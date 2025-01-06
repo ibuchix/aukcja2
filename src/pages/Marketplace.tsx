@@ -11,25 +11,28 @@ import {
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Database } from "@/integrations/supabase/types";
+
+type CarFeatures = {
+  satNav: boolean;
+  heatedSeats: boolean;
+  panoramicRoof: boolean;
+  reverseCamera: boolean;
+  upgradedSound: boolean;
+};
 
 interface CarListing {
   id: string;
   title: string;
   price: number;
-  make: string;
-  model: string;
-  year: number;
+  make: string | null;
+  model: string | null;
+  year: number | null;
   mileage: number;
-  images: string[];
-  description: string;
-  features: {
-    satNav: boolean;
-    heatedSeats: boolean;
-    panoramicRoof: boolean;
-    reverseCamera: boolean;
-    upgradedSound: boolean;
-  };
-  transmission: string;
+  images: string[] | null;
+  description: string | null;
+  features: CarFeatures;
+  transmission: string | null;
 }
 
 const Marketplace = () => {
@@ -45,7 +48,29 @@ const Marketplace = () => {
         .eq("is_draft", false);
 
       if (error) throw error;
-      return data as CarListing[];
+
+      // Transform the data to match our CarListing interface
+      const transformedData: CarListing[] = (data || []).map((car) => ({
+        id: car.id,
+        title: car.title,
+        price: car.price,
+        make: car.make,
+        model: car.model,
+        year: car.year,
+        mileage: car.mileage,
+        images: car.images,
+        description: car.description,
+        features: {
+          satNav: car.features?.satNav || false,
+          heatedSeats: car.features?.heatedSeats || false,
+          panoramicRoof: car.features?.panoramicRoof || false,
+          reverseCamera: car.features?.reverseCamera || false,
+          upgradedSound: car.features?.upgradedSound || false,
+        },
+        transmission: car.transmission,
+      }));
+
+      return transformedData;
     },
   });
 
@@ -78,7 +103,7 @@ const Marketplace = () => {
           >
             <VehicleCard
               image={car.images?.[0] || "/placeholder.svg"}
-              name={`${car.year} ${car.make} ${car.model}`}
+              name={`${car.year || 'N/A'} ${car.make || 'Unknown'} ${car.model || 'Model'}`}
               price={`$${car.price.toLocaleString()}`}
               specs={{
                 speed: "N/A",
@@ -122,7 +147,7 @@ const Marketplace = () => {
                   <h3 className="text-lg font-semibold">Details</h3>
                   <ul className="list-disc list-inside space-y-2">
                     <li>Mileage: {selectedCar?.mileage.toLocaleString()} miles</li>
-                    <li>Transmission: {selectedCar?.transmission}</li>
+                    <li>Transmission: {selectedCar?.transmission || 'N/A'}</li>
                   </ul>
                 </div>
                 <div>
@@ -143,7 +168,7 @@ const Marketplace = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold">Description</h3>
-                  <p className="text-gray-600">{selectedCar?.description}</p>
+                  <p className="text-gray-600">{selectedCar?.description || 'No description available'}</p>
                 </div>
               </div>
               <div className="pt-4">
