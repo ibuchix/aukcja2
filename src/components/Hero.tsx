@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
@@ -57,31 +56,14 @@ const Hero = () => {
               <p className="text-subtitle-text">Verified Dealers</p>
             </div>
             <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-              <h3 className="text-4xl font-bold text-primary mb-2">15min</h3>
-              <p className="text-subtitle-text">Average Response</p>
+              <h3 className="text-4xl font-bold text-primary mb-2">100+</h3>
+              <p className="text-subtitle-text">Live Auctions</p>
             </div>
             <div className="text-center p-6 bg-white rounded-lg shadow-sm">
               <h3 className="text-4xl font-bold text-primary mb-2">98%</h3>
               <p className="text-subtitle-text">Satisfaction Rate</p>
             </div>
           </motion.div>
-        </div>
-      </div>
-
-      {/* Brand Logos Section */}
-      <div className="bg-primary/95 py-12 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-8 items-center justify-items-center">
-            {/* Add car brand logos here */}
-            <img src="https://www.car-logos.org/wp-content/uploads/2011/09/bmw.png" alt="BMW" className="h-12 opacity-80 grayscale brightness-200" />
-            <img src="https://www.car-logos.org/wp-content/uploads/2011/09/mercedes.png" alt="Mercedes" className="h-12 opacity-80 grayscale brightness-200" />
-            <img src="https://www.car-logos.org/wp-content/uploads/2011/09/audi.png" alt="Audi" className="h-12 opacity-80 grayscale brightness-200" />
-            <img src="https://www.car-logos.org/wp-content/uploads/2011/09/volkswagen.png" alt="Volkswagen" className="h-12 opacity-80 grayscale brightness-200" />
-            <img src="https://www.car-logos.org/wp-content/uploads/2011/09/porsche.png" alt="Porsche" className="h-12 opacity-80 grayscale brightness-200" />
-            <img src="https://www.car-logos.org/wp-content/uploads/2011/09/toyota.png" alt="Toyota" className="h-12 opacity-80 grayscale brightness-200" />
-            <img src="https://www.car-logos.org/wp-content/uploads/2011/09/honda.png" alt="Honda" className="h-12 opacity-80 grayscale brightness-200" />
-            <img src="https://www.car-logos.org/wp-content/uploads/2011/09/ford.png" alt="Ford" className="h-12 opacity-80 grayscale brightness-200" />
-          </div>
         </div>
       </div>
     </div>
