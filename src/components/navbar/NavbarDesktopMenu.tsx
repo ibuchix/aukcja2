@@ -1,38 +1,35 @@
 import { Link } from "react-router-dom";
-import { Compass, User } from "@phosphor-icons/react";
+import { Button } from "@/components/ui/button";
 
 interface NavbarDesktopMenuProps {
   session: any;
-  handleLogout: () => Promise<void>;
+  handleLogout: () => void;
 }
 
 export const NavbarDesktopMenu = ({ session, handleLogout }: NavbarDesktopMenuProps) => {
   return (
-    <div className="hidden md:flex items-center space-x-8">
-      <Link to="/marketplace" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
-        <Compass size={20} weight="bold" />
-        Browse Vehicles
-      </Link>
-      <Link to="/dealer/dashboard" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
-        My Bids
+    <div className="hidden md:flex items-center space-x-4">
+      <Link to="/marketplace" className="text-gray-700 hover:text-primary transition-colors">
+        Marketplace
       </Link>
       {session ? (
-        <div className="flex items-center space-x-4">
-          <Link to="/dealer/profile" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
-            <User size={20} weight="bold" />
-            Profile
+        <>
+          <Link to="/my-bids" className="text-gray-700 hover:text-primary transition-colors">
+            My Bids (zł)
           </Link>
-          <button
+          <Button
+            variant="ghost"
+            className="text-gray-700 hover:text-primary transition-colors"
             onClick={handleLogout}
-            className="btn-primary"
           >
             Logout
-          </button>
-        </div>
+          </Button>
+        </>
       ) : (
-        <Link to="/auth" className="btn-primary flex items-center gap-2">
-          <User size={20} weight="bold" />
-          Sign Up
+        <Link to="/auth">
+          <Button variant="ghost" className="text-gray-700 hover:text-primary transition-colors">
+            Login
+          </Button>
         </Link>
       )}
     </div>
