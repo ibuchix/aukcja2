@@ -25,7 +25,9 @@ export function useSignupDealer() {
         options: {
           data: {
             role: 'dealer',
+            name: values.supervisorName,
           },
+          emailRedirectTo: `${window.location.origin}/confirm-email`,
         },
       });
 
@@ -42,29 +44,11 @@ export function useSignupDealer() {
         address: values.companyAddress,
       });
 
-      // Step 3: Send welcome email
-      const { error: emailError } = await supabase.functions.invoke('send-dealer-welcome', {
-        body: {
-          to: values.email,
-          name: values.supervisorName,
-          confirmationUrl: `${window.location.origin}/confirm-email`,
-        },
+      toast({
+        title: "Registration Successful!",
+        description: "Please check your email to confirm your account. You'll be able to log in after confirmation.",
+        duration: 6000,
       });
-
-      if (emailError) {
-        console.error("Email sending error:", emailError);
-        toast({
-          title: "Email Notification Issue",
-          description: "Your account was created but we couldn't send the welcome email. Please check your inbox later or contact support.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Registration Successful!",
-          description: "Please check your email to confirm your account. You'll be able to log in after confirmation.",
-          duration: 6000,
-        });
-      }
 
       return { success: true };
     } catch (error: any) {
