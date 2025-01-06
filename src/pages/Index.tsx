@@ -9,32 +9,26 @@ const Index = () => {
     {
       image: "https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&q=80",
       name: "Porsche 911 GT3",
-      price: "$162,450",
-      specs: {
-        speed: "198 mph",
-        acceleration: "3.2s",
-        power: "502 hp",
-      },
+      price: 162450,
+      mileage: 15000,
+      year: 2023,
+      transmission: "Automatic",
     },
     {
       image: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80",
       name: "Ferrari F8 Tributo",
-      price: "$276,550",
-      specs: {
-        speed: "211 mph",
-        acceleration: "2.9s",
-        power: "710 hp",
-      },
+      price: 276550,
+      mileage: 8000,
+      year: 2022,
+      transmission: "Automatic",
     },
     {
       image: "https://images.unsplash.com/photo-1555353540-64580b51c258?auto=format&fit=crop&q=80",
       name: "Lamborghini Huracán",
-      price: "$208,571",
-      specs: {
-        speed: "202 mph",
-        acceleration: "2.8s",
-        power: "631 hp",
-      },
+      price: 208571,
+      mileage: 12000,
+      year: 2023,
+      transmission: "Automatic",
     },
   ];
 

@@ -217,12 +217,10 @@ const DealerDashboard = () => {
                 <VehicleCard
                   image={car.images?.[0] || "/placeholder.svg"}
                   name={`${car.year} ${car.make} ${car.model}`}
-                  price={`$${car.price.toLocaleString()}`}
-                  specs={{
-                    speed: "N/A",
-                    acceleration: "N/A",
-                    power: "N/A",
-                  }}
+                  price={Number(car.price)}
+                  mileage={car.mileage}
+                  year={car.year}
+                  transmission={car.transmission}
                 />
                 <button
                   onClick={() => handlePlaceBid(car.id, car.price)}
