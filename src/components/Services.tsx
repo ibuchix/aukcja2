@@ -43,49 +43,6 @@ const Services = () => {
           ))}
         </div>
       </div>
-
-      {/* How It Works Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
-        <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-          <div className="relative">
-            <div className="absolute -left-4 top-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-bold">1</div>
-            <h3 className="text-xl font-semibold mb-4 pl-6">Browse through our stock</h3>
-            <p className="text-subtitle-text pl-6">Explore our extensive collection of quality vehicles from verified sellers.</p>
-          </div>
-          <div className="relative">
-            <div className="absolute -left-4 top-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-bold">2</div>
-            <h3 className="text-xl font-semibold mb-4 pl-6">Bid easily online</h3>
-            <p className="text-subtitle-text pl-6">Place competitive bids on vehicles that match your inventory needs.</p>
-          </div>
-          <div className="relative">
-            <div className="absolute -left-4 top-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-bold">3</div>
-            <h3 className="text-xl font-semibold mb-4 pl-6">Close the purchase</h3>
-            <p className="text-subtitle-text pl-6">Complete your transaction securely through our platform.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Testimonials Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
-        <h2 className="text-3xl font-bold text-center mb-12">See what our dealers have to say</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[1, 2, 3].map((index) => (
-            <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-accent">
-              <p className="text-subtitle-text mb-4">
-                "Auto-Strada has transformed how we source our inventory. The process is seamless and the quality of vehicles is outstanding."
-              </p>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-full" />
-                <div>
-                  <h4 className="font-semibold">John Smith</h4>
-                  <p className="text-subtitle-text text-sm">Premium Motors</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </section>
   );
 };
