@@ -14,7 +14,9 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
+// Move form schema to a separate file if this component gets too large
 const dealerFormSchema = z.object({
   supervisorName: z.string().min(2, "Full name is required"),
   email: z.string().email("Invalid email address"),
@@ -33,6 +35,7 @@ type DealerFormValues = z.infer<typeof dealerFormSchema>;
 
 export function DealerSignupForm() {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<DealerFormValues>({
     resolver: zodResolver(dealerFormSchema),
@@ -50,13 +53,15 @@ export function DealerSignupForm() {
   });
 
   const onSubmit = async (values: DealerFormValues) => {
+    setIsSubmitting(true);
     try {
-      // Show loading state
-      toast({
+      // Show initial loading state
+      const loadingToast = toast({
         title: "Processing registration...",
         description: "Please wait while we set up your account.",
       });
 
+      // Step 1: Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -67,51 +72,71 @@ export function DealerSignupForm() {
         },
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        throw new Error(authError.message);
+      }
 
-      if (authData.user) {
-        const { error: dealerError } = await supabase
-          .from('dealers')
-          .insert({
-            user_id: authData.user.id,
-            supervisor_name: values.supervisorName,
-            dealership_name: values.companyName,
-            license_number: 'pending',
-            tax_id: values.taxId,
-            business_registry_number: values.businessRegistryNumber,
-            address: values.companyAddress,
-            verification_status: 'pending',
-            is_verified: false,
-          });
+      if (!authData.user) {
+        throw new Error("Failed to create user account");
+      }
 
-        if (dealerError) throw dealerError;
-
-        // Send welcome email
-        const { error: emailError } = await supabase.functions.invoke('send-dealer-welcome', {
-          body: {
-            to: values.email,
-            name: values.supervisorName,
-            confirmationUrl: `${window.location.origin}/confirm-email`,
-          },
+      // Step 2: Create dealer record
+      const { error: dealerError } = await supabase
+        .from('dealers')
+        .insert({
+          user_id: authData.user.id,
+          supervisor_name: values.supervisorName,
+          dealership_name: values.companyName,
+          license_number: 'pending',
+          tax_id: values.taxId,
+          business_registry_number: values.businessRegistryNumber,
+          address: values.companyAddress,
+          verification_status: 'pending',
+          is_verified: false,
         });
 
-        if (emailError) throw emailError;
+      if (dealerError) {
+        console.error("Dealer creation error:", dealerError);
+        throw new Error("Failed to create dealer profile");
+      }
 
+      // Step 3: Send welcome email
+      const { error: emailError } = await supabase.functions.invoke('send-dealer-welcome', {
+        body: {
+          to: values.email,
+          name: values.supervisorName,
+          confirmationUrl: `${window.location.origin}/confirm-email`,
+        },
+      });
+
+      if (emailError) {
+        console.error("Email sending error:", emailError);
+        // Don't throw here, as the account is already created
+        toast({
+          title: "Email Notification Issue",
+          description: "Your account was created but we couldn't send the welcome email. Please contact support.",
+          variant: "destructive",
+        });
+      } else {
+        // Clear loading toast and show success
         toast({
           title: "Registration Successful!",
           description: "Please check your email to confirm your account. You'll be able to log in after confirmation.",
           duration: 6000,
         });
-
-        // Reset form
-        form.reset();
       }
+
+      // Reset form
+      form.reset();
     } catch (error: any) {
+      console.error("Registration error:", error);
       toast({
         title: "Registration Failed",
         description: error.message || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -254,9 +279,9 @@ export function DealerSignupForm() {
         <Button 
           type="submit" 
           className="w-full"
-          disabled={form.formState.isSubmitting}
+          disabled={isSubmitting}
         >
-          {form.formState.isSubmitting ? "Signing up..." : "Sign Up"}
+          {isSubmitting ? "Signing up..." : "Sign Up"}
         </Button>
       </form>
     </Form>
