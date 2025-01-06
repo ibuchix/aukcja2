@@ -22,7 +22,9 @@ export const createDealerProfile = async (data: DealerRegistrationData) => {
       address: data.address,
       verification_status: 'pending',
       is_verified: false,
-    });
+    })
+    .select()
+    .single();
 
   if (error) {
     console.error("Dealer creation error:", error);

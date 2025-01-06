@@ -35,7 +35,14 @@ export function useSignupDealer() {
       if (authError) throw new Error(authError.message);
       if (!authData.user) throw new Error("Failed to create user account");
 
-      // Step 2: Create dealer profile
+      // Step 2: Create dealer profile using the session from auth
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("No session available after signup");
+      }
+
+      // Step 3: Create dealer profile
       await createDealerProfile({
         userId: authData.user.id,
         supervisorName: values.supervisorName,
@@ -45,7 +52,7 @@ export function useSignupDealer() {
         address: values.companyAddress,
       });
 
-      // Step 3: Send welcome email
+      // Step 4: Send welcome email
       await sendEmail({
         to: values.email,
         subject: "Welcome to Auto-Strada Dealer Portal",
