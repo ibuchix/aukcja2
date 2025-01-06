@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import VehicleCard from "@/components/VehicleCard";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { Badge } from "@/components/ui/badge";
@@ -77,7 +77,6 @@ const DealerDashboard = () => {
     fetchDealerStatus();
   }, [toast]);
 
-  // Fetch initial cars and bids data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -249,7 +248,7 @@ const DealerDashboard = () => {
             <Alert>
               <AlertDescription className="flex items-center gap-2">
                 Verification Status: 
-                <Badge variant={dealerStatus.is_verified ? "success" : "secondary"}>
+                <Badge variant={dealerStatus.is_verified ? "default" : "secondary"}>
                   {dealerStatus.verification_status}
                 </Badge>
               </AlertDescription>

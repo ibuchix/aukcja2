@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const dealerFormSchema = z.object({
   supervisorName: z.string().min(2, "Full name is required"),
@@ -80,19 +80,17 @@ const AuthPage = () => {
       if (authData.user) {
         const { error: dealerError } = await supabase
           .from('dealers')
-          .insert([
-            {
-              user_id: authData.user.id,
-              supervisor_name: values.supervisorName,
-              dealership_name: values.companyName,
-              phone_number: values.phoneNumber,
-              tax_id: values.taxId,
-              business_registry_number: values.businessRegistryNumber,
-              address: values.companyAddress,
-              verification_status: 'pending',
-              is_verified: false,
-            },
-          ]);
+          .insert({
+            user_id: authData.user.id,
+            supervisor_name: values.supervisorName,
+            dealership_name: values.companyName,
+            license_number: 'pending',
+            tax_id: values.taxId,
+            business_registry_number: values.businessRegistryNumber,
+            address: values.companyAddress,
+            verification_status: 'pending',
+            is_verified: false,
+          });
 
         if (dealerError) throw dealerError;
 
@@ -101,7 +99,7 @@ const AuthPage = () => {
           body: {
             to: values.email,
             name: values.supervisorName,
-            confirmationUrl: `${window.location.origin}/confirm-email?token=${authData.user.confirmation_token}`,
+            confirmationUrl: `${window.location.origin}/confirm-email`,
           },
         });
 
