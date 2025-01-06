@@ -1,15 +1,15 @@
+import { formatCurrency } from "@/lib/utils";
+
 interface VehicleCardProps {
   image: string;
   name: string;
-  price: string;
-  specs: {
-    speed: string;
-    acceleration: string;
-    power: string;
-  };
+  price: number;
+  mileage: number;
+  transmission?: string | null;
+  year?: number | null;
 }
 
-const VehicleCard = ({ image, name, price, specs }: VehicleCardProps) => {
+const VehicleCard = ({ image, name, price, mileage, transmission, year }: VehicleCardProps) => {
   return (
     <div className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
       <div className="relative h-48 overflow-hidden">
@@ -21,19 +21,19 @@ const VehicleCard = ({ image, name, price, specs }: VehicleCardProps) => {
       </div>
       <div className="p-6">
         <h3 className="text-xl font-semibold mb-2">{name}</h3>
-        <p className="text-primary text-lg font-bold mb-4">{price}</p>
-        <div className="grid grid-cols-3 gap-4 text-sm text-gray-600">
+        <p className="text-primary text-lg font-bold mb-4">{formatCurrency(price)}</p>
+        <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
           <div>
-            <p className="font-semibold">Top Speed</p>
-            <p>{specs.speed}</p>
+            <p className="font-semibold">Year</p>
+            <p>{year || "N/A"}</p>
           </div>
           <div>
-            <p className="font-semibold">0-60 mph</p>
-            <p>{specs.acceleration}</p>
+            <p className="font-semibold">Mileage</p>
+            <p>{mileage.toLocaleString()} km</p>
           </div>
-          <div>
-            <p className="font-semibold">Power</p>
-            <p>{specs.power}</p>
+          <div className="col-span-2">
+            <p className="font-semibold">Transmission</p>
+            <p>{transmission || "N/A"}</p>
           </div>
         </div>
       </div>

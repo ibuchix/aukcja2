@@ -6,7 +6,6 @@ import { Database } from "@/integrations/supabase/types";
 import { CarListing } from "@/types/cars";
 import { useState } from "react";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
-import { formatCurrency } from "@/lib/utils";
 
 type CarRow = Database["public"]["Tables"]["cars"]["Row"];
 
@@ -77,6 +76,20 @@ const Marketplace = () => {
     );
   }
 
+  // Helper function to get the primary image for a car
+  const getPrimaryImage = (car: CarListing): string => {
+    // First try to get the front view from required photos
+    if (car.required_photos?.front) {
+      return car.required_photos.front;
+    }
+    // Then try the first image from the images array
+    if (car.images && car.images.length > 0) {
+      return car.images[0];
+    }
+    // Fallback to placeholder
+    return "/placeholder.svg";
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Marketplace</h1>
@@ -88,16 +101,14 @@ const Marketplace = () => {
             className="cursor-pointer"
           >
             <VehicleCard
-              image={car.images?.[0] || "/placeholder.svg"}
+              image={getPrimaryImage(car)}
               name={`${car.year || "N/A"} ${car.make || "Unknown"} ${
                 car.model || "Model"
               }`}
-              price={formatCurrency(car.price)}
-              specs={{
-                speed: "N/A",
-                acceleration: "N/A",
-                power: `${car.mileage.toLocaleString()} miles`,
-              }}
+              price={car.price}
+              mileage={car.mileage}
+              transmission={car.transmission}
+              year={car.year}
             />
           </div>
         ))}
