@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { List, X, CurrencyCircleDollar, User, Compass } from "@phosphor-icons/react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { NavbarLogo } from "./navbar/NavbarLogo";
+import { NavbarDesktopMenu } from "./navbar/NavbarDesktopMenu";
+import { NavbarMobileMenu } from "./navbar/NavbarMobileMenu";
+import { NavbarMobileButton } from "./navbar/NavbarMobileButton";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,92 +24,11 @@ const Navbar = () => {
     <nav className="fixed w-full bg-white shadow-sm z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          <div className="flex-shrink-0">
-            <Link to="/" className="flex items-center gap-2">
-              <img 
-                src="/lovable-uploads/aa669890-4367-45e2-993a-634d24895446.png" 
-                alt="Auto-Strada Logo" 
-                className="h-8 w-auto"
-              />
-            </Link>
-          </div>
-          
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link to="/marketplace" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
-              <Compass size={20} weight="bold" />
-              Browse Vehicles
-            </Link>
-            <Link to="/dealer/dashboard" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
-              <CurrencyCircleDollar size={20} weight="bold" />
-              My Bids
-            </Link>
-            {session ? (
-              <div className="flex items-center space-x-4">
-                <Link to="/dealer/profile" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
-                  <User size={20} weight="bold" />
-                  Profile
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="btn-primary"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <Link to="/auth" className="btn-primary flex items-center gap-2">
-                <User size={20} weight="bold" />
-                Sign Up
-              </Link>
-            )}
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-700 hover:text-primary"
-            >
-              {isOpen ? <X size={24} weight="bold" /> : <List size={24} weight="bold" />}
-            </button>
-          </div>
+          <NavbarLogo />
+          <NavbarDesktopMenu session={session} handleLogout={handleLogout} />
+          <NavbarMobileButton isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
         </div>
-
-        {/* Mobile Menu */}
-        {isOpen && (
-          <div className="md:hidden pb-4">
-            <div className="space-y-4">
-              <Link to="/marketplace" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
-                <Compass size={20} weight="bold" />
-                Browse Vehicles
-              </Link>
-              <Link to="/dealer/dashboard" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
-                <CurrencyCircleDollar size={20} weight="bold" />
-                My Bids
-              </Link>
-              {session ? (
-                <>
-                  <Link to="/dealer/profile" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
-                    <User size={20} weight="bold" />
-                    Profile
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left btn-primary"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <Link to="/auth" className="block w-full btn-primary flex items-center gap-2">
-                  <User size={20} weight="bold" />
-                  Sign Up
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
+        <NavbarMobileMenu isOpen={isOpen} session={session} handleLogout={handleLogout} />
       </div>
     </nav>
   );
