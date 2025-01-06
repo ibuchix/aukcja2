@@ -32,28 +32,7 @@ export function useSignupDealer() {
       if (authError) throw new Error(authError.message);
       if (!authData.user) throw new Error("Failed to create user account");
 
-      // Step 2: Get current session immediately after signup
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error("Session error:", sessionError);
-        throw new Error("Failed to get session");
-      }
-
-      if (!session) {
-        // If no session, try signing in explicitly
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: values.email,
-          password: values.password,
-        });
-
-        if (signInError || !signInData.session) {
-          console.error("Sign in error:", signInError);
-          throw new Error("Failed to establish session");
-        }
-      }
-
-      // Step 3: Create dealer profile
+      // Step 2: Create dealer profile
       await createDealerProfile({
         userId: authData.user.id,
         supervisorName: values.supervisorName,
@@ -63,7 +42,7 @@ export function useSignupDealer() {
         address: values.companyAddress,
       });
 
-      // Step 4: Send welcome email
+      // Step 3: Send welcome email
       const { error: emailError } = await supabase.functions.invoke('send-dealer-welcome', {
         body: {
           to: values.email,
@@ -76,7 +55,7 @@ export function useSignupDealer() {
         console.error("Email sending error:", emailError);
         toast({
           title: "Email Notification Issue",
-          description: "Your account was created but we couldn't send the welcome email. Please contact support.",
+          description: "Your account was created but we couldn't send the welcome email. Please check your inbox later or contact support.",
           variant: "destructive",
         });
       } else {
