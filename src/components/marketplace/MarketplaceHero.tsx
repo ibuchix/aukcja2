@@ -3,7 +3,7 @@ import { Car, Shield, Clock } from "lucide-react";
 
 const MarketplaceHero = () => {
   return (
-    <div className="bg-gradient-to-br from-iris to-primary/5">
+    <div className="bg-iris-light">
       <div className="container mx-auto px-4 py-16 md:py-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -30,7 +30,7 @@ const MarketplaceHero = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-sm"
+              className="bg-white p-6 rounded-lg shadow-sm"
             >
               <div className="flex flex-col items-center text-center space-y-3">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
