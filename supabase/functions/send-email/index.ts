@@ -37,9 +37,9 @@ serve(async (req) => {
       body: JSON.stringify({
         personalizations: [{
           to: [{ email: to }],
+          subject: subject, // Move subject into personalizations for better template support
         }],
         from: { email: from },
-        subject: subject,
         content: [{
           type: 'text/html',
           value: html,
@@ -54,7 +54,10 @@ serve(async (req) => {
     }
 
     console.log('Email sent successfully');
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ 
+      success: true,
+      message: 'Email sent successfully'
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
@@ -62,7 +65,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error sending email:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
