@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,9 +34,18 @@ interface CarListing {
   description: string | null;
   features: CarFeatures;
   transmission: string | null;
+  service_history_files: string[] | null;
+  required_photos: Record<string, string | null> | null;
 }
 
 type CarRow = Database['public']['Tables']['cars']['Row'];
+
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('pl-PL', {
+    style: 'currency',
+    currency: 'PLN'
+  }).format(amount);
+};
 
 const Marketplace = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
@@ -79,6 +89,8 @@ const Marketplace = () => {
             upgradedSound: carFeatures.upgradedSound || false,
           },
           transmission: car.transmission,
+          service_history_files: car.service_history_files,
+          required_photos: car.required_photos as Record<string, string | null>,
         };
       });
 
@@ -116,7 +128,7 @@ const Marketplace = () => {
             <VehicleCard
               image={car.images?.[0] || "/placeholder.svg"}
               name={`${car.year || 'N/A'} ${car.make || 'Unknown'} ${car.model || 'Model'}`}
-              price={`$${car.price.toLocaleString()}`}
+              price={formatCurrency(car.price)}
               specs={{
                 speed: "N/A",
                 acceleration: "N/A",
@@ -133,6 +145,9 @@ const Marketplace = () => {
             <DialogTitle>
               {selectedCar?.year} {selectedCar?.make} {selectedCar?.model}
             </DialogTitle>
+            <DialogDescription>
+              View detailed information about this vehicle
+            </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[80vh]">
             <div className="space-y-4">
@@ -141,18 +156,26 @@ const Marketplace = () => {
                   <img
                     key={index}
                     src={image}
-                    alt={`${selectedCar.make} ${selectedCar.model} - Image ${
-                      index + 1
-                    }`}
+                    alt={`${selectedCar.make} ${selectedCar.model} - Image ${index + 1}`}
                     className="w-full h-48 object-cover rounded-lg"
                   />
                 ))}
+                {selectedCar?.required_photos && Object.entries(selectedCar.required_photos).map(([key, value]) => 
+                  value && (
+                    <img
+                      key={key}
+                      src={value}
+                      alt={`${key.replace(/_/g, ' ').toUpperCase()}`}
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                  )
+                )}
               </div>
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-semibold">Price</h3>
                   <p className="text-2xl text-primary">
-                    ${selectedCar?.price.toLocaleString()}
+                    {formatCurrency(selectedCar?.price || 0)}
                   </p>
                 </div>
                 <div>
@@ -178,6 +201,25 @@ const Marketplace = () => {
                       )}
                   </ul>
                 </div>
+                {selectedCar?.service_history_files && selectedCar.service_history_files.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold">Service History Documents</h3>
+                    <ul className="list-disc list-inside space-y-2">
+                      {selectedCar.service_history_files.map((file, index) => (
+                        <li key={index}>
+                          <a 
+                            href={file} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            Document {index + 1}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <div>
                   <h3 className="text-lg font-semibold">Description</h3>
                   <p className="text-gray-600">{selectedCar?.description || 'No description available'}</p>
