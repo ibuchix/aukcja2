@@ -29,7 +29,6 @@ const Navbar = () => {
                 alt="Auto-Strada Logo" 
                 className="h-8 w-auto"
               />
-              <span className="text-2xl font-bold text-dark">AUTO-STRADA</span>
             </Link>
           </div>
           

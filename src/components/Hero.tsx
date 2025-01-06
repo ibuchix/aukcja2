@@ -16,7 +16,7 @@ const Hero = () => {
             className="space-y-8"
           >
             <h1 className="text-5xl md:text-6xl font-bold text-dark leading-tight">
-              Buy <span className="text-primary">premium cars</span> for your dealership
+              Buy <span className="text-primary">quality cars</span> for your dealership
               <br />
               directly from private sellers
             </h1>

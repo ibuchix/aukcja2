@@ -21,7 +21,7 @@ const MarketplaceHero = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
           {[
-            { icon: Car, title: "Premium Selection", description: "Curated high-quality vehicles" },
+            { icon: Car, title: "Quality Selection", description: "Curated high-quality vehicles" },
             { icon: Shield, title: "Verified Sellers", description: "100% trusted dealers" },
             { icon: Clock, title: "Quick Process", description: "Efficient buying experience" },
           ].map((feature, index) => (
