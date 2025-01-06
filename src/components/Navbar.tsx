@@ -25,11 +25,11 @@ const Navbar = () => {
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center gap-2">
               <img 
-                src="/lovable-uploads/7dadc1d9-fd04-480c-a084-a678596a6e12.png" 
+                src="/lovable-uploads/aa669890-4367-45e2-993a-634d24895446.png" 
                 alt="Auto-Strada Logo" 
                 className="h-8 w-auto"
               />
-              <span className="text-2xl font-bold text-primary">Auto-Strada</span>
+              <span className="text-2xl font-bold text-dark">AUTO-STRADA</span>
             </Link>
           </div>
           
