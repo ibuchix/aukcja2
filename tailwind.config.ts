@@ -19,44 +19,34 @@ export default {
     },
     extend: {
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "#BF9456",
-          foreground: "#FFFFFF",
-        },
-        secondary: {
-          DEFAULT: "#0A0A0A",
-          foreground: "#FFFFFF",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "#BF9456",
-          foreground: "#FFFFFF",
-        },
-        card: {
-          DEFAULT: "#FFFFFF",
-          foreground: "#0A0A0A",
-        },
+        primary: "#DC143C",
+        secondary: "#383B39",
+        iris: "#4B4DED",
+        "iris-light": "#EFEFFD",
+        dark: "#0E0E2C",
+        success: "#21CA6F",
+        accent: "#ECF1F4",
+        background: "#FFFFFF",
+        "body-text": "#222020",
+        "subtitle-text": "#6A6A77",
       },
-      keyframes: {
-        fadeIn: {
-          "0%": { opacity: "0" },
-          "100%": { opacity: "1" },
-        },
+      fontFamily: {
+        kanit: ["Kanit", "sans-serif"],
+        oswald: ["Oswald", "sans-serif"],
       },
-      animation: {
-        fadeIn: "fadeIn 0.5s ease-in-out",
+      fontSize: {
+        "heading-lg": "2rem",
+        "heading-md": "1.5rem",
+        "heading-sm": "1.25rem",
+        body: "1rem",
+        subtitle: "0.875rem",
+      },
+      spacing: {
+        default: "16px",
+        compact: "8px",
+      },
+      borderRadius: {
+        default: "4px",
       },
     },
   },
