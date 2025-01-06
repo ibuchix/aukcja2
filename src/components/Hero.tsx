@@ -1,56 +1,75 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
 const Hero = () => {
-  const [currentImage, setCurrentImage] = useState(0);
-  const images = [
-    "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1555353540-64580b51c258?auto=format&fit=crop&q=80",
-  ];
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % images.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
-
   return (
-    <div className="relative min-h-screen bg-white">
+    <div className="relative min-h-screen">
+      {/* Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-iris-light -z-10" />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="space-y-8"
+          >
             <h1 className="text-5xl md:text-6xl font-bold text-dark leading-tight">
-              Buy <span className="text-primary">high quality cars</span> for your dealership,
+              Buy <span className="text-primary">premium cars</span> for your dealership
               <br />
               directly from private sellers
             </h1>
             <p className="text-subtitle-text text-lg max-w-2xl">
-              Discover direct and fastest growing way to purchase cars on online
-              auctions, exclusively from a wide selection of private sellers.
+              Discover the fastest growing marketplace for purchasing cars through online
+              auctions, exclusively from a curated selection of private sellers.
             </p>
-            <div className="flex gap-4">
+            <motion.div 
+              className="flex gap-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
               <a
                 href="#vehicles"
-                className="btn-primary text-lg px-8 py-3"
+                className="btn-primary text-lg px-8 py-3 flex items-center gap-2 group"
               >
-                Sign up now
+                Start exploring
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </a>
+            </motion.div>
+          </motion.div>
+
+          {/* Stats Section */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="grid grid-cols-2 gap-8 p-8 bg-white/50 backdrop-blur-sm rounded-lg border border-accent"
+          >
+            <div className="text-center p-6 bg-white rounded-lg shadow-sm">
+              <h3 className="text-4xl font-bold text-primary mb-2">2,500+</h3>
+              <p className="text-subtitle-text">Active Listings</p>
             </div>
-          </div>
-          <div className="relative">
-            <img
-              src="/lovable-uploads/77d4932b-acbe-4d45-8b3e-ba3304cf4491.png"
-              alt="Car illustration"
-              className="w-full h-auto"
-            />
-          </div>
+            <div className="text-center p-6 bg-white rounded-lg shadow-sm">
+              <h3 className="text-4xl font-bold text-primary mb-2">500+</h3>
+              <p className="text-subtitle-text">Verified Dealers</p>
+            </div>
+            <div className="text-center p-6 bg-white rounded-lg shadow-sm">
+              <h3 className="text-4xl font-bold text-primary mb-2">15min</h3>
+              <p className="text-subtitle-text">Average Response</p>
+            </div>
+            <div className="text-center p-6 bg-white rounded-lg shadow-sm">
+              <h3 className="text-4xl font-bold text-primary mb-2">98%</h3>
+              <p className="text-subtitle-text">Satisfaction Rate</p>
+            </div>
+          </motion.div>
         </div>
       </div>
 
       {/* Brand Logos Section */}
-      <div className="bg-primary py-12">
+      <div className="bg-primary/95 py-12 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-8 items-center justify-items-center">
             {/* Add car brand logos here */}
