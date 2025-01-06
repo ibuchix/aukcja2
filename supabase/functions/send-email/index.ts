@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
-const SENDGRID_API_KEY = Deno.env.get('SENDGRID_API_KEY');
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,50 +21,53 @@ serve(async (req) => {
   }
 
   try {
-    if (!SENDGRID_API_KEY) {
-      throw new Error('SendGrid API key not configured');
+    console.log('Starting email sending process');
+    
+    if (!RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not set');
+      throw new Error('Email service configuration is missing');
     }
 
-    const { to, subject, html, from = 'Auto-Strada <noreply@auto-strada.com>' }: EmailRequest = await req.json();
-    console.log(`Attempting to send email to: ${to}`);
+    const { to, subject, html, from = 'Auto Market <onboarding@resend.dev>' }: EmailRequest = await req.json();
+    console.log('Attempting to send email to:', to);
 
-    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+    const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${SENDGRID_API_KEY}`,
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        personalizations: [{
-          to: [{ email: to }],
-        }],
-        from: { email: from },
-        subject: subject,
-        content: [{
-          type: 'text/html',
-          value: html,
-        }],
+        from,
+        to: [to],
+        subject,
+        html,
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('SendGrid API error:', errorData);
-      throw new Error(`Failed to send email: ${response.statusText}`);
+    const responseData = await res.json();
+    console.log('Resend API response:', responseData);
+
+    if (!res.ok) {
+      console.error('Failed to send email:', responseData);
+      throw new Error(responseData.message || 'Failed to send email');
     }
 
-    console.log('Email sent successfully');
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ success: true, data: responseData }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    );
 
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error('Error in send-email function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
-        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
       }
     );
   }
