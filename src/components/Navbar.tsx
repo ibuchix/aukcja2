@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, DollarSign, User, Navigation } from "lucide-react";
+import { List, X, CurrencyCircleDollar, User, Compass } from "@phosphor-icons/react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -35,17 +35,17 @@ const Navbar = () => {
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
             <Link to="/marketplace" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
-              <Navigation size={20} />
+              <Compass size={20} weight="bold" />
               Browse Vehicles
             </Link>
             <Link to="/dealer/dashboard" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
-              <DollarSign size={20} />
+              <CurrencyCircleDollar size={20} weight="bold" />
               My Bids
             </Link>
             {session ? (
               <div className="flex items-center space-x-4">
                 <Link to="/dealer/profile" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
-                  <User size={20} />
+                  <User size={20} weight="bold" />
                   Profile
                 </Link>
                 <button
@@ -57,7 +57,7 @@ const Navbar = () => {
               </div>
             ) : (
               <Link to="/auth" className="btn-primary flex items-center gap-2">
-                <User size={20} />
+                <User size={20} weight="bold" />
                 Sign Up
               </Link>
             )}
@@ -69,7 +69,7 @@ const Navbar = () => {
               onClick={() => setIsOpen(!isOpen)}
               className="text-gray-700 hover:text-primary"
             >
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
+              {isOpen ? <X size={24} weight="bold" /> : <List size={24} weight="bold" />}
             </button>
           </div>
         </div>
@@ -79,17 +79,17 @@ const Navbar = () => {
           <div className="md:hidden pb-4">
             <div className="space-y-4">
               <Link to="/marketplace" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
-                <Navigation size={20} />
+                <Compass size={20} weight="bold" />
                 Browse Vehicles
               </Link>
               <Link to="/dealer/dashboard" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
-                <DollarSign size={20} />
+                <CurrencyCircleDollar size={20} weight="bold" />
                 My Bids
               </Link>
               {session ? (
                 <>
                   <Link to="/dealer/profile" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
-                    <User size={20} />
+                    <User size={20} weight="bold" />
                     Profile
                   </Link>
                   <button
@@ -101,7 +101,7 @@ const Navbar = () => {
                 </>
               ) : (
                 <Link to="/auth" className="block w-full btn-primary flex items-center gap-2">
-                  <User size={20} />
+                  <User size={20} weight="bold" />
                   Sign Up
                 </Link>
               )}

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Car, Shield, Clock } from "lucide-react";
+import { Car, Shield, Clock } from "@phosphor-icons/react";
 
 const MarketplaceHero = () => {
   return (
@@ -15,7 +15,7 @@ const MarketplaceHero = () => {
             Find Your Perfect <span className="text-primary">Vehicle</span>
           </h1>
           <p className="text-subtitle-text text-lg md:text-xl">
-            Browse through our curated selection of premium vehicles from verified sellers
+            Browse through our curated selection of quality vehicles from verified sellers
           </p>
         </motion.div>
 
@@ -34,7 +34,7 @@ const MarketplaceHero = () => {
             >
               <div className="flex flex-col items-center text-center space-y-3">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <feature.icon className="w-6 h-6 text-primary" />
+                  <feature.icon size={24} weight="bold" className="text-primary" />
                 </div>
                 <h3 className="text-xl font-bold">{feature.title}</h3>
                 <p className="text-subtitle-text">{feature.description}</p>
