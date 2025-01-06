@@ -32,16 +32,28 @@ export function useSignupDealer() {
       if (authError) throw new Error(authError.message);
       if (!authData.user) throw new Error("Failed to create user account");
 
-      // Step 2: Wait for session to be established
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Step 3: Get current session to ensure we have valid auth
+      // Step 2: Get current session immediately after signup
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) {
-        throw new Error("Failed to establish session");
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw new Error("Failed to get session");
       }
 
-      // Step 4: Create dealer profile
+      if (!session) {
+        // If no session, try signing in explicitly
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password,
+        });
+
+        if (signInError || !signInData.session) {
+          console.error("Sign in error:", signInError);
+          throw new Error("Failed to establish session");
+        }
+      }
+
+      // Step 3: Create dealer profile
       await createDealerProfile({
         userId: authData.user.id,
         supervisorName: values.supervisorName,
@@ -51,7 +63,7 @@ export function useSignupDealer() {
         address: values.companyAddress,
       });
 
-      // Step 5: Send welcome email
+      // Step 4: Send welcome email
       const { error: emailError } = await supabase.functions.invoke('send-dealer-welcome', {
         body: {
           to: values.email,
