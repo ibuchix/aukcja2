@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, CarFront, DollarSign, User, Navigation } from "lucide-react";
+import { Menu, X, DollarSign, User, Navigation } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -24,7 +24,11 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-20">
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center gap-2">
-              <CarFront className="h-8 w-8 text-primary" />
+              <img 
+                src="/lovable-uploads/7dadc1d9-fd04-480c-a084-a678596a6e12.png" 
+                alt="Auto-Strada Logo" 
+                className="h-8 w-auto"
+              />
               <span className="text-2xl font-bold text-primary">Auto-Strada</span>
             </Link>
           </div>
