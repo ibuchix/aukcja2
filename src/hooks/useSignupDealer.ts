@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { createDealerProfile } from "@/services/dealerService";
+import { sendEmail } from "@/services/emailService";
 
 export function useSignupDealer() {
   const { toast } = useToast();
@@ -42,6 +43,24 @@ export function useSignupDealer() {
         taxId: values.taxId,
         businessRegistryNumber: values.businessRegistryNumber,
         address: values.companyAddress,
+      });
+
+      // Step 3: Send welcome email
+      await sendEmail({
+        to: values.email,
+        subject: "Welcome to Auto-Strada Dealer Portal",
+        html: `
+          <h1>Welcome to Auto-Strada!</h1>
+          <p>Dear ${values.supervisorName},</p>
+          <p>Thank you for registering as a dealer on Auto-Strada. Your account is being set up with the following details:</p>
+          <ul>
+            <li>Dealership Name: ${values.companyName}</li>
+            <li>Tax ID: ${values.taxId}</li>
+            <li>Business Registry Number: ${values.businessRegistryNumber}</li>
+          </ul>
+          <p>Please note that your account is pending verification. We will review your details and notify you once your account is verified.</p>
+          <p>Best regards,<br>The Auto-Strada Team</p>
+        `,
       });
 
       toast({
