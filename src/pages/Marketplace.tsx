@@ -35,6 +35,8 @@ interface CarListing {
   transmission: string | null;
 }
 
+type CarRow = Database['public']['Tables']['cars']['Row'];
+
 const Marketplace = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
 
@@ -50,25 +52,35 @@ const Marketplace = () => {
       if (error) throw error;
 
       // Transform the data to match our CarListing interface
-      const transformedData: CarListing[] = (data || []).map((car) => ({
-        id: car.id,
-        title: car.title,
-        price: car.price,
-        make: car.make,
-        model: car.model,
-        year: car.year,
-        mileage: car.mileage,
-        images: car.images,
-        description: car.description,
-        features: {
-          satNav: car.features?.satNav || false,
-          heatedSeats: car.features?.heatedSeats || false,
-          panoramicRoof: car.features?.panoramicRoof || false,
-          reverseCamera: car.features?.reverseCamera || false,
-          upgradedSound: car.features?.upgradedSound || false,
-        },
-        transmission: car.transmission,
-      }));
+      const transformedData: CarListing[] = (data || []).map((car: CarRow) => {
+        const carFeatures = car.features as CarFeatures || {
+          satNav: false,
+          heatedSeats: false,
+          panoramicRoof: false,
+          reverseCamera: false,
+          upgradedSound: false,
+        };
+
+        return {
+          id: car.id,
+          title: car.title,
+          price: car.price,
+          make: car.make,
+          model: car.model,
+          year: car.year,
+          mileage: car.mileage,
+          images: car.images,
+          description: car.description,
+          features: {
+            satNav: carFeatures.satNav || false,
+            heatedSeats: carFeatures.heatedSeats || false,
+            panoramicRoof: carFeatures.panoramicRoof || false,
+            reverseCamera: carFeatures.reverseCamera || false,
+            upgradedSound: carFeatures.upgradedSound || false,
+          },
+          transmission: car.transmission,
+        };
+      });
 
       return transformedData;
     },
