@@ -25,7 +25,7 @@ serve(async (req) => {
       throw new Error('SendGrid API key not configured');
     }
 
-    const { to, subject, html, from = 'Auto Market <noreply@auto-market.com>' }: EmailRequest = await req.json();
+    const { to, subject, html, from = 'Auto-Strada <noreply@auto-strada.com>' }: EmailRequest = await req.json();
     console.log(`Attempting to send email to: ${to}`);
 
     const response = await fetch('https://api.sendgrid.com/v3/mail/send', {

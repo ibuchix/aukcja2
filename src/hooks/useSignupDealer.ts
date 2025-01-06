@@ -53,22 +53,27 @@ export function useSignupDealer() {
       });
 
       // Step 4: Send welcome email
-      await sendEmail({
-        to: values.email,
-        subject: "Welcome to Auto-Strada Dealer Portal",
-        html: `
-          <h1>Welcome to Auto-Strada!</h1>
-          <p>Dear ${values.supervisorName},</p>
-          <p>Thank you for registering as a dealer on Auto-Strada. Your account is being set up with the following details:</p>
-          <ul>
-            <li>Dealership Name: ${values.companyName}</li>
-            <li>Tax ID: ${values.taxId}</li>
-            <li>Business Registry Number: ${values.businessRegistryNumber}</li>
-          </ul>
-          <p>Please note that your account is pending verification. We will review your details and notify you once your account is verified.</p>
-          <p>Best regards,<br>The Auto-Strada Team</p>
-        `,
-      });
+      try {
+        await sendEmail({
+          to: values.email,
+          subject: "Welcome to Auto-Strada Dealer Portal",
+          html: `
+            <h1>Welcome to Auto-Strada!</h1>
+            <p>Dear ${values.supervisorName},</p>
+            <p>Thank you for registering as a dealer on Auto-Strada. Your account is being set up with the following details:</p>
+            <ul>
+              <li>Dealership Name: ${values.companyName}</li>
+              <li>Tax ID: ${values.taxId}</li>
+              <li>Business Registry Number: ${values.businessRegistryNumber}</li>
+            </ul>
+            <p>Please note that your account is pending verification. We will review your details and notify you once your account is verified.</p>
+            <p>Best regards,<br>The Auto-Strada Team</p>
+          `,
+        });
+      } catch (emailError) {
+        console.error('Failed to send welcome email:', emailError);
+        // Don't throw the error, just log it and continue
+      }
 
       toast({
         title: "Registration Successful!",
