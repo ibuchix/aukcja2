@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Compass, User } from "@phosphor-icons/react";
+import { Compass, User, CreditCard } from "@phosphor-icons/react";
 
 interface NavbarDesktopMenuProps {
   session: any;
@@ -14,6 +14,7 @@ export const NavbarDesktopMenu = ({ session, handleLogout }: NavbarDesktopMenuPr
         Browse Vehicles
       </Link>
       <Link to="/dealer/dashboard" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
+        <CreditCard size={20} weight="bold" />
         My Bids
       </Link>
       {session ? (

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Compass, User } from "@phosphor-icons/react";
+import { Compass, User, CreditCard } from "@phosphor-icons/react";
 
 interface NavbarMobileMenuProps {
   isOpen: boolean;
@@ -18,6 +18,7 @@ export const NavbarMobileMenu = ({ isOpen, session, handleLogout }: NavbarMobile
           Browse Vehicles
         </Link>
         <Link to="/dealer/dashboard" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
+          <CreditCard size={20} weight="bold" />
           My Bids
         </Link>
         {session ? (
