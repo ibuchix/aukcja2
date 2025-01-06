@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import VehicleCard from "@/components/VehicleCard";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import { Badge } from "@/components/ui/badge";
 
 interface Car {
   id: string;
@@ -26,10 +28,16 @@ interface Bid {
   created_at: string;
 }
 
+interface DealerStatus {
+  is_verified: boolean;
+  verification_status: string;
+}
+
 const DealerDashboard = () => {
   const [cars, setCars] = useState<Car[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dealerStatus, setDealerStatus] = useState<DealerStatus | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -43,6 +51,31 @@ const DealerDashboard = () => {
     };
     checkAuth();
   }, [navigate]);
+
+  useEffect(() => {
+    const fetchDealerStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data, error } = await supabase
+          .from("dealers")
+          .select("is_verified, verification_status")
+          .eq("user_id", user.id)
+          .single();
+
+        if (error) {
+          toast({
+            title: "Error",
+            description: "Failed to fetch dealer status",
+            variant: "destructive",
+          });
+        } else {
+          setDealerStatus(data);
+        }
+      }
+    };
+
+    fetchDealerStatus();
+  }, [toast]);
 
   // Fetch initial cars and bids data
   useEffect(() => {
@@ -211,6 +244,19 @@ const DealerDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
+        {dealerStatus && (
+          <div className="mb-6">
+            <Alert>
+              <AlertDescription className="flex items-center gap-2">
+                Verification Status: 
+                <Badge variant={dealerStatus.is_verified ? "success" : "secondary"}>
+                  {dealerStatus.verification_status}
+                </Badge>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-4">Available Vehicles</h1>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
