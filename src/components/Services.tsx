@@ -1,4 +1,4 @@
-import { Shield, Tool, Clock, Car } from "lucide-react";
+import { Shield, Wrench, Clock, Car } from "lucide-react";
 
 const Services = () => {
   const services = [
@@ -8,7 +8,7 @@ const Services = () => {
       description: "Comprehensive warranty coverage for your peace of mind",
     },
     {
-      icon: Tool,
+      icon: Wrench,
       title: "Expert Service",
       description: "Factory-trained technicians and state-of-the-art facilities",
     },
