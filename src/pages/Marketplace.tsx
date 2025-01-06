@@ -1,51 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import VehicleCard from "@/components/VehicleCard";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Database } from "@/integrations/supabase/types";
+import { CarListing } from "@/types/cars";
+import { useState } from "react";
+import CarDetailsDialog from "@/components/CarDetailsDialog";
+import { formatCurrency } from "@/lib/utils";
 
-type CarFeatures = {
-  satNav: boolean;
-  heatedSeats: boolean;
-  panoramicRoof: boolean;
-  reverseCamera: boolean;
-  upgradedSound: boolean;
-};
-
-interface CarListing {
-  id: string;
-  title: string;
-  price: number;
-  make: string | null;
-  model: string | null;
-  year: number | null;
-  mileage: number;
-  images: string[] | null;
-  description: string | null;
-  features: CarFeatures;
-  transmission: string | null;
-  service_history_files: string[] | null;
-  required_photos: Record<string, string | null> | null;
-}
-
-type CarRow = Database['public']['Tables']['cars']['Row'];
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('pl-PL', {
-    style: 'currency',
-    currency: 'PLN'
-  }).format(amount);
-};
+type CarRow = Database["public"]["Tables"]["cars"]["Row"];
 
 const Marketplace = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
@@ -61,9 +24,8 @@ const Marketplace = () => {
 
       if (error) throw error;
 
-      // Transform the data to match our CarListing interface
       const transformedData: CarListing[] = (data || []).map((car: CarRow) => {
-        const carFeatures = car.features as CarFeatures || {
+        const carFeatures = car.features as CarListing["features"] || {
           satNav: false,
           heatedSeats: false,
           panoramicRoof: false,
@@ -127,7 +89,9 @@ const Marketplace = () => {
           >
             <VehicleCard
               image={car.images?.[0] || "/placeholder.svg"}
-              name={`${car.year || 'N/A'} ${car.make || 'Unknown'} ${car.model || 'Model'}`}
+              name={`${car.year || "N/A"} ${car.make || "Unknown"} ${
+                car.model || "Model"
+              }`}
               price={formatCurrency(car.price)}
               specs={{
                 speed: "N/A",
@@ -139,99 +103,7 @@ const Marketplace = () => {
         ))}
       </div>
 
-      <Dialog open={!!selectedCar} onOpenChange={() => setSelectedCar(null)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedCar?.year} {selectedCar?.make} {selectedCar?.model}
-            </DialogTitle>
-            <DialogDescription>
-              View detailed information about this vehicle
-            </DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="max-h-[80vh]">
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                {selectedCar?.images?.map((image, index) => (
-                  <img
-                    key={index}
-                    src={image}
-                    alt={`${selectedCar.make} ${selectedCar.model} - Image ${index + 1}`}
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                ))}
-                {selectedCar?.required_photos && Object.entries(selectedCar.required_photos).map(([key, value]) => 
-                  value && (
-                    <img
-                      key={key}
-                      src={value}
-                      alt={`${key.replace(/_/g, ' ').toUpperCase()}`}
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                  )
-                )}
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold">Price</h3>
-                  <p className="text-2xl text-primary">
-                    {formatCurrency(selectedCar?.price || 0)}
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">Details</h3>
-                  <ul className="list-disc list-inside space-y-2">
-                    <li>Mileage: {selectedCar?.mileage.toLocaleString()} miles</li>
-                    <li>Transmission: {selectedCar?.transmission || 'N/A'}</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">Features</h3>
-                  <ul className="list-disc list-inside space-y-2">
-                    {selectedCar?.features &&
-                      Object.entries(selectedCar.features).map(
-                        ([key, value]) =>
-                          value && (
-                            <li key={key}>
-                              {key
-                                .replace(/([A-Z])/g, " $1")
-                                .replace(/^./, (str) => str.toUpperCase())}
-                            </li>
-                          )
-                      )}
-                  </ul>
-                </div>
-                {selectedCar?.service_history_files && selectedCar.service_history_files.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-semibold">Service History Documents</h3>
-                    <ul className="list-disc list-inside space-y-2">
-                      {selectedCar.service_history_files.map((file, index) => (
-                        <li key={index}>
-                          <a 
-                            href={file} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                          >
-                            Document {index + 1}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                <div>
-                  <h3 className="text-lg font-semibold">Description</h3>
-                  <p className="text-gray-600">{selectedCar?.description || 'No description available'}</p>
-                </div>
-              </div>
-              <div className="pt-4">
-                <Button className="w-full">Place Bid</Button>
-              </div>
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
+      <CarDetailsDialog car={selectedCar} onClose={() => setSelectedCar(null)} />
     </div>
   );
 };
