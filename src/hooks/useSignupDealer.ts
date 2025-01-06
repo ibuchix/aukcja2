@@ -27,7 +27,6 @@ export function useSignupDealer() {
             role: 'dealer',
             name: values.supervisorName,
           },
-          emailRedirectTo: `${window.location.origin}/confirm-email`,
         },
       });
 
@@ -43,6 +42,20 @@ export function useSignupDealer() {
         businessRegistryNumber: values.businessRegistryNumber,
         address: values.companyAddress,
       });
+
+      // Step 3: Send welcome email using Resend
+      const { error: emailError } = await supabase.functions.invoke('send-dealer-welcome', {
+        body: {
+          to: values.email,
+          name: values.supervisorName,
+          confirmationUrl: `${window.location.origin}/confirm-email?token=${authData?.session?.access_token}`,
+        },
+      });
+
+      if (emailError) {
+        console.error('Error sending welcome email:', emailError);
+        // Don't throw here - we still want to show success even if email fails
+      }
 
       toast({
         title: "Registration Successful!",
