@@ -14,6 +14,8 @@ interface Car {
   model: string;
   year: number;
   status: string;
+  mileage: number;
+  transmission: string | null;
 }
 
 interface Bid {
