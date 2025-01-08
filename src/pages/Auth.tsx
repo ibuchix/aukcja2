@@ -16,12 +16,16 @@ const AuthPage = () => {
 
   const getErrorMessage = (error: AuthError) => {
     if (error instanceof AuthApiError) {
+      // First check the error code from the response body
+      const errorBody = error.message.includes('{') ? JSON.parse(error.message) : null;
+      if (errorBody?.code === "invalid_credentials") {
+        return "Invalid email or password. Please check your credentials and try again.";
+      }
+
+      // Then check status codes
       switch (error.status) {
         case 400:
-          if (error.message.includes("Invalid login credentials")) {
-            return "Invalid email or password. Please check your credentials and try again.";
-          }
-          break;
+          return "Invalid login attempt. Please check your credentials and try again.";
         case 422:
           return "Invalid email format. Please enter a valid email address.";
         case 429:
@@ -39,6 +43,7 @@ const AuthPage = () => {
       if (event === "USER_UPDATED") {
         const { error } = await supabase.auth.getSession();
         if (error) {
+          console.error("Auth error:", error);
           setErrorMessage(getErrorMessage(error));
         }
       }
