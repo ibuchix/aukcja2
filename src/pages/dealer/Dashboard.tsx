@@ -47,14 +47,31 @@ const DealerDashboard = () => {
 
   const fetchDealerProfile = async (userId: string) => {
     try {
+      console.log('Fetching dealer profile for user:', userId);
+      
       const { data: dealerData, error } = await supabase
         .from('dealers')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching dealer profile:', error);
+        throw error;
+      }
 
+      if (!dealerData) {
+        console.log('No dealer profile found');
+        toast({
+          variant: "destructive",
+          title: "Profile Not Found",
+          description: "Please complete your dealer registration first"
+        });
+        navigate('/auth');
+        return;
+      }
+
+      console.log('Dealer profile found:', dealerData);
       setDealerProfile(dealerData);
     } catch (error) {
       console.error('Error fetching dealer profile:', error);
@@ -74,6 +91,21 @@ const DealerDashboard = () => {
         <Navbar />
         <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
           Loading...
+        </div>
+      </div>
+    );
+  }
+
+  if (!dealerProfile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] space-y-4">
+          <h2 className="text-2xl font-bold">No Dealer Profile Found</h2>
+          <p className="text-subtitle-text">Please complete your registration first</p>
+          <Button onClick={() => navigate('/auth')}>
+            Go to Registration
+          </Button>
         </div>
       </div>
     );
