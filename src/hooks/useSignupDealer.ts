@@ -20,15 +20,25 @@ export function useSignupDealer() {
     });
 
     try {
-      // Step 1: Check if user already exists
-      const { data: existingUser, error: checkError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', values.email)
-        .single();
+      // Step 1: Check if dealer already exists for this email
+      const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
 
-      if (existingUser) {
-        throw new Error("An account with this email already exists.");
+      if (user) {
+        // Check if this user already has a dealer profile
+        const { data: existingDealer } = await supabase
+          .from('dealers')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (existingDealer) {
+          throw new Error("A dealer account already exists with this email. Please log in instead.");
+        } else {
+          throw new Error("An account exists but is not registered as a dealer. Please contact support.");
+        }
       }
 
       // Step 2: Create auth user
@@ -74,18 +84,7 @@ export function useSignupDealer() {
         throw new Error("Failed to verify user creation. Please try again.");
       }
 
-      // Step 5: Check if dealer profile already exists
-      const { data: existingDealer, error: dealerCheckError } = await supabase
-        .from('dealers')
-        .select('id')
-        .eq('user_id', authData.user.id)
-        .single();
-
-      if (existingDealer) {
-        throw new Error("A dealer profile already exists for this user.");
-      }
-
-      // Step 6: Create dealer profile
+      // Step 5: Create dealer profile
       try {
         await createDealerProfile({
           userId: authData.user.id,
@@ -102,7 +101,7 @@ export function useSignupDealer() {
         throw new Error("Failed to create dealer profile: " + dealerError.message);
       }
 
-      // Step 7: Send welcome email
+      // Step 6: Send welcome email
       try {
         await sendEmail({
           to: values.email,
