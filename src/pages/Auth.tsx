@@ -58,6 +58,7 @@ const AuthPage = () => {
             appearance={{ theme: ThemeSupa }}
             providers={[]}
             theme="light"
+            redirectTo={`${window.location.origin}/dealer/dashboard`}
           />
         ) : (
           <DealerSignupForm />
