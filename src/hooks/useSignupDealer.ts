@@ -19,7 +19,7 @@ export function useSignupDealer() {
     });
 
     try {
-      // Step 1: Create auth user
+      // Step 1: Create auth user with proper metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -32,8 +32,15 @@ export function useSignupDealer() {
         },
       });
 
-      if (authError) throw new Error(authError.message);
-      if (!authData.user) throw new Error("Failed to create user account");
+      if (authError) {
+        console.error("Auth error:", authError);
+        throw new Error(authError.message);
+      }
+      
+      if (!authData.user) {
+        console.error("No user data returned");
+        throw new Error("Failed to create user account");
+      }
 
       console.log("Auth user created:", authData.user.id);
 
@@ -52,7 +59,10 @@ export function useSignupDealer() {
       } catch (dealerError: any) {
         console.error("Failed to create dealer profile:", dealerError);
         // If dealer profile creation fails, we should delete the auth user
-        await supabase.auth.admin.deleteUser(authData.user.id);
+        const { error: deleteError } = await supabase.auth.admin.deleteUser(authData.user.id);
+        if (deleteError) {
+          console.error("Failed to cleanup auth user:", deleteError);
+        }
         throw new Error("Failed to create dealer profile: " + dealerError.message);
       }
 

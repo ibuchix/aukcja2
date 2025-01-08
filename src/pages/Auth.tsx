@@ -6,15 +6,29 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DealerSignupForm } from "@/components/auth/DealerSignupForm";
 import { House } from "@phosphor-icons/react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const AuthPage = () => {
   const navigate = useNavigate();
   const [isDealer, setIsDealer] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN") {
+      if (event === "SIGNED_IN" && session) {
         navigate("/dealer/dashboard");
+      }
+      if (event === "USER_UPDATED") {
+        const checkSession = async () => {
+          const { error } = await supabase.auth.getSession();
+          if (error) {
+            setErrorMessage(error.message);
+          }
+        };
+        checkSession();
+      }
+      if (event === "SIGNED_OUT") {
+        setErrorMessage("");
       }
     });
 
@@ -35,6 +49,12 @@ const AuthPage = () => {
             Back to Home
           </Button>
         </div>
+
+        {errorMessage && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
         
         <div className="mb-6">
           <Button
