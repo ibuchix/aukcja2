@@ -44,10 +44,22 @@ export function useSignupDealer() {
 
       console.log("Auth user created:", authData.user.id);
 
-      // Step 2: Wait a short moment to ensure auth user is fully created
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Step 2: Wait for the user record to be fully created
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Step 3: Create dealer profile
+      // Step 3: Verify the user exists in the database
+      const { data: userCheck, error: userCheckError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (userCheckError || !userCheck) {
+        console.error("User profile not found:", userCheckError);
+        throw new Error("Failed to verify user creation. Please try again.");
+      }
+
+      // Step 4: Create dealer profile
       try {
         await createDealerProfile({
           userId: authData.user.id,
@@ -64,7 +76,7 @@ export function useSignupDealer() {
         throw new Error("Failed to create dealer profile: " + dealerError.message);
       }
 
-      // Step 4: Send welcome email
+      // Step 5: Send welcome email
       try {
         await sendEmail({
           to: values.email,
