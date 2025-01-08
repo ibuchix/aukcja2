@@ -15,18 +15,19 @@ interface EmailRequest {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     if (!SENDGRID_API_KEY) {
-      console.error('SENDGRID_API_KEY is not set');
       throw new Error('SendGrid API key not configured');
     }
 
-    const { to, subject, html, from = 'Auto Market <noreply@auto-market.com>' }: EmailRequest = await req.json();
-    console.log(`Attempting to send email to: ${to}`);
+    const { to, subject, html, from = 'Auto-Strada <noreply@auto-strada.com>' }: EmailRequest = await req.json();
+    
+    console.log(`Sending email to: ${to}`);
 
     const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
       method: 'POST',
@@ -37,7 +38,7 @@ serve(async (req) => {
       body: JSON.stringify({
         personalizations: [{
           to: [{ email: to }],
-          subject: subject, // Move subject into personalizations for better template support
+          subject: subject,
         }],
         from: { email: from },
         content: [{
@@ -53,25 +54,24 @@ serve(async (req) => {
       throw new Error(`Failed to send email: ${response.statusText}`);
     }
 
-    console.log('Email sent successfully');
-    return new Response(JSON.stringify({ 
-      success: true,
-      message: 'Email sent successfully'
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({ success: true, message: 'Email sent successfully' }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    );
 
   } catch (error) {
     console.error('Error sending email:', error);
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: error.stack
+        details: error instanceof Error ? error.stack : undefined
       }),
       { 
-        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
       }
     );
   }

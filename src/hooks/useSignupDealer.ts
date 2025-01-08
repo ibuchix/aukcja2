@@ -10,7 +10,7 @@ export function useSignupDealer() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const signupDealer = async (values: DealerFormValues) => {
-    if (isSubmitting) return;
+    if (isSubmitting) return { success: false };
     
     setIsSubmitting(true);
     const loadingToast = toast({
@@ -28,21 +28,14 @@ export function useSignupDealer() {
             role: 'dealer',
             name: values.supervisorName,
           },
-          emailRedirectTo: `${window.location.origin}/confirm-email`,
+          emailRedirectTo: `${window.location.origin}/dealer/dashboard`,
         },
       });
 
       if (authError) throw new Error(authError.message);
       if (!authData.user) throw new Error("Failed to create user account");
 
-      // Step 2: Create dealer profile using the session from auth
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error("No session available after signup");
-      }
-
-      // Step 3: Create dealer profile
+      // Step 2: Create dealer profile
       await createDealerProfile({
         userId: authData.user.id,
         supervisorName: values.supervisorName,
@@ -52,27 +45,42 @@ export function useSignupDealer() {
         address: values.companyAddress,
       });
 
-      // Step 4: Send welcome email
+      // Step 3: Send welcome email
       try {
         await sendEmail({
           to: values.email,
           subject: "Welcome to Auto-Strada Dealer Portal",
           html: `
-            <h1>Welcome to Auto-Strada!</h1>
-            <p>Dear ${values.supervisorName},</p>
-            <p>Thank you for registering as a dealer on Auto-Strada. Your account is being set up with the following details:</p>
-            <ul>
-              <li>Dealership Name: ${values.companyName}</li>
-              <li>Tax ID: ${values.taxId}</li>
-              <li>Business Registry Number: ${values.businessRegistryNumber}</li>
-            </ul>
-            <p>Please note that your account is pending verification. We will review your details and notify you once your account is verified.</p>
-            <p>Best regards,<br>The Auto-Strada Team</p>
+            <div style="font-family: 'Oswald', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h1 style="color: #DC143C; font-size: 24px; margin-bottom: 20px;">Welcome to Auto-Strada!</h1>
+              
+              <p style="font-family: 'Kanit', sans-serif; color: #222020; margin-bottom: 15px;">Dear ${values.supervisorName},</p>
+              
+              <p style="font-family: 'Kanit', sans-serif; color: #222020; margin-bottom: 15px;">Thank you for registering as a dealer on Auto-Strada. Your account is being set up with the following details:</p>
+              
+              <div style="background-color: #ECF1F4; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                <ul style="font-family: 'Kanit', sans-serif; color: #222020; margin: 0; padding-left: 20px;">
+                  <li style="margin-bottom: 10px;">Dealership Name: ${values.companyName}</li>
+                  <li style="margin-bottom: 10px;">Tax ID: ${values.taxId}</li>
+                  <li style="margin-bottom: 10px;">Business Registry Number: ${values.businessRegistryNumber}</li>
+                </ul>
+              </div>
+              
+              <p style="font-family: 'Kanit', sans-serif; color: #6A6A77; margin-bottom: 15px;">Please note that your account is pending verification. We will review your details and notify you once your account is verified.</p>
+              
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ECF1F4;">
+                <p style="font-family: 'Kanit', sans-serif; color: #6A6A77; font-size: 14px;">
+                  Best regards,<br>
+                  The Auto-Strada Team
+                </p>
+              </div>
+            </div>
           `,
         });
       } catch (emailError) {
         console.error('Failed to send welcome email:', emailError);
         // Don't throw the error, just log it and continue
+        // The user is still registered, they just won't receive the welcome email
       }
 
       toast({
