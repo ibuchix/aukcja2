@@ -7,25 +7,40 @@ import { Button } from "@/components/ui/button";
 import { DealerSignupForm } from "@/components/auth/DealerSignupForm";
 import { House } from "@phosphor-icons/react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AuthError, AuthApiError } from "@supabase/supabase-js";
 
 const AuthPage = () => {
   const navigate = useNavigate();
   const [isDealer, setIsDealer] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const getErrorMessage = (error: AuthError) => {
+    if (error instanceof AuthApiError) {
+      switch (error.status) {
+        case 400:
+          if (error.message.includes("Invalid login credentials")) {
+            return "Invalid email or password. Please check your credentials and try again.";
+          }
+          break;
+        case 422:
+          return "Invalid email format. Please enter a valid email address.";
+        case 429:
+          return "Too many login attempts. Please try again later.";
+      }
+    }
+    return error.message;
+  };
+
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session) {
         navigate("/dealer/dashboard");
       }
       if (event === "USER_UPDATED") {
-        const checkSession = async () => {
-          const { error } = await supabase.auth.getSession();
-          if (error) {
-            setErrorMessage(error.message);
-          }
-        };
-        checkSession();
+        const { error } = await supabase.auth.getSession();
+        if (error) {
+          setErrorMessage(getErrorMessage(error));
+        }
       }
       if (event === "SIGNED_OUT") {
         setErrorMessage("");
