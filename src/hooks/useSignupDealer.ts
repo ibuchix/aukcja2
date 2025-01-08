@@ -19,7 +19,7 @@ export function useSignupDealer() {
     });
 
     try {
-      // Step 1: Create auth user with proper metadata
+      // Step 1: Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -58,11 +58,6 @@ export function useSignupDealer() {
         console.log("Dealer profile created successfully");
       } catch (dealerError: any) {
         console.error("Failed to create dealer profile:", dealerError);
-        // If dealer profile creation fails, we should delete the auth user
-        const { error: deleteError } = await supabase.auth.admin.deleteUser(authData.user.id);
-        if (deleteError) {
-          console.error("Failed to cleanup auth user:", deleteError);
-        }
         throw new Error("Failed to create dealer profile: " + dealerError.message);
       }
 
@@ -102,7 +97,6 @@ export function useSignupDealer() {
       } catch (emailError) {
         console.error('Failed to send welcome email:', emailError);
         // Don't throw the error, just log it and continue
-        // The user is still registered, they just won't receive the welcome email
       }
 
       toast({
