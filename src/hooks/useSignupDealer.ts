@@ -36,17 +36,16 @@ export function useSignupDealer() {
       // Step 2: Create dealer profile
       const { error: dealerError } = await supabase
         .from('dealers')
-        .insert([
-          {
-            user_id: authData.user.id,
-            supervisor_name: values.supervisorName,
-            dealership_name: values.companyName,
-            tax_id: values.taxId,
-            business_registry_number: values.businessRegistryNumber,
-            address: values.companyAddress,
-            verification_status: 'pending',
-          },
-        ]);
+        .insert({
+          user_id: authData.user.id,
+          supervisor_name: values.supervisorName,
+          dealership_name: values.companyName,
+          tax_id: values.taxId,
+          business_registry_number: values.businessRegistryNumber,
+          license_number: values.businessRegistryNumber, // Using business registry number as license number
+          address: values.companyAddress,
+          verification_status: 'pending',
+        });
 
       if (dealerError) {
         console.error("Dealer creation error:", dealerError);
