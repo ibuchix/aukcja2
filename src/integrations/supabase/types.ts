@@ -75,7 +75,7 @@ export type Database = {
             foreignKeyName: "buyer_watchlist_buyer_id_fkey"
             columns: ["buyer_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -162,13 +162,6 @@ export type Database = {
             columns: ["car_id"]
             isOneToOne: false
             referencedRelation: "cars"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "car_status_logs_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -361,7 +354,7 @@ export type Database = {
             foreignKeyName: "dealers_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -385,39 +378,6 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           id?: string
-          role?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      users: {
-        Row: {
-          created_at: string | null
-          email: string
-          id: string
-          name: string
-          password_hash: string
-          phone_number: string | null
-          role: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email: string
-          id?: string
-          name: string
-          password_hash: string
-          phone_number?: string | null
-          role: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string
-          id?: string
-          name?: string
-          password_hash?: string
-          phone_number?: string | null
           role?: string
           updated_at?: string | null
         }
