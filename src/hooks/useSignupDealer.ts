@@ -44,7 +44,10 @@ export function useSignupDealer() {
 
       console.log("Auth user created:", authData.user.id);
 
-      // Step 2: Create dealer profile
+      // Step 2: Wait a short moment to ensure auth user is fully created
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Step 3: Create dealer profile
       try {
         await createDealerProfile({
           userId: authData.user.id,
@@ -61,7 +64,7 @@ export function useSignupDealer() {
         throw new Error("Failed to create dealer profile: " + dealerError.message);
       }
 
-      // Step 3: Send welcome email
+      // Step 4: Send welcome email
       try {
         await sendEmail({
           to: values.email,
@@ -96,7 +99,6 @@ export function useSignupDealer() {
         console.log("Welcome email sent successfully");
       } catch (emailError) {
         console.error('Failed to send welcome email:', emailError);
-        // Don't throw the error, just log it and continue
       }
 
       toast({

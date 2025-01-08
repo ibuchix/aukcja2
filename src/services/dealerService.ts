@@ -16,7 +16,6 @@ export const createDealerProfile = async (data: DealerRegistrationData) => {
       user_id: data.userId,
       supervisor_name: data.supervisorName,
       dealership_name: data.dealershipName,
-      license_number: 'pending',
       tax_id: data.taxId,
       business_registry_number: data.businessRegistryNumber,
       address: data.address,
