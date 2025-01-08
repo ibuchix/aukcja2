@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { createDealerProfile } from "@/services/dealerService";
 import { sendEmail } from "@/services/emailService";
+import { AuthError } from "@supabase/supabase-js";
 
 export function useSignupDealer() {
   const { toast } = useToast();
@@ -19,7 +20,18 @@ export function useSignupDealer() {
     });
 
     try {
-      // Step 1: Create auth user
+      // Step 1: Check if user already exists
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', values.email)
+        .single();
+
+      if (existingUser) {
+        throw new Error("An account with this email already exists.");
+      }
+
+      // Step 2: Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -34,6 +46,9 @@ export function useSignupDealer() {
 
       if (authError) {
         console.error("Auth error:", authError);
+        if (authError instanceof AuthError && authError.message.includes("already registered")) {
+          throw new Error("This email is already registered. Please try logging in instead.");
+        }
         throw new Error(authError.message);
       }
       
@@ -44,10 +59,10 @@ export function useSignupDealer() {
 
       console.log("Auth user created:", authData.user.id);
 
-      // Step 2: Wait for the user record to be fully created
+      // Step 3: Wait for the user record to be fully created
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Step 3: Verify the user exists in the database
+      // Step 4: Verify the user exists in the database
       const { data: userCheck, error: userCheckError } = await supabase
         .from('profiles')
         .select('id')
@@ -59,7 +74,18 @@ export function useSignupDealer() {
         throw new Error("Failed to verify user creation. Please try again.");
       }
 
-      // Step 4: Create dealer profile
+      // Step 5: Check if dealer profile already exists
+      const { data: existingDealer, error: dealerCheckError } = await supabase
+        .from('dealers')
+        .select('id')
+        .eq('user_id', authData.user.id)
+        .single();
+
+      if (existingDealer) {
+        throw new Error("A dealer profile already exists for this user.");
+      }
+
+      // Step 6: Create dealer profile
       try {
         await createDealerProfile({
           userId: authData.user.id,
@@ -76,7 +102,7 @@ export function useSignupDealer() {
         throw new Error("Failed to create dealer profile: " + dealerError.message);
       }
 
-      // Step 5: Send welcome email
+      // Step 7: Send welcome email
       try {
         await sendEmail({
           to: values.email,
