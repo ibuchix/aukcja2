@@ -35,15 +35,26 @@ export function useSignupDealer() {
       if (authError) throw new Error(authError.message);
       if (!authData.user) throw new Error("Failed to create user account");
 
+      console.log("Auth user created:", authData.user.id);
+
       // Step 2: Create dealer profile
-      await createDealerProfile({
-        userId: authData.user.id,
-        supervisorName: values.supervisorName,
-        dealershipName: values.companyName,
-        taxId: values.taxId,
-        businessRegistryNumber: values.businessRegistryNumber,
-        address: values.companyAddress,
-      });
+      try {
+        await createDealerProfile({
+          userId: authData.user.id,
+          supervisorName: values.supervisorName,
+          dealershipName: values.companyName,
+          taxId: values.taxId,
+          businessRegistryNumber: values.businessRegistryNumber,
+          address: values.companyAddress,
+        });
+        
+        console.log("Dealer profile created successfully");
+      } catch (dealerError: any) {
+        console.error("Failed to create dealer profile:", dealerError);
+        // If dealer profile creation fails, we should delete the auth user
+        await supabase.auth.admin.deleteUser(authData.user.id);
+        throw new Error("Failed to create dealer profile: " + dealerError.message);
+      }
 
       // Step 3: Send welcome email
       try {
@@ -77,6 +88,7 @@ export function useSignupDealer() {
             </div>
           `,
         });
+        console.log("Welcome email sent successfully");
       } catch (emailError) {
         console.error('Failed to send welcome email:', emailError);
         // Don't throw the error, just log it and continue

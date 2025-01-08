@@ -28,6 +28,6 @@ export const createDealerProfile = async (data: DealerRegistrationData) => {
 
   if (error) {
     console.error("Dealer creation error:", error);
-    throw new Error("Failed to create dealer profile");
+    throw new Error(error.message);
   }
 };
