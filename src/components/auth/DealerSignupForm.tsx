@@ -37,6 +37,7 @@ export function DealerSignupForm() {
           description: "Please check your email to verify your account.",
         });
         form.reset();
+        // Fix: Use absolute path without domain
         navigate('/dealer/dashboard');
       }
     } catch (error: any) {
