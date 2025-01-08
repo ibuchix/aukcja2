@@ -7,11 +7,26 @@ import { dealerFormSchema, type DealerFormValues } from "@/schemas/dealerFormSch
 import { DealerFormFields } from "./DealerFormFields";
 import { useSignupDealer } from "@/hooks/useSignupDealer";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 export function DealerSignupForm() {
   const { signupDealer, isSubmitting } = useSignupDealer();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Check authentication state on mount and changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        navigate('/dealer/dashboard');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const form = useForm<DealerFormValues>({
     resolver: zodResolver(dealerFormSchema),
@@ -37,8 +52,7 @@ export function DealerSignupForm() {
           description: "Please check your email to verify your account.",
         });
         form.reset();
-        // Fix: Use absolute path without domain
-        navigate('/dealer/dashboard');
+        // We don't need to navigate here as the onAuthStateChange will handle it
       }
     } catch (error: any) {
       toast({
