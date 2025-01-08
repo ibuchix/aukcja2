@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import Navbar from "@/components/Navbar";
 import { 
   Car, 
   DollarSign, 
@@ -31,29 +32,47 @@ export default function DealerProfile() {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchDealerProfile();
-  }, []);
-
-  const fetchDealerProfile = async () => {
-    try {
+    const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
       if (!session) {
         navigate('/auth');
         return;
       }
+      fetchDealerProfile(session.user.id);
+    };
+    checkAuth();
+  }, [navigate]);
 
+  const fetchDealerProfile = async (userId: string) => {
+    try {
+      console.log('Fetching dealer profile for user:', userId);
+      
       const { data: dealerData, error } = await supabase
         .from('dealers')
         .select('*')
-        .eq('user_id', session.user.id)
-        .single();
+        .eq('user_id', userId)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching dealer profile:', error);
+        throw error;
+      }
 
+      if (!dealerData) {
+        console.log('No dealer profile found');
+        toast({
+          variant: "destructive",
+          title: "Profile Not Found",
+          description: "Please complete your dealer registration first"
+        });
+        navigate('/auth');
+        return;
+      }
+
+      console.log('Dealer profile found:', dealerData);
       setDealerProfile(dealerData);
     } catch (error) {
-      console.error('Error fetching dealer profile:', error);
+      console.error('Error in fetchDealerProfile:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -65,167 +84,198 @@ export default function DealerProfile() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
+          Loading...
+        </div>
+      </div>
+    );
+  }
+
+  if (!dealerProfile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] space-y-4">
+          <h2 className="text-2xl font-bold">No Dealer Profile Found</h2>
+          <p className="text-subtitle-text">Please complete your registration first</p>
+          <Button onClick={() => navigate('/auth')}>
+            Go to Registration
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Dealer Info Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{dealerProfile?.dealership_name}</h1>
-        <div className="flex items-center space-x-2 text-subtitle-text">
-          <User className="w-4 h-4" />
-          <span>{dealerProfile?.supervisor_name}</span>
-          {dealerProfile?.is_verified && (
-            <span className="bg-success/20 text-success px-2 py-1 rounded-full text-sm">
-              Verified Dealer
-            </span>
-          )}
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="container mx-auto px-4 py-8">
+        {/* Dealer Info Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">{dealerProfile.dealership_name}</h1>
+          <div className="flex items-center space-x-2 text-subtitle-text">
+            <User className="w-4 h-4" />
+            <span>{dealerProfile.supervisor_name}</span>
+            {dealerProfile.is_verified && (
+              <span className="bg-success/20 text-success px-2 py-1 rounded-full text-sm">
+                Verified Dealer
+              </span>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Button 
-          className="flex items-center justify-center space-x-2 h-16"
-          onClick={() => navigate('/marketplace')}
-        >
-          <Car className="w-5 h-5" />
-          <span>Browse Vehicles</span>
-        </Button>
-        <Button 
-          className="flex items-center justify-center space-x-2 h-16"
-          onClick={() => navigate('/dealer/bids')}
-          variant="secondary"
-        >
-          <DollarSign className="w-5 h-5" />
-          <span>View My Bids</span>
-        </Button>
-        <Button 
-          className="flex items-center justify-center space-x-2 h-16"
-          onClick={() => navigate('/dealer/documents')}
-          variant="outline"
-        >
-          <FileText className="w-5 h-5" />
-          <span>Manage Documents</span>
-        </Button>
-      </div>
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Button 
+            className="flex items-center justify-center space-x-2 h-16"
+            onClick={() => navigate('/marketplace')}
+          >
+            <Car className="w-5 h-5" />
+            <span>Browse Vehicles</span>
+          </Button>
+          <Button 
+            className="flex items-center justify-center space-x-2 h-16"
+            onClick={() => navigate('/dealer/bids')}
+            variant="secondary"
+          >
+            <DollarSign className="w-5 h-5" />
+            <span>View My Bids</span>
+          </Button>
+          <Button 
+            className="flex items-center justify-center space-x-2 h-16"
+            onClick={() => navigate('/dealer/documents')}
+            variant="outline"
+          >
+            <FileText className="w-5 h-5" />
+            <span>Manage Documents</span>
+          </Button>
+        </div>
 
-      {/* Dashboard Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Active Bids */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <DollarSign className="w-5 h-5 text-primary" />
-              <span>Active Bids</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              variant="link" 
-              className="p-0"
-              onClick={() => navigate('/dealer/active-bids')}
-            >
-              View Active Bids →
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Management Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Active Bids */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <DollarSign className="w-5 h-5 text-primary" />
+                <span>Active Bids</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-subtitle-text mb-4">Track and manage your current vehicle bids</p>
+              <Button 
+                variant="link" 
+                className="p-0"
+                onClick={() => navigate('/dealer/active-bids')}
+              >
+                View Active Bids →
+              </Button>
+            </CardContent>
+          </Card>
 
-        {/* Transaction History */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <History className="w-5 h-5 text-primary" />
-              <span>Transaction History</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              variant="link" 
-              className="p-0"
-              onClick={() => navigate('/dealer/transactions')}
-            >
-              View History →
-            </Button>
-          </CardContent>
-        </Card>
+          {/* Transaction History */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <History className="w-5 h-5 text-primary" />
+                <span>Transaction History</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-subtitle-text mb-4">View your past transactions and purchases</p>
+              <Button 
+                variant="link" 
+                className="p-0"
+                onClick={() => navigate('/dealer/transactions')}
+              >
+                View History →
+              </Button>
+            </CardContent>
+          </Card>
 
-        {/* Notifications */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Bell className="w-5 h-5 text-primary" />
-              <span>Notifications</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              variant="link" 
-              className="p-0"
-              onClick={() => navigate('/dealer/notifications')}
-            >
-              View Notifications →
-            </Button>
-          </CardContent>
-        </Card>
+          {/* Notifications */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Bell className="w-5 h-5 text-primary" />
+                <span>Notifications</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-subtitle-text mb-4">Stay updated with important alerts</p>
+              <Button 
+                variant="link" 
+                className="p-0"
+                onClick={() => navigate('/dealer/notifications')}
+              >
+                View Notifications →
+              </Button>
+            </CardContent>
+          </Card>
 
-        {/* Business Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Building2 className="w-5 h-5 text-primary" />
-              <span>Business Information</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              variant="link" 
-              className="p-0"
-              onClick={() => navigate('/dealer/business-info')}
-            >
-              View Details →
-            </Button>
-          </CardContent>
-        </Card>
+          {/* Business Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Building2 className="w-5 h-5 text-primary" />
+                <span>Business Information</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-subtitle-text mb-4">Manage your dealership details</p>
+              <Button 
+                variant="link" 
+                className="p-0"
+                onClick={() => navigate('/dealer/business-info')}
+              >
+                View Details →
+              </Button>
+            </CardContent>
+          </Card>
 
-        {/* Messages */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <MessageSquare className="w-5 h-5 text-primary" />
-              <span>Messages</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              variant="link" 
-              className="p-0"
-              onClick={() => navigate('/dealer/messages')}
-            >
-              View Messages →
-            </Button>
-          </CardContent>
-        </Card>
+          {/* Messages */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <MessageSquare className="w-5 h-5 text-primary" />
+                <span>Messages</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-subtitle-text mb-4">Communicate with sellers and buyers</p>
+              <Button 
+                variant="link" 
+                className="p-0"
+                onClick={() => navigate('/dealer/messages')}
+              >
+                View Messages →
+              </Button>
+            </CardContent>
+          </Card>
 
-        {/* Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Settings className="w-5 h-5 text-primary" />
-              <span>Settings</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              variant="link" 
-              className="p-0"
-              onClick={() => navigate('/dealer/settings')}
-            >
-              Manage Settings →
-            </Button>
-          </CardContent>
-        </Card>
+          {/* Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Settings className="w-5 h-5 text-primary" />
+                <span>Settings</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-subtitle-text mb-4">Configure your account preferences</p>
+              <Button 
+                variant="link" 
+                className="p-0"
+                onClick={() => navigate('/dealer/settings')}
+              >
+                Manage Settings →
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
