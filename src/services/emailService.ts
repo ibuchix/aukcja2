@@ -8,6 +8,8 @@ interface SendEmailParams {
 }
 
 export const sendEmail = async (params: SendEmailParams) => {
+  console.log('Sending email with params:', params);
+  
   const { data, error } = await supabase.functions.invoke('send-email', {
     body: params,
   });
@@ -17,5 +19,6 @@ export const sendEmail = async (params: SendEmailParams) => {
     throw error;
   }
 
+  console.log('Email sent successfully:', data);
   return data;
 };
