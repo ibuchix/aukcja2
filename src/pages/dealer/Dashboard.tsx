@@ -16,6 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface DealerProfile {
   dealership_name: string;
@@ -70,9 +72,17 @@ const DealerDashboard = () => {
         return;
       }
 
-      console.log('Dealer profile loaded:', dealerData);
       setDealerProfile(dealerData);
       setLoading(false);
+
+      // Show verification status message
+      if (dealerData.verification_status === 'pending') {
+        toast({
+          title: "Account Pending Verification",
+          description: "Your account is currently under review. You'll be notified once verified.",
+          variant: "default",
+        });
+      }
     };
 
     checkAuthAndProfile();
@@ -104,12 +114,30 @@ const DealerDashboard = () => {
     );
   }
 
+  // Show verification status banner
+  const VerificationBanner = () => {
+    if (dealerProfile.verification_status === 'pending') {
+      return (
+        <Alert variant="default" className="mb-4 bg-[#EFEFFD] border-[#4B4DED]">
+          <AlertCircle className="h-4 w-4 text-[#4B4DED]" />
+          <AlertTitle className="text-[#4B4DED]">Account Pending Verification</AlertTitle>
+          <AlertDescription>
+            Your account is currently under review. You'll be notified once verified.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      {/* Dealer Info Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        <VerificationBanner />
+        
+        {/* Dealer Info Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">{dealerProfile?.dealership_name}</h1>
           <div className="flex items-center space-x-2 text-subtitle-text">
@@ -123,6 +151,7 @@ const DealerDashboard = () => {
           </div>
         </div>
 
+        {/* Rest of the dashboard content */}
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Button 

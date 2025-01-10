@@ -21,7 +21,7 @@ export function DealerSignupForm() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        // Check if dealer profile exists before navigation
+        // Check if dealer profile exists and verification status
         const { data: dealerProfile, error: dealerError } = await supabase
           .from('dealers')
           .select('*')
@@ -42,6 +42,7 @@ export function DealerSignupForm() {
           return;
         }
 
+        // Redirect to dashboard if profile exists
         if (session.user?.user_metadata?.role === 'dealer' && dealerProfile) {
           navigate('/dealer/dashboard');
         }
@@ -79,7 +80,7 @@ export function DealerSignupForm() {
       if (result.success) {
         toast({
           title: "Registration Successful",
-          description: "Please check your email to verify your account.",
+          description: "Your account is pending verification. You'll be notified once approved.",
           variant: "default",
         });
         form.reset();
