@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { 
   Car, 
@@ -10,14 +11,11 @@ import {
   History,
   Bell,
   MessageSquare,
-  ShoppingCart,
-  Users 
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface DealerProfile {
   dealership_name: string;
@@ -34,56 +32,51 @@ const DealerDashboard = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuthAndProfile = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      
       if (!session) {
         navigate('/auth');
         return;
       }
-      fetchDealerProfile(session.user.id);
-    };
-    checkAuth();
-  }, [navigate]);
 
-  const fetchDealerProfile = async (userId: string) => {
-    try {
-      console.log('Fetching dealer profile for user:', userId);
-      
-      const { data: dealerData, error } = await supabase
-        .from('dealers')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching dealer profile:', error);
-        throw error;
-      }
-
-      if (!dealerData) {
-        console.log('No dealer profile found');
+      // Verify user has dealer role
+      if (session.user.user_metadata?.role !== 'dealer') {
         toast({
+          title: "Access Denied",
+          description: "This dashboard is only accessible to dealers",
           variant: "destructive",
-          title: "Profile Not Found",
-          description: "Please complete your dealer registration first"
         });
         navigate('/auth');
         return;
       }
 
-      console.log('Dealer profile found:', dealerData);
+      // Fetch dealer profile
+      const { data: dealerData, error } = await supabase
+        .from('dealers')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error || !dealerData) {
+        console.error('Error fetching dealer profile:', error);
+        toast({
+          title: "Profile Error",
+          description: "Unable to load dealer profile. Please try logging in again.",
+          variant: "destructive",
+        });
+        await supabase.auth.signOut();
+        navigate('/auth');
+        return;
+      }
+
+      console.log('Dealer profile loaded:', dealerData);
       setDealerProfile(dealerData);
-    } catch (error) {
-      console.error('Error fetching dealer profile:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load dealer profile"
-      });
-    } finally {
       setLoading(false);
-    }
-  };
+    };
+
+    checkAuthAndProfile();
+  }, [navigate, toast]);
 
   if (loading) {
     return (

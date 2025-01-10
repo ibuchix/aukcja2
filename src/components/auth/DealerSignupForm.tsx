@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 export function DealerSignupForm() {
   const { signupDealer, isSubmitting } = useSignupDealer();
@@ -19,10 +19,24 @@ export function DealerSignupForm() {
   const [authError, setAuthError] = useState<string>("");
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session);
       if (event === 'SIGNED_IN' && session) {
-        if (session.user?.user_metadata?.role === 'dealer') {
+        // Check if dealer profile exists before navigation
+        const { data: dealerProfile, error: dealerError } = await supabase
+          .from('dealers')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (dealerError || !dealerProfile) {
+          console.error("Dealer profile not found:", dealerError);
+          await supabase.auth.signOut();
+          setAuthError("Dealer profile creation failed. Please try again.");
+          return;
+        }
+
+        if (session.user?.user_metadata?.role === 'dealer' && dealerProfile) {
           navigate('/dealer/dashboard');
         }
       }
