@@ -27,17 +27,16 @@ export function useSignupDealer() {
     try {
       console.log("Starting dealer registration process");
       
-      // First check if dealer exists with this email
-      const { data: existingDealer } = await supabase
-        .from('dealers')
-        .select('id')
-        .eq('user_id', values.email)
-        .maybeSingle();
+      // First check if user exists with this email
+      const { data: existingUser } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
 
-      if (existingDealer) {
+      if (existingUser.user) {
         return {
           success: false,
-          error: "Dealer already registered",
+          error: "User already registered",
           errorType: 'auth'
         };
       }
@@ -81,6 +80,17 @@ export function useSignupDealer() {
       
     } catch (error) {
       console.error("Registration error:", error);
+      // Check for specific error types
+      if (error instanceof Error) {
+        if (error.message.includes("User already registered")) {
+          return {
+            success: false,
+            error: "This email is already registered. Please try logging in instead.",
+            errorType: 'auth'
+          };
+        }
+      }
+      
       // Attempt to clean up on unexpected errors
       await supabase.auth.signOut();
       

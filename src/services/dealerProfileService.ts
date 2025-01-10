@@ -9,30 +9,6 @@ interface ProfileResult {
 
 export async function createDealerProfile(userId: string, values: DealerFormValues): Promise<ProfileResult> {
   try {
-    // First check if profile already exists
-    const { data: existingProfile, error: fetchError } = await supabase
-      .from('dealers')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (fetchError) {
-      console.error("Error checking existing profile:", fetchError);
-      return {
-        success: false,
-        error: "Failed to verify dealer profile",
-        errorType: 'database'
-      };
-    }
-
-    if (existingProfile) {
-      return {
-        success: false,
-        error: "A dealer profile already exists for this account",
-        errorType: 'validation'
-      };
-    }
-
     // Create the dealer profile with properly formatted data
     const { error: dealerError } = await supabase
       .from('dealers')
