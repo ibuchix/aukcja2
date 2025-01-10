@@ -27,25 +27,6 @@ export function useSignupDealer() {
     try {
       console.log("Starting dealer registration process");
       
-      // Check if user exists using admin data query
-      const { data: existingUser, error: userCheckError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', values.email)
-        .maybeSingle();
-
-      if (userCheckError) {
-        console.error("Error checking user existence:", userCheckError);
-      }
-
-      if (existingUser) {
-        return {
-          success: false,
-          error: "This email is already registered. Please try logging in instead.",
-          errorType: 'auth'
-        };
-      }
-
       // Step 1: Create auth user with dealer role
       const authResult = await signUpDealerWithEmail(
         values.email,
