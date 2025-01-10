@@ -46,8 +46,7 @@ serve(async (req) => {
           email: 'noreply@auto-strada.com',
           name: 'Auto-Strada'
         },
-        // Replace 'd-your-template-id' with your actual template ID from SendGrid
-        template_id: 'd-your-template-id', // <-- Replace this with your template ID
+        template_id: 'd-9d3253561f2a4fc7984013b5b1ee45ae',
       }),
     });
 
