@@ -85,6 +85,17 @@ export function DealerSignupForm() {
         });
         form.reset();
       } else {
+        // Handle specific error cases
+        if (result.error?.includes("User already registered")) {
+          setAuthError("This email is already registered. Please try logging in instead.");
+          toast({
+            title: "Registration Failed",
+            description: "This email is already registered. Please try logging in instead.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         setAuthError(result.error || "Registration failed");
         
         const toastMessage = {

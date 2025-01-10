@@ -27,6 +27,21 @@ export function useSignupDealer() {
     try {
       console.log("Starting dealer registration process");
       
+      // First check if user exists
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', values.email)
+        .maybeSingle();
+
+      if (existingUser) {
+        return {
+          success: false,
+          error: "User already registered",
+          errorType: 'auth'
+        };
+      }
+
       // Step 1: Create auth user with dealer role
       const authResult = await signUpDealerWithEmail(
         values.email,
@@ -72,7 +87,7 @@ export function useSignupDealer() {
       
       return {
         success: false,
-        error: "An unexpected error occurred",
+        error: error instanceof Error ? error.message : "An unexpected error occurred",
         errorType: 'validation'
       };
     } finally {
