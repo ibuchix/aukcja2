@@ -17,6 +17,16 @@ export const signUpDealerWithEmail = async (
   metadata: UserMetadata
 ): Promise<SignUpResult> => {
   try {
+    // First check if user exists
+    const { data: { user: existingUser } } = await supabase.auth.getUser();
+    
+    if (existingUser) {
+      return {
+        success: false,
+        error: "User already registered",
+      };
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -26,17 +36,15 @@ export const signUpDealerWithEmail = async (
       },
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Signup error:", error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
 
     if (data.user) {
-      // Send welcome email
-      await supabase.functions.invoke('send-dealer-welcome', {
-        body: {
-          to: email,
-          dealerName: metadata.name,
-        },
-      });
-
       return {
         success: true,
         userId: data.user.id,

@@ -37,10 +37,27 @@ export function useSignupDealer() {
         }
       );
 
-      if (!authResult.success || !authResult.userId) {
+      if (!authResult.success) {
+        // Handle specific error for existing user
+        if (authResult.error?.includes("User already registered")) {
+          return {
+            success: false,
+            error: "This email is already registered. Please try logging in instead.",
+            errorType: 'auth'
+          };
+        }
+
         return {
           success: false,
           error: authResult.error || "Authentication failed",
+          errorType: 'auth'
+        };
+      }
+
+      if (!authResult.userId) {
+        return {
+          success: false,
+          error: "Failed to create user account",
           errorType: 'auth'
         };
       }
@@ -66,16 +83,6 @@ export function useSignupDealer() {
       
     } catch (error) {
       console.error("Registration error:", error);
-      
-      if (error instanceof Error) {
-        if (error.message.includes("User already registered")) {
-          return {
-            success: false,
-            error: "This email is already registered. Please try logging in instead.",
-            errorType: 'auth'
-          };
-        }
-      }
       
       // Attempt to clean up on unexpected errors
       await supabase.auth.signOut();
