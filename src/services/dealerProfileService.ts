@@ -33,6 +33,7 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
       };
     }
 
+    // Create the dealer profile with properly formatted data
     const { error: dealerError } = await supabase
       .from('dealers')
       .insert({

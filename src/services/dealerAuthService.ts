@@ -14,11 +14,15 @@ export async function signUpDealerWithEmail(
   metadata: { role: string; name: string; }
 ): Promise<AuthResult> {
   try {
+    // Start a Supabase transaction
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: email.trim(),
       password: password,
       options: {
-        data: metadata,
+        data: {
+          ...metadata,
+          role: 'dealer', // Ensure role is always set to dealer
+        },
       },
     });
 
