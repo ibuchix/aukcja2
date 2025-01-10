@@ -11,10 +11,43 @@ interface SignupResult {
 export function useSignupDealer() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const cleanupAuthUser = async (userId: string) => {
+    try {
+      // Using admin delete user endpoint via edge function would be better,
+      // but for now we'll sign out the user
+      await supabase.auth.signOut();
+      console.log("Cleaned up auth state after failed dealer creation");
+    } catch (error) {
+      console.error("Error cleaning up auth state:", error);
+    }
+  };
+
+  const createDealerProfile = async (userId: string, values: DealerFormValues) => {
+    const { error: dealerError } = await supabase
+      .from('dealers')
+      .insert({
+        user_id: userId,
+        supervisor_name: values.supervisorName,
+        dealership_name: values.companyName,
+        tax_id: values.taxId,
+        business_registry_number: values.businessRegistryNumber,
+        license_number: values.businessRegistryNumber,
+        address: values.companyAddress,
+        verification_status: 'pending',
+      });
+
+    if (dealerError) {
+      throw dealerError;
+    }
+  };
+
   const signupDealer = async (values: DealerFormValues): Promise<SignupResult> => {
-    if (isSubmitting) return { success: false, error: "Registration in progress" };
+    if (isSubmitting) {
+      return { success: false, error: "Registration in progress" };
+    }
     
     setIsSubmitting(true);
+    let authUserId: string | undefined;
     
     try {
       console.log("Starting dealer registration process");
@@ -40,31 +73,22 @@ export function useSignupDealer() {
         throw new Error("Failed to create user account");
       }
 
-      console.log("Auth user created successfully:", authData.user.id);
+      authUserId = authData.user.id;
+      console.log("Auth user created successfully:", authUserId);
 
       // Step 2: Create dealer profile
-      const { error: dealerError } = await supabase
-        .from('dealers')
-        .insert({
-          user_id: authData.user.id,
-          supervisor_name: values.supervisorName,
-          dealership_name: values.companyName,
-          tax_id: values.taxId,
-          business_registry_number: values.businessRegistryNumber,
-          license_number: values.businessRegistryNumber, // Using business registry number as license number
-          address: values.companyAddress,
-          verification_status: 'pending',
-        });
-
-      if (dealerError) {
+      try {
+        await createDealerProfile(authUserId, values);
+        console.log("Dealer profile created successfully");
+        return { success: true };
+      } catch (dealerError) {
         console.error("Dealer creation error:", dealerError);
-        // If dealer profile creation fails, we should handle the cleanup
-        await supabase.auth.signOut(); // Sign out the user
+        // If dealer profile creation fails, clean up the auth user
+        if (authUserId) {
+          await cleanupAuthUser(authUserId);
+        }
         throw dealerError;
       }
-
-      console.log("Dealer profile created successfully");
-      return { success: true };
     } catch (error) {
       console.error("Registration error:", error);
       let errorMessage = "Registration failed";
