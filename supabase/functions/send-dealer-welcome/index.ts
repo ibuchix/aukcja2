@@ -46,8 +46,8 @@ serve(async (req) => {
           email: 'noreply@auto-strada.com',
           name: 'Auto-Strada'
         },
-        template_id: 'd-your-template-id', // You'll need to create this template in SendGrid
-        subject: 'Welcome to Auto-Strada - Please Verify Your Email',
+        // Replace 'd-your-template-id' with your actual template ID from SendGrid
+        template_id: 'd-your-template-id', // <-- Replace this with your template ID
       }),
     });
 
