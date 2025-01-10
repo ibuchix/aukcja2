@@ -14,9 +14,9 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
       .from('dealers')
       .select('*')
       .eq('user_id', userId)
-      .maybeSingle(); // Using maybeSingle instead of single
+      .maybeSingle();
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
+    if (fetchError) {
       console.error("Error checking existing profile:", fetchError);
       return {
         success: false,

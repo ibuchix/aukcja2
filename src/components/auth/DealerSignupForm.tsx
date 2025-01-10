@@ -26,9 +26,9 @@ export function DealerSignupForm() {
           .from('dealers')
           .select('*')
           .eq('user_id', session.user.id)
-          .maybeSingle(); // Changed from single() to maybeSingle()
+          .maybeSingle();
 
-        if (dealerError) {
+        if (dealerError && dealerError.code !== 'PGRST116') {
           console.error("Error fetching dealer profile:", dealerError);
           await supabase.auth.signOut();
           setAuthError("Failed to verify dealer profile. Please try again.");
