@@ -1,11 +1,20 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { DealerSignupForm } from "@/components/auth/DealerSignupForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+interface Dealer {
+  id: string;
+  dealership_name: string;
+  supervisor_name: string;
+  verification_status: string;
+}
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [dealers, setDealers] = useState<Dealer[]>([]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -14,6 +23,20 @@ const Auth = () => {
       }
     });
 
+    // Fetch dealers
+    const fetchDealers = async () => {
+      const { data, error } = await supabase
+        .from('dealers')
+        .select('*');
+      
+      if (error) {
+        console.error('Error fetching dealers:', error);
+      } else {
+        setDealers(data || []);
+      }
+    };
+
+    fetchDealers();
     return () => subscription.unsubscribe();
   }, [navigate]);
 
@@ -34,7 +57,7 @@ const Auth = () => {
         </div>
       </div>
       <div className="p-4 lg:p-8 h-full flex items-center">
-        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+        <div className="mx-auto flex w-full flex-col justify-center space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="font-oswald text-[#DC143C]">Dealer Registration</CardTitle>
@@ -44,6 +67,41 @@ const Auth = () => {
             </CardHeader>
             <CardContent>
               <DealerSignupForm />
+            </CardContent>
+          </Card>
+
+          {/* Display registered dealers */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-oswald">Registered Dealers</CardTitle>
+              <CardDescription className="font-kanit">
+                Currently registered dealers in the system
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Dealership Name</TableHead>
+                    <TableHead>Supervisor</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {dealers.map((dealer) => (
+                    <TableRow key={dealer.id}>
+                      <TableCell>{dealer.dealership_name}</TableCell>
+                      <TableCell>{dealer.supervisor_name}</TableCell>
+                      <TableCell>{dealer.verification_status}</TableCell>
+                    </TableRow>
+                  ))}
+                  {dealers.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center">No dealers registered yet</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </div>
