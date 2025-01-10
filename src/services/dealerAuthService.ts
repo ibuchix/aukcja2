@@ -1,58 +1,57 @@
 import { supabase } from "@/integrations/supabase/client";
-import { DealerFormValues } from "@/schemas/dealerFormSchema";
 
-interface AuthResult {
+interface SignUpResult {
   success: boolean;
   error?: string;
-  errorType?: 'auth' | 'database' | 'validation';
   userId?: string;
 }
 
-export async function signUpDealerWithEmail(
-  email: string, 
-  password: string, 
-  metadata: { role: string; name: string; }
-): Promise<AuthResult> {
+interface UserMetadata {
+  role: string;
+  name: string;
+}
+
+export const signUpDealerWithEmail = async (
+  email: string,
+  password: string,
+  metadata: UserMetadata
+): Promise<SignUpResult> => {
   try {
-    // Start a Supabase transaction
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: email.trim(),
-      password: password,
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
       options: {
-        data: {
-          ...metadata,
-          role: 'dealer', // Ensure role is always set to dealer
-        },
+        data: metadata,
+        emailRedirectTo: `${window.location.origin}/dealer/dashboard`,
       },
     });
 
-    if (authError) {
-      console.error("Auth error:", authError);
+    if (error) throw error;
+
+    if (data.user) {
+      // Send welcome email
+      await supabase.functions.invoke('send-dealer-welcome', {
+        body: {
+          to: email,
+          dealerName: metadata.name,
+        },
+      });
+
       return {
-        success: false,
-        error: authError.message,
-        errorType: 'auth'
+        success: true,
+        userId: data.user.id,
       };
     }
 
-    if (!authData.user) {
-      return {
-        success: false,
-        error: "Failed to create user account",
-        errorType: 'auth'
-      };
-    }
-
-    return {
-      success: true,
-      userId: authData.user.id
-    };
-  } catch (error) {
-    console.error("Auth service error:", error);
     return {
       success: false,
-      error: "Authentication service error",
-      errorType: 'auth'
+      error: "User creation failed",
+    };
+  } catch (error) {
+    console.error("Signup error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "An unexpected error occurred",
     };
   }
-}
+};
