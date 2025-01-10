@@ -9,8 +9,8 @@ import { useSignupDealer } from "@/hooks/useSignupDealer";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AuthError } from "@supabase/supabase-js";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 export function DealerSignupForm() {
   const { signupDealer, isSubmitting } = useSignupDealer();
@@ -60,27 +60,36 @@ export function DealerSignupForm() {
         toast({
           title: "Registration Successful",
           description: "Please check your email to verify your account.",
+          variant: "default",
+          icon: <CheckCircle2 className="h-4 w-4 text-success" />
         });
         form.reset();
       } else {
         setAuthError(result.error || "Registration failed");
+        
+        const toastMessage = {
+          auth: "Authentication Error",
+          database: "Profile Creation Error",
+          validation: "Validation Error"
+        }[result.errorType || 'validation'];
+
         toast({
-          title: "Registration Failed",
+          title: toastMessage,
           description: result.error || "An unexpected error occurred",
           variant: "destructive",
+          icon: <AlertCircle className="h-4 w-4" />
         });
       }
     } catch (error) {
       console.error("Signup error:", error);
-      const errorMessage = error instanceof AuthError ? 
-        error.message : 
-        "An unexpected error occurred";
+      const errorMessage = "An unexpected error occurred during registration";
       
       setAuthError(errorMessage);
       toast({
         title: "Registration Failed",
         description: errorMessage,
         variant: "destructive",
+        icon: <AlertCircle className="h-4 w-4" />
       });
     }
   };
@@ -89,6 +98,8 @@ export function DealerSignupForm() {
     <>
       {authError && (
         <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
           <AlertDescription>{authError}</AlertDescription>
         </Alert>
       )}

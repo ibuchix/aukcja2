@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { AuthError } from "@supabase/supabase-js";
+import { AuthError, PostgrestError } from "@supabase/supabase-js";
 
 interface SignupResult {
   success: boolean;
   error?: string;
+  errorType?: 'auth' | 'database' | 'validation';
 }
 
 export function useSignupDealer() {
@@ -32,9 +33,53 @@ export function useSignupDealer() {
     }
   };
 
+  const handleAuthError = (error: AuthError): SignupResult => {
+    console.error("Auth error details:", error);
+    let errorMessage = "Authentication failed";
+
+    if (error.message.includes("already registered")) {
+      errorMessage = "This email is already registered. Please try logging in instead.";
+    } else if (error.message.includes("invalid email")) {
+      errorMessage = "Please enter a valid email address.";
+    } else if (error.message.includes("password")) {
+      errorMessage = "Password must be at least 8 characters long.";
+    }
+
+    return {
+      success: false,
+      error: errorMessage,
+      errorType: 'auth'
+    };
+  };
+
+  const handleDatabaseError = (error: PostgrestError): SignupResult => {
+    console.error("Database error details:", error);
+    let errorMessage = "Failed to create dealer profile";
+
+    if (error.code === '23505') { // Unique violation
+      if (error.message.includes("unique_dealer_user_id")) {
+        errorMessage = "A dealer profile already exists for this account.";
+      } else if (error.message.includes("tax_id")) {
+        errorMessage = "This tax ID is already registered.";
+      }
+    } else if (error.code === '23502') { // Not null violation
+      errorMessage = "Please fill in all required fields.";
+    }
+
+    return {
+      success: false,
+      error: errorMessage,
+      errorType: 'database'
+    };
+  };
+
   const signupDealer = async (values: DealerFormValues): Promise<SignupResult> => {
     if (isSubmitting) {
-      return { success: false, error: "Registration in progress" };
+      return { 
+        success: false, 
+        error: "Registration in progress",
+        errorType: 'validation'
+      };
     }
     
     setIsSubmitting(true);
@@ -56,11 +101,15 @@ export function useSignupDealer() {
 
       if (authError) {
         console.error("Auth error:", authError);
-        throw authError;
+        return handleAuthError(authError);
       }
 
       if (!authData.user) {
-        throw new Error("Failed to create user account");
+        return {
+          success: false,
+          error: "Failed to create user account",
+          errorType: 'auth'
+        };
       }
 
       console.log("Auth user created successfully:", authData.user.id);
@@ -74,27 +123,29 @@ export function useSignupDealer() {
         console.error("Dealer creation error:", dealerError);
         // If dealer profile creation fails, sign out the user
         await supabase.auth.signOut();
-        throw dealerError;
+        
+        if (dealerError instanceof PostgrestError) {
+          return handleDatabaseError(dealerError);
+        }
+        
+        return {
+          success: false,
+          error: "Failed to create dealer profile",
+          errorType: 'database'
+        };
       }
     } catch (error) {
       console.error("Registration error:", error);
-      let errorMessage = "Registration failed";
       
       if (error instanceof AuthError) {
-        if (error.message.includes("already registered")) {
-          errorMessage = "This email is already registered. Please try logging in instead.";
-        } else {
-          errorMessage = error.message;
-        }
-      } else if (error instanceof Error) {
-        if (error.message.includes("duplicate key")) {
-          errorMessage = "A dealer profile already exists for this account.";
-        } else {
-          errorMessage = error.message;
-        }
+        return handleAuthError(error);
       }
       
-      return { success: false, error: errorMessage };
+      return {
+        success: false,
+        error: "An unexpected error occurred",
+        errorType: 'validation'
+      };
     } finally {
       setIsSubmitting(false);
     }
