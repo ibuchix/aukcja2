@@ -2,14 +2,21 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import DealerDashboard from "./pages/dealer/Dashboard";
 import DealerProfile from "./pages/dealer/Profile";
 import Marketplace from "./pages/Marketplace";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -23,6 +30,7 @@ const App = () => (
           <Route path="/dealer/dashboard" element={<DealerDashboard />} />
           <Route path="/dealer/profile" element={<DealerProfile />} />
           <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="*" element={<Navigate to="/" replace />} /> {/* Add catch-all route */}
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
