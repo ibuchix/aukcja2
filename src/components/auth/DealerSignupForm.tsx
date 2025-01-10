@@ -61,7 +61,6 @@ export function DealerSignupForm() {
           title: "Registration Successful",
           description: "Please check your email to verify your account.",
           variant: "default",
-          icon: <CheckCircle2 className="h-4 w-4 text-success" />
         });
         form.reset();
       } else {
@@ -77,7 +76,6 @@ export function DealerSignupForm() {
           title: toastMessage,
           description: result.error || "An unexpected error occurred",
           variant: "destructive",
-          icon: <AlertCircle className="h-4 w-4" />
         });
       }
     } catch (error) {
@@ -89,7 +87,6 @@ export function DealerSignupForm() {
         title: "Registration Failed",
         description: errorMessage,
         variant: "destructive",
-        icon: <AlertCircle className="h-4 w-4" />
       });
     }
   };

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { AuthError, PostgrestError } from "@supabase/supabase-js";
+import { AuthError } from "@supabase/supabase-js";
 
 interface SignupResult {
   success: boolean;
@@ -52,7 +52,7 @@ export function useSignupDealer() {
     };
   };
 
-  const handleDatabaseError = (error: PostgrestError): SignupResult => {
+  const handleDatabaseError = (error: any): SignupResult => {
     console.error("Database error details:", error);
     let errorMessage = "Failed to create dealer profile";
 
@@ -87,7 +87,6 @@ export function useSignupDealer() {
     try {
       console.log("Starting dealer registration process");
       
-      // Step 1: Create auth user with dealer role
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -114,25 +113,14 @@ export function useSignupDealer() {
 
       console.log("Auth user created successfully:", authData.user.id);
 
-      // Step 2: Create dealer profile
       try {
         await createDealerProfile(authData.user.id, values);
         console.log("Dealer profile created successfully");
         return { success: true };
       } catch (dealerError) {
         console.error("Dealer creation error:", dealerError);
-        // If dealer profile creation fails, sign out the user
         await supabase.auth.signOut();
-        
-        if (dealerError instanceof PostgrestError) {
-          return handleDatabaseError(dealerError);
-        }
-        
-        return {
-          success: false,
-          error: "Failed to create dealer profile",
-          errorType: 'database'
-        };
+        return handleDatabaseError(dealerError);
       }
     } catch (error) {
       console.error("Registration error:", error);
