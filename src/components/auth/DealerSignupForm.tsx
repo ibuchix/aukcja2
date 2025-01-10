@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AuthError, AuthApiError } from "@supabase/supabase-js";
+import { AuthError } from "@supabase/supabase-js";
 
 export function DealerSignupForm() {
   const { signupDealer, isSubmitting } = useSignupDealer();
@@ -18,12 +18,10 @@ export function DealerSignupForm() {
   const navigate = useNavigate();
   const [authError, setAuthError] = useState<string>("");
 
-  // Check authentication state on mount and changes
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event, session);
       if (event === 'SIGNED_IN' && session) {
-        // Only navigate if the user has the dealer role
         if (session.user?.user_metadata?.role === 'dealer') {
           navigate('/dealer/dashboard');
         }
@@ -53,22 +51,6 @@ export function DealerSignupForm() {
     },
   });
 
-  const getErrorMessage = (error: AuthError) => {
-    if (error instanceof AuthApiError) {
-      switch (error.status) {
-        case 400:
-          return 'Invalid email or password format';
-        case 422:
-          return 'Email already registered';
-        case 401:
-          return 'Invalid credentials';
-        default:
-          return error.message;
-      }
-    }
-    return error.message;
-  };
-
   const onSubmit = async (values: DealerFormValues) => {
     try {
       setAuthError(""); // Clear any previous errors
@@ -88,11 +70,11 @@ export function DealerSignupForm() {
           variant: "destructive",
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Signup error:", error);
       const errorMessage = error instanceof AuthError ? 
-        getErrorMessage(error) : 
-        error.message || "An unexpected error occurred";
+        error.message : 
+        "An unexpected error occurred";
       
       setAuthError(errorMessage);
       toast({

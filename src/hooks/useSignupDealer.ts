@@ -11,17 +11,6 @@ interface SignupResult {
 export function useSignupDealer() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const cleanupAuthUser = async (userId: string) => {
-    try {
-      // Using admin delete user endpoint via edge function would be better,
-      // but for now we'll sign out the user
-      await supabase.auth.signOut();
-      console.log("Cleaned up auth state after failed dealer creation");
-    } catch (error) {
-      console.error("Error cleaning up auth state:", error);
-    }
-  };
-
   const createDealerProfile = async (userId: string, values: DealerFormValues) => {
     const { error: dealerError } = await supabase
       .from('dealers')
@@ -31,12 +20,14 @@ export function useSignupDealer() {
         dealership_name: values.companyName,
         tax_id: values.taxId,
         business_registry_number: values.businessRegistryNumber,
-        license_number: values.businessRegistryNumber,
+        license_number: values.businessRegistryNumber, // Using business registry as license number
         address: values.companyAddress,
         verification_status: 'pending',
+        is_verified: false,
       });
 
     if (dealerError) {
+      console.error("Dealer profile creation error:", dealerError);
       throw dealerError;
     }
   };
@@ -47,7 +38,6 @@ export function useSignupDealer() {
     }
     
     setIsSubmitting(true);
-    let authUserId: string | undefined;
     
     try {
       console.log("Starting dealer registration process");
@@ -73,20 +63,17 @@ export function useSignupDealer() {
         throw new Error("Failed to create user account");
       }
 
-      authUserId = authData.user.id;
-      console.log("Auth user created successfully:", authUserId);
+      console.log("Auth user created successfully:", authData.user.id);
 
       // Step 2: Create dealer profile
       try {
-        await createDealerProfile(authUserId, values);
+        await createDealerProfile(authData.user.id, values);
         console.log("Dealer profile created successfully");
         return { success: true };
       } catch (dealerError) {
         console.error("Dealer creation error:", dealerError);
-        // If dealer profile creation fails, clean up the auth user
-        if (authUserId) {
-          await cleanupAuthUser(authUserId);
-        }
+        // If dealer profile creation fails, sign out the user
+        await supabase.auth.signOut();
         throw dealerError;
       }
     } catch (error) {
@@ -100,7 +87,11 @@ export function useSignupDealer() {
           errorMessage = error.message;
         }
       } else if (error instanceof Error) {
-        errorMessage = error.message;
+        if (error.message.includes("duplicate key")) {
+          errorMessage = "A dealer profile already exists for this account.";
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       return { success: false, error: errorMessage };
