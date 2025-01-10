@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { AuthError } from "@supabase/supabase-js";
 
 interface SignupResult {
   success: boolean;
@@ -17,12 +16,11 @@ export function useSignupDealer() {
       .from('dealers')
       .insert({
         user_id: userId,
-        supervisor_name: values.supervisorName,
-        dealership_name: values.companyName,
-        tax_id: values.taxId,
-        business_registry_number: values.businessRegistryNumber,
-        license_number: values.businessRegistryNumber, // Using business registry as license number
-        address: values.companyAddress,
+        supervisor_name: values.supervisorName.trim(),
+        dealership_name: values.companyName.trim(),
+        tax_id: values.taxId.trim(),
+        business_registry_number: values.businessRegistryNumber.trim(),
+        address: values.companyAddress.trim(),
         verification_status: 'pending',
         is_verified: false,
       });
@@ -33,7 +31,7 @@ export function useSignupDealer() {
     }
   };
 
-  const handleAuthError = (error: AuthError): SignupResult => {
+  const handleAuthError = (error: any): SignupResult => {
     console.error("Auth error details:", error);
     let errorMessage = "Authentication failed";
 
@@ -58,9 +56,11 @@ export function useSignupDealer() {
 
     if (error.code === '23505') { // Unique violation
       if (error.message.includes("dealers_tax_id_key")) {
-        errorMessage = "This tax ID is already registered.";
+        errorMessage = "This tax ID (NIP) is already registered.";
       } else if (error.message.includes("dealers_business_registry_number_key")) {
-        errorMessage = "This business registry number is already registered.";
+        errorMessage = "This business registry number (REGON) is already registered.";
+      } else if (error.message.includes("dealers_user_id_key")) {
+        errorMessage = "A dealer profile already exists for this account.";
       }
     } else if (error.code === '23502') { // Not null violation
       errorMessage = "Please fill in all required fields.";
@@ -88,12 +88,12 @@ export function useSignupDealer() {
       console.log("Starting dealer registration process");
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: values.email,
+        email: values.email.trim(),
         password: values.password,
         options: {
           data: {
             role: 'dealer',
-            name: values.supervisorName,
+            name: values.supervisorName.trim(),
           },
         },
       });
@@ -124,10 +124,6 @@ export function useSignupDealer() {
       }
     } catch (error) {
       console.error("Registration error:", error);
-      
-      if (error instanceof AuthError) {
-        return handleAuthError(error);
-      }
       
       return {
         success: false,
