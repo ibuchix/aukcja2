@@ -20,17 +20,23 @@ export function DealerSignupForm() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session);
       if (event === 'SIGNED_IN' && session) {
         // Check if dealer profile exists before navigation
         const { data: dealerProfile, error: dealerError } = await supabase
           .from('dealers')
           .select('*')
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle(); // Changed from single() to maybeSingle()
 
-        if (dealerError || !dealerProfile) {
-          console.error("Dealer profile not found:", dealerError);
+        if (dealerError) {
+          console.error("Error fetching dealer profile:", dealerError);
+          await supabase.auth.signOut();
+          setAuthError("Failed to verify dealer profile. Please try again.");
+          return;
+        }
+
+        if (!dealerProfile) {
+          console.error("Dealer profile not found");
           await supabase.auth.signOut();
           setAuthError("Dealer profile creation failed. Please try again.");
           return;

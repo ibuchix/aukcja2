@@ -9,6 +9,30 @@ interface ProfileResult {
 
 export async function createDealerProfile(userId: string, values: DealerFormValues): Promise<ProfileResult> {
   try {
+    // First check if profile already exists
+    const { data: existingProfile, error: fetchError } = await supabase
+      .from('dealers')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle(); // Using maybeSingle instead of single
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error("Error checking existing profile:", fetchError);
+      return {
+        success: false,
+        error: "Failed to verify dealer profile",
+        errorType: 'database'
+      };
+    }
+
+    if (existingProfile) {
+      return {
+        success: false,
+        error: "A dealer profile already exists for this account",
+        errorType: 'validation'
+      };
+    }
+
     const { error: dealerError } = await supabase
       .from('dealers')
       .insert({
@@ -17,7 +41,7 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
         dealership_name: values.companyName.trim(),
         tax_id: values.taxId.trim(),
         business_registry_number: values.businessRegistryNumber.trim(),
-        license_number: values.businessRegistryNumber.trim(),
+        license_number: values.businessRegistryNumber.trim(), // Using business registry as license
         address: values.companyAddress.trim(),
         verification_status: 'pending',
         is_verified: false,
