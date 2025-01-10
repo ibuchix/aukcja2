@@ -80,7 +80,7 @@ export function DealerSignupForm() {
       if (result.success) {
         toast({
           title: "Registration Successful",
-          description: "Your account is pending verification. You'll be notified once approved.",
+          description: "Please check your email to verify your account. You'll be notified once your dealer account is approved.",
           variant: "default",
         });
         form.reset();
