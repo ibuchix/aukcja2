@@ -57,10 +57,10 @@ export function useSignupDealer() {
     let errorMessage = "Failed to create dealer profile";
 
     if (error.code === '23505') { // Unique violation
-      if (error.message.includes("unique_dealer_user_id")) {
-        errorMessage = "A dealer profile already exists for this account.";
-      } else if (error.message.includes("tax_id")) {
+      if (error.message.includes("dealers_tax_id_key")) {
         errorMessage = "This tax ID is already registered.";
+      } else if (error.message.includes("dealers_business_registry_number_key")) {
+        errorMessage = "This business registry number is already registered.";
       }
     } else if (error.code === '23502') { // Not null violation
       errorMessage = "Please fill in all required fields.";
