@@ -20,6 +20,7 @@ export function useSignupDealer() {
         dealership_name: values.companyName.trim(),
         tax_id: values.taxId.trim(),
         business_registry_number: values.businessRegistryNumber.trim(),
+        license_number: values.businessRegistryNumber.trim(), // Using business registry number as license number
         address: values.companyAddress.trim(),
         verification_status: 'pending',
         is_verified: false,
