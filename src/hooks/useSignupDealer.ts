@@ -48,68 +48,58 @@ export function useSignupDealer() {
         };
       }
 
-      // Check if the email exists in auth system
-      const { data: userExists, error: userCheckError } = await supabase
-        .rpc('check_email_exists', {
-          email_to_check: values.email.trim().toLowerCase()
-        });
-
-      if (userCheckError) {
-        console.error("Error checking user:", userCheckError);
-        return {
-          success: false,
-          error: "Error checking email availability",
-          errorType: 'database'
-        };
-      }
-
-      if (userExists) {
-        return {
-          success: false,
-          error: "This email is already registered. Please use a different email address or contact support if you need assistance.",
-          errorType: 'validation'
-        };
-      }
-
-      // Create new user
-      const signUpResponse = await supabase.auth.signUp({
+      // Try to sign in first to see if the user exists
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: values.email.trim().toLowerCase(),
         password: values.password,
-        options: {
-          data: {
-            role: 'dealer',
-            name: values.supervisorName.trim(),
-          },
-          emailRedirectTo: `${window.location.origin}/dealer/dashboard`,
-        }
       });
 
-      if (signUpResponse.error) {
-        console.error("Auth signup error:", signUpResponse.error);
-        return {
-          success: false,
-          error: signUpResponse.error.message,
-          errorType: 'auth'
-        };
+      let userId;
+
+      if (!signInError && signInData.user) {
+        // User exists and credentials are correct
+        userId = signInData.user.id;
+        console.log("Existing user signed in:", userId);
+      } else {
+        // User doesn't exist, create new user
+        const signUpResponse = await supabase.auth.signUp({
+          email: values.email.trim().toLowerCase(),
+          password: values.password,
+          options: {
+            data: {
+              role: 'dealer',
+              name: values.supervisorName.trim(),
+            },
+            emailRedirectTo: `${window.location.origin}/dealer/dashboard`,
+          }
+        });
+
+        if (signUpResponse.error) {
+          console.error("Auth signup error:", signUpResponse.error);
+          return {
+            success: false,
+            error: signUpResponse.error.message,
+            errorType: 'auth'
+          };
+        }
+
+        if (!signUpResponse.data?.user?.id) {
+          return {
+            success: false,
+            error: "Failed to create user account",
+            errorType: 'auth'
+          };
+        }
+
+        userId = signUpResponse.data.user.id;
+        console.log("New user created:", userId);
       }
-
-      const { data } = signUpResponse;
-
-      if (!data?.user?.id) {
-        return {
-          success: false,
-          error: "Failed to create user account",
-          errorType: 'auth'
-        };
-      }
-
-      console.log("Auth user created successfully:", data.user.id);
 
       // Create dealer profile
       const { error: dealerError } = await supabase
         .from('dealers')
         .insert({
-          user_id: data.user.id,
+          user_id: userId,
           supervisor_name: values.supervisorName.trim(),
           dealership_name: values.companyName.trim(),
           tax_id: values.taxId.trim(),
@@ -122,10 +112,12 @@ export function useSignupDealer() {
 
       if (dealerError) {
         console.error("Dealer profile creation error:", dealerError);
-        // Cleanup the failed registration
-        await supabase.rpc('cleanup_failed_dealer_registration', {
-          user_id_param: data.user.id
-        });
+        // Cleanup the failed registration only if it's a new user
+        if (!signInData?.user) {
+          await supabase.rpc('cleanup_failed_dealer_registration', {
+            user_id_param: userId
+          });
+        }
         return {
           success: false,
           error: dealerError.message,
