@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthError } from "@supabase/supabase-js";
 
 const loginFormSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -16,6 +17,13 @@ const loginFormSchema = z.object({
 });
 
 type LoginFormValues = z.infer<typeof loginFormSchema>;
+
+const getErrorMessage = (error: AuthError) => {
+  if (error.message.includes("Invalid login credentials")) {
+    return "Invalid email or password. Please check your credentials and try again.";
+  }
+  return error.message;
+};
 
 export function DealerLoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,6 +43,8 @@ export function DealerLoginForm() {
       setIsSubmitting(true);
       setAuthError("");
 
+      console.log("Attempting login with email:", values.email.trim().toLowerCase());
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email.trim().toLowerCase(),
         password: values.password,
@@ -42,11 +52,31 @@ export function DealerLoginForm() {
 
       if (error) {
         console.error("Login error:", error);
-        setAuthError(error.message);
+        setAuthError(getErrorMessage(error));
         return;
       }
 
       if (data?.user) {
+        // Check if dealer profile exists
+        const { data: dealerProfile, error: dealerError } = await supabase
+          .from('dealers')
+          .select('*')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
+        if (dealerError) {
+          console.error("Error fetching dealer profile:", dealerError);
+          setAuthError("Failed to verify dealer profile. Please try again.");
+          return;
+        }
+
+        if (!dealerProfile) {
+          console.error("No dealer profile found");
+          setAuthError("No dealer profile found for this account. Please register as a dealer first.");
+          await supabase.auth.signOut();
+          return;
+        }
+
         navigate('/dealer/dashboard');
       }
     } catch (error) {
