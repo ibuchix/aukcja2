@@ -26,7 +26,7 @@ export function useSignupDealer() {
     try {
       console.log("Starting dealer registration process");
       
-      // Create new user account
+      // Create or get existing user account
       const signUpResult = await signUpDealerWithEmail(
         values.email.trim().toLowerCase(),
         values.password,

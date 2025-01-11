@@ -9,7 +9,7 @@ interface ProfileResult {
 
 export async function createDealerProfile(userId: string, values: DealerFormValues): Promise<ProfileResult> {
   try {
-    // Create dealer profile
+    // Create dealer profile without checking for duplicates
     const { error: dealerError } = await supabase
       .from('dealers')
       .insert({
@@ -28,7 +28,7 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
       console.error("Dealer profile creation error:", dealerError);
       return {
         success: false,
-        error: dealerError.message,
+        error: "Failed to create dealer profile. Please try again.",
         errorType: 'database'
       };
     }

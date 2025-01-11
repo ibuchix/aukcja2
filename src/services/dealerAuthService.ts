@@ -17,7 +17,21 @@ export const signUpDealerWithEmail = async (
   metadata: UserMetadata
 ): Promise<SignUpResult> => {
   try {
-    // Create new user directly
+    // First try to sign in with the provided credentials
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    // If sign in successful, use that user's ID
+    if (signInData?.user) {
+      return {
+        success: true,
+        userId: signInData.user.id,
+      };
+    }
+
+    // If sign in fails, create a new user
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
