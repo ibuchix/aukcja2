@@ -75,7 +75,16 @@ export function DealerSignupForm() {
   const onSubmit = async (values: DealerFormValues) => {
     try {
       setAuthError(""); // Clear any previous errors
-      const result = await signupDealer(values);
+      
+      // Trim email to prevent whitespace issues
+      const trimmedValues = {
+        ...values,
+        email: values.email.trim().toLowerCase()
+      };
+
+      console.log("Attempting registration with email:", trimmedValues.email);
+      
+      const result = await signupDealer(trimmedValues);
       
       if (result.success) {
         toast({
@@ -87,10 +96,10 @@ export function DealerSignupForm() {
       } else {
         // Handle specific error cases
         if (result.error?.includes("User already registered")) {
-          setAuthError("This email is already registered. Please try logging in instead.");
+          setAuthError("This email is already registered. Please try logging in or use a different email address.");
           toast({
             title: "Registration Failed",
-            description: "This email is already registered. Please try logging in instead.",
+            description: "This email is already registered. Please try logging in or use a different email address.",
             variant: "destructive",
           });
           return;
@@ -112,7 +121,7 @@ export function DealerSignupForm() {
       }
     } catch (error) {
       console.error("Signup error:", error);
-      const errorMessage = "An unexpected error occurred during registration";
+      const errorMessage = "An unexpected error occurred during registration. Please try again.";
       
       setAuthError(errorMessage);
       toast({
