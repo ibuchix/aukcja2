@@ -101,7 +101,7 @@ export function useSignupDealer() {
         console.error("Dealer profile creation error:", dealerError);
         // Attempt to cleanup the failed registration
         await supabase.rpc('cleanup_failed_dealer_registration', {
-          user_id: data.user.id
+          user_id_param: data.user.id
         });
         return {
           success: false,
