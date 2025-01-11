@@ -27,11 +27,12 @@ export function useSignupDealer() {
       
       // First check if email exists as a dealer
       const { data: existingDealer, error: checkError } = await supabase
-        .rpc('check_dealer_email_exists', {
-          email_to_check: values.email.trim().toLowerCase()
-        });
+        .from('dealers')
+        .select('id')
+        .eq('email', values.email.trim().toLowerCase())
+        .single();
 
-      if (checkError) {
+      if (checkError && checkError.code !== 'PGRST116') {
         console.error("Error checking dealer email:", checkError);
         return {
           success: false,
@@ -49,7 +50,7 @@ export function useSignupDealer() {
       }
 
       // Step 1: Create auth user with dealer role
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      const signUpResponse = await supabase.auth.signUp({
         email: values.email.trim().toLowerCase(),
         password: values.password,
         options: {
@@ -61,14 +62,16 @@ export function useSignupDealer() {
         }
       });
 
-      if (signUpError) {
-        console.error("Auth signup error:", signUpError);
+      if (signUpResponse.error) {
+        console.error("Auth signup error:", signUpResponse.error);
         return {
           success: false,
-          error: signUpError.message,
+          error: signUpResponse.error.message,
           errorType: 'auth'
         };
       }
+
+      const { data } = signUpResponse;
 
       if (!data?.user?.id) {
         return {
