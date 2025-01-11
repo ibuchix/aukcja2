@@ -323,14 +323,14 @@ export type Database = {
         }
         Insert: {
           address?: string | null
-          business_registry_number?: string
+          business_registry_number: string
           created_at?: string | null
           dealership_name: string
           id?: string
           is_verified?: boolean
           license_number: string
-          supervisor_name?: string
-          tax_id?: string
+          supervisor_name: string
+          tax_id: string
           updated_at?: string | null
           user_id: string
           verification_status?: string
