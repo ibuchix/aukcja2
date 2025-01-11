@@ -1,8 +1,9 @@
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { UseFormReturn } from "react-hook-form";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
+import { Info } from "lucide-react";
 
 interface DealerFormFieldsProps {
   form: UseFormReturn<DealerFormValues>;
@@ -18,8 +19,11 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
           <FormItem>
             <FormLabel>Full Name of Account Supervisor</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} onBlur={field.onBlur} />
             </FormControl>
+            <FormDescription className="text-xs text-muted-foreground">
+              Enter your full legal name as it appears on official documents
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -32,8 +36,15 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
           <FormItem>
             <FormLabel>Email</FormLabel>
             <FormControl>
-              <Input type="email" {...field} />
+              <Input 
+                type="email" 
+                {...field} 
+                onChange={(e) => field.onChange(e.target.value.toLowerCase())}
+              />
             </FormControl>
+            <FormDescription className="text-xs text-muted-foreground">
+              This will be your login email
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -48,6 +59,9 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
             <FormControl>
               <Input type="password" {...field} />
             </FormControl>
+            <FormDescription className="text-xs text-muted-foreground">
+              Must contain at least 8 characters, including uppercase, lowercase, and numbers
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -60,7 +74,7 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
           <FormItem>
             <FormLabel>Phone Number</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} placeholder="+48 XXX XXX XXX" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -76,6 +90,9 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
             <FormControl>
               <Input {...field} />
             </FormControl>
+            <FormDescription className="text-xs text-muted-foreground">
+              Enter your registered company name
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -88,8 +105,18 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
           <FormItem>
             <FormLabel>Tax Identification Number (NIP)</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input 
+                {...field} 
+                maxLength={10}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^\d]/g, '');
+                  field.onChange(value);
+                }}
+              />
             </FormControl>
+            <FormDescription className="text-xs text-muted-foreground">
+              Must be exactly 10 digits
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -102,8 +129,18 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
           <FormItem>
             <FormLabel>National Business Registry Number (REGON)</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input 
+                {...field} 
+                maxLength={14}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^\d]/g, '');
+                  field.onChange(value);
+                }}
+              />
             </FormControl>
+            <FormDescription className="text-xs text-muted-foreground">
+              Must be either 9 or 14 digits
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -118,6 +155,9 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
             <FormControl>
               <Input {...field} />
             </FormControl>
+            <FormDescription className="text-xs text-muted-foreground">
+              Enter your registered company address
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -135,11 +175,11 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
               />
             </FormControl>
             <div className="space-y-1 leading-none">
-              <FormLabel>
+              <FormLabel className="text-sm">
                 I agree to and accept the terms and conditions of the service
               </FormLabel>
+              <FormMessage />
             </div>
-            <FormMessage />
           </FormItem>
         )}
       />
