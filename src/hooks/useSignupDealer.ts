@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { supabase } from "@/integrations/supabase/client";
+import { signUpDealerWithEmail } from "@/services/dealerAuthService";
+import { createDealerProfile } from "@/services/dealerProfileService";
 
 interface SignupResult {
   success: boolean;
@@ -62,56 +64,30 @@ export function useSignupDealer() {
         console.log("Existing user signed in:", userId);
       } else {
         // User doesn't exist, create new user
-        const signUpResponse = await supabase.auth.signUp({
-          email: values.email.trim().toLowerCase(),
-          password: values.password,
-          options: {
-            data: {
-              role: 'dealer',
-              name: values.supervisorName.trim(),
-            },
-            emailRedirectTo: `${window.location.origin}/dealer/dashboard`,
+        const signUpResult = await signUpDealerWithEmail(
+          values.email.trim().toLowerCase(),
+          values.password,
+          {
+            role: 'dealer',
+            name: values.supervisorName.trim(),
           }
-        });
+        );
 
-        if (signUpResponse.error) {
-          console.error("Auth signup error:", signUpResponse.error);
+        if (!signUpResult.success || !signUpResult.userId) {
           return {
             success: false,
-            error: signUpResponse.error.message,
+            error: signUpResult.error || "Failed to create user account",
             errorType: 'auth'
           };
         }
 
-        if (!signUpResponse.data?.user?.id) {
-          return {
-            success: false,
-            error: "Failed to create user account",
-            errorType: 'auth'
-          };
-        }
-
-        userId = signUpResponse.data.user.id;
-        console.log("New user created:", userId);
+        userId = signUpResult.userId;
       }
 
       // Create dealer profile
-      const { error: dealerError } = await supabase
-        .from('dealers')
-        .insert({
-          user_id: userId,
-          supervisor_name: values.supervisorName.trim(),
-          dealership_name: values.companyName.trim(),
-          tax_id: values.taxId.trim(),
-          business_registry_number: values.businessRegistryNumber.trim(),
-          license_number: values.businessRegistryNumber.trim(),
-          address: values.companyAddress.trim(),
-          verification_status: 'pending',
-          is_verified: false,
-        });
+      const profileResult = await createDealerProfile(userId, values);
 
-      if (dealerError) {
-        console.error("Dealer profile creation error:", dealerError);
+      if (!profileResult.success) {
         // Cleanup the failed registration only if it's a new user
         if (!signInData?.user) {
           await supabase.rpc('cleanup_failed_dealer_registration', {
@@ -120,8 +96,8 @@ export function useSignupDealer() {
         }
         return {
           success: false,
-          error: dealerError.message,
-          errorType: 'database'
+          error: profileResult.error,
+          errorType: profileResult.errorType
         };
       }
 

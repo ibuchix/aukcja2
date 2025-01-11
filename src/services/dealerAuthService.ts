@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { DealerFormValues } from "@/schemas/dealerFormSchema";
 
 interface SignUpResult {
   success: boolean;
