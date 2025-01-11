@@ -26,7 +26,7 @@ const Auth = () => {
         <div className="absolute inset-0 bg-[#DC143C]" />
         <div className="relative z-20 flex items-center text-lg font-medium">
           <img 
-            src="/lovable-uploads/72e01c63-dbd1-4da0-a04b-0878831fbc78.png" 
+            src="/lovable-uploads/1e5979df-6867-4ab3-9da3-1188df42d992.png" 
             alt="Auto-Strada Logo" 
             className="h-12"
           />
