@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { signUpDealerWithEmail, checkDealerTaxIdExists } from "@/services/dealerAuthService";
+import { signUpDealerWithEmail } from "@/services/dealerAuthService";
 import { createDealerProfile } from "@/services/dealerProfileService";
 
 interface SignupResult {
@@ -26,16 +26,6 @@ export function useSignupDealer() {
     try {
       console.log("Starting dealer registration process");
       
-      // Check if tax ID is already registered
-      const taxIdExists = await checkDealerTaxIdExists(values.taxId);
-      if (taxIdExists) {
-        return {
-          success: false,
-          error: "A dealer with this tax ID is already registered",
-          errorType: 'validation'
-        };
-      }
-
       // Create new user account
       const signUpResult = await signUpDealerWithEmail(
         values.email.trim().toLowerCase(),
