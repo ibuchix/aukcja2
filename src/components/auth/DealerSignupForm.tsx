@@ -11,14 +11,15 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { RegistrationProgress } from "./dealer-form/RegistrationProgress";
 import { RegistrationStatus } from "./dealer-form/RegistrationStatus";
+import { useSignupDealer } from "@/hooks/useSignupDealer";
 
 export function DealerSignupForm() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string>("");
   const [registrationStep, setRegistrationStep] = useState<number>(1);
   const [emailVerified, setEmailVerified] = useState<boolean>(false);
+  const { signupDealer, isSubmitting } = useSignupDealer();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -50,94 +51,29 @@ export function DealerSignupForm() {
   });
 
   const onSubmit = async (values: DealerFormValues) => {
-    if (isSubmitting) return;
-    
-    setIsSubmitting(true);
     setAuthError("");
     setRegistrationStep(2);
     
-    try {
-      console.log("Starting dealer registration with:", values.email);
-      
-      // Step 1: Create auth user with metadata
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: values.email.trim().toLowerCase(),
-        password: values.password,
-        options: {
-          data: {
-            role: 'dealer',
-            name: values.supervisorName.trim(),
-          },
-          emailRedirectTo: `${window.location.origin}/dealer/dashboard`,
-        }
-      });
-
-      if (signUpError) {
-        console.error("Auth signup error:", signUpError);
-        setRegistrationStep(1);
-        setAuthError(signUpError.message);
-        toast({
-          title: "Registration Failed",
-          description: signUpError.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!authData.user?.id) {
-        throw new Error("Failed to create user account");
-      }
-
-      // Step 2: Create dealer profile
-      const { error: dealerError } = await supabase
-        .from('dealers')
-        .insert({
-          user_id: authData.user.id,
-          supervisor_name: values.supervisorName.trim(),
-          dealership_name: values.companyName.trim(),
-          tax_id: values.taxId.trim(),
-          business_registry_number: values.businessRegistryNumber.trim(),
-          license_number: values.businessRegistryNumber.trim(),
-          address: values.companyAddress.trim(),
-          verification_status: 'pending',
-          is_verified: false,
-        });
-
-      if (dealerError) {
-        console.error("Dealer profile creation error:", dealerError);
-        // Cleanup the auth user if dealer profile creation fails
-        await supabase.auth.signOut();
-        setRegistrationStep(1);
-        setAuthError("Failed to create dealer profile. Please try again.");
-        toast({
-          title: "Profile Creation Failed",
-          description: dealerError.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setRegistrationStep(3);
-      toast({
-        title: "Registration Successful",
-        description: "Please check your email to verify your account.",
-        variant: "default",
-      });
-      form.reset();
-      
-    } catch (error) {
-      console.error("Registration error:", error);
+    const result = await signupDealer(values);
+    
+    if (!result.success) {
       setRegistrationStep(1);
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
-      setAuthError(errorMessage);
+      setAuthError(result.error || "Registration failed");
       toast({
         title: "Registration Failed",
-        description: errorMessage,
+        description: result.error,
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
+      return;
     }
+
+    setRegistrationStep(3);
+    toast({
+      title: "Registration Successful",
+      description: "Please check your email to verify your account.",
+      variant: "default",
+    });
+    form.reset();
   };
 
   return (

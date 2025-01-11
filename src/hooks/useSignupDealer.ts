@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { signUpDealerWithEmail } from "@/services/dealerAuthService";
-import { createDealerProfile } from "@/services/dealerProfileService";
 import { supabase } from "@/integrations/supabase/client";
-import { withTimeout } from "@/utils/registrationUtils";
 
 interface SignupResult {
   success: boolean;
@@ -30,13 +27,14 @@ export function useSignupDealer() {
       
       // Step 1: Create auth user with dealer role
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email: values.email.trim(),
+        email: values.email.trim().toLowerCase(),
         password: values.password,
         options: {
           data: {
             role: 'dealer',
             name: values.supervisorName.trim(),
           },
+          emailRedirectTo: `${window.location.origin}/dealer/dashboard`,
         }
       });
 
