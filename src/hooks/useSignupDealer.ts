@@ -38,8 +38,8 @@ export function useSignupDealer() {
       );
 
       if (!authResult.success) {
-        // Handle specific error for existing user
-        if (authResult.error?.includes("User already registered")) {
+        // Check for specific error messages
+        if (authResult.error?.toLowerCase().includes("user already registered")) {
           return {
             success: false,
             error: "This email is already registered. Please try logging in instead.",
