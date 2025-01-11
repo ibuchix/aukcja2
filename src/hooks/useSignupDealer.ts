@@ -25,7 +25,7 @@ export function useSignupDealer() {
     try {
       console.log("Starting dealer registration process");
       
-      // Check if email exists using the check_email_exists function
+      // First check if the email exists as a dealer
       const { data: emailExists, error: checkError } = await supabase
         .rpc('check_dealer_email_exists', {
           email_to_check: values.email.trim().toLowerCase()
@@ -48,85 +48,93 @@ export function useSignupDealer() {
         };
       }
 
-      // Step 1: Create auth user with dealer role
-      const signUpResponse = await supabase.auth.signUp({
+      // Try to sign in first to check if user exists
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: values.email.trim().toLowerCase(),
         password: values.password,
-        options: {
-          data: {
-            role: 'dealer',
-            name: values.supervisorName.trim(),
-          },
-          emailRedirectTo: `${window.location.origin}/dealer/dashboard`,
+      });
+
+      // If user doesn't exist, proceed with signup
+      if (signInError && signInError.message.includes("Invalid login credentials")) {
+        // Create new user
+        const signUpResponse = await supabase.auth.signUp({
+          email: values.email.trim().toLowerCase(),
+          password: values.password,
+          options: {
+            data: {
+              role: 'dealer',
+              name: values.supervisorName.trim(),
+            },
+            emailRedirectTo: `${window.location.origin}/dealer/dashboard`,
+          }
+        });
+
+        if (signUpResponse.error) {
+          console.error("Auth signup error:", signUpResponse.error);
+          return {
+            success: false,
+            error: signUpResponse.error.message,
+            errorType: 'auth'
+          };
         }
-      });
 
-      if (signUpResponse.error) {
-        console.error("Auth signup error:", signUpResponse.error);
+        const { data } = signUpResponse;
+
+        if (!data?.user?.id) {
+          return {
+            success: false,
+            error: "Failed to create user account",
+            errorType: 'auth'
+          };
+        }
+
+        console.log("Auth user created successfully:", data.user.id);
+
+        // Create dealer profile
+        const { error: dealerError } = await supabase
+          .from('dealers')
+          .insert({
+            user_id: data.user.id,
+            supervisor_name: values.supervisorName.trim(),
+            dealership_name: values.companyName.trim(),
+            tax_id: values.taxId.trim(),
+            business_registry_number: values.businessRegistryNumber.trim(),
+            license_number: values.businessRegistryNumber.trim(),
+            address: values.companyAddress.trim(),
+            verification_status: 'pending',
+            is_verified: false,
+          });
+
+        if (dealerError) {
+          console.error("Dealer profile creation error:", dealerError);
+          // Cleanup the failed registration
+          await supabase.rpc('cleanup_failed_dealer_registration', {
+            user_id_param: data.user.id
+          });
+          return {
+            success: false,
+            error: dealerError.message,
+            errorType: 'database'
+          };
+        }
+
+        return { success: true };
+      } else if (!signInError) {
+        // User exists but is not a dealer - sign out and return error
+        await supabase.auth.signOut();
         return {
           success: false,
-          error: signUpResponse.error.message,
+          error: "This email is already registered. Please use a different email address.",
+          errorType: 'validation'
+        };
+      } else {
+        // Other sign-in error
+        return {
+          success: false,
+          error: signInError.message,
           errorType: 'auth'
         };
       }
-
-      const { data } = signUpResponse;
-
-      if (!data?.user?.id) {
-        return {
-          success: false,
-          error: "Failed to create user account",
-          errorType: 'auth'
-        };
-      }
-
-      console.log("Auth user created successfully:", data.user.id);
-
-      // Step 2: Create dealer profile
-      const { error: dealerError } = await supabase
-        .from('dealers')
-        .insert({
-          user_id: data.user.id,
-          supervisor_name: values.supervisorName.trim(),
-          dealership_name: values.companyName.trim(),
-          tax_id: values.taxId.trim(),
-          business_registry_number: values.businessRegistryNumber.trim(),
-          license_number: values.businessRegistryNumber.trim(),
-          address: values.companyAddress.trim(),
-          verification_status: 'pending',
-          is_verified: false,
-        });
-
-      if (dealerError) {
-        console.error("Dealer profile creation error:", dealerError);
-        // Attempt to cleanup the failed registration
-        await supabase.rpc('cleanup_failed_dealer_registration', {
-          user_id_param: data.user.id
-        });
-        return {
-          success: false,
-          error: dealerError.message,
-          errorType: 'database'
-        };
-      }
-
-      console.log("Dealer profile created successfully");
-
-      // Step 3: Send welcome email
-      const { error: emailError } = await supabase.functions.invoke('send-dealer-welcome', {
-        body: {
-          to: values.email.trim().toLowerCase(),
-          dealerName: values.supervisorName.trim(),
-        },
-      });
-
-      if (emailError) {
-        console.error("Error sending welcome email:", emailError);
-        // We don't want to fail the registration if email sending fails
-        // but we should log it
-      }
-
-      return { success: true };
       
     } catch (error) {
       console.error("Registration error:", error);
