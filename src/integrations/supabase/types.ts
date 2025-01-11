@@ -440,7 +440,7 @@ export type Database = {
       }
       cleanup_failed_dealer_registration: {
         Args: {
-          user_id: string
+          user_id_param: string
         }
         Returns: undefined
       }
