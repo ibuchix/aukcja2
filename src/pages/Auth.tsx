@@ -25,7 +25,11 @@ const Auth = () => {
       <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
         <div className="absolute inset-0 bg-[#DC143C]" />
         <div className="relative z-20 flex items-center text-lg font-medium">
-          <img src="/lovable-uploads/77d4932b-acbe-4d45-8b3e-ba3304cf4491.png" alt="Logo" className="h-8" />
+          <img 
+            src="/lovable-uploads/72e01c63-dbd1-4da0-a04b-0878831fbc78.png" 
+            alt="Auto-Strada Logo" 
+            className="h-12"
+          />
         </div>
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
