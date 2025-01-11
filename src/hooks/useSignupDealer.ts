@@ -25,29 +25,36 @@ export function useSignupDealer() {
     try {
       console.log("Starting dealer registration process");
       
-      // First check if email exists in profiles with dealer role
-      const { data: existingDealers, error: checkError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('role', 'dealer');
+      // First check if email exists in auth system
+      const { data: existingUser, error: userError } = await supabase.auth.signInWithPassword({
+        email: values.email.trim().toLowerCase(),
+        password: values.password,
+      });
 
-      if (checkError) {
-        console.error("Error checking dealer email:", checkError);
-        return {
-          success: false,
-          error: "Error checking email availability",
-          errorType: 'database'
-        };
-      }
+      if (existingUser?.user) {
+        // Check if this user is already a dealer
+        const { data: existingDealer, error: dealerError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', existingUser.user.id)
+          .single();
 
-      // Check if any of the dealers have the same email
-      const { data: authUser } = await supabase.auth.admin.getUserByEmail(values.email.trim().toLowerCase());
-      if (authUser && existingDealers?.some(dealer => dealer.id === authUser.id)) {
-        return {
-          success: false,
-          error: "This email is already registered as a dealer",
-          errorType: 'validation'
-        };
+        if (dealerError) {
+          console.error("Error checking dealer profile:", dealerError);
+          return {
+            success: false,
+            error: "Error checking email availability",
+            errorType: 'database'
+          };
+        }
+
+        if (existingDealer?.role === 'dealer') {
+          return {
+            success: false,
+            error: "This email is already registered as a dealer",
+            errorType: 'validation'
+          };
+        }
       }
 
       // Step 1: Create auth user with dealer role
