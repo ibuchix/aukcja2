@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { supabase } from "@/integrations/supabase/client";
-import { signUpDealerWithEmail } from "@/services/dealerAuthService";
+import { signUpDealerWithEmail, checkDealerTaxIdExists } from "@/services/dealerAuthService";
 import { createDealerProfile } from "@/services/dealerProfileService";
 
 interface SignupResult {
@@ -27,7 +26,17 @@ export function useSignupDealer() {
     try {
       console.log("Starting dealer registration process");
       
-      // Try to sign up or sign in the user
+      // Check if tax ID is already registered
+      const taxIdExists = await checkDealerTaxIdExists(values.taxId);
+      if (taxIdExists) {
+        return {
+          success: false,
+          error: "A dealer with this tax ID is already registered",
+          errorType: 'validation'
+        };
+      }
+
+      // Create new user account
       const signUpResult = await signUpDealerWithEmail(
         values.email.trim().toLowerCase(),
         values.password,
@@ -49,11 +58,6 @@ export function useSignupDealer() {
       const profileResult = await createDealerProfile(signUpResult.userId, values);
 
       if (!profileResult.success) {
-        // Cleanup if profile creation fails
-        await supabase.rpc('cleanup_failed_dealer_registration', {
-          user_id_param: signUpResult.userId
-        });
-        
         return {
           success: false,
           error: profileResult.error,

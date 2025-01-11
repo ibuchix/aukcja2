@@ -11,27 +11,28 @@ interface UserMetadata {
   name: string;
 }
 
+export const checkDealerTaxIdExists = async (taxId: string): Promise<boolean> => {
+  const { data, error } = await supabase
+    .from('dealers')
+    .select('id')
+    .eq('tax_id', taxId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error("Error checking tax ID:", error);
+    throw error;
+  }
+
+  return !!data;
+};
+
 export const signUpDealerWithEmail = async (
   email: string,
   password: string,
   metadata: UserMetadata
 ): Promise<SignUpResult> => {
   try {
-    // First try to sign in with the provided credentials
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    // If sign in succeeds, use existing user
-    if (!signInError && signInData.user) {
-      return {
-        success: true,
-        userId: signInData.user.id,
-      };
-    }
-
-    // If sign in fails, create new user
+    // Create new user directly without trying to sign in first
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,

@@ -9,7 +9,7 @@ interface ProfileResult {
 
 export async function createDealerProfile(userId: string, values: DealerFormValues): Promise<ProfileResult> {
   try {
-    // Create dealer profile regardless of existing roles
+    // Create dealer profile
     const { error: dealerError } = await supabase
       .from('dealers')
       .insert({
@@ -26,6 +26,16 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
 
     if (dealerError) {
       console.error("Dealer profile creation error:", dealerError);
+      
+      // If it's a unique constraint violation
+      if (dealerError.code === '23505') {
+        return {
+          success: false,
+          error: "A dealer with this tax ID already exists",
+          errorType: 'validation'
+        };
+      }
+
       return {
         success: false,
         error: dealerError.message,
