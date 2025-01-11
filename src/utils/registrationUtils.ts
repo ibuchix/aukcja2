@@ -16,7 +16,7 @@ export async function checkEmailExists(email: string): Promise<boolean> {
 export async function cleanupFailedRegistration(userId: string) {
   try {
     await supabase.rpc('cleanup_failed_dealer_registration', {
-      user_id: userId
+      user_id_param: userId
     });
     await supabase.auth.signOut();
   } catch (error) {
