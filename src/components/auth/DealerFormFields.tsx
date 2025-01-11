@@ -19,7 +19,7 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
           <FormItem>
             <FormLabel>Full Name of Account Supervisor</FormLabel>
             <FormControl>
-              <Input {...field} onBlur={field.onBlur} />
+              <Input {...field} onBlur={field.onBlur} disabled={form.formState.isSubmitting} />
             </FormControl>
             <FormDescription className="text-xs text-muted-foreground">
               Enter your full legal name as it appears on official documents
@@ -40,6 +40,7 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
                 type="email" 
                 {...field} 
                 onChange={(e) => field.onChange(e.target.value.toLowerCase())}
+                disabled={form.formState.isSubmitting}
               />
             </FormControl>
             <FormDescription className="text-xs text-muted-foreground">
@@ -57,7 +58,11 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
           <FormItem>
             <FormLabel>Password</FormLabel>
             <FormControl>
-              <Input type="password" {...field} />
+              <Input 
+                type="password" 
+                {...field} 
+                disabled={form.formState.isSubmitting}
+              />
             </FormControl>
             <FormDescription className="text-xs text-muted-foreground">
               Must contain at least 8 characters, including uppercase, lowercase, and numbers
@@ -74,7 +79,11 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
           <FormItem>
             <FormLabel>Phone Number</FormLabel>
             <FormControl>
-              <Input {...field} placeholder="+48 XXX XXX XXX" />
+              <Input 
+                {...field} 
+                placeholder="+48 XXX XXX XXX" 
+                disabled={form.formState.isSubmitting}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -88,7 +97,10 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
           <FormItem>
             <FormLabel>Company Name</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input 
+                {...field} 
+                disabled={form.formState.isSubmitting}
+              />
             </FormControl>
             <FormDescription className="text-xs text-muted-foreground">
               Enter your registered company name
@@ -112,6 +124,7 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
                   const value = e.target.value.replace(/[^\d]/g, '');
                   field.onChange(value);
                 }}
+                disabled={form.formState.isSubmitting}
               />
             </FormControl>
             <FormDescription className="text-xs text-muted-foreground">
@@ -136,6 +149,7 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
                   const value = e.target.value.replace(/[^\d]/g, '');
                   field.onChange(value);
                 }}
+                disabled={form.formState.isSubmitting}
               />
             </FormControl>
             <FormDescription className="text-xs text-muted-foreground">
@@ -153,7 +167,10 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
           <FormItem>
             <FormLabel>Company Address</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input 
+                {...field} 
+                disabled={form.formState.isSubmitting}
+              />
             </FormControl>
             <FormDescription className="text-xs text-muted-foreground">
               Enter your registered company address
@@ -172,6 +189,7 @@ export function DealerFormFields({ form }: DealerFormFieldsProps) {
               <Checkbox
                 checked={field.value}
                 onCheckedChange={field.onChange}
+                disabled={form.formState.isSubmitting}
               />
             </FormControl>
             <div className="space-y-1 leading-none">
