@@ -27,73 +27,33 @@ export function useSignupDealer() {
     try {
       console.log("Starting dealer registration process");
       
-      // First check if the email exists as a dealer
-      const { data: emailExists, error: checkError } = await supabase
-        .rpc('check_dealer_email_exists', {
-          email_to_check: values.email.trim().toLowerCase()
-        });
-
-      if (checkError) {
-        console.error("Error checking email:", checkError);
-        return {
-          success: false,
-          error: "Error checking email availability",
-          errorType: 'database'
-        };
-      }
-
-      if (emailExists) {
-        return {
-          success: false,
-          error: "This email is already registered as a dealer",
-          errorType: 'validation'
-        };
-      }
-
-      // Try to sign in first to see if the user exists
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: values.email.trim().toLowerCase(),
-        password: values.password,
-      });
-
-      let userId;
-
-      if (!signInError && signInData.user) {
-        // User exists and credentials are correct
-        userId = signInData.user.id;
-        console.log("Existing user signed in:", userId);
-      } else {
-        // User doesn't exist, create new user
-        const signUpResult = await signUpDealerWithEmail(
-          values.email.trim().toLowerCase(),
-          values.password,
-          {
-            role: 'dealer',
-            name: values.supervisorName.trim(),
-          }
-        );
-
-        if (!signUpResult.success || !signUpResult.userId) {
-          return {
-            success: false,
-            error: signUpResult.error || "Failed to create user account",
-            errorType: 'auth'
-          };
+      // Try to sign up or sign in the user
+      const signUpResult = await signUpDealerWithEmail(
+        values.email.trim().toLowerCase(),
+        values.password,
+        {
+          role: 'dealer',
+          name: values.supervisorName.trim(),
         }
+      );
 
-        userId = signUpResult.userId;
+      if (!signUpResult.success || !signUpResult.userId) {
+        return {
+          success: false,
+          error: signUpResult.error || "Failed to create user account",
+          errorType: 'auth'
+        };
       }
 
       // Create dealer profile
-      const profileResult = await createDealerProfile(userId, values);
+      const profileResult = await createDealerProfile(signUpResult.userId, values);
 
       if (!profileResult.success) {
-        // Cleanup the failed registration only if it's a new user
-        if (!signInData?.user) {
-          await supabase.rpc('cleanup_failed_dealer_registration', {
-            user_id_param: userId
-          });
-        }
+        // Cleanup if profile creation fails
+        await supabase.rpc('cleanup_failed_dealer_registration', {
+          user_id_param: signUpResult.userId
+        });
+        
         return {
           success: false,
           error: profileResult.error,

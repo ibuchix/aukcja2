@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { DealerFormValues } from "@/schemas/dealerFormSchema";
 
 interface SignUpResult {
   success: boolean;
@@ -18,7 +17,22 @@ export const signUpDealerWithEmail = async (
   metadata: UserMetadata
 ): Promise<SignUpResult> => {
   try {
-    const { data, error: signUpError } = await supabase.auth.signUp({
+    // First try to sign in with the provided credentials
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    // If sign in succeeds, use existing user
+    if (!signInError && signInData.user) {
+      return {
+        success: true,
+        userId: signInData.user.id,
+      };
+    }
+
+    // If sign in fails, create new user
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -28,24 +42,23 @@ export const signUpDealerWithEmail = async (
     });
 
     if (signUpError) {
-      console.error("Signup error:", signUpError);
+      console.error("Auth signup error:", signUpError);
       return {
         success: false,
         error: signUpError.message,
       };
     }
 
-    if (!data?.user?.id) {
+    if (!signUpData?.user?.id) {
       return {
         success: false,
         error: "Failed to create user account",
       };
     }
 
-    console.log("Auth user created successfully:", data.user.id);
     return {
       success: true,
-      userId: data.user.id,
+      userId: signUpData.user.id,
     };
 
   } catch (error) {
