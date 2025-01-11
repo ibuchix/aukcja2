@@ -59,7 +59,7 @@ export function DealerSignupForm() {
     try {
       console.log("Starting dealer registration with:", values.email);
       
-      // Step 1: Create auth user
+      // Step 1: Create auth user with metadata
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: values.email.trim().toLowerCase(),
         password: values.password,
@@ -68,6 +68,7 @@ export function DealerSignupForm() {
             role: 'dealer',
             name: values.supervisorName.trim(),
           },
+          emailRedirectTo: `${window.location.origin}/dealer/dashboard`,
         }
       });
 
