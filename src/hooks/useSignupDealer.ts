@@ -3,12 +3,7 @@ import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { signUpDealerWithEmail } from "@/services/dealerAuthService";
 import { createDealerProfile } from "@/services/dealerProfileService";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  checkEmailExists, 
-  cleanupFailedRegistration, 
-  MAX_RETRIES, 
-  withTimeout 
-} from "@/utils/registrationUtils";
+import { withTimeout } from "@/utils/registrationUtils";
 
 interface SignupResult {
   success: boolean;
@@ -18,7 +13,6 @@ interface SignupResult {
 
 export function useSignupDealer() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
 
   const signupDealer = async (values: DealerFormValues): Promise<SignupResult> => {
     if (isSubmitting) {
@@ -34,39 +28,28 @@ export function useSignupDealer() {
     try {
       console.log("Starting dealer registration process");
       
-      // Check for existing email using auth function
-      const { data: exists } = await supabase.rpc('check_email_exists', {
-        email_to_check: values.email.trim()
+      // Step 1: Create auth user with dealer role
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: values.email.trim(),
+        password: values.password,
+        options: {
+          data: {
+            role: 'dealer',
+            name: values.supervisorName.trim(),
+          },
+        }
       });
 
-      if (exists) {
+      if (signUpError) {
+        console.error("Auth signup error:", signUpError);
         return {
           success: false,
-          error: "This email is already registered. Please try logging in or use a different email address.",
+          error: signUpError.message,
           errorType: 'auth'
         };
       }
 
-      // Step 1: Create auth user with dealer role
-      const authResult = await withTimeout(signUpDealerWithEmail(
-        values.email.trim(),
-        values.password,
-        {
-          role: 'dealer',
-          name: values.supervisorName.trim(),
-        }
-      ));
-
-      if (!authResult.success) {
-        console.log("Auth result error:", authResult.error);
-        return {
-          success: false,
-          error: authResult.error || "Authentication failed",
-          errorType: 'auth'
-        };
-      }
-
-      if (!authResult.userId) {
+      if (!data?.user?.id) {
         return {
           success: false,
           error: "Failed to create user account",
@@ -74,32 +57,29 @@ export function useSignupDealer() {
         };
       }
 
-      console.log("Auth user created successfully:", authResult.userId);
+      console.log("Auth user created successfully:", data.user.id);
 
-      // Step 2: Create dealer profile with retry mechanism
-      let profileResult;
-      while (retryCount < MAX_RETRIES) {
-        try {
-          profileResult = await withTimeout(createDealerProfile(authResult.userId, values));
-          if (profileResult.success) break;
-          
-          setRetryCount(prev => prev + 1);
-          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-        } catch (error) {
-          if (retryCount === MAX_RETRIES - 1) throw error;
-          setRetryCount(prev => prev + 1);
-          continue;
-        }
-      }
-      
-      if (!profileResult?.success) {
-        // Clean up the auth user if profile creation fails
-        await cleanupFailedRegistration(authResult.userId);
-        
+      // Step 2: Create dealer profile
+      const { error: dealerError } = await supabase
+        .from('dealers')
+        .insert({
+          user_id: data.user.id,
+          supervisor_name: values.supervisorName.trim(),
+          dealership_name: values.companyName.trim(),
+          tax_id: values.taxId.trim(),
+          business_registry_number: values.businessRegistryNumber.trim(),
+          license_number: values.businessRegistryNumber.trim(),
+          address: values.companyAddress.trim(),
+          verification_status: 'pending',
+          is_verified: false,
+        });
+
+      if (dealerError) {
+        console.error("Dealer profile creation error:", dealerError);
         return {
           success: false,
-          error: profileResult?.error || "Failed to create dealer profile",
-          errorType: profileResult?.errorType || 'database'
+          error: dealerError.message,
+          errorType: 'database'
         };
       }
 
@@ -108,12 +88,6 @@ export function useSignupDealer() {
       
     } catch (error) {
       console.error("Registration error:", error);
-      
-      // Attempt to clean up on unexpected errors
-      if (error instanceof Error && 'userId' in error) {
-        await cleanupFailedRegistration((error as any).userId);
-      }
-      
       return {
         success: false,
         error: error instanceof Error ? error.message : "An unexpected error occurred",
@@ -121,7 +95,6 @@ export function useSignupDealer() {
       };
     } finally {
       setIsSubmitting(false);
-      setRetryCount(0);
     }
   };
 
