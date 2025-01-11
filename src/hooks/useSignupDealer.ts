@@ -29,7 +29,7 @@ export function useSignupDealer() {
       
       // Step 1: Create auth user with dealer role
       const authResult = await signUpDealerWithEmail(
-        values.email.trim().toLowerCase(),
+        values.email.trim(),
         values.password,
         {
           role: 'dealer',
@@ -40,7 +40,6 @@ export function useSignupDealer() {
       if (!authResult.success) {
         console.log("Auth result error:", authResult.error);
         
-        // Check for specific error messages
         if (authResult.error?.toLowerCase().includes("user already registered")) {
           return {
             success: false,

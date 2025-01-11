@@ -9,7 +9,6 @@ interface ProfileResult {
 
 export async function createDealerProfile(userId: string, values: DealerFormValues): Promise<ProfileResult> {
   try {
-    // Create the dealer profile with properly formatted data
     const { error: dealerError } = await supabase
       .from('dealers')
       .insert({
