@@ -28,8 +28,9 @@ export function getRegistrationErrorMessage(error: AuthError | Error): string {
   if ('code' in error) {
     switch (error.code) {
       case '23505':
-        if (error.message.includes('tax_id_key')):
+        if (error.message.includes('tax_id_key')) {
           return "This tax ID is already registered";
+        }
         return "A dealer profile already exists with these details";
       case 'P0001':
         return "Registration failed due to a database constraint";
