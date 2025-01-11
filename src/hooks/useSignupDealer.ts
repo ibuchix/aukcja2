@@ -111,6 +111,21 @@ export function useSignupDealer() {
       }
 
       console.log("Dealer profile created successfully");
+
+      // Step 3: Send welcome email
+      const { error: emailError } = await supabase.functions.invoke('send-dealer-welcome', {
+        body: {
+          to: values.email.trim().toLowerCase(),
+          dealerName: values.supervisorName.trim(),
+        },
+      });
+
+      if (emailError) {
+        console.error("Error sending welcome email:", emailError);
+        // We don't want to fail the registration if email sending fails
+        // but we should log it
+      }
+
       return { success: true };
       
     } catch (error) {
