@@ -25,11 +25,11 @@ export function useSignupDealer() {
     try {
       console.log("Starting dealer registration process");
       
-      // First check if email exists as a dealer
+      // First check if email exists in profiles with dealer role
       const { data: existingDealer, error: checkError } = await supabase
-        .from('dealers')
+        .from('profiles')
         .select('id')
-        .eq('email', values.email.trim().toLowerCase())
+        .eq('role', 'dealer')
         .single();
 
       if (checkError && checkError.code !== 'PGRST116') {
