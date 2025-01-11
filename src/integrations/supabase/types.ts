@@ -426,6 +426,12 @@ export type Database = {
         }
         Returns: string[]
       }
+      check_dealer_email_exists: {
+        Args: {
+          email_to_check: string
+        }
+        Returns: boolean
+      }
       check_email_exists: {
         Args: {
           email_to_check: string

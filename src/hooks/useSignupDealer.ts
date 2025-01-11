@@ -25,6 +25,29 @@ export function useSignupDealer() {
     try {
       console.log("Starting dealer registration process");
       
+      // First check if email exists as a dealer
+      const { data: existingDealer, error: checkError } = await supabase
+        .rpc('check_dealer_email_exists', {
+          email_to_check: values.email.trim().toLowerCase()
+        });
+
+      if (checkError) {
+        console.error("Error checking dealer email:", checkError);
+        return {
+          success: false,
+          error: "Error checking email availability",
+          errorType: 'database'
+        };
+      }
+
+      if (existingDealer) {
+        return {
+          success: false,
+          error: "This email is already registered as a dealer",
+          errorType: 'validation'
+        };
+      }
+
       // Step 1: Create auth user with dealer role
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: values.email.trim().toLowerCase(),
@@ -74,6 +97,10 @@ export function useSignupDealer() {
 
       if (dealerError) {
         console.error("Dealer profile creation error:", dealerError);
+        // Attempt to cleanup the failed registration
+        await supabase.rpc('cleanup_failed_dealer_registration', {
+          user_id: data.user.id
+        });
         return {
           success: false,
           error: dealerError.message,
