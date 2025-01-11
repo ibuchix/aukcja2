@@ -442,6 +442,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_orphaned_users: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       update_required_photos: {
         Args: {
           car_id: string
