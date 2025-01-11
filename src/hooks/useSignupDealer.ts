@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthError } from "@supabase/supabase-js";
 
 interface SignupResult {
   success: boolean;
@@ -49,7 +48,30 @@ export function useSignupDealer() {
         };
       }
 
-      // Create new user directly without trying to sign in first
+      // Check if the email exists in auth system
+      const { data: userExists, error: userCheckError } = await supabase
+        .rpc('check_email_exists', {
+          email_to_check: values.email.trim().toLowerCase()
+        });
+
+      if (userCheckError) {
+        console.error("Error checking user:", userCheckError);
+        return {
+          success: false,
+          error: "Error checking email availability",
+          errorType: 'database'
+        };
+      }
+
+      if (userExists) {
+        return {
+          success: false,
+          error: "This email is already registered. Please use a different email address or contact support if you need assistance.",
+          errorType: 'validation'
+        };
+      }
+
+      // Create new user
       const signUpResponse = await supabase.auth.signUp({
         email: values.email.trim().toLowerCase(),
         password: values.password,
