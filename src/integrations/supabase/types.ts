@@ -426,6 +426,18 @@ export type Database = {
         }
         Returns: string[]
       }
+      check_email_exists: {
+        Args: {
+          email_to_check: string
+        }
+        Returns: boolean
+      }
+      cleanup_failed_dealer_registration: {
+        Args: {
+          user_id: string
+        }
+        Returns: undefined
+      }
       cleanup_old_listings: {
         Args: Record<PropertyKey, never>
         Returns: undefined
