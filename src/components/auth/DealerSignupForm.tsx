@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { dealerFormSchema, type DealerFormValues } from "@/schemas/dealerFormSchema";
 import { DealerFormFields } from "./DealerFormFields";
-import { useSignupDealer } from "@/hooks/useSignupDealer";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -14,52 +13,26 @@ import { RegistrationProgress } from "./dealer-form/RegistrationProgress";
 import { RegistrationStatus } from "./dealer-form/RegistrationStatus";
 
 export function DealerSignupForm() {
-  const { signupDealer, isSubmitting } = useSignupDealer();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string>("");
   const [registrationStep, setRegistrationStep] = useState<number>(1);
   const [emailVerified, setEmailVerified] = useState<boolean>(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        const { data: dealerProfile, error: dealerError } = await supabase
-          .from('dealers')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-
-        if (dealerError && dealerError.code !== 'PGRST116') {
-          console.error("Error fetching dealer profile:", dealerError);
-          await supabase.auth.signOut();
-          setAuthError("Failed to verify dealer profile. Please try again.");
-          return;
-        }
-
-        if (!dealerProfile) {
-          console.error("Dealer profile not found");
-          await supabase.auth.signOut();
-          setAuthError("Dealer profile creation failed. Please try again.");
-          return;
-        }
-
-        setEmailVerified(session.user.email_confirmed_at !== null);
-
-        if (session.user?.user_metadata?.role === 'dealer' && dealerProfile && emailVerified) {
-          navigate('/dealer/dashboard');
-        }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
+        setEmailVerified(true);
+        navigate('/dealer/dashboard');
       }
       if (event === 'USER_UPDATED') {
-        setAuthError("");
         setEmailVerified(session?.user?.email_confirmed_at !== null);
       }
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate, emailVerified]);
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const form = useForm<DealerFormValues>({
     resolver: zodResolver(dealerFormSchema),
@@ -77,55 +50,92 @@ export function DealerSignupForm() {
   });
 
   const onSubmit = async (values: DealerFormValues) => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    setAuthError("");
+    setRegistrationStep(2);
+    
     try {
-      setAuthError("");
-      setRegistrationStep(2);
+      console.log("Starting dealer registration with:", values.email);
       
-      const trimmedValues = {
-        ...values,
-        email: values.email.trim().toLowerCase()
-      };
-
-      console.log("Attempting registration with email:", trimmedValues.email);
-      
-      const result = await signupDealer(trimmedValues);
-      
-      if (result.success) {
-        setRegistrationStep(3);
-        toast({
-          title: "Registration Successful",
-          description: "Please check your email to verify your account. You'll be notified once your dealer account is approved.",
-          variant: "default",
-        });
-        form.reset();
-      } else {
-        setRegistrationStep(1);
-        if (result.error?.includes("User already registered")) {
-          setAuthError("This email is already registered. Please try logging in or use a different email address.");
-          return;
+      // Step 1: Create auth user
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: values.email.trim().toLowerCase(),
+        password: values.password,
+        options: {
+          data: {
+            role: 'dealer',
+            name: values.supervisorName.trim(),
+          },
         }
+      });
 
-        setAuthError(result.error || "Registration failed");
-        
+      if (signUpError) {
+        console.error("Auth signup error:", signUpError);
+        setRegistrationStep(1);
+        setAuthError(signUpError.message);
         toast({
-          title: result.errorType === 'auth' ? "Authentication Error" : 
-                result.errorType === 'database' ? "Profile Creation Error" : 
-                "Validation Error",
-          description: result.error || "An unexpected error occurred",
+          title: "Registration Failed",
+          description: signUpError.message,
           variant: "destructive",
         });
+        return;
       }
-    } catch (error) {
-      setRegistrationStep(1);
-      console.error("Signup error:", error);
-      const errorMessage = "An unexpected error occurred during registration. Please try again.";
+
+      if (!authData.user?.id) {
+        throw new Error("Failed to create user account");
+      }
+
+      // Step 2: Create dealer profile
+      const { error: dealerError } = await supabase
+        .from('dealers')
+        .insert({
+          user_id: authData.user.id,
+          supervisor_name: values.supervisorName.trim(),
+          dealership_name: values.companyName.trim(),
+          tax_id: values.taxId.trim(),
+          business_registry_number: values.businessRegistryNumber.trim(),
+          license_number: values.businessRegistryNumber.trim(),
+          address: values.companyAddress.trim(),
+          verification_status: 'pending',
+          is_verified: false,
+        });
+
+      if (dealerError) {
+        console.error("Dealer profile creation error:", dealerError);
+        // Cleanup the auth user if dealer profile creation fails
+        await supabase.auth.signOut();
+        setRegistrationStep(1);
+        setAuthError("Failed to create dealer profile. Please try again.");
+        toast({
+          title: "Profile Creation Failed",
+          description: dealerError.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setRegistrationStep(3);
+      toast({
+        title: "Registration Successful",
+        description: "Please check your email to verify your account.",
+        variant: "default",
+      });
+      form.reset();
       
+    } catch (error) {
+      console.error("Registration error:", error);
+      setRegistrationStep(1);
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
       setAuthError(errorMessage);
       toast({
         title: "Registration Failed",
         description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
