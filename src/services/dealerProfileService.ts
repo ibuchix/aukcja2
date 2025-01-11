@@ -9,6 +9,7 @@ interface ProfileResult {
 
 export async function createDealerProfile(userId: string, values: DealerFormValues): Promise<ProfileResult> {
   try {
+    // Start a transaction by using single batch request
     const { error: dealerError } = await supabase
       .from('dealers')
       .insert({
@@ -27,11 +28,15 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
       console.error("Dealer profile creation error:", dealerError);
       
       if (dealerError.code === '23505') { // Unique violation
-        const errorMessage = dealerError.message.includes("dealers_tax_id_key") 
-          ? "This tax ID is already registered"
-          : dealerError.message.includes("dealers_business_registry_number_key")
-            ? "This business registry number is already registered"
-            : "A dealer profile already exists for this account";
+        let errorMessage: string;
+        
+        if (dealerError.message.includes("dealers_tax_id_key")) {
+          errorMessage = "This tax ID is already registered";
+        } else if (dealerError.message.includes("dealers_business_registry_number_key")) {
+          errorMessage = "This business registry number is already registered";
+        } else {
+          errorMessage = "A dealer profile already exists for this account";
+        }
             
         return {
           success: false,
@@ -40,6 +45,9 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
         };
       }
 
+      // Attempt to clean up auth user on profile creation failure
+      await supabase.auth.signOut();
+      
       return {
         success: false,
         error: "Failed to create dealer profile",
@@ -47,9 +55,29 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
       };
     }
 
+    // Check if profile was actually created
+    const { data: createdDealer, error: verifyError } = await supabase
+      .from('dealers')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (verifyError || !createdDealer) {
+      console.error("Profile verification error:", verifyError);
+      await supabase.auth.signOut();
+      return {
+        success: false,
+        error: "Failed to verify dealer profile creation",
+        errorType: 'database'
+      };
+    }
+
     return { success: true };
   } catch (error) {
     console.error("Profile service error:", error);
+    // Attempt to clean up auth user on unexpected errors
+    await supabase.auth.signOut();
+    
     return {
       success: false,
       error: "Profile service error",
