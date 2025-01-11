@@ -34,9 +34,12 @@ export function useSignupDealer() {
     try {
       console.log("Starting dealer registration process");
       
-      // Check for existing email before attempting registration
-      const emailExists = await withTimeout(checkEmailExists(values.email.trim()));
-      if (emailExists) {
+      // Check for existing email using auth function
+      const { data: exists } = await supabase.rpc('check_email_exists', {
+        email_to_check: values.email.trim()
+      });
+
+      if (exists) {
         return {
           success: false,
           error: "This email is already registered. Please try logging in or use a different email address.",
