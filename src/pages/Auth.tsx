@@ -1,11 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { DealerSignupForm } from "@/components/auth/DealerSignupForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DealerLoginForm } from "@/components/auth/DealerLoginForm";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"register" | "login">("register");
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -36,13 +39,24 @@ const Auth = () => {
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           <Card>
             <CardHeader>
-              <CardTitle className="font-oswald text-[#DC143C]">Dealer Registration</CardTitle>
+              <CardTitle className="font-oswald text-[#DC143C]">Dealer Portal</CardTitle>
               <CardDescription className="font-kanit">
-                Register your dealership to start bidding on vehicles
+                Register or login to your dealer account
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <DealerSignupForm />
+              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "register" | "login")}>
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="register">Register</TabsTrigger>
+                  <TabsTrigger value="login">Login</TabsTrigger>
+                </TabsList>
+                <TabsContent value="register">
+                  <DealerSignupForm />
+                </TabsContent>
+                <TabsContent value="login">
+                  <DealerLoginForm />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </div>
