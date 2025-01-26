@@ -170,6 +170,10 @@ export type Database = {
         Row: {
           additional_photos: string[] | null
           address: string | null
+          auction_end_time: string | null
+          auction_start_time: string | null
+          auction_status: string | null
+          capacity: number | null
           created_at: string | null
           description: string | null
           features: Json | null
@@ -180,6 +184,7 @@ export type Database = {
           has_tool_pack: boolean | null
           id: string
           images: string[] | null
+          is_auction: boolean | null
           is_damaged: boolean | null
           is_draft: boolean | null
           is_registered_in_poland: boolean | null
@@ -187,6 +192,7 @@ export type Database = {
           last_saved: string | null
           make: string | null
           mileage: number
+          minimum_bid_increment: number | null
           mobile_number: string | null
           model: string | null
           name: string | null
@@ -194,6 +200,7 @@ export type Database = {
           price: number
           registration_number: string | null
           required_photos: Json | null
+          reserve_price: number | null
           seat_material: string | null
           seller_id: string
           seller_notes: string | null
@@ -204,7 +211,9 @@ export type Database = {
           status: string | null
           thumbnails: Json | null
           title: string
-          transmission: string | null
+          transmission:
+            | Database["public"]["Enums"]["car_transmission_type"]
+            | null
           updated_at: string | null
           valuation_data: Json | null
           vin: string
@@ -213,6 +222,10 @@ export type Database = {
         Insert: {
           additional_photos?: string[] | null
           address?: string | null
+          auction_end_time?: string | null
+          auction_start_time?: string | null
+          auction_status?: string | null
+          capacity?: number | null
           created_at?: string | null
           description?: string | null
           features?: Json | null
@@ -223,6 +236,7 @@ export type Database = {
           has_tool_pack?: boolean | null
           id?: string
           images?: string[] | null
+          is_auction?: boolean | null
           is_damaged?: boolean | null
           is_draft?: boolean | null
           is_registered_in_poland?: boolean | null
@@ -230,6 +244,7 @@ export type Database = {
           last_saved?: string | null
           make?: string | null
           mileage: number
+          minimum_bid_increment?: number | null
           mobile_number?: string | null
           model?: string | null
           name?: string | null
@@ -237,6 +252,7 @@ export type Database = {
           price: number
           registration_number?: string | null
           required_photos?: Json | null
+          reserve_price?: number | null
           seat_material?: string | null
           seller_id: string
           seller_notes?: string | null
@@ -247,7 +263,9 @@ export type Database = {
           status?: string | null
           thumbnails?: Json | null
           title: string
-          transmission?: string | null
+          transmission?:
+            | Database["public"]["Enums"]["car_transmission_type"]
+            | null
           updated_at?: string | null
           valuation_data?: Json | null
           vin: string
@@ -256,6 +274,10 @@ export type Database = {
         Update: {
           additional_photos?: string[] | null
           address?: string | null
+          auction_end_time?: string | null
+          auction_start_time?: string | null
+          auction_status?: string | null
+          capacity?: number | null
           created_at?: string | null
           description?: string | null
           features?: Json | null
@@ -266,6 +288,7 @@ export type Database = {
           has_tool_pack?: boolean | null
           id?: string
           images?: string[] | null
+          is_auction?: boolean | null
           is_damaged?: boolean | null
           is_draft?: boolean | null
           is_registered_in_poland?: boolean | null
@@ -273,6 +296,7 @@ export type Database = {
           last_saved?: string | null
           make?: string | null
           mileage?: number
+          minimum_bid_increment?: number | null
           mobile_number?: string | null
           model?: string | null
           name?: string | null
@@ -280,6 +304,7 @@ export type Database = {
           price?: number
           registration_number?: string | null
           required_photos?: Json | null
+          reserve_price?: number | null
           seat_material?: string | null
           seller_id?: string
           seller_notes?: string | null
@@ -290,7 +315,9 @@ export type Database = {
           status?: string | null
           thumbnails?: Json | null
           title?: string
-          transmission?: string | null
+          transmission?:
+            | Database["public"]["Enums"]["car_transmission_type"]
+            | null
           updated_at?: string | null
           valuation_data?: Json | null
           vin?: string
@@ -359,6 +386,150 @@ export type Database = {
           },
         ]
       }
+      manual_valuations: {
+        Row: {
+          accident_history: boolean | null
+          additional_photos: string[] | null
+          address: string | null
+          color: string | null
+          condition_rating: number
+          contact_email: string
+          contact_phone: string | null
+          created_at: string | null
+          engine_capacity: number | null
+          features: Json | null
+          finance_amount: number | null
+          finance_document_url: string | null
+          fuel_type: string | null
+          has_documentation: boolean | null
+          has_private_plate: boolean | null
+          has_tool_pack: boolean | null
+          id: string
+          interior_material: string | null
+          is_damaged: boolean | null
+          is_registered_in_poland: boolean | null
+          is_selling_on_behalf: boolean | null
+          last_service_date: string | null
+          make: string
+          mileage: number
+          mobile_number: string | null
+          model: string
+          modifications: string | null
+          name: string | null
+          notes: string | null
+          number_of_keys: number | null
+          photos: Json | null
+          previous_owners: number | null
+          registration_number: string | null
+          required_photos: Json | null
+          seat_material: string | null
+          seller_notes: string | null
+          service_history_files: string[] | null
+          service_history_status: string | null
+          service_history_type: string | null
+          status: Database["public"]["Enums"]["manual_valuation_status"] | null
+          transmission: string
+          updated_at: string | null
+          user_id: string | null
+          vin: string
+          year: number
+        }
+        Insert: {
+          accident_history?: boolean | null
+          additional_photos?: string[] | null
+          address?: string | null
+          color?: string | null
+          condition_rating: number
+          contact_email: string
+          contact_phone?: string | null
+          created_at?: string | null
+          engine_capacity?: number | null
+          features?: Json | null
+          finance_amount?: number | null
+          finance_document_url?: string | null
+          fuel_type?: string | null
+          has_documentation?: boolean | null
+          has_private_plate?: boolean | null
+          has_tool_pack?: boolean | null
+          id?: string
+          interior_material?: string | null
+          is_damaged?: boolean | null
+          is_registered_in_poland?: boolean | null
+          is_selling_on_behalf?: boolean | null
+          last_service_date?: string | null
+          make: string
+          mileage: number
+          mobile_number?: string | null
+          model: string
+          modifications?: string | null
+          name?: string | null
+          notes?: string | null
+          number_of_keys?: number | null
+          photos?: Json | null
+          previous_owners?: number | null
+          registration_number?: string | null
+          required_photos?: Json | null
+          seat_material?: string | null
+          seller_notes?: string | null
+          service_history_files?: string[] | null
+          service_history_status?: string | null
+          service_history_type?: string | null
+          status?: Database["public"]["Enums"]["manual_valuation_status"] | null
+          transmission: string
+          updated_at?: string | null
+          user_id?: string | null
+          vin: string
+          year: number
+        }
+        Update: {
+          accident_history?: boolean | null
+          additional_photos?: string[] | null
+          address?: string | null
+          color?: string | null
+          condition_rating?: number
+          contact_email?: string
+          contact_phone?: string | null
+          created_at?: string | null
+          engine_capacity?: number | null
+          features?: Json | null
+          finance_amount?: number | null
+          finance_document_url?: string | null
+          fuel_type?: string | null
+          has_documentation?: boolean | null
+          has_private_plate?: boolean | null
+          has_tool_pack?: boolean | null
+          id?: string
+          interior_material?: string | null
+          is_damaged?: boolean | null
+          is_registered_in_poland?: boolean | null
+          is_selling_on_behalf?: boolean | null
+          last_service_date?: string | null
+          make?: string
+          mileage?: number
+          mobile_number?: string | null
+          model?: string
+          modifications?: string | null
+          name?: string | null
+          notes?: string | null
+          number_of_keys?: number | null
+          photos?: Json | null
+          previous_owners?: number | null
+          registration_number?: string | null
+          required_photos?: Json | null
+          seat_material?: string | null
+          seller_notes?: string | null
+          service_history_files?: string[] | null
+          service_history_status?: string | null
+          service_history_type?: string | null
+          status?: Database["public"]["Enums"]["manual_valuation_status"] | null
+          transmission?: string
+          updated_at?: string | null
+          user_id?: string | null
+          vin?: string
+          year?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -382,6 +553,48 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      proxy_bids: {
+        Row: {
+          car_id: string | null
+          created_at: string | null
+          dealer_id: string | null
+          id: string
+          max_bid_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          car_id?: string | null
+          created_at?: string | null
+          dealer_id?: string | null
+          id?: string
+          max_bid_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          car_id?: string | null
+          created_at?: string | null
+          dealer_id?: string | null
+          id?: string
+          max_bid_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proxy_bids_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proxy_bids_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "dealers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vin_search_results: {
         Row: {
@@ -426,6 +639,14 @@ export type Database = {
         }
         Returns: string[]
       }
+      calculate_checksum: {
+        Args: {
+          api_id: string
+          api_secret: string
+          vin: string
+        }
+        Returns: string
+      }
       check_dealer_email_exists: {
         Args: {
           email_to_check: string
@@ -452,6 +673,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      log_vin_search: {
+        Args: {
+          search_vin: string
+          search_result: Json
+          searcher_id?: string
+        }
+        Returns: undefined
+      }
+      update_auction_status: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       update_required_photos: {
         Args: {
           car_id: string
@@ -462,6 +695,10 @@ export type Database = {
       }
     }
     Enums: {
+      car_country_code: "PL" | "DE" | "UK"
+      car_fuel_type: "petrol" | "diesel" | "electric" | "hybrid"
+      car_transmission_type: "manual" | "automatic"
+      manual_valuation_status: "pending" | "processed" | "rejected"
       service_history_type: "full" | "partial" | "none" | "not_due"
     }
     CompositeTypes: {
