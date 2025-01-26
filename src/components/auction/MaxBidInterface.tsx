@@ -3,6 +3,7 @@ import { BidNotificationHandler } from "./BidNotificationHandler";
 import { AuctionTimer } from "./AuctionTimer";
 import { BidInfo } from "./BidInfo";
 import { BidForm } from "./BidForm";
+import { BidHistory } from "./BidHistory";
 
 interface MaxBidInterfaceProps {
   carId: string;
@@ -20,7 +21,7 @@ export const MaxBidInterface = ({
   auctionEndTime,
 }: MaxBidInterfaceProps) => {
   return (
-    <>
+    <div className="space-y-4">
       <BidNotificationHandler 
         carId={carId}
         dealerId={dealerId}
@@ -44,6 +45,7 @@ export const MaxBidInterface = ({
           />
         </CardContent>
       </Card>
-    </>
+      <BidHistory carId={carId} />
+    </div>
   );
 };
