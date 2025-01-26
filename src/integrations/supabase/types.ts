@@ -687,6 +687,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      close_ended_auctions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       log_vin_search: {
         Args: {
           search_vin: string
