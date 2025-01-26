@@ -12,13 +12,49 @@ async function checkBusinessRegistryExists(businessRegistryNumber: string): Prom
     .from('dealers')
     .select('business_registry_number')
     .eq('business_registry_number', businessRegistryNumber)
-    .single();
+    .maybeSingle();
   
   return !!data;
 }
 
+async function ensureProfileExists(userId: string): Promise<boolean> {
+  // Check if profile exists
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (!existingProfile) {
+    // Create profile if it doesn't exist
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: userId,
+        role: 'dealer'
+      });
+
+    if (profileError) {
+      console.error("Profile creation error:", profileError);
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export async function createDealerProfile(userId: string, values: DealerFormValues): Promise<ProfileResult> {
   try {
+    // Ensure profile exists first
+    const profileCreated = await ensureProfileExists(userId);
+    if (!profileCreated) {
+      return {
+        success: false,
+        error: "Failed to create user profile. Please try again.",
+        errorType: 'database'
+      };
+    }
+
     // Check if business registry number already exists
     const exists = await checkBusinessRegistryExists(values.businessRegistryNumber.trim());
     if (exists) {
