@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, DollarSign, TrendingUp } from "lucide-react";
+import { BidNotificationHandler } from "./BidNotificationHandler";
 
 interface MaxBidInterfaceProps {
   carId: string;
@@ -50,33 +51,6 @@ export const MaxBidInterface = ({
     return () => clearInterval(timer);
   }, [auctionEndTime]);
 
-  // Subscribe to real-time bid updates
-  useEffect(() => {
-    const channel = supabase
-      .channel('public:bids')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'bids',
-          filter: `car_id=eq.${carId}`,
-        },
-        (payload) => {
-          console.log('New bid:', payload);
-          toast({
-            title: "New Bid Placed",
-            description: `A new bid of $${payload.new.amount} has been placed`,
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [carId, toast]);
-
   const handleSetMaxBid = async () => {
     try {
       const numericMaxBid = parseFloat(maxBid);
@@ -112,41 +86,48 @@ export const MaxBidInterface = ({
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle className="text-heading-sm font-oswald">Place Maximum Bid</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-2 text-subtitle-text">
-          <Clock className="w-4 h-4" />
-          <span>Time Remaining: {timeRemaining}</span>
-        </div>
-        
-        <div className="flex items-center gap-2 text-subtitle-text">
-          <DollarSign className="w-4 h-4" />
-          <span>Current Highest Bid: ${currentHighestBid}</span>
-        </div>
-        
-        <div className="flex items-center gap-2 text-subtitle-text">
-          <TrendingUp className="w-4 h-4" />
-          <span>Minimum Increment: ${minimumIncrement}</span>
-        </div>
+    <>
+      <BidNotificationHandler 
+        carId={carId}
+        dealerId={dealerId}
+        currentBid={currentHighestBid}
+      />
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle className="text-heading-sm font-oswald">Place Maximum Bid</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-2 text-subtitle-text">
+            <Clock className="w-4 h-4" />
+            <span>Time Remaining: {timeRemaining}</span>
+          </div>
+          
+          <div className="flex items-center gap-2 text-subtitle-text">
+            <DollarSign className="w-4 h-4" />
+            <span>Current Highest Bid: ${currentHighestBid}</span>
+          </div>
+          
+          <div className="flex items-center gap-2 text-subtitle-text">
+            <TrendingUp className="w-4 h-4" />
+            <span>Minimum Increment: ${minimumIncrement}</span>
+          </div>
 
-        <div className="flex gap-2">
-          <Input
-            type="number"
-            value={maxBid}
-            onChange={(e) => setMaxBid(e.target.value)}
-            placeholder="Enter your maximum bid"
-            min={currentHighestBid + minimumIncrement}
-            step={minimumIncrement}
-            className="flex-1"
-          />
-          <Button onClick={handleSetMaxBid}>
-            Set Max Bid
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              value={maxBid}
+              onChange={(e) => setMaxBid(e.target.value)}
+              placeholder="Enter your maximum bid"
+              min={currentHighestBid + minimumIncrement}
+              step={minimumIncrement}
+              className="flex-1"
+            />
+            <Button onClick={handleSetMaxBid}>
+              Set Max Bid
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </>
   );
 };
