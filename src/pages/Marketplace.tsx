@@ -10,6 +10,7 @@ import CarDetailsDialog from "@/components/CarDetailsDialog";
 import MarketplaceHero from "@/components/marketplace/MarketplaceHero";
 import VehicleListings from "@/components/marketplace/VehicleListings";
 import TestimonialsSection from "@/components/marketplace/TestimonialsSection";
+import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
 
 type CarRow = Database["public"]["Tables"]["cars"]["Row"];
 
@@ -47,6 +48,24 @@ const Marketplace = () => {
     },
   });
 
+  // Fetch dealer ID for the current user
+  const { data: dealerData } = useQuery({
+    queryKey: ["dealerProfile"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+
+      const { data, error } = await supabase
+        .from("dealers")
+        .select("id")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -74,6 +93,15 @@ const Marketplace = () => {
       <MarketplaceHero />
       <VehicleListings listings={listings} onSelectCar={setSelectedCar} />
       <TestimonialsSection />
+      {selectedCar?.is_auction && dealerData?.id && (
+        <MaxBidInterface
+          carId={selectedCar.id}
+          dealerId={dealerData.id}
+          currentHighestBid={selectedCar.price}
+          minimumIncrement={100}
+          auctionEndTime={selectedCar.auction_end_time}
+        />
+      )}
       <CarDetailsDialog car={selectedCar} onClose={() => setSelectedCar(null)} />
     </div>
   );
