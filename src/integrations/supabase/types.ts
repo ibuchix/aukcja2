@@ -647,6 +647,12 @@ export type Database = {
         }
         Returns: string
       }
+      check_bid_rate_limit: {
+        Args: {
+          dealer_id: string
+        }
+        Returns: boolean
+      }
       check_dealer_email_exists: {
         Args: {
           email_to_check: string
@@ -656,6 +662,14 @@ export type Database = {
       check_email_exists: {
         Args: {
           email_to_check: string
+        }
+        Returns: boolean
+      }
+      check_suspicious_bidding: {
+        Args: {
+          bid_car_id: string
+          bid_dealer_id: string
+          bid_amount: number
         }
         Returns: boolean
       }
