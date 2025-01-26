@@ -6,8 +6,10 @@ import { useToast } from "@/hooks/use-toast";
 import { VerificationBanner } from "@/components/dealer/VerificationBanner";
 import { DealerHeader } from "@/components/dealer/DealerHeader";
 import { QuickActions } from "@/components/dealer/QuickActions";
+import { AuctionManagement } from "@/components/dealer/AuctionManagement";
 
 interface DealerProfile {
+  id: string;
   dealership_name: string;
   license_number: string;
   address: string | null;
@@ -82,7 +84,12 @@ const DealerDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <VerificationBanner verificationStatus={dealerProfile.verification_status} />
         <DealerHeader dealerProfile={dealerProfile} />
-        <QuickActions />
+        <div className="mt-8">
+          <QuickActions />
+        </div>
+        <div className="mt-8">
+          <AuctionManagement dealerId={dealerProfile.id} />
+        </div>
       </div>
     </div>
   );
