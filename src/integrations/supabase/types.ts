@@ -9,6 +9,72 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      alert_history: {
+        Row: {
+          alert_type: string
+          created_at: string | null
+          id: string
+          message: string
+          metric_name: string
+          metric_value: number
+          severity: string
+          threshold_value: number
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string | null
+          id?: string
+          message: string
+          metric_name: string
+          metric_value: number
+          severity: string
+          threshold_value: number
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string | null
+          id?: string
+          message?: string
+          metric_name?: string
+          metric_value?: number
+          severity?: string
+          threshold_value?: number
+        }
+        Relationships: []
+      }
+      alert_thresholds: {
+        Row: {
+          comparison_operator: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          metric_name: string
+          threshold_value: number
+          time_window: number
+          updated_at: string | null
+        }
+        Insert: {
+          comparison_operator: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          metric_name: string
+          threshold_value: number
+          time_window: number
+          updated_at?: string | null
+        }
+        Update: {
+          comparison_operator?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          metric_name?: string
+          threshold_value?: number
+          time_window?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       auction_metrics: {
         Row: {
           auction_id: string | null
@@ -858,6 +924,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_bid_volume_alert: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      check_cache_performance_alert: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       check_dealer_email_exists: {
         Args: {
           email_to_check: string
@@ -870,6 +944,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_error_rate_alert: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       check_suspicious_bidding: {
         Args: {
           bid_car_id: string
@@ -877,6 +955,10 @@ export type Database = {
           bid_amount: number
         }
         Returns: boolean
+      }
+      check_system_performance_alert: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       cleanup_failed_dealer_registration: {
         Args: {
