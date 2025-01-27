@@ -125,63 +125,6 @@ export type Database = {
           },
         ]
       }
-      auction_promotions: {
-        Row: {
-          auction_id: string
-          budget: number | null
-          created_at: string | null
-          end_date: string | null
-          id: string
-          performance_metrics: Json | null
-          promotion_type: string
-          start_date: string | null
-          status: string | null
-          target_audience: Json | null
-          updated_at: string | null
-        }
-        Insert: {
-          auction_id: string
-          budget?: number | null
-          created_at?: string | null
-          end_date?: string | null
-          id?: string
-          performance_metrics?: Json | null
-          promotion_type: string
-          start_date?: string | null
-          status?: string | null
-          target_audience?: Json | null
-          updated_at?: string | null
-        }
-        Update: {
-          auction_id?: string
-          budget?: number | null
-          created_at?: string | null
-          end_date?: string | null
-          id?: string
-          performance_metrics?: Json | null
-          promotion_type?: string
-          start_date?: string | null
-          status?: string | null
-          target_audience?: Json | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "auction_promotions_auction_id_fkey"
-            columns: ["auction_id"]
-            isOneToOne: false
-            referencedRelation: "cars"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_auction"
-            columns: ["auction_id"]
-            isOneToOne: false
-            referencedRelation: "cars"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       auction_results: {
         Row: {
           auction_id: string
