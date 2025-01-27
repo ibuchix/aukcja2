@@ -8,8 +8,9 @@ const corsHeaders = {
 }
 
 const redis = await connect({
-  hostname: "redis.railway.internal",
-  port: 6379,
+  hostname: Deno.env.get("REDISHOST") || "",
+  port: parseInt(Deno.env.get("REDISPORT") || "6379"),
+  password: Deno.env.get("REDISPASSWORD"),
 });
 
 serve(async (req) => {
