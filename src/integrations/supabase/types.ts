@@ -1065,6 +1065,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      process_pending_proxy_bids: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       update_auction_status: {
         Args: Record<PropertyKey, never>
         Returns: undefined
