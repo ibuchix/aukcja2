@@ -1,5 +1,6 @@
 import { MapPin } from "lucide-react";
 import { CarListing } from "@/types/cars";
+import Map from "./Map";
 
 interface LocationProps {
   car: CarListing;
@@ -11,9 +12,10 @@ const Location = ({ car }: LocationProps) => (
       <MapPin className="w-5 h-5" />
       Location
     </h3>
-    <p className="text-subtitle-text">
+    <p className="text-subtitle-text mb-4">
       {car.address || "Location not specified"}
     </p>
+    {car.address && <Map address={car.address} />}
   </div>
 );
 
