@@ -11,21 +11,31 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MetricsSummary } from "./analytics/MetricsSummary";
 import { BidPatternsChart } from "./analytics/BidPatternsChart";
 
-interface AuctionMetrics {
+// Raw database types matching Supabase schema
+type AuctionMetricsRow = {
+  total_bids: number | null;
+  unique_bidders: number | null;
+  final_price: number | null;
+  duration_minutes: number | null;
+  status: string | null;
+};
+
+// Processed metrics for display
+type ProcessedMetrics = {
   total_auctions: number;
   successful_auctions: number;
   average_bids: number;
   average_duration: number;
   total_value: number;
-}
+};
 
-interface BidPattern {
+type BidPattern = {
   hour: number;
   bid_count: number;
-}
+};
 
 export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
-  const { data: metrics, isLoading: metricsLoading } = useQuery<AuctionMetrics>({
+  const { data: metrics, isLoading: metricsLoading } = useQuery({
     queryKey: ["auction-metrics", dealerId] as const,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -35,20 +45,23 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
 
       if (error) throw error;
 
-      const metricsData = data || [];
-      return {
+      const metricsData = (data || []) as AuctionMetricsRow[];
+      
+      const processed: ProcessedMetrics = {
         total_auctions: metricsData.length,
         successful_auctions: metricsData.filter((d) => d.status === "sold").length,
-        average_bids:
-          metricsData.reduce((acc, curr) => acc + (curr.total_bids || 0), 0) / (metricsData.length || 1),
-        average_duration:
-          metricsData.reduce((acc, curr) => acc + (curr.duration_minutes || 0), 0) / (metricsData.length || 1),
+        average_bids: metricsData.length ? 
+          metricsData.reduce((acc, curr) => acc + (curr.total_bids || 0), 0) / metricsData.length : 0,
+        average_duration: metricsData.length ? 
+          metricsData.reduce((acc, curr) => acc + (curr.duration_minutes || 0), 0) / metricsData.length : 0,
         total_value: metricsData.reduce((acc, curr) => acc + (curr.final_price || 0), 0),
       };
+
+      return processed;
     },
   });
 
-  const { data: bidPatterns, isLoading: patternsLoading } = useQuery<BidPattern[]>({
+  const { data: bidPatterns, isLoading: patternsLoading } = useQuery({
     queryKey: ["bid-patterns", dealerId] as const,
     queryFn: async () => {
       const { data, error } = await supabase
