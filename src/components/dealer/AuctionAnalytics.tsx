@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MetricsSummary } from "./analytics/MetricsSummary";
 import { BidPatternsChart } from "./analytics/BidPatternsChart";
 
-// Simplified type for auction metrics response
 type MetricsResponse = {
   total_bids: number | null;
   unique_bidders: number | null;
@@ -21,8 +20,8 @@ type MetricsResponse = {
 };
 
 export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
-  const { data: metrics, isLoading: metricsLoading } = useQuery({
-    queryKey: ["auction-metrics", dealerId] as const,
+  const { data: metrics } = useQuery({
+    queryKey: ["auction-metrics", dealerId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("auction_metrics")
@@ -45,8 +44,8 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
     },
   });
 
-  const { data: bidPatterns, isLoading: patternsLoading } = useQuery({
-    queryKey: ["bid-patterns", dealerId] as const,
+  const { data: bidPatterns } = useQuery({
+    queryKey: ["bid-patterns", dealerId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bids")
@@ -56,7 +55,7 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
       if (error) throw error;
 
       const hourlyDistribution: Record<number, number> = {};
-      data?.forEach(bid => {
+      (data || []).forEach(bid => {
         const hour = new Date(bid.created_at || "").getHours();
         hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1;
       });
@@ -67,10 +66,6 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
       }));
     },
   });
-
-  if (metricsLoading || patternsLoading) {
-    return <div>Loading analytics...</div>;
-  }
 
   return (
     <Card>
