@@ -33,12 +33,7 @@ type BidPattern = {
 };
 
 export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
-  const { data: metrics, isLoading: metricsLoading } = useQuery<
-    AuctionMetrics,
-    Error,
-    AuctionMetrics,
-    [string, string]
-  >({
+  const metricsQuery = useQuery({
     queryKey: ["auction-metrics", dealerId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -49,23 +44,19 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
       if (error) throw error;
 
       const metricsData = data as AuctionMetricsData[];
-      
-      return {
+      const metrics: AuctionMetrics = {
         total_auctions: metricsData.length,
         successful_auctions: metricsData.filter(d => d.status === 'sold').length,
         average_bids: metricsData.reduce((acc, curr) => acc + (curr.total_bids || 0), 0) / metricsData.length,
         average_duration: metricsData.reduce((acc, curr) => acc + (curr.duration_minutes || 0), 0) / metricsData.length,
         total_value: metricsData.reduce((acc, curr) => acc + (curr.final_price || 0), 0),
       };
+      
+      return metrics;
     },
   });
 
-  const { data: bidPatterns, isLoading: patternsLoading } = useQuery<
-    BidPattern[],
-    Error,
-    BidPattern[],
-    [string, string]
-  >({
+  const patternsQuery = useQuery({
     queryKey: ["bid-patterns", dealerId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -76,19 +67,21 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
       if (error) throw error;
 
       const hourlyDistribution: Record<number, number> = {};
-      data.forEach((bid) => {
+      data.forEach(bid => {
         const hour = new Date(bid.created_at).getHours();
         hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1;
       });
 
-      return Object.entries(hourlyDistribution).map(([hour, count]) => ({
+      const patterns: BidPattern[] = Object.entries(hourlyDistribution).map(([hour, count]) => ({
         hour: parseInt(hour),
         bid_count: count,
       }));
+      
+      return patterns;
     },
   });
 
-  if (metricsLoading || patternsLoading) {
+  if (metricsQuery.isLoading || patternsQuery.isLoading) {
     return <div>Loading analytics...</div>;
   }
 
@@ -108,11 +101,11 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
           </TabsList>
           
           <TabsContent value="summary" className="space-y-4">
-            <MetricsSummary metrics={metrics!} />
+            <MetricsSummary metrics={metricsQuery.data!} />
           </TabsContent>
           
           <TabsContent value="patterns">
-            <BidPatternsChart data={bidPatterns || []} />
+            <BidPatternsChart data={patternsQuery.data || []} />
           </TabsContent>
         </Tabs>
       </CardContent>
