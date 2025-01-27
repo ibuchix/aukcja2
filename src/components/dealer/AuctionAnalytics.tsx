@@ -10,32 +10,26 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MetricsSummary } from "./analytics/MetricsSummary";
 import { BidPatternsChart } from "./analytics/BidPatternsChart";
+import type { Database } from "@/integrations/supabase/types";
 
-// Raw database types matching Supabase schema
-type AuctionMetricsRow = {
-  total_bids: number | null;
-  unique_bidders: number | null;
-  final_price: number | null;
-  duration_minutes: number | null;
-  status: string | null;
-};
+type AuctionMetricsRow = Database["public"]["Tables"]["auction_metrics"]["Row"];
+type BidsRow = Database["public"]["Tables"]["bids"]["Row"];
 
-// Processed metrics for display
-type ProcessedMetrics = {
+interface ProcessedMetrics {
   total_auctions: number;
   successful_auctions: number;
   average_bids: number;
   average_duration: number;
   total_value: number;
-};
+}
 
-type BidPattern = {
+interface BidPattern {
   hour: number;
   bid_count: number;
-};
+}
 
 export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
-  const { data: metrics, isLoading: metricsLoading } = useQuery({
+  const { data: metrics, isLoading: metricsLoading } = useQuery<ProcessedMetrics>({
     queryKey: ["auction-metrics", dealerId] as const,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -47,7 +41,7 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
 
       const metricsData = (data || []) as AuctionMetricsRow[];
       
-      const processed: ProcessedMetrics = {
+      return {
         total_auctions: metricsData.length,
         successful_auctions: metricsData.filter((d) => d.status === "sold").length,
         average_bids: metricsData.length ? 
@@ -56,12 +50,10 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
           metricsData.reduce((acc, curr) => acc + (curr.duration_minutes || 0), 0) / metricsData.length : 0,
         total_value: metricsData.reduce((acc, curr) => acc + (curr.final_price || 0), 0),
       };
-
-      return processed;
     },
   });
 
-  const { data: bidPatterns, isLoading: patternsLoading } = useQuery({
+  const { data: bidPatterns, isLoading: patternsLoading } = useQuery<BidPattern[]>({
     queryKey: ["bid-patterns", dealerId] as const,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -72,8 +64,8 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
       if (error) throw error;
 
       const hourlyDistribution: Record<number, number> = {};
-      (data || []).forEach((bid) => {
-        const hour = new Date(bid.created_at).getHours();
+      (data || []).forEach((bid: BidsRow) => {
+        const hour = new Date(bid.created_at || "").getHours();
         hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1;
       });
 
