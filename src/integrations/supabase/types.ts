@@ -9,6 +9,97 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      auction_metrics: {
+        Row: {
+          auction_id: string | null
+          created_at: string | null
+          duration_minutes: number | null
+          end_time: string | null
+          final_price: number | null
+          id: string
+          reserve_price: number | null
+          start_time: string | null
+          status: string | null
+          total_bids: number | null
+          unique_bidders: number | null
+        }
+        Insert: {
+          auction_id?: string | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          end_time?: string | null
+          final_price?: number | null
+          id?: string
+          reserve_price?: number | null
+          start_time?: string | null
+          status?: string | null
+          total_bids?: number | null
+          unique_bidders?: number | null
+        }
+        Update: {
+          auction_id?: string | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          end_time?: string | null
+          final_price?: number | null
+          id?: string
+          reserve_price?: number | null
+          start_time?: string | null
+          status?: string | null
+          total_bids?: number | null
+          unique_bidders?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_metrics_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bid_metrics: {
+        Row: {
+          bid_id: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          processing_time_ms: number | null
+          proxy_processing_time_ms: number | null
+          success: boolean | null
+          validation_time_ms: number | null
+        }
+        Insert: {
+          bid_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          processing_time_ms?: number | null
+          proxy_processing_time_ms?: number | null
+          success?: boolean | null
+          validation_time_ms?: number | null
+        }
+        Update: {
+          bid_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          processing_time_ms?: number | null
+          proxy_processing_time_ms?: number | null
+          success?: boolean | null
+          validation_time_ms?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bid_metrics_bid_id_fkey"
+            columns: ["bid_id"]
+            isOneToOne: false
+            referencedRelation: "bids"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bids: {
         Row: {
           amount: number
@@ -674,6 +765,39 @@ export type Database = {
           requests_limit?: number
           time_window?: number
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      system_metrics: {
+        Row: {
+          active_connections: number | null
+          avg_query_time_ms: number | null
+          cache_hit_ratio: number | null
+          cpu_usage: number | null
+          id: string
+          memory_usage: number | null
+          timestamp: string | null
+          total_queries: number | null
+        }
+        Insert: {
+          active_connections?: number | null
+          avg_query_time_ms?: number | null
+          cache_hit_ratio?: number | null
+          cpu_usage?: number | null
+          id?: string
+          memory_usage?: number | null
+          timestamp?: string | null
+          total_queries?: number | null
+        }
+        Update: {
+          active_connections?: number | null
+          avg_query_time_ms?: number | null
+          cache_hit_ratio?: number | null
+          cpu_usage?: number | null
+          id?: string
+          memory_usage?: number | null
+          timestamp?: string | null
+          total_queries?: number | null
         }
         Relationships: []
       }
