@@ -19,6 +19,11 @@ type AuctionMetrics = {
   total_value: number;
 };
 
+type BidPattern = {
+  hour: number;
+  bid_count: number;
+};
+
 export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
   const { data: metrics, isLoading: metricsLoading } = useQuery({
     queryKey: ["auction-metrics", dealerId],
