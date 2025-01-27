@@ -1,54 +1,98 @@
-import { useSession } from "@supabase/auth-helpers-react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { VerificationBanner } from "@/components/dealer/VerificationBanner";
 import { DealerHeader } from "@/components/dealer/DealerHeader";
 import { QuickActions } from "@/components/dealer/QuickActions";
-import { AuctionAnalytics } from "@/components/dealer/AuctionAnalytics";
-import { VerificationBanner } from "@/components/dealer/VerificationBanner";
+import { AuctionManagement } from "@/components/dealer/AuctionManagement";
 
-interface DealerData {
+interface DealerProfile {
+  id: string;
   dealership_name: string;
-  address: string | null;
   license_number: string;
+  address: string | null;
   verification_status: string;
 }
 
-const Dashboard = () => {
-  const session = useSession();
+const DealerDashboard = () => {
+  const [loading, setLoading] = useState(true);
+  const [dealerProfile, setDealerProfile] = useState<DealerProfile | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const { data: dealerData, isLoading } = useQuery({
-    queryKey: ["dealer-profile", session?.user?.id] as const,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("dealers")
-        .select("dealership_name, address, license_number, verification_status")
-        .eq("user_id", session?.user?.id)
-        .single();
+  useEffect(() => {
+    const checkAuthAndProfile = async () => {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-      if (error) throw error;
-      return data as DealerData;
-    },
-    enabled: !!session?.user?.id,
-  });
+      if (sessionError) {
+        console.error('Error fetching session:', sessionError);
+        navigate('/auth');
+        return;
+      }
 
-  if (!session?.user) {
-    return null;
-  }
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
 
-  if (isLoading) {
-    return <div>Loading...</div>;
+      const { data: dealerData, error: dealerError } = await supabase
+        .from('dealers')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (dealerError) {
+        console.error('Error fetching dealer profile:', dealerError);
+        navigate('/auth');
+        return;
+      }
+
+      if (!dealerData) {
+        console.error('No dealer profile found');
+        navigate('/auth');
+        return;
+      }
+
+      setDealerProfile(dealerData);
+      setLoading(false);
+
+      if (dealerData.verification_status === 'pending') {
+        toast({
+          title: "Account Pending Verification",
+          description: "Your account is currently under review. You'll be notified once verified.",
+          variant: "default",
+        });
+      }
+    };
+
+    checkAuthAndProfile();
+  }, [navigate, toast]);
+
+  if (loading || !dealerProfile) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <VerificationBanner verificationStatus={dealerData?.verification_status || 'pending'} />
-      <DealerHeader dealerProfile={dealerData!} />
-      <QuickActions />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <AuctionAnalytics dealerId={session.user.id} />
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <VerificationBanner verificationStatus={dealerProfile.verification_status} />
+        <DealerHeader dealerProfile={dealerProfile} />
+        <div className="mt-8">
+          <QuickActions />
+        </div>
+        <div className="mt-8">
+          <AuctionManagement dealerId={dealerProfile.id} />
+        </div>
       </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default DealerDashboard;
