@@ -623,6 +623,33 @@ export type Database = {
           },
         ]
       }
+      query_metrics: {
+        Row: {
+          execution_time: unknown | null
+          id: string
+          query_hash: string
+          query_text: string
+          rows_affected: number | null
+          timestamp: string | null
+        }
+        Insert: {
+          execution_time?: unknown | null
+          id?: string
+          query_hash: string
+          query_text: string
+          rows_affected?: number | null
+          timestamp?: string | null
+        }
+        Update: {
+          execution_time?: unknown | null
+          id?: string
+          query_hash?: string
+          query_text?: string
+          rows_affected?: number | null
+          timestamp?: string | null
+        }
+        Relationships: []
+      }
       rate_limits: {
         Row: {
           created_at: string | null
