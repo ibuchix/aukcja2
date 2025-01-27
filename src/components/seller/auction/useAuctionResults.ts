@@ -16,6 +16,9 @@ interface AuctionResult {
     bid_amount: number;
   }[];
   highest_bid_dealer_id: string;
+  auction: {
+    title: string;
+  };
 }
 
 export const useAuctionResults = (sellerId: string) => {
@@ -28,9 +31,9 @@ export const useAuctionResults = (sellerId: string) => {
         .from('auction_results')
         .select(`
           *,
-          auction:cars(title)
+          auction:auction_id(title)
         `)
-        .eq('cars.seller_id', sellerId);
+        .eq('auction:auction_id.seller_id', sellerId);
 
       if (error) {
         toast({
@@ -41,7 +44,7 @@ export const useAuctionResults = (sellerId: string) => {
         throw error;
       }
 
-      return results;
+      return results as AuctionResult[];
     },
   });
 };
