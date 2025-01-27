@@ -36,9 +36,9 @@ interface ProxyBid {
     title: string;
     auction_end_time: string;
   };
-  current_highest_bid?: {
+  current_highest_bid: {
     amount: number;
-  }[];
+  }[] | null;
 }
 
 export const ProxyBidManagement = ({ dealerId }: { dealerId: string }) => {
@@ -65,7 +65,9 @@ export const ProxyBidManagement = ({ dealerId }: { dealerId: string }) => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return proxyBids as ProxyBid[];
+      
+      // Type assertion with proper handling of the response
+      return (proxyBids || []) as unknown as ProxyBid[];
     },
     refetchInterval: 5000, // Refresh every 5 seconds
   });
