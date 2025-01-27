@@ -355,11 +355,15 @@ export type Database = {
           additional_photos: string[] | null
           address: string | null
           auction_end_time: string | null
+          auction_format: string | null
           auction_start_time: string | null
           auction_status: string | null
           capacity: number | null
           created_at: string | null
           description: string | null
+          extension_duration_minutes: number | null
+          extension_trigger_minutes: number | null
+          extensions_used: number | null
           features: Json | null
           finance_amount: number | null
           finance_document_url: string | null
@@ -375,6 +379,7 @@ export type Database = {
           is_selling_on_behalf: boolean | null
           last_saved: string | null
           make: string | null
+          max_extensions_allowed: number | null
           mileage: number
           minimum_bid_increment: number | null
           mobile_number: string | null
@@ -407,11 +412,15 @@ export type Database = {
           additional_photos?: string[] | null
           address?: string | null
           auction_end_time?: string | null
+          auction_format?: string | null
           auction_start_time?: string | null
           auction_status?: string | null
           capacity?: number | null
           created_at?: string | null
           description?: string | null
+          extension_duration_minutes?: number | null
+          extension_trigger_minutes?: number | null
+          extensions_used?: number | null
           features?: Json | null
           finance_amount?: number | null
           finance_document_url?: string | null
@@ -427,6 +436,7 @@ export type Database = {
           is_selling_on_behalf?: boolean | null
           last_saved?: string | null
           make?: string | null
+          max_extensions_allowed?: number | null
           mileage: number
           minimum_bid_increment?: number | null
           mobile_number?: string | null
@@ -459,11 +469,15 @@ export type Database = {
           additional_photos?: string[] | null
           address?: string | null
           auction_end_time?: string | null
+          auction_format?: string | null
           auction_start_time?: string | null
           auction_status?: string | null
           capacity?: number | null
           created_at?: string | null
           description?: string | null
+          extension_duration_minutes?: number | null
+          extension_trigger_minutes?: number | null
+          extensions_used?: number | null
           features?: Json | null
           finance_amount?: number | null
           finance_document_url?: string | null
@@ -479,6 +493,7 @@ export type Database = {
           is_selling_on_behalf?: boolean | null
           last_saved?: string | null
           make?: string | null
+          max_extensions_allowed?: number | null
           mileage?: number
           minimum_bid_increment?: number | null
           mobile_number?: string | null
