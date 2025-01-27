@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { 
   BarChart, 
   Bar, 
@@ -19,7 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-interface AuctionMetrics {
+type AuctionMetrics = {
   total_auctions: number;
   successful_auctions: number;
   average_bids: number;
@@ -27,7 +26,7 @@ interface AuctionMetrics {
   total_value: number;
 }
 
-interface BidPattern {
+type BidPattern = {
   hour: number;
   bid_count: number;
 }
