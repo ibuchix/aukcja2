@@ -623,6 +623,33 @@ export type Database = {
           },
         ]
       }
+      rate_limits: {
+        Row: {
+          created_at: string | null
+          endpoint_name: string
+          id: string
+          requests_limit: number
+          time_window: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          endpoint_name: string
+          id?: string
+          requests_limit: number
+          time_window: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          endpoint_name?: string
+          id?: string
+          requests_limit?: number
+          time_window?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       vin_search_results: {
         Row: {
           created_at: string | null
