@@ -5,6 +5,7 @@ import Hero from "@/components/Hero";
 import Services from "@/components/Services";
 import Footer from "@/components/Footer";
 import { SellerAuctionManagement } from "@/components/seller/AuctionManagement";
+import { AuctionWonNotification } from "@/components/seller/notifications/AuctionWonNotification";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -35,6 +36,7 @@ const Index = () => {
       <Hero />
       {userId && userRole === 'seller' && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <AuctionWonNotification sellerId={userId} />
           <SellerAuctionManagement sellerId={userId} />
         </div>
       )}
