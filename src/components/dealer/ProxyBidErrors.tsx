@@ -48,7 +48,16 @@ export const ProxyBidErrors = ({ dealerId }: { dealerId: string }) => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as ProxyBidError[];
+      
+      // Transform the data to ensure metadata matches our expected type
+      return (data as any[]).map(error => ({
+        ...error,
+        metadata: {
+          auction_status: error.metadata?.auction_status || "unknown",
+          current_highest_bid: Number(error.metadata?.current_highest_bid) || 0,
+          attempted_amount: error.metadata?.attempted_amount ? Number(error.metadata.attempted_amount) : undefined
+        }
+      })) as ProxyBidError[];
     },
   });
 

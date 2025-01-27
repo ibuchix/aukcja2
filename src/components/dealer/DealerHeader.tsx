@@ -1,14 +1,36 @@
+import { useQuery } from "@tanstack/react-query";
 import { MapPin, Phone } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-interface DealerHeaderProps {
-  dealerProfile: {
-    dealership_name: string;
-    address?: string | null;
-    license_number: string;
-  };
+interface DealerProfile {
+  dealership_name: string;
+  address?: string | null;
+  license_number: string;
 }
 
-export function DealerHeader({ dealerProfile }: DealerHeaderProps) {
+interface DealerHeaderProps {
+  dealerId: string;
+}
+
+export function DealerHeader({ dealerId }: DealerHeaderProps) {
+  const { data: dealerProfile, isLoading } = useQuery({
+    queryKey: ["dealerProfile", dealerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("dealers")
+        .select("dealership_name, address, license_number")
+        .eq("id", dealerId)
+        .single();
+
+      if (error) throw error;
+      return data as DealerProfile;
+    },
+  });
+
+  if (isLoading || !dealerProfile) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="mb-8">
       <h1 className="text-3xl font-bold mb-2">{dealerProfile.dealership_name}</h1>
