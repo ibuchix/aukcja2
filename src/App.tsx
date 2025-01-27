@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import DealerDashboard from "./pages/dealer/Dashboard";
 import DealerProfile from "./pages/dealer/Profile";
+import DealerBids from "./pages/dealer/Bids";
+import DealerDocuments from "./pages/dealer/Documents";
 import Marketplace from "./pages/Marketplace";
 
 const queryClient = new QueryClient({
@@ -29,8 +31,10 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/dealer/dashboard" element={<DealerDashboard />} />
           <Route path="/dealer/profile" element={<DealerProfile />} />
+          <Route path="/dealer/bids" element={<DealerBids />} />
+          <Route path="/dealer/documents" element={<DealerDocuments />} />
           <Route path="/marketplace" element={<Marketplace />} />
-          <Route path="*" element={<Navigate to="/" replace />} /> {/* Add catch-all route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
