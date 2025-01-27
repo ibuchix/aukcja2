@@ -75,7 +75,7 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
       return Object.entries(hourlyDistribution).map(([hour, count]) => ({
         hour: parseInt(hour),
         bid_count: count,
-      }));
+      })) as BidPattern[];
     },
   });
 
