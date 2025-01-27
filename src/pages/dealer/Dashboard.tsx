@@ -7,6 +7,7 @@ import { QuickActions } from "@/components/dealer/QuickActions";
 import { AuctionManagement } from "@/components/dealer/AuctionManagement";
 import { ProxyBidErrors } from "@/components/dealer/ProxyBidErrors";
 import { VerificationBanner } from "@/components/dealer/VerificationBanner";
+import { DealerGuide } from "@/components/dealer/DealerGuide";
 
 export default function DealerDashboard() {
   const [dealerId, setDealerId] = useState<string | null>(null);
@@ -59,6 +60,7 @@ export default function DealerDashboard() {
           <QuickActions />
           <AuctionManagement dealerId={dealerId} />
           <ProxyBidErrors dealerId={dealerId} />
+          <DealerGuide />
         </div>
       </div>
     </div>
