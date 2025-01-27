@@ -18,77 +18,100 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 )
 
-async function checkRateLimit(userId: string, endpoint: string): Promise<{ allowed: boolean; remaining: number }> {
-  try {
-    // Get rate limit configuration from database
-    const { data: rateLimitConfig, error } = await supabase
-      .from('rate_limits')
-      .select('requests_limit, time_window')
-      .eq('endpoint_name', endpoint)
-      .single();
-
-    if (error || !rateLimitConfig) {
-      console.error('Error fetching rate limit config:', error);
-      return { allowed: true, remaining: 0 }; // Fail open if config not found
-    }
-
-    const key = `ratelimit:${endpoint}:${userId}`;
-    const current = await redis.get(key);
-    const currentCount = current ? parseInt(current) : 0;
-
-    if (currentCount >= rateLimitConfig.requests_limit) {
-      return { allowed: false, remaining: 0 };
-    }
-
-    // Increment counter and set expiry
-    await redis.incr(key);
-    await redis.expire(key, rateLimitConfig.time_window);
-
-    return {
-      allowed: true,
-      remaining: rateLimitConfig.requests_limit - (currentCount + 1)
-    };
-  } catch (error) {
-    console.error('Rate limiting error:', error);
-    return { allowed: true, remaining: 0 }; // Fail open on errors
-  }
-}
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const { endpoint, userId } = await req.json();
+    const { action, endpoint, userId } = await req.json()
 
-    if (!endpoint || !userId) {
-      throw new Error('Missing required parameters');
+    // Handle auction rate limit reset
+    if (action === 'reset_auction_limits') {
+      console.log('Resetting auction rate limits...')
+      
+      // Get all auction-related rate limit keys
+      const auctionKeys = await redis.keys('ratelimit:auction_*')
+      
+      // Delete all auction-related rate limit entries
+      for (const key of auctionKeys) {
+        await redis.del(key)
+      }
+      
+      console.log(`Reset ${auctionKeys.length} auction rate limit entries`)
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Auction rate limits reset successfully' 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    const result = await checkRateLimit(userId, endpoint);
-    
+    // Handle regular rate limiting
+    if (!endpoint || !userId) {
+      throw new Error('Missing required parameters')
+    }
+
+    // Get rate limit configuration from database
+    const { data: rateLimitConfig, error: configError } = await supabase
+      .from('rate_limits')
+      .select('requests_limit, time_window')
+      .eq('endpoint_name', endpoint)
+      .single()
+
+    if (configError) {
+      console.error('Error fetching rate limit config:', configError)
+      throw new Error('Failed to fetch rate limit configuration')
+    }
+
+    const key = `ratelimit:${endpoint}:${userId}`
+    const current = await redis.get(key)
+    const currentCount = current ? parseInt(current) : 0
+
+    if (currentCount >= rateLimitConfig.requests_limit) {
+      return new Response(
+        JSON.stringify({
+          allowed: false,
+          remaining: 0,
+          resetIn: await redis.ttl(key)
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Increment counter and set expiry if not exists
+    await redis.incr(key)
+    await redis.expire(key, rateLimitConfig.time_window)
+
+    // Get remaining requests
+    const remaining = rateLimitConfig.requests_limit - (currentCount + 1)
+
     return new Response(
-      JSON.stringify(result),
-      { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+      JSON.stringify({
+        allowed: true,
+        remaining,
+        resetIn: await redis.ttl(key)
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+
   } catch (error) {
-    console.error('Error in rate-limiter function:', error);
+    console.error('Rate limiting error:', error)
+    
+    // Fail open - allow the request but log the error
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({
+        allowed: true,
+        remaining: 999,
+        error: error.message
+      }),
       { 
-        status: 400,
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
-    );
+    )
   }
-});
+})
