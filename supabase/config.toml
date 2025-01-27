@@ -1,15 +1,4 @@
 project_id = "sdvakfhmoaoucmhbhwvy"
 
-[api]
-enabled = true
-url = "https://sdvakfhmoaoucmhbhwvy.supabase.co"
-
-[db]
-enabled = true
-port = 5432
-
-[realtime]
-enabled = true
-
 [functions.auction-cache]
 verify_jwt = true
