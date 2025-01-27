@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MetricsSummary } from "./analytics/MetricsSummary";
 import { BidPatternsChart } from "./analytics/BidPatternsChart";
 
-// Simplified type definitions
+// Simplified type for auction metrics response
 type MetricsResponse = {
   total_bids: number | null;
   unique_bidders: number | null;
@@ -31,11 +31,11 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
 
       if (error) throw error;
 
-      const metricsData = (data || []) as MetricsResponse[];
+      const metricsData = data as MetricsResponse[];
       
       return {
         total_auctions: metricsData.length,
-        successful_auctions: metricsData.filter((d) => d.status === "sold").length,
+        successful_auctions: metricsData.filter(d => d.status === "sold").length,
         average_bids: metricsData.length ? 
           metricsData.reduce((acc, curr) => acc + (curr.total_bids || 0), 0) / metricsData.length : 0,
         average_duration: metricsData.length ? 
@@ -56,7 +56,7 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
       if (error) throw error;
 
       const hourlyDistribution: Record<number, number> = {};
-      (data || []).forEach((bid) => {
+      data?.forEach(bid => {
         const hour = new Date(bid.created_at || "").getHours();
         hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1;
       });
