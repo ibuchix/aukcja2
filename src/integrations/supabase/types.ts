@@ -238,6 +238,8 @@ export type Database = {
           dealer_id: string
           id: string
           status: string | null
+          withdrawal_reason: string | null
+          withdrawn_at: string | null
         }
         Insert: {
           amount: number
@@ -246,6 +248,8 @@ export type Database = {
           dealer_id: string
           id?: string
           status?: string | null
+          withdrawal_reason?: string | null
+          withdrawn_at?: string | null
         }
         Update: {
           amount?: number
@@ -254,6 +258,8 @@ export type Database = {
           dealer_id?: string
           id?: string
           status?: string | null
+          withdrawal_reason?: string | null
+          withdrawn_at?: string | null
         }
         Relationships: [
           {
