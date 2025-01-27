@@ -11,6 +11,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MetricsSummary } from "./analytics/MetricsSummary";
 import { BidPatternsChart } from "./analytics/BidPatternsChart";
 
+type AuctionMetricsData = {
+  total_bids: number;
+  unique_bidders: number;
+  final_price: number;
+  duration_minutes: number;
+  status: string;
+};
+
 type AuctionMetrics = {
   total_auctions: number;
   successful_auctions: number;
@@ -30,23 +38,18 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("auction_metrics")
-        .select(`
-          total_bids,
-          unique_bidders,
-          final_price,
-          duration_minutes,
-          status
-        `)
+        .select("total_bids, unique_bidders, final_price, duration_minutes, status")
         .eq("dealer_id", dealerId);
 
       if (error) throw error;
 
+      const metricsData = data as AuctionMetricsData[];
       const summary: AuctionMetrics = {
-        total_auctions: data.length,
-        successful_auctions: data.filter(d => d.status === 'sold').length,
-        average_bids: data.reduce((acc, curr) => acc + (curr.total_bids || 0), 0) / data.length,
-        average_duration: data.reduce((acc, curr) => acc + (curr.duration_minutes || 0), 0) / data.length,
-        total_value: data.reduce((acc, curr) => acc + (curr.final_price || 0), 0),
+        total_auctions: metricsData.length,
+        successful_auctions: metricsData.filter(d => d.status === 'sold').length,
+        average_bids: metricsData.reduce((acc, curr) => acc + (curr.total_bids || 0), 0) / metricsData.length,
+        average_duration: metricsData.reduce((acc, curr) => acc + (curr.duration_minutes || 0), 0) / metricsData.length,
+        total_value: metricsData.reduce((acc, curr) => acc + (curr.final_price || 0), 0),
       };
 
       return summary;
