@@ -125,6 +125,127 @@ export type Database = {
           },
         ]
       }
+      auction_promotions: {
+        Row: {
+          auction_id: string
+          budget: number | null
+          created_at: string | null
+          end_date: string | null
+          id: string
+          performance_metrics: Json | null
+          promotion_type: string
+          start_date: string | null
+          status: string | null
+          target_audience: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          auction_id: string
+          budget?: number | null
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          performance_metrics?: Json | null
+          promotion_type: string
+          start_date?: string | null
+          status?: string | null
+          target_audience?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          auction_id?: string
+          budget?: number | null
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          performance_metrics?: Json | null
+          promotion_type?: string
+          start_date?: string | null
+          status?: string | null
+          target_audience?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_promotions_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_auction"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auction_results: {
+        Row: {
+          auction_id: string
+          bidding_activity_timeline: Json | null
+          created_at: string | null
+          duration_minutes: number | null
+          final_price: number | null
+          highest_bid_dealer_id: string | null
+          id: string
+          reserve_price: number | null
+          start_price: number | null
+          total_bids: number | null
+          unique_bidders: number | null
+        }
+        Insert: {
+          auction_id: string
+          bidding_activity_timeline?: Json | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          final_price?: number | null
+          highest_bid_dealer_id?: string | null
+          id?: string
+          reserve_price?: number | null
+          start_price?: number | null
+          total_bids?: number | null
+          unique_bidders?: number | null
+        }
+        Update: {
+          auction_id?: string
+          bidding_activity_timeline?: Json | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          final_price?: number | null
+          highest_bid_dealer_id?: string | null
+          id?: string
+          reserve_price?: number | null
+          start_price?: number | null
+          total_bids?: number | null
+          unique_bidders?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_results_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auction_results_highest_bid_dealer_id_fkey"
+            columns: ["highest_bid_dealer_id"]
+            isOneToOne: false
+            referencedRelation: "dealers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_auction"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bid_metrics: {
         Row: {
           bid_id: string | null

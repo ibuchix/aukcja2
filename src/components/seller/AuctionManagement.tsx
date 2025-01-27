@@ -9,6 +9,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AuctionTable } from "./auction/AuctionTable";
 import { useAuctions } from "./auction/useAuctions";
+import { AuctionResultsCard } from "./auction/AuctionResultsCard";
+import { AuctionPromotionsCard } from "./auction/AuctionPromotionsCard";
 
 export const SellerAuctionManagement = ({ sellerId }: { sellerId: string }) => {
   const { data: activeAuctions, isLoading: loadingActive } = useAuctions(sellerId, 'active');
@@ -33,12 +35,20 @@ export const SellerAuctionManagement = ({ sellerId }: { sellerId: string }) => {
               Active Auctions
             </TabsTrigger>
             <TabsTrigger value="completed">Completed Auctions</TabsTrigger>
+            <TabsTrigger value="results">Results & Analytics</TabsTrigger>
+            <TabsTrigger value="promotions">Promotions</TabsTrigger>
           </TabsList>
           <TabsContent value="active" className="mt-4">
             <AuctionTable auctions={activeAuctions} isLoading={loadingActive} />
           </TabsContent>
           <TabsContent value="completed" className="mt-4">
             <AuctionTable auctions={completedAuctions} isLoading={loadingCompleted} />
+          </TabsContent>
+          <TabsContent value="results" className="mt-4">
+            <AuctionResultsCard sellerId={sellerId} />
+          </TabsContent>
+          <TabsContent value="promotions" className="mt-4">
+            <AuctionPromotionsCard sellerId={sellerId} />
           </TabsContent>
         </Tabs>
       </CardContent>
