@@ -34,9 +34,9 @@ export const useAuctionResults = (sellerId: string) => {
         .from('auction_results')
         .select(`
           *,
-          auction:auction_id(title)
+          auction:cars!auction_results_auction_id_fkey(title)
         `)
-        .eq('auction:auction_id.seller_id', sellerId);
+        .eq('cars.seller_id', sellerId);
 
       if (error) {
         toast({
@@ -47,15 +47,20 @@ export const useAuctionResults = (sellerId: string) => {
         throw error;
       }
 
-      // Transform the bidding_activity_timeline to ensure it matches our type
-      const transformedResults = results?.map(result => ({
+      if (!results) return [];
+
+      // Transform the results to match our expected type
+      const transformedResults = results.map(result => ({
         ...result,
         bidding_activity_timeline: (result.bidding_activity_timeline as any[] || []).map(
           (activity: any) => ({
             timestamp: activity.timestamp,
             bid_amount: activity.bid_amount
           })
-        )
+        ),
+        auction: {
+          title: result.auction?.title || 'Untitled Auction'
+        }
       }));
 
       return transformedResults as AuctionResult[];
