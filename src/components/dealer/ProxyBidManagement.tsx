@@ -38,7 +38,7 @@ interface ProxyBid {
   };
   current_highest_bid?: {
     amount: number;
-  };
+  }[];
 }
 
 export const ProxyBidManagement = ({ dealerId }: { dealerId: string }) => {
@@ -169,7 +169,8 @@ export const ProxyBidManagement = ({ dealerId }: { dealerId: string }) => {
                     </TooltipProvider>
                   </TableCell>
                 </TableRow>
-              ))}
+              );
+            })}
             {!proxyBids?.length && (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground">
