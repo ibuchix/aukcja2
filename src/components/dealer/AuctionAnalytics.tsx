@@ -10,7 +10,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MetricsSummary } from "./analytics/MetricsSummary";
 import { BidPatternsChart } from "./analytics/BidPatternsChart";
-import type { Database } from "@/integrations/supabase/types";
 
 // Simplified type definitions
 type MetricsResponse = {
@@ -21,23 +20,15 @@ type MetricsResponse = {
   status: string | null;
 };
 
-interface ProcessedMetrics {
-  total_auctions: number;
-  successful_auctions: number;
-  average_bids: number;
-  average_duration: number;
-  total_value: number;
-}
-
 interface BidPattern {
   hour: number;
   bid_count: number;
 }
 
 export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
-  const { data: metrics, isLoading: metricsLoading } = useQuery<ProcessedMetrics>({
+  const { data: metrics, isLoading: metricsLoading } = useQuery({
     queryKey: ["auction-metrics", dealerId] as const,
-    queryFn: async (): Promise<ProcessedMetrics> => {
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("auction_metrics")
         .select("total_bids, unique_bidders, final_price, duration_minutes, status")
@@ -59,9 +50,9 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
     },
   });
 
-  const { data: bidPatterns, isLoading: patternsLoading } = useQuery<BidPattern[]>({
+  const { data: bidPatterns, isLoading: patternsLoading } = useQuery({
     queryKey: ["bid-patterns", dealerId] as const,
-    queryFn: async (): Promise<BidPattern[]> => {
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("bids")
         .select("created_at")
