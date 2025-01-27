@@ -11,16 +11,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MetricsSummary } from "./analytics/MetricsSummary";
 import { BidPatternsChart } from "./analytics/BidPatternsChart";
 
-interface AuctionMetricsData {
-  total_bids: number;
-  unique_bidders: number;
-  final_price: number;
-  duration_minutes: number;
-  status: string;
+interface AuctionMetrics {
+  total_auctions: number;
+  successful_auctions: number;
+  average_bids: number;
+  average_duration: number;
+  total_value: number;
+}
+
+interface BidPattern {
+  hour: number;
+  bid_count: number;
 }
 
 export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
-  const { data: metrics, isLoading: metricsLoading } = useQuery({
+  const { data: metrics, isLoading: metricsLoading } = useQuery<AuctionMetrics>({
     queryKey: ["auction-metrics", dealerId] as const,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -30,20 +35,20 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
 
       if (error) throw error;
 
-      const metricsData = data as AuctionMetricsData[];
+      const metricsData = data || [];
       return {
         total_auctions: metricsData.length,
         successful_auctions: metricsData.filter((d) => d.status === "sold").length,
         average_bids:
-          metricsData.reduce((acc, curr) => acc + (curr.total_bids || 0), 0) / metricsData.length,
+          metricsData.reduce((acc, curr) => acc + (curr.total_bids || 0), 0) / (metricsData.length || 1),
         average_duration:
-          metricsData.reduce((acc, curr) => acc + (curr.duration_minutes || 0), 0) / metricsData.length,
+          metricsData.reduce((acc, curr) => acc + (curr.duration_minutes || 0), 0) / (metricsData.length || 1),
         total_value: metricsData.reduce((acc, curr) => acc + (curr.final_price || 0), 0),
       };
     },
   });
 
-  const { data: bidPatterns, isLoading: patternsLoading } = useQuery({
+  const { data: bidPatterns, isLoading: patternsLoading } = useQuery<BidPattern[]>({
     queryKey: ["bid-patterns", dealerId] as const,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -54,7 +59,7 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
       if (error) throw error;
 
       const hourlyDistribution: Record<number, number> = {};
-      data.forEach((bid) => {
+      (data || []).forEach((bid) => {
         const hour = new Date(bid.created_at).getHours();
         hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1;
       });
