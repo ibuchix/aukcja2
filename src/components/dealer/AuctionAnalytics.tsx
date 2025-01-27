@@ -34,7 +34,7 @@ type BidPattern = {
 
 export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
   const metricsQuery = useQuery({
-    queryKey: ["auction-metrics", dealerId],
+    queryKey: ["auction-metrics", dealerId] as const,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("auction_metrics")
@@ -57,7 +57,7 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
   });
 
   const patternsQuery = useQuery({
-    queryKey: ["bid-patterns", dealerId],
+    queryKey: ["bid-patterns", dealerId] as const,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bids")
