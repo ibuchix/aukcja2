@@ -33,7 +33,12 @@ type BidPattern = {
 };
 
 export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
-  const { data: metrics, isLoading: metricsLoading } = useQuery<AuctionMetrics>({
+  const { data: metrics, isLoading: metricsLoading } = useQuery<
+    AuctionMetrics,
+    Error,
+    AuctionMetrics,
+    [string, string]
+  >({
     queryKey: ["auction-metrics", dealerId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -55,7 +60,12 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
     },
   });
 
-  const { data: bidPatterns, isLoading: patternsLoading } = useQuery<BidPattern[]>({
+  const { data: bidPatterns, isLoading: patternsLoading } = useQuery<
+    BidPattern[],
+    Error,
+    BidPattern[],
+    [string, string]
+  >({
     queryKey: ["bid-patterns", dealerId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -66,7 +76,7 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
       if (error) throw error;
 
       const hourlyDistribution: Record<number, number> = {};
-      data.forEach(bid => {
+      data.forEach((bid) => {
         const hour = new Date(bid.created_at).getHours();
         hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1;
       });
