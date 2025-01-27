@@ -12,8 +12,14 @@ import { MetricsSummary } from "./analytics/MetricsSummary";
 import { BidPatternsChart } from "./analytics/BidPatternsChart";
 import type { Database } from "@/integrations/supabase/types";
 
-type AuctionMetricsRow = Database["public"]["Tables"]["auction_metrics"]["Row"];
-type BidsRow = Database["public"]["Tables"]["bids"]["Row"];
+// Simplified type definitions
+type MetricsResponse = {
+  total_bids: number | null;
+  unique_bidders: number | null;
+  final_price: number | null;
+  duration_minutes: number | null;
+  status: string | null;
+};
 
 interface ProcessedMetrics {
   total_auctions: number;
@@ -31,7 +37,7 @@ interface BidPattern {
 export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
   const { data: metrics, isLoading: metricsLoading } = useQuery<ProcessedMetrics>({
     queryKey: ["auction-metrics", dealerId] as const,
-    queryFn: async () => {
+    queryFn: async (): Promise<ProcessedMetrics> => {
       const { data, error } = await supabase
         .from("auction_metrics")
         .select("total_bids, unique_bidders, final_price, duration_minutes, status")
@@ -39,7 +45,7 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
 
       if (error) throw error;
 
-      const metricsData = (data || []) as AuctionMetricsRow[];
+      const metricsData = (data || []) as MetricsResponse[];
       
       return {
         total_auctions: metricsData.length,
@@ -55,7 +61,7 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
 
   const { data: bidPatterns, isLoading: patternsLoading } = useQuery<BidPattern[]>({
     queryKey: ["bid-patterns", dealerId] as const,
-    queryFn: async () => {
+    queryFn: async (): Promise<BidPattern[]> => {
       const { data, error } = await supabase
         .from("bids")
         .select("created_at")
@@ -64,7 +70,7 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
       if (error) throw error;
 
       const hourlyDistribution: Record<number, number> = {};
-      (data || []).forEach((bid: BidsRow) => {
+      (data || []).forEach((bid) => {
         const hour = new Date(bid.created_at || "").getHours();
         hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1;
       });
