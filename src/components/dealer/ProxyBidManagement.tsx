@@ -35,10 +35,10 @@ interface ProxyBid {
   car: {
     title: string;
     auction_end_time: string;
+    highest_bid: {
+      amount: number;
+    }[] | null;
   };
-  current_highest_bid: {
-    amount: number;
-  }[] | null;
 }
 
 export const ProxyBidManagement = ({ dealerId }: { dealerId: string }) => {
@@ -55,10 +55,10 @@ export const ProxyBidManagement = ({ dealerId }: { dealerId: string }) => {
           updated_at,
           car:cars(
             title,
-            auction_end_time
-          ),
-          current_highest_bid:bids(
-            amount
+            auction_end_time,
+            highest_bid:bids(
+              amount
+            )
           )
         `)
         .eq("dealer_id", dealerId)
@@ -66,14 +66,13 @@ export const ProxyBidManagement = ({ dealerId }: { dealerId: string }) => {
 
       if (error) throw error;
       
-      // Type assertion with proper handling of the response
       return (proxyBids || []) as unknown as ProxyBid[];
     },
     refetchInterval: 5000, // Refresh every 5 seconds
   });
 
   const getBidStatus = (proxyBid: ProxyBid) => {
-    const currentHighest = proxyBid.current_highest_bid?.[0]?.amount || 0;
+    const currentHighest = proxyBid.car.highest_bid?.[0]?.amount || 0;
     if (currentHighest === 0) return "No bids yet";
     if (currentHighest >= proxyBid.max_bid_amount) return "Outbid";
     return "Leading";
@@ -137,7 +136,7 @@ export const ProxyBidManagement = ({ dealerId }: { dealerId: string }) => {
                   <TableCell>{bid.car.title}</TableCell>
                   <TableCell>${bid.max_bid_amount.toLocaleString()}</TableCell>
                   <TableCell>
-                    ${(bid.current_highest_bid?.[0]?.amount || 0).toLocaleString()}
+                    ${(bid.car.highest_bid?.[0]?.amount || 0).toLocaleString()}
                   </TableCell>
                   <TableCell>
                     <Badge className={badgeColor}>{status}</Badge>
