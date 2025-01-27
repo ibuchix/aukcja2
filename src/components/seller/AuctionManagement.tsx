@@ -20,6 +20,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { AuctionFormat } from "@/types/cars";
+import { AuctionTimer } from "@/components/auction/AuctionTimer";
 
 interface Auction {
   id: string;
@@ -83,7 +84,7 @@ export const SellerAuctionManagement = ({ sellerId }: { sellerId: string }) => {
         highest_bid: auction.highest_bid?.[0],
         total_bids: auction.total_bids?.length || 0,
         unique_bidders: new Set(auction.unique_bidders).size,
-        auction_format: auction.auction_format as AuctionFormat // Type assertion here
+        auction_format: auction.auction_format as AuctionFormat
       }));
     },
   });
@@ -128,7 +129,7 @@ export const SellerAuctionManagement = ({ sellerId }: { sellerId: string }) => {
         highest_bid: auction.highest_bid?.[0],
         total_bids: auction.total_bids?.length || 0,
         unique_bidders: new Set(auction.unique_bidders).size,
-        auction_format: auction.auction_format as AuctionFormat // Type assertion here
+        auction_format: auction.auction_format as AuctionFormat
       }));
     },
   });
@@ -147,7 +148,7 @@ export const SellerAuctionManagement = ({ sellerId }: { sellerId: string }) => {
         <TableHeader>
           <TableRow>
             <TableHead>Vehicle</TableHead>
-            <TableHead>End Time</TableHead>
+            <TableHead>Time Remaining</TableHead>
             <TableHead>Format</TableHead>
             <TableHead>Extensions</TableHead>
             <TableHead>Reserve Price</TableHead>
@@ -162,20 +163,34 @@ export const SellerAuctionManagement = ({ sellerId }: { sellerId: string }) => {
             <TableRow key={auction.id}>
               <TableCell>{auction.title}</TableCell>
               <TableCell>
-                {format(new Date(auction.auction_end_time), "MMM d, yyyy HH:mm")}
+                <AuctionTimer 
+                  auctionEndTime={auction.auction_end_time}
+                  auctionFormat={auction.auction_format}
+                  extensionsUsed={auction.extensions_used}
+                  maxExtensionsAllowed={auction.max_extensions_allowed}
+                />
               </TableCell>
               <TableCell className="capitalize">
                 {auction.auction_format}
               </TableCell>
               <TableCell>
-                {auction.auction_format === 'extended' 
-                  ? `${auction.extensions_used}/${auction.max_extensions_allowed}`
-                  : 'N/A'}
+                {auction.auction_format === 'extended' ? (
+                  <div className="space-y-1">
+                    <div>{auction.extensions_used}/{auction.max_extensions_allowed} used</div>
+                    {auction.extensions_used < auction.max_extensions_allowed && (
+                      <div className="text-sm text-muted-foreground">
+                        Extensions available
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  'N/A'
+                )}
               </TableCell>
               <TableCell>${auction.reserve_price.toLocaleString()}</TableCell>
               <TableCell>
                 {auction.highest_bid ? (
-                  <div>
+                  <div className="space-y-1">
                     <div>${auction.highest_bid.amount.toLocaleString()}</div>
                     <div className="text-sm text-muted-foreground">
                       by {auction.highest_bid.dealer.dealership_name}
