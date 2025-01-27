@@ -28,23 +28,37 @@ interface Bid {
 
 export const BidHistory = ({ carId }: BidHistoryProps) => {
   const { data: bids, isLoading } = useQuery({
-    queryKey: ["bids", carId],
+    queryKey: ["auction-bids", carId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("bids")
-        .select(`
-          id,
-          amount,
-          created_at,
-          status,
-          dealer:dealers(dealership_name)
-        `)
-        .eq("car_id", carId)
-        .order("created_at", { ascending: false });
+      try {
+        // Try to get cached auction details
+        const { data, error } = await supabase.functions.invoke('auction-cache', {
+          body: { action: 'getAuctionDetails', carId }
+        });
 
-      if (error) throw error;
-      return data as Bid[];
+        if (error) throw error;
+        return data.bids as Bid[];
+      } catch (error) {
+        console.error('Cache fetch failed, falling back to direct query:', error);
+        
+        // Fallback to direct database query
+        const { data, error: dbError } = await supabase
+          .from("bids")
+          .select(`
+            id,
+            amount,
+            created_at,
+            status,
+            dealer:dealers(dealership_name)
+          `)
+          .eq("car_id", carId)
+          .order("created_at", { ascending: false });
+
+        if (dbError) throw dbError;
+        return data as Bid[];
+      }
     },
+    refetchInterval: 5000, // Refresh every 5 seconds
   });
 
   if (isLoading) {

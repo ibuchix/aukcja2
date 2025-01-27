@@ -87,6 +87,33 @@ export type Database = {
           },
         ]
       }
+      cache_metrics: {
+        Row: {
+          cache_key: string
+          created_at: string | null
+          hit_count: number | null
+          id: string
+          last_accessed: string | null
+          miss_count: number | null
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string | null
+          hit_count?: number | null
+          id?: string
+          last_accessed?: string | null
+          miss_count?: number | null
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string | null
+          hit_count?: number | null
+          id?: string
+          last_accessed?: string | null
+          miss_count?: number | null
+        }
+        Relationships: []
+      }
       car_file_uploads: {
         Row: {
           car_id: string | null
