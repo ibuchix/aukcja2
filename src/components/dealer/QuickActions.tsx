@@ -17,6 +17,7 @@ export function QuickActions() {
       <Button
         variant="outline"
         className="h-32 flex flex-col items-center justify-center space-y-2"
+        onClick={() => navigate('/dealer/bids')}
       >
         <span className="text-lg font-semibold">My Bids</span>
         <span className="text-sm text-subtitle-text">Manage your active bids</span>
@@ -24,10 +25,10 @@ export function QuickActions() {
       <Button
         variant="outline"
         className="h-32 flex flex-col items-center justify-center space-y-2"
-        onClick={() => navigate('/dealer/profile')}
+        onClick={() => navigate('/dealer/documents')}
       >
-        <span className="text-lg font-semibold">Profile Settings</span>
-        <span className="text-sm text-subtitle-text">Update your information</span>
+        <span className="text-lg font-semibold">Manage Documents</span>
+        <span className="text-sm text-subtitle-text">View uploaded files</span>
       </Button>
     </div>
   );
