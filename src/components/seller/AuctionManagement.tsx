@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import { AuctionFormat } from "@/types/cars";
 
 interface Auction {
   id: string;
@@ -26,7 +27,7 @@ interface Auction {
   auction_end_time: string;
   auction_status: string;
   reserve_price: number;
-  auction_format: 'timed' | 'extended';
+  auction_format: AuctionFormat;
   extensions_used: number;
   max_extensions_allowed: number;
   highest_bid?: {
@@ -82,6 +83,7 @@ export const SellerAuctionManagement = ({ sellerId }: { sellerId: string }) => {
         highest_bid: auction.highest_bid?.[0],
         total_bids: auction.total_bids?.length || 0,
         unique_bidders: new Set(auction.unique_bidders).size,
+        auction_format: auction.auction_format as AuctionFormat // Type assertion here
       }));
     },
   });
@@ -126,6 +128,7 @@ export const SellerAuctionManagement = ({ sellerId }: { sellerId: string }) => {
         highest_bid: auction.highest_bid?.[0],
         total_bids: auction.total_bids?.length || 0,
         unique_bidders: new Set(auction.unique_bidders).size,
+        auction_format: auction.auction_format as AuctionFormat // Type assertion here
       }));
     },
   });
