@@ -817,6 +817,53 @@ export type Database = {
         }
         Relationships: []
       }
+      proxy_bid_errors: {
+        Row: {
+          created_at: string | null
+          error_message: string
+          error_type: string
+          id: string
+          metadata: Json | null
+          proxy_bid_id: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          retry_count: number | null
+          stack_trace: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message: string
+          error_type: string
+          id?: string
+          metadata?: Json | null
+          proxy_bid_id?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          retry_count?: number | null
+          stack_trace?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string
+          error_type?: string
+          id?: string
+          metadata?: Json | null
+          proxy_bid_id?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          retry_count?: number | null
+          stack_trace?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proxy_bid_errors_proxy_bid_id_fkey"
+            columns: ["proxy_bid_id"]
+            isOneToOne: false
+            referencedRelation: "proxy_bids"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proxy_bids: {
         Row: {
           car_id: string | null
@@ -1050,6 +1097,10 @@ export type Database = {
         Returns: undefined
       }
       cleanup_orphaned_users: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_resolved_proxy_bid_errors: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
