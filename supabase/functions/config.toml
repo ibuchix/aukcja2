@@ -1,0 +1,7 @@
+project_id = "sdvakfhmoaoucmhbhwvy"
+
+[functions.auction-cache]
+verify_jwt = true
+
+[functions.auction-cache-manager]
+verify_jwt = true
