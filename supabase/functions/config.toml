@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.auction-cache-manager]
 verify_jwt = true
+
+[functions.cache-monitor]
+verify_jwt = true
