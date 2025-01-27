@@ -1,13 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
-} from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Card,
@@ -17,6 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MetricsSummary } from "./analytics/MetricsSummary";
+import { BidPatternsChart } from "./analytics/BidPatternsChart";
 
 type AuctionMetrics = {
   total_auctions: number;
@@ -24,12 +17,7 @@ type AuctionMetrics = {
   average_bids: number;
   average_duration: number;
   total_value: number;
-}
-
-type BidPattern = {
-  hour: number;
-  bid_count: number;
-}
+};
 
 export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
   const { data: metrics, isLoading: metricsLoading } = useQuery({
@@ -103,62 +91,11 @@ export const AuctionAnalytics = ({ dealerId }: { dealerId: string }) => {
           </TabsList>
           
           <TabsContent value="summary" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-heading-sm">Success Rate</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-success">
-                    {metrics ? 
-                      `${((metrics.successful_auctions / metrics.total_auctions) * 100).toFixed(1)}%` 
-                      : '0%'}
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-heading-sm">Average Bids</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold">
-                    {metrics?.average_bids.toFixed(1) || 0}
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-heading-sm">Total Value</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold">
-                    ${metrics?.total_value.toLocaleString() || 0}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+            <MetricsSummary metrics={metrics!} />
           </TabsContent>
           
           <TabsContent value="patterns">
-            <div className="h-[400px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={bidPatterns}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="hour" 
-                    tickFormatter={(hour) => `${hour}:00`}
-                  />
-                  <YAxis />
-                  <Tooltip 
-                    labelFormatter={(hour) => `Time: ${hour}:00`}
-                    formatter={(value) => [`${value} bids`, "Count"]}
-                  />
-                  <Bar dataKey="bid_count" fill="#DC143C" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <BidPatternsChart data={bidPatterns || []} />
           </TabsContent>
         </Tabs>
       </CardContent>
