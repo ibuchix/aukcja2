@@ -26,4 +26,7 @@ export interface CarListing {
   reserve_price?: number;
   minimum_bid_increment?: number;
   auction_status?: string;
+  is_damaged?: boolean;
+  address?: string | null;
+  condition_rating?: number;
 }
