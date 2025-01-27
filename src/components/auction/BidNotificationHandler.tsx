@@ -38,20 +38,11 @@ export const BidNotificationHandler = ({
               variant: "default",
             });
           } else {
-            // If we had the previous highest bid, notify that we've been outbid
-            if (currentBid && dealerId && newBid.amount > currentBid) {
-              toast({
-                title: "You've Been Outbid!",
-                description: `New highest bid is $${newBid.amount.toLocaleString()}`,
-                variant: "destructive",
-              });
-            } else {
-              // General notification for other users
-              toast({
-                title: "New Bid Placed",
-                description: `A new bid of $${newBid.amount.toLocaleString()} has been placed`,
-              });
-            }
+            // General notification for other users
+            toast({
+              title: "New Bid Placed",
+              description: `A new bid of $${newBid.amount.toLocaleString()} has been placed`,
+            });
           }
         }
       )
@@ -101,12 +92,6 @@ export const BidNotificationHandler = ({
               title: "You're Winning!",
               description: `Your bid of $${payload.new.amount.toLocaleString()} is currently winning`,
               variant: "default",
-            });
-          } else if (payload.new.status === 'outbid') {
-            toast({
-              title: "You've Been Outbid",
-              description: "Someone has placed a higher bid",
-              variant: "destructive",
             });
           }
         }
