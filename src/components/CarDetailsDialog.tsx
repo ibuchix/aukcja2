@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { CarListing } from "@/types/cars";
 import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Tools, Camera, AlertTriangle, Info } from "lucide-react";
+import { Star, MapPin, Wrench, Camera, AlertTriangle, Info } from "lucide-react";
 
 interface CarDetailsDialogProps {
   car: CarListing | null;
@@ -87,7 +87,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   const renderServiceHistoryGroup = () => (
     <div className="space-y-4 p-4 bg-accent/50 rounded-lg">
       <h3 className="text-lg font-semibold font-oswald flex items-center gap-2">
-        <Tools className="w-5 h-5" />
+        <Wrench className="w-5 h-5" />
         Service History
       </h3>
       {car.service_history_files && car.service_history_files.length > 0 ? (
