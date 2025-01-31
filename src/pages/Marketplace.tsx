@@ -5,18 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Database } from "@/integrations/supabase/types";
 import { CarListing } from "@/types/cars";
-import { useState } from "react";
-import CarDetailsDialog from "@/components/CarDetailsDialog";
 import MarketplaceHero from "@/components/marketplace/MarketplaceHero";
 import VehicleListings from "@/components/marketplace/VehicleListings";
 import TestimonialsSection from "@/components/marketplace/TestimonialsSection";
-import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
 
 type CarRow = Database["public"]["Tables"]["cars"]["Row"];
 
 const Marketplace = () => {
-  const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
-
   const { data: listings, isLoading } = useQuery({
     queryKey: ["carListings"],
     queryFn: async () => {
@@ -48,24 +43,6 @@ const Marketplace = () => {
     },
   });
 
-  // Fetch dealer ID for the current user
-  const { data: dealerData } = useQuery({
-    queryKey: ["dealerProfile"],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return null;
-
-      const { data, error } = await supabase
-        .from("dealers")
-        .select("id")
-        .eq("user_id", session.user.id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -91,18 +68,8 @@ const Marketplace = () => {
         <Home size={24} />
       </Link>
       <MarketplaceHero />
-      <VehicleListings listings={listings} onSelectCar={setSelectedCar} />
+      <VehicleListings listings={listings} />
       <TestimonialsSection />
-      {selectedCar?.is_auction && dealerData?.id && (
-        <MaxBidInterface
-          carId={selectedCar.id}
-          dealerId={dealerData.id}
-          currentHighestBid={selectedCar.price}
-          minimumIncrement={100}
-          auctionEndTime={selectedCar.auction_end_time}
-        />
-      )}
-      <CarDetailsDialog car={selectedCar} onClose={() => setSelectedCar(null)} />
     </div>
   );
 };
