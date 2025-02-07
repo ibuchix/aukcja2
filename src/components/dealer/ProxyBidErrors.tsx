@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle } from "lucide-react";
+import { format } from "date-fns";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Card,
@@ -16,54 +17,82 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
-interface ProxyBidErrorsProps {
-  dealerId: string;
+interface ProxyBidError {
+  id: string;
+  error_type: string;
+  error_message: string;
+  retry_count: number;
+  resolved: boolean;
+  created_at: string;
+  resolved_at: string | null;
+  metadata: {
+    auction_status: string;
+    current_highest_bid: number;
+    attempted_amount?: number;
+  };
 }
 
-export const ProxyBidErrors = ({ dealerId }: ProxyBidErrorsProps) => {
+export const ProxyBidErrors = ({ dealerId }: { dealerId: string }) => {
   const { data: errors, isLoading } = useQuery({
-    queryKey: ["proxy-bid-errors", dealerId],
+    queryKey: ["proxyBidErrors", dealerId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("proxy_bid_errors")
         .select(`
-          id,
-          error_type,
-          error_message,
-          retry_count,
-          created_at,
-          proxy_bids (
-            car_id,
-            max_bid_amount
-          )
+          *,
+          proxy_bids!inner(dealer_id)
         `)
         .eq("proxy_bids.dealer_id", dealerId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      
+      // Transform the data to ensure metadata matches our expected type
+      return (data as any[]).map(error => ({
+        ...error,
+        metadata: {
+          auction_status: error.metadata?.auction_status || "unknown",
+          current_highest_bid: Number(error.metadata?.current_highest_bid) || 0,
+          attempted_amount: error.metadata?.attempted_amount ? Number(error.metadata.attempted_amount) : undefined
+        }
+      })) as ProxyBidError[];
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   if (isLoading) {
-    return null;
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-center text-subtitle-text">Loading error logs...</p>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (!errors?.length) {
-    return null;
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center gap-2 text-success">
+            <CheckCircle2 className="h-5 w-5" />
+            <p>No proxy bid errors found</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <Card className="mt-8">
+    <Card>
       <CardHeader>
         <CardTitle className="text-heading-sm font-oswald flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-destructive" />
-          Proxy Bid Issues
+          <AlertCircle className="h-5 w-5 text-destructive" />
+          Proxy Bid Error Logs
         </CardTitle>
         <CardDescription>
-          Review and address any issues with your proxy bids
+          Monitor and track any issues with your proxy bids
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -73,7 +102,8 @@ export const ProxyBidErrors = ({ dealerId }: ProxyBidErrorsProps) => {
               <TableHead>Error Type</TableHead>
               <TableHead>Message</TableHead>
               <TableHead>Retries</TableHead>
-              <TableHead>Time</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Timestamp</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -83,7 +113,18 @@ export const ProxyBidErrors = ({ dealerId }: ProxyBidErrorsProps) => {
                 <TableCell>{error.error_message}</TableCell>
                 <TableCell>{error.retry_count}</TableCell>
                 <TableCell>
-                  {new Date(error.created_at).toLocaleString()}
+                  {error.resolved ? (
+                    <Badge variant="outline" className="bg-success/10 text-success">
+                      Resolved
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-destructive/10 text-destructive">
+                      Unresolved
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {format(new Date(error.created_at), "MMM d, yyyy HH:mm")}
                 </TableCell>
               </TableRow>
             ))}

@@ -17,7 +17,7 @@ export const BidNotificationHandler = ({
 
   useEffect(() => {
     // Subscribe to new bids
-    const bidsChannel = supabase
+    const channel = supabase
       .channel('public:bids')
       .on(
         'postgres_changes',
@@ -34,75 +34,32 @@ export const BidNotificationHandler = ({
           if (newBid.dealer_id === dealerId) {
             toast({
               title: "Bid Placed Successfully",
-              description: `Your bid of $${newBid.amount.toLocaleString()} has been placed`,
+              description: `Your bid of $${newBid.amount} has been placed`,
               variant: "default",
             });
           } else {
-            // General notification for other users
-            toast({
-              title: "New Bid Placed",
-              description: `A new bid of $${newBid.amount.toLocaleString()} has been placed`,
-            });
+            // If we had the previous highest bid, notify that we've been outbid
+            if (currentBid && dealerId && newBid.amount > currentBid) {
+              toast({
+                title: "You've Been Outbid!",
+                description: `New highest bid is $${newBid.amount}`,
+                variant: "destructive",
+              });
+            } else {
+              // General notification for other users
+              toast({
+                title: "New Bid Placed",
+                description: `A new bid of $${newBid.amount} has been placed`,
+              });
+            }
           }
         }
       )
       .subscribe();
 
-    // Subscribe to proxy bid updates
-    const proxyBidsChannel = supabase
-      .channel('public:proxy_bids')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'proxy_bids',
-          filter: `dealer_id=eq.${dealerId}`,
-        },
-        (payload) => {
-          if (payload.eventType === 'UPDATE') {
-            toast({
-              title: "Proxy Bid Updated",
-              description: `Your maximum bid has been updated to $${payload.new.max_bid_amount.toLocaleString()}`,
-            });
-          } else if (payload.eventType === 'INSERT') {
-            toast({
-              title: "Proxy Bid Set",
-              description: `Your maximum bid of $${payload.new.max_bid_amount.toLocaleString()} has been set`,
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    // Subscribe to bid status changes
-    const bidStatusChannel = supabase
-      .channel('public:bid_status')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'bids',
-          filter: `dealer_id=eq.${dealerId}`,
-        },
-        (payload) => {
-          if (payload.new.status === 'winning') {
-            toast({
-              title: "You're Winning!",
-              description: `Your bid of $${payload.new.amount.toLocaleString()} is currently winning`,
-              variant: "default",
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    // Cleanup subscriptions
+    // Cleanup subscription
     return () => {
-      supabase.removeChannel(bidsChannel);
-      supabase.removeChannel(proxyBidsChannel);
-      supabase.removeChannel(bidStatusChannel);
+      supabase.removeChannel(channel);
     };
   }, [carId, dealerId, currentBid, toast]);
 
