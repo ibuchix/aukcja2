@@ -817,6 +817,67 @@ export type Database = {
         }
         Relationships: []
       }
+      proxy_bid_audit_logs: {
+        Row: {
+          action_timestamp: string | null
+          action_type: string
+          car_id: string | null
+          created_at: string | null
+          dealer_id: string | null
+          id: string
+          metadata: Json | null
+          new_value: Json | null
+          old_value: Json | null
+          proxy_bid_id: string | null
+        }
+        Insert: {
+          action_timestamp?: string | null
+          action_type: string
+          car_id?: string | null
+          created_at?: string | null
+          dealer_id?: string | null
+          id?: string
+          metadata?: Json | null
+          new_value?: Json | null
+          old_value?: Json | null
+          proxy_bid_id?: string | null
+        }
+        Update: {
+          action_timestamp?: string | null
+          action_type?: string
+          car_id?: string | null
+          created_at?: string | null
+          dealer_id?: string | null
+          id?: string
+          metadata?: Json | null
+          new_value?: Json | null
+          old_value?: Json | null
+          proxy_bid_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proxy_bid_audit_logs_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proxy_bid_audit_logs_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "dealers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proxy_bid_audit_logs_proxy_bid_id_fkey"
+            columns: ["proxy_bid_id"]
+            isOneToOne: false
+            referencedRelation: "proxy_bids"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proxy_bid_errors: {
         Row: {
           created_at: string | null
