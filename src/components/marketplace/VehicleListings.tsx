@@ -1,16 +1,14 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { CarListing } from "@/types/cars";
 import VehicleCard from "@/components/VehicleCard";
 
 interface VehicleListingsProps {
   listings: CarListing[] | undefined;
+  onSelectCar: (car: CarListing) => void;
 }
 
-const VehicleListings = ({ listings }: VehicleListingsProps) => {
-  const navigate = useNavigate();
-
+const VehicleListings = ({ listings, onSelectCar }: VehicleListingsProps) => {
   const getPrimaryImage = (car: CarListing): string => {
     if (car.required_photos?.front) {
       return car.required_photos.front;
@@ -41,7 +39,8 @@ const VehicleListings = ({ listings }: VehicleListingsProps) => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             whileHover={{ scale: 1.02 }}
-            onClick={() => navigate(`/dealer/auctions/${car.id}`)}
+            transition={{ duration: 0.2 }}
+            onClick={() => onSelectCar(car)}
             className="cursor-pointer"
           >
             <VehicleCard

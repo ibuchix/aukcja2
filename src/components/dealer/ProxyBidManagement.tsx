@@ -95,10 +95,10 @@ export const ProxyBidManagement = ({ dealerId }: { dealerId: string }) => {
         <CardHeader>
           <CardTitle className="text-heading-sm font-oswald flex items-center gap-2">
             <ArrowUpDown className="h-5 w-5" />
-            Bid Management
+            Proxy Bid Management
           </CardTitle>
         </CardHeader>
-        <CardContent>Loading bids...</CardContent>
+        <CardContent>Loading proxy bids...</CardContent>
       </Card>
     );
   }
@@ -108,10 +108,10 @@ export const ProxyBidManagement = ({ dealerId }: { dealerId: string }) => {
       <CardHeader>
         <CardTitle className="text-heading-sm font-oswald flex items-center gap-2">
           <ArrowUpDown className="h-5 w-5" />
-          Bid Management
+          Proxy Bid Management
         </CardTitle>
         <CardDescription>
-          Monitor and manage your automatic bids across all auctions
+          Monitor and manage your automatic proxy bids across all auctions
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -120,6 +120,7 @@ export const ProxyBidManagement = ({ dealerId }: { dealerId: string }) => {
             <TableRow>
               <TableHead>Vehicle</TableHead>
               <TableHead>Max Bid</TableHead>
+              <TableHead>Current Highest</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>End Time</TableHead>
               <TableHead>Last Updated</TableHead>
@@ -134,6 +135,9 @@ export const ProxyBidManagement = ({ dealerId }: { dealerId: string }) => {
                 <TableRow key={bid.id}>
                   <TableCell>{bid.car.title}</TableCell>
                   <TableCell>${bid.max_bid_amount.toLocaleString()}</TableCell>
+                  <TableCell>
+                    ${(bid.car.highest_bid?.[0]?.amount || 0).toLocaleString()}
+                  </TableCell>
                   <TableCell>
                     <Badge className={badgeColor}>{status}</Badge>
                   </TableCell>
@@ -170,8 +174,8 @@ export const ProxyBidManagement = ({ dealerId }: { dealerId: string }) => {
             })}
             {!proxyBids?.length && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  No bids found.
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  No proxy bids found.
                 </TableCell>
               </TableRow>
             )}
