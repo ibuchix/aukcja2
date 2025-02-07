@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { CarListing, CarFeatures } from "@/types/cars";
+import { CarListing } from "@/types/cars";
 import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
 import BasicSpecifications from "@/components/car-details/BasicSpecifications";
 import ConditionAndFeatures from "@/components/car-details/ConditionAndFeatures";
@@ -24,20 +24,7 @@ const AuctionDetails = () => {
         .single();
 
       if (error) throw error;
-
-      // Transform the features to match CarFeatures type
-      const transformedData: CarListing = {
-        ...data,
-        features: {
-          satNav: data.features?.satNav || false,
-          heatedSeats: data.features?.heatedSeats || false,
-          panoramicRoof: data.features?.panoramicRoof || false,
-          reverseCamera: data.features?.reverseCamera || false,
-          upgradedSound: data.features?.upgradedSound || false,
-        } as CarFeatures
-      };
-
-      return transformedData;
+      return data as CarListing;
     },
   });
 
