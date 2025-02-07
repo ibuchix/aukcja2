@@ -29,13 +29,12 @@ const AuctionDetails = () => {
       const transformedData: CarListing = {
         ...data,
         features: {
-          satNav: data.features?.satNav ?? false,
-          heatedSeats: data.features?.heatedSeats ?? false,
-          panoramicRoof: data.features?.panoramicRoof ?? false,
-          reverseCamera: data.features?.reverseCamera ?? false,
-          upgradedSound: data.features?.upgradedSound ?? false,
-        } as CarFeatures,
-        required_photos: data.required_photos as Record<string, string | null> ?? {},
+          satNav: data.features?.satNav || false,
+          heatedSeats: data.features?.heatedSeats || false,
+          panoramicRoof: data.features?.panoramicRoof || false,
+          reverseCamera: data.features?.reverseCamera || false,
+          upgradedSound: data.features?.upgradedSound || false,
+        } as CarFeatures
       };
 
       return transformedData;
