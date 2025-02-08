@@ -11,9 +11,6 @@ interface MaxBidInterfaceProps {
   currentHighestBid: number;
   minimumIncrement: number;
   auctionEndTime: string;
-  auctionFormat?: 'timed' | 'extended';
-  extensionsUsed?: number;
-  maxExtensionsAllowed?: number;
 }
 
 export const MaxBidInterface = ({
@@ -22,9 +19,6 @@ export const MaxBidInterface = ({
   currentHighestBid,
   minimumIncrement,
   auctionEndTime,
-  auctionFormat = 'timed',
-  extensionsUsed = 0,
-  maxExtensionsAllowed = 0
 }: MaxBidInterfaceProps) => {
   return (
     <div className="space-y-4">
@@ -38,12 +32,7 @@ export const MaxBidInterface = ({
           <CardTitle className="text-heading-sm font-oswald">Place Maximum Bid</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <AuctionTimer 
-            auctionEndTime={auctionEndTime}
-            auctionFormat={auctionFormat}
-            extensionsUsed={extensionsUsed}
-            maxExtensionsAllowed={maxExtensionsAllowed}
-          />
+          <AuctionTimer auctionEndTime={auctionEndTime} />
           <BidInfo 
             currentHighestBid={currentHighestBid}
             minimumIncrement={minimumIncrement}

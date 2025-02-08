@@ -1,50 +1,79 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { VerificationBanner } from "@/components/dealer/VerificationBanner";
 import { DealerHeader } from "@/components/dealer/DealerHeader";
 import { QuickActions } from "@/components/dealer/QuickActions";
 import { AuctionManagement } from "@/components/dealer/AuctionManagement";
-import { ProxyBidErrors } from "@/components/dealer/ProxyBidErrors";
-import { VerificationBanner } from "@/components/dealer/VerificationBanner";
 
-export default function DealerDashboard() {
-  const [dealerId, setDealerId] = useState<string | null>(null);
+interface DealerProfile {
+  id: string;
+  dealership_name: string;
+  license_number: string;
+  address: string | null;
+  verification_status: string;
+}
+
+const DealerDashboard = () => {
+  const [loading, setLoading] = useState(true);
+  const [dealerProfile, setDealerProfile] = useState<DealerProfile | null>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    const getDealerProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    const checkAuthAndProfile = async () => {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        console.error('Error fetching session:', sessionError);
+        navigate('/auth');
+        return;
+      }
+
       if (!session) {
         navigate('/auth');
         return;
       }
 
-      const { data: dealer, error } = await supabase
+      const { data: dealerData, error: dealerError } = await supabase
         .from('dealers')
-        .select('id, verification_status')
+        .select('*')
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
 
-      if (error || !dealer) {
-        console.error('Error fetching dealer profile:', error);
+      if (dealerError) {
+        console.error('Error fetching dealer profile:', dealerError);
         navigate('/auth');
         return;
       }
 
-      setDealerId(dealer.id);
+      if (!dealerData) {
+        console.error('No dealer profile found');
+        navigate('/auth');
+        return;
+      }
+
+      setDealerProfile(dealerData);
+      setLoading(false);
+
+      if (dealerData.verification_status === 'pending') {
+        toast({
+          title: "Account Pending Verification",
+          description: "Your account is currently under review. You'll be notified once verified.",
+          variant: "default",
+        });
+      }
     };
 
-    getDealerProfile();
-  }, [navigate]);
+    checkAuthAndProfile();
+  }, [navigate, toast]);
 
-  if (!dealerId) {
+  if (loading || !dealerProfile) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-          Loading...
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
       </div>
     );
   }
@@ -52,15 +81,18 @@ export default function DealerDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="container mx-auto px-4 py-8">
-        <DealerHeader dealerId={dealerId} />
-        <VerificationBanner dealerId={dealerId} />
-        <div className="space-y-8 mt-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <VerificationBanner verificationStatus={dealerProfile.verification_status} />
+        <DealerHeader dealerProfile={dealerProfile} />
+        <div className="mt-8">
           <QuickActions />
-          <AuctionManagement dealerId={dealerId} />
-          <ProxyBidErrors dealerId={dealerId} />
+        </div>
+        <div className="mt-8">
+          <AuctionManagement dealerId={dealerProfile.id} />
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default DealerDashboard;

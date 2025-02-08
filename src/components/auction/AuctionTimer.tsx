@@ -3,17 +3,9 @@ import { Clock } from "lucide-react";
 
 interface AuctionTimerProps {
   auctionEndTime: string;
-  auctionFormat?: 'timed' | 'extended';
-  extensionsUsed?: number;
-  maxExtensionsAllowed?: number;
 }
 
-export const AuctionTimer = ({ 
-  auctionEndTime,
-  auctionFormat = 'timed',
-  extensionsUsed = 0,
-  maxExtensionsAllowed = 0
-}: AuctionTimerProps) => {
+export const AuctionTimer = ({ auctionEndTime }: AuctionTimerProps) => {
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
   useEffect(() => {
@@ -41,16 +33,9 @@ export const AuctionTimer = ({
   }, [auctionEndTime]);
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 text-subtitle-text">
-        <Clock className="w-4 h-4" />
-        <span>Time Remaining: {timeRemaining}</span>
-      </div>
-      {auctionFormat === 'extended' && (
-        <div className="text-sm text-subtitle-text">
-          Extensions: {extensionsUsed} / {maxExtensionsAllowed} used
-        </div>
-      )}
+    <div className="flex items-center gap-2 text-subtitle-text">
+      <Clock className="w-4 h-4" />
+      <span>Time Remaining: {timeRemaining}</span>
     </div>
   );
 };
