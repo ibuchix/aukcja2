@@ -1,26 +1,98 @@
-import { useAuth } from "@supabase/auth-helpers-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Navbar from "@/components/Navbar";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { VerificationBanner } from "@/components/dealer/VerificationBanner";
 import { DealerHeader } from "@/components/dealer/DealerHeader";
 import { QuickActions } from "@/components/dealer/QuickActions";
 import { AuctionManagement } from "@/components/dealer/AuctionManagement";
-import { AuctionAnalytics } from "@/components/dealer/AuctionAnalytics";
-import { VerificationBanner } from "@/components/dealer/VerificationBanner";
 
-export const Dashboard = () => {
-  const { user } = useAuth();
+interface DealerProfile {
+  id: string;
+  dealership_name: string;
+  license_number: string;
+  address: string | null;
+  verification_status: string;
+}
 
-  if (!user) {
-    return null;
+const DealerDashboard = () => {
+  const [loading, setLoading] = useState(true);
+  const [dealerProfile, setDealerProfile] = useState<DealerProfile | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const checkAuthAndProfile = async () => {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        console.error('Error fetching session:', sessionError);
+        navigate('/auth');
+        return;
+      }
+
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
+
+      const { data: dealerData, error: dealerError } = await supabase
+        .from('dealers')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (dealerError) {
+        console.error('Error fetching dealer profile:', dealerError);
+        navigate('/auth');
+        return;
+      }
+
+      if (!dealerData) {
+        console.error('No dealer profile found');
+        navigate('/auth');
+        return;
+      }
+
+      setDealerProfile(dealerData);
+      setLoading(false);
+
+      if (dealerData.verification_status === 'pending') {
+        toast({
+          title: "Account Pending Verification",
+          description: "Your account is currently under review. You'll be notified once verified.",
+          variant: "default",
+        });
+      }
+    };
+
+    checkAuthAndProfile();
+  }, [navigate, toast]);
+
+  if (loading || !dealerProfile) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <VerificationBanner />
-      <DealerHeader />
-      <QuickActions />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <AuctionAnalytics dealerId={user.id} />
-        <AuctionManagement dealerId={user.id} />
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <VerificationBanner verificationStatus={dealerProfile.verification_status} />
+        <DealerHeader dealerProfile={dealerProfile} />
+        <div className="mt-8">
+          <QuickActions />
+        </div>
+        <div className="mt-8">
+          <AuctionManagement dealerId={dealerProfile.id} />
+        </div>
       </div>
     </div>
   );
 };
+
+export default DealerDashboard;
