@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Compass, User, CreditCard, LayoutDashboard } from "lucide-react";
 
@@ -13,7 +14,7 @@ export const NavbarDesktopMenu = ({ session, handleLogout }: NavbarDesktopMenuPr
         <LayoutDashboard size={20} />
         Dashboard
       </Link>
-      <Link to="/marketplace" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
+      <Link to="/auctions" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
         <Compass size={20} />
         Browse Vehicles
       </Link>

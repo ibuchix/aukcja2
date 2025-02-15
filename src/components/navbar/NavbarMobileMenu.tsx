@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Compass, User, CreditCard, LayoutDashboard } from "lucide-react";
 
@@ -17,7 +18,7 @@ export const NavbarMobileMenu = ({ isOpen, session, handleLogout }: NavbarMobile
           <LayoutDashboard size={20} />
           Dashboard
         </Link>
-        <Link to="/marketplace" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
+        <Link to="/auctions" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
           <Compass size={20} />
           Browse Vehicles
         </Link>
