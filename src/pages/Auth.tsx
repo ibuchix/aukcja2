@@ -1,5 +1,6 @@
+
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { DealerSignupForm } from "@/components/auth/DealerSignupForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,13 +26,15 @@ const Auth = () => {
       <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
         <div className="absolute inset-0 bg-[#DC143C]" />
         <div className="relative z-20 flex items-center text-lg font-medium">
-          <img 
-            src="/lovable-uploads/2960eac5-04b8-4f16-9cd3-2cfdeeda3e72.png" 
-            alt="Auto-Strada Logo" 
-            className="h-12"
-          />
+          <Link to="/">
+            <img 
+              src="/lovable-uploads/2960eac5-04b8-4f16-9cd3-2cfdeeda3e72.png" 
+              alt="Auto-Strada Logo" 
+              className="h-12"
+            />
+          </Link>
         </div>
-        <div className="relative z-20 mt-auto">
+        <div className="relative z-20 mt-auto flex flex-col items-center text-center w-full">
           <blockquote className="space-y-2">
             <p className="text-lg">
               Join our network of trusted dealers and expand your business reach.
