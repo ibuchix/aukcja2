@@ -1,36 +1,46 @@
+
+import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import VehicleCard from "@/components/VehicleCard";
 import Services from "@/components/Services";
 import Footer from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
+import CarDetailsDialog from "@/components/CarDetailsDialog";
+import { CarListing } from "@/types/cars";
 
 const Index = () => {
-  const featuredVehicles = [
-    {
-      image: "https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&q=80",
-      name: "Porsche 911 GT3",
-      price: 162450,
-      mileage: 15000,
-      year: 2023,
-      transmission: "Automatic",
+  const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
+
+  const { data: featuredVehicles, isLoading } = useQuery({
+    queryKey: ["featuredVehicles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cars")
+        .select("*")
+        .eq("status", "available")
+        .eq("is_draft", false)
+        .limit(4)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      return data.map(car => ({
+        ...car,
+        features: typeof car.features === 'string' 
+          ? JSON.parse(car.features) 
+          : car.features || {
+              satNav: false,
+              heatedSeats: false,
+              panoramicRoof: false,
+              reverseCamera: false,
+              upgradedSound: false
+            }
+      })) as CarListing[];
     },
-    {
-      image: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80",
-      name: "Ferrari F8 Tributo",
-      price: 276550,
-      mileage: 8000,
-      year: 2022,
-      transmission: "Automatic",
-    },
-    {
-      image: "https://images.unsplash.com/photo-1555353540-64580b51c258?auto=format&fit=crop&q=80",
-      name: "Lamborghini Huracán",
-      price: 208571,
-      mileage: 12000,
-      year: 2023,
-      transmission: "Automatic",
-    },
-  ];
+  });
 
   return (
     <div className="min-h-screen">
@@ -40,16 +50,46 @@ const Index = () => {
       <section id="vehicles" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-12">Featured Vehicles</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredVehicles.map((vehicle, index) => (
-              <VehicleCard key={index} {...vehicle} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="space-y-4">
+                  <Skeleton className="h-48 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {featuredVehicles?.map((vehicle) => (
+                <div 
+                  key={vehicle.id}
+                  onClick={() => setSelectedCar(vehicle)}
+                  className="cursor-pointer"
+                >
+                  <VehicleCard
+                    image={vehicle.required_photos?.front || vehicle.images?.[0] || "/placeholder.svg"}
+                    name={`${vehicle.year || 'N/A'} ${vehicle.make || 'Unknown'} ${vehicle.model || 'Model'}`}
+                    price={vehicle.price}
+                    mileage={vehicle.mileage}
+                    transmission={vehicle.transmission}
+                    year={vehicle.year}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
       <Services />
       <Footer />
+      
+      <CarDetailsDialog 
+        car={selectedCar} 
+        onClose={() => setSelectedCar(null)} 
+      />
     </div>
   );
 };
