@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { Clock, Trophy, AlertCircle } from "lucide-react";
+import { Clock, Trophy, AlertCircle, LucideIcon } from "lucide-react";
 
 export const WinningProcess = () => {
   return (
