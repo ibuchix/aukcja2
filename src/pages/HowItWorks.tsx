@@ -1,4 +1,3 @@
-
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Clock, UserCheck, Gavel, Trophy, AlertCircle, Search } from "lucide-react";
@@ -131,12 +130,12 @@ const HowItWorks = () => {
               initial={{ opacity: 0, x: -100 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="relative"
+              className="relative mb-24"
             >
               <div className="flex items-center mb-4">
                 <div className="w-1/2 pr-8 text-right">
-                  <h3 className="text-2xl font-bold text-dark mb-2">Place Your Bids</h3>
-                  <p className="text-subtitle-text">Participate in 24-hour auctions</p>
+                  <h3 className="text-2xl font-bold text-dark mb-2">Place Your Maximum Bid</h3>
+                  <p className="text-subtitle-text">Set your maximum bid and let our system work for you</p>
                 </div>
                 <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center z-10">
                   <Gavel className="text-white w-6 h-6" />
@@ -145,21 +144,79 @@ const HowItWorks = () => {
                   <ul className="space-y-2 text-subtitle-text">
                     <li className="flex items-center">
                       <span className="w-2 h-2 bg-primary rounded-full mr-2" />
-                      Submit competitive bids
+                      Enter your maximum bid amount
                     </li>
                     <li className="flex items-center">
                       <span className="w-2 h-2 bg-primary rounded-full mr-2" />
-                      Track in real-time
+                      System bids incrementally on your behalf
                     </li>
                     <li className="flex items-center">
                       <span className="w-2 h-2 bg-primary rounded-full mr-2" />
-                      Receive instant notifications
+                      Stay competitive without constant monitoring
                     </li>
                   </ul>
                 </div>
               </div>
             </motion.div>
+
+            {/* Step 4 - New Proxy Bidding Explanation */}
+            <motion.div 
+              initial={{ opacity: 0, x: 100 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              <div className="flex items-center mb-4">
+                <div className="w-1/2 pr-8 text-right">
+                  <ul className="space-y-2 text-subtitle-text">
+                    <li className="flex items-center justify-end">
+                      <span className="w-2 h-2 bg-iris rounded-full ml-2" />
+                      System places minimum required bid
+                    </li>
+                    <li className="flex items-center justify-end">
+                      <span className="w-2 h-2 bg-iris rounded-full ml-2" />
+                      Automatically outbids competitors
+                    </li>
+                    <li className="flex items-center justify-end">
+                      <span className="w-2 h-2 bg-iris rounded-full ml-2" />
+                      Never exceeds your maximum amount
+                    </li>
+                  </ul>
+                </div>
+                <div className="w-12 h-12 bg-iris rounded-full flex items-center justify-center z-10">
+                  <Trophy className="text-white w-6 h-6" />
+                </div>
+                <div className="w-1/2 pl-8">
+                  <h3 className="text-2xl font-bold text-dark mb-2">Proxy Bidding System</h3>
+                  <p className="text-subtitle-text">Our system works as your personal bidding agent</p>
+                </div>
+              </div>
+            </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* Example Box */}
+      <section className="py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="bg-white p-8 rounded-lg shadow-md border border-iris/20"
+          >
+            <h3 className="text-xl font-semibold mb-4 text-iris">How Proxy Bidding Works - An Example</h3>
+            <div className="space-y-4 text-subtitle-text">
+              <p>1. Current bid on a vehicle is €10,000 with €500 minimum increments</p>
+              <p>2. You set your maximum bid to €15,000</p>
+              <p>3. If someone bids €11,000, our system automatically bids €11,500 for you</p>
+              <p>4. This continues until either:</p>
+              <ul className="list-disc pl-8 space-y-2">
+                <li>You win the auction</li>
+                <li>The bidding exceeds your €15,000 maximum</li>
+              </ul>
+            </div>
+          </motion.div>
         </div>
       </section>
 
