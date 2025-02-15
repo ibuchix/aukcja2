@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Compass, User, CreditCard, LayoutDashboard } from "lucide-react";
+import { Compass, User, LayoutDashboard } from "lucide-react";
 
 interface NavbarDesktopMenuProps {
   session: any;
@@ -17,10 +17,6 @@ export const NavbarDesktopMenu = ({ session, handleLogout }: NavbarDesktopMenuPr
       <Link to="/auctions" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
         <Compass size={20} />
         Browse Vehicles
-      </Link>
-      <Link to="/dealer/dashboard" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
-        <CreditCard size={20} />
-        My Bids
       </Link>
       {session ? (
         <div className="flex items-center space-x-4">

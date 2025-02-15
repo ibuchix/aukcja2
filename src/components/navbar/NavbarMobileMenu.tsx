@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Compass, User, CreditCard, LayoutDashboard } from "lucide-react";
+import { Compass, User, LayoutDashboard } from "lucide-react";
 
 interface NavbarMobileMenuProps {
   isOpen: boolean;
@@ -21,10 +21,6 @@ export const NavbarMobileMenu = ({ isOpen, session, handleLogout }: NavbarMobile
         <Link to="/auctions" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
           <Compass size={20} />
           Browse Vehicles
-        </Link>
-        <Link to="/dealer/dashboard" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
-          <CreditCard size={20} />
-          My Bids
         </Link>
         {session ? (
           <>

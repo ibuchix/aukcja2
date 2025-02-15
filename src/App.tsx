@@ -8,7 +8,6 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import DealerDashboard from "./pages/dealer/Dashboard";
 import DealerProfile from "./pages/dealer/Profile";
-import DealerBids from "./pages/dealer/Bids";
 import DealerDocuments from "./pages/dealer/Documents";
 import Auctions from "./pages/Auctions";
 
@@ -32,7 +31,6 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/dealer/dashboard" element={<DealerDashboard />} />
           <Route path="/dealer/profile" element={<DealerProfile />} />
-          <Route path="/dealer/bids" element={<DealerBids />} />
           <Route path="/dealer/documents" element={<DealerDocuments />} />
           <Route path="/auctions" element={<Auctions />} />
           <Route path="*" element={<Navigate to="/" replace />} />
