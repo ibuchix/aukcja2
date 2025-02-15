@@ -7,8 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import VehicleListings from "@/components/marketplace/VehicleListings";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
 import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const Auctions = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
@@ -26,7 +26,17 @@ const Auctions = () => {
 
       if (error) throw error;
 
-      return data as CarListing[];
+      // Transform the data to match CarListing type
+      return (data || []).map(car => ({
+        ...car,
+        features: {
+          satNav: car.features?.satNav || false,
+          heatedSeats: car.features?.heatedSeats || false,
+          panoramicRoof: car.features?.panoramicRoof || false,
+          reverseCamera: car.features?.reverseCamera || false,
+          upgradedSound: car.features?.upgradedSound || false
+        }
+      })) as CarListing[];
     },
   });
 
@@ -79,7 +89,7 @@ const Auctions = () => {
           </p>
         </div>
         <VehicleListings 
-          listings={auctions} 
+          listings={auctions || []} 
           onSelectCar={setSelectedCar} 
         />
       </div>
