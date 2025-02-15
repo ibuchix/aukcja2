@@ -1,8 +1,7 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CarListing } from "@/types/cars";
+import { CarListing, CarFeatures } from "@/types/cars";
 import { Skeleton } from "@/components/ui/skeleton";
 import VehicleListings from "@/components/marketplace/VehicleListings";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
@@ -27,16 +26,26 @@ const Auctions = () => {
       if (error) throw error;
 
       // Transform the data to match CarListing type
-      return (data || []).map(car => ({
-        ...car,
-        features: {
-          satNav: car.features?.satNav || false,
-          heatedSeats: car.features?.heatedSeats || false,
-          panoramicRoof: car.features?.panoramicRoof || false,
-          reverseCamera: car.features?.reverseCamera || false,
-          upgradedSound: car.features?.upgradedSound || false
-        }
-      })) as CarListing[];
+      return (data || []).map(car => {
+        // Parse the features JSON safely
+        const carFeatures = typeof car.features === 'string' 
+          ? JSON.parse(car.features) 
+          : car.features as Record<string, boolean>;
+
+        // Create a properly typed features object
+        const features: CarFeatures = {
+          satNav: Boolean(carFeatures?.satNav),
+          heatedSeats: Boolean(carFeatures?.heatedSeats),
+          panoramicRoof: Boolean(carFeatures?.panoramicRoof),
+          reverseCamera: Boolean(carFeatures?.reverseCamera),
+          upgradedSound: Boolean(carFeatures?.upgradedSound)
+        };
+
+        return {
+          ...car,
+          features
+        };
+      }) as CarListing[];
     },
   });
 
