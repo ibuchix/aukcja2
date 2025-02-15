@@ -1,7 +1,7 @@
 
-import Navbar from "@/components/navbar/Navbar";
+import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { LucideAuction, Clock, UserCheck, Gavel, Trophy, AlertCircle } from "lucide-react";
+import { Clock, UserCheck, Gavel, Trophy, AlertCircle, Search } from "lucide-react";
 import { motion } from "framer-motion";
 
 const HowItWorks = () => {
@@ -48,7 +48,7 @@ const HowItWorks = () => {
               className="bg-white p-8 rounded-lg shadow-md"
             >
               <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4">
-                <LucideAuction className="text-primary w-6 h-6" />
+                <Search className="text-primary w-6 h-6" />
               </div>
               <h3 className="text-xl font-semibold mb-4">2. Browse Active Auctions</h3>
               <p className="text-subtitle-text">
