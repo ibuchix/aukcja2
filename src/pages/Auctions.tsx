@@ -8,13 +8,49 @@ import CarDetailsDialog from "@/components/CarDetailsDialog";
 import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import AuctionFilters, { AuctionFilters as FilterType } from "@/components/marketplace/AuctionFilters";
+
+const calculateDistance = (lat1?: number, lon1?: number, lat2?: number, lon2?: number) => {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+  
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
 
 const Auctions = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
+  const [filters, setFilters] = useState<FilterType>({});
+
+  // Fetch dealer location first
+  const { data: dealerLocation } = useQuery({
+    queryKey: ["dealerLocation"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+
+      const { data, error } = await supabase
+        .from("dealers")
+        .select("latitude, longitude")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   // Fetch active auctions
   const { data: auctions, isLoading } = useQuery({
-    queryKey: ["auctions"],
+    queryKey: ["auctions", filters],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cars")
@@ -25,27 +61,51 @@ const Auctions = () => {
 
       if (error) throw error;
 
-      // Transform the data to match CarListing type
-      return (data || []).map(car => {
-        // Parse the features JSON safely
-        const carFeatures = typeof car.features === 'string' 
-          ? JSON.parse(car.features) 
-          : car.features as Record<string, boolean>;
+      // Transform and filter the data
+      return (data || [])
+        .map(car => {
+          // Parse the features JSON safely
+          const carFeatures = typeof car.features === 'string' 
+            ? JSON.parse(car.features) 
+            : car.features as Record<string, boolean>;
 
-        // Create a properly typed features object
-        const features: CarFeatures = {
-          satNav: Boolean(carFeatures?.satNav),
-          heatedSeats: Boolean(carFeatures?.heatedSeats),
-          panoramicRoof: Boolean(carFeatures?.panoramicRoof),
-          reverseCamera: Boolean(carFeatures?.reverseCamera),
-          upgradedSound: Boolean(carFeatures?.upgradedSound)
-        };
+          // Create a properly typed features object
+          const features: CarFeatures = {
+            satNav: Boolean(carFeatures?.satNav),
+            heatedSeats: Boolean(carFeatures?.heatedSeats),
+            panoramicRoof: Boolean(carFeatures?.panoramicRoof),
+            reverseCamera: Boolean(carFeatures?.reverseCamera),
+            upgradedSound: Boolean(carFeatures?.upgradedSound)
+          };
 
-        return {
-          ...car,
-          features
-        };
-      }) as CarListing[];
+          // Calculate distance if dealer location is available
+          const distance = dealerLocation 
+            ? calculateDistance(
+                dealerLocation.latitude,
+                dealerLocation.longitude,
+                car.latitude,
+                car.longitude
+              )
+            : null;
+
+          return {
+            ...car,
+            features,
+            distance
+          };
+        })
+        .filter(car => {
+          if (filters.priceMin && car.price < filters.priceMin) return false;
+          if (filters.priceMax && car.price > filters.priceMax) return false;
+          if (filters.make && !car.make?.toLowerCase().includes(filters.make.toLowerCase())) return false;
+          if (filters.model && !car.model?.toLowerCase().includes(filters.model.toLowerCase())) return false;
+          if (filters.yearMin && car.year && car.year < filters.yearMin) return false;
+          if (filters.yearMax && car.year && car.year > filters.yearMax) return false;
+          if (filters.mileageMin && car.mileage < filters.mileageMin) return false;
+          if (filters.mileageMax && car.mileage > filters.mileageMax) return false;
+          if (filters.maxDistance && car.distance && car.distance > filters.maxDistance) return false;
+          return true;
+        }) as CarListing[];
     },
   });
 
@@ -97,6 +157,11 @@ const Auctions = () => {
             Browse and bid on vehicles currently up for auction
           </p>
         </div>
+        
+        <div className="mb-8">
+          <AuctionFilters onFiltersChange={setFilters} />
+        </div>
+
         <VehicleListings 
           listings={auctions || []} 
           onSelectCar={setSelectedCar} 

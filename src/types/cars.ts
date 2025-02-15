@@ -1,3 +1,4 @@
+
 export type CarFeatures = {
   satNav: boolean;
   heatedSeats: boolean;
@@ -29,4 +30,5 @@ export interface CarListing {
   is_damaged?: boolean;
   address?: string | null;
   condition_rating?: number;
+  distance?: number | null;
 }
