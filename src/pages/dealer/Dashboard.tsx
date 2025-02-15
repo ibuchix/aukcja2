@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -7,6 +8,7 @@ import { VerificationBanner } from "@/components/dealer/VerificationBanner";
 import { DealerHeader } from "@/components/dealer/DealerHeader";
 import { QuickActions } from "@/components/dealer/QuickActions";
 import { AuctionManagement } from "@/components/dealer/AuctionManagement";
+import { WatchlistManagement } from "@/components/dealer/WatchlistManagement";
 
 interface DealerProfile {
   id: string;
@@ -86,6 +88,9 @@ const DealerDashboard = () => {
         <DealerHeader dealerProfile={dealerProfile} />
         <div className="mt-8">
           <QuickActions />
+        </div>
+        <div className="mt-8">
+          <WatchlistManagement />
         </div>
         <div className="mt-8">
           <AuctionManagement dealerId={dealerProfile.id} />
