@@ -10,6 +10,7 @@ import DealerDashboard from "./pages/dealer/Dashboard";
 import DealerProfile from "./pages/dealer/Profile";
 import DealerDocuments from "./pages/dealer/Documents";
 import Auctions from "./pages/Auctions";
+import HowItWorks from "./pages/HowItWorks";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/dealer/profile" element={<DealerProfile />} />
           <Route path="/dealer/documents" element={<DealerDocuments />} />
           <Route path="/auctions" element={<Auctions />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

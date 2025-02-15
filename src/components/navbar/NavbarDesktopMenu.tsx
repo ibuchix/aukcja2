@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Compass, User, LayoutDashboard } from "lucide-react";
+import { Compass, User, LayoutDashboard, HelpCircle } from "lucide-react";
 
 interface NavbarDesktopMenuProps {
   session: any;
@@ -17,6 +17,10 @@ export const NavbarDesktopMenu = ({ session, handleLogout }: NavbarDesktopMenuPr
       <Link to="/auctions" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
         <Compass size={20} />
         Browse Vehicles
+      </Link>
+      <Link to="/how-it-works" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
+        <HelpCircle size={20} />
+        How It Works
       </Link>
       {session ? (
         <div className="flex items-center space-x-4">
