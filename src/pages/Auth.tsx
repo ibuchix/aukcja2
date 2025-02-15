@@ -34,8 +34,8 @@ const Auth = () => {
             />
           </Link>
         </div>
-        <div className="relative z-20 mt-auto flex flex-col items-center text-center w-full">
-          <blockquote className="space-y-2">
+        <div className="relative z-20 flex-1 flex items-center justify-center">
+          <blockquote className="text-center">
             <p className="text-lg">
               Join our network of trusted dealers and expand your business reach.
             </p>
