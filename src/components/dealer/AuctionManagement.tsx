@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Gavel, Timer } from "lucide-react";
@@ -33,6 +34,7 @@ interface Auction {
     amount: number;
     status: string;
   };
+  lost_by?: number;
 }
 
 export const AuctionManagement = ({ dealerId }: { dealerId: string }) => {
@@ -74,6 +76,15 @@ export const AuctionManagement = ({ dealerId }: { dealerId: string }) => {
   const { data: wonAuctions, isLoading: loadingWon } = useQuery({
     queryKey: ["wonAuctions", dealerId],
     queryFn: async () => {
+      // First get winning bid car IDs
+      const { data: winningBids } = await supabase
+        .from("bids")
+        .select("car_id")
+        .eq("dealer_id", dealerId)
+        .eq("status", "won");
+
+      const winningCarIds = winningBids?.map(bid => bid.car_id) || [];
+
       const { data: auctions, error } = await supabase
         .from("cars")
         .select(`
@@ -86,18 +97,15 @@ export const AuctionManagement = ({ dealerId }: { dealerId: string }) => {
         `)
         .eq("is_auction", true)
         .eq("auction_status", "sold")
-        .in("id", 
-          supabase
-            .from("bids")
-            .select("car_id")
-            .eq("dealer_id", dealerId)
-            .eq("status", "won")
-        )
+        .in("id", winningCarIds)
         .order("auction_end_time", { ascending: false });
 
       if (error) throw error;
 
-      return auctions;
+      return auctions.map(auction => ({
+        ...auction,
+        highest_bid: auction.highest_bid?.[0]
+      }));
     },
   });
 
