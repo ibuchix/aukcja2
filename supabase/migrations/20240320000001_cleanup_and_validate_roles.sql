@@ -1,3 +1,4 @@
+
 -- Clean up NULL roles
 UPDATE profiles 
 SET role = 'dealer'::user_role 

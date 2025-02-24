@@ -1,3 +1,4 @@
+
 -- Drop existing type
 DROP TYPE IF EXISTS user_role;
 
