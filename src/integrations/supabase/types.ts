@@ -1364,25 +1364,22 @@ export type Database = {
       }
       profiles: {
         Row: {
-          avatar_url: string | null
-          created_at: string | null
+          full_name: string | null
           id: string
-          role: Database["public"]["Enums"]["user_role"] | null
-          updated_at: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
         }
         Insert: {
-          avatar_url?: string | null
-          created_at?: string | null
+          full_name?: string | null
           id: string
-          role?: Database["public"]["Enums"]["user_role"] | null
-          updated_at?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
         }
         Update: {
-          avatar_url?: string | null
-          created_at?: string | null
+          full_name?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["user_role"] | null
-          updated_at?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
         }
         Relationships: []
       }
