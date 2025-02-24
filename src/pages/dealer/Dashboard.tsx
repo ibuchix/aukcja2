@@ -43,9 +43,32 @@ const DealerDashboard = () => {
           return;
         }
 
-        console.log('Fetching dealer profile for user:', session.user.id);
+        console.log('Attempting to fetch dealer profile with user_id:', session.user.id);
 
-        // Fetch dealer profile
+        // First, check if profile exists
+        const { count, error: countError } = await supabase
+          .from('dealers')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', session.user.id);
+
+        if (countError) {
+          console.error('Error checking dealer profile count:', countError);
+          throw new Error('Failed to check dealer profile');
+        }
+
+        console.log('Number of dealer profiles found:', count);
+
+        if (count === 0) {
+          console.error('No dealer profile exists for user:', session.user.id);
+          throw new Error('No dealer profile found. Please complete registration.');
+        }
+
+        if (count > 1) {
+          console.error('Multiple dealer profiles found for user:', session.user.id);
+          throw new Error('Multiple profiles found. Please contact support.');
+        }
+
+        // Fetch the single dealer profile
         const { data: dealerData, error: dealerError } = await supabase
           .from('dealers')
           .select('id, dealership_name, license_number, address, verification_status')
@@ -58,12 +81,12 @@ const DealerDashboard = () => {
         }
 
         if (!dealerData) {
-          console.error('No dealer profile found for user:', session.user.id);
-          throw new Error('Dealer profile not found');
+          console.error('No dealer data returned after successful count');
+          throw new Error('Failed to load dealer profile data');
         }
 
         if (mounted) {
-          console.log('Successfully loaded dealer profile:', dealerData.id);
+          console.log('Successfully loaded dealer profile:', dealerData);
           setDealerProfile(dealerData);
           setLoading(false);
 
