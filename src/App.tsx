@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +10,7 @@ import DealerProfile from "./pages/dealer/Profile";
 import DealerDocuments from "./pages/dealer/Documents";
 import Auctions from "./pages/Auctions";
 import HowItWorks from "./pages/HowItWorks";
+import CompleteRegistration from "./pages/CompleteRegistration";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,6 +35,7 @@ const App = () => (
           <Route path="/dealer/documents" element={<DealerDocuments />} />
           <Route path="/auctions" element={<Auctions />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/complete-registration" element={<CompleteRegistration />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
