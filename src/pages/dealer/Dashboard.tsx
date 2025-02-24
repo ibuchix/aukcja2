@@ -26,46 +26,66 @@ const DealerDashboard = () => {
 
   useEffect(() => {
     const checkAuthAndProfile = async () => {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-      if (sessionError) {
-        console.error('Error fetching session:', sessionError);
-        navigate('/auth');
-        return;
-      }
+        if (sessionError) {
+          console.error('Error fetching session:', sessionError);
+          navigate('/auth');
+          return;
+        }
 
-      if (!session) {
-        navigate('/auth');
-        return;
-      }
+        if (!session) {
+          navigate('/auth');
+          return;
+        }
 
-      const { data: dealerData, error: dealerError } = await supabase
-        .from('dealers')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
+        const { data: dealerData, error: dealerError } = await supabase
+          .from('dealers')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
 
-      if (dealerError) {
-        console.error('Error fetching dealer profile:', dealerError);
-        navigate('/auth');
-        return;
-      }
+        if (dealerError) {
+          console.error('Error fetching dealer profile:', dealerError);
+          toast({
+            title: "Error Loading Profile",
+            description: "There was a problem loading your dealer profile. Please try again.",
+            variant: "destructive",
+          });
+          navigate('/auth');
+          return;
+        }
 
-      if (!dealerData) {
-        console.error('No dealer profile found');
-        navigate('/auth');
-        return;
-      }
+        if (!dealerData) {
+          console.error('No dealer profile found');
+          toast({
+            title: "Profile Not Found",
+            description: "Your dealer profile could not be found. Please contact support.",
+            variant: "destructive",
+          });
+          navigate('/auth');
+          return;
+        }
 
-      setDealerProfile(dealerData);
-      setLoading(false);
+        setDealerProfile(dealerData);
+        setLoading(false);
 
-      if (dealerData.verification_status === 'pending') {
+        if (dealerData.verification_status === 'pending') {
+          toast({
+            title: "Account Pending Verification",
+            description: "Your account is currently under review. You'll be notified once verified.",
+            variant: "default",
+          });
+        }
+      } catch (error) {
+        console.error('Unexpected error:', error);
         toast({
-          title: "Account Pending Verification",
-          description: "Your account is currently under review. You'll be notified once verified.",
-          variant: "default",
+          title: "Error",
+          description: "An unexpected error occurred. Please try again later.",
+          variant: "destructive",
         });
+        navigate('/auth');
       }
     };
 
