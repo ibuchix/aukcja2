@@ -24,7 +24,7 @@ export const signUpDealerWithEmail = async (
   try {
     console.log("Starting dealer signup process...");
 
-    // 1. Create auth user
+    // 1. Create auth user - without role in metadata since it's handled by DB trigger
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -45,24 +45,7 @@ export const signUpDealerWithEmail = async (
       };
     }
 
-    console.log("Auth user created successfully, creating profile...");
-
-    // 2. Create profile record
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({ 
-        id: signUpData.user.id,
-        role: 'dealer',
-        full_name: metadata.name,
-        updated_at: new Date().toISOString()
-      });
-
-    if (profileError) {
-      console.error("Profile creation error:", profileError);
-      throw profileError;
-    }
-
-    console.log("Profile created successfully, creating dealer record...");
+    console.log("Auth user created successfully, creating dealer record...");
 
     // 3. Create dealer record - using correct schema fields
     const { error: dealerError } = await supabase
