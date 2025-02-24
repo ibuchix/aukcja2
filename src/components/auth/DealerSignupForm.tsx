@@ -5,13 +5,13 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { dealerFormSchema, type DealerFormValues } from "@/schemas/dealerFormSchema";
-import { DealerFormFields } from "./DealerFormFields";
+import { DealerFormFields } from "@/components/auth/DealerFormFields";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { RegistrationProgress } from "./dealer-form/RegistrationProgress";
-import { RegistrationStatus } from "./dealer-form/RegistrationStatus";
+import { RegistrationProgress } from "@/components/auth/dealer-form/RegistrationProgress";
+import { RegistrationStatus } from "@/components/auth/dealer-form/RegistrationStatus";
 import { useSignupDealer } from "@/hooks/useSignupDealer";
 
 export function DealerSignupForm() {
