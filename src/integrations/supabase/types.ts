@@ -1487,7 +1487,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           id: string
-          role: Database["public"]["Enums"]["user_role"]
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
         }
         Update: {
