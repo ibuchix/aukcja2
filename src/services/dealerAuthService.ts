@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 interface SignUpResult {
@@ -7,7 +8,7 @@ interface SignUpResult {
 }
 
 interface UserMetadata {
-  role: string;
+  role: 'dealer';  // We now explicitly type this as 'dealer'
   name: string;
 }
 
@@ -17,6 +18,12 @@ export const signUpDealerWithEmail = async (
   metadata: UserMetadata
 ): Promise<SignUpResult> => {
   try {
+    // First ensure the role is correctly set
+    const sanitizedMetadata: UserMetadata = {
+      ...metadata,
+      role: 'dealer' // Ensure we always set the correct role
+    };
+
     // First try to sign in with the provided credentials
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email,
@@ -36,7 +43,7 @@ export const signUpDealerWithEmail = async (
       email,
       password,
       options: {
-        data: metadata,
+        data: sanitizedMetadata,
         emailRedirectTo: `${window.location.origin}/dealer/dashboard`,
       },
     });
