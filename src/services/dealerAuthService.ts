@@ -54,7 +54,6 @@ export const signUpDealerWithEmail = async (
         id: signUpData.user.id,
         role: 'dealer',
         full_name: metadata.name,
-        email: email.toLowerCase(),
         updated_at: new Date().toISOString()
       });
 
@@ -65,20 +64,21 @@ export const signUpDealerWithEmail = async (
 
     console.log("Profile created successfully, creating dealer record...");
 
-    // 3. Create dealer record
+    // 3. Create dealer record - using correct schema fields
     const { error: dealerError } = await supabase
       .from('dealers')
       .insert({
         user_id: signUpData.user.id,
         supervisor_name: metadata.name,
-        company_name: metadata.companyName || '',
-        phone_number: metadata.phoneNumber || '',
-        company_address: metadata.companyAddress || '',
-        tax_id: metadata.taxId || '',
+        dealership_name: metadata.companyName || metadata.name,
+        address: metadata.companyAddress || '',
         business_registry_number: metadata.businessRegistryNumber || '',
+        tax_id: metadata.taxId || '',
         verification_status: 'pending',
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        license_number: '', // Required field with empty default
+        is_verified: false
       });
 
     if (dealerError) {
@@ -94,8 +94,6 @@ export const signUpDealerWithEmail = async (
 
   } catch (error) {
     console.error("Unexpected signup error:", error);
-    // If there was an error after creating the auth user, we should clean up
-    // by deleting the auth user to prevent orphaned accounts
     if (error instanceof Error) {
       return {
         success: false,

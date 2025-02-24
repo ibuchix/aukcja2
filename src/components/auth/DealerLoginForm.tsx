@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -43,44 +44,56 @@ export function DealerLoginForm() {
       setIsSubmitting(true);
       setAuthError("");
 
-      console.log("Attempting login with email:", values.email.trim().toLowerCase());
-      
+      // 1. Authenticate
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email.trim().toLowerCase(),
         password: values.password,
       });
 
-      if (error) {
-        console.error("Login error:", error);
-        setAuthError(getErrorMessage(error));
+      if (error || !data.user) {
+        setAuthError(error?.message || "Invalid credentials");
         return;
       }
 
-      if (data?.user) {
-        // Check if dealer profile exists
-        const { data: dealerProfile, error: dealerError } = await supabase
+      // 2. Check dealer profile with retry logic
+      let dealerProfile = null;
+      let retries = 0;
+      
+      while (retries < 3 && !dealerProfile) {
+        const { data: profileData, error: profileError } = await supabase
           .from('dealers')
           .select('*')
           .eq('user_id', data.user.id)
           .maybeSingle();
-
-        if (dealerError) {
-          console.error("Error fetching dealer profile:", dealerError);
-          setAuthError("Failed to verify dealer profile. Please try again.");
-          return;
+        
+        if (profileError) {
+          console.error("Error fetching dealer profile:", profileError);
+          break;
         }
 
+        dealerProfile = profileData;
         if (!dealerProfile) {
-          console.error("No dealer profile found");
-          setAuthError("No dealer profile found for this account. Please register as a dealer first.");
-          await supabase.auth.signOut();
-          return;
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
+          retries++;
         }
-
-        navigate('/dealer/dashboard');
       }
+
+      if (!dealerProfile) {
+        // User authenticated but no dealer profile - redirect to complete registration
+        navigate('/complete-registration', { 
+          state: { 
+            userId: data.user.id,
+            email: values.email.trim().toLowerCase()
+          } 
+        });
+        return;
+      }
+
+      // Successfully authenticated and has dealer profile
+      navigate('/dealer/dashboard');
+      
     } catch (error) {
-      console.error("Unexpected login error:", error);
+      console.error("Login error:", error);
       setAuthError("An unexpected error occurred during login. Please try again.");
     } finally {
       setIsSubmitting(false);
