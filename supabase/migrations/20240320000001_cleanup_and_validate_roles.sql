@@ -62,7 +62,7 @@ BEGIN
     
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;  -- Added SECURITY DEFINER
 
 -- Create trigger to keep auth metadata in sync with profile role
 DROP TRIGGER IF EXISTS sync_auth_metadata_trigger ON profiles;
