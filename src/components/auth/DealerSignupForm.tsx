@@ -1,3 +1,4 @@
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +20,7 @@ export function DealerSignupForm() {
   const [authError, setAuthError] = useState<string>("");
   const [registrationStep, setRegistrationStep] = useState<number>(1);
   const [emailVerified, setEmailVerified] = useState<boolean>(false);
-  const { signupDealer, isSubmitting } = useSignupDealer();
+  const { signupDealer, isSubmitting, testSignup } = useSignupDealer();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -76,6 +77,31 @@ export function DealerSignupForm() {
     form.reset();
   };
 
+  const handleTestSignup = async () => {
+    setAuthError("");
+    setRegistrationStep(2);
+    
+    const result = await testSignup();
+    
+    if (!result.success) {
+      setRegistrationStep(1);
+      setAuthError(result.error || "Test registration failed");
+      toast({
+        title: "Test Registration Failed",
+        description: result.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setRegistrationStep(3);
+    toast({
+      title: "Test Registration Successful",
+      description: "Test account created successfully.",
+      variant: "default",
+    });
+  };
+
   return (
     <>
       <RegistrationProgress step={registrationStep} />
@@ -100,6 +126,18 @@ export function DealerSignupForm() {
               </>
             ) : "Sign Up"}
           </Button>
+          
+          {process.env.NODE_ENV === 'development' && (
+            <Button
+              type="button"
+              onClick={handleTestSignup}
+              className="w-full mt-2"
+              variant="secondary"
+              disabled={isSubmitting}
+            >
+              Test Signup with Hardcoded Values
+            </Button>
+          )}
         </form>
       </Form>
     </>

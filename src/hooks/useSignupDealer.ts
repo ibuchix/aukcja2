@@ -69,5 +69,25 @@ export function useSignupDealer() {
     }
   };
 
-  return { signupDealer, isSubmitting };
+  // Test function with hardcoded values
+  const testSignup = async () => {
+    const testValues: DealerFormValues = {
+      email: "testdealer@example.com",
+      password: "TestPassword123!",
+      supervisorName: "Test Supervisor",
+      phoneNumber: "+48123456789",
+      companyName: "Test Dealership",
+      taxId: "1234567890",
+      businessRegistryNumber: "123456789",
+      companyAddress: "123 Test St",
+      acceptTerms: true,
+    };
+
+    console.log("Starting test signup with hardcoded values:", testValues);
+    const result = await signupDealer(testValues);
+    console.log("Test signup result:", result);
+    return result;
+  };
+
+  return { signupDealer, isSubmitting, testSignup };
 }
