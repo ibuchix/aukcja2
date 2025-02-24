@@ -25,79 +25,88 @@ const DealerDashboard = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    let mounted = true;
+
     const checkAuthAndProfile = async () => {
       try {
+        // Get session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
-          console.error('Error fetching session:', sessionError);
+          console.error('Session error details:', sessionError);
+          throw new Error('Failed to get session');
+        }
+
+        if (!session || !session.user) {
+          console.log('No active session found');
           navigate('/auth');
           return;
         }
 
-        if (!session) {
-          navigate('/auth');
-          return;
-        }
+        console.log('Fetching dealer profile for user:', session.user.id);
 
+        // Fetch dealer profile
         const { data: dealerData, error: dealerError } = await supabase
           .from('dealers')
-          .select('*')
+          .select('id, dealership_name, license_number, address, verification_status')
           .eq('user_id', session.user.id)
-          .maybeSingle();
+          .single();
 
         if (dealerError) {
-          console.error('Error fetching dealer profile:', dealerError);
-          toast({
-            title: "Error Loading Profile",
-            description: "There was a problem loading your dealer profile. Please try again.",
-            variant: "destructive",
-          });
-          navigate('/auth');
-          return;
+          console.error('Dealer profile fetch error:', dealerError);
+          throw new Error(dealerError.message);
         }
 
         if (!dealerData) {
-          console.error('No dealer profile found');
+          console.error('No dealer profile found for user:', session.user.id);
+          throw new Error('Dealer profile not found');
+        }
+
+        if (mounted) {
+          console.log('Successfully loaded dealer profile:', dealerData.id);
+          setDealerProfile(dealerData);
+          setLoading(false);
+
+          if (dealerData.verification_status === 'pending') {
+            toast({
+              title: "Account Pending Verification",
+              description: "Your account is currently under review. You'll be notified once verified.",
+              variant: "default",
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Profile loading error:', error);
+        
+        if (mounted) {
+          setLoading(false);
           toast({
-            title: "Profile Not Found",
-            description: "Your dealer profile could not be found. Please contact support.",
+            title: "Error Loading Profile",
+            description: error instanceof Error ? error.message : "Failed to load dealer profile",
             variant: "destructive",
           });
           navigate('/auth');
-          return;
         }
-
-        setDealerProfile(dealerData);
-        setLoading(false);
-
-        if (dealerData.verification_status === 'pending') {
-          toast({
-            title: "Account Pending Verification",
-            description: "Your account is currently under review. You'll be notified once verified.",
-            variant: "default",
-          });
-        }
-      } catch (error) {
-        console.error('Unexpected error:', error);
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred. Please try again later.",
-          variant: "destructive",
-        });
-        navigate('/auth');
       }
     };
 
     checkAuthAndProfile();
+
+    return () => {
+      mounted = false;
+    };
   }, [navigate, toast]);
 
-  if (loading || !dealerProfile) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
       </div>
     );
+  }
+
+  if (!dealerProfile) {
+    return null;
   }
 
   return (
