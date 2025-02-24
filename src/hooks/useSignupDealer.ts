@@ -32,7 +32,6 @@ export function useSignupDealer() {
         values.email.trim().toLowerCase(),
         values.password,
         {
-          role: 'dealer',
           name: values.supervisorName.trim(),
         }
       );
