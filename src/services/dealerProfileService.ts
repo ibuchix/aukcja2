@@ -9,22 +9,27 @@ interface ProfileResult {
 }
 
 async function checkBusinessRegistryExists(businessRegistryNumber: string): Promise<boolean> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('dealers')
     .select('business_registry_number')
     .eq('business_registry_number', businessRegistryNumber)
     .maybeSingle();
+  
+  if (error) {
+    console.error("Error checking business registry:", error);
+  }
   
   return !!data;
 }
 
 export async function createDealerProfile(userId: string, values: DealerFormValues): Promise<ProfileResult> {
   try {
-    console.log("Creating dealer profile for user:", userId);
+    console.log("Starting dealer profile creation for user:", userId);
     
-    // Check if business registry number already exists
+    // Check for existing business registry number FIRST
     const exists = await checkBusinessRegistryExists(values.businessRegistryNumber.trim());
     if (exists) {
+      console.warn("Attempted to register duplicate business registry number:", values.businessRegistryNumber);
       return {
         success: false,
         error: "This business registry number (REGON) is already registered. Please verify your information or contact support.",
@@ -32,7 +37,7 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
       };
     }
 
-    // Create dealer profile
+    // Insert dealer profile directly
     const { error: dealerError } = await supabase
       .from('dealers')
       .insert({
@@ -50,40 +55,59 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
       });
 
     if (dealerError) {
-      console.error("Dealer profile creation error:", dealerError);
+      console.error("Dealer profile creation failed:", {
+        error: dealerError,
+        errorCode: dealerError.code,
+        errorMessage: dealerError.message,
+        details: dealerError.details
+      });
       
-      // Handle specific database errors
-      if (dealerError.code === '23505') {
-        if (dealerError.message.includes('business_registry_number_unique')) {
+      // Handle specific database constraint violations
+      if (dealerError.code === '23505') { // Unique violation
+        const errorMessage = dealerError.message.toLowerCase();
+        if (errorMessage.includes('business_registry_number')) {
           return {
             success: false,
             error: "This business registry number (REGON) is already registered. Please verify your information or contact support.",
             errorType: 'validation'
           };
         }
-        if (dealerError.message.includes('tax_id_unique')) {
+        if (errorMessage.includes('tax_id')) {
           return {
             success: false,
             error: "This tax ID (NIP) is already registered. Please verify your information or contact support.",
             errorType: 'validation'
           };
         }
+        return {
+          success: false,
+          error: "A unique constraint was violated. Please verify your information.",
+          errorType: 'validation'
+        };
       }
-      
+
+      // Handle other database errors
       return {
         success: false,
-        error: "Failed to create dealer profile. Please try again.",
+        error: `Database error: ${dealerError.message}`,
         errorType: 'database'
       };
     }
 
-    console.log("Dealer profile created successfully");
+    console.log("Dealer profile created successfully for user:", userId);
     return { success: true };
+    
   } catch (error) {
-    console.error("Profile service error:", error);
+    console.error("Unexpected error in profile service:", {
+      error,
+      userId,
+      businessRegistryNumber: values.businessRegistryNumber,
+      taxId: values.taxId
+    });
+    
     return {
       success: false,
-      error: "Profile service error",
+      error: "An unexpected error occurred while creating your dealer profile. Please try again later.",
       errorType: 'database'
     };
   }
