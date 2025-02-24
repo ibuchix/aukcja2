@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 
@@ -18,20 +19,29 @@ async function checkBusinessRegistryExists(businessRegistryNumber: string): Prom
 }
 
 async function ensureProfileExists(userId: string): Promise<boolean> {
+  console.log("Ensuring profile exists for user:", userId);
+  
   // Check if profile exists
-  const { data: existingProfile } = await supabase
+  const { data: existingProfile, error: selectError } = await supabase
     .from('profiles')
-    .select('id')
+    .select('id, role')
     .eq('id', userId)
     .maybeSingle();
 
+  if (selectError) {
+    console.error("Error checking profile:", selectError);
+    return false;
+  }
+
   if (!existingProfile) {
+    console.log("Creating new profile for user");
     // Create profile if it doesn't exist
     const { error: profileError } = await supabase
       .from('profiles')
       .insert({
         id: userId,
-        role: 'dealer'
+        role: 'dealer',
+        updated_at: new Date().toISOString()
       });
 
     if (profileError) {
@@ -45,6 +55,8 @@ async function ensureProfileExists(userId: string): Promise<boolean> {
 
 export async function createDealerProfile(userId: string, values: DealerFormValues): Promise<ProfileResult> {
   try {
+    console.log("Creating dealer profile for user:", userId);
+    
     // Ensure profile exists first
     const profileCreated = await ensureProfileExists(userId);
     if (!profileCreated) {
@@ -78,6 +90,8 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
         address: values.companyAddress.trim(),
         verification_status: 'pending',
         is_verified: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       });
 
     if (dealerError) {
@@ -108,6 +122,7 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
       };
     }
 
+    console.log("Dealer profile created successfully");
     return { success: true };
   } catch (error) {
     console.error("Profile service error:", error);
