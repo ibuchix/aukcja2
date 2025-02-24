@@ -18,55 +18,10 @@ async function checkBusinessRegistryExists(businessRegistryNumber: string): Prom
   return !!data;
 }
 
-async function ensureProfileExists(userId: string): Promise<boolean> {
-  console.log("Ensuring profile exists for user:", userId);
-  
-  // Check if profile exists
-  const { data: existingProfile, error: selectError } = await supabase
-    .from('profiles')
-    .select('id, role')
-    .eq('id', userId)
-    .maybeSingle();
-
-  if (selectError) {
-    console.error("Error checking profile:", selectError);
-    return false;
-  }
-
-  if (!existingProfile) {
-    console.log("Creating new profile for user");
-    // Create profile if it doesn't exist
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        id: userId,
-        role: 'dealer',
-        updated_at: new Date().toISOString()
-      });
-
-    if (profileError) {
-      console.error("Profile creation error:", profileError);
-      return false;
-    }
-  }
-
-  return true;
-}
-
 export async function createDealerProfile(userId: string, values: DealerFormValues): Promise<ProfileResult> {
   try {
     console.log("Creating dealer profile for user:", userId);
     
-    // Ensure profile exists first
-    const profileCreated = await ensureProfileExists(userId);
-    if (!profileCreated) {
-      return {
-        success: false,
-        error: "Failed to create user profile. Please try again.",
-        errorType: 'database'
-      };
-    }
-
     // Check if business registry number already exists
     const exists = await checkBusinessRegistryExists(values.businessRegistryNumber.trim());
     if (exists) {
