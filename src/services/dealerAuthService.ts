@@ -8,7 +8,6 @@ interface SignUpResult {
 }
 
 interface UserMetadata {
-  role: 'dealer';
   name: string;
 }
 
@@ -20,12 +19,14 @@ export const signUpDealerWithEmail = async (
   try {
     console.log("Attempting dealer signup with email:", email);
     
-    // Create a new user with metadata
+    // Create a new user - the trigger will handle profile creation
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: metadata, // Include all metadata for the user
+        data: {
+          name: metadata.name
+        },
         emailRedirectTo: `${window.location.origin}/dealer/dashboard`
       }
     });
@@ -43,20 +44,6 @@ export const signUpDealerWithEmail = async (
       return {
         success: false,
         error: "Failed to create user account",
-      };
-    }
-
-    // Update the profile role explicitly
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ role: 'dealer' })
-      .eq('id', signUpData.user.id);
-
-    if (updateError) {
-      console.error("Profile update error:", updateError);
-      return {
-        success: false,
-        error: "Failed to set user role",
       };
     }
 
