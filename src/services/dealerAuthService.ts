@@ -20,17 +20,17 @@ export const signUpDealerWithEmail = async (
   try {
     console.log("Attempting dealer signup with email:", email);
     
-    // Create a new user directly - remove the sign in attempt
+    // Create a new user with minimal metadata
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          role: 'dealer', // Ensure role is always dealer
+          role: 'dealer' as const, // Ensure TypeScript treats this as a literal type
           name: metadata.name,
         },
-        emailRedirectTo: `${window.location.origin}/dealer/dashboard`,
-      },
+        emailRedirectTo: `${window.location.origin}/dealer/dashboard`
+      }
     });
 
     if (signUpError) {
