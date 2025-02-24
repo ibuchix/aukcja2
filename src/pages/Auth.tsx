@@ -12,8 +12,12 @@ const Auth = () => {
   const [activeTab, setActiveTab] = useState<"register" | "login">("register");
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN') {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Wait 2 seconds for profile data to sync
+        console.log('Signed in, waiting for profile sync...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        console.log('Profile sync wait complete, navigating to dashboard...');
         navigate('/dealer/dashboard');
       }
     });
