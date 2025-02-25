@@ -42,7 +42,7 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
       } catch (error) {
         console.error('Cache fetch failed, falling back to direct query:', error);
         
-        // Fallback to direct database query with proper join
+        // Fallback to direct database query with proper join using dealer_id
         const { data, error: dbError } = await supabase
           .from("bids")
           .select(`
@@ -50,7 +50,8 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
             amount,
             created_at,
             status,
-            dealer:dealers(dealership_name)
+            dealer_id,
+            dealer:dealers!bids_dealer_id_fkey(dealership_name)
           `)
           .eq("car_id", carId)
           .order("created_at", { ascending: false });
