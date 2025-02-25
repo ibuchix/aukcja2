@@ -14,6 +14,32 @@ interface AuthRequest {
   companyAddress?: string
 }
 
+const createErrorResponse = (message: string, status = 400) => {
+  return new Response(
+    JSON.stringify({
+      success: false,
+      error: message
+    }),
+    {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status,
+    }
+  )
+}
+
+const createSuccessResponse = (data: any) => {
+  return new Response(
+    JSON.stringify({
+      success: true,
+      ...data
+    }),
+    {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    }
+  )
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -48,34 +74,27 @@ Deno.serve(async (req) => {
     const { action, email } = requestData
 
     if (!email || !requestData.password) {
-      throw new Error('Email and password are required')
+      return createErrorResponse('Email and password are required')
     }
 
     if (action === 'register') {
       if (!requestData.supervisorName) {
-        throw new Error('Supervisor name is required for registration')
+        return createErrorResponse('Supervisor name is required for registration')
       }
 
-      // Check if user exists
+      // More efficient user existence check
       console.log('Checking if user exists:', email)
-      const { data: existingUser } = await supabaseClient
-        .from('profiles')
-        .select('id')
-        .eq('id', (await supabaseClient.auth.admin.listUsers()).data.users.find(u => u.email === email)?.id)
-        .single()
-      
+      const { data: { user: existingUser }, error: fetchError } = 
+        await supabaseClient.auth.admin.getUserByIdentifier(email)
+
+      if (fetchError?.status !== 404) { // Handle non-404 errors
+        console.error('Error checking user existence:', fetchError)
+        throw fetchError
+      }
+
       if (existingUser) {
         console.log('User already exists:', email)
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: "An account with this email already exists"
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
-          }
-        )
+        return createErrorResponse("An account with this email already exists", 409)
       }
 
       console.log('Creating new user with email:', email)
@@ -139,17 +158,10 @@ Deno.serve(async (req) => {
 
         console.log('Basic profile created successfully')
 
-        return new Response(
-          JSON.stringify({
-            success: true,
-            user: user,
-            message: 'Registration successful'
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200,
-          }
-        )
+        return createSuccessResponse({
+          user,
+          message: 'Registration successful'
+        })
 
       } catch (error) {
         console.error('Registration process failed:', {
@@ -206,21 +218,14 @@ Deno.serve(async (req) => {
         throw new Error('Dealer profile not found')
       }
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          session: data.session,
-          dealer: dealer,
-          message: 'Login successful'
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
-      )
+      return createSuccessResponse({
+        session: data.session,
+        dealer: dealer,
+        message: 'Login successful'
+      })
     }
 
-    throw new Error('Invalid action')
+    return createErrorResponse('Invalid action')
 
   } catch (err) {
     console.error('Request failed:', {
@@ -230,15 +235,6 @@ Deno.serve(async (req) => {
       timestamp: new Date().toISOString()
     })
     
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: err.message || 'An unexpected error occurred'
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
-    )
+    return createErrorResponse(err.message || 'An unexpected error occurred')
   }
 })
