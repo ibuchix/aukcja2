@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -36,135 +35,145 @@ Deno.serve(async (req) => {
     const requestData = await req.json() as AuthRequest
     const { action, email } = requestData
 
-    console.log('Processing request:', {
-      action,
-      email,
-      timestamp: new Date().toISOString(),
-      hasPassword: !!requestData.password,
-      metadata: {
-        hasSupervisorName: !!requestData.supervisorName,
-        hasCompanyName: !!requestData.companyName,
-        hasPhoneNumber: !!requestData.phoneNumber,
-        hasTaxId: !!requestData.taxId,
-        hasBusinessRegistry: !!requestData.businessRegistryNumber,
-        hasAddress: !!requestData.companyAddress
-      }
-    })
-
     if (action === 'register') {
-      console.log('Starting registration process for:', email)
+      // First check if user already exists
+      const { data: existingUser } = await supabaseClient.auth.admin.getUserByEmail(email)
       
-      // 1. Create auth user
-      console.log('Step 1: Creating auth user')
-      const { data: { user }, error: signUpError } = await supabaseClient.auth.admin.createUser({
-        email,
-        password: requestData.password,
-        email_confirm: true,
-        user_metadata: {
-          name: requestData.supervisorName,
-          role: 'dealer'
-        }
-      })
+      if (existingUser) {
+        console.log('User already exists:', email)
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "An account with this email already exists"
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400,
+          }
+        )
+      }
 
-      if (signUpError) {
-        console.error('Auth user creation failed:', {
-          error: signUpError,
+      console.log('Creating new user with email:', email)
+      
+      try {
+        const { data: { user }, error: signUpError } = await supabaseClient.auth.admin.createUser({
           email,
-          timestamp: new Date().toISOString()
-        })
-        throw signUpError
-      }
-
-      if (!user?.id) {
-        console.error('No user ID returned from auth signup')
-        throw new Error('No user ID returned from auth signup')
-      }
-
-      console.log('Auth user created successfully:', {
-        userId: user.id,
-        email: user.email,
-        timestamp: new Date().toISOString()
-      })
-
-      // 2. Create dealer profile
-      console.log('Step 2: Creating dealer profile')
-      const { error: dealerError } = await supabaseClient
-        .from('dealers')
-        .insert({
-          user_id: user.id,
-          supervisor_name: requestData.supervisorName,
-          dealership_name: requestData.companyName,
-          tax_id: requestData.taxId,
-          business_registry_number: requestData.businessRegistryNumber,
-          address: requestData.companyAddress,
-          verification_status: 'pending',
-          is_verified: false,
-          license_number: requestData.businessRegistryNumber,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          password: requestData.password,
+          email_confirm: false, // Changed to false to ensure email verification
+          user_metadata: {
+            name: requestData.supervisorName,
+            role: 'dealer'
+          }
         })
 
-      if (dealerError) {
-        console.error('Dealer profile creation failed:', {
-          error: dealerError,
-          userId: user.id,
-          timestamp: new Date().toISOString()
-        })
-        
-        // Cleanup: Delete auth user
-        console.log('Rolling back: Deleting auth user due to dealer profile creation failure')
-        await supabaseClient.auth.admin.deleteUser(user.id)
-        
-        throw dealerError
-      }
-
-      console.log('Dealer profile created successfully:', {
-        userId: user.id,
-        timestamp: new Date().toISOString()
-      })
-
-      // 3. Create basic profile
-      console.log('Step 3: Creating user profile')
-      const { error: profileError } = await supabaseClient
-        .from('profiles')
-        .insert({
-          id: user.id,
-          role: 'dealer',
-          full_name: requestData.supervisorName
-        })
-
-      if (profileError) {
-        console.error('Profile creation failed:', {
-          error: profileError,
-          userId: user.id,
-          timestamp: new Date().toISOString()
-        })
-        
-        // Cleanup: Delete auth user
-        console.log('Rolling back: Deleting auth user due to profile creation failure')
-        await supabaseClient.auth.admin.deleteUser(user.id)
-        
-        throw profileError
-      }
-
-      console.log('Registration completed successfully:', {
-        userId: user.id,
-        email: user.email,
-        timestamp: new Date().toISOString()
-      })
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          user: user,
-          message: 'Registration successful'
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
+        if (signUpError) {
+          console.error('Auth user creation failed:', {
+            error: signUpError,
+            email,
+            timestamp: new Date().toISOString()
+          })
+          throw signUpError
         }
-      )
 
+        if (!user?.id) {
+          throw new Error('No user ID returned from auth signup')
+        }
+
+        console.log('Auth user created successfully:', {
+          userId: user.id,
+          email: user.email,
+          timestamp: new Date().toISOString()
+        })
+
+        // Create dealer profile
+        const { error: dealerError } = await supabaseClient
+          .from('dealers')
+          .insert({
+            user_id: user.id,
+            supervisor_name: requestData.supervisorName,
+            dealership_name: requestData.companyName,
+            tax_id: requestData.taxId,
+            business_registry_number: requestData.businessRegistryNumber,
+            address: requestData.companyAddress,
+            verification_status: 'pending',
+            is_verified: false,
+            license_number: requestData.businessRegistryNumber || '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+
+        if (dealerError) {
+          console.error('Dealer profile creation failed:', {
+            error: dealerError,
+            userId: user.id,
+            timestamp: new Date().toISOString()
+          })
+          await supabaseClient.auth.admin.deleteUser(user.id)
+          throw dealerError
+        }
+
+        // Create basic profile
+        const { error: profileError } = await supabaseClient
+          .from('profiles')
+          .insert({
+            id: user.id,
+            role: 'dealer',
+            full_name: requestData.supervisorName,
+            updated_at: new Date().toISOString()
+          })
+
+        if (profileError) {
+          console.error('Profile creation failed:', {
+            error: profileError,
+            userId: user.id,
+            timestamp: new Date().toISOString()
+          })
+          await supabaseClient.auth.admin.deleteUser(user.id)
+          throw profileError
+        }
+
+        // Send email confirmation
+        const { error: emailError } = await supabaseClient.auth.admin.generateLink({
+          type: 'signup',
+          email: email,
+        })
+
+        if (emailError) {
+          console.error('Error sending verification email:', emailError)
+          // Don't throw here, just log the error
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            user: user,
+            message: 'Registration successful, please check your email for verification'
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          }
+        )
+
+      } catch (error) {
+        console.error('Registration process failed:', {
+          error,
+          email,
+          timestamp: new Date().toISOString(),
+          stack: error.stack
+        })
+        
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: error.message || 'Registration failed'
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400,
+          }
+        )
+      }
     } else if (action === 'login') {
       console.log('Starting login process for:', email)
       
