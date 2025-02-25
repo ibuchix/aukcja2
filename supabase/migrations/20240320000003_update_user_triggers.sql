@@ -30,4 +30,3 @@ CREATE TRIGGER on_auth_user_created
 
 -- Add an index on the id column for better performance
 CREATE INDEX IF NOT EXISTS idx_profiles_id ON public.profiles(id);
-
