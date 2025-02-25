@@ -28,11 +28,34 @@ const createErrorResponse = (message: string, status = 400) => {
 }
 
 const createSuccessResponse = (data: any) => {
+  // Sanitize sensitive data before sending response
+  const sanitizedData = {
+    success: true,
+    message: data.message,
+    ...data.user && {
+      user: {
+        id: data.user.id,
+        email: data.user.email
+      }
+    },
+    ...data.dealer && {
+      dealer: {
+        id: data.dealer.id,
+        dealership_name: data.dealer.dealership_name,
+        verification_status: data.dealer.verification_status,
+        is_verified: data.dealer.is_verified
+      }
+    },
+    ...data.session && {
+      session: {
+        access_token: data.session.access_token,
+        expires_at: data.session.expires_at
+      }
+    }
+  }
+
   return new Response(
-    JSON.stringify({
-      success: true,
-      ...data
-    }),
+    JSON.stringify(sanitizedData),
     {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
@@ -78,7 +101,6 @@ Deno.serve(async (req) => {
         return createErrorResponse('Supervisor name is required for registration')
       }
 
-      // Call the stored procedure that handles the entire registration process
       const { data, error } = await supabaseClient.rpc('create_dealer_with_profile', {
         p_email: email.toLowerCase(),
         p_password: requestData.password,
@@ -99,8 +121,8 @@ Deno.serve(async (req) => {
       }
 
       return createSuccessResponse({
-        user: data.user,
-        message: 'Registration successful'
+        message: 'Registration successful',
+        user: data.user
       })
 
     } else if (action === 'login') {
@@ -119,10 +141,9 @@ Deno.serve(async (req) => {
         throw new Error('No user data returned from login')
       }
 
-      // Fetch dealer profile
       const { data: dealer, error: dealerError } = await supabaseClient
         .from('dealers')
-        .select('*')
+        .select('id, dealership_name, verification_status, is_verified')
         .eq('user_id', data.user.id)
         .single()
 
@@ -135,9 +156,9 @@ Deno.serve(async (req) => {
       }
 
       return createSuccessResponse({
+        message: 'Login successful',
         session: data.session,
-        dealer: dealer,
-        message: 'Login successful'
+        dealer: dealer
       })
     }
 
@@ -147,7 +168,6 @@ Deno.serve(async (req) => {
     console.error('Request failed:', {
       error: err,
       errorMessage: err.message,
-      stack: err.stack,
       timestamp: new Date().toISOString()
     })
     
