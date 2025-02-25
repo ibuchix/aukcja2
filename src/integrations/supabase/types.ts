@@ -5135,7 +5135,7 @@ export type Database = {
       damage_type: "scratches" | "dents" | "paintwork" | "windscreen"
       manual_valuation_status: "pending" | "processed" | "rejected"
       service_history_type: "full" | "partial" | "none" | "not_due"
-      user_role: "dealer" | "admin"
+      user_role: "dealer" | "seller" | "admin"
     }
     CompositeTypes: {
       geometry_dump: {
