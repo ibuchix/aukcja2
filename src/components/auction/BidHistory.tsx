@@ -12,6 +12,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Database } from "@/integrations/supabase/types";
+
+type DatabaseBid = Database['public']['Tables']['bids']['Row'] & {
+  dealer: {
+    dealership_name: string | null;
+  } | null;
+};
 
 interface BidHistoryProps {
   carId: string;
@@ -25,16 +32,6 @@ interface Bid {
     dealership_name: string;
   };
   status: string;
-}
-
-interface BidResponse {
-  id: string;
-  amount: number;
-  created_at: string;
-  status: string;
-  dealer: {
-    dealership_name: string | null;
-  } | null;
 }
 
 export const BidHistory = ({ carId }: BidHistoryProps) => {
@@ -70,7 +67,7 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
         if (!data) return [];
 
         // Transform the data to match the Bid interface
-        return (data as BidResponse[]).map(bid => ({
+        return data.map((bid: any) => ({
           id: bid.id,
           amount: bid.amount,
           created_at: bid.created_at,
