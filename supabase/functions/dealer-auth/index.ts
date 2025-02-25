@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
     } else if (action === 'login') {
       console.log('Starting login process for:', email)
       
-      const { data, error: signInError } = await supabaseClient.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: requestData.email,
         password: requestData.password,
       })
