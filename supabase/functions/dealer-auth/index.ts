@@ -15,12 +15,13 @@ interface AuthRequest {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
+    console.log('Request received:', new Date().toISOString())
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -32,76 +33,125 @@ Deno.serve(async (req) => {
       }
     )
 
-    const { action, email, password, supervisorName, phoneNumber, companyName, taxId, businessRegistryNumber, companyAddress } = await req.json() as AuthRequest
+    const requestData = await req.json() as AuthRequest
+    const { action, email } = requestData
 
-    console.log(`Processing ${action} request for email: ${email}`)
+    console.log('Processing request:', {
+      action,
+      email,
+      timestamp: new Date().toISOString(),
+      hasPassword: !!requestData.password,
+      metadata: {
+        hasSupervisorName: !!requestData.supervisorName,
+        hasCompanyName: !!requestData.companyName,
+        hasPhoneNumber: !!requestData.phoneNumber,
+        hasTaxId: !!requestData.taxId,
+        hasBusinessRegistry: !!requestData.businessRegistryNumber,
+        hasAddress: !!requestData.companyAddress
+      }
+    })
 
     if (action === 'register') {
-      // Start a transaction for the registration process
+      console.log('Starting registration process for:', email)
+      
+      // 1. Create auth user
+      console.log('Step 1: Creating auth user')
       const { data: { user }, error: signUpError } = await supabaseClient.auth.admin.createUser({
         email,
-        password,
+        password: requestData.password,
         email_confirm: true,
         user_metadata: {
-          name: supervisorName,
+          name: requestData.supervisorName,
           role: 'dealer'
         }
       })
 
       if (signUpError) {
-        console.error('Error creating auth user:', signUpError)
+        console.error('Auth user creation failed:', {
+          error: signUpError,
+          email,
+          timestamp: new Date().toISOString()
+        })
         throw signUpError
       }
 
       if (!user?.id) {
+        console.error('No user ID returned from auth signup')
         throw new Error('No user ID returned from auth signup')
       }
 
-      console.log('Auth user created successfully:', user.id)
+      console.log('Auth user created successfully:', {
+        userId: user.id,
+        email: user.email,
+        timestamp: new Date().toISOString()
+      })
 
-      // Insert dealer profile
+      // 2. Create dealer profile
+      console.log('Step 2: Creating dealer profile')
       const { error: dealerError } = await supabaseClient
         .from('dealers')
         .insert({
           user_id: user.id,
-          supervisor_name: supervisorName,
-          dealership_name: companyName,
-          tax_id: taxId,
-          business_registry_number: businessRegistryNumber,
-          address: companyAddress,
+          supervisor_name: requestData.supervisorName,
+          dealership_name: requestData.companyName,
+          tax_id: requestData.taxId,
+          business_registry_number: requestData.businessRegistryNumber,
+          address: requestData.companyAddress,
           verification_status: 'pending',
           is_verified: false,
-          license_number: businessRegistryNumber,
+          license_number: requestData.businessRegistryNumber,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
 
       if (dealerError) {
-        // If dealer creation fails, clean up the auth user
+        console.error('Dealer profile creation failed:', {
+          error: dealerError,
+          userId: user.id,
+          timestamp: new Date().toISOString()
+        })
+        
+        // Cleanup: Delete auth user
+        console.log('Rolling back: Deleting auth user due to dealer profile creation failure')
         await supabaseClient.auth.admin.deleteUser(user.id)
-        console.error('Error creating dealer profile:', dealerError)
+        
         throw dealerError
       }
 
-      console.log('Dealer profile created successfully')
+      console.log('Dealer profile created successfully:', {
+        userId: user.id,
+        timestamp: new Date().toISOString()
+      })
 
-      // Create basic profile
+      // 3. Create basic profile
+      console.log('Step 3: Creating user profile')
       const { error: profileError } = await supabaseClient
         .from('profiles')
         .insert({
           id: user.id,
           role: 'dealer',
-          full_name: supervisorName
+          full_name: requestData.supervisorName
         })
 
       if (profileError) {
-        // If profile creation fails, clean up everything
+        console.error('Profile creation failed:', {
+          error: profileError,
+          userId: user.id,
+          timestamp: new Date().toISOString()
+        })
+        
+        // Cleanup: Delete auth user
+        console.log('Rolling back: Deleting auth user due to profile creation failure')
         await supabaseClient.auth.admin.deleteUser(user.id)
-        console.error('Error creating user profile:', profileError)
+        
         throw profileError
       }
 
-      console.log('Profile created successfully')
+      console.log('Registration completed successfully:', {
+        userId: user.id,
+        email: user.email,
+        timestamp: new Date().toISOString()
+      })
 
       return new Response(
         JSON.stringify({
@@ -116,17 +166,31 @@ Deno.serve(async (req) => {
       )
 
     } else if (action === 'login') {
+      console.log('Starting login process for:', email)
+      
+      // 1. Authenticate user
+      console.log('Step 1: Authenticating user')
       const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password,
+        email: requestData.email,
+        password: requestData.password,
       })
 
       if (error) {
-        console.error('Login error:', error)
+        console.error('Login authentication failed:', {
+          error,
+          email,
+          timestamp: new Date().toISOString()
+        })
         throw error
       }
 
-      // Get dealer profile
+      console.log('User authenticated successfully:', {
+        userId: data.user.id,
+        timestamp: new Date().toISOString()
+      })
+
+      // 2. Fetch dealer profile
+      console.log('Step 2: Fetching dealer profile')
       const { data: dealer, error: dealerError } = await supabaseClient
         .from('dealers')
         .select('*')
@@ -134,9 +198,19 @@ Deno.serve(async (req) => {
         .single()
 
       if (dealerError) {
-        console.error('Error fetching dealer profile:', dealerError)
+        console.error('Error fetching dealer profile:', {
+          error: dealerError,
+          userId: data.user.id,
+          timestamp: new Date().toISOString()
+        })
         throw dealerError
       }
+
+      console.log('Login completed successfully:', {
+        userId: data.user.id,
+        email: data.user.email,
+        timestamp: new Date().toISOString()
+      })
 
       return new Response(
         JSON.stringify({
@@ -155,7 +229,12 @@ Deno.serve(async (req) => {
     throw new Error('Invalid action')
 
   } catch (err) {
-    console.error('Error processing request:', err)
+    console.error('Request failed:', {
+      error: err,
+      errorMessage: err.message,
+      stack: err.stack,
+      timestamp: new Date().toISOString()
+    })
     
     return new Response(
       JSON.stringify({
