@@ -2,7 +2,11 @@
 -- Create the user_role type first (if not exists)
 DO $$ 
 BEGIN
-    CREATE TYPE user_role AS ENUM ('dealer', 'admin');
+    -- Drop existing type if it exists
+    DROP TYPE IF EXISTS user_role;
+    
+    -- Create the type with all roles
+    CREATE TYPE user_role AS ENUM ('dealer', 'seller', 'admin');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
@@ -18,3 +22,4 @@ CREATE TABLE IF NOT EXISTS profiles (
 -- Create indexes if they don't exist
 CREATE INDEX IF NOT EXISTS idx_profiles_id ON profiles(id);
 CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
+
