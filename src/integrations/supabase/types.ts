@@ -1366,19 +1366,16 @@ export type Database = {
         Row: {
           full_name: string | null
           id: string
-          role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
         Insert: {
           full_name?: string | null
           id: string
-          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Update: {
           full_name?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Relationships: []
@@ -5135,7 +5132,7 @@ export type Database = {
       damage_type: "scratches" | "dents" | "paintwork" | "windscreen"
       manual_valuation_status: "pending" | "processed" | "rejected"
       service_history_type: "full" | "partial" | "none" | "not_due"
-      user_role: "seller" | "dealer" | "admin"
+      user_role: "dealer" | "admin"
     }
     CompositeTypes: {
       geometry_dump: {
