@@ -27,6 +27,16 @@ interface Bid {
   status: string;
 }
 
+interface BidResponse {
+  id: string;
+  amount: number;
+  created_at: string;
+  status: string;
+  dealer: {
+    dealership_name: string | null;
+  } | null;
+}
+
 export const BidHistory = ({ carId }: BidHistoryProps) => {
   const { data: bids, isLoading } = useQuery({
     queryKey: ["auction-bids", carId],
@@ -42,7 +52,7 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
       } catch (error) {
         console.error('Cache fetch failed, falling back to direct query:', error);
         
-        // Fallback to direct database query with proper join using dealer_id
+        // Fallback to direct database query
         const { data, error: dbError } = await supabase
           .from("bids")
           .select(`
@@ -50,8 +60,7 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
             amount,
             created_at,
             status,
-            dealer_id,
-            dealer:dealers!bids_dealer_id_fkey(dealership_name)
+            dealer:dealers(dealership_name)
           `)
           .eq("car_id", carId)
           .order("created_at", { ascending: false });
@@ -61,7 +70,7 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
         if (!data) return [];
 
         // Transform the data to match the Bid interface
-        return data.map(bid => ({
+        return (data as BidResponse[]).map(bid => ({
           id: bid.id,
           amount: bid.amount,
           created_at: bid.created_at,
