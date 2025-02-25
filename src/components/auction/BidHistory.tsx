@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { History } from "lucide-react";
@@ -41,21 +42,25 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
       } catch (error) {
         console.error('Cache fetch failed, falling back to direct query:', error);
         
-        // Fallback to direct database query
+        // Fallback to direct database query with proper join
         const { data, error: dbError } = await supabase
           .from("bids")
-          .select(`
-            id,
-            amount,
-            created_at,
-            status,
-            dealer:dealers(dealership_name)
-          `)
+          .select("*, dealer:dealers!inner(dealership_name)")
           .eq("car_id", carId)
           .order("created_at", { ascending: false });
 
         if (dbError) throw dbError;
-        return data as Bid[];
+        
+        // Transform the data to match the Bid interface
+        return (data || []).map(bid => ({
+          id: bid.id,
+          amount: bid.amount,
+          created_at: bid.created_at,
+          status: bid.status,
+          dealer: {
+            dealership_name: bid.dealer.dealership_name
+          }
+        })) as Bid[];
       }
     },
     refetchInterval: 5000, // Refresh every 5 seconds
