@@ -27,8 +27,36 @@ const createErrorResponse = (message: string, status = 400) => {
   )
 }
 
+const sanitizeError = (error: any): string => {
+  // Log the full error for debugging while returning safe message to user
+  console.error('Original error:', error);
+
+  if (typeof error === 'object' && error !== null) {
+    // Handle specific database errors
+    if (error.code === '23505') { // Unique violation
+      if (error.message?.toLowerCase().includes('email')) {
+        return 'An account with this email already exists';
+      }
+      if (error.message?.toLowerCase().includes('business_registry_number')) {
+        return 'This business registry number is already registered';
+      }
+      if (error.message?.toLowerCase().includes('tax_id')) {
+        return 'This tax ID is already registered';
+      }
+      return 'A duplicate registration was detected';
+    }
+
+    // Handle authentication errors
+    if (error.message?.includes('Invalid login credentials')) {
+      return 'Invalid email or password';
+    }
+  }
+
+  // Default safe error messages
+  return 'An unexpected error occurred. Please try again later';
+}
+
 const createSuccessResponse = (data: any) => {
-  // Sanitize sensitive data before sending response
   const sanitizedData = {
     success: true,
     message: data.message,
@@ -75,7 +103,7 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     
     if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Missing required environment variables');
+      return createErrorResponse('Service configuration error');
     }
     
     const supabaseClient = createClient(
@@ -112,12 +140,11 @@ Deno.serve(async (req) => {
       });
 
       if (error) {
-        console.error('Registration failed:', error);
-        return createErrorResponse(error.message)
+        return createErrorResponse(sanitizeError(error))
       }
 
       if (!data.success) {
-        return createErrorResponse(data.error || 'Registration failed')
+        return createErrorResponse('Registration failed')
       }
 
       return createSuccessResponse({
@@ -134,11 +161,11 @@ Deno.serve(async (req) => {
       })
 
       if (signInError) {
-        throw signInError
+        return createErrorResponse(sanitizeError(signInError))
       }
 
       if (!data.user) {
-        throw new Error('No user data returned from login')
+        return createErrorResponse('Invalid login attempt')
       }
 
       const { data: dealer, error: dealerError } = await supabaseClient
@@ -148,11 +175,11 @@ Deno.serve(async (req) => {
         .single()
 
       if (dealerError) {
-        throw dealerError
+        return createErrorResponse(sanitizeError(dealerError))
       }
 
       if (!dealer) {
-        throw new Error('Dealer profile not found')
+        return createErrorResponse('Dealer profile not found')
       }
 
       return createSuccessResponse({
@@ -166,11 +193,11 @@ Deno.serve(async (req) => {
 
   } catch (err) {
     console.error('Request failed:', {
-      error: err,
-      errorMessage: err.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      errorType: err.constructor.name,
+      errorMessage: err.message
     })
     
-    return createErrorResponse(err.message || 'An unexpected error occurred')
+    return createErrorResponse(sanitizeError(err))
   }
 })
