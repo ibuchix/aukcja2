@@ -338,13 +338,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "auction_results_highest_bid_dealer_id_fkey"
-            columns: ["highest_bid_dealer_id"]
-            isOneToOne: false
-            referencedRelation: "dealers"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "fk_auction"
             columns: ["auction_id"]
             isOneToOne: false
@@ -426,13 +419,6 @@ export type Database = {
             columns: ["car_id"]
             isOneToOne: false
             referencedRelation: "cars"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bid_history_dealer_id_fkey"
-            columns: ["dealer_id"]
-            isOneToOne: false
-            referencedRelation: "dealers"
             referencedColumns: ["id"]
           },
         ]
@@ -548,13 +534,6 @@ export type Database = {
             columns: ["car_id"]
             isOneToOne: false
             referencedRelation: "cars"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bids_dealer_id_fkey"
-            columns: ["dealer_id"]
-            isOneToOne: false
-            referencedRelation: "dealers"
             referencedColumns: ["id"]
           },
         ]
@@ -991,13 +970,6 @@ export type Database = {
             referencedRelation: "bids"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "cars_winning_dealer_id_fkey"
-            columns: ["winning_dealer_id"]
-            isOneToOne: false
-            referencedRelation: "dealers"
-            referencedColumns: ["id"]
-          },
         ]
       }
       dealer_purchases: {
@@ -1075,13 +1047,6 @@ export type Database = {
             referencedRelation: "cars"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "dealer_purchases_dealer_id_fkey"
-            columns: ["dealer_id"]
-            isOneToOne: false
-            referencedRelation: "dealers"
-            referencedColumns: ["id"]
-          },
         ]
       }
       dealer_watchlist: {
@@ -1137,51 +1102,51 @@ export type Database = {
       dealers: {
         Row: {
           address: string | null
-          business_registry_number: string
+          business_registry_number: string | null
           created_at: string | null
           dealership_name: string
           id: string
-          is_verified: boolean
-          latitude: number | null
-          license_number: string
-          longitude: number | null
+          is_verified: boolean | null
+          license_number: string | null
           supervisor_name: string
-          tax_id: string
+          tax_id: string | null
           updated_at: string | null
-          user_id: string
-          verification_status: string
+          user_id: string | null
+          verification_status:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
         }
         Insert: {
           address?: string | null
-          business_registry_number: string
+          business_registry_number?: string | null
           created_at?: string | null
           dealership_name: string
           id?: string
-          is_verified?: boolean
-          latitude?: number | null
-          license_number: string
-          longitude?: number | null
+          is_verified?: boolean | null
+          license_number?: string | null
           supervisor_name: string
-          tax_id: string
+          tax_id?: string | null
           updated_at?: string | null
-          user_id: string
-          verification_status?: string
+          user_id?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
         }
         Update: {
           address?: string | null
-          business_registry_number?: string
+          business_registry_number?: string | null
           created_at?: string | null
           dealership_name?: string
           id?: string
-          is_verified?: boolean
-          latitude?: number | null
-          license_number?: string
-          longitude?: number | null
+          is_verified?: boolean | null
+          license_number?: string | null
           supervisor_name?: string
-          tax_id?: string
+          tax_id?: string | null
           updated_at?: string | null
-          user_id?: string
-          verification_status?: string
+          user_id?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
         }
         Relationships: []
       }
@@ -1367,19 +1332,19 @@ export type Database = {
           full_name: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
           full_name?: string | null
           id: string
           role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
           full_name?: string | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1447,13 +1412,6 @@ export type Database = {
             columns: ["car_id"]
             isOneToOne: false
             referencedRelation: "cars"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "proxy_bid_audit_logs_dealer_id_fkey"
-            columns: ["dealer_id"]
-            isOneToOne: false
-            referencedRelation: "dealers"
             referencedColumns: ["id"]
           },
           {
@@ -1564,13 +1522,6 @@ export type Database = {
             columns: ["car_id"]
             isOneToOne: false
             referencedRelation: "cars"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "proxy_bids_dealer_id_fkey"
-            columns: ["dealer_id"]
-            isOneToOne: false
-            referencedRelation: "dealers"
             referencedColumns: ["id"]
           },
         ]
@@ -5136,6 +5087,7 @@ export type Database = {
       manual_valuation_status: "pending" | "processed" | "rejected"
       service_history_type: "full" | "partial" | "none" | "not_due"
       user_role: "dealer" | "seller" | "admin"
+      verification_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       geometry_dump: {
