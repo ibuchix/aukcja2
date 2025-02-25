@@ -22,9 +22,16 @@ Deno.serve(async (req) => {
   try {
     console.log('Request received:', new Date().toISOString())
     
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    
+    // Log credentials for verification
+    console.log("Supabase URL:", supabaseUrl)
+    console.log("Supabase Key:", supabaseKey)
+    
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      supabaseUrl,
+      supabaseKey,
       {
         auth: {
           autoRefreshToken: false,
