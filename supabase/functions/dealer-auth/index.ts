@@ -155,7 +155,8 @@ Deno.serve(async (req) => {
     } else if (action === 'login') {
       console.log('Starting login process for:', email)
       
-      const { data, error: signInError } = await supabaseClient.auth.signInWithPassword({
+      // Initial sign in
+      const { data: signInData, error: signInError } = await supabaseClient.auth.signInWithPassword({
         email: requestData.email,
         password: requestData.password,
       })
@@ -164,14 +165,27 @@ Deno.serve(async (req) => {
         return createErrorResponse(sanitizeError(signInError))
       }
 
-      if (!data.user) {
+      if (!signInData?.user) {
         return createErrorResponse('Invalid login attempt')
       }
 
+      // Validate session freshness
+      const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession()
+
+      if (sessionError) {
+        return createErrorResponse('Session validation failed')
+      }
+
+      if (!session || session.user.id !== signInData.user.id) {
+        await supabaseClient.auth.signOut()
+        return createErrorResponse('Session validation failed')
+      }
+
+      // Get dealer profile
       const { data: dealer, error: dealerError } = await supabaseClient
         .from('dealers')
         .select('id, dealership_name, verification_status, is_verified')
-        .eq('user_id', data.user.id)
+        .eq('user_id', signInData.user.id)
         .single()
 
       if (dealerError) {
@@ -182,9 +196,10 @@ Deno.serve(async (req) => {
         return createErrorResponse('Dealer profile not found')
       }
 
+      // Return successful login response with fresh session
       return createSuccessResponse({
         message: 'Login successful',
-        session: data.session,
+        session: session,
         dealer: dealer
       })
     }
