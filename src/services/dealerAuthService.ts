@@ -56,14 +56,13 @@ export const signUpDealerWithEmail = async (
       return { success: false, error: "Name is required" };
     }
 
-    // 1. Create auth user - with role in metadata
+    // Create auth user - without role in metadata
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
       options: {
         data: { 
-          name: metadata.name.trim(),
-          role: 'dealer' // Set role in auth metadata
+          name: metadata.name.trim()
         },
         emailRedirectTo: `${window.location.origin}/dealer/dashboard`
       }
@@ -92,7 +91,7 @@ export const signUpDealerWithEmail = async (
 
     console.log("Auth user created successfully, creating dealer record...");
 
-    // 3. Create dealer record
+    // Create dealer record
     const { error: dealerError } = await supabase
       .from('dealers')
       .insert({
