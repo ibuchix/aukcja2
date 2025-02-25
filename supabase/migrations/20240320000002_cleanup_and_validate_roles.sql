@@ -1,9 +1,4 @@
 
--- Clean up NULL roles
-UPDATE profiles 
-SET role = 'dealer'::user_role 
-WHERE role IS NULL;
-
 -- Fix case mismatches
 UPDATE profiles 
 SET role = LOWER(role::text)::user_role 
@@ -16,10 +11,6 @@ WHERE NOT EXISTS (
     FROM auth.users u 
     WHERE u.id = p.id
 );
-
--- Make role required
-ALTER TABLE profiles 
-ALTER COLUMN role SET NOT NULL;
 
 -- Create role validation function
 CREATE OR REPLACE FUNCTION ensure_valid_role()
@@ -45,7 +36,7 @@ ALTER TABLE profiles
 ADD CONSTRAINT valid_role_values 
 CHECK (role IN ('dealer', 'admin'));
 
--- Create metadata sync function with SECURITY DEFINER
+-- Create metadata sync function
 CREATE OR REPLACE FUNCTION sync_auth_metadata() 
 RETURNS TRIGGER AS $$
 BEGIN
