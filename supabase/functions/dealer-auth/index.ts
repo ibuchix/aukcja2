@@ -181,7 +181,19 @@ Deno.serve(async (req) => {
         return createErrorResponse('Session validation failed')
       }
 
-      // Get dealer profile
+      // Check profile role and verification status
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('role')
+        .eq('id', signInData.user.id)
+        .single();
+
+      if (!profile || profile.role !== 'dealer') {
+        await supabaseClient.auth.signOut()
+        return createErrorResponse('Invalid account type')
+      }
+
+      // Get dealer profile and verify status
       const { data: dealer, error: dealerError } = await supabaseClient
         .from('dealers')
         .select('id, dealership_name, verification_status, is_verified')
@@ -196,11 +208,18 @@ Deno.serve(async (req) => {
         return createErrorResponse('Dealer profile not found')
       }
 
-      // Return successful login response with fresh session
+      // Check if dealer registration is complete and verified
+      if (dealer.verification_status === 'rejected') {
+        return createErrorResponse('Your dealer application has been rejected. Please contact support.')
+      }
+
+      // Allow login but include verification status in response
+      // This lets the frontend show appropriate messages for pending verification
       return createSuccessResponse({
         message: 'Login successful',
         session: session,
-        dealer: dealer
+        dealer: dealer,
+        requiresVerification: dealer.verification_status === 'pending'
       })
     }
 
