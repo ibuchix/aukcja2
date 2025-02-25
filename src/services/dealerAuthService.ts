@@ -63,7 +63,7 @@ export const signUpDealerWithEmail = async (
       options: {
         data: { 
           name: metadata.name.trim(),
-          role: 'dealer' // Set role in metadata to match enum
+          role: 'dealer' as const // Explicitly type as 'dealer' to match the ENUM
         },
         emailRedirectTo: `${window.location.origin}/dealer/dashboard`
       }
