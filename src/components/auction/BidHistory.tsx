@@ -45,20 +45,28 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
         // Fallback to direct database query with proper join
         const { data, error: dbError } = await supabase
           .from("bids")
-          .select("*, dealer:dealers!inner(dealership_name)")
+          .select(`
+            id,
+            amount,
+            created_at,
+            status,
+            dealer:dealers(dealership_name)
+          `)
           .eq("car_id", carId)
           .order("created_at", { ascending: false });
 
         if (dbError) throw dbError;
         
+        if (!data) return [];
+
         // Transform the data to match the Bid interface
-        return (data || []).map(bid => ({
+        return data.map(bid => ({
           id: bid.id,
           amount: bid.amount,
           created_at: bid.created_at,
           status: bid.status,
           dealer: {
-            dealership_name: bid.dealer.dealership_name
+            dealership_name: bid.dealer?.dealership_name || 'Unknown Dealer'
           }
         })) as Bid[];
       }
