@@ -56,95 +56,78 @@ export const signUpDealerWithEmail = async (
       return { success: false, error: "Name is required" };
     }
 
-    // Create auth user with role in metadata
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
-      password,
-      options: {
-        data: { 
-          name: metadata.name.trim(),
-          role: 'dealer' as const // Explicitly type as 'dealer' to match the ENUM
-        },
-        emailRedirectTo: `${window.location.origin}/dealer/dashboard`
+    // Call the dealer-auth edge function
+    const { data, error } = await supabase.functions.invoke('dealer-auth', {
+      body: {
+        action: 'register',
+        email: email.trim().toLowerCase(),
+        password,
+        supervisorName: metadata.name.trim(),
+        companyName: metadata.companyName?.trim(),
+        phoneNumber: metadata.phoneNumber?.trim(),
+        taxId: metadata.taxId?.trim(),
+        businessRegistryNumber: metadata.businessRegistryNumber?.trim(),
+        companyAddress: metadata.companyAddress?.trim()
       }
     });
 
-    if (signUpError) {
-      console.error("Auth signup error details:", {
-        status: signUpError.status,
-        message: signUpError.message,
-        name: signUpError.name,
-        stack: signUpError.stack
-      });
-      
-      // Handle specific error cases
-      switch (signUpError.status) {
-        case 400:
-          return { success: false, error: "Invalid signup data provided" };
-        case 422:
-          return { success: false, error: "Email address is already registered" };
-        case 429:
-          return { success: false, error: "Too many signup attempts. Please try again later" };
-        default:
-          return { success: false, error: signUpError.message || "Failed to create user account" };
-      }
+    if (error) {
+      console.error("Registration error:", error);
+      return {
+        success: false,
+        error: error.message || "Failed to create user account"
+      };
     }
 
-    if (!signUpData?.user?.id) {
-      console.error("No user ID returned from signup");
-      return { success: false, error: "Failed to create user account" };
+    if (!data?.user?.id) {
+      return {
+        success: false,
+        error: "Failed to create user account - no user ID returned"
+      };
     }
 
-    console.log("Auth user created successfully, creating dealer record...");
-
-    // Create dealer record
-    const { error: dealerError } = await supabase
-      .from('dealers')
-      .insert({
-        user_id: signUpData.user.id,
-        supervisor_name: metadata.name.trim(),
-        dealership_name: metadata.companyName?.trim() || metadata.name.trim(),
-        address: metadata.companyAddress?.trim() || '',
-        business_registry_number: metadata.businessRegistryNumber?.trim() || '',
-        tax_id: metadata.taxId?.trim() || '',
-        verification_status: 'pending',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        license_number: '', // Required field with empty default
-        is_verified: false
-      });
-
-    if (dealerError) {
-      console.error("Dealer record creation error:", dealerError);
-      
-      // Handle specific dealer creation errors
-      if (dealerError.code === '23505') { // Unique violation
-        return { 
-          success: false, 
-          error: "A dealer with this information already exists" 
-        };
-      }
-      
-      throw dealerError;
-    }
-
-    console.log("Dealer signup completed successfully");
     return {
       success: true,
-      userId: signUpData.user.id
+      userId: data.user.id
     };
 
   } catch (error) {
     console.error("Unexpected signup error:", error);
-    if (error instanceof Error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
     return {
       success: false,
-      error: "An unexpected error occurred during signup"
+      error: error instanceof Error ? error.message : "An unexpected error occurred during signup"
+    };
+  }
+};
+
+export const signInDealerWithEmail = async (
+  email: string,
+  password: string
+) => {
+  try {
+    const { data, error } = await supabase.functions.invoke('dealer-auth', {
+      body: {
+        action: 'login',
+        email: email.trim().toLowerCase(),
+        password
+      }
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      success: true,
+      session: data.session,
+      dealer: data.dealer
+    };
+
+  } catch (error) {
+    console.error("Login error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "An unexpected error occurred during login"
     };
   }
 };
