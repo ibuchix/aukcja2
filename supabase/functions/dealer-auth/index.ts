@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -44,7 +43,7 @@ Deno.serve(async (req) => {
     const { action, email } = requestData
 
     if (action === 'register') {
-      // Check if user exists using listUsers instead of getUserByEmail
+      // Check if user exists using listUsers
       console.log('Checking if user exists:', email)
       const { data: users, error: listError } = await supabaseClient.auth.admin.listUsers()
       
@@ -72,14 +71,13 @@ Deno.serve(async (req) => {
       console.log('Creating new user with email:', email)
       
       try {
-        // Create user with the admin API
+        // Create user with minimal metadata first
         const { data: { user }, error: signUpError } = await supabaseClient.auth.admin.createUser({
           email,
           password: requestData.password,
           email_confirm: false,
           user_metadata: {
-            name: requestData.supervisorName,
-            role: 'dealer'
+            name: requestData.supervisorName
           }
         })
 
