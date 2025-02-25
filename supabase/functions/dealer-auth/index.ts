@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -24,9 +25,13 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     
-    // Log credentials for verification
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing required environment variables');
+    }
+    
+    // Log credentials for verification (without showing full key)
     console.log("Supabase URL:", supabaseUrl)
-    console.log("Supabase Key:", supabaseKey)
+    console.log("Supabase Key length:", supabaseKey.length)
     
     const supabaseClient = createClient(
       supabaseUrl,
@@ -42,17 +47,22 @@ Deno.serve(async (req) => {
     const requestData = await req.json() as AuthRequest
     const { action, email } = requestData
 
+    if (!email || !requestData.password) {
+      throw new Error('Email and password are required')
+    }
+
     if (action === 'register') {
-      // Check if user exists using listUsers
-      console.log('Checking if user exists:', email)
-      const { data: users, error: listError } = await supabaseClient.auth.admin.listUsers()
-      
-      if (listError) {
-        console.error('Error checking existing users:', listError)
-        throw listError
+      if (!requestData.supervisorName) {
+        throw new Error('Supervisor name is required for registration')
       }
 
-      const existingUser = users.users.find(user => user.email === email)
+      // Check if user exists
+      console.log('Checking if user exists:', email)
+      const { data: existingUser } = await supabaseClient
+        .from('profiles')
+        .select('id')
+        .eq('id', (await supabaseClient.auth.admin.listUsers()).data.users.find(u => u.email === email)?.id)
+        .single()
       
       if (existingUser) {
         console.log('User already exists:', email)
@@ -70,37 +80,27 @@ Deno.serve(async (req) => {
 
       console.log('Creating new user with email:', email)
       
+      // Begin transaction-like operations
+      let user;
       try {
-        // Create user with minimal metadata first
-        const { data: { user }, error: signUpError } = await supabaseClient.auth.admin.createUser({
+        // Step 1: Create auth user
+        const { data: { user: newUser }, error: signUpError } = await supabaseClient.auth.admin.createUser({
           email,
           password: requestData.password,
-          email_confirm: false,
+          email_confirm: true, // Auto-confirm email for better testing
           user_metadata: {
             name: requestData.supervisorName
           }
         })
 
-        if (signUpError) {
-          console.error('Auth user creation failed:', {
-            error: signUpError,
-            email,
-            timestamp: new Date().toISOString()
-          })
-          throw signUpError
+        if (signUpError || !newUser) {
+          throw signUpError || new Error('Failed to create user')
         }
 
-        if (!user?.id) {
-          throw new Error('No user ID returned from auth signup')
-        }
+        user = newUser
+        console.log('Auth user created successfully:', { userId: user.id })
 
-        console.log('Auth user created successfully:', {
-          userId: user.id,
-          email: user.email,
-          timestamp: new Date().toISOString()
-        })
-
-        // Create dealer profile
+        // Step 2: Create dealer profile
         const { error: dealerError } = await supabaseClient
           .from('dealers')
           .insert({
@@ -118,17 +118,12 @@ Deno.serve(async (req) => {
           })
 
         if (dealerError) {
-          console.error('Dealer profile creation failed:', {
-            error: dealerError,
-            userId: user.id,
-            timestamp: new Date().toISOString()
-          })
-          // Clean up by deleting the user if profile creation fails
-          await supabaseClient.auth.admin.deleteUser(user.id)
           throw dealerError
         }
 
-        // Create basic profile
+        console.log('Dealer profile created successfully')
+
+        // Step 3: Create basic profile
         const { error: profileError } = await supabaseClient
           .from('profiles')
           .insert({
@@ -139,15 +134,10 @@ Deno.serve(async (req) => {
           })
 
         if (profileError) {
-          console.error('Profile creation failed:', {
-            error: profileError,
-            userId: user.id,
-            timestamp: new Date().toISOString()
-          })
-          // Clean up by deleting the user if profile creation fails
-          await supabaseClient.auth.admin.deleteUser(user.id)
           throw profileError
         }
+
+        console.log('Basic profile created successfully')
 
         return new Response(
           JSON.stringify({
@@ -165,36 +155,35 @@ Deno.serve(async (req) => {
         console.error('Registration process failed:', {
           error,
           email,
-          timestamp: new Date().toISOString(),
-          stack: error.stack
+          timestamp: new Date().toISOString()
         })
         
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: error.message || 'Registration failed'
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
+        // Clean up if user was created but subsequent steps failed
+        if (user?.id) {
+          try {
+            await supabaseClient.auth.admin.deleteUser(user.id)
+            console.log('Cleaned up failed registration for user:', user.id)
+          } catch (cleanupError) {
+            console.error('Failed to cleanup user after failed registration:', cleanupError)
           }
-        )
+        }
+        
+        throw error
       }
     } else if (action === 'login') {
       console.log('Starting login process for:', email)
       
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
+      const { data, error: signInError } = await supabaseClient.auth.signInWithPassword({
         email: requestData.email,
         password: requestData.password,
       })
 
-      if (error) {
-        console.error('Login authentication failed:', {
-          error,
-          email,
-          timestamp: new Date().toISOString()
-        })
-        throw error
+      if (signInError) {
+        throw signInError
+      }
+
+      if (!data.user) {
+        throw new Error('No user data returned from login')
       }
 
       console.log('User authenticated successfully:', {
@@ -210,12 +199,11 @@ Deno.serve(async (req) => {
         .single()
 
       if (dealerError) {
-        console.error('Error fetching dealer profile:', {
-          error: dealerError,
-          userId: data.user.id,
-          timestamp: new Date().toISOString()
-        })
         throw dealerError
+      }
+
+      if (!dealer) {
+        throw new Error('Dealer profile not found')
       }
 
       return new Response(
@@ -245,7 +233,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: err.message
+        error: err.message || 'An unexpected error occurred'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

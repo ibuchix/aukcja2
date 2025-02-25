@@ -56,39 +56,59 @@ export const signUpDealerWithEmail = async (
       return { success: false, error: "Name is required" };
     }
 
-    // Call the dealer-auth edge function
-    const { data, error } = await supabase.functions.invoke('dealer-auth', {
-      body: {
-        action: 'register',
-        email: email.trim().toLowerCase(),
-        password,
-        supervisorName: metadata.name.trim(),
-        companyName: metadata.companyName?.trim(),
-        phoneNumber: metadata.phoneNumber?.trim(),
-        taxId: metadata.taxId?.trim(),
-        businessRegistryNumber: metadata.businessRegistryNumber?.trim(),
-        companyAddress: metadata.companyAddress?.trim()
+    // Call the dealer-auth edge function with retries
+    const maxRetries = 3;
+    let lastError: any;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`Attempt ${attempt} to register dealer...`);
+        
+        const { data, error } = await supabase.functions.invoke('dealer-auth', {
+          body: {
+            action: 'register',
+            email: email.trim().toLowerCase(),
+            password,
+            supervisorName: metadata.name.trim(),
+            companyName: metadata.companyName?.trim(),
+            phoneNumber: metadata.phoneNumber?.trim(),
+            taxId: metadata.taxId?.trim(),
+            businessRegistryNumber: metadata.businessRegistryNumber?.trim(),
+            companyAddress: metadata.companyAddress?.trim()
+          }
+        });
+
+        if (error) {
+          console.error(`Registration attempt ${attempt} failed:`, error);
+          lastError = error;
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
+          continue;
+        }
+
+        if (!data?.user?.id) {
+          console.error(`Registration attempt ${attempt} failed: No user ID returned`);
+          lastError = new Error("Failed to create user account - no user ID returned");
+          continue;
+        }
+
+        console.log("Registration successful!");
+        return {
+          success: true,
+          userId: data.user.id
+        };
+      } catch (error) {
+        console.error(`Registration attempt ${attempt} threw error:`, error);
+        lastError = error;
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
+        }
       }
-    });
-
-    if (error) {
-      console.error("Registration error:", error);
-      return {
-        success: false,
-        error: error.message || "Failed to create user account"
-      };
-    }
-
-    if (!data?.user?.id) {
-      return {
-        success: false,
-        error: "Failed to create user account - no user ID returned"
-      };
     }
 
     return {
-      success: true,
-      userId: data.user.id
+      success: false,
+      error: lastError?.message || "Registration failed after multiple attempts"
     };
 
   } catch (error) {
@@ -104,30 +124,46 @@ export const signInDealerWithEmail = async (
   email: string,
   password: string
 ) => {
-  try {
-    const { data, error } = await supabase.functions.invoke('dealer-auth', {
-      body: {
-        action: 'login',
-        email: email.trim().toLowerCase(),
-        password
+  const maxRetries = 3;
+  let lastError: any;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Attempt ${attempt} to login dealer...`);
+      
+      const { data, error } = await supabase.functions.invoke('dealer-auth', {
+        body: {
+          action: 'login',
+          email: email.trim().toLowerCase(),
+          password
+        }
+      });
+
+      if (error) {
+        console.error(`Login attempt ${attempt} failed:`, error);
+        lastError = error;
+        await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
+        continue;
       }
-    });
 
-    if (error) {
-      throw error;
+      console.log("Login successful!");
+      return {
+        success: true,
+        session: data.session,
+        dealer: data.dealer
+      };
+
+    } catch (error) {
+      console.error(`Login attempt ${attempt} threw error:`, error);
+      lastError = error;
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
+      }
     }
-
-    return {
-      success: true,
-      session: data.session,
-      dealer: data.dealer
-    };
-
-  } catch (error) {
-    console.error("Login error:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "An unexpected error occurred during login"
-    };
   }
+
+  return {
+    success: false,
+    error: lastError?.message || "Login failed after multiple attempts"
+  };
 };
