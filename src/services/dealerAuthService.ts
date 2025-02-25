@@ -56,20 +56,26 @@ export const signUpDealerWithEmail = async (
       return { success: false, error: "Name is required" };
     }
 
-    // Create auth user - without role in metadata
+    // Create auth user with role in metadata
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
       options: {
         data: { 
-          name: metadata.name.trim()
+          name: metadata.name.trim(),
+          role: 'dealer' // Set role in metadata to match enum
         },
         emailRedirectTo: `${window.location.origin}/dealer/dashboard`
       }
     });
 
     if (signUpError) {
-      console.error("Auth signup error:", signUpError);
+      console.error("Auth signup error details:", {
+        status: signUpError.status,
+        message: signUpError.message,
+        name: signUpError.name,
+        stack: signUpError.stack
+      });
       
       // Handle specific error cases
       switch (signUpError.status) {
