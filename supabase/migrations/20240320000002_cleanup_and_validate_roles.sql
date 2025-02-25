@@ -1,15 +1,20 @@
 
--- Create role validation function
+-- Create or replace role validation function
 CREATE OR REPLACE FUNCTION ensure_valid_role()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Ensure role is lowercase and valid
-    NEW.role = COALESCE(LOWER(NEW.role::text), 'dealer')::user_role;
+    -- Ensure role is valid
+    NEW.role = COALESCE(NEW.role, 'dealer')::user_role;
     RETURN NEW;
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Default to dealer role if there's any error
+        NEW.role = 'dealer'::user_role;
+        RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- Create metadata sync function
+-- Create or replace metadata sync function
 CREATE OR REPLACE FUNCTION sync_auth_metadata() 
 RETURNS TRIGGER AS $$
 BEGIN
@@ -19,10 +24,17 @@ BEGIN
         jsonb_build_object('role', NEW.role::text)
     WHERE id = NEW.id;
     RETURN NEW;
+EXCEPTION
+    WHEN OTHERS THEN
+        RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Create triggers
+-- Drop existing triggers if they exist
+DROP TRIGGER IF EXISTS validate_role_trigger ON profiles;
+DROP TRIGGER IF EXISTS sync_auth_metadata_trigger ON profiles;
+
+-- Create new triggers
 CREATE TRIGGER validate_role_trigger
     BEFORE INSERT OR UPDATE ON profiles
     FOR EACH ROW
