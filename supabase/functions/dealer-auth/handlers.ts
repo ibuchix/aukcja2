@@ -1,10 +1,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { Database } from '../database.types';
-import { corsHeaders } from '../_shared/cors';
-import { AuthHandlerResponse, LoginRequest, RegisterRequest } from './types';
-import { buildErrorResponse, buildSuccessResponse } from './response-utils';
-import { logError, logInfo } from './logging';
+import type { Database, AuthHandlerResponse, LoginRequest, RegisterRequest } from './types.ts';
+import { corsHeaders } from '../_shared/cors.ts';
 
 const validateInput = (email: string, password: string): { isValid: boolean; error?: string } => {
   // Email validation
@@ -29,6 +26,20 @@ const validateInput = (email: string, password: string): { isValid: boolean; err
   return { isValid: true };
 };
 
+export function buildErrorResponse(error: string): AuthHandlerResponse {
+  return {
+    success: false,
+    error
+  };
+}
+
+export function buildSuccessResponse(data: Omit<AuthHandlerResponse, 'success'>): AuthHandlerResponse {
+  return {
+    success: true,
+    ...data
+  };
+}
+
 export async function handleRegister(
   supabaseAdmin: ReturnType<typeof createClient<Database>>,
   request: RegisterRequest
@@ -50,24 +61,23 @@ export async function handleRegister(
     });
 
     if (error) {
-      const errorMessage = sanitizeError(error)
-      logError('register', request.email, errorMessage)
-      return buildErrorResponse(errorMessage)
+      console.error('Registration error:', error);
+      return buildErrorResponse(sanitizeError(error));
     }
 
     if (!data.success) {
-      logError('register', request.email, 'Registration failed')
-      return buildErrorResponse('Registration failed')
+      console.error('Registration failed without error');
+      return buildErrorResponse('Registration failed');
     }
 
-    logInfo('register', request.email, 'success')
+    console.log('Registration successful');
     return buildSuccessResponse({
       message: 'Registration successful',
       user: data.user
-    })
+    });
   } catch (error) {
-    logError('register', request.email, sanitizeError(error))
-    return buildErrorResponse(sanitizeError(error))
+    console.error('Unexpected error during registration:', error);
+    return buildErrorResponse(sanitizeError(error));
   }
 }
 
@@ -84,30 +94,29 @@ export async function handleLogin(
     const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
       email: request.email,
       password: request.password,
-    })
+    });
 
     if (signInError) {
-      const errorMessage = sanitizeError(signInError)
-      logError('login', request.email, errorMessage)
-      return buildErrorResponse(errorMessage)
+      console.error('Login error:', signInError);
+      return buildErrorResponse(sanitizeError(signInError));
     }
 
     if (!signInData?.user) {
-      logError('login', request.email, 'Invalid login attempt')
-      return buildErrorResponse('Invalid login attempt')
+      console.error('Invalid login attempt - no user returned');
+      return buildErrorResponse('Invalid login attempt');
     }
 
-    const { data: { session }, error: sessionError } = await supabaseAdmin.auth.getSession()
+    const { data: { session }, error: sessionError } = await supabaseAdmin.auth.getSession();
 
     if (sessionError) {
-      logError('login', request.email, 'Session validation failed')
-      return buildErrorResponse('Session validation failed')
+      console.error('Session validation failed:', sessionError);
+      return buildErrorResponse('Session validation failed');
     }
 
     if (!session || session.user.id !== signInData.user.id) {
-      await supabaseAdmin.auth.signOut()
-      logError('login', request.email, 'Session validation failed')
-      return buildErrorResponse('Session validation failed')
+      await supabaseAdmin.auth.signOut();
+      console.error('Session validation failed - user ID mismatch');
+      return buildErrorResponse('Session validation failed');
     }
 
     const { data: profile } = await supabaseAdmin
@@ -117,67 +126,66 @@ export async function handleLogin(
       .single();
 
     if (!profile || profile.role !== 'dealer') {
-      await supabaseAdmin.auth.signOut()
-      logError('login', request.email, 'Invalid account type')
-      return buildErrorResponse('Invalid account type')
+      await supabaseAdmin.auth.signOut();
+      console.error('Invalid account type');
+      return buildErrorResponse('Invalid account type');
     }
 
     const { data: dealer, error: dealerError } = await supabaseAdmin
       .from('dealers')
       .select('id, dealership_name, verification_status, is_verified')
       .eq('user_id', signInData.user.id)
-      .single()
+      .single();
 
     if (dealerError) {
-      const errorMessage = sanitizeError(dealerError)
-      logError('login', request.email, errorMessage)
-      return buildErrorResponse(errorMessage)
+      console.error('Error fetching dealer profile:', dealerError);
+      return buildErrorResponse(sanitizeError(dealerError));
     }
 
     if (!dealer) {
-      logError('login', request.email, 'Dealer profile not found')
-      return buildErrorResponse('Dealer profile not found')
+      console.error('Dealer profile not found');
+      return buildErrorResponse('Dealer profile not found');
     }
 
     if (dealer.verification_status === 'rejected') {
-      logError('login', request.email, 'Application rejected')
-      return buildErrorResponse('Your dealer application has been rejected. Please contact support.')
+      console.error('Application rejected');
+      return buildErrorResponse('Your dealer application has been rejected. Please contact support.');
     }
 
-    logInfo('login', request.email, 'success')
+    console.log('Login successful');
     return buildSuccessResponse({
       message: 'Login successful',
       session: session,
       dealer: dealer,
       requiresVerification: dealer.verification_status === 'pending'
-    })
+    });
   } catch (error) {
-    logError('login', request.email, sanitizeError(error))
-    return buildErrorResponse(sanitizeError(error))
+    console.error('Unexpected error during login:', error);
+    return buildErrorResponse(sanitizeError(error));
   }
 }
 
 const sanitizeError = (error: any): string => {
-  console.error('Original error:', error)
+  console.error('Original error:', error);
 
   if (typeof error === 'object' && error !== null) {
     if (error.code === '23505') {
       if (error.message?.toLowerCase().includes('email')) {
-        return 'An account with this email already exists'
+        return 'An account with this email already exists';
       }
       if (error.message?.toLowerCase().includes('business_registry_number')) {
-        return 'This business registry number is already registered'
+        return 'This business registry number is already registered';
       }
       if (error.message?.toLowerCase().includes('tax_id')) {
-        return 'This tax ID is already registered'
+        return 'This tax ID is already registered';
       }
-      return 'A duplicate registration was detected'
+      return 'A duplicate registration was detected';
     }
 
     if (error.message?.includes('Invalid login credentials')) {
-      return 'Invalid email or password'
+      return 'Invalid email or password';
     }
   }
 
-  return 'An unexpected error occurred. Please try again later'
-}
+  return 'An unexpected error occurred. Please try again later';
+};

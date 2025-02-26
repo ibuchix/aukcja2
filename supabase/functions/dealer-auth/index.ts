@@ -1,80 +1,64 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
-import { RateLimiter } from '../_shared/rate-limiter.ts'
-import { createErrorResponse } from './response-utils.ts'
-import { handleLogin, handleRegistration } from './handlers.ts'
-import { logAuthEvent } from './logging.ts'
-import type { AuthRequest } from './types.ts'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders } from '../_shared/cors.ts';
+import { handleLogin, handleRegister } from './handlers.ts';
+import type { LoginRequest, RegisterRequest } from './types.ts';
 
-// Initialize rate limiter
-const limiter = new RateLimiter({
-  tokensPerInterval: 5,
-  interval: "minute"
-});
-
-Deno.serve(async (req) => {
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Rate limiting check
-    if (!await limiter.check(req)) {
-      logAuthEvent(req, 'rate_limit_exceeded', 'unknown', 'failure', 'Too many requests')
-      return new Response("Too many requests", {
-        status: 429,
-        headers: corsHeaders
-      });
-    }
-    
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
     if (!supabaseUrl || !supabaseKey) {
-      logAuthEvent(req, 'configuration_error', 'unknown', 'failure', 'Service configuration error')
-      return createErrorResponse('Service configuration error');
+      throw new Error('Missing environment variables');
     }
-    
-    const supabaseClient = createClient(
-      supabaseUrl,
-      supabaseKey,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        },
-        db: {
-          pool: { min: 2, max: 10 }
-        }
+
+    const supabaseClient = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
       }
-    )
+    });
 
-    const requestData = await req.json() as AuthRequest
-    const { action, email } = requestData
-
-    if (!email || !requestData.password) {
-      logAuthEvent(req, action || 'unknown', email || 'unknown', 'failure', 'Missing credentials')
-      return createErrorResponse('Email and password are required')
-    }
+    const { action, ...data } = await req.json();
 
     if (action === 'register') {
-      return await handleRegistration(supabaseClient, requestData, req)
-    } else if (action === 'login') {
-      return await handleLogin(supabaseClient, requestData, req)
+      const response = await handleRegister(supabaseClient, data as RegisterRequest);
+      return new Response(JSON.stringify(response), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: response.success ? 200 : 400
+      });
     }
 
-    logAuthEvent(req, 'invalid_action', email, 'failure', 'Invalid action')
-    return createErrorResponse('Invalid action')
+    if (action === 'login') {
+      const response = await handleLogin(supabaseClient, data as LoginRequest);
+      return new Response(JSON.stringify(response), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: response.success ? 200 : 401
+      });
+    }
 
-  } catch (err) {
-    logAuthEvent(
-      req, 
-      'error', 
-      'unknown', 
-      'failure', 
-      err instanceof Error ? err.message : 'An unexpected error occurred'
-    )
-    return createErrorResponse(err instanceof Error ? err.message : 'An unexpected error occurred')
+    return new Response(
+      JSON.stringify({ success: false, error: 'Invalid action' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+    );
+
+  } catch (error) {
+    console.error('Error processing request:', error);
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'Internal server error'
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      }
+    );
   }
-})
+});
