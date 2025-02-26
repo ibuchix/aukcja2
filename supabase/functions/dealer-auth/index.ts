@@ -43,6 +43,9 @@ Deno.serve(async (req) => {
         auth: {
           autoRefreshToken: false,
           persistSession: false
+        },
+        db: {
+          pool: { min: 2, max: 10 }
         }
       }
     )
