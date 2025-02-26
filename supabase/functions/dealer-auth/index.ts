@@ -4,6 +4,7 @@ import { corsHeaders } from '../_shared/cors.ts'
 import { RateLimiter } from '../_shared/rate-limiter.ts'
 import { createErrorResponse } from './response-utils.ts'
 import { handleLogin, handleRegistration } from './handlers.ts'
+import { logAuthEvent } from './logging.ts'
 import type { AuthRequest } from './types.ts'
 
 // Initialize rate limiter
@@ -18,10 +19,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    console.log('Request received:', new Date().toISOString())
-    
     // Rate limiting check
     if (!await limiter.check(req)) {
+      logAuthEvent(req, 'rate_limit_exceeded', 'unknown', 'failure', 'Too many requests')
       return new Response("Too many requests", {
         status: 429,
         headers: corsHeaders
@@ -32,6 +32,7 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     
     if (!supabaseUrl || !supabaseKey) {
+      logAuthEvent(req, 'configuration_error', 'unknown', 'failure', 'Service configuration error')
       return createErrorResponse('Service configuration error');
     }
     
@@ -50,24 +51,27 @@ Deno.serve(async (req) => {
     const { action, email } = requestData
 
     if (!email || !requestData.password) {
+      logAuthEvent(req, action || 'unknown', email || 'unknown', 'failure', 'Missing credentials')
       return createErrorResponse('Email and password are required')
     }
 
     if (action === 'register') {
-      return await handleRegistration(supabaseClient, requestData)
+      return await handleRegistration(supabaseClient, requestData, req)
     } else if (action === 'login') {
-      return await handleLogin(supabaseClient, requestData)
+      return await handleLogin(supabaseClient, requestData, req)
     }
 
+    logAuthEvent(req, 'invalid_action', email, 'failure', 'Invalid action')
     return createErrorResponse('Invalid action')
 
   } catch (err) {
-    console.error('Request failed:', {
-      timestamp: new Date().toISOString(),
-      errorType: err.constructor.name,
-      errorMessage: err.message
-    })
-    
+    logAuthEvent(
+      req, 
+      'error', 
+      'unknown', 
+      'failure', 
+      err instanceof Error ? err.message : 'An unexpected error occurred'
+    )
     return createErrorResponse(err instanceof Error ? err.message : 'An unexpected error occurred')
   }
 })
