@@ -10,7 +10,7 @@ create or replace function create_dealer_with_profile(
   p_address text
 ) returns json
 language plpgsql
-security definer
+security definer -- Run with definer's permissions
 as $$
 declare
   v_user_id uuid;
@@ -103,3 +103,9 @@ begin
   end;
 end;
 $$;
+
+-- Revoke execute from public
+REVOKE ALL ON FUNCTION create_dealer_with_profile FROM PUBLIC;
+
+-- Grant execute to service role only
+GRANT EXECUTE ON FUNCTION create_dealer_with_profile TO service_role;
