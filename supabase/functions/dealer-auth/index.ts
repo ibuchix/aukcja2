@@ -1,6 +1,47 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
+
+// Rate limiter implementation
+class RateLimiter {
+  private tokens: number;
+  private lastRefill: number;
+  private tokensPerInterval: number;
+  private interval: number;
+
+  constructor({ tokensPerInterval, interval }: { tokensPerInterval: number, interval: string }) {
+    this.tokens = tokensPerInterval;
+    this.lastRefill = Date.now();
+    this.tokensPerInterval = tokensPerInterval;
+    this.interval = interval === 'minute' ? 60000 : 3600000; // Convert to milliseconds
+  }
+
+  async check(request: Request): Promise<boolean> {
+    const now = Date.now();
+    const timePassed = now - this.lastRefill;
+    
+    if (timePassed > this.interval) {
+      this.tokens = this.tokensPerInterval;
+      this.lastRefill = now;
+    } else {
+      const tokensToAdd = Math.floor(timePassed * (this.tokensPerInterval / this.interval));
+      this.tokens = Math.min(this.tokensPerInterval, this.tokens + tokensToAdd);
+      this.lastRefill = now;
+    }
+
+    if (this.tokens > 0) {
+      this.tokens--;
+      return true;
+    }
+
+    return false;
+  }
+}
+
+// Initialize rate limiter
+const limiter = new RateLimiter({
+  tokensPerInterval: 5,
+  interval: "minute"
+});
 
 interface AuthRequest {
   action: 'register' | 'login'
@@ -98,6 +139,14 @@ Deno.serve(async (req) => {
 
   try {
     console.log('Request received:', new Date().toISOString())
+    
+    // Rate limiting check
+    if (!await limiter.check(req)) {
+      return new Response("Too many requests", {
+        status: 429,
+        headers: corsHeaders
+      });
+    }
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
