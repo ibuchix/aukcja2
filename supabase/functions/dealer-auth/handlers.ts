@@ -1,6 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Database } from '../database.types';
-import { cors } from '../_shared/cors';
+import { corsHeaders } from '../_shared/cors';
 import { AuthHandlerResponse, LoginRequest, RegisterRequest } from './types';
 import { buildErrorResponse, buildSuccessResponse } from './response-utils';
 import { logError, logInfo } from './logging';
@@ -154,4 +155,29 @@ export async function handleLogin(
     logError('login', request.email, sanitizeError(error))
     return buildErrorResponse(sanitizeError(error))
   }
+}
+
+const sanitizeError = (error: any): string => {
+  console.error('Original error:', error)
+
+  if (typeof error === 'object' && error !== null) {
+    if (error.code === '23505') {
+      if (error.message?.toLowerCase().includes('email')) {
+        return 'An account with this email already exists'
+      }
+      if (error.message?.toLowerCase().includes('business_registry_number')) {
+        return 'This business registry number is already registered'
+      }
+      if (error.message?.toLowerCase().includes('tax_id')) {
+        return 'This tax ID is already registered'
+      }
+      return 'A duplicate registration was detected'
+    }
+
+    if (error.message?.includes('Invalid login credentials')) {
+      return 'Invalid email or password'
+    }
+  }
+
+  return 'An unexpected error occurred. Please try again later'
 }
