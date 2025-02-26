@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { validateEmail, validatePassword } from "@/utils/authValidation";
 
 interface SignUpResult {
   success: boolean;
@@ -16,22 +17,6 @@ interface UserMetadata {
   businessRegistryNumber?: string;
 }
 
-const validatePassword = (password: string): { isValid: boolean; error?: string } => {
-  if (password.length < 8) {
-    return { isValid: false, error: "Password must be at least 8 characters" };
-  }
-  if (!/[A-Z]/.test(password)) {
-    return { isValid: false, error: "Password must contain at least one uppercase letter" };
-  }
-  if (!/[a-z]/.test(password)) {
-    return { isValid: false, error: "Password must contain at least one lowercase letter" };
-  }
-  if (!/[0-9]/.test(password)) {
-    return { isValid: false, error: "Password must contain at least one number" };
-  }
-  return { isValid: true };
-};
-
 export const signUpDealerWithEmail = async (
   email: string,
   password: string,
@@ -40,12 +25,13 @@ export const signUpDealerWithEmail = async (
   try {
     console.log("Starting dealer signup process...");
 
-    // Validate email format
-    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-      return { success: false, error: "Invalid email format" };
+    // Use centralized email validation
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      return { success: false, error: emailValidation.error };
     }
 
-    // Validate password strength
+    // Use centralized password validation
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
       return { success: false, error: passwordValidation.error };
@@ -81,7 +67,6 @@ export const signUpDealerWithEmail = async (
         if (error) {
           console.error(`Registration attempt ${attempt} failed:`, error);
           lastError = error;
-          // Wait before retrying (exponential backoff)
           await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
           continue;
         }
@@ -127,6 +112,12 @@ export const signInDealerWithEmail = async (
   const maxRetries = 3;
   let lastError: any;
 
+  // Validate email format first
+  const emailValidation = validateEmail(email);
+  if (!emailValidation.isValid) {
+    return { success: false, error: emailValidation.error };
+  }
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`Attempt ${attempt} to login dealer...`);
@@ -167,3 +158,4 @@ export const signInDealerWithEmail = async (
     error: lastError?.message || "Login failed after multiple attempts"
   };
 };
+
