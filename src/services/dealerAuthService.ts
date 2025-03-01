@@ -45,6 +45,17 @@ export const signUpDealerWithEmail = async (
     // Normalize inputs
     const normalizedEmail = safeTrim(email).toLowerCase();
 
+    // Log the request before sending
+    console.log("Preparing dealer registration request:", {
+      email: normalizedEmail,
+      supervisorName: safeTrim(metadata.name),
+      companyName: safeTrim(metadata.companyName),
+      phoneNumber: safeTrim(metadata.phoneNumber),
+      taxId: safeTrim(metadata.taxId),
+      businessRegistryNumber: safeTrim(metadata.businessRegistryNumber),
+      companyAddress: safeTrim(metadata.companyAddress)
+    });
+
     // Call the dealer-auth edge function with retries and better logging
     const maxRetries = 3;
     let lastError: any;
@@ -67,13 +78,27 @@ export const signUpDealerWithEmail = async (
           }
         });
 
-        console.log("Registration response:", { data, error });
+        console.log("Registration response:", { 
+          success: data?.success, 
+          error: error || data?.error,
+          userId: data?.user?.id
+        });
 
         if (error) {
           console.error(`Registration attempt ${attempt} failed:`, error);
           lastError = error;
           
           // Add delay before retry
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
+          }
+          continue;
+        }
+
+        if (!data?.success) {
+          console.error(`Registration attempt ${attempt} failed with API error:`, data?.error);
+          lastError = new Error(data?.error || "Failed to create user account");
+          
           if (attempt < maxRetries) {
             await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
           }
