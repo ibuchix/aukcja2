@@ -57,11 +57,21 @@ export const invokeDealerFunction = async <T = any>(
         continue;
       }
 
-      // Ensure we're returning the actual data payload, not the wrapper
-      return {
-        success: true,
-        data: data.data as T
-      };
+      // Important: ensure data.data exists before casting
+      if (data && typeof data === 'object' && 'data' in data) {
+        // Only cast when we know the structure matches our expectation
+        return {
+          success: true,
+          data: data.data as T
+        };
+      } else {
+        // If the structure doesn't match, return a properly typed response
+        console.error(`Unexpected response structure from function ${action}:`, data);
+        return {
+          success: false,
+          error: `Unexpected response structure from function ${action}`
+        };
+      }
 
     } catch (error) {
       console.error(`Attempt ${attempt} threw error:`, error);

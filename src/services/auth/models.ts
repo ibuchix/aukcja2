@@ -21,6 +21,7 @@ export interface UserMetadata {
   businessRegistryNumber?: string;
 }
 
+// Updated to match the exact structure returned by the API
 export interface RegisterResponse {
   message: string;
   user: { 

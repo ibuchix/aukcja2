@@ -89,22 +89,33 @@ export const signUpDealerWithEmail = async (
       };
     }
 
-    // Safely access the user ID from the response data with detailed type checking
-    // This is the critical part that was causing the 'id' property error
-    if (!response.data || typeof response.data !== 'object') {
-      console.error("Registration successful but response data is invalid:", response.data);
+    // Add detailed type checking and validation before accessing data
+    if (!response.data) {
+      console.error("Registration successful but response data is missing");
       return {
         success: false,
-        error: "Failed to create user account - invalid response data"
+        error: "Failed to create user account - missing response data"
       };
     }
 
+    // Explicitly validate the response data structure
     const userData = response.data;
-    if (!userData.user || typeof userData.user !== 'object' || !userData.user.id) {
-      console.error("Registration successful but no valid user object returned:", userData);
+    
+    // Check if user object exists and has an id
+    if (!userData.user) {
+      console.error("Registration successful but user object is missing:", userData);
       return {
         success: false,
-        error: "Failed to create user account - missing user ID"
+        error: "Failed to create user account - missing user data"
+      };
+    }
+
+    // Final check for id property
+    if (typeof userData.user.id !== 'string' || !userData.user.id) {
+      console.error("Registration successful but user id is invalid:", userData.user);
+      return {
+        success: false,
+        error: "Failed to create user account - invalid user ID"
       };
     }
 
@@ -149,6 +160,14 @@ export const signInDealerWithEmail = async (
     return {
       success: false,
       error: response.error
+    };
+  }
+
+  // Validate response data
+  if (!response.data) {
+    return {
+      success: false,
+      error: "Login successful but no session data returned"
     };
   }
 
