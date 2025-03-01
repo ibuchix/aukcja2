@@ -1,133 +1,152 @@
 
-import { createEdgeClient } from "../_shared/supabase-client.ts";
-import { logOperation, logError, logAuthEvent } from "./logging.ts";
-import { createResponse, errorResponse, successResponse, sanitizeError } from "./response-utils.ts";
-import { LoginRequest, RegistrationRequest } from "./types.ts";
+import { createEdgeClient, createResponse, createErrorResponse, validateRequiredFields } from '@shared/dependencies.ts';
+import { createServiceClient } from '@shared/supabase-client.ts';
+import { corsHeaders } from '@shared/cors.ts';
 
-// Function for checking if email exists
-export const checkEmailExists = async (req: Request) => {
+export async function handleRegister(req: Request) {
   try {
-    const { email } = await req.json();
+    const body = await req.json();
+    validateRequiredFields(body, ['email', 'password', 'supervisorName', 'companyName']);
     
-    if (!email) {
-      return errorResponse('Email is required', 400);
+    const supabaseClient = createEdgeClient(req);
+    const adminClient = createServiceClient();
+
+    // Check if user already exists to provide better error messages
+    const { data: existingUser } = await adminClient
+      .from('profiles')
+      .select('id')
+      .eq('email', body.email.toLowerCase())
+      .maybeSingle();
+
+    if (existingUser) {
+      return createErrorResponse({
+        message: 'User with this email already exists',
+        code: 'user_exists',
+        status: 409
+      });
     }
 
-    logOperation('Checking if email exists', { email });
-    
-    const supabase = createEdgeClient(req);
-    const { data, error } = await supabase.auth.admin.listUsers({ 
-      filters: { email }
+    // Use RPC function for atomic registration
+    const { data, error } = await adminClient.rpc('create_dealer_with_profile', {
+      p_email: body.email.toLowerCase(),
+      p_password: body.password,
+      p_supervisor_name: body.supervisorName,
+      p_company_name: body.companyName,
+      p_tax_id: body.taxId || '',
+      p_business_registry_number: body.businessRegistryNumber || '',
+      p_address: body.companyAddress || ''
     });
 
     if (error) {
-      logError('Error checking if email exists', error);
-      return errorResponse(sanitizeError(error), 500);
+      // Handle specific error codes
+      if (error.message?.includes('already exists')) {
+        return createErrorResponse({
+          message: 'User with this email already exists',
+          code: 'user_exists',
+          status: 409
+        });
+      }
+      
+      return createErrorResponse({
+        message: error.message,
+        code: error.code,
+        status: 400
+      });
     }
 
-    return successResponse({
-      exists: (data?.users?.length || 0) > 0
-    });
-  } catch (error) {
-    logError('Unexpected error in checkEmailExists', error);
-    return errorResponse(sanitizeError(error), 500);
-  }
-};
-
-// Login function - updated to use the new response utilities
-export const login = async (req: Request) => {
-  try {
-    const { email, password } = await req.json() as LoginRequest;
-    
-    if (!email || !password) {
-      return errorResponse('Email and password are required', 400);
-    }
-
-    logOperation('Login attempt', { email });
-    
-    const supabase = createEdgeClient(req);
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email, password
-    });
-
-    if (authError) {
-      logError('Login error', authError);
-      return errorResponse('Invalid email or password', 401);
-    }
-
-    // Get dealer profile
-    const { data: dealerData, error: dealerError } = await supabase
-      .from('dealers')
-      .select('*')
-      .eq('user_id', authData.user.id)
-      .single();
-
-    if (dealerError) {
-      logError('Error fetching dealer profile', dealerError);
-    }
-
-    return successResponse({
-      session: authData.session,
-      dealer: dealerData || null
-    });
-  } catch (error) {
-    logError('Unexpected error in login', error);
-    return errorResponse(sanitizeError(error), 500);
-  }
-};
-
-// Registration function with lock mechanism - updated to use the new response utilities
-export const registerWithLock = async (req: Request, registrationLocks: Map<string, boolean>) => {
-  try {
-    const body = await req.json() as RegistrationRequest;
-    const { email, password } = body;
-
-    if (!email || !password) {
-      return errorResponse('Email and password are required', 400);
-    }
-
-    // Check if registration is already in progress for this email
-    if (registrationLocks.get(email)) {
-      return errorResponse('Registration for this email is already in progress. Please try again in a moment.', 429);
-    }
-
-    // Set lock
-    registrationLocks.set(email, true);
-    logOperation('Registration with lock started', { email });
-
-    try {
-      const supabase = createEdgeClient(req);
-      // Perform the registration using the database function
-      const { data, error } = await supabase.rpc('create_dealer_with_profile', {
-        p_email: email,
-        p_password: password,
-        p_supervisor_name: body.supervisorName || '',
-        p_company_name: body.companyName || '',
-        p_tax_id: body.taxId || '',
-        p_business_registry_number: body.businessRegistryNumber || '',
-        p_address: body.companyAddress || ''
+    // Send verification email if registration successful
+    if (data?.success) {
+      const { error: signInError } = await supabaseClient.auth.signInWithOtp({
+        email: body.email.toLowerCase(),
+        options: {
+          emailRedirectTo: new URL(req.url).origin + '/auth?verify=true'
+        }
       });
 
-      if (error) {
-        logError('Registration error', error);
-        return errorResponse(sanitizeError(error), 400);
+      if (signInError) {
+        console.error('Error sending verification email:', signInError);
       }
-
-      return successResponse(data);
-    } finally {
-      // Always release the lock
-      registrationLocks.delete(email);
-      logOperation('Registration lock released', { email });
     }
-  } catch (error) {
-    logError('Unexpected error in registration', error);
-    return errorResponse(sanitizeError(error), 500);
-  }
-};
 
-// Export all handlers in a map for easy access
-export const handlers = {
-  'check-email-exists': checkEmailExists,
-  'login': login,
-  'register-with-lock': registerWithLock
-};
+    return createResponse({
+      success: true,
+      message: 'Registration successful. Please check your email for verification.',
+      userId: data?.user?.id
+    }, 201);
+  } catch (error) {
+    return createErrorResponse(error);
+  }
+}
+
+export async function handleLogin(req: Request) {
+  try {
+    const body = await req.json();
+    validateRequiredFields(body, ['email', 'password']);
+    
+    const supabaseClient = createEdgeClient(req);
+    
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: body.email.toLowerCase(),
+      password: body.password,
+    });
+
+    if (error) {
+      return createErrorResponse({
+        message: 'Invalid login credentials',
+        code: 'invalid_credentials',
+        status: 401
+      });
+    }
+
+    // Fetch dealer profile
+    const { data: dealer, error: dealerError } = await supabaseClient
+      .from('dealers')
+      .select('*')
+      .eq('user_id', data.user.id)
+      .single();
+
+    if (dealerError && dealerError.code !== 'PGRST116') {
+      console.error('Error fetching dealer profile:', dealerError);
+    }
+
+    return createResponse({
+      success: true,
+      session: data.session,
+      dealer: dealer || null
+    });
+  } catch (error) {
+    return createErrorResponse(error);
+  }
+}
+
+// Handle password verification (used for additional security checks)
+export async function handleVerifyPassword(req: Request) {
+  try {
+    const body = await req.json();
+    validateRequiredFields(body, ['userId', 'password']);
+    
+    const adminClient = createServiceClient();
+    
+    const { data, error } = await adminClient.rpc('verify_password', {
+      uuid: body.userId,
+      plain_text: body.password
+    });
+
+    if (error) {
+      return createErrorResponse({
+        message: 'Password verification failed',
+        code: 'verification_failed',
+        status: 400
+      });
+    }
+
+    return createResponse({
+      success: true,
+      verified: data
+    });
+  } catch (error) {
+    return createErrorResponse(error);
+  }
+}
+
+// Update index file to use these handlers

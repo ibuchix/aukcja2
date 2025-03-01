@@ -1,65 +1,37 @@
 
-import { corsHeaders } from "../_shared/cors.ts";
-import { handlers } from "./handlers.ts";
-
-// Create a map to track concurrent registration attempts
-const registrationLocks = new Map<string, boolean>();
+import { corsHeaders } from '@shared/cors.ts';
+import { handleLogin, handleRegister, handleVerifyPassword } from './handlers.ts';
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
   }
 
-  // Get the function name from the URL
+  // Get the endpoint from URL path
   const url = new URL(req.url);
-  const functionName = url.pathname.split("/").pop();
+  const endpoint = url.pathname.split('/').pop();
 
   try {
-    // Check if the function exists in handlers
-    if (functionName && handlers[functionName]) {
-      // Special case for register-with-lock to pass the locks map
-      if (functionName === "register-with-lock") {
-        return await handlers[functionName](req, registrationLocks);
-      }
-      
-      // Regular handler call
-      return await handlers[functionName](req);
+    // Route to the appropriate handler
+    switch (endpoint) {
+      case 'register':
+        return await handleRegister(req);
+      case 'login':
+        return await handleLogin(req);
+      case 'verify-password':
+        return await handleVerifyPassword(req);
+      default:
+        return new Response(
+          JSON.stringify({ error: 'Endpoint not found' }),
+          { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
     }
-
-    // Function not found
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: `Function ${functionName} not found`
-      }),
-      {
-        status: 404,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders,
-        },
-      }
-    );
   } catch (error) {
-    // Unexpected server error
-    console.error(`Error executing ${functionName}:`, error);
-    
+    console.error(`Unhandled error:`, error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: `Internal server error: ${error.message || "Unknown error"}`
-      }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders,
-        },
-      }
+      JSON.stringify({ error: error.message || 'Unknown error' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 });
