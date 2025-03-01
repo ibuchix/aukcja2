@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { signUpDealerWithEmail } from "@/services/auth/dealerAuthService";
+import { signUpDealerWithEmail } from "@/services/auth/signup";
 import { createDealerProfile } from "@/services/dealerProfileService";
 
 interface SignupResult {
