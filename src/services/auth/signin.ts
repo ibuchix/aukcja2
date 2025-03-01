@@ -76,6 +76,22 @@ export const signInDealerWithEmail = async (
     // Direct Supabase auth was successful
     console.log("Login successful via direct Supabase auth!");
     
+    // Verify password using the RPC function
+    const { data: verifyData, error: verifyError } = await supabase.rpc('verify_password', {
+      uuid: authData.user.id,
+      plain_text: password
+    });
+
+    if (verifyError || !verifyData) {
+      console.error("Password verification failed:", verifyError);
+      // Sign out the user since verification failed
+      await supabase.auth.signOut();
+      return {
+        success: false,
+        error: "Credential verification failed. Please try again."
+      };
+    }
+    
     // Get dealer profile for the user
     const { data: dealerData, error: dealerError } = await supabase
       .from('dealers')

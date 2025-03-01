@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { signInDealerWithEmail } from "@/services/auth/dealerAuthService";
+import { signInDealerWithEmail } from "@/services/auth/signin";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const loginFormSchema = z.object({
