@@ -6,13 +6,20 @@ import { performStartupChecks } from '@shared/startup.ts';
 // Perform startup validation checks at the entry point
 performStartupChecks('dealer-auth/index');
 
+// Define explicit CORS headers for this function
+const dealerAuthCorsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey, x-client-info",
+};
+
 // Primary function handler for all dealer auth requests
 Deno.serve(async (req) => {
-  // Handle CORS
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: corsHeaders,
-      status: 204,
+  // Handle preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { 
+      headers: dealerAuthCorsHeaders,
+      status: 204
     });
   }
 
@@ -23,20 +30,25 @@ Deno.serve(async (req) => {
 
     console.log(`Dealer auth request received for action: ${action}`);
 
+    let response;
+    
     // Route to appropriate handler based on action
     switch (action) {
       case 'register':
       case 'register-with-lock':
-        return await handleRegister(req);
+        response = await handleRegister(req);
+        break;
       
       case 'login':
-        return await handleLogin(req);
+        response = await handleLogin(req);
+        break;
       
       case 'verify-password':
-        return await handleVerifyPassword(req);
+        response = await handleVerifyPassword(req);
+        break;
         
       default:
-        return new Response(
+        response = new Response(
           JSON.stringify({
             success: false,
             error: `Unknown action: ${action}`
@@ -50,6 +62,20 @@ Deno.serve(async (req) => {
           }
         );
     }
+
+    // Add the CORS headers to the response
+    const responseHeaders = new Headers(response.headers);
+    Object.entries(dealerAuthCorsHeaders).forEach(([key, value]) => {
+      responseHeaders.set(key, value);
+    });
+
+    // Return the response with CORS headers
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: responseHeaders
+    });
+    
   } catch (error) {
     console.error('Unexpected error processing dealer-auth request:', error);
     
@@ -62,7 +88,7 @@ Deno.serve(async (req) => {
         status: 500,
         headers: {
           'Content-Type': 'application/json',
-          ...corsHeaders
+          ...dealerAuthCorsHeaders
         }
       }
     );
