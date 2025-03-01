@@ -33,11 +33,14 @@ export const invokeDealerFunction = async <T = any>(
     try {
       console.log(`Attempt ${attempt} to invoke dealer-auth with action: ${action}`);
       
+      const requestPayload = {
+        action,
+        ...payload,
+        _attempt: attempt
+      };
+      
       const { data, error } = await supabase.functions.invoke('dealer-auth', {
-        body: {
-          action,
-          ...payload
-        }
+        body: requestPayload
       });
 
       console.log(`Function response for ${action}:`, { data, error });
@@ -68,20 +71,17 @@ export const invokeDealerFunction = async <T = any>(
         continue;
       }
       
-      // Handle edge case where error is in data property
-      if (data.error) {
-        console.error(`Attempt ${attempt} failed with API error:`, data.error);
-        lastError = new Error(typeof data.error === 'object' 
-          ? (data.error.message || JSON.stringify(data.error)) 
-          : data.error);
+      if (data.error && typeof data.error === 'string' && 
+          (data.error.includes('already in progress') || 
+           data.error.includes('concurrent'))) {
+        console.warn(`${action} blocked due to concurrent operation:`, data.error);
         
         if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, Math.min(retryDelay * Math.pow(2, attempt - 1), 5000)));
+          await new Promise(resolve => setTimeout(resolve, Math.min(retryDelay * Math.pow(3, attempt - 1), 10000)));
+          continue;
         }
-        continue;
       }
 
-      // Also check for success: false in the data
       if (typeof data.success === 'boolean' && !data.success) {
         console.error(`Attempt ${attempt} failed with success: false:`, data);
         lastError = new Error(data.message || `Failed to execute ${action}`);
@@ -92,7 +92,6 @@ export const invokeDealerFunction = async <T = any>(
         continue;
       }
 
-      // Return the data with proper typing
       return {
         success: true,
         data: data as T
@@ -107,7 +106,6 @@ export const invokeDealerFunction = async <T = any>(
     }
   }
 
-  // Format the error message based on the error type
   let errorMessage = `Failed to execute ${action} after multiple attempts`;
   
   if (lastError) {

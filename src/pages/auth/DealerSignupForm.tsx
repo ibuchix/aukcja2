@@ -1,4 +1,3 @@
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -23,18 +22,15 @@ export function DealerSignupForm() {
   const { signupDealer, isSubmitting, testSignup } = useSignupDealer();
 
   useEffect(() => {
-    // Check if user exists but needs dealer profile
     const checkExistingUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        // Check if user exists in profiles table
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
           .single();
 
-        // Check if dealer profile exists
         const { data: dealer } = await supabase
           .from('dealers')
           .select('*')
@@ -89,36 +85,55 @@ export function DealerSignupForm() {
     setAuthError("");
     setRegistrationStep(2);
     
-    const result = await signupDealer(values);
-    
-    if (!result.success) {
-      setRegistrationStep(1);
-      setAuthError(result.error || "Registration failed");
+    try {
+      const result = await signupDealer(values);
+      
+      if (!result.success) {
+        setRegistrationStep(1);
+        setAuthError(result.error || "Registration failed");
+        
+        if (result.error?.includes("already in progress") || result.error?.includes("concurrent")) {
+          toast({
+            title: "Registration In Progress",
+            description: "There is already a registration in progress for this email. Please try again in a moment.",
+            variant: "default",
+          });
+        } else {
+          toast({
+            title: "Registration Failed",
+            description: result.error,
+            variant: "destructive",
+          });
+        }
+        
+        if (result.error?.includes("already exists")) {
+          toast({
+            title: "Account Exists",
+            description: "Try logging in with your email instead.",
+            variant: "default",
+          });
+        }
+        
+        return;
+      }
+
+      setRegistrationStep(3);
       toast({
-        title: "Registration Failed",
-        description: result.error,
+        title: "Registration Successful",
+        description: "Please check your email to verify your account.",
+        variant: "default",
+      });
+      form.reset();
+    } catch (error) {
+      setRegistrationStep(1);
+      const errorMessage = error instanceof Error ? error.message : "Unexpected error during registration";
+      setAuthError(errorMessage);
+      toast({
+        title: "Registration Error",
+        description: errorMessage,
         variant: "destructive",
       });
-      
-      // If the error indicates account already exists, show login suggestion
-      if (result.error?.includes("already exists")) {
-        toast({
-          title: "Account Exists",
-          description: "Try logging in with your email instead.",
-          variant: "default",
-        });
-      }
-      
-      return;
     }
-
-    setRegistrationStep(3);
-    toast({
-      title: "Registration Successful",
-      description: "Please check your email to verify your account.",
-      variant: "default",
-    });
-    form.reset();
   };
 
   const handleTestSignup = async () => {

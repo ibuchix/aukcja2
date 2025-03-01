@@ -49,113 +49,11 @@ export const signUpDealerWithEmail = async (
       };
     }
 
-    // Try direct signup with Supabase
+    // Try direct signup with Supabase using transaction for atomic operations
     try {
-      const { data: authData, error: signupError } = await supabase.auth.signUp({
-        email: normalizedEmail,
-        password,
-        options: {
-          data: {
-            name: safeTrim(metadata.name),
-            role: 'dealer'
-          }
-        }
-      });
-
-      if (signupError) {
-        console.error("Direct Supabase signup error:", signupError);
-        
-        // Try the edge function as fallback
-        const response = await invokeDealerFunction<RegisterResponse>(
-          'register', 
-          {
-            email: normalizedEmail,
-            password,
-            supervisorName: safeTrim(metadata.name),
-            companyName: safeTrim(metadata.companyName),
-            phoneNumber: safeTrim(metadata.phoneNumber),
-            taxId: safeTrim(metadata.taxId),
-            businessRegistryNumber: safeTrim(metadata.businessRegistryNumber),
-            companyAddress: safeTrim(metadata.companyAddress)
-          }
-        );
-
-        if (!response.success) {
-          // Handle specific error messages from edge function
-          return {
-            success: false,
-            error: response.error || "Registration failed. Please try again."
-          };
-        }
-
-        if (!isRegisterResponse(response.data)) {
-          console.error("Invalid registration response format:", response.data);
-          return {
-            success: false,
-            error: "Registration failed - invalid response format from server"
-          };
-        }
-
-        const userId = response.data?.user?.id;
-        if (!userId) {
-          console.error("No user ID in response:", response.data);
-          return {
-            success: false,
-            error: "Registration failed - missing user ID in response"
-          };
-        }
-
-        console.log("Registration successful via edge function! User ID:", userId);
-        return {
-          success: true,
-          userId
-        };
-      }
-
-      // Direct registration was successful
-      if (!authData.user) {
-        return {
-          success: false,
-          error: "Registration failed - no user returned"
-        };
-      }
-
-      // Create dealer profile
-      const { error: dealerError } = await supabase
-        .from('dealers')
-        .insert({
-          user_id: authData.user.id,
-          supervisor_name: safeTrim(metadata.name),
-          dealership_name: safeTrim(metadata.companyName) || '',
-          tax_id: safeTrim(metadata.taxId) || '',
-          business_registry_number: safeTrim(metadata.businessRegistryNumber) || '',
-          license_number: safeTrim(metadata.businessRegistryNumber) || '',
-          address: safeTrim(metadata.companyAddress) || '',
-          verification_status: 'pending',
-          is_verified: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-
-      if (dealerError) {
-        console.error("Error creating dealer profile:", dealerError);
-        return {
-          success: false,
-          error: `Failed to create dealer profile: ${dealerError.message}`
-        };
-      }
-
-      console.log("Registration successful via direct Supabase auth! User ID:", authData.user.id);
-      return {
-        success: true,
-        userId: authData.user.id
-      };
-    } catch (error) {
-      console.error("Error in direct Supabase auth:", error);
-      
-      // Continue with edge function approach as fallback
+      // Use edge function with locking mechanism to prevent race conditions
       const response = await invokeDealerFunction<RegisterResponse>(
-        'register', 
+        'register-with-lock', 
         {
           email: normalizedEmail,
           password,
@@ -169,6 +67,16 @@ export const signUpDealerWithEmail = async (
       );
 
       if (!response.success) {
+        // Check for concurrent registration error
+        if (response.error?.includes("registration in progress") || response.error?.includes("concurrent")) {
+          console.warn("Concurrent registration detected:", response.error);
+          return {
+            success: false,
+            error: "Another registration with this email is already in progress. Please try again in a moment."
+          };
+        }
+        
+        // Handle specific error messages from edge function
         return {
           success: false,
           error: response.error || "Registration failed. Please try again."
@@ -192,10 +100,19 @@ export const signUpDealerWithEmail = async (
         };
       }
 
-      console.log("Registration successful! User ID:", userId);
+      console.log("Registration successful via edge function with locking! User ID:", userId);
       return {
         success: true,
         userId
+      };
+    } catch (error) {
+      console.error("Error in registration process:", error);
+      
+      return {
+        success: false,
+        error: error instanceof Error 
+          ? error.message 
+          : "An unexpected error occurred during registration. Please try again."
       };
     }
   } catch (error) {
