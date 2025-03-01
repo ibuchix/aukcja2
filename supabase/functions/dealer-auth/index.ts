@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { handlers } from "./handlers.ts";
 import { logOperation, logError } from "./logging.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { supabase } from "../_shared/supabase-client.ts";
+import { errorResponse } from "./response-utils.ts";
 
 // Concurrent registration lock registry
 const registrationLocks = new Map();
@@ -15,67 +15,30 @@ serve(async (req) => {
   }
 
   try {
-    const { action, ...data } = await req.json();
-    logOperation(action, data);
+    // Parse request to get action
+    const requestData = await req.json();
+    const action = requestData.action;
 
-    // Handle each action type
-    switch (action) {
-      case 'login':
-        return await handlers.login(supabase, data, corsHeaders);
-      
-      case 'register':
-        return await handlers.register(supabase, data, corsHeaders);
-      
-      case 'register-with-lock': {
-        const email = data.email?.toLowerCase();
-        if (!email) {
-          return new Response(
-            JSON.stringify({ success: false, error: "Email is required" }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        // Check if there's an ongoing registration for this email
-        if (registrationLocks.has(email)) {
-          console.log(`Concurrent registration detected for ${email}`);
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: "A registration with this email is already in progress. Please try again in a moment." 
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        // Set registration lock
-        console.log(`Setting registration lock for ${email}`);
-        registrationLocks.set(email, true);
-
-        try {
-          // Process registration with exclusive lock
-          const result = await handlers.register(supabase, data, corsHeaders);
-          return result;
-        } finally {
-          // Always release the lock when done
-          console.log(`Releasing registration lock for ${email}`);
-          registrationLocks.delete(email);
-        }
-      }
-      
-      default:
-        return new Response(
-          JSON.stringify({ success: false, error: `Unknown action: ${action}` }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+    if (!action) {
+      return errorResponse('Missing action parameter', 400);
     }
+
+    logOperation(`Function invoked with action: ${action}`, requestData);
+
+    // Check if handler exists for this action
+    if (!handlers[action]) {
+      return errorResponse(`Unknown action: ${action}`, 400);
+    }
+
+    // Execute handler with special case for registration with lock
+    if (action === 'register-with-lock') {
+      return await handlers[action](req, registrationLocks);
+    } else {
+      return await handlers[action](req);
+    }
+
   } catch (error) {
-    logError(error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: `Server error: ${error instanceof Error ? error.message : "Unknown error"}`
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    logError('Unexpected error in dealer-auth function', error);
+    return errorResponse('Internal server error', 500);
   }
 });
