@@ -1,6 +1,35 @@
-
 import { corsHeaders } from '../_shared/cors.ts'
 import type { ErrorResponse, SuccessResponse } from './types.ts'
+
+export const createResponse = (
+  data: any, 
+  status: number = 200, 
+  headers?: Record<string, string>
+) => {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      ...corsHeaders,
+      ...headers
+    }
+  });
+};
+
+export const errorResponse = (
+  error: string,
+  status: number = 400,
+  details?: Record<string, any>
+) => {
+  return createResponse(
+    { success: false, error, ...details },
+    status
+  );
+};
+
+export const successResponse = (data: any) => {
+  return createResponse({ success: true, ...data });
+};
 
 export const createErrorResponse = (message: string, status = 400, additionalInfo = {}) => {
   const response: ErrorResponse = {
@@ -9,18 +38,7 @@ export const createErrorResponse = (message: string, status = 400, additionalInf
     ...additionalInfo
   }
   
-  return new Response(
-    JSON.stringify(response),
-    {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status,
-    }
-  )
-}
-
-// Add the missing createResponse function that was being imported in handlers.ts
-export const createResponse = (data: Omit<SuccessResponse, 'success'>) => {
-  return createSuccessResponse(data);
+  return errorResponse(message, status, additionalInfo);
 }
 
 export const createSuccessResponse = (data: Omit<SuccessResponse, 'success'>) => {
@@ -50,19 +68,12 @@ export const createSuccessResponse = (data: Omit<SuccessResponse, 'success'>) =>
     ...data.requiresVerification !== undefined && {
       requiresVerification: data.requiresVerification
     },
-    // Add support for the exists property for email check functions
     ...data.exists !== undefined && {
       exists: data.exists
     }
   }
 
-  return new Response(
-    JSON.stringify(sanitizedData),
-    {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    }
-  )
+  return successResponse(sanitizedData);
 }
 
 export const sanitizeError = (error: any): string => {
