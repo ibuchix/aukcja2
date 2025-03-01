@@ -1,34 +1,40 @@
-
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { AuthError } from "@supabase/supabase-js";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
+import { signInDealerWithEmail } from "@/services/auth/dealerAuthService";
 
 const loginFormSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string()
+    .email({
+      message: "Please enter a valid email address",
+    })
+    .min(5, {
+      message: "Email must be at least 5 characters",
+    })
+    .max(255, {
+      message: "Email cannot exceed 255 characters",
+    }),
+  password: z.string()
+    .min(8, {
+      message: "Password must be at least 8 characters",
+    })
+    .max(72, {
+      message: "Password cannot exceed 72 characters",
+    }),
 });
 
 type LoginFormValues = z.infer<typeof loginFormSchema>;
 
-const getErrorMessage = (error: AuthError) => {
-  if (error.message.includes("Invalid login credentials")) {
-    return "Invalid email or password. Please check your credentials and try again.";
-  }
-  return error.message;
-};
-
 export function DealerLoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [authError, setAuthError] = useState<string>("");
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const form = useForm<LoginFormValues>({
@@ -39,115 +45,85 @@ export function DealerLoginForm() {
     },
   });
 
-  const onSubmit = async (values: LoginFormValues) => {
+  async function onSubmit(values: LoginFormValues) {
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
-      setAuthError("");
+      const result = await signInDealerWithEmail(values.email, values.password);
 
-      // 1. Authenticate
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: values.email.trim().toLowerCase(),
-        password: values.password,
-      });
-
-      if (error || !data.user) {
-        setAuthError(error?.message || "Invalid credentials");
-        return;
-      }
-
-      // 2. Check dealer profile with retry logic
-      let dealerProfile = null;
-      let retries = 0;
-      
-      while (retries < 3 && !dealerProfile) {
-        const { data: profileData, error: profileError } = await supabase
-          .from('dealers')
-          .select('*')
-          .eq('user_id', data.user.id)
-          .maybeSingle();
-        
-        if (profileError) {
-          console.error("Error fetching dealer profile:", profileError);
-          break;
-        }
-
-        dealerProfile = profileData;
-        if (!dealerProfile) {
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
-          retries++;
-        }
-      }
-
-      if (!dealerProfile) {
-        // User authenticated but no dealer profile - redirect to complete registration
-        navigate('/complete-registration', { 
-          state: { 
-            userId: data.user.id,
-            email: values.email.trim().toLowerCase()
-          } 
+      if (!result.success) {
+        toast({
+          title: "Login Failed",
+          description: result.error || "Invalid credentials",
+          variant: "destructive",
         });
         return;
       }
 
-      // Successfully authenticated and has dealer profile
-      navigate('/dealer/dashboard');
+      toast({
+        title: "Login Successful",
+        description: "Redirecting to dashboard...",
+      });
       
+      // Store session and dealer info (if needed)
+      // localStorage.setItem('dealership', JSON.stringify(result.dealer));
+      // localStorage.setItem('session', JSON.stringify(result.session));
+
+      navigate('/dealer/dashboard');
+
     } catch (error) {
       console.error("Login error:", error);
-      setAuthError("An unexpected error occurred during login. Please try again.");
+      toast({
+        title: "Login Failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }
 
   return (
-    <>
-      {authError && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{authError}</AlertDescription>
-        </Alert>
-      )}
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input type="email" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <Button 
-            type="submit" 
-            className="w-full"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Logging in..." : "Login"}
-          </Button>
-        </form>
-      </Form>
-    </>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input placeholder="mail@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input type="password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button 
+          type="submit" 
+          className="w-full"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Logging in...
+            </>
+          ) : "Login"}
+        </Button>
+      </form>
+    </Form>
   );
 }
