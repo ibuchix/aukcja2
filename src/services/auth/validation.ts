@@ -1,62 +1,75 @@
 
-// Shared validation utilities for authentication
+import { supabase } from "@/integrations/supabase/client";
+
+export const safeTrim = (value?: string): string => {
+  if (value === undefined || value === null) {
+    return '';
+  }
+  return value.trim();
+};
+
 export const validateEmail = (email: string): { isValid: boolean; error?: string } => {
-  if (!email) {
-    return { isValid: false, error: "Email is required" };
+  if (!email || email.trim() === '') {
+    return { isValid: false, error: 'Email is required' };
   }
-  
-  const trimmedEmail = email.trim();
-  if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
-    return { isValid: false, error: "Invalid email format" };
+
+  // Basic email format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return { isValid: false, error: 'Please enter a valid email address' };
   }
+
   return { isValid: true };
 };
 
 export const validatePassword = (password: string): { isValid: boolean; error?: string } => {
   if (!password) {
-    return { isValid: false, error: "Password is required" };
+    return { isValid: false, error: 'Password is required' };
   }
-  
+
   if (password.length < 8) {
-    return { isValid: false, error: "Password must be at least 8 characters" };
+    return { isValid: false, error: 'Password must be at least 8 characters' };
   }
+
+  // Check for at least one uppercase letter
   if (!/[A-Z]/.test(password)) {
-    return { isValid: false, error: "Password must contain at least one uppercase letter" };
+    return { isValid: false, error: 'Password must contain at least one uppercase letter' };
   }
+
+  // Check for at least one lowercase letter
   if (!/[a-z]/.test(password)) {
-    return { isValid: false, error: "Password must contain at least one lowercase letter" };
+    return { isValid: false, error: 'Password must contain at least one lowercase letter' };
   }
+
+  // Check for at least one number
   if (!/[0-9]/.test(password)) {
-    return { isValid: false, error: "Password must contain at least one number" };
+    return { isValid: false, error: 'Password must contain at least one number' };
   }
+
   return { isValid: true };
 };
 
-// Helper function to safely trim strings (handles null/undefined)
-export const safeTrim = (value: string | null | undefined): string => {
-  if (!value) return '';
-  return value.trim();
-};
-
+/**
+ * Checks if an account already exists with the given email
+ */
 export const checkAccountExists = async (email: string): Promise<boolean> => {
   try {
-    const { data, error } = await fetch(`https://sdvakfhmoaoucmhbhwvy.supabase.co/auth/v1/user-exists`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M',
-      },
-      body: JSON.stringify({ email })
-    }).then(res => res.json());
+    // First check in auth.users table using the admin listUsers API
+    const { data: authData, error: authError } = await supabase.functions.invoke('dealer-auth', {
+      body: {
+        action: 'check-email-exists',
+        email: email
+      }
+    });
 
-    if (error) {
-      console.error("Error checking if account exists:", error);
-      return false;
+    if (authError) {
+      console.error("Error checking if email exists:", authError);
+      throw authError;
     }
 
-    return !!data?.exists;
-  } catch (err) {
-    console.error("Failed to check if account exists:", err);
-    return false;
+    return authData?.exists || false;
+  } catch (error) {
+    console.error("Error in checkAccountExists:", error);
+    throw error;
   }
 };

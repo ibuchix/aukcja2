@@ -89,16 +89,26 @@ export const signUpDealerWithEmail = async (
       };
     }
 
-    // Safely access the user ID from the response data
-    const userId = response.data?.user?.id;
-    if (!userId) {
-      console.error("Registration successful but no user ID returned", response.data);
+    // Safely access the user ID from the response data with detailed type checking
+    // This is the critical part that was causing the 'id' property error
+    if (!response.data || typeof response.data !== 'object') {
+      console.error("Registration successful but response data is invalid:", response.data);
       return {
         success: false,
-        error: "Failed to create user account - no user ID returned"
+        error: "Failed to create user account - invalid response data"
       };
     }
 
+    const userData = response.data;
+    if (!userData.user || typeof userData.user !== 'object' || !userData.user.id) {
+      console.error("Registration successful but no valid user object returned:", userData);
+      return {
+        success: false,
+        error: "Failed to create user account - missing user ID"
+      };
+    }
+
+    const userId = userData.user.id;
     console.log("Registration successful! User ID:", userId);
     return {
       success: true,

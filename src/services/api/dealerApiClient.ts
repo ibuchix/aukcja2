@@ -57,9 +57,10 @@ export const invokeDealerFunction = async <T = any>(
         continue;
       }
 
+      // Ensure we're returning the actual data payload, not the wrapper
       return {
         success: true,
-        data: data.data as T // Access the nested data property that contains the actual response
+        data: data.data as T
       };
 
     } catch (error) {
