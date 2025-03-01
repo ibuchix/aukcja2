@@ -1,4 +1,3 @@
-
 import { validateEmail, validatePassword, safeTrim, checkAccountExists } from "./validation";
 import { invokeDealerFunction } from "../api/dealerApiClient";
 import { 
@@ -122,18 +121,16 @@ export const signUpDealerWithEmail = async (
       };
     }
 
-    // At this point, the data has been validated, but user field might be optional
-    // Check if user field exists before accessing it
-    if (!response.data.user) {
-      console.error("Valid response but no user data:", response.data);
+    // Replace the direct userId assignment with safe optional chaining
+    const userId = response.data?.user?.id;
+    if (!userId) {
+      console.error("No user ID in response:", response.data);
       return {
         success: false,
-        error: "Registration failed - user data missing in server response"
+        error: "Registration failed - missing user ID in response"
       };
     }
 
-    // Now we can safely access the user.id
-    const userId = response.data.user.id;
     console.log("Registration successful! User ID:", userId);
     
     return {
