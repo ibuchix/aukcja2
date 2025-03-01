@@ -1,11 +1,10 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 
 interface ProfileResult {
   success: boolean;
   error?: string;
-  errorType?: 'database' | 'validation';
+  errorType?: 'database' | 'validation' | 'network';
 }
 
 async function checkBusinessRegistryExists(businessRegistryNumber: string): Promise<boolean> {
@@ -86,6 +85,20 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
         };
       }
 
+      // Detect network-related errors
+      if (dealerError.message && (
+        dealerError.message.toLowerCase().includes('network') ||
+        dealerError.message.toLowerCase().includes('connection') ||
+        dealerError.message.toLowerCase().includes('timeout') ||
+        dealerError.message.toLowerCase().includes('unavailable')
+      )) {
+        return {
+          success: false,
+          error: `Network error: ${dealerError.message}`,
+          errorType: 'network'
+        };
+      }
+
       // Handle other database errors
       return {
         success: false,
@@ -104,6 +117,19 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
       businessRegistryNumber: values.businessRegistryNumber,
       taxId: values.taxId
     });
+    
+    // Check if error is network-related
+    if (error instanceof Error && 
+        (error.message.includes('network') || 
+         error.message.includes('connection') || 
+         error.message.includes('timeout') || 
+         error.message.includes('unavailable'))) {
+      return {
+        success: false,
+        error: "A network error occurred while creating your dealer profile. Please check your connection and try again.",
+        errorType: 'network'
+      };
+    }
     
     return {
       success: false,
