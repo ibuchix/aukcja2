@@ -9,16 +9,277 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      bids: {
+        Row: {
+          amount: number
+          car_id: string
+          created_at: string
+          dealer_id: string
+          id: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          car_id: string
+          created_at?: string
+          dealer_id: string
+          id?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          car_id?: string
+          created_at?: string
+          dealer_id?: string
+          id?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bids_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bids_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "dealers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cars: {
+        Row: {
+          auction_end_time: string | null
+          auction_status: string | null
+          created_at: string
+          features: Json | null
+          id: string
+          images: string[] | null
+          is_auction: boolean | null
+          is_draft: boolean
+          make: string | null
+          mileage: number | null
+          minimum_bid_increment: number | null
+          model: string | null
+          price: number
+          required_photos: Json | null
+          reserve_price: number | null
+          status: string | null
+          title: string | null
+          transmission: string | null
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          auction_end_time?: string | null
+          auction_status?: string | null
+          created_at?: string
+          features?: Json | null
+          id?: string
+          images?: string[] | null
+          is_auction?: boolean | null
+          is_draft?: boolean
+          make?: string | null
+          mileage?: number | null
+          minimum_bid_increment?: number | null
+          model?: string | null
+          price?: number
+          required_photos?: Json | null
+          reserve_price?: number | null
+          status?: string | null
+          title?: string | null
+          transmission?: string | null
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          auction_end_time?: string | null
+          auction_status?: string | null
+          created_at?: string
+          features?: Json | null
+          id?: string
+          images?: string[] | null
+          is_auction?: boolean | null
+          is_draft?: boolean
+          make?: string | null
+          mileage?: number | null
+          minimum_bid_increment?: number | null
+          model?: string | null
+          price?: number
+          required_photos?: Json | null
+          reserve_price?: number | null
+          status?: string | null
+          title?: string | null
+          transmission?: string | null
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      dealer_watchlist: {
+        Row: {
+          buyer_id: string
+          car_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          buyer_id: string
+          car_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          buyer_id?: string
+          car_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dealer_watchlist_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dealers: {
+        Row: {
+          address: string
+          business_registry_number: string
+          created_at: string
+          dealership_name: string
+          id: string
+          is_verified: boolean
+          license_number: string
+          supervisor_name: string
+          tax_id: string
+          updated_at: string
+          user_id: string
+          verification_status: string
+        }
+        Insert: {
+          address: string
+          business_registry_number: string
+          created_at?: string
+          dealership_name: string
+          id?: string
+          is_verified?: boolean
+          license_number: string
+          supervisor_name: string
+          tax_id: string
+          updated_at?: string
+          user_id: string
+          verification_status?: string
+        }
+        Update: {
+          address?: string
+          business_registry_number?: string
+          created_at?: string
+          dealership_name?: string
+          id?: string
+          is_verified?: boolean
+          license_number?: string
+          supervisor_name?: string
+          tax_id?: string
+          updated_at?: string
+          user_id?: string
+          verification_status?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          full_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          full_name?: string | null
+          id: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          full_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      proxy_bids: {
+        Row: {
+          car_id: string
+          created_at: string
+          dealer_id: string
+          id: string
+          max_bid_amount: number
+          updated_at: string
+        }
+        Insert: {
+          car_id: string
+          created_at?: string
+          dealer_id: string
+          id?: string
+          max_bid_amount: number
+          updated_at?: string
+        }
+        Update: {
+          car_id?: string
+          created_at?: string
+          dealer_id?: string
+          id?: string
+          max_bid_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proxy_bids_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proxy_bids_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "dealers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_dealer_with_profile: {
+        Args: {
+          p_email: string
+          p_password: string
+          p_supervisor_name: string
+          p_company_name: string
+          p_tax_id: string
+          p_business_registry_number: string
+          p_address: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "dealer" | "seller" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
