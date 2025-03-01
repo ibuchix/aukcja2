@@ -67,16 +67,19 @@ export const signUpDealerWithEmail = async (
     });
 
     // Call the dealer-auth edge function with retries
-    const response = await invokeDealerFunction('register', {
-      email: normalizedEmail,
-      password,
-      supervisorName: safeTrim(metadata.name),
-      companyName: safeTrim(metadata.companyName),
-      phoneNumber: safeTrim(metadata.phoneNumber),
-      taxId: safeTrim(metadata.taxId),
-      businessRegistryNumber: safeTrim(metadata.businessRegistryNumber),
-      companyAddress: safeTrim(metadata.companyAddress)
-    });
+    const response = await invokeDealerFunction<{user?: {id: string}}>(
+      'register', 
+      {
+        email: normalizedEmail,
+        password,
+        supervisorName: safeTrim(metadata.name),
+        companyName: safeTrim(metadata.companyName),
+        phoneNumber: safeTrim(metadata.phoneNumber),
+        taxId: safeTrim(metadata.taxId),
+        businessRegistryNumber: safeTrim(metadata.businessRegistryNumber),
+        companyAddress: safeTrim(metadata.companyAddress)
+      }
+    );
 
     if (!response.success) {
       // Check for specific error types for better messaging
