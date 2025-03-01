@@ -5,6 +5,8 @@ import { UseFormReturn } from "react-hook-form";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { PasswordValidation } from "../PasswordValidation";
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface PersonalInfoFieldsProps {
   form: UseFormReturn<DealerFormValues>;
@@ -12,6 +14,11 @@ interface PersonalInfoFieldsProps {
 
 export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
   const [passwordValue, setPasswordValue] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   return (
     <>
@@ -61,15 +68,28 @@ export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
           <FormItem>
             <FormLabel>Password</FormLabel>
             <FormControl>
-              <Input 
-                type="password" 
-                {...field} 
-                onChange={(e) => {
-                  field.onChange(e);
-                  setPasswordValue(e.target.value);
-                }}
-                disabled={form.formState.isSubmitting}
-              />
+              <div className="relative">
+                <Input 
+                  type={showPassword ? "text" : "password"} 
+                  {...field} 
+                  onChange={(e) => {
+                    field.onChange(e);
+                    setPasswordValue(e.target.value);
+                  }}
+                  disabled={form.formState.isSubmitting}
+                  className="pr-10" 
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-10 w-10"
+                  onClick={togglePasswordVisibility}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
             </FormControl>
             <PasswordValidation password={passwordValue} />
             <FormMessage />
