@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,8 +6,9 @@ import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { FileText, Download } from "lucide-react";
+import { FileText, Download, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Document {
   id: string;
@@ -38,38 +40,18 @@ export default function DealerDocuments() {
           return;
         }
 
-        const { data: carsWithFiles, error } = await supabase
+        // Since we don't have service_history_files in the database yet, 
+        // we'll just load the cars and show a message that no documents are available
+        const { data: cars, error } = await supabase
           .from('cars')
-          .select('id, title, make, model, year, service_history_files')
-          .not('service_history_files', 'is', null)
+          .select('id, title, make, model, year')
           .order('created_at', { ascending: false });
 
         if (error) throw error;
         
-        const transformedDocs: Document[] = [];
+        // For now, we're creating an empty document list
+        setDocuments([]);
         
-        carsWithFiles?.forEach(car => {
-          if (car.service_history_files && car.service_history_files.length > 0) {
-            car.service_history_files.forEach((filePath: string, index: number) => {
-              transformedDocs.push({
-                id: `${car.id}_${index}`,
-                car_id: car.id,
-                file_path: filePath,
-                file_type: 'service_history',
-                upload_status: 'completed',
-                created_at: new Date().toISOString(),
-                car: {
-                  title: car.title,
-                  make: car.make,
-                  model: car.model,
-                  year: car.year
-                }
-              });
-            });
-          }
-        });
-
-        setDocuments(transformedDocs);
       } catch (error) {
         console.error('Error fetching documents:', error);
         toast({
@@ -127,6 +109,15 @@ export default function DealerDocuments() {
       <Navbar />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">My Documents</h1>
+        
+        <Alert className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Notice</AlertTitle>
+          <AlertDescription>
+            Document management functionality is currently being developed. You will be able to upload and view car service history documents here soon.
+          </AlertDescription>
+        </Alert>
+        
         <div className="grid gap-6">
           {documents.length === 0 ? (
             <Card>

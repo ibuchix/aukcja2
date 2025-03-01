@@ -60,8 +60,6 @@ const Auctions = () => {
             ...car,
             features,
             distance: null,
-            description: car.description || null,
-            service_history_files: car.service_history_files || null
           } as CarListing;
         })
         .filter(car => {

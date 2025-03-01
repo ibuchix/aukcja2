@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
@@ -38,9 +37,6 @@ const Index = () => {
               reverseCamera: false,
               upgradedSound: false
             },
-        // Add missing fields required by CarListing type
-        description: car.description || null,
-        service_history_files: car.service_history_files || null
       })) as CarListing[];
     },
   });

@@ -16,10 +16,10 @@ export interface CarListing {
   year: number | null;
   mileage: number;
   images: string[] | null;
-  description: string | null;
+  description?: string | null; // Made optional
   features: CarFeatures;
   transmission: string | null;
-  service_history_files: string[] | null;
+  service_history_files?: string[] | null; // Made optional
   required_photos: Record<string, string | null> | null;
   is_auction?: boolean;
   auction_end_time?: string | null;
