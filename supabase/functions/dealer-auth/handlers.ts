@@ -132,7 +132,6 @@ export const handleRegistration = async (req: Request) => {
   }
 };
 
-// Update other handlers to use the new response utility functions
 export const handleLogin = async (req: Request) => {
   try {
     const payload = await req.json() as LoginPayload;

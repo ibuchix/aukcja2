@@ -1,19 +1,9 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
 import { handlers } from "./handlers.ts";
 import { logOperation, logError } from "./logging.ts";
-
-// CORS headers for browser requests
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-// Setup Supabase client
-const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { corsHeaders } from "../_shared/cors.ts";
+import { supabase } from "../_shared/supabase-client.ts";
 
 // Concurrent registration lock registry
 const registrationLocks = new Map();
