@@ -1,53 +1,12 @@
 
-export interface Database {
-  public: {
-    Tables: {
-      dealers: {
-        Row: {
-          id: string;
-          user_id: string;
-          supervisor_name: string;
-          dealership_name: string | null;
-          tax_id: string | null;
-          business_registry_number: string | null;
-          address: string | null;
-          verification_status: string;
-          is_verified: boolean;
-          license_number: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-      };
-      profiles: {
-        Row: {
-          id: string;
-          role: string;
-          full_name: string | null;
-          updated_at: string | null;
-        };
-      };
-    };
-  };
+// Common base interface for all dealer auth requests
+export interface DealerAuthRequest {
+  action: string;
+  [key: string]: any;
 }
 
-export interface AuthHandlerResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
-  user?: any;
-  dealer?: any;
-  session?: any;
-  requiresVerification?: boolean;
-}
-
-export interface LoginRequest {
-  action: 'login';
-  email: string;
-  password: string;
-}
-
-export interface RegisterRequest {
-  action: 'register';
+// Registration specific data
+export interface DealerRegistrationData extends DealerAuthRequest {
   email: string;
   password: string;
   supervisorName: string;
@@ -58,4 +17,35 @@ export interface RegisterRequest {
   companyAddress?: string;
 }
 
-export type DealerAuthRequest = LoginRequest | RegisterRequest;
+// Login specific data
+export interface LoginData extends DealerAuthRequest {
+  email: string;
+  password: string;
+}
+
+// Check email exists specific data
+export interface CheckEmailData extends DealerAuthRequest {
+  email: string;
+}
+
+// User data returned from Supabase
+export interface UserData {
+  id: string;
+  email: string;
+  user_metadata?: Record<string, any>;
+}
+
+// Response formats
+export interface RegisterResponse {
+  user?: UserData;
+  session?: any;
+}
+
+export interface LoginResponse {
+  user: UserData;
+  session: any;
+}
+
+export interface CheckEmailResponse {
+  exists: boolean;
+}

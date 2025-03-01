@@ -1,326 +1,308 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import type { Database, AuthHandlerResponse, LoginRequest, RegisterRequest } from './types.ts';
-import { corsHeaders } from '../_shared/cors.ts';
 
-const validateInput = (email: string, password: string): { isValid: boolean; error?: string } => {
-  // Email validation
-  if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-    return { isValid: false, error: "Invalid email format" };
+import { corsHeaders } from "../_shared/cors.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createResponse, createErrorResponse } from "./response-utils.ts";
+import { logInfo, logError, logWarning } from "./logging.ts";
+import { 
+  DealerAuthRequest, 
+  DealerRegistrationData,
+  LoginData,
+  CheckEmailData 
+} from "./types.ts";
+
+// Create a Supabase client with the service role key
+const supabaseClient = createClient(
+  Deno.env.get("SUPABASE_URL") || "",
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "",
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
   }
+);
 
-  // Password validation for registration
-  if (password.length < 8) {
-    return { isValid: false, error: "Password must be at least 8 characters" };
-  }
-  if (!/[A-Z]/.test(password)) {
-    return { isValid: false, error: "Password must contain at least one uppercase letter" };
-  }
-  if (!/[a-z]/.test(password)) {
-    return { isValid: false, error: "Password must contain at least one lowercase letter" };
-  }
-  if (!/[0-9]/.test(password)) {
-    return { isValid: false, error: "Password must contain at least one number" };
-  }
-
-  return { isValid: true };
-};
-
-export function buildErrorResponse(error: string): AuthHandlerResponse {
-  console.error(`Error response: ${error}`);
-  return {
-    success: false,
-    error
-  };
-}
-
-export function buildSuccessResponse(data: Omit<AuthHandlerResponse, 'success'>): AuthHandlerResponse {
-  console.log(`Success response: ${JSON.stringify(data)}`);
-  return {
-    success: true,
-    ...data
-  };
-}
-
-export async function handleRegister(
-  supabaseAdmin: ReturnType<typeof createClient<Database>>,
-  request: RegisterRequest
-): Promise<AuthHandlerResponse> {
-  console.log(`Registration request received for ${request.email}`);
-  console.log(`Request details: ${JSON.stringify({
-    email: request.email,
-    supervisorName: request.supervisorName,
-    companyName: request.companyName,
-    taxId: request.taxId,
-    businessRegistryNumber: request.businessRegistryNumber,
-    companyAddress: request.companyAddress
-  })}`);
-
+/**
+ * Handles dealer registration
+ */
+export async function handleRegistration(
+  request: Request,
+  requestData: DealerRegistrationData
+): Promise<Response> {
   try {
-    const validation = validateInput(request.email, request.password);
-    if (!validation.isValid) {
-      console.error(`Validation failed: ${validation.error}`);
-      return buildErrorResponse(validation.error || 'Invalid input');
+    // Extract needed fields
+    const { 
+      email, 
+      password, 
+      supervisorName, 
+      companyName, 
+      taxId, 
+      businessRegistryNumber, 
+      companyAddress 
+    } = requestData;
+
+    if (!email || !password || !supervisorName) {
+      return createErrorResponse(
+        "Required fields missing",
+        400,
+        { details: "Email, password, and supervisor name are required" }
+      );
     }
 
-    // Check if user already exists in auth.users table instead of profiles
-    const { data: existingUsers, error: userSearchError } = await supabaseAdmin.auth
-      .admin
-      .listUsers({
-        filters: {
-          email: request.email.toLowerCase()
-        }
-      });
-      
-    if (userSearchError) {
-      console.error(`Error checking for existing user: ${userSearchError.message}`);
-      return buildErrorResponse(`Error checking account existence: ${userSearchError.message}`);
+    logInfo(`Attempting to register dealer with email ${email}`);
+
+    // First check if user exists using admin API
+    const { data: existingUsers, error: lookupError } = await supabaseClient.auth.admin.listUsers({
+      page: 1,
+      perPage: 1,
+      filters: [
+        {
+          property: 'email',
+          operator: 'eq',
+          value: email,
+        },
+      ],
+    });
+
+    if (lookupError) {
+      logError(`Error checking if user exists: ${lookupError.message}`);
+      return createErrorResponse(
+        "Failed to check if user exists",
+        500,
+        { details: lookupError.message }
+      );
     }
-    
+
+    // If user exists, return error
     if (existingUsers && existingUsers.users.length > 0) {
-      console.error(`User with email ${request.email} already exists`);
-      return buildErrorResponse('An account with this email already exists');
+      logWarning(`User with email ${email} already exists`);
+      return createErrorResponse(
+        "User with this email already exists",
+        400,
+        { details: "An account with this email already exists. Please login instead." }
+      );
     }
 
-    console.log("Calling create_dealer_with_profile RPC function");
-    const { data, error } = await supabaseAdmin.rpc('create_dealer_with_profile', {
-      p_email: request.email.toLowerCase(),
-      p_password: request.password,
-      p_supervisor_name: request.supervisorName,
-      p_company_name: request.companyName || '',
-      p_tax_id: request.taxId || '',
-      p_business_registry_number: request.businessRegistryNumber || '',
-      p_address: request.companyAddress || ''
-    });
-
-    console.log("RPC response data:", data);
-    if (error) {
-      console.error('Registration error:', error);
-      return buildErrorResponse(sanitizeError(error));
-    }
-
-    if (!data.success) {
-      console.error('Registration failed with DB response:', data);
-      
-      // Specifically handle profile exists error
-      if (data.error_code === 'unique_violation' && data.error.includes('profiles_pkey')) {
-        console.log('Detected profiles_pkey violation - this indicates the trigger already created a profile');
-        
-        // Try to retrieve the user that might have been created by querying auth.users
-        const { data: userList, error: authError } = await supabaseAdmin.auth
-          .admin
-          .listUsers({
-            filters: {
-              email: request.email.toLowerCase()
-            }
-          });
-          
-        if (authError) {
-          console.error('Error retrieving existing user:', authError);
-          return buildErrorResponse('Failed to retrieve existing user');
-        }
-        
-        if (userList && userList.users.length > 0) {
-          const user = userList.users[0];
-          console.log('Found existing user, will use this ID to create dealer profile only');
-          
-          // Create just the dealer profile for the existing user
-          try {
-            const { error: dealerError } = await supabaseAdmin
-              .from('dealers')
-              .insert({
-                user_id: user.id,
-                supervisor_name: request.supervisorName,
-                dealership_name: request.companyName || '',
-                tax_id: request.taxId || '',
-                business_registry_number: request.businessRegistryNumber || '',
-                address: request.companyAddress || '',
-                verification_status: 'pending',
-                is_verified: false,
-                license_number: request.businessRegistryNumber || ''
-              });
-              
-            if (dealerError) {
-              console.error('Failed to create dealer profile for existing user:', dealerError);
-              return buildErrorResponse('Failed to create dealer profile');
-            }
-            
-            // Perform final validation check for the newly created dealer
-            const { data: verificationData, error: verificationError } = await supabaseAdmin
-              .from('dealers')
-              .select('*')
-              .eq('user_id', user.id)
-              .single();
-            
-            if (verificationError) {
-              console.error('Post-registration verification failed:', verificationError);
-              // Don't delete the user here as they already existed before
-              return buildErrorResponse('Registration verification failed');
-            }
-            
-            return buildSuccessResponse({
-              message: 'Registration successful',
-              user: {
-                id: user.id,
-                email: user.email
-              }
-            });
-          } catch (e) {
-            console.error('Error creating dealer profile:', e);
-            return buildErrorResponse(sanitizeError(e));
-          }
-        }
+    // Create user with admin API - this is more reliable than signUp
+    const { data: { user }, error: signUpError } = await supabaseClient.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true, // Auto-confirm for development
+      user_metadata: {
+        name: supervisorName,
+        role: 'dealer'
       }
-      
-      return buildErrorResponse(data.error || 'Registration failed');
-    }
-
-    console.log('Registration successful, user created:', data.user.id);
-    
-    // Add final validation check after successful registration
-    const { data: verificationData, error: verificationError } = await supabaseAdmin
-      .from('dealers')
-      .select('*')
-      .eq('user_id', data.user.id)
-      .single();
-    
-    if (verificationError) {
-      console.error('Post-registration verification failed:', verificationError);
-      // Clean up the user if verification fails
-      await supabaseAdmin.auth.admin.deleteUser(data.user.id);
-      return buildErrorResponse('Registration verification failed');
-    }
-    
-    return buildSuccessResponse({
-      message: 'Registration successful',
-      user: data.user
-    });
-  } catch (error) {
-    console.error('Unexpected error during registration:', error);
-    return buildErrorResponse(sanitizeError(error));
-  }
-}
-
-export async function handleLogin(
-  supabaseAdmin: ReturnType<typeof createClient<Database>>,
-  request: LoginRequest
-): Promise<AuthHandlerResponse> {
-  console.log(`Login attempt for ${request.email}`);
-  
-  try {
-    const validation = validateInput(request.email, request.password);
-    if (!validation.isValid) {
-      console.error(`Login validation failed: ${validation.error}`);
-      return buildErrorResponse(validation.error || 'Invalid input');
-    }
-
-    console.log("Attempting signInWithPassword");
-    const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
-      email: request.email,
-      password: request.password,
     });
 
-    if (signInError) {
-      console.error('Login error:', signInError);
-      return buildErrorResponse(sanitizeError(signInError));
+    if (signUpError || !user) {
+      logError(`Failed to create user: ${signUpError?.message || "No user returned"}`);
+      return createErrorResponse(
+        "Registration failed",
+        500,
+        { details: signUpError?.message || "Failed to create user account" }
+      );
     }
 
-    if (!signInData?.user) {
-      console.error('Invalid login attempt - no user returned');
-      return buildErrorResponse('Invalid login attempt');
+    // Verify password was set
+    if (!user.encrypted_password) {
+      logError("Password not set during registration - deleting incomplete user");
+      await supabaseClient.auth.admin.deleteUser(user.id);
+      return createErrorResponse(
+        "Password not set during registration",
+        500,
+        { details: "Failed to secure account properly. Please try again." }
+      );
     }
 
-    console.log(`User authenticated: ${signInData.user.id}`);
-    
-    const { data: { session }, error: sessionError } = await supabaseAdmin.auth.getSession();
-
-    if (sessionError) {
-      console.error('Session validation failed:', sessionError);
-      return buildErrorResponse('Session validation failed');
-    }
-
-    if (!session || session.user.id !== signInData.user.id) {
-      await supabaseAdmin.auth.signOut();
-      console.error('Session validation failed - user ID mismatch');
-      return buildErrorResponse('Session validation failed');
-    }
-
-    console.log("Getting user profile");
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
-      .eq('id', signInData.user.id)
-      .single();
-
-    if (!profile || profile.role !== 'dealer') {
-      await supabaseAdmin.auth.signOut();
-      console.error('Invalid account type');
-      return buildErrorResponse('Invalid account type');
-    }
-
-    console.log("Getting dealer profile");
-    const { data: dealer, error: dealerError } = await supabaseAdmin
-      .from('dealers')
-      .select('id, dealership_name, verification_status, is_verified')
-      .eq('user_id', signInData.user.id)
-      .single();
+    // Use the create_dealer_with_profile database function to create dealer profile
+    const { data: dealerData, error: dealerError } = await supabaseClient.rpc(
+      'create_dealer_with_profile',
+      {
+        p_email: email,
+        p_password: password,
+        p_supervisor_name: supervisorName,
+        p_company_name: companyName || '',
+        p_tax_id: taxId || '',
+        p_business_registry_number: businessRegistryNumber || '',
+        p_address: companyAddress || ''
+      }
+    );
 
     if (dealerError) {
-      console.error('Error fetching dealer profile:', dealerError);
-      return buildErrorResponse(sanitizeError(dealerError));
+      logError(`Error creating dealer profile: ${dealerError.message}`);
+      
+      // If dealer profile creation fails, delete the user to maintain consistency
+      await supabaseClient.auth.admin.deleteUser(user.id);
+      
+      return createErrorResponse(
+        "Failed to create dealer profile",
+        500,
+        { details: dealerError.message }
+      );
     }
 
-    if (!dealer) {
-      console.error('Dealer profile not found');
-      return buildErrorResponse('Dealer profile not found');
-    }
+    logInfo(`Successfully registered dealer with email ${email}, user ID: ${user.id}`);
 
-    if (dealer.verification_status === 'rejected') {
-      console.error('Application rejected');
-      return buildErrorResponse('Your dealer application has been rejected. Please contact support.');
-    }
-
-    console.log('Login successful');
-    return buildSuccessResponse({
-      message: 'Login successful',
-      session: session,
-      dealer: dealer,
-      requiresVerification: dealer.verification_status === 'pending'
+    // Return success
+    return createResponse({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        user_metadata: user.user_metadata
+      }
     });
   } catch (error) {
-    console.error('Unexpected error during login:', error);
-    return buildErrorResponse(sanitizeError(error));
+    logError(`Unexpected error in handleRegistration: ${error.message}`);
+    return createErrorResponse(
+      error.message || "Registration failed",
+      500
+    );
   }
 }
 
-const sanitizeError = (error: any): string => {
-  console.error('Original error:', error);
+/**
+ * Handles dealer login
+ */
+export async function handleLogin(
+  request: Request,
+  requestData: LoginData
+): Promise<Response> {
+  try {
+    const { email, password } = requestData;
 
-  if (typeof error === 'object' && error !== null) {
-    if (error.code === '23505') {
-      if (error.message?.toLowerCase().includes('email')) {
-        return 'An account with this email already exists';
-      }
-      if (error.message?.toLowerCase().includes('business_registry_number')) {
-        return 'This business registry number is already registered';
-      }
-      if (error.message?.toLowerCase().includes('tax_id')) {
-        return 'This tax ID is already registered';
-      }
-      if (error.message?.toLowerCase().includes('profiles_pkey')) {
-        return 'Account already exists. Try logging in instead.';
-      }
-      return 'A duplicate registration was detected';
+    if (!email || !password) {
+      return createErrorResponse(
+        "Email and password are required",
+        400
+      );
     }
 
-    if (error.message?.includes('Invalid login credentials')) {
-      return 'Invalid email or password';
+    logInfo(`Attempting login for user ${email}`);
+
+    // Use signInWithPassword for consistency with frontend auth flow
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      logWarning(`Login failed for ${email}: ${error.message}`);
+      return createErrorResponse(
+        "Invalid login credentials",
+        400,
+        { details: error.message }
+      );
     }
 
-    // Return the actual error message if available
-    if (error.message) {
-      return error.message;
+    // Verify user has dealer role in profiles
+    const { data: profileData, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single();
+
+    if (profileError || !profileData) {
+      logWarning(`User ${email} has no profile or is not a dealer`);
+      return createErrorResponse(
+        "Account is not registered as a dealer",
+        403,
+        { details: "This account is not configured as a dealer account" }
+      );
     }
+
+    logInfo(`Login successful for user ${email}`);
+
+    return createResponse({
+      success: true,
+      user: data.user,
+      session: data.session
+    });
+  } catch (error) {
+    logError(`Unexpected error in handleLogin: ${error.message}`);
+    return createErrorResponse(
+      error.message || "Login failed",
+      500
+    );
   }
+}
 
-  return 'An unexpected error occurred. Please try again later';
-};
+/**
+ * Checks if an email exists
+ */
+export async function handleCheckEmailExists(
+  request: Request,
+  requestData: CheckEmailData
+): Promise<Response> {
+  try {
+    const { email } = requestData;
+
+    if (!email) {
+      return createErrorResponse(
+        "Email is required", 
+        400
+      );
+    }
+
+    logInfo(`Checking if email exists: ${email}`);
+
+    // Use admin API to check if email exists
+    const { data: users, error: usersError } = await supabaseClient.auth.admin.listUsers({
+      page: 1,
+      perPage: 1,
+      filters: [
+        {
+          property: 'email',
+          operator: 'eq',
+          value: email,
+        },
+      ],
+    });
+
+    if (usersError) {
+      logError(`Error checking if email exists: ${usersError.message}`);
+      return createErrorResponse(
+        "Failed to check if email exists",
+        500,
+        { details: usersError.message }
+      );
+    }
+
+    const exists = users && users.users.length > 0;
+    logInfo(`Email ${email} exists: ${exists}`);
+
+    return createResponse({
+      exists
+    });
+  } catch (error) {
+    logError(`Unexpected error in handleCheckEmailExists: ${error.message}`);
+    return createErrorResponse(
+      error.message || "Failed to check email",
+      500
+    );
+  }
+}
+
+/**
+ * Handle request based on action
+ */
+export async function handleRequest(
+  request: Request,
+  requestData: DealerAuthRequest
+): Promise<Response> {
+  const { action } = requestData;
+
+  switch (action) {
+    case "register":
+      return handleRegistration(request, requestData as DealerRegistrationData);
+    case "login":
+      return handleLogin(request, requestData as LoginData);
+    case "check-email-exists":
+      return handleCheckEmailExists(request, requestData as CheckEmailData);
+    default:
+      return createErrorResponse(
+        `Unsupported action: ${action}`,
+        400
+      );
+  }
+}
