@@ -1,10 +1,16 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 interface ApiResponse<T = any> {
   data?: T;
   error?: any;
   success: boolean;
+}
+
+interface SupabaseFunctionError {
+  message?: string;
+  code?: string;
+  details?: string;
+  hint?: string;
 }
 
 /**
@@ -37,8 +43,14 @@ export const invokeDealerFunction = async <T = any>(
       console.log(`Function response for ${action}:`, { data, error });
 
       if (error) {
-        console.error(`Attempt ${attempt} failed:`, error);
-        lastError = error;
+        const supabaseError = error as SupabaseFunctionError;
+        console.error(`Attempt ${attempt} failed:`, {
+          code: supabaseError.code,
+          message: supabaseError.message,
+          details: supabaseError.details,
+          hint: supabaseError.hint
+        });
+        lastError = supabaseError;
         
         if (attempt < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, Math.min(retryDelay * Math.pow(2, attempt - 1), 5000)));
@@ -56,10 +68,23 @@ export const invokeDealerFunction = async <T = any>(
         continue;
       }
       
-      // If the API returned an error message in the data
-      if (data.error || (typeof data.success === 'boolean' && !data.success)) {
-        console.error(`Attempt ${attempt} failed with API error:`, data);
-        lastError = new Error(data.error || `Failed to execute ${action}`);
+      // Handle edge case where error is in data property
+      if (data.error) {
+        console.error(`Attempt ${attempt} failed with API error:`, data.error);
+        lastError = new Error(typeof data.error === 'object' 
+          ? (data.error.message || JSON.stringify(data.error)) 
+          : data.error);
+        
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, Math.min(retryDelay * Math.pow(2, attempt - 1), 5000)));
+        }
+        continue;
+      }
+
+      // Also check for success: false in the data
+      if (typeof data.success === 'boolean' && !data.success) {
+        console.error(`Attempt ${attempt} failed with success: false:`, data);
+        lastError = new Error(data.message || `Failed to execute ${action}`);
         
         if (attempt < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, Math.min(retryDelay * Math.pow(2, attempt - 1), 5000)));
@@ -82,8 +107,29 @@ export const invokeDealerFunction = async <T = any>(
     }
   }
 
+  // Format the error message based on the error type
+  let errorMessage = `Failed to execute ${action} after multiple attempts`;
+  
+  if (lastError) {
+    if (typeof lastError === 'object') {
+      if (lastError.message) {
+        errorMessage = lastError.message;
+      } else if (lastError.details) {
+        errorMessage = lastError.details;
+      } else {
+        try {
+          errorMessage = JSON.stringify(lastError);
+        } catch (e) {
+          // Keep default error message if JSON stringification fails
+        }
+      }
+    } else if (typeof lastError === 'string') {
+      errorMessage = lastError;
+    }
+  }
+
   return {
     success: false,
-    error: lastError?.message || `Failed to execute ${action} after multiple attempts`
+    error: errorMessage
   };
 };
