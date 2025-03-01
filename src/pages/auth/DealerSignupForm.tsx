@@ -1,70 +1,40 @@
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { dealerFormSchema, type DealerFormValues } from "@/schemas/dealerFormSchema";
 import { DealerFormFields } from "@/components/auth/DealerFormFields";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { RegistrationProgress } from "@/components/auth/dealer-form/RegistrationProgress";
 import { RegistrationStatus } from "@/components/auth/dealer-form/RegistrationStatus";
-import { useSignupDealer } from "@/hooks/useSignupDealer";
+import { useRegistrationSteps } from "@/components/auth/dealer-form/useRegistrationSteps";
+import { useAuthStateMonitor } from "@/components/auth/dealer-form/useAuthStateMonitor";
+import { useFormSubmission } from "@/components/auth/dealer-form/useFormSubmission";
 
 export function DealerSignupForm() {
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const [authError, setAuthError] = useState<string>("");
-  const [registrationStep, setRegistrationStep] = useState<number>(1);
-  const [emailVerified, setEmailVerified] = useState<boolean>(false);
-  const { signupDealer, isSubmitting, testSignup } = useSignupDealer();
+  const {
+    registrationStep,
+    emailVerified,
+    authError,
+    setEmailVerified,
+    moveToStep,
+    resetError,
+    setError
+  } = useRegistrationSteps();
 
-  useEffect(() => {
-    const checkExistingUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+  // Monitor auth state changes
+  useAuthStateMonitor(setEmailVerified);
 
-        const { data: dealer } = await supabase
-          .from('dealers')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-
-        if (profile && !dealer) {
-          toast({
-            title: "Profile Recovery Required",
-            description: "We found your account but need to complete your dealer profile. Please fill out the form.",
-            variant: "default",
-          });
-          setAuthError("Please complete your dealer profile registration.");
-        }
-      }
-    };
-
-    checkExistingUser();
-  }, [toast]);
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event, session?.user?.email_confirmed_at);
-      if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
-        setEmailVerified(true);
-        navigate('/dealer/dashboard');
-      }
-      if (event === 'USER_UPDATED') {
-        setEmailVerified(session?.user?.email_confirmed_at !== null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+  const {
+    handleFormSubmit,
+    handleTestSignup,
+    isSubmitting
+  } = useFormSubmission({
+    moveToStep,
+    resetError,
+    setError
+  });
 
   const form = useForm<DealerFormValues>({
     resolver: zodResolver(dealerFormSchema),
@@ -82,83 +52,10 @@ export function DealerSignupForm() {
   });
 
   const onSubmit = async (values: DealerFormValues) => {
-    setAuthError("");
-    setRegistrationStep(2);
-    
-    try {
-      const result = await signupDealer(values);
-      
-      if (!result.success) {
-        setRegistrationStep(1);
-        setAuthError(result.error || "Registration failed");
-        
-        if (result.error?.includes("already in progress") || result.error?.includes("concurrent")) {
-          toast({
-            title: "Registration In Progress",
-            description: "There is already a registration in progress for this email. Please try again in a moment.",
-            variant: "default",
-          });
-        } else {
-          toast({
-            title: "Registration Failed",
-            description: result.error,
-            variant: "destructive",
-          });
-        }
-        
-        if (result.error?.includes("already exists")) {
-          toast({
-            title: "Account Exists",
-            description: "Try logging in with your email instead.",
-            variant: "default",
-          });
-        }
-        
-        return;
-      }
-
-      setRegistrationStep(3);
-      toast({
-        title: "Registration Successful",
-        description: "Please check your email to verify your account.",
-        variant: "default",
-      });
+    const success = await handleFormSubmit(values);
+    if (success) {
       form.reset();
-    } catch (error) {
-      setRegistrationStep(1);
-      const errorMessage = error instanceof Error ? error.message : "Unexpected error during registration";
-      setAuthError(errorMessage);
-      toast({
-        title: "Registration Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
     }
-  };
-
-  const handleTestSignup = async () => {
-    setAuthError("");
-    setRegistrationStep(2);
-    
-    const result = await testSignup();
-    
-    if (!result.success) {
-      setRegistrationStep(1);
-      setAuthError(result.error || "Test registration failed");
-      toast({
-        title: "Test Registration Failed",
-        description: result.error,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setRegistrationStep(3);
-    toast({
-      title: "Test Registration Successful",
-      description: "Test account created successfully.",
-      variant: "default",
-    });
   };
 
   return (
