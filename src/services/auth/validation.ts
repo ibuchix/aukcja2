@@ -59,13 +59,21 @@ export const validatePassword = (password: string): { isValid: boolean; error?: 
  */
 export const checkAccountExists = async (email: string): Promise<boolean> => {
   try {
-    // First try direct Supabase check
-    const { data: user, error } = await supabase.auth.admin.getUserByEmail(email);
+    // Try searching in profiles table first (more reliable method)
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
     
-    if (error) {
-      console.error("Error checking if email exists via admin API:", error);
-      
-      // Try edge function as fallback
+    if (profileError) {
+      console.error("Error checking profiles table:", profileError);
+    } else if (profileData) {
+      return true; // Found a matching profile
+    }
+    
+    // Try edge function method
+    try {
       const { data: authData, error: authError } = await supabase.functions.invoke('dealer-auth', {
         body: {
           action: 'check-email-exists',
@@ -75,34 +83,32 @@ export const checkAccountExists = async (email: string): Promise<boolean> => {
 
       if (authError) {
         console.error("Error checking if email exists via edge function:", authError);
-        throw authError;
+      } else {
+        return authData?.exists || false;
       }
-
-      return authData?.exists || false;
+    } catch (e) {
+      console.error("Error in edge function check:", e);
     }
     
-    return !!user;
+    // Final attempt - query users directly (may not have permissions)
+    try {
+      // Note: This is likely to fail due to RLS, but we try as a last resort
+      const { count, error: countError } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('email', email);
+        
+      if (!countError && count && count > 0) {
+        return true;
+      }
+    } catch (e) {
+      console.error("Error in final users check:", e);
+    }
+    
+    return false; // No evidence the email exists
   } catch (error) {
     console.error("Error in checkAccountExists:", error);
-    
-    // In case of errors, try a simple query to see if the email exists in profiles
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .maybeSingle();
-        
-      if (error) {
-        console.error("Error checking profiles table:", error);
-        return false;
-      }
-      
-      return !!data;
-    } catch (e) {
-      console.error("Error in fallback check:", e);
-      return false;
-    }
+    return false;
   }
 };
 

@@ -40,20 +40,17 @@ export const signUpDealerWithEmail = async (
     // Normalize inputs
     const normalizedEmail = safeTrim(email).toLowerCase();
 
-    // Try direct Supabase auth signup first
+    // Check if email already exists
+    const emailExists = await checkAccountExists(normalizedEmail);
+    if (emailExists) {
+      return {
+        success: false,
+        error: "An account with this email already exists. Please login instead."
+      };
+    }
+
+    // Try direct signup with Supabase
     try {
-      const { data: existingUser, error: existingUserError } = await supabase.auth.admin
-        .getUserByEmail(normalizedEmail);
-
-      // If user exists, return error
-      if (existingUser) {
-        return {
-          success: false,
-          error: "An account with this email already exists. Please login instead."
-        };
-      }
-
-      // Try direct signup with Supabase
       const { data: authData, error: signupError } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
