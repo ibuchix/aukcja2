@@ -2,10 +2,11 @@
 import { corsHeaders } from '../_shared/cors.ts'
 import type { ErrorResponse, SuccessResponse } from './types.ts'
 
-export const createErrorResponse = (message: string, status = 400) => {
+export const createErrorResponse = (message: string, status = 400, additionalInfo = {}) => {
   const response: ErrorResponse = {
     success: false,
-    error: message
+    error: message,
+    ...additionalInfo
   }
   
   return new Response(
@@ -15,6 +16,11 @@ export const createErrorResponse = (message: string, status = 400) => {
       status,
     }
   )
+}
+
+// Add the missing createResponse function that was being imported in handlers.ts
+export const createResponse = (data: Omit<SuccessResponse, 'success'>) => {
+  return createSuccessResponse(data);
 }
 
 export const createSuccessResponse = (data: Omit<SuccessResponse, 'success'>) => {
@@ -43,6 +49,10 @@ export const createSuccessResponse = (data: Omit<SuccessResponse, 'success'>) =>
     },
     ...data.requiresVerification !== undefined && {
       requiresVerification: data.requiresVerification
+    },
+    // Add support for the exists property for email check functions
+    ...data.exists !== undefined && {
+      exists: data.exists
     }
   }
 
