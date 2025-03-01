@@ -1,13 +1,18 @@
+
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
+import { PasswordValidation } from "../PasswordValidation";
+import { useState } from "react";
 
 interface PersonalInfoFieldsProps {
   form: UseFormReturn<DealerFormValues>;
 }
 
 export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
+  const [passwordValue, setPasswordValue] = useState("");
+
   return (
     <>
       <FormField
@@ -59,12 +64,14 @@ export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
               <Input 
                 type="password" 
                 {...field} 
+                onChange={(e) => {
+                  field.onChange(e);
+                  setPasswordValue(e.target.value);
+                }}
                 disabled={form.formState.isSubmitting}
               />
             </FormControl>
-            <FormDescription className="text-xs text-muted-foreground">
-              Must contain at least 8 characters, including uppercase, lowercase, and numbers
-            </FormDescription>
+            <PasswordValidation password={passwordValue} />
             <FormMessage />
           </FormItem>
         )}
