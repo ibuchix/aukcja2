@@ -1,5 +1,13 @@
 
-// This file now serves as a redirector to maintain backward compatibility
-// while eliminating circular dependencies
+/**
+ * This file serves as a redirector to maintain backward compatibility
+ * while eliminating circular dependencies
+ */
 
-export { createServiceClient, createEdgeClient } from './dependencies.ts';
+import { createServiceClient, createEdgeClient } from './dependencies.ts';
+import { performStartupChecks } from './startup.ts';
+
+// Perform startup checks when this module is loaded
+performStartupChecks('supabase-client');
+
+export { createServiceClient, createEdgeClient };

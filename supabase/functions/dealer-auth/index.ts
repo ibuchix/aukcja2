@@ -1,6 +1,10 @@
 
 import { corsHeaders } from '@shared/cors.ts';
 import { handleRegister, handleLogin, handleVerifyPassword } from './handlers.ts';
+import { performStartupChecks } from '@shared/startup.ts';
+
+// Perform startup validation checks at the entry point
+performStartupChecks('dealer-auth/index');
 
 // Primary function handler for all dealer auth requests
 Deno.serve(async (req) => {
