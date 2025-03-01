@@ -1,4 +1,3 @@
-
 import { validateEmail, validatePassword, safeTrim, checkAccountExists } from "./validation";
 import { invokeDealerFunction } from "../api/dealerApiClient";
 import { 
@@ -101,7 +100,7 @@ export const signUpDealerWithEmail = async (
     // Log the response for debugging
     console.log("Registration API response:", response);
     
-    // Validate response data with type guard
+    // Validate response data
     if (!response.data) {
       console.error("No data in response:", response);
       return {
@@ -166,7 +165,7 @@ export const signInDealerWithEmail = async (
     };
   }
 
-  // Validate response data with type guard
+  // Validate response data
   if (!response.data) {
     return {
       success: false,
