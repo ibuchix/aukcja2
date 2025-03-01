@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,9 +50,8 @@ export default function CompleteRegistration() {
     try {
       setIsSubmitting(true);
 
-      // Use RPC function to create dealer instead, as it has proper type support
-      // and will handle the proper type structure internally
-      const { data, error } = await supabase.rpc('create_dealer_profile', {
+      // Use the correct function name "create_dealer_with_profile" instead of "create_dealer_profile"
+      const { data, error } = await supabase.rpc('create_dealer_with_profile', {
         p_user_id: state.userId,
         p_supervisor_name: values.supervisorName,
         p_dealership_name: values.companyName,

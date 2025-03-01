@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 interface ApiResponse<T = any> {
@@ -145,9 +144,8 @@ export const createDealerProfile = async (
   businessRegistryNumber: string,
   verificationStatus = 'pending'
 ) => {
-  // Use the Supabase SQL function instead of directly inserting
-  // This avoids type issues with the dealers table
-  return await supabase.rpc('create_dealer_profile', {
+  // Use the correct function name "create_dealer_with_profile" instead of "create_dealer_profile"
+  return await supabase.rpc('create_dealer_with_profile', {
     p_user_id: userId,
     p_supervisor_name: supervisorName,
     p_dealership_name: dealershipName, 
