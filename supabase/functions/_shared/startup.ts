@@ -1,63 +1,56 @@
 
-/**
- * Provides utilities for validating correct module loading and initialization
- */
+import { handleError } from "./error-handling.ts";
 
-// Track initialization status across module loads
-const initStatus = {
-  initialized: false,
-  timestamp: null as number | null,
-  initCount: 0
-};
+interface StartupOptions {
+  requiredEnvVars?: string[];
+  moduleName?: string;
+}
 
 /**
- * Verifies the module load order and initialization sequence
- * to prevent circular dependencies and duplicate initialization.
- * 
- * @param componentName Optional name of the component being initialized
- * @returns True if this is the first initialization
+ * Performs startup validation checks to ensure proper module loading order
+ * and environment configuration
  */
-export const verifyLoadOrder = (componentName?: string): boolean => {
-  // If already initialized, log a warning
-  if ((globalThis as any).__supabase_initialized) {
-    console.warn(`⚠️ Duplicate initialization detected${componentName ? ` in ${componentName}` : ''}`);
-    (globalThis as any).__supabase_init_count = ((globalThis as any).__supabase_init_count || 0) + 1;
-    return false;
+export function performStartupChecks(moduleName: string, options: StartupOptions = {}) {
+  try {
+    // Check for circular dependencies
+    verifyLoadOrder(moduleName);
+    
+    // Validate environment variables
+    if (options.requiredEnvVars?.length) {
+      verifyEnvironment(options.requiredEnvVars);
+    }
+    
+    console.log(`[${moduleName}] Startup checks completed successfully`);
+  } catch (error) {
+    console.error(`[${moduleName}] Startup checks failed: ${error.message}`);
+    // Re-throw to prevent further execution
+    throw error;
+  }
+}
+
+/**
+ * Verifies module load order to prevent circular dependencies
+ */
+function verifyLoadOrder(moduleName: string) {
+  const initKey = `__${moduleName}_initialized`;
+  const globalState = globalThis as any;
+  
+  if (globalState[initKey]) {
+    console.log(`[${moduleName}] Module already initialized, preventing duplicate initialization`);
+    return;
   }
   
-  // Mark as initialized
-  (globalThis as any).__supabase_initialized = true;
-  (globalThis as any).__supabase_init_timestamp = Date.now();
-  (globalThis as any).__supabase_init_count = 1;
-  
-  console.log(`✅ Supabase client initialized successfully${componentName ? ` in ${componentName}` : ''}`);
-  return true;
-};
+  globalState[initKey] = true;
+  console.log(`[${moduleName}] Module initialized successfully`);
+}
 
 /**
- * Verifies that required environment variables are available
- * @throws Error if any required variable is missing
+ * Validates that required environment variables are present
  */
-export const verifyDependencies = () => {
-  const requiredVars = [
-    "SUPABASE_URL",
-    "SUPABASE_SERVICE_ROLE_KEY"
-  ];
+function verifyEnvironment(requiredVars: string[]) {
+  const missingVars = requiredVars.filter(varName => !Deno.env.get(varName));
   
-  const missing = requiredVars.filter(varName => !Deno.env.get(varName));
-  
-  if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  if (missingVars.length > 0) {
+    throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
   }
-  
-  return true;
-};
-
-/**
- * Performs all startup validation checks
- * @param componentName Optional name of the component being initialized
- */
-export const performStartupChecks = (componentName?: string): void => {
-  verifyLoadOrder(componentName);
-  verifyDependencies();
-};
+}
