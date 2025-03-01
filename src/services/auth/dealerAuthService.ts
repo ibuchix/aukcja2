@@ -122,7 +122,17 @@ export const signUpDealerWithEmail = async (
       };
     }
 
-    // At this point, the data has been validated, so we can safely extract the user ID
+    // At this point, the data has been validated, but user field might be optional
+    // Check if user field exists before accessing it
+    if (!response.data.user) {
+      console.error("Valid response but no user data:", response.data);
+      return {
+        success: false,
+        error: "Registration failed - user data missing in server response"
+      };
+    }
+
+    // Now we can safely access the user.id
     const userId = response.data.user.id;
     console.log("Registration successful! User ID:", userId);
     

@@ -25,13 +25,13 @@ export interface UserMetadata {
 export interface RegisterResponseUser {
   id: string;
   email: string;
-  user_metadata?: any;
+  user_metadata?: Record<string, unknown>;
 }
 
 // Exactly match the API response structure from create_dealer_with_profile SQL function
 export interface RegisterResponse {
   success: boolean;
-  user: RegisterResponseUser;
+  user?: RegisterResponseUser; // Make optional to handle cases where user might not be present
   error?: string;
 }
 
@@ -47,13 +47,15 @@ export function isRegisterResponse(data: any): data is RegisterResponse {
     typeof data === 'object' &&
     'success' in data &&
     typeof data.success === 'boolean' &&
-    'user' in data &&
-    !!data.user &&
-    typeof data.user === 'object' &&
-    'id' in data.user &&
-    typeof data.user.id === 'string' &&
-    'email' in data.user &&
-    typeof data.user.email === 'string'
+    // Allow optional user field
+    (!('user' in data) || (
+      !!data.user &&
+      typeof data.user === 'object' &&
+      'id' in data.user &&
+      typeof data.user.id === 'string' &&
+      'email' in data.user &&
+      typeof data.user.email === 'string'
+    ))
   );
 }
 
