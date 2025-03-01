@@ -5,6 +5,10 @@
     "@shared/": "./_shared/"
   },
   "compilerOptions": {
-    "lib": ["deno.window", "deno.unstable"]
+    "lib": ["deno.window", "deno.unstable"],
+    "strict": true
+  },
+  "tasks": {
+    "dev": "deno run --unstable --watch functions/dealer-auth/index.ts"
   }
 }
