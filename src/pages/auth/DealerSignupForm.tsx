@@ -28,7 +28,6 @@ export function DealerSignupForm() {
 
   const {
     handleFormSubmit,
-    handleTestSignup,
     isSubmitting
   } = useFormSubmission({
     moveToStep,
@@ -82,18 +81,6 @@ export function DealerSignupForm() {
               </>
             ) : "Sign Up"}
           </Button>
-          
-          {process.env.NODE_ENV === 'development' && (
-            <Button
-              type="button"
-              onClick={handleTestSignup}
-              className="w-full mt-2"
-              variant="secondary"
-              disabled={isSubmitting}
-            >
-              Test Signup with Hardcoded Values
-            </Button>
-          )}
         </form>
       </Form>
     </>

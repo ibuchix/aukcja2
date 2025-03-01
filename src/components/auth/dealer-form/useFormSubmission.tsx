@@ -14,7 +14,7 @@ interface UseFormSubmissionParams {
 export function useFormSubmission({ moveToStep, resetError, setError }: UseFormSubmissionParams) {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { signupDealer, isSubmitting, testSignup } = useSignupDealer();
+  const { signupDealer, isSubmitting } = useSignupDealer();
 
   const handleFormSubmit = async (values: DealerFormValues) => {
     resetError();
@@ -69,33 +69,8 @@ export function useFormSubmission({ moveToStep, resetError, setError }: UseFormS
     }
   };
 
-  const handleTestSignup = async () => {
-    resetError();
-    moveToStep(2);
-    
-    const result = await testSignup();
-    
-    if (!result.success) {
-      setError(result.error || "Test registration failed");
-      toast({
-        title: "Test Registration Failed",
-        description: result.error,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    moveToStep(3);
-    toast({
-      title: "Test Registration Successful",
-      description: "Test account created successfully.",
-      variant: "default",
-    });
-  };
-
   return {
     handleFormSubmit,
-    handleTestSignup,
     isSubmitting
   };
 }
