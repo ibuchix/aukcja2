@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +30,6 @@ const Auctions = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
   const [filters, setFilters] = useState<FilterType>({});
 
-  // Remove dealer location query since the columns don't exist
   const { data: activeAuctions, isLoading } = useQuery({
     queryKey: ["auctions", filters],
     queryFn: async () => {
@@ -44,15 +42,12 @@ const Auctions = () => {
 
       if (error) throw error;
 
-      // Transform and filter the data without distance calculation
       return (data || [])
         .map(car => {
-          // Parse the features JSON safely
           const carFeatures = typeof car.features === 'string' 
             ? JSON.parse(car.features) 
             : car.features as Record<string, boolean>;
 
-          // Create a properly typed features object
           const features: CarFeatures = {
             satNav: Boolean(carFeatures?.satNav),
             heatedSeats: Boolean(carFeatures?.heatedSeats),
@@ -64,8 +59,10 @@ const Auctions = () => {
           return {
             ...car,
             features,
-            distance: null // Set distance to null since we can't calculate it
-          };
+            distance: null,
+            description: car.description || null,
+            service_history_files: car.service_history_files || null
+          } as CarListing;
         })
         .filter(car => {
           if (filters.priceMin && car.price < filters.priceMin) return false;
@@ -76,13 +73,11 @@ const Auctions = () => {
           if (filters.yearMax && car.year && car.year > filters.yearMax) return false;
           if (filters.mileageMin && car.mileage < filters.mileageMin) return false;
           if (filters.mileageMax && car.mileage > filters.mileageMax) return false;
-          // Remove distance filter since we can't calculate distances
           return true;
         }) as CarListing[];
     },
   });
 
-  // Fetch dealer ID for the current user
   const { data: dealerData } = useQuery({
     queryKey: ["dealerProfile"],
     queryFn: async () => {

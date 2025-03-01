@@ -37,7 +37,10 @@ const Index = () => {
               panoramicRoof: false,
               reverseCamera: false,
               upgradedSound: false
-            }
+            },
+        // Add missing fields required by CarListing type
+        description: car.description || null,
+        service_history_files: car.service_history_files || null
       })) as CarListing[];
     },
   });

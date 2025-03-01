@@ -16,10 +16,10 @@ interface Document {
   upload_status: string;
   created_at: string;
   car: {
-    title: string;
-    make: string;
-    model: string;
-    year: number;
+    title: string | null;
+    make: string | null;
+    model: string | null;
+    year: number | null;
   };
 }
 
@@ -38,22 +38,38 @@ export default function DealerDocuments() {
           return;
         }
 
-        const { data: documentsData, error: documentsError } = await supabase
-          .from('car_file_uploads')
-          .select(`
-            *,
-            car:cars (
-              title,
-              make,
-              model,
-              year
-            )
-          `)
-          .eq('uploaded_by', session.user.id)
+        const { data: carsWithFiles, error } = await supabase
+          .from('cars')
+          .select('id, title, make, model, year, service_history_files')
+          .not('service_history_files', 'is', null)
           .order('created_at', { ascending: false });
 
-        if (documentsError) throw documentsError;
-        setDocuments(documentsData);
+        if (error) throw error;
+        
+        const transformedDocs: Document[] = [];
+        
+        carsWithFiles?.forEach(car => {
+          if (car.service_history_files && car.service_history_files.length > 0) {
+            car.service_history_files.forEach((filePath: string, index: number) => {
+              transformedDocs.push({
+                id: `${car.id}_${index}`,
+                car_id: car.id,
+                file_path: filePath,
+                file_type: 'service_history',
+                upload_status: 'completed',
+                created_at: new Date().toISOString(),
+                car: {
+                  title: car.title,
+                  make: car.make,
+                  model: car.model,
+                  year: car.year
+                }
+              });
+            });
+          }
+        });
+
+        setDocuments(transformedDocs);
       } catch (error) {
         console.error('Error fetching documents:', error);
         toast({
@@ -77,7 +93,6 @@ export default function DealerDocuments() {
 
       if (error) throw error;
 
-      // Create a download link and trigger the download
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;

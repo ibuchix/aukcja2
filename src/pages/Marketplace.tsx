@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Home } from "lucide-react";
@@ -35,12 +36,12 @@ const Marketplace = () => {
         make: car.make,
         model: car.model,
         year: car.year,
-        mileage: car.mileage,
+        mileage: car.mileage || 0,
         images: car.images,
-        description: car.description,
+        description: null, // Add missing required field
         features: car.features as CarListing["features"],
         transmission: car.transmission,
-        service_history_files: car.service_history_files,
+        service_history_files: null, // Add missing required field
         required_photos: car.required_photos as Record<string, string | null>,
       }));
 
