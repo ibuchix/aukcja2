@@ -63,6 +63,13 @@ export async function handleRegister(
       return buildErrorResponse(validation.error || 'Invalid input');
     }
 
+    // First try to check if user already exists
+    const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail(request.email);
+    if (existingUser) {
+      console.error(`User with email ${request.email} already exists`);
+      return buildErrorResponse('An account with this email already exists');
+    }
+
     console.log("Calling create_dealer_with_profile RPC function");
     const { data, error } = await supabaseAdmin.rpc('create_dealer_with_profile', {
       p_email: request.email.toLowerCase(),
@@ -74,16 +81,63 @@ export async function handleRegister(
       p_address: request.companyAddress || ''
     });
 
-    console.log("RPC response:", { data, error });
-
+    console.log("RPC response data:", data);
     if (error) {
       console.error('Registration error:', error);
       return buildErrorResponse(sanitizeError(error));
     }
 
     if (!data.success) {
-      console.error('Registration failed without error:', data);
-      return buildErrorResponse('Registration failed');
+      console.error('Registration failed with DB response:', data);
+      
+      // Specifically handle profile exists error
+      if (data.error_code === 'unique_violation' && data.error.includes('profiles_pkey')) {
+        console.log('Detected profiles_pkey violation - this indicates the trigger already created a profile');
+        
+        // Try to retrieve the user that might have been created
+        const { data: userData } = await supabaseAdmin.auth.admin.listUsers();
+        const user = userData?.users?.find(u => u.email === request.email.toLowerCase());
+        
+        if (user) {
+          console.log('Found existing user, will use this ID to create dealer profile only');
+          
+          // Create just the dealer profile for the existing user
+          try {
+            const { error: dealerError } = await supabaseAdmin
+              .from('dealers')
+              .insert({
+                user_id: user.id,
+                supervisor_name: request.supervisorName,
+                dealership_name: request.companyName || '',
+                tax_id: request.taxId || '',
+                business_registry_number: request.businessRegistryNumber || '',
+                address: request.companyAddress || '',
+                verification_status: 'pending',
+                is_verified: false,
+                license_number: request.businessRegistryNumber || ''
+              });
+              
+            if (dealerError) {
+              console.error('Failed to create dealer profile for existing user:', dealerError);
+              return buildErrorResponse('Failed to create dealer profile');
+            }
+            
+            return buildSuccessResponse({
+              message: 'Registration successful',
+              user: {
+                id: user.id,
+                email: user.email || '',
+                user_metadata: user.user_metadata
+              }
+            });
+          } catch (e) {
+            console.error('Error creating dealer profile:', e);
+            return buildErrorResponse(sanitizeError(e));
+          }
+        }
+      }
+      
+      return buildErrorResponse(data.error || 'Registration failed');
     }
 
     console.log('Registration successful, user created:', data.user.id);
@@ -203,11 +257,19 @@ const sanitizeError = (error: any): string => {
       if (error.message?.toLowerCase().includes('tax_id')) {
         return 'This tax ID is already registered';
       }
+      if (error.message?.toLowerCase().includes('profiles_pkey')) {
+        return 'Account already exists. Try logging in instead.';
+      }
       return 'A duplicate registration was detected';
     }
 
     if (error.message?.includes('Invalid login credentials')) {
       return 'Invalid email or password';
+    }
+
+    // Return the actual error message if available
+    if (error.message) {
+      return error.message;
     }
   }
 

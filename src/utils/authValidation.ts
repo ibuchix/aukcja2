@@ -1,4 +1,3 @@
-
 // Shared validation utilities for authentication
 export const validateEmail = (email: string): { isValid: boolean; error?: string } => {
   if (!email) {
@@ -36,4 +35,27 @@ export const validatePassword = (password: string): { isValid: boolean; error?: 
 export const safeTrim = (value: string | null | undefined): string => {
   if (!value) return '';
   return value.trim();
+};
+
+export const checkAccountExists = async (email: string): Promise<boolean> => {
+  try {
+    const { data, error } = await fetch(`https://sdvakfhmoaoucmhbhwvy.supabase.co/auth/v1/user-exists`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M',
+      },
+      body: JSON.stringify({ email })
+    }).then(res => res.json());
+
+    if (error) {
+      console.error("Error checking if account exists:", error);
+      return false;
+    }
+
+    return !!data?.exists;
+  } catch (err) {
+    console.error("Failed to check if account exists:", err);
+    return false;
+  }
 };

@@ -56,6 +56,22 @@ export const signUpDealerWithEmail = async (
       companyAddress: safeTrim(metadata.companyAddress)
     });
 
+    // First check if the user already exists to provide a better error message
+    const { data: existingUser, error: checkError } = await supabase.auth.signInWithOtp({
+      email: normalizedEmail,
+      options: {
+        shouldCreateUser: false
+      }
+    });
+
+    if (existingUser?.user) {
+      console.error("User already exists:", existingUser.user.id);
+      return {
+        success: false,
+        error: "An account with this email already exists. Please login instead."
+      };
+    }
+
     // Call the dealer-auth edge function with retries and better logging
     const maxRetries = 3;
     let lastError: any;
@@ -81,7 +97,8 @@ export const signUpDealerWithEmail = async (
         console.log("Registration response:", { 
           success: data?.success, 
           error: error || data?.error,
-          userId: data?.user?.id
+          userId: data?.user?.id,
+          fullData: data // Log the full data for debugging
         });
 
         if (error) {
@@ -96,7 +113,19 @@ export const signUpDealerWithEmail = async (
         }
 
         if (!data?.success) {
-          console.error(`Registration attempt ${attempt} failed with API error:`, data?.error);
+          console.error(`Registration attempt ${attempt} failed with API error:`, data);
+          
+          // If the error mentions duplicate profile, it might be a race condition with the trigger
+          if (data?.error && (
+              data.error.includes('profiles_pkey') || 
+              data.error.includes('duplicate') || 
+              data.error.includes('already exists'))) {
+            return {
+              success: false,
+              error: "An account with this email already exists. Please try logging in."
+            };
+          }
+          
           lastError = new Error(data?.error || "Failed to create user account");
           
           if (attempt < maxRetries) {

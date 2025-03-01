@@ -57,6 +57,7 @@ export function DealerSignupForm() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event, session?.user?.email_confirmed_at);
       if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
         setEmailVerified(true);
         navigate('/dealer/dashboard');
@@ -98,6 +99,16 @@ export function DealerSignupForm() {
         description: result.error,
         variant: "destructive",
       });
+      
+      // If the error indicates account already exists, show login suggestion
+      if (result.error?.includes("already exists")) {
+        toast({
+          title: "Account Exists",
+          description: "Try logging in with your email instead.",
+          variant: "default",
+        });
+      }
+      
       return;
     }
 
