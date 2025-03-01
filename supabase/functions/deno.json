@@ -9,6 +9,6 @@
     "strict": true
   },
   "tasks": {
-    "dev": "deno run --unstable --watch functions/dealer-auth/index.ts"
+    "dev": "deno run --allow-net --allow-env --allow-read --unstable --watch functions/dealer-auth/index.ts"
   }
 }
