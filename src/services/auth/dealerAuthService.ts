@@ -1,21 +1,7 @@
 
-import { validateEmail, validatePassword, safeTrim, checkAccountExists } from "@/utils/authValidation";
+import { validateEmail, validatePassword, safeTrim, checkAccountExists } from "./validation";
 import { invokeDealerFunction } from "../api/dealerApiClient";
-
-interface SignUpResult {
-  success: boolean;
-  error?: string;
-  userId?: string;
-}
-
-interface UserMetadata {
-  name: string;
-  companyName?: string;
-  phoneNumber?: string;
-  companyAddress?: string;
-  taxId?: string;
-  businessRegistryNumber?: string;
-}
+import { SignUpResult, UserMetadata, RegisterResponse, SignInResult, LoginResponse } from "./models";
 
 export const signUpDealerWithEmail = async (
   email: string,
@@ -70,13 +56,6 @@ export const signUpDealerWithEmail = async (
       businessRegistryNumber: safeTrim(metadata.businessRegistryNumber),
       companyAddress: safeTrim(metadata.companyAddress)
     });
-
-    // Call the dealer-auth edge function with retries
-    // Specify the expected response type to fix the TypeScript error
-    interface RegisterResponse {
-      message: string;
-      user: { id: string; email: string };
-    }
     
     const response = await invokeDealerFunction<RegisterResponse>(
       'register', 
@@ -137,7 +116,7 @@ export const signUpDealerWithEmail = async (
 export const signInDealerWithEmail = async (
   email: string,
   password: string
-) => {
+): Promise<SignInResult> => {
   // Validate email format first
   const emailValidation = validateEmail(email);
   if (!emailValidation.isValid) {
@@ -147,10 +126,13 @@ export const signInDealerWithEmail = async (
   // Normalize email
   const normalizedEmail = safeTrim(email).toLowerCase();
 
-  const response = await invokeDealerFunction('login', {
-    email: normalizedEmail,
-    password
-  });
+  const response = await invokeDealerFunction<LoginResponse>(
+    'login', 
+    {
+      email: normalizedEmail,
+      password
+    }
+  );
 
   if (!response.success) {
     return {
