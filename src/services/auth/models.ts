@@ -21,13 +21,15 @@ export interface UserMetadata {
   businessRegistryNumber?: string;
 }
 
-// Updated to match the exact structure returned by the API
+// Exactly match the API response structure
 export interface RegisterResponse {
-  message: string;
+  message?: string;
   user: { 
     id: string; 
     email: string;
   };
+  success?: boolean;
+  error?: string;
 }
 
 export interface LoginResponse {

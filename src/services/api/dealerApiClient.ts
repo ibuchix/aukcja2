@@ -57,21 +57,31 @@ export const invokeDealerFunction = async <T = any>(
         continue;
       }
 
-      // Important: ensure data.data exists before casting
-      if (data && typeof data === 'object' && 'data' in data) {
-        // Only cast when we know the structure matches our expectation
+      // For dealer registration, the response might be directly in data, not in data.data
+      if (action === 'register' && data.user) {
+        // Handle the case where the user object is directly in the response
         return {
           success: true,
-          data: data.data as T
-        };
-      } else {
-        // If the structure doesn't match, return a properly typed response
-        console.error(`Unexpected response structure from function ${action}:`, data);
-        return {
-          success: false,
-          error: `Unexpected response structure from function ${action}`
+          data: data as unknown as T
         };
       }
+
+      // Handle the typical case where data contains a nested data property
+      if (data && typeof data === 'object') {
+        // Check if 'data' property exists or use the data object itself
+        const resultData = 'data' in data ? data.data : data;
+        return {
+          success: true,
+          data: resultData as T
+        };
+      }
+
+      // Fallback for unexpected structures
+      console.error(`Unexpected response structure from function ${action}:`, data);
+      return {
+        success: false,
+        error: `Unexpected response structure from function ${action}`
+      };
 
     } catch (error) {
       console.error(`Attempt ${attempt} threw error:`, error);

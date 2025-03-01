@@ -89,36 +89,49 @@ export const signUpDealerWithEmail = async (
       };
     }
 
-    // Add detailed type checking and validation before accessing data
+    // The critical part: safely extract user ID with detailed logs
+    console.log("Registration API response:", response);
+    
+    // Make sure response.data exists
     if (!response.data) {
-      console.error("Registration successful but response data is missing");
+      console.error("No data in response:", response);
       return {
         success: false,
-        error: "Failed to create user account - missing response data"
+        error: "Registration failed - no data returned from server"
       };
     }
 
-    // Explicitly validate the response data structure
+    // Access user data with strong type checking
     const userData = response.data;
     
-    // Check if user object exists and has an id
+    // Most important check: does user object exist?
     if (!userData.user) {
-      console.error("Registration successful but user object is missing:", userData);
+      console.error("User object missing in response data:", userData);
+      // Fallback: try using the data directly if it has an id
+      if ('id' in userData && typeof userData.id === 'string') {
+        console.log("Found ID directly in response data, using that:", userData.id);
+        return {
+          success: true,
+          userId: userData.id as string
+        };
+      }
+      
       return {
         success: false,
-        error: "Failed to create user account - missing user data"
+        error: "Registration complete but user data is missing"
       };
     }
 
-    // Final check for id property
-    if (typeof userData.user.id !== 'string' || !userData.user.id) {
-      console.error("Registration successful but user id is invalid:", userData.user);
+    // Specific check for id property
+    if (!userData.user.id) {
+      console.error("User ID is missing:", userData.user);
       return {
         success: false,
-        error: "Failed to create user account - invalid user ID"
+        error: "Registration complete but user ID is missing"
       };
     }
 
+    // Final success case
     const userId = userData.user.id;
     console.log("Registration successful! User ID:", userId);
     return {
