@@ -15,6 +15,7 @@ export function useFormSubmission({ moveToStep, resetError, setError }: UseFormS
   const { toast } = useToast();
   const navigate = useNavigate();
   const { signupDealer, isSubmitting } = useSignupDealer();
+  const [retryAttempt, setRetryAttempt] = useState(0);
 
   const handleFormSubmit = async (values: DealerFormValues) => {
     resetError();
@@ -24,6 +25,30 @@ export function useFormSubmission({ moveToStep, resetError, setError }: UseFormS
       const result = await signupDealer(values);
       
       if (!result.success) {
+        // Network error handling
+        if (result.errorType === 'network') {
+          setError("Network connection issue. Please try again.");
+          toast({
+            title: "Network Connection Issue",
+            description: "There was a problem connecting to our servers. This is often temporary. Please try again.",
+            variant: "destructive",
+          });
+          
+          console.log("Network error during registration, showing detailed guidance");
+          
+          // Add more detailed troubleshooting toast
+          setTimeout(() => {
+            toast({
+              title: "Troubleshooting Tips",
+              description: "Try refreshing the page or check if you have any extensions blocking requests.",
+              variant: "default",
+              duration: 8000,
+            });
+          }, 1000);
+          
+          return;
+        }
+        
         setError(result.error || "Registration failed");
         
         if (result.error?.includes("already in progress") || result.error?.includes("concurrent")) {
@@ -59,12 +84,30 @@ export function useFormSubmission({ moveToStep, resetError, setError }: UseFormS
       });
       return true;
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Unexpected error during registration");
-      toast({
-        title: "Registration Error",
-        description: error instanceof Error ? error.message : "Unexpected error during registration",
-        variant: "destructive",
-      });
+      console.error("Form submission error:", error);
+      
+      // Check for network-related errors
+      const errorMessage = error instanceof Error ? error.message : "Unexpected error during registration";
+      if (errorMessage.includes('network') || 
+          errorMessage.includes('connection') || 
+          errorMessage.includes('internet') || 
+          errorMessage.includes('CORS') ||
+          errorMessage.includes('503')) {
+            
+        setError("Network connection issue. Please check your internet and try again.");
+        toast({
+          title: "Network Connection Issue",
+          description: "Please check your internet connection and try again shortly.",
+          variant: "destructive",
+        });
+      } else {
+        setError(errorMessage);
+        toast({
+          title: "Registration Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
       return false;
     }
   };

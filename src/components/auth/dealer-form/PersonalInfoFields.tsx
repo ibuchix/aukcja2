@@ -5,8 +5,9 @@ import { UseFormReturn } from "react-hook-form";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { PasswordValidation } from "../PasswordValidation";
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PersonalInfoFieldsProps {
   form: UseFormReturn<DealerFormValues>;
@@ -44,16 +45,29 @@ export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
         name="email"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Email</FormLabel>
+            <FormLabel className="flex items-center gap-1">
+              Email
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-xs">
+                    Use a valid business email for verification purposes
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </FormLabel>
             <FormControl>
               <Input 
                 type="email" 
                 {...field} 
                 onChange={(e) => field.onChange(e.target.value.toLowerCase())}
                 disabled={form.formState.isSubmitting}
+                aria-describedby="email-description"
               />
             </FormControl>
-            <FormDescription className="text-xs text-muted-foreground">
+            <FormDescription className="text-xs text-muted-foreground" id="email-description">
               This will be your login email
             </FormDescription>
             <FormMessage />
