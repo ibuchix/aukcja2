@@ -1,3 +1,4 @@
+
 // This file now serves as a redirector to maintain backward compatibility
 // while eliminating circular dependencies
 
@@ -57,5 +58,5 @@ export const createEdgeClient = () => {
   });
 };
 
-// Export the verify function for backwards compatibility
-export { verifyDependencies } from './startup.ts';
+// Export the performStartupChecks function as verifyDependencies for backwards compatibility
+export { performStartupChecks as verifyDependencies } from './startup.ts';
