@@ -50,17 +50,15 @@ export default function CompleteRegistration() {
     try {
       setIsSubmitting(true);
 
-      // Use the correct function name "create_dealer_with_profile" instead of "create_dealer_profile"
+      // The function expects all these parameters including email and password
       const { data, error } = await supabase.rpc('create_dealer_with_profile', {
-        p_user_id: state.userId,
+        p_email: values.email,
+        p_password: values.password,
         p_supervisor_name: values.supervisorName,
-        p_dealership_name: values.companyName,
-        p_address: values.companyAddress,
+        p_company_name: values.companyName,
         p_tax_id: values.taxId,
         p_business_registry_number: values.businessRegistryNumber,
-        p_license_number: values.businessRegistryNumber,
-        p_verification_status: 'pending',
-        p_is_verified: false
+        p_address: values.companyAddress
       });
 
       if (error) throw error;

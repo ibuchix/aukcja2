@@ -136,24 +136,22 @@ export const invokeDealerFunction = async <T = any>(
  * Creates a dealer profile with proper TypeScript types
  */
 export const createDealerProfile = async (
-  userId: string, 
+  email: string,
+  password: string,
   supervisorName: string,
   dealershipName: string,
   address: string,
   taxId: string,
-  businessRegistryNumber: string,
-  verificationStatus = 'pending'
+  businessRegistryNumber: string
 ) => {
-  // Use the correct function name "create_dealer_with_profile" instead of "create_dealer_profile"
+  // Match the parameters expected by the create_dealer_with_profile function
   return await supabase.rpc('create_dealer_with_profile', {
-    p_user_id: userId,
+    p_email: email,
+    p_password: password,
     p_supervisor_name: supervisorName,
-    p_dealership_name: dealershipName, 
+    p_company_name: dealershipName, 
     p_address: address,
     p_tax_id: taxId,
-    p_business_registry_number: businessRegistryNumber,
-    p_license_number: businessRegistryNumber,
-    p_verification_status: verificationStatus,
-    p_is_verified: false
+    p_business_registry_number: businessRegistryNumber
   });
 };
