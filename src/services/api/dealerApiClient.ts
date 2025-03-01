@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 interface ApiResponse<T = any> {
@@ -133,61 +132,4 @@ export const invokeDealerFunction = async <T = any>(
     success: false,
     error: errorMessage
   };
-};
-
-/**
- * Call the database transaction function to create a dealer
- */
-export const createDealerWithTransaction = async (
-  email: string,
-  password: string,
-  supervisorName: string,
-  companyName: string,
-  taxId: string,
-  businessRegistryNumber: string,
-  companyAddress: string
-): Promise<ApiResponse> => {
-  console.log("Creating dealer using database transaction function");
-  
-  try {
-    const { data, error } = await supabase.rpc('create_dealer_transaction', {
-      p_email: email,
-      p_password: password,
-      p_supervisor_name: supervisorName,
-      p_company_name: companyName,
-      p_tax_id: taxId,
-      p_business_registry_number: businessRegistryNumber,
-      p_company_address: companyAddress
-    });
-
-    console.log("Create dealer transaction result:", data, error);
-
-    if (error) {
-      console.error("Database transaction failed:", error);
-      return {
-        success: false,
-        error: error.message || "Failed to create dealer account"
-      };
-    }
-
-    if (!data || (typeof data.success === 'boolean' && !data.success)) {
-      const errorMsg = data?.error || "Unknown error occurred during dealer creation";
-      console.error("Transaction returned failure:", errorMsg);
-      return {
-        success: false,
-        error: errorMsg
-      };
-    }
-
-    return {
-      success: true,
-      data: data
-    };
-  } catch (error) {
-    console.error("Unexpected error in dealer transaction:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "An unexpected error occurred"
-    };
-  }
 };

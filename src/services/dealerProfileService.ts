@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { createDealerWithTransaction } from "./api/dealerApiClient";
 
 interface ProfileResult {
   success: boolean;
@@ -109,65 +108,6 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
     return {
       success: false,
       error: "An unexpected error occurred while creating your dealer profile. Please try again later.",
-      errorType: 'database'
-    };
-  }
-}
-
-/**
- * Create dealer profile using the database transaction function
- */
-export async function createDealerWithDatabaseTransaction(values: DealerFormValues): Promise<ProfileResult> {
-  try {
-    console.log("Creating dealer using database transaction function");
-    
-    const result = await createDealerWithTransaction(
-      values.email.trim(),
-      values.password,
-      values.supervisorName.trim(),
-      values.companyName.trim(),
-      values.taxId.trim(),
-      values.businessRegistryNumber.trim(),
-      values.companyAddress.trim()
-    );
-
-    if (!result.success) {
-      console.error("Dealer transaction failed:", result.error);
-      
-      // Try to detect business registry/tax ID duplicates
-      const errorMsg = result.error?.toString().toLowerCase() || '';
-      if (errorMsg.includes('business_registry_number') || errorMsg.includes('regon')) {
-        return {
-          success: false,
-          error: "This business registry number (REGON) is already registered. Please verify your information or contact support.",
-          errorType: 'validation'
-        };
-      }
-      if (errorMsg.includes('tax_id') || errorMsg.includes('nip')) {
-        return {
-          success: false,
-          error: "This tax ID (NIP) is already registered. Please verify your information or contact support.",
-          errorType: 'validation'
-        };
-      }
-      
-      return {
-        success: false,
-        error: result.error || "Failed to create dealer account",
-        errorType: 'database'
-      };
-    }
-    
-    console.log("Dealer created successfully with transaction");
-    return { 
-      success: true 
-    };
-    
-  } catch (error) {
-    console.error("Unexpected error in dealer transaction service:", error);
-    return {
-      success: false,
-      error: "An unexpected error occurred while creating your dealer account. Please try again later.",
       errorType: 'database'
     };
   }
