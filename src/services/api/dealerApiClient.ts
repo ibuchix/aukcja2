@@ -59,7 +59,7 @@ export const invokeDealerFunction = async <T = any>(
 
       return {
         success: true,
-        data: data
+        data: data as T
       };
 
     } catch (error) {

@@ -63,9 +63,19 @@ export async function handleRegister(
       return buildErrorResponse(validation.error || 'Invalid input');
     }
 
-    // First try to check if user already exists
-    const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail(request.email);
-    if (existingUser) {
+    // Check if user already exists - but using the auth.getUser method instead of admin methods
+    const { data: existingUsers, error: userSearchError } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('email', request.email.toLowerCase())
+      .maybeSingle();
+      
+    if (userSearchError) {
+      console.error(`Error checking for existing user: ${userSearchError.message}`);
+      return buildErrorResponse(`Error checking account existence: ${userSearchError.message}`);
+    }
+    
+    if (existingUsers) {
       console.error(`User with email ${request.email} already exists`);
       return buildErrorResponse('An account with this email already exists');
     }
@@ -94,11 +104,19 @@ export async function handleRegister(
       if (data.error_code === 'unique_violation' && data.error.includes('profiles_pkey')) {
         console.log('Detected profiles_pkey violation - this indicates the trigger already created a profile');
         
-        // Try to retrieve the user that might have been created
-        const { data: userData } = await supabaseAdmin.auth.admin.listUsers();
-        const user = userData?.users?.find(u => u.email === request.email.toLowerCase());
+        // Try to retrieve the user that might have been created using profiles table
+        const { data: userData, error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .select('id, email')
+          .eq('email', request.email.toLowerCase())
+          .single();
+          
+        if (profileError) {
+          console.error('Error retrieving existing profile:', profileError);
+          return buildErrorResponse('Failed to retrieve existing profile');
+        }
         
-        if (user) {
+        if (userData) {
           console.log('Found existing user, will use this ID to create dealer profile only');
           
           // Create just the dealer profile for the existing user
@@ -106,7 +124,7 @@ export async function handleRegister(
             const { error: dealerError } = await supabaseAdmin
               .from('dealers')
               .insert({
-                user_id: user.id,
+                user_id: userData.id,
                 supervisor_name: request.supervisorName,
                 dealership_name: request.companyName || '',
                 tax_id: request.taxId || '',
@@ -125,9 +143,8 @@ export async function handleRegister(
             return buildSuccessResponse({
               message: 'Registration successful',
               user: {
-                id: user.id,
-                email: user.email || '',
-                user_metadata: user.user_metadata
+                id: userData.id,
+                email: userData.email
               }
             });
           } catch (e) {

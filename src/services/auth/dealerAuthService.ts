@@ -46,13 +46,18 @@ export const signUpDealerWithEmail = async (
     const normalizedEmail = safeTrim(email).toLowerCase();
 
     // Check if the user already exists
-    const accountExists = await checkAccountExists(normalizedEmail);
-    if (accountExists) {
-      console.log("Account exists check returned true for email:", normalizedEmail);
-      return {
-        success: false,
-        error: "An account with this email already exists. Please login instead."
-      };
+    try {
+      const accountExists = await checkAccountExists(normalizedEmail);
+      if (accountExists) {
+        console.log("Account exists check returned true for email:", normalizedEmail);
+        return {
+          success: false,
+          error: "An account with this email already exists. Please login instead."
+        };
+      }
+    } catch (error) {
+      console.error("Failed to check if account exists:", error);
+      // Continue with registration attempt even if the check fails
     }
 
     // Log the request before sending
@@ -67,7 +72,13 @@ export const signUpDealerWithEmail = async (
     });
 
     // Call the dealer-auth edge function with retries
-    const response = await invokeDealerFunction<{user?: {id: string}}>(
+    // Specify the expected response type to fix the TypeScript error
+    interface RegisterResponse {
+      message: string;
+      user: { id: string; email: string };
+    }
+    
+    const response = await invokeDealerFunction<RegisterResponse>(
       'register', 
       {
         email: normalizedEmail,
