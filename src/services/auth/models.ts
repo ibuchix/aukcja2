@@ -21,14 +21,17 @@ export interface UserMetadata {
   businessRegistryNumber?: string;
 }
 
+// Define explicitly what the user object structure should be in the RegisterResponse
+export interface RegisterResponseUser {
+  id: string;
+  email: string;
+  user_metadata?: any;
+}
+
 // Exactly match the API response structure from create_dealer_with_profile SQL function
 export interface RegisterResponse {
   success: boolean;
-  user: { 
-    id: string; 
-    email: string;
-    user_metadata?: any;
-  };
+  user: RegisterResponseUser;
   error?: string;
 }
 
@@ -38,7 +41,7 @@ export interface LoginResponse {
 }
 
 // Type guards for runtime validation
-export function isRegisterResponse(data: unknown): data is RegisterResponse {
+export function isRegisterResponse(data: any): data is RegisterResponse {
   return (
     !!data &&
     typeof data === 'object' &&
@@ -54,7 +57,7 @@ export function isRegisterResponse(data: unknown): data is RegisterResponse {
   );
 }
 
-export function isLoginResponse(data: unknown): data is LoginResponse {
+export function isLoginResponse(data: any): data is LoginResponse {
   return (
     !!data &&
     typeof data === 'object' &&

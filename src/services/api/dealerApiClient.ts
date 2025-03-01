@@ -67,11 +67,10 @@ export const invokeDealerFunction = async <T = any>(
         continue;
       }
 
-      // For all actions, simply pass through the data
-      // Type assertions will be handled by the type guards in the service layer
+      // Return the data with proper typing
       return {
         success: true,
-        data: data as unknown as T
+        data: data as T
       };
 
     } catch (error) {

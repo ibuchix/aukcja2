@@ -1,3 +1,4 @@
+
 import { validateEmail, validatePassword, safeTrim, checkAccountExists } from "./validation";
 import { invokeDealerFunction } from "../api/dealerApiClient";
 import { 
@@ -65,7 +66,7 @@ export const signUpDealerWithEmail = async (
     });
     
     // Make the API call
-    const response = await invokeDealerFunction(
+    const response = await invokeDealerFunction<RegisterResponse>(
       'register', 
       {
         email: normalizedEmail,
@@ -109,6 +110,9 @@ export const signUpDealerWithEmail = async (
       };
     }
 
+    // Extra debug logging to see the actual data structure
+    console.log("Registration data structure:", JSON.stringify(response.data, null, 2));
+
     // Use type guard to validate the response structure
     if (!isRegisterResponse(response.data)) {
       console.error("Invalid response format:", response.data);
@@ -118,8 +122,7 @@ export const signUpDealerWithEmail = async (
       };
     }
 
-    // At this point, TypeScript knows that response.data is a valid RegisterResponse
-    // and we can safely access the user.id property
+    // At this point, the data has been validated, so we can safely extract the user ID
     const userId = response.data.user.id;
     console.log("Registration successful! User ID:", userId);
     
@@ -150,7 +153,7 @@ export const signInDealerWithEmail = async (
   // Normalize email
   const normalizedEmail = safeTrim(email).toLowerCase();
 
-  const response = await invokeDealerFunction(
+  const response = await invokeDealerFunction<LoginResponse>(
     'login', 
     {
       email: normalizedEmail,
@@ -172,6 +175,9 @@ export const signInDealerWithEmail = async (
       error: "Login successful but no session data returned"
     };
   }
+
+  // Extra debug logging for login response
+  console.log("Login data structure:", JSON.stringify(response.data, null, 2));
 
   // Use type guard to validate login response
   if (!isLoginResponse(response.data)) {
