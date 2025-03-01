@@ -1,280 +1,140 @@
+
+import { corsHeaders } from "../_shared/cors.ts";
+import { createClient } from "../_shared/supabase-client.ts";
 import { logOperation, logError } from "./logging.ts";
-import { supabase } from "../_shared/supabase-client.ts";
-import { 
-  createResponse, 
-  errorResponse, 
-  successResponse,
-  sanitizeError
-} from './response-utils.ts';
+import { createResponse, errorResponse, successResponse, sanitizeError } from "./response-utils.ts";
+import { LoginRequest, RegistrationRequest } from "./types.ts";
 
-// Define payload types
-type RegisterPayload = {
-  email: string;
-  password: string;
-  supervisorName: string;
-  companyName: string;
-  phoneNumber?: string;
-  taxId: string;
-  businessRegistryNumber: string;
-  companyAddress: string;
+// Create a function to get the Supabase client
+const getSupabaseClient = () => {
+  return createClient();
 };
 
-type LoginPayload = {
-  email: string;
-  password: string;
-};
-
-type EmailCheckPayload = {
-  email: string;
-};
-
-// Export all handlers through a single object
-export const handlers = {
-  register: handleRegistration,
-  login: handleLogin,
-  'check-email-exists': handleEmailExists,
-  'register-with-lock': handleRegistrationWithLock,
-};
-
-// Handler for email existence check
-export const handleEmailExists = async (req: Request) => {
+// Function for checking if email exists
+export const checkEmailExists = async (req: Request) => {
   try {
-    const payload = await req.json() as EmailCheckPayload;
+    const { email } = await req.json();
     
-    logOperation('Checking if email exists', { email: payload.email });
-    
-    if (!payload.email || typeof payload.email !== 'string') {
-      return errorResponse('Email is required', 400);
-    }
-    
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', payload.email.toLowerCase())
-      .maybeSingle();
-      
-    if (error) {
-      logError('Error checking email existence', error);
-      return errorResponse('Failed to check email', 500);
-    }
-    
-    return successResponse({ exists: !!data });
-    
-  } catch (error) {
-    logError('Unexpected error in email check', error);
-    return errorResponse('Failed to check email', 500);
-  }
-};
-
-// Handler for user registration
-export const handleRegistration = async (req: Request) => {
-  try {
-    const payload = await req.json() as RegisterPayload;
-    
-    // Validate required fields
-    if (!payload.email || !payload.password || !payload.supervisorName) {
-      return errorResponse('Missing required fields', 400);
-    }
-    
-    logOperation('Starting registration', { email: payload.email });
-    
-    // Create user with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: payload.email.toLowerCase(),
-      password: payload.password,
-      email_confirm: true,
-      user_metadata: {
-        name: payload.supervisorName,
-        company_name: payload.companyName
-      }
-    });
-    
-    if (authError) {
-      logError('Auth error during registration', authError);
-      return errorResponse(sanitizeError(authError), 400);
-    }
-    
-    const userId = authData.user.id;
-    
-    // Create dealer profile
-    const { error: dealerError } = await supabase
-      .from('dealers')
-      .insert({
-        user_id: userId,
-        supervisor_name: payload.supervisorName,
-        dealership_name: payload.companyName,
-        tax_id: payload.taxId,
-        business_registry_number: payload.businessRegistryNumber,
-        address: payload.companyAddress,
-        verification_status: 'pending',
-        is_verified: false,
-        license_number: payload.businessRegistryNumber,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-      
-    if (dealerError) {
-      logError('Dealer profile creation error', dealerError);
-      
-      // Attempt to clean up the auth user
-      await supabase.auth.admin.deleteUser(userId);
-      
-      return errorResponse(sanitizeError(dealerError), 400);
-    }
-    
-    logOperation('Registration successful', { userId });
-    
-    return successResponse({
-      user: {
-        id: userId,
-        email: payload.email
-      }
-    });
-    
-  } catch (error) {
-    logError('Unexpected registration error', error);
-    return errorResponse('Registration failed', 500);
-  }
-};
-
-export const handleRegistrationWithLock = async (req: Request, locks: Map<string, boolean>) => {
-  try {
-    const payload = await req.json() as RegisterPayload;
-    const { email } = payload;
-
     if (!email) {
       return errorResponse('Email is required', 400);
     }
 
-    const normalizedEmail = email.toLowerCase();
+    logOperation('Checking if email exists', { email });
+    
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.auth.admin.listUsers({ 
+      filters: { email }
+    });
 
-    // Use a lock key based on the normalized email
-    const lockKey = `registration_lock_${normalizedEmail}`;
-
-    // Check if registration is already in progress for this email
-    if (locks.get(lockKey)) {
-      console.warn(`Registration already in progress for email: ${normalizedEmail}`);
-      return errorResponse('Registration already in progress. Please try again in a moment.', 429);
+    if (error) {
+      logError('Error checking if email exists', error);
+      return errorResponse(sanitizeError(error), 500);
     }
 
-    // Acquire the lock
-    locks.set(lockKey, true);
-    console.log(`Acquired lock for email: ${normalizedEmail}`);
-
-    try {
-      logOperation('Starting registration with lock', { email: normalizedEmail });
-
-      // Create user with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: normalizedEmail,
-        password: payload.password,
-        email_confirm: true,
-        user_metadata: {
-          name: payload.supervisorName,
-          company_name: payload.companyName
-        }
-      });
-
-      if (authError) {
-        logError('Auth error during registration with lock', authError);
-        return errorResponse(sanitizeError(authError), 400);
-      }
-
-      const userId = authData.user.id;
-
-      // Create dealer profile
-      const { error: dealerError } = await supabase
-        .from('dealers')
-        .insert({
-          user_id: userId,
-          supervisor_name: payload.supervisorName,
-          dealership_name: payload.companyName,
-          tax_id: payload.taxId,
-          business_registry_number: payload.businessRegistryNumber,
-          address: payload.companyAddress,
-          verification_status: 'pending',
-          is_verified: false,
-          license_number: payload.businessRegistryNumber,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-
-      if (dealerError) {
-        logError('Dealer profile creation error with lock', dealerError);
-
-        // Attempt to clean up the auth user
-        await supabase.auth.admin.deleteUser(userId);
-
-        return errorResponse(sanitizeError(dealerError), 400);
-      }
-
-      logOperation('Registration with lock successful', { userId });
-
-      return successResponse({
-        user: {
-          id: userId,
-          email: normalizedEmail
-        }
-      });
-
-    } finally {
-      // Release the lock
-      locks.delete(lockKey);
-      console.log(`Released lock for email: ${normalizedEmail}`);
-    }
-
+    return successResponse({
+      exists: (data?.users?.length || 0) > 0
+    });
   } catch (error) {
-    logError('Unexpected registration error with lock', error);
-    return errorResponse('Registration failed', 500);
+    logError('Unexpected error in checkEmailExists', error);
+    return errorResponse(sanitizeError(error), 500);
   }
 };
 
-export const handleLogin = async (req: Request) => {
+// Login function - updated to use the new response utilities
+export const login = async (req: Request) => {
   try {
-    const payload = await req.json() as LoginPayload;
+    const { email, password } = await req.json() as LoginRequest;
     
-    if (!payload.email || !payload.password) {
+    if (!email || !password) {
       return errorResponse('Email and password are required', 400);
     }
+
+    logOperation('Login attempt', { email });
     
-    logOperation('Attempting login', { email: payload.email });
-    
-    // Sign in with email/password
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: payload.email.toLowerCase(),
-      password: payload.password,
+    const supabase = getSupabaseClient();
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email, password
     });
-    
-    if (error) {
-      logError('Login error', error);
-      return errorResponse('Invalid login credentials', 401);
+
+    if (authError) {
+      logError('Login error', authError);
+      return errorResponse('Invalid email or password', 401);
     }
-    
-    if (!data.user || !data.session) {
-      return errorResponse('Login failed - no session created', 500);
-    }
-    
+
     // Get dealer profile
     const { data: dealerData, error: dealerError } = await supabase
       .from('dealers')
       .select('*')
-      .eq('user_id', data.user.id)
+      .eq('user_id', authData.user.id)
       .single();
-      
-    if (dealerError && dealerError.code !== 'PGRST116') {
+
+    if (dealerError) {
       logError('Error fetching dealer profile', dealerError);
-      // Continue anyway, as authentication succeeded
     }
-    
-    logOperation('Login successful', { userId: data.user.id });
-    
+
     return successResponse({
-      session: data.session,
+      session: authData.session,
       dealer: dealerData || null
     });
-    
   } catch (error) {
-    logError('Unexpected login error', error);
-    return errorResponse('Login failed', 500);
+    logError('Unexpected error in login', error);
+    return errorResponse(sanitizeError(error), 500);
   }
+};
+
+// Registration function with lock mechanism - updated to use the new response utilities
+export const registerWithLock = async (req: Request, registrationLocks: Map<string, boolean>) => {
+  try {
+    const body = await req.json() as RegistrationRequest;
+    const { email, password } = body;
+
+    if (!email || !password) {
+      return errorResponse('Email and password are required', 400);
+    }
+
+    // Check if registration is already in progress for this email
+    if (registrationLocks.get(email)) {
+      return errorResponse('Registration for this email is already in progress. Please try again in a moment.', 429);
+    }
+
+    // Set lock
+    registrationLocks.set(email, true);
+    logOperation('Registration with lock started', { email });
+
+    try {
+      const supabase = getSupabaseClient();
+      
+      // Perform the registration using the database function
+      const { data, error } = await supabase.rpc('create_dealer_with_profile', {
+        p_email: email,
+        p_password: password,
+        p_supervisor_name: body.supervisorName || '',
+        p_company_name: body.companyName || '',
+        p_tax_id: body.taxId || '',
+        p_business_registry_number: body.businessRegistryNumber || '',
+        p_address: body.companyAddress || ''
+      });
+
+      if (error) {
+        logError('Registration error', error);
+        return errorResponse(sanitizeError(error), 400);
+      }
+
+      return successResponse(data);
+    } finally {
+      // Always release the lock
+      registrationLocks.delete(email);
+      logOperation('Registration lock released', { email });
+    }
+  } catch (error) {
+    logError('Unexpected error in registration', error);
+    return errorResponse(sanitizeError(error), 500);
+  }
+};
+
+// Export all handlers in a map for easy access
+export const handlers = {
+  'check-email-exists': checkEmailExists,
+  'login': login,
+  'register-with-lock': registerWithLock
 };
