@@ -1,6 +1,5 @@
 
-import { supabase } from "@/integrations/supabase/client";
-
+// Helper function to safely trim strings (handles null/undefined)
 export const safeTrim = (value?: string): string => {
   if (value === undefined || value === null) {
     return '';
@@ -8,6 +7,9 @@ export const safeTrim = (value?: string): string => {
   return value.trim();
 };
 
+/**
+ * Validates email format
+ */
 export const validateEmail = (email: string): { isValid: boolean; error?: string } => {
   if (!email || email.trim() === '') {
     return { isValid: false, error: 'Email is required' };
@@ -22,6 +24,9 @@ export const validateEmail = (email: string): { isValid: boolean; error?: string
   return { isValid: true };
 };
 
+/**
+ * Validates password strength
+ */
 export const validatePassword = (password: string): { isValid: boolean; error?: string } => {
   if (!password) {
     return { isValid: false, error: 'Password is required' };
@@ -73,3 +78,6 @@ export const checkAccountExists = async (email: string): Promise<boolean> => {
     throw error;
   }
 };
+
+// Add import for supabase client at the top
+import { supabase } from "@/integrations/supabase/client";
