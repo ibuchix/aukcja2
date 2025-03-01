@@ -1,3 +1,4 @@
+
 import * as z from "zod";
 
 export const dealerFormSchema = z.object({
@@ -28,8 +29,8 @@ export const dealerFormSchema = z.object({
     .max(72, {
       message: "Password cannot exceed 72 characters",
     })
-    .refine((value) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value), {
-      message: "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+    .refine((value) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(value), {
+      message: "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
     }),
   phoneNumber: z.string()
     .min(9, {

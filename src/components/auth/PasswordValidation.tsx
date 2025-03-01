@@ -17,7 +17,8 @@ export function PasswordValidation({ password, className = "" }: PasswordValidat
     { label: "At least 8 characters", regex: /.{8,}/ },
     { label: "At least one uppercase letter", regex: /[A-Z]/ },
     { label: "At least one lowercase letter", regex: /[a-z]/ },
-    { label: "At least one number", regex: /[0-9]/ }
+    { label: "At least one number", regex: /[0-9]/ },
+    { label: "At least one special character", regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/ }
   ];
 
   return (

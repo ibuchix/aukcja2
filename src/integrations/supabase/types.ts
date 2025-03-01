@@ -277,6 +277,13 @@ export type Database = {
         }
         Returns: Json
       }
+      verify_password: {
+        Args: {
+          uuid: string
+          plain_text: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       user_role: "dealer" | "seller" | "admin"
