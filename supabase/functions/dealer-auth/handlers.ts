@@ -1,15 +1,29 @@
 
-import { createEdgeClient, createResponse, createErrorResponse, validateRequiredFields } from '@shared/dependencies.ts';
-import { createServiceClient } from '@shared/supabase-client.ts';
+import { createEdgeClient, createServiceClient } from '@shared/supabase-client.ts';
 import { corsHeaders } from '@shared/cors.ts';
+import { verifyDependencies } from '@shared/dependencies.ts';
+
+// Initialize early with dependency verification
+verifyDependencies();
+const adminClient = createServiceClient();
 
 export async function handleRegister(req: Request) {
   try {
     const body = await req.json();
-    validateRequiredFields(body, ['email', 'password', 'supervisorName', 'companyName']);
+    
+    // Validate required fields
+    const requiredFields = ['email', 'password', 'supervisorName', 'companyName'];
+    for (const field of requiredFields) {
+      if (!body[field]) {
+        return createErrorResponse({
+          message: `Missing required field: ${field}`,
+          code: 'missing_field',
+          status: 400
+        });
+      }
+    }
     
     const supabaseClient = createEdgeClient(req);
-    const adminClient = createServiceClient();
 
     // Check if user already exists to provide better error messages
     const { data: existingUser } = await adminClient
@@ -81,7 +95,15 @@ export async function handleRegister(req: Request) {
 export async function handleLogin(req: Request) {
   try {
     const body = await req.json();
-    validateRequiredFields(body, ['email', 'password']);
+    
+    // Validate required fields
+    if (!body.email || !body.password) {
+      return createErrorResponse({
+        message: !body.email ? 'Email is required' : 'Password is required',
+        code: 'missing_credentials',
+        status: 400
+      });
+    }
     
     const supabaseClient = createEdgeClient(req);
     
@@ -91,6 +113,7 @@ export async function handleLogin(req: Request) {
     });
 
     if (error) {
+      console.error('Login error:', error);
       return createErrorResponse({
         message: 'Invalid login credentials',
         code: 'invalid_credentials',
@@ -99,7 +122,7 @@ export async function handleLogin(req: Request) {
     }
 
     // Fetch dealer profile
-    const { data: dealer, error: dealerError } = await supabaseClient
+    const { data: dealer, error: dealerError } = await adminClient
       .from('dealers')
       .select('*')
       .eq('user_id', data.user.id)
@@ -115,17 +138,45 @@ export async function handleLogin(req: Request) {
       dealer: dealer || null
     });
   } catch (error) {
+    console.error('Unexpected error during login:', error);
     return createErrorResponse(error);
   }
+}
+
+// Helper to create standardized responses
+function createResponse(data: any, status = 200) {
+  return new Response(
+    JSON.stringify(data),
+    {
+      status,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders
+      }
+    }
+  );
+}
+
+function createErrorResponse(error: { message: string, code?: string, status?: number }) {
+  console.error(`Error: ${error.message}`, error);
+  return createResponse({ 
+    success: false, 
+    error: error.message,
+    code: error.code || 'unknown_error'
+  }, error.status || 400);
 }
 
 // Handle password verification (used for additional security checks)
 export async function handleVerifyPassword(req: Request) {
   try {
     const body = await req.json();
-    validateRequiredFields(body, ['userId', 'password']);
-    
-    const adminClient = createServiceClient();
+    if (!body.userId || !body.password) {
+      return createErrorResponse({
+        message: !body.userId ? 'User ID is required' : 'Password is required',
+        code: 'missing_field',
+        status: 400
+      });
+    }
     
     const { data, error } = await adminClient.rpc('verify_password', {
       uuid: body.userId,
@@ -148,5 +199,3 @@ export async function handleVerifyPassword(req: Request) {
     return createErrorResponse(error);
   }
 }
-
-// Update index file to use these handlers
