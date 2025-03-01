@@ -59,7 +59,7 @@ export const invokeDealerFunction = async <T = any>(
 
       return {
         success: true,
-        data: data as T
+        data: data.data as T // Access the nested data property that contains the actual response
       };
 
     } catch (error) {

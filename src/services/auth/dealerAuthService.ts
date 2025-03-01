@@ -89,6 +89,7 @@ export const signUpDealerWithEmail = async (
       };
     }
 
+    // Safely access the user ID from the response data
     const userId = response.data?.user?.id;
     if (!userId) {
       console.error("Registration successful but no user ID returned", response.data);
