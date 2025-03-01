@@ -63,7 +63,6 @@ export const checkAccountExists = async (email: string): Promise<boolean> => {
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('id')
-      .eq('email', email)
       .maybeSingle();
     
     if (profileError) {
@@ -90,19 +89,21 @@ export const checkAccountExists = async (email: string): Promise<boolean> => {
       console.error("Error in edge function check:", e);
     }
     
-    // Final attempt - query users directly (may not have permissions)
+    // Final attempt - use auth API directly
     try {
-      // Note: This is likely to fail due to RLS, but we try as a last resort
-      const { count, error: countError } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('email', email);
-        
-      if (!countError && count && count > 0) {
+      const { data, error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          shouldCreateUser: false
+        }
+      });
+      
+      if (!error) {
+        // If this succeeded, the user exists
         return true;
       }
     } catch (e) {
-      console.error("Error in final users check:", e);
+      console.error("Error in final auth check:", e);
     }
     
     return false; // No evidence the email exists
