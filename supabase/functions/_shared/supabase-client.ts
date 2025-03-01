@@ -1,5 +1,5 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
 
 // We use env vars for the Supabase URL and key
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
@@ -25,6 +25,25 @@ export const supabaseAnon = createClient(supabaseUrl, anonKey, {
     persistSession: false
   }
 });
+
+// Create an edge client with request context
+export const createEdgeClient = (req: Request) => {
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("Missing Supabase environment variables");
+  }
+
+  return createClient(supabaseUrl, supabaseKey, {
+    global: {
+      headers: {
+        Authorization: req.headers.get("Authorization") || "",
+      },
+    },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+};
 
 // For backwards compatibility
 export const createClient = () => {

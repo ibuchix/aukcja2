@@ -1,7 +1,6 @@
 
-import { corsHeaders } from "../_shared/cors.ts";
 import { supabase } from "../_shared/supabase-client.ts";
-import { logOperation, logError } from "./logging.ts";
+import { logOperation, logError, logAuthEvent } from "./logging.ts";
 import { createResponse, errorResponse, successResponse, sanitizeError } from "./response-utils.ts";
 import { LoginRequest, RegistrationRequest } from "./types.ts";
 
