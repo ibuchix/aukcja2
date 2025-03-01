@@ -59,25 +59,52 @@ export const validatePassword = (password: string): { isValid: boolean; error?: 
  */
 export const checkAccountExists = async (email: string): Promise<boolean> => {
   try {
-    // First check in auth.users table using the admin listUsers API
-    const { data: authData, error: authError } = await supabase.functions.invoke('dealer-auth', {
-      body: {
-        action: 'check-email-exists',
-        email: email
+    // First try direct Supabase check
+    const { data: user, error } = await supabase.auth.admin.getUserByEmail(email);
+    
+    if (error) {
+      console.error("Error checking if email exists via admin API:", error);
+      
+      // Try edge function as fallback
+      const { data: authData, error: authError } = await supabase.functions.invoke('dealer-auth', {
+        body: {
+          action: 'check-email-exists',
+          email: email
+        }
+      });
+
+      if (authError) {
+        console.error("Error checking if email exists via edge function:", authError);
+        throw authError;
       }
-    });
 
-    if (authError) {
-      console.error("Error checking if email exists:", authError);
-      throw authError;
+      return authData?.exists || false;
     }
-
-    return authData?.exists || false;
+    
+    return !!user;
   } catch (error) {
     console.error("Error in checkAccountExists:", error);
-    throw error;
+    
+    // In case of errors, try a simple query to see if the email exists in profiles
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+        
+      if (error) {
+        console.error("Error checking profiles table:", error);
+        return false;
+      }
+      
+      return !!data;
+    } catch (e) {
+      console.error("Error in fallback check:", e);
+      return false;
+    }
   }
 };
 
-// Add import for supabase client at the top
+// Import supabase client
 import { supabase } from "@/integrations/supabase/client";

@@ -7,6 +7,7 @@ import {
   RegisterResponse,
   isRegisterResponse
 } from "./models";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Handles the signup process for dealers with email authentication
@@ -39,115 +40,167 @@ export const signUpDealerWithEmail = async (
     // Normalize inputs
     const normalizedEmail = safeTrim(email).toLowerCase();
 
-    // Check if the user already exists
+    // Try direct Supabase auth signup first
     try {
-      const accountExists = await checkAccountExists(normalizedEmail);
-      if (accountExists) {
-        console.log("Account exists check returned true for email:", normalizedEmail);
+      const { data: existingUser, error: existingUserError } = await supabase.auth.admin
+        .getUserByEmail(normalizedEmail);
+
+      // If user exists, return error
+      if (existingUser) {
         return {
           success: false,
           error: "An account with this email already exists. Please login instead."
         };
       }
-    } catch (error) {
-      console.error("Failed to check if account exists:", error);
-      // Continue with registration attempt even if the check fails
-    }
 
-    // Log the request before sending
-    console.log("Preparing dealer registration request:", {
-      email: normalizedEmail,
-      supervisorName: safeTrim(metadata.name),
-      companyName: safeTrim(metadata.companyName),
-      phoneNumber: safeTrim(metadata.phoneNumber),
-      taxId: safeTrim(metadata.taxId),
-      businessRegistryNumber: safeTrim(metadata.businessRegistryNumber),
-      companyAddress: safeTrim(metadata.companyAddress)
-    });
-    
-    // Make the API call with explicit typing
-    const response = await invokeDealerFunction<RegisterResponse>(
-      'register', 
-      {
+      // Try direct signup with Supabase
+      const { data: authData, error: signupError } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
-        supervisorName: safeTrim(metadata.name),
-        companyName: safeTrim(metadata.companyName),
-        phoneNumber: safeTrim(metadata.phoneNumber),
-        taxId: safeTrim(metadata.taxId),
-        businessRegistryNumber: safeTrim(metadata.businessRegistryNumber),
-        companyAddress: safeTrim(metadata.companyAddress)
-      }
-    );
+        options: {
+          data: {
+            name: safeTrim(metadata.name),
+            role: 'dealer'
+          }
+        }
+      });
 
-    // Add error handling before checking response.success
-    if (!response) {
-      console.error("No response received from registration service");
-      return {
-        success: false,
-        error: "No response from registration service"
-      };
-    }
+      if (signupError) {
+        console.error("Direct Supabase signup error:", signupError);
+        
+        // Try the edge function as fallback
+        const response = await invokeDealerFunction<RegisterResponse>(
+          'register', 
+          {
+            email: normalizedEmail,
+            password,
+            supervisorName: safeTrim(metadata.name),
+            companyName: safeTrim(metadata.companyName),
+            phoneNumber: safeTrim(metadata.phoneNumber),
+            taxId: safeTrim(metadata.taxId),
+            businessRegistryNumber: safeTrim(metadata.businessRegistryNumber),
+            companyAddress: safeTrim(metadata.companyAddress)
+          }
+        );
 
-    if (!response.success) {
-      // Check for specific error types for better messaging
-      if (response.error && (
-        response.error.includes('profiles_pkey') ||
-        response.error.includes('duplicate') ||
-        response.error.includes('already exists'))) {
+        if (!response.success) {
+          // Handle specific error messages from edge function
+          return {
+            success: false,
+            error: response.error || "Registration failed. Please try again."
+          };
+        }
+
+        if (!isRegisterResponse(response.data)) {
+          console.error("Invalid registration response format:", response.data);
+          return {
+            success: false,
+            error: "Registration failed - invalid response format from server"
+          };
+        }
+
+        const userId = response.data?.user?.id;
+        if (!userId) {
+          console.error("No user ID in response:", response.data);
+          return {
+            success: false,
+            error: "Registration failed - missing user ID in response"
+          };
+        }
+
+        console.log("Registration successful via edge function! User ID:", userId);
         return {
-          success: false,
-          error: "An account with this email already exists. Please try logging in."
+          success: true,
+          userId
         };
       }
+
+      // Direct registration was successful
+      if (!authData.user) {
+        return {
+          success: false,
+          error: "Registration failed - no user returned"
+        };
+      }
+
+      // Create dealer profile
+      const { error: dealerError } = await supabase
+        .from('dealers')
+        .insert({
+          user_id: authData.user.id,
+          supervisor_name: safeTrim(metadata.name),
+          dealership_name: safeTrim(metadata.companyName) || '',
+          tax_id: safeTrim(metadata.taxId) || '',
+          business_registry_number: safeTrim(metadata.businessRegistryNumber) || '',
+          license_number: safeTrim(metadata.businessRegistryNumber) || '',
+          address: safeTrim(metadata.companyAddress) || '',
+          verification_status: 'pending',
+          is_verified: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+      if (dealerError) {
+        console.error("Error creating dealer profile:", dealerError);
+        return {
+          success: false,
+          error: `Failed to create dealer profile: ${dealerError.message}`
+        };
+      }
+
+      console.log("Registration successful via direct Supabase auth! User ID:", authData.user.id);
+      return {
+        success: true,
+        userId: authData.user.id
+      };
+    } catch (error) {
+      console.error("Error in direct Supabase auth:", error);
       
+      // Continue with edge function approach as fallback
+      const response = await invokeDealerFunction<RegisterResponse>(
+        'register', 
+        {
+          email: normalizedEmail,
+          password,
+          supervisorName: safeTrim(metadata.name),
+          companyName: safeTrim(metadata.companyName),
+          phoneNumber: safeTrim(metadata.phoneNumber),
+          taxId: safeTrim(metadata.taxId),
+          businessRegistryNumber: safeTrim(metadata.businessRegistryNumber),
+          companyAddress: safeTrim(metadata.companyAddress)
+        }
+      );
+
+      if (!response.success) {
+        return {
+          success: false,
+          error: response.error || "Registration failed. Please try again."
+        };
+      }
+
+      if (!isRegisterResponse(response.data)) {
+        console.error("Invalid registration response format:", response.data);
+        return {
+          success: false,
+          error: "Registration failed - invalid response format from server"
+        };
+      }
+
+      const userId = response.data?.user?.id;
+      if (!userId) {
+        console.error("No user ID in response:", response.data);
+        return {
+          success: false,
+          error: "Registration failed - missing user ID in response"
+        };
+      }
+
+      console.log("Registration successful! User ID:", userId);
       return {
-        success: false,
-        error: response.error
+        success: true,
+        userId
       };
     }
-
-    // Log the response for debugging
-    console.log("Registration API response:", response);
-    
-    // Validate response data
-    if (!response.data) {
-      console.error("No data in response:", response);
-      return {
-        success: false,
-        error: "Registration failed - no data returned from server"
-      };
-    }
-
-    // Extra debug logging to see the actual data structure
-    console.log("Registration data structure:", JSON.stringify(response.data, null, 2));
-
-    // Use type guard to validate the response structure
-    if (!isRegisterResponse(response.data)) {
-      console.error("Invalid response format:", response.data);
-      return {
-        success: false,
-        error: "Registration failed - invalid response format from server"
-      };
-    }
-
-    // Replace the direct userId assignment with safe optional chaining
-    const userId = response.data?.user?.id;
-    if (!userId) {
-      console.error("No user ID in response:", response.data);
-      return {
-        success: false,
-        error: "Registration failed - missing user ID in response"
-      };
-    }
-
-    console.log("Registration successful! User ID:", userId);
-    
-    return {
-      success: true,
-      userId
-    };
-
   } catch (error) {
     console.error("Unexpected signup error:", error);
     return {

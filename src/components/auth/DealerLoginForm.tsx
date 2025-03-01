@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { signInDealerWithEmail } from "@/services/auth/dealerAuthService";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const loginFormSchema = z.object({
   email: z.string()
@@ -34,6 +36,7 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 export function DealerLoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -47,15 +50,15 @@ export function DealerLoginForm() {
 
   async function onSubmit(values: LoginFormValues) {
     setIsSubmitting(true);
+    setLoginError(null);
+    
     try {
+      console.log("Attempting login with email:", values.email);
       const result = await signInDealerWithEmail(values.email, values.password);
 
       if (!result.success) {
-        toast({
-          title: "Login Failed",
-          description: result.error || "Invalid credentials",
-          variant: "destructive",
-        });
+        console.error("Login failed:", result.error);
+        setLoginError(result.error || "Invalid credentials. Please check your email and password.");
         return;
       }
 
@@ -64,19 +67,12 @@ export function DealerLoginForm() {
         description: "Redirecting to dashboard...",
       });
       
-      // Store session and dealer info (if needed)
-      // localStorage.setItem('dealership', JSON.stringify(result.dealer));
-      // localStorage.setItem('session', JSON.stringify(result.session));
-
+      // Navigate to dashboard
       navigate('/dealer/dashboard');
 
     } catch (error) {
       console.error("Login error:", error);
-      toast({
-        title: "Login Failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      setLoginError(error instanceof Error ? error.message : "An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
     }
@@ -85,6 +81,12 @@ export function DealerLoginForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {loginError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{loginError}</AlertDescription>
+          </Alert>
+        )}
+        
         <FormField
           control={form.control}
           name="email"
