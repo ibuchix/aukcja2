@@ -2353,6 +2353,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_dealer_transaction: {
+        Args: {
+          p_email: string
+          p_password: string
+          p_supervisor_name: string
+          p_company_name: string
+          p_tax_id: string
+          p_business_registry_number: string
+          p_company_address: string
+        }
+        Returns: Json
+      }
       create_dealer_with_profile: {
         Args: {
           p_email: string
