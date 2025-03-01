@@ -1,3 +1,4 @@
+
 import { validateEmail, validatePassword, safeTrim, checkAccountExists } from "./validation";
 import { invokeDealerFunction } from "../api/dealerApiClient";
 import { 
@@ -64,7 +65,7 @@ export const signUpDealerWithEmail = async (
       companyAddress: safeTrim(metadata.companyAddress)
     });
     
-    // Make the API call
+    // Make the API call with explicit typing
     const response = await invokeDealerFunction<RegisterResponse>(
       'register', 
       {
@@ -78,6 +79,15 @@ export const signUpDealerWithEmail = async (
         companyAddress: safeTrim(metadata.companyAddress)
       }
     );
+
+    // Add error handling before checking response.success
+    if (!response) {
+      console.error("No response received from registration service");
+      return {
+        success: false,
+        error: "No response from registration service"
+      };
+    }
 
     if (!response.success) {
       // Check for specific error types for better messaging
