@@ -46,10 +46,20 @@ export const invokeDealerFunction = async <T = any>(
         continue;
       }
 
-      if (!data?.success) {
-        console.error(`Attempt ${attempt} failed with API error:`, data);
+      if (!data) {
+        console.error(`Attempt ${attempt} failed: No data returned`);
+        lastError = new Error(`No data returned from ${action}`);
         
-        lastError = new Error(data?.error || `Failed to execute ${action}`);
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, Math.min(retryDelay * Math.pow(2, attempt - 1), 5000)));
+        }
+        continue;
+      }
+      
+      // If the API returned an error message in the data
+      if (data.error || (typeof data.success === 'boolean' && !data.success)) {
+        console.error(`Attempt ${attempt} failed with API error:`, data);
+        lastError = new Error(data.error || `Failed to execute ${action}`);
         
         if (attempt < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, Math.min(retryDelay * Math.pow(2, attempt - 1), 5000)));
@@ -57,18 +67,17 @@ export const invokeDealerFunction = async <T = any>(
         continue;
       }
 
-      // For dealer registration, the response might be directly in data, not in data.data
-      if (action === 'register' && data.user) {
-        // Handle the case where the user object is directly in the response
+      // For registration response, return the full data object as is
+      // This matches the RegisterResponse interface exactly
+      if (action === 'register') {
         return {
           success: true,
-          data: data as unknown as T
+          data: data as T
         };
       }
 
-      // Handle the typical case where data contains a nested data property
-      if (data && typeof data === 'object') {
-        // Check if 'data' property exists or use the data object itself
+      // For other actions, handle potential nesting
+      if (typeof data === 'object') {
         const resultData = 'data' in data ? data.data : data;
         return {
           success: true,
@@ -76,13 +85,11 @@ export const invokeDealerFunction = async <T = any>(
         };
       }
 
-      // Fallback for unexpected structures
       console.error(`Unexpected response structure from function ${action}:`, data);
       return {
         success: false,
         error: `Unexpected response structure from function ${action}`
       };
-
     } catch (error) {
       console.error(`Attempt ${attempt} threw error:`, error);
       lastError = error;

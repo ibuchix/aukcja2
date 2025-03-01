@@ -57,6 +57,7 @@ export const signUpDealerWithEmail = async (
       companyAddress: safeTrim(metadata.companyAddress)
     });
     
+    // Make the API call with explicit typing
     const response = await invokeDealerFunction<RegisterResponse>(
       'register', 
       {
@@ -89,10 +90,10 @@ export const signUpDealerWithEmail = async (
       };
     }
 
-    // The critical part: safely extract user ID with detailed logs
+    // Log the response for debugging
     console.log("Registration API response:", response);
     
-    // Make sure response.data exists
+    // Check if response.data exists
     if (!response.data) {
       console.error("No data in response:", response);
       return {
@@ -101,28 +102,18 @@ export const signUpDealerWithEmail = async (
       };
     }
 
-    // Access user data with strong type checking
+    // Safely extract user ID with strong type assertion
     const userData = response.data;
     
-    // Most important check: does user object exist?
+    // Assertions and validations
     if (!userData.user) {
       console.error("User object missing in response data:", userData);
-      // Fallback: try using the data directly if it has an id
-      if ('id' in userData && typeof userData.id === 'string') {
-        console.log("Found ID directly in response data, using that:", userData.id);
-        return {
-          success: true,
-          userId: userData.id as string
-        };
-      }
-      
       return {
         success: false,
         error: "Registration complete but user data is missing"
       };
     }
 
-    // Specific check for id property
     if (!userData.user.id) {
       console.error("User ID is missing:", userData.user);
       return {
@@ -131,12 +122,12 @@ export const signUpDealerWithEmail = async (
       };
     }
 
-    // Final success case
+    // Success case - we have the user ID
     const userId = userData.user.id;
     console.log("Registration successful! User ID:", userId);
     return {
       success: true,
-      userId: userId
+      userId
     };
 
   } catch (error) {

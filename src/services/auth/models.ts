@@ -21,14 +21,14 @@ export interface UserMetadata {
   businessRegistryNumber?: string;
 }
 
-// Exactly match the API response structure
+// Exactly match the API response structure from create_dealer_with_profile SQL function
 export interface RegisterResponse {
-  message?: string;
+  success: boolean;
   user: { 
     id: string; 
     email: string;
+    user_metadata?: any;
   };
-  success?: boolean;
   error?: string;
 }
 
