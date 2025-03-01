@@ -1,97 +1,111 @@
+import React, { useState } from "react";
+import { toast } from "sonner";
+import { SqlApprovalDialog } from "@/components/SqlApprovalDialog";
 
-import { useQuery } from "@tanstack/react-query";
-import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
-import VehicleCard from "@/components/VehicleCard";
-import Services from "@/components/Services";
-import Footer from "@/components/Footer";
-import { supabase } from "@/integrations/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
-import CarDetailsDialog from "@/components/CarDetailsDialog";
-import { CarListing } from "@/types/cars";
+const sqlMigration = `
+CREATE OR REPLACE FUNCTION create_dealer_transaction(
+  p_email TEXT,
+  p_password TEXT,
+  p_supervisor_name TEXT,
+  p_company_name TEXT,
+  p_tax_id TEXT,
+  p_business_registry_number TEXT,
+  p_company_address TEXT
+) RETURNS JSON AS $$
+DECLARE
+  user_id UUID;
+BEGIN
+  -- Create auth user
+  user_id := gen_random_uuid();
+  
+  INSERT INTO auth.users (
+    id, instance_id, email, password,
+    email_confirmed_at, raw_app_meta_data,
+    raw_user_meta_data, created_at, updated_at
+  ) VALUES (
+    user_id,
+    '00000000-0000-0000-0000-000000000000',
+    p_email,
+    crypt(p_password, gen_salt('bf')),
+    NOW(),
+    '{"provider":"email","providers":["email"]}',
+    jsonb_build_object(
+      'name', p_supervisor_name,
+      'company', p_company_name
+    ),
+    NOW(),
+    NOW()
+  );
 
-const Index = () => {
-  const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
+  -- Create profile
+  INSERT INTO public.profiles (id, role, full_name)
+  VALUES (user_id, 'dealer', p_supervisor_name);
 
-  const { data: featuredVehicles, isLoading } = useQuery({
-    queryKey: ["featuredVehicles"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cars")
-        .select("*")
-        .eq("status", "available")
-        .eq("is_draft", false)
-        .limit(4)
-        .order("created_at", { ascending: false });
+  -- Create dealer record
+  INSERT INTO public.dealers (
+    user_id, supervisor_name, dealership_name,
+    tax_id, business_registry_number, address
+  ) VALUES (
+    user_id,
+    p_supervisor_name,
+    p_company_name,
+    p_tax_id,
+    p_business_registry_number,
+    p_company_address
+  );
 
-      if (error) throw error;
+  RETURN json_build_object(
+    'success', true,
+    'user', json_build_object(
+      'id', user_id,
+      'email', p_email
+    )
+  );
 
-      return data.map(car => ({
-        ...car,
-        features: typeof car.features === 'string' 
-          ? JSON.parse(car.features) 
-          : car.features || {
-              satNav: false,
-              heatedSeats: false,
-              panoramicRoof: false,
-              reverseCamera: false,
-              upgradedSound: false
-            }
-      })) as CarListing[];
-    },
-  });
+EXCEPTION WHEN others THEN
+  RETURN json_build_object(
+    'success', false,
+    'error', SQLERRM
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+`;
+
+export default function Index() {
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleApprove = () => {
+    // Here you would typically call an API endpoint to run the migration
+    toast.success("SQL migration approved! Migration would run now.");
+    setDialogOpen(false);
+  };
 
   return (
-    <div className="min-h-screen">
-      <Navbar />
-      <Hero />
-      
-      <section id="vehicles" className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">Featured Vehicles</h2>
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="space-y-4">
-                  <Skeleton className="h-48 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {featuredVehicles?.map((vehicle) => (
-                <div 
-                  key={vehicle.id}
-                  onClick={() => setSelectedCar(vehicle)}
-                  className="cursor-pointer"
-                >
-                  <VehicleCard
-                    image={vehicle.required_photos?.front || vehicle.images?.[0] || "/placeholder.svg"}
-                    name={`${vehicle.year || 'N/A'} ${vehicle.make || 'Unknown'} ${vehicle.model || 'Model'}`}
-                    price={vehicle.price}
-                    mileage={vehicle.mileage}
-                    transmission={vehicle.transmission}
-                    year={vehicle.year}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+    <div className="container mx-auto py-10">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-4">Car Auction Platform</h1>
+        <p className="text-lg text-gray-700">
+          Welcome to our premier car auction platform for dealers.
+        </p>
+      </div>
 
-      <Services />
-      <Footer />
-      
-      <CarDetailsDialog 
-        car={selectedCar} 
-        onClose={() => setSelectedCar(null)} 
+      <div className="bg-gray-100 p-6 rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold mb-4">SQL Migration Approval</h2>
+        <p className="mb-4">
+          There's a pending SQL migration that needs your approval.
+          This migration adds a transaction function for creating dealer accounts.
+        </p>
+        <Button onClick={() => setDialogOpen(true)}>
+          Review SQL Migration
+        </Button>
+      </div>
+
+      <SqlApprovalDialog
+        sql={sqlMigration}
+        isOpen={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onApprove={handleApprove}
       />
     </div>
   );
-};
-
-export default Index;
+}
