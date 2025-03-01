@@ -63,19 +63,21 @@ export async function handleRegister(
       return buildErrorResponse(validation.error || 'Invalid input');
     }
 
-    // Check if user already exists - but using the auth.getUser method instead of admin methods
-    const { data: existingUsers, error: userSearchError } = await supabaseAdmin
-      .from('profiles')
-      .select('id')
-      .eq('email', request.email.toLowerCase())
-      .maybeSingle();
+    // Check if user already exists in auth.users table instead of profiles
+    const { data: existingUsers, error: userSearchError } = await supabaseAdmin.auth
+      .admin
+      .listUsers({
+        filters: {
+          email: request.email.toLowerCase()
+        }
+      });
       
     if (userSearchError) {
       console.error(`Error checking for existing user: ${userSearchError.message}`);
       return buildErrorResponse(`Error checking account existence: ${userSearchError.message}`);
     }
     
-    if (existingUsers) {
+    if (existingUsers && existingUsers.users.length > 0) {
       console.error(`User with email ${request.email} already exists`);
       return buildErrorResponse('An account with this email already exists');
     }
@@ -104,19 +106,22 @@ export async function handleRegister(
       if (data.error_code === 'unique_violation' && data.error.includes('profiles_pkey')) {
         console.log('Detected profiles_pkey violation - this indicates the trigger already created a profile');
         
-        // Try to retrieve the user that might have been created using profiles table
-        const { data: userData, error: profileError } = await supabaseAdmin
-          .from('profiles')
-          .select('id, email')
-          .eq('email', request.email.toLowerCase())
-          .single();
+        // Try to retrieve the user that might have been created by querying auth.users
+        const { data: userList, error: authError } = await supabaseAdmin.auth
+          .admin
+          .listUsers({
+            filters: {
+              email: request.email.toLowerCase()
+            }
+          });
           
-        if (profileError) {
-          console.error('Error retrieving existing profile:', profileError);
-          return buildErrorResponse('Failed to retrieve existing profile');
+        if (authError) {
+          console.error('Error retrieving existing user:', authError);
+          return buildErrorResponse('Failed to retrieve existing user');
         }
         
-        if (userData) {
+        if (userList && userList.users.length > 0) {
+          const user = userList.users[0];
           console.log('Found existing user, will use this ID to create dealer profile only');
           
           // Create just the dealer profile for the existing user
@@ -124,7 +129,7 @@ export async function handleRegister(
             const { error: dealerError } = await supabaseAdmin
               .from('dealers')
               .insert({
-                user_id: userData.id,
+                user_id: user.id,
                 supervisor_name: request.supervisorName,
                 dealership_name: request.companyName || '',
                 tax_id: request.taxId || '',
@@ -143,8 +148,8 @@ export async function handleRegister(
             return buildSuccessResponse({
               message: 'Registration successful',
               user: {
-                id: userData.id,
-                email: userData.email
+                id: user.id,
+                email: user.email
               }
             });
           } catch (e) {
