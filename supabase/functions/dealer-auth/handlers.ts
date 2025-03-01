@@ -1,14 +1,9 @@
 
 import { corsHeaders } from "../_shared/cors.ts";
-import { createClient } from "../_shared/supabase-client.ts";
+import { supabase } from "../_shared/supabase-client.ts";
 import { logOperation, logError } from "./logging.ts";
 import { createResponse, errorResponse, successResponse, sanitizeError } from "./response-utils.ts";
 import { LoginRequest, RegistrationRequest } from "./types.ts";
-
-// Create a function to get the Supabase client
-const getSupabaseClient = () => {
-  return createClient();
-};
 
 // Function for checking if email exists
 export const checkEmailExists = async (req: Request) => {
@@ -21,7 +16,6 @@ export const checkEmailExists = async (req: Request) => {
 
     logOperation('Checking if email exists', { email });
     
-    const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.admin.listUsers({ 
       filters: { email }
     });
@@ -51,7 +45,6 @@ export const login = async (req: Request) => {
 
     logOperation('Login attempt', { email });
     
-    const supabase = getSupabaseClient();
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email, password
     });
@@ -102,8 +95,6 @@ export const registerWithLock = async (req: Request, registrationLocks: Map<stri
     logOperation('Registration with lock started', { email });
 
     try {
-      const supabase = getSupabaseClient();
-      
       // Perform the registration using the database function
       const { data, error } = await supabase.rpc('create_dealer_with_profile', {
         p_email: email,

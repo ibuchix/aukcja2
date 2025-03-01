@@ -25,3 +25,8 @@ export const supabaseAnon = createClient(supabaseUrl, anonKey, {
     persistSession: false
   }
 });
+
+// For backwards compatibility
+export const createClient = () => {
+  return supabase;
+};
