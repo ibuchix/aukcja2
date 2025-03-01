@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { validateEmail, validatePassword } from "@/utils/authValidation";
+import { validateEmail, validatePassword, safeTrim } from "@/utils/authValidation";
 
 interface SignUpResult {
   success: boolean;
@@ -25,59 +25,72 @@ export const signUpDealerWithEmail = async (
   try {
     console.log("Starting dealer signup process...");
 
-    // Use centralized email validation
+    // Use centralized email validation with better error handling
     const emailValidation = validateEmail(email);
     if (!emailValidation.isValid) {
       return { success: false, error: emailValidation.error };
     }
 
-    // Use centralized password validation
+    // Use centralized password validation with better error handling
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
       return { success: false, error: passwordValidation.error };
     }
 
-    // Validate required metadata
-    if (!metadata.name?.trim()) {
+    // Validate required metadata with better handling
+    if (!safeTrim(metadata.name)) {
       return { success: false, error: "Name is required" };
     }
 
-    // Call the dealer-auth edge function with retries
+    // Normalize inputs
+    const normalizedEmail = safeTrim(email).toLowerCase();
+
+    // Call the dealer-auth edge function with retries and better logging
     const maxRetries = 3;
     let lastError: any;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`Attempt ${attempt} to register dealer...`);
+        console.log(`Attempt ${attempt} to register dealer with email: ${normalizedEmail}`);
         
         const { data, error } = await supabase.functions.invoke('dealer-auth', {
           body: {
             action: 'register',
-            email: email.trim().toLowerCase(),
+            email: normalizedEmail,
             password,
-            supervisorName: metadata.name.trim(),
-            companyName: metadata.companyName?.trim(),
-            phoneNumber: metadata.phoneNumber?.trim(),
-            taxId: metadata.taxId?.trim(),
-            businessRegistryNumber: metadata.businessRegistryNumber?.trim(),
-            companyAddress: metadata.companyAddress?.trim()
+            supervisorName: safeTrim(metadata.name),
+            companyName: safeTrim(metadata.companyName),
+            phoneNumber: safeTrim(metadata.phoneNumber),
+            taxId: safeTrim(metadata.taxId),
+            businessRegistryNumber: safeTrim(metadata.businessRegistryNumber),
+            companyAddress: safeTrim(metadata.companyAddress)
           }
         });
+
+        console.log("Registration response:", { data, error });
 
         if (error) {
           console.error(`Registration attempt ${attempt} failed:`, error);
           lastError = error;
-          await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
+          
+          // Add delay before retry
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
+          }
           continue;
         }
 
         if (!data?.user?.id) {
-          console.error(`Registration attempt ${attempt} failed: No user ID returned`);
+          console.error(`Registration attempt ${attempt} failed: No user ID returned`, data);
           lastError = new Error("Failed to create user account - no user ID returned");
+          
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
+          }
           continue;
         }
 
-        console.log("Registration successful!");
+        console.log("Registration successful! User ID:", data.user.id);
         return {
           success: true,
           userId: data.user.id
@@ -118,22 +131,30 @@ export const signInDealerWithEmail = async (
     return { success: false, error: emailValidation.error };
   }
 
+  // Normalize email
+  const normalizedEmail = safeTrim(email).toLowerCase();
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`Attempt ${attempt} to login dealer...`);
+      console.log(`Attempt ${attempt} to login dealer with email: ${normalizedEmail}`);
       
       const { data, error } = await supabase.functions.invoke('dealer-auth', {
         body: {
           action: 'login',
-          email: email.trim().toLowerCase(),
+          email: normalizedEmail,
           password
         }
       });
 
+      console.log("Login response:", { data, error });
+
       if (error) {
         console.error(`Login attempt ${attempt} failed:`, error);
         lastError = error;
-        await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
+        
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
+        }
         continue;
       }
 
@@ -158,4 +179,3 @@ export const signInDealerWithEmail = async (
     error: lastError?.message || "Login failed after multiple attempts"
   };
 };
-
