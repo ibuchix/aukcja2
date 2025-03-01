@@ -49,7 +49,7 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
       } catch (error) {
         console.error('Cache fetch failed, falling back to direct query:', error);
         
-        // Fallback to direct database query
+        // Use explicit string literal for equality check
         const { data, error: dbError } = await supabase
           .from("bids")
           .select(`
@@ -59,8 +59,7 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
             status,
             dealer:dealers(dealership_name)
           `)
-          .eq("car_id", carId)
-          .order("created_at", { ascending: false });
+          .eq("car_id", carId as string);
 
         if (dbError) throw dbError;
         

@@ -33,6 +33,10 @@ export const WatchlistManagement = () => {
   const { data: watchlistedCars, isLoading } = useQuery({
     queryKey: ["watchlistedCars"],
     queryFn: async () => {
+      // Get current user's ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+      
       const { data: watchlistData, error } = await supabase
         .from('dealer_watchlist')
         .select(`
@@ -51,14 +55,18 @@ export const WatchlistManagement = () => {
             reserve_price
           )
         `)
-        .eq('buyer_id', (await supabase.auth.getUser()).data.user?.id);
+        .eq('buyer_id', user.id);
 
       if (error) throw error;
+      
+      if (!watchlistData) return [];
 
-      return watchlistData.map(item => ({
-        ...item.cars,
-        watchlist_id: item.id
-      })) as WatchlistCar[];
+      return watchlistData
+        .filter(item => item.cars) // Filter out any null cars
+        .map(item => ({
+          ...item.cars,
+          watchlist_id: item.id
+        })) as WatchlistCar[];
     }
   });
 
@@ -67,7 +75,7 @@ export const WatchlistManagement = () => {
       const { error } = await supabase
         .from('dealer_watchlist')
         .delete()
-        .eq('id', watchlistId);
+        .eq('id', watchlistId as string);
 
       if (error) throw error;
     },

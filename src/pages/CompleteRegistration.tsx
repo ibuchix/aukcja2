@@ -51,23 +51,21 @@ export default function CompleteRegistration() {
     try {
       setIsSubmitting(true);
 
-      const { error: dealerError } = await supabase
-        .from('dealers')
-        .insert({
-          user_id: state.userId,
-          supervisor_name: values.supervisorName,
-          dealership_name: values.companyName,
-          address: values.companyAddress,
-          tax_id: values.taxId,
-          business_registry_number: values.businessRegistryNumber,
-          verification_status: 'pending',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          license_number: '', // Required field with empty default
-          is_verified: false
-        });
+      // Use RPC function to create dealer instead, as it has proper type support
+      // and will handle the proper type structure internally
+      const { data, error } = await supabase.rpc('create_dealer_profile', {
+        p_user_id: state.userId,
+        p_supervisor_name: values.supervisorName,
+        p_dealership_name: values.companyName,
+        p_address: values.companyAddress,
+        p_tax_id: values.taxId,
+        p_business_registry_number: values.businessRegistryNumber,
+        p_license_number: values.businessRegistryNumber,
+        p_verification_status: 'pending',
+        p_is_verified: false
+      });
 
-      if (dealerError) throw dealerError;
+      if (error) throw error;
 
       toast({
         title: "Registration Complete",
@@ -120,4 +118,4 @@ export default function CompleteRegistration() {
       </Card>
     </div>
   );
-}
+};

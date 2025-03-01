@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 interface ApiResponse<T = any> {
@@ -130,4 +131,31 @@ export const invokeDealerFunction = async <T = any>(
     success: false,
     error: errorMessage
   };
+};
+
+/**
+ * Creates a dealer profile with proper TypeScript types
+ */
+export const createDealerProfile = async (
+  userId: string, 
+  supervisorName: string,
+  dealershipName: string,
+  address: string,
+  taxId: string,
+  businessRegistryNumber: string,
+  verificationStatus = 'pending'
+) => {
+  // Use the Supabase SQL function instead of directly inserting
+  // This avoids type issues with the dealers table
+  return await supabase.rpc('create_dealer_profile', {
+    p_user_id: userId,
+    p_supervisor_name: supervisorName,
+    p_dealership_name: dealershipName, 
+    p_address: address,
+    p_tax_id: taxId,
+    p_business_registry_number: businessRegistryNumber,
+    p_license_number: businessRegistryNumber,
+    p_verification_status: verificationStatus,
+    p_is_verified: false
+  });
 };

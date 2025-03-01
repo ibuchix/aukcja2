@@ -15,9 +15,7 @@ export const supabase = createClient<Database>(
   {
     auth: {
       debug: true,
-      logger: (level, message, data) => {
-        console.log(`[AUTH ${level}] ${message}`, data);
-      }
+      // Logger is removed as it's causing type errors
     }
   }
 );

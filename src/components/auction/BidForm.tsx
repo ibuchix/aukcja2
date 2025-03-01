@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,12 +32,16 @@ export const BidForm = ({
         throw new Error(`Bid must be higher than current bid of $${currentHighestBid}`);
       }
 
+      // Fixed: Use properly typed object with exact database field names
       const { error } = await supabase
         .from('proxy_bids')
         .upsert({
           car_id: carId,
           dealer_id: dealerId,
           max_bid_amount: numericMaxBid,
+        }, {
+          // Use onConflict option to specify conflict resolution
+          onConflict: 'car_id,dealer_id'
         });
 
       if (error) throw error;
