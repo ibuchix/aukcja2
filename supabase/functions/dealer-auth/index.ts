@@ -15,6 +15,19 @@ const dealerAuthCorsHeaders = {
 
 // Primary function handler for all dealer auth requests
 Deno.serve(async (req) => {
+  // Handle health check endpoint
+  if (req.url.endsWith("/health")) {
+    return new Response(JSON.stringify({
+      status: "ok",
+      timestamp: new Date().toISOString()
+    }), {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
+      }
+    });
+  }
+
   // Handle preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { 
