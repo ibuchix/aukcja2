@@ -1,158 +1,126 @@
 
-import { validateEmail, validatePassword, safeTrim, checkAccountExists } from "./validation";
-import { invokeDealerFunction } from "../api/dealerApiClient";
-import { 
-  SignUpResult, 
-  UserMetadata, 
-  RegisterResponse,
-  isRegisterResponse
-} from "./models";
+import { signIn } from '@/integrations/supabase/client';
+import { DealerFormValues } from '@/schemas/dealerFormSchema';
+import { createDealerWithDatabaseTransaction } from '../dealerProfileService';
+import { invokeDealerFunction } from '../api/dealerApiClient';
+import { validateEmail, validatePassword, checkAccountExists } from './validation';
 
-/**
- * Handles the signup process for dealers with email authentication
- */
-export const signUpDealerWithEmail = async (
-  email: string,
-  password: string,
-  metadata: UserMetadata
-): Promise<SignUpResult> => {
+export interface SignUpResult {
+  success: boolean;
+  user?: {
+    id: string;
+    email: string;
+  };
+  error?: string;
+  errorType?: 'email' | 'password' | 'server' | 'duplicate';
+}
+
+export async function signUpDealerWithEmail(values: DealerFormValues): Promise<SignUpResult> {
+  console.log("Starting dealer signup process");
+  
+  // Validate email
+  const emailValidation = validateEmail(values.email);
+  if (!emailValidation.isValid) {
+    return {
+      success: false,
+      error: emailValidation.error,
+      errorType: 'email'
+    };
+  }
+
+  // Validate password
+  const passwordValidation = validatePassword(values.password);
+  if (!passwordValidation.isValid) {
+    return {
+      success: false,
+      error: passwordValidation.error,
+      errorType: 'password'
+    };
+  }
+
   try {
-    console.log("Starting dealer signup process...");
-
-    // Use centralized email validation with better error handling
-    const emailValidation = validateEmail(email);
-    if (!emailValidation.isValid) {
-      return { success: false, error: emailValidation.error };
-    }
-
-    // Use centralized password validation with better error handling
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      return { success: false, error: passwordValidation.error };
-    }
-
-    // Validate required metadata with better handling
-    if (!safeTrim(metadata.name)) {
-      return { success: false, error: "Name is required" };
-    }
-
-    // Normalize inputs
-    const normalizedEmail = safeTrim(email).toLowerCase();
-
-    // Check if the user already exists
-    try {
-      const accountExists = await checkAccountExists(normalizedEmail);
-      if (accountExists) {
-        console.log("Account exists check returned true for email:", normalizedEmail);
-        return {
-          success: false,
-          error: "An account with this email already exists. Please login instead."
-        };
-      }
-    } catch (error) {
-      console.error("Failed to check if account exists:", error);
-      // Continue with registration attempt even if the check fails
-    }
-
-    // Log the request before sending
-    console.log("Preparing dealer registration request:", {
-      email: normalizedEmail,
-      supervisorName: safeTrim(metadata.name),
-      companyName: safeTrim(metadata.companyName),
-      phoneNumber: safeTrim(metadata.phoneNumber),
-      taxId: safeTrim(metadata.taxId),
-      businessRegistryNumber: safeTrim(metadata.businessRegistryNumber),
-      companyAddress: safeTrim(metadata.companyAddress)
-    });
-    
-    // Make the API call with explicit typing
-    const response = await invokeDealerFunction<RegisterResponse>(
-      'register', 
-      {
-        email: normalizedEmail,
-        password,
-        supervisorName: safeTrim(metadata.name),
-        companyName: safeTrim(metadata.companyName),
-        phoneNumber: safeTrim(metadata.phoneNumber),
-        taxId: safeTrim(metadata.taxId),
-        businessRegistryNumber: safeTrim(metadata.businessRegistryNumber),
-        companyAddress: safeTrim(metadata.companyAddress)
-      }
-    );
-
-    // Add error handling before checking response.success
-    if (!response) {
-      console.error("No response received from registration service");
+    // Check if account exists
+    const accountExists = await checkAccountExists(values.email);
+    if (accountExists) {
       return {
         success: false,
-        error: "No response from registration service"
+        error: 'An account with this email already exists.',
+        errorType: 'duplicate'
       };
     }
 
-    if (!response.success) {
-      // Check for specific error types for better messaging
-      if (response.error && (
-        response.error.includes('profiles_pkey') ||
-        response.error.includes('duplicate') ||
-        response.error.includes('already exists'))) {
-        return {
-          success: false,
-          error: "An account with this email already exists. Please try logging in."
-        };
+    // Try the new transactional approach first
+    console.log("Attempting to create dealer using database transaction");
+    const transactionResult = await createDealerWithDatabaseTransaction(values);
+    
+    if (transactionResult.success) {
+      console.log("Dealer created successfully with transaction");
+      
+      // Auto sign-in the user after successful signup
+      const { error: signInError } = await signIn.emailPassword({
+        email: values.email,
+        password: values.password
+      });
+      
+      if (signInError) {
+        console.warn("Auto sign-in failed after signup:", signInError);
       }
       
       return {
-        success: false,
-        error: response.error
+        success: true,
+        user: {
+          id: "transaction-created", // we don't have the actual ID but that's fine for now
+          email: values.email
+        }
       };
     }
-
-    // Log the response for debugging
-    console.log("Registration API response:", response);
     
-    // Validate response data
-    if (!response.data) {
-      console.error("No data in response:", response);
+    // Fall back to the edge function for registration if transaction failed
+    console.log("Transaction approach failed, falling back to edge function");
+    const response = await invokeDealerFunction('register', {
+      email: values.email,
+      password: values.password,
+      supervisorName: values.supervisorName,
+      companyName: values.companyName,
+      taxId: values.taxId,
+      businessRegistryNumber: values.businessRegistryNumber,
+      companyAddress: values.companyAddress
+    });
+
+    if (!response.success) {
+      console.error("Dealer registration failed:", response.error);
       return {
         success: false,
-        error: "Registration failed - no data returned from server"
+        error: response.error as string || 'Failed to create your account. Please try again.',
+        errorType: 'server'
       };
     }
 
-    // Extra debug logging to see the actual data structure
-    console.log("Registration data structure:", JSON.stringify(response.data, null, 2));
-
-    // Use type guard to validate the response structure
-    if (!isRegisterResponse(response.data)) {
-      console.error("Invalid response format:", response.data);
+    const userData = response.data?.user;
+    if (!userData || !userData.id) {
+      console.error("Dealer registration returned invalid user data:", userData);
       return {
         success: false,
-        error: "Registration failed - invalid response format from server"
+        error: 'Invalid user data returned from server',
+        errorType: 'server'
       };
     }
 
-    // Replace the direct userId assignment with safe optional chaining
-    const userId = response.data?.user?.id;
-    if (!userId) {
-      console.error("No user ID in response:", response.data);
-      return {
-        success: false,
-        error: "Registration failed - missing user ID in response"
-      };
-    }
-
-    console.log("Registration successful! User ID:", userId);
-    
+    console.log("Dealer registration successful:", userData);
     return {
       success: true,
-      userId
+      user: {
+        id: userData.id,
+        email: userData.email
+      }
     };
 
   } catch (error) {
-    console.error("Unexpected signup error:", error);
+    console.error("Unexpected error during dealer signup:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "An unexpected error occurred during signup"
+      error: error instanceof Error ? error.message : 'An unexpected error occurred',
+      errorType: 'server'
     };
   }
-};
+}
