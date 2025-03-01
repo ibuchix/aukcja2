@@ -1,4 +1,34 @@
 
+// Logging utilities for dealer auth operations
+
+/**
+ * Logs an operation with context data
+ */
+export function logOperation(operation: string, data?: Record<string, any>) {
+  const logData = {
+    operation,
+    timestamp: new Date().toISOString(),
+    ...(data && { data })
+  };
+  
+  console.log(`[DEALER-AUTH] ${operation}:`, JSON.stringify(logData));
+}
+
+/**
+ * Logs an error with context
+ */
+export function logError(context: string, error: any) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorData = {
+    context,
+    error: errorMessage,
+    timestamp: new Date().toISOString(),
+    ...(error instanceof Error && error.stack && { stack: error.stack })
+  };
+  
+  console.error(`[DEALER-AUTH ERROR] ${context}:`, JSON.stringify(errorData));
+}
+
 export interface AuthLogEvent {
   type: "AUTH_EVENT"
   action: string
@@ -30,7 +60,7 @@ export function logAuthEvent(
       user_agent: req.headers.get("user-agent"),
       ip: req.headers.get("cf-connecting-ip")
     }
-  }
+  };
   
-  console.log(JSON.stringify(event))
+  console.log(JSON.stringify(event));
 }
