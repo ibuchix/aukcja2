@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import type { Database, AuthHandlerResponse, LoginRequest, RegisterRequest } from './types.ts';
 import { corsHeaders } from '../_shared/cors.ts';
@@ -145,6 +144,19 @@ export async function handleRegister(
               return buildErrorResponse('Failed to create dealer profile');
             }
             
+            // Perform final validation check for the newly created dealer
+            const { data: verificationData, error: verificationError } = await supabaseAdmin
+              .from('dealers')
+              .select('*')
+              .eq('user_id', user.id)
+              .single();
+            
+            if (verificationError) {
+              console.error('Post-registration verification failed:', verificationError);
+              // Don't delete the user here as they already existed before
+              return buildErrorResponse('Registration verification failed');
+            }
+            
             return buildSuccessResponse({
               message: 'Registration successful',
               user: {
@@ -163,6 +175,21 @@ export async function handleRegister(
     }
 
     console.log('Registration successful, user created:', data.user.id);
+    
+    // Add final validation check after successful registration
+    const { data: verificationData, error: verificationError } = await supabaseAdmin
+      .from('dealers')
+      .select('*')
+      .eq('user_id', data.user.id)
+      .single();
+    
+    if (verificationError) {
+      console.error('Post-registration verification failed:', verificationError);
+      // Clean up the user if verification fails
+      await supabaseAdmin.auth.admin.deleteUser(data.user.id);
+      return buildErrorResponse('Registration verification failed');
+    }
+    
     return buildSuccessResponse({
       message: 'Registration successful',
       user: data.user
