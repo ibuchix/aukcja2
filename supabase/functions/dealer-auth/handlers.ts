@@ -1,5 +1,5 @@
 
-import { supabase } from "../_shared/supabase-client.ts";
+import { createEdgeClient } from "../_shared/supabase-client.ts";
 import { logOperation, logError, logAuthEvent } from "./logging.ts";
 import { createResponse, errorResponse, successResponse, sanitizeError } from "./response-utils.ts";
 import { LoginRequest, RegistrationRequest } from "./types.ts";
@@ -15,6 +15,7 @@ export const checkEmailExists = async (req: Request) => {
 
     logOperation('Checking if email exists', { email });
     
+    const supabase = createEdgeClient(req);
     const { data, error } = await supabase.auth.admin.listUsers({ 
       filters: { email }
     });
@@ -44,6 +45,7 @@ export const login = async (req: Request) => {
 
     logOperation('Login attempt', { email });
     
+    const supabase = createEdgeClient(req);
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email, password
     });
@@ -94,6 +96,7 @@ export const registerWithLock = async (req: Request, registrationLocks: Map<stri
     logOperation('Registration with lock started', { email });
 
     try {
+      const supabase = createEdgeClient(req);
       // Perform the registration using the database function
       const { data, error } = await supabase.rpc('create_dealer_with_profile', {
         p_email: email,
