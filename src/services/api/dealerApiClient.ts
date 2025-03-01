@@ -67,29 +67,13 @@ export const invokeDealerFunction = async <T = any>(
         continue;
       }
 
-      // For registration response, return the full data object as is
-      // This matches the RegisterResponse interface exactly
-      if (action === 'register') {
-        return {
-          success: true,
-          data: data as T
-        };
-      }
-
-      // For other actions, handle potential nesting
-      if (typeof data === 'object') {
-        const resultData = 'data' in data ? data.data : data;
-        return {
-          success: true,
-          data: resultData as T
-        };
-      }
-
-      console.error(`Unexpected response structure from function ${action}:`, data);
+      // For all actions, simply pass through the data
+      // Type assertions will be handled by the type guards in the service layer
       return {
-        success: false,
-        error: `Unexpected response structure from function ${action}`
+        success: true,
+        data: data as unknown as T
       };
+
     } catch (error) {
       console.error(`Attempt ${attempt} threw error:`, error);
       lastError = error;

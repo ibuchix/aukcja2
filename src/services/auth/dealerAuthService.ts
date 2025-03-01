@@ -1,7 +1,15 @@
 
 import { validateEmail, validatePassword, safeTrim, checkAccountExists } from "./validation";
 import { invokeDealerFunction } from "../api/dealerApiClient";
-import { SignUpResult, UserMetadata, RegisterResponse, SignInResult, LoginResponse } from "./models";
+import { 
+  SignUpResult, 
+  UserMetadata, 
+  RegisterResponse, 
+  SignInResult, 
+  LoginResponse,
+  isRegisterResponse,
+  isLoginResponse
+} from "./models";
 
 export const signUpDealerWithEmail = async (
   email: string,
@@ -57,8 +65,8 @@ export const signUpDealerWithEmail = async (
       companyAddress: safeTrim(metadata.companyAddress)
     });
     
-    // Make the API call with explicit typing
-    const response = await invokeDealerFunction<RegisterResponse>(
+    // Make the API call
+    const response = await invokeDealerFunction(
       'register', 
       {
         email: normalizedEmail,
@@ -93,7 +101,7 @@ export const signUpDealerWithEmail = async (
     // Log the response for debugging
     console.log("Registration API response:", response);
     
-    // Check if response.data exists
+    // Validate response data with type guard
     if (!response.data) {
       console.error("No data in response:", response);
       return {
@@ -102,29 +110,20 @@ export const signUpDealerWithEmail = async (
       };
     }
 
-    // Safely extract user ID with strong type assertion
-    const userData = response.data;
-    
-    // Assertions and validations
-    if (!userData.user) {
-      console.error("User object missing in response data:", userData);
+    // Use type guard to validate the response structure
+    if (!isRegisterResponse(response.data)) {
+      console.error("Invalid response format:", response.data);
       return {
         success: false,
-        error: "Registration complete but user data is missing"
+        error: "Registration failed - invalid response format from server"
       };
     }
 
-    if (!userData.user.id) {
-      console.error("User ID is missing:", userData.user);
-      return {
-        success: false,
-        error: "Registration complete but user ID is missing"
-      };
-    }
-
-    // Success case - we have the user ID
-    const userId = userData.user.id;
+    // At this point, TypeScript knows that response.data is a valid RegisterResponse
+    // and we can safely access the user.id property
+    const userId = response.data.user.id;
     console.log("Registration successful! User ID:", userId);
+    
     return {
       success: true,
       userId
@@ -152,7 +151,7 @@ export const signInDealerWithEmail = async (
   // Normalize email
   const normalizedEmail = safeTrim(email).toLowerCase();
 
-  const response = await invokeDealerFunction<LoginResponse>(
+  const response = await invokeDealerFunction(
     'login', 
     {
       email: normalizedEmail,
@@ -167,11 +166,20 @@ export const signInDealerWithEmail = async (
     };
   }
 
-  // Validate response data
+  // Validate response data with type guard
   if (!response.data) {
     return {
       success: false,
       error: "Login successful but no session data returned"
+    };
+  }
+
+  // Use type guard to validate login response
+  if (!isLoginResponse(response.data)) {
+    console.error("Invalid login response format:", response.data);
+    return {
+      success: false,
+      error: "Login failed - invalid response format from server"
     };
   }
 

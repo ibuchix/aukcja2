@@ -36,3 +36,29 @@ export interface LoginResponse {
   session: any;
   dealer: any;
 }
+
+// Type guards for runtime validation
+export function isRegisterResponse(data: unknown): data is RegisterResponse {
+  return (
+    !!data &&
+    typeof data === 'object' &&
+    'success' in data &&
+    typeof data.success === 'boolean' &&
+    'user' in data &&
+    !!data.user &&
+    typeof data.user === 'object' &&
+    'id' in data.user &&
+    typeof data.user.id === 'string' &&
+    'email' in data.user &&
+    typeof data.user.email === 'string'
+  );
+}
+
+export function isLoginResponse(data: unknown): data is LoginResponse {
+  return (
+    !!data &&
+    typeof data === 'object' &&
+    'session' in data &&
+    'dealer' in data
+  );
+}
