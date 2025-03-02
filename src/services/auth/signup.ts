@@ -57,6 +57,17 @@ export const signUpDealerWithEmail = async (
       console.log("Edge function response:", data, "Error:", error);
 
       if (error) {
+        // Enhanced error handling for network issues
+        if (error.message?.includes('Failed to fetch') || 
+            error.message?.includes('NetworkError') ||
+            error.message?.includes('network')) {
+          return {
+            success: false,
+            error: "Network error connecting to registration service. Please try again.",
+            errorType: 'network'
+          };
+        }
+      
         return {
           success: false,
           error: error.message || "Registration failed with server error"
@@ -80,7 +91,7 @@ export const signUpDealerWithEmail = async (
         };
       }
 
-      // Improved user ID extraction with better logging and fallbacks
+      // Robust user ID extraction with detailed logging
       const userId = response.user?.id || response.userId;
       console.log("Registration successful, extracted userId:", userId);
       
@@ -97,11 +108,21 @@ export const signUpDealerWithEmail = async (
     } catch (error) {
       console.error("Error in registration process:", error);
       
+      // Enhanced error type detection
+      let errorType = 'unknown';
+      let errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      
+      if (errorMessage.includes('network') || 
+          errorMessage.includes('fetch') || 
+          errorMessage.includes('connection')) {
+        errorType = 'network';
+        errorMessage = "Network error connecting to registration service. Please try again.";
+      }
+      
       return {
         success: false,
-        error: error instanceof Error 
-          ? error.message 
-          : "An unexpected error occurred during registration. Please try again."
+        error: errorMessage,
+        errorType: errorType as any
       };
     }
   } catch (error) {

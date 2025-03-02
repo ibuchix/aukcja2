@@ -1,44 +1,25 @@
 
-// Standard response utilities for dealer authentication functions
-
-/**
- * Standard success response format
- */
-export function respondSuccess(data: any = {}, message: string = "Operation successful") {
-  return {
-    success: true,
-    message,
-    ...data
-  };
+// Helper to build a standardized success response
+export function buildSuccessResponse(data: any): Response {
+  return new Response(
+    JSON.stringify(data),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    }
+  );
 }
 
-/**
- * Standard error response format
- */
-export function respondError(error: string | Error, statusCode: number = 400) {
-  const errorMessage = error instanceof Error ? error.message : error;
-  
-  return {
-    success: false,
-    error: errorMessage,
-    status: statusCode
-  };
+// Helper to build a standardized error response
+export function buildErrorResponse(status: number, message: string): Response {
+  return new Response(
+    JSON.stringify({
+      success: false,
+      error: message
+    }),
+    {
+      status,
+      headers: { "Content-Type": "application/json" }
+    }
+  );
 }
-
-/**
- * Format validation errors
- */
-export function validationErrorResponse(errors: Record<string, string>) {
-  return respondError("Validation failed", 422);
-}
-
-/**
- * Authentication error response
- */
-export function authErrorResponse(message: string = "Authentication failed") {
-  return respondError(message, 401);
-}
-
-// For backward compatibility with existing code that might use these names
-export const successResponse = respondSuccess;
-export const errorResponse = respondError;

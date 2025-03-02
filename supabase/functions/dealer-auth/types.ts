@@ -1,28 +1,4 @@
 
-// Type definitions for dealer authentication
-
-// Registration request payload
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  metadata: UserMetadata;
-  action: 'register';
-}
-
-// Login request payload
-export interface LoginRequest {
-  email: string;
-  password: string;
-  action: 'login';
-}
-
-// Email check request
-export interface EmailCheckRequest {
-  email: string;
-  action: 'check-email-exists';
-}
-
-// User metadata structure
 export interface UserMetadata {
   name: string;
   companyName?: string;
@@ -32,8 +8,30 @@ export interface UserMetadata {
   companyAddress?: string;
 }
 
-// Registration response
-export interface RegisterResponse {
+export interface RegisterRequestBody {
+  action: 'register';
+  email: string;
+  password: string;
+  metadata: UserMetadata;
+}
+
+export interface LoginRequestBody {
+  action: 'login';
+  email: string;
+  password: string;
+}
+
+export interface CheckEmailExistsRequestBody {
+  action: 'checkEmailExists';
+  email: string;
+}
+
+export type RequestBody = 
+  | RegisterRequestBody
+  | LoginRequestBody
+  | CheckEmailExistsRequestBody;
+
+export interface RegisterResponseData {
   success: boolean;
   user?: {
     id: string;
@@ -44,33 +42,13 @@ export interface RegisterResponse {
   message?: string;
 }
 
-// Login response
-export interface LoginResponse {
+export interface LoginResponseData {
   success: boolean;
   session?: any;
   dealer?: any;
   error?: string;
 }
 
-// Email check response
-export interface EmailCheckResponse {
+export interface CheckEmailExistsResponseData {
   exists: boolean;
-}
-
-// Generic dealer auth request
-export type DealerAuthRequest = RegisterRequest | LoginRequest | EmailCheckRequest;
-
-// Type guard for RegisterRequest
-export function isRegisterRequest(req: any): req is RegisterRequest {
-  return req && req.action === 'register' && typeof req.email === 'string' && typeof req.password === 'string';
-}
-
-// Type guard for LoginRequest
-export function isLoginRequest(req: any): req is LoginRequest {
-  return req && req.action === 'login' && typeof req.email === 'string' && typeof req.password === 'string';
-}
-
-// Type guard for EmailCheckRequest
-export function isEmailCheckRequest(req: any): req is EmailCheckRequest {
-  return req && req.action === 'check-email-exists' && typeof req.email === 'string';
 }
