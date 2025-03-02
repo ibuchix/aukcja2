@@ -14,6 +14,7 @@ interface SignupResult {
 export function useSignupDealer() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [networkRetries, setNetworkRetries] = useState(0);
+  const MAX_RETRIES = 2;
 
   const signupDealer = async (values: DealerFormValues): Promise<SignupResult> => {
     if (isSubmitting) {
@@ -44,6 +45,31 @@ export function useSignupDealer() {
       );
 
       if (!signUpResult.success) {
+        // Check for unexpected auth failures which often require a retry
+        if (signUpResult.error?.includes('unexpected_failure') || 
+            signUpResult.error?.includes('500') || 
+            signUpResult.error?.includes('AuthApiError')) {
+          
+          console.log(`Auth error detected, attempt ${networkRetries + 1} of ${MAX_RETRIES}`);
+          
+          // Only retry if we haven't exceeded our retry limit
+          if (networkRetries < MAX_RETRIES) {
+            setNetworkRetries(prev => prev + 1);
+            setIsSubmitting(false);
+            
+            // Add a small delay before retry
+            await new Promise(resolve => setTimeout(resolve, 1000)); 
+            
+            return signupDealer(values);
+          }
+          
+          return {
+            success: false,
+            error: "Authentication service temporarily unavailable. Please try again in a few moments.",
+            errorType: 'auth'
+          };
+        }
+      
         // Check if the error is network-related
         if (signUpResult.error?.includes('network') || 
             signUpResult.error?.includes('timeout') || 
@@ -63,6 +89,9 @@ export function useSignupDealer() {
           errorType: 'auth'
         };
       }
+
+      // Reset retries on success
+      setNetworkRetries(0);
 
       // Skip profile creation if userId is missing - don't show error to user
       // The user account has been created already, and they can log in
@@ -115,6 +144,17 @@ export function useSignupDealer() {
             success: false,
             error: "Network connection issue. Please check your internet and try again.",
             errorType: 'network'
+          };
+        }
+        
+        // Check for unexpected auth errors
+        if (error.message.includes('unexpected_failure') || 
+            error.message.includes('AuthApiError') || 
+            error.message.includes('500')) {
+          return {
+            success: false,
+            error: "Authentication service is temporarily unavailable. Please try again in a few moments.",
+            errorType: 'auth'
           };
         }
       }
