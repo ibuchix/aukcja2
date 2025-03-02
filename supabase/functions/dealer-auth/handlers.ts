@@ -2,7 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { logInfo, logError, logDebug } from "./logging.ts";
 import { buildSuccessResponse, buildErrorResponse } from "./response-utils.ts";
-import { UserMetadata, RegisterResponse } from "../../src/services/auth/models.ts";
+import { UserMetadata, RegisterResponse } from "./types.ts";
 
 // Initialize Supabase client with admin privileges
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -46,7 +46,7 @@ async function handleRegister(body: any): Promise<Response> {
     
     // Check if user already exists
     const { data: existingUsers, error: checkError } = await supabase
-      .from("auth.users")
+      .from("users")
       .select("id")
       .eq("email", email.toLowerCase())
       .limit(1);
@@ -76,7 +76,7 @@ async function handleRegister(body: any): Promise<Response> {
     if (funcError) {
       logError("Error in create_dealer_with_profile function", funcError);
       
-      if (funcError.message.includes("already exists")) {
+      if (funcError.message?.includes("already exists")) {
         return buildErrorResponse(409, "A user with this email already exists");
       }
       
@@ -200,7 +200,7 @@ async function handleCheckEmailExists(body: any): Promise<Response> {
 
     // Check if user exists by email (case insensitive)
     const { data, error } = await supabase
-      .from("auth.users")
+      .from("users")
       .select("id")
       .ilike("email", email)
       .limit(1);
