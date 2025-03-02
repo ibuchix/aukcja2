@@ -16,6 +16,29 @@ export interface UserMetadata {
   companyAddress?: string;
 }
 
+export interface RegisterRequestBody {
+  action: 'register';
+  email: string;
+  password: string;
+  metadata: UserMetadata;
+}
+
+export interface LoginRequestBody {
+  action: 'login';
+  email: string;
+  password: string;
+}
+
+export interface CheckEmailExistsRequestBody {
+  action: 'checkEmailExists';
+  email: string;
+}
+
+export type RequestBody = 
+  | RegisterRequestBody
+  | LoginRequestBody
+  | CheckEmailExistsRequestBody;
+
 export interface RegisterResponse {
   success: boolean;
   error?: string;
@@ -32,4 +55,8 @@ export interface LoginResponse {
   session?: any;
   dealer?: any;
   error?: string;
+}
+
+export interface CheckEmailExistsResponseData {
+  exists: boolean;
 }

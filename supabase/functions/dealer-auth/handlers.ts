@@ -44,18 +44,40 @@ async function handleRegister(body: any): Promise<Response> {
 
     logDebug("Registration request received", { email, metadata });
     
-    // Check if user already exists
+    // Check if user already exists - FIXED: using auth.users table
     const { data: existingUsers, error: checkError } = await supabase
-      .from("users")
+      .from("auth.users")
       .select("id")
       .eq("email", email.toLowerCase())
       .limit(1);
       
     if (checkError) {
       logError("Error checking for existing user", checkError);
-    }
-    
-    if (existingUsers && existingUsers.length > 0) {
+      
+      // If the error is about the table not existing, check differently
+      if (checkError.message?.includes("does not exist")) {
+        // Alternative check using the direct auth API
+        const { data: userList, error: authError } = await supabase.auth.admin.listUsers({
+          page: 1,
+          perPage: 1,
+          filter: {
+            email: email.toLowerCase()
+          }
+        });
+        
+        if (authError) {
+          logError("Auth API error when checking existing user", authError);
+          return buildErrorResponse(500, "Failed to verify account availability");
+        }
+        
+        if (userList && userList.users && userList.users.length > 0) {
+          return buildErrorResponse(409, "A user with this email already exists");
+        }
+      } else {
+        // For other errors, continue but log the issue
+        logError("Warning: User existence check failed, proceeding with caution", checkError);
+      }
+    } else if (existingUsers && existingUsers.length > 0) {
       return buildErrorResponse(409, "A user with this email already exists");
     }
 
@@ -198,19 +220,21 @@ async function handleCheckEmailExists(body: any): Promise<Response> {
       return buildErrorResponse(400, "Email is required");
     }
 
-    // Check if user exists by email (case insensitive)
-    const { data, error } = await supabase
-      .from("users")
-      .select("id")
-      .ilike("email", email)
-      .limit(1);
+    // Check if user exists using the auth API instead of direct table access
+    const { data: userList, error: authError } = await supabase.auth.admin.listUsers({
+      page: 1,
+      perPage: 1,
+      filter: {
+        email: email.toLowerCase()
+      }
+    });
     
-    if (error) {
-      logError("Error checking email existence", error);
+    if (authError) {
+      logError("Error checking email existence", authError);
       return buildErrorResponse(500, "Failed to check if email exists");
     }
 
-    const exists = data && data.length > 0;
+    const exists = userList && userList.users && userList.users.length > 0;
     logInfo(`Email existence check: ${exists ? "exists" : "does not exist"}`);
 
     return buildSuccessResponse({ exists });

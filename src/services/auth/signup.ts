@@ -61,6 +61,7 @@ export const signUpDealerWithEmail = async (
         if (error.message?.includes('Failed to fetch') || 
             error.message?.includes('NetworkError') ||
             error.message?.includes('network')) {
+          console.error("Network error communicating with registration service:", error);
           return {
             success: false,
             error: "Network error connecting to registration service. Please try again.",
@@ -75,6 +76,7 @@ export const signUpDealerWithEmail = async (
       }
       
       if (!data) {
+        console.error("Empty response from registration service");
         return {
           success: false,
           error: "No response from registration service"
@@ -85,6 +87,7 @@ export const signUpDealerWithEmail = async (
       const response = data as any;
       
       if (!response.success) {
+        console.error("Registration failed with error:", response.error);
         return {
           success: false,
           error: response.error || "Registration failed with an unknown error"
@@ -109,7 +112,7 @@ export const signUpDealerWithEmail = async (
       console.error("Error in registration process:", error);
       
       // Enhanced error type detection
-      let errorType = 'unknown';
+      let errorType: 'auth' | 'database' | 'validation' | 'network' | 'unknown' = 'unknown';
       let errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
       
       if (errorMessage.includes('network') || 
