@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,7 +51,7 @@ export default function CompleteRegistration() {
     try {
       setIsSubmitting(true);
 
-      // The function expects all these parameters including email and password
+      // Pass phone number to the function
       const { data, error } = await supabase.rpc('create_dealer_with_profile', {
         p_email: values.email,
         p_password: values.password,
@@ -58,7 +59,8 @@ export default function CompleteRegistration() {
         p_company_name: values.companyName,
         p_tax_id: values.taxId,
         p_business_registry_number: values.businessRegistryNumber,
-        p_address: values.companyAddress
+        p_address: values.companyAddress,
+        p_phone_number: values.phoneNumber // Include phone number
       });
 
       if (error) throw error;

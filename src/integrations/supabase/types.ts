@@ -280,6 +280,7 @@ export type Database = {
           p_tax_id: string
           p_business_registry_number: string
           p_address: string
+          p_phone_number?: string
         }
         Returns: Json
       }
