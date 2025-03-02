@@ -9,12 +9,13 @@ interface SignupResult {
   error?: string;
   errorType?: 'auth' | 'database' | 'validation' | 'network';
   message?: string;
+  userId?: string;
 }
 
 export function useSignupDealer() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [networkRetries, setNetworkRetries] = useState(0);
-  const MAX_RETRIES = 2;
+  const MAX_RETRIES = 3; // Increase retries to handle schema-related issues
 
   const signupDealer = async (values: DealerFormValues): Promise<SignupResult> => {
     if (isSubmitting) {
@@ -57,8 +58,10 @@ export function useSignupDealer() {
             setNetworkRetries(prev => prev + 1);
             setIsSubmitting(false);
             
-            // Add a small delay before retry
-            await new Promise(resolve => setTimeout(resolve, 1000)); 
+            // Add a small delay before retry - increasing with each retry
+            const delayMs = Math.min(1000 * Math.pow(2, networkRetries), 8000);
+            console.log(`Retrying in ${delayMs}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delayMs)); 
             
             return signupDealer(values);
           }
@@ -80,6 +83,15 @@ export function useSignupDealer() {
             success: false,
             error: "Network error connecting to authentication service. Please try again.",
             errorType: 'network'
+          };
+        }
+
+        // Look for common error patterns to provide better messages
+        if (signUpResult.error?.includes('already exists')) {
+          return {
+            success: false,
+            error: "An account with this email already exists. Please try logging in instead.",
+            errorType: 'auth'
           };
         }
 
@@ -123,11 +135,16 @@ export function useSignupDealer() {
         return {
           success: false,
           error: profileResult.error,
-          errorType: profileResult.errorType
+          errorType: profileResult.errorType,
+          userId: signUpResult.userId // Pass userId through even on profile error
         };
       }
 
-      return { success: true, message: signUpResult.message };
+      return { 
+        success: true, 
+        message: signUpResult.message,
+        userId: signUpResult.userId 
+      };
       
     } catch (error) {
       console.error("Registration error:", error);
