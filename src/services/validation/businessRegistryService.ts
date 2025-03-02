@@ -8,18 +8,18 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export async function checkBusinessRegistryExists(businessRegistryNumber: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase
+    const response = await supabase
       .from('dealers')
       .select('business_registry_number')
       .eq('business_registry_number', businessRegistryNumber)
       .maybeSingle();
     
-    if (error) {
-      console.error("Error checking business registry:", error);
-      throw error;
+    if (response.error) {
+      console.error("Error checking business registry:", response.error);
+      throw response.error;
     }
     
-    return !!data;
+    return !!response.data;
   } catch (error) {
     // Fail silently but log the error
     console.error("Error in business registry check:", error);

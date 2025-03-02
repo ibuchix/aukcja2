@@ -3,7 +3,7 @@
  * Utility for retrying operations with exponential backoff
  */
 export async function executeWithRetry<T>(
-  operation: () => Promise<T>,
+  operation: () => Promise<T> | any,
   options: {
     maxRetries?: number;
     baseDelay?: number;
@@ -20,7 +20,17 @@ export async function executeWithRetry<T>(
 
   while (true) {
     try {
-      return await operation();
+      // Execute the operation and await the result
+      // This handles both regular promises and Supabase query builders
+      const result = await operation();
+      
+      // For Supabase responses, check if there's an error property
+      // and throw it if it exists
+      if (result && typeof result === 'object' && 'error' in result && result.error) {
+        throw result.error;
+      }
+      
+      return result;
     } catch (error: any) {
       // Don't retry if the error doesn't meet criteria or we've reached the limit
       if (!shouldRetry(error) || retryCount >= maxRetries) {

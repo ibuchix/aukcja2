@@ -46,7 +46,7 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
 
     // Verify profile exists, create if missing
     try {
-      const profileCheck = await executeWithRetry(() => 
+      const profileResponse = await executeWithRetry(() => 
         supabase
           .from('profiles')
           .select('id')
@@ -55,11 +55,11 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
       );
 
       // If profile doesn't exist, create it as a fallback mechanism
-      if (!profileCheck.data && !profileCheck.error) {
+      if (!profileResponse.data && !profileResponse.error) {
         console.log("Profile not found, creating as fallback for user:", userId);
         
         try {
-          await executeWithRetry(() => 
+          const insertResponse = await executeWithRetry(() => 
             supabase
               .from('profiles')
               .insert({
@@ -69,6 +69,11 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
                 updated_at: new Date().toISOString()
               })
           );
+          
+          if (insertResponse.error) {
+            console.warn("Failed to create profile as fallback:", insertResponse.error);
+            // Continue despite this error - the dealer profile is more important
+          }
         } catch (error) {
           console.warn("Failed to create profile as fallback, but continuing with dealer creation:", error);
           // Continue despite this error - the dealer profile is more important
