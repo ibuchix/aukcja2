@@ -1,4 +1,3 @@
-
 export interface SignUpResult {
   success: boolean;
   error?: string;
@@ -23,16 +22,21 @@ export interface UserMetadata {
 }
 
 export interface RegisterResponse {
-  user: {
+  success: boolean;
+  user?: {
     id: string;
     email: string;
     user_metadata: UserMetadata;
   };
+  error?: string;
+  message?: string;
 }
 
 export interface LoginResponse {
-  session: any;
-  dealer: any;
+  success: boolean;
+  session?: any;
+  dealer?: any;
+  error?: string;
 }
 
 export function isRegisterResponse(obj: any): obj is RegisterResponse {
@@ -52,7 +56,7 @@ export function isLoginResponse(data: any): data is LoginResponse {
   return (
     !!data &&
     typeof data === 'object' &&
-    'session' in data &&
-    'dealer' in data
+    typeof data.success === 'boolean' &&
+    (data.session !== undefined || data.dealer !== undefined || data.error !== undefined)
   );
 }
