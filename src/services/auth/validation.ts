@@ -1,84 +1,97 @@
 
-// Helper function to safely trim strings (handles null/undefined)
-export const safeTrim = (value?: string): string => {
-  if (value === undefined || value === null) {
-    return '';
-  }
-  return value.trim();
+import { supabase } from "@/integrations/supabase/client";
+
+export interface ValidationResult {
+  isValid: boolean;
+  error?: string;
+}
+
+/**
+ * Safely trims a string with null/undefined handling
+ */
+export const safeTrim = (str: string | null | undefined): string => {
+  return str ? str.trim() : '';
 };
 
 /**
- * Validates email format
+ * Validates an email address using regex
  */
-export const validateEmail = (email: string): { isValid: boolean; error?: string } => {
-  if (!email || email.trim() === '') {
-    return { isValid: false, error: 'Email is required' };
+export function validateEmail(email: string | null | undefined): ValidationResult {
+  if (!email) {
+    return { isValid: false, error: "Email is required" };
   }
 
-  // Basic email format validation
+  const trimmedEmail = email.trim();
+  
+  if (!trimmedEmail) {
+    return { isValid: false, error: "Email is required" };
+  }
+
+  // Simple regex for basic email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return { isValid: false, error: 'Please enter a valid email address' };
+  if (!emailRegex.test(trimmedEmail)) {
+    return { isValid: false, error: "Please enter a valid email address" };
   }
 
   return { isValid: true };
-};
+}
 
 /**
- * Validates password strength
+ * Validates a password with security requirements
  */
-export const validatePassword = (password: string): { isValid: boolean; error?: string } => {
+export function validatePassword(password: string | null | undefined): ValidationResult {
   if (!password) {
-    return { isValid: false, error: 'Password is required' };
+    return { isValid: false, error: "Password is required" };
   }
 
   if (password.length < 8) {
-    return { isValid: false, error: 'Password must be at least 8 characters' };
-  }
-
-  // Check for at least one uppercase letter
-  if (!/[A-Z]/.test(password)) {
-    return { isValid: false, error: 'Password must contain at least one uppercase letter' };
-  }
-
-  // Check for at least one lowercase letter
-  if (!/[a-z]/.test(password)) {
-    return { isValid: false, error: 'Password must contain at least one lowercase letter' };
+    return { isValid: false, error: "Password must be at least 8 characters long" };
   }
 
   // Check for at least one number
-  if (!/[0-9]/.test(password)) {
-    return { isValid: false, error: 'Password must contain at least one number' };
+  if (!/\d/.test(password)) {
+    return { isValid: false, error: "Password must contain at least one number" };
+  }
+
+  // Check for at least one letter
+  if (!/[a-zA-Z]/.test(password)) {
+    return { isValid: false, error: "Password must contain at least one letter" };
   }
 
   return { isValid: true };
-};
-
-// Import supabase client
-import { supabase } from "@/integrations/supabase/client";
+}
 
 /**
  * Checks if an account already exists with the given email
- * using the new edge function approach
  */
-export const checkAccountExists = async (email: string): Promise<boolean> => {
+export async function checkAccountExists(email: string): Promise<boolean> {
   try {
-    // Use edge function to check if email exists
-    const { data, error } = await supabase.functions.invoke('dealer-auth', {
-      body: { 
-        action: 'check-email-exists',
-        email 
-      }
+    console.log("Checking if account exists with email:", email);
+    
+    // First try using the RPC function
+    const { data: count, error: rpcError } = await supabase.rpc('check_email_exists', {
+      email_to_check: email.toLowerCase().trim()
     });
     
-    if (error) {
-      console.error("Error checking email existence:", error);
-      return false;
+    if (rpcError) {
+      console.warn("Error using RPC to check email, falling back to edge function:", rpcError);
+      
+      // Fall back to using the dealer-auth edge function
+      const { data, error } = await supabase.functions.invoke('dealer-auth', {
+        body: { action: 'checkEmailExists', email: email.toLowerCase().trim() }
+      });
+      
+      if (error) {
+        console.error("Edge function error checking email:", error);
+        throw new Error(`Error checking if email exists: ${error.message}`);
+      }
+      
+      return data?.exists || false;
     }
     
-    return data?.exists === true;
+    return count > 0;
   } catch (error) {
-    console.error("Error in checkAccountExists:", error);
-    return false;
+    console.error("Error checking if account exists:", error);
+    throw new Error("Error checking if account already exists");
   }
-};
+}

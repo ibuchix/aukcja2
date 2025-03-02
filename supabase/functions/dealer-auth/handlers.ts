@@ -1,6 +1,6 @@
 
 import { createError, handleApiError } from "../_shared/error-handling.ts";
-import { createClient } from "../_shared/supabase-client.ts";
+import { createServiceClient } from "../_shared/supabase-client.ts";
 import { RegisterRequest, CheckEmailRequest, LoginRequest } from "./types.ts";
 import { respondSuccess, respondError } from "./response-utils.ts";
 import { logError, logInfo } from "./logging.ts";
@@ -21,7 +21,7 @@ export async function handleRegister(request: RegisterRequest) {
     }
 
     // Create a new Supabase service client
-    const supabaseAdmin = createClient();
+    const supabaseAdmin = createServiceClient();
 
     // Use our custom RPC function to create the dealer with profile
     const { data, error } = await supabaseAdmin.rpc('create_dealer_with_profile', {
@@ -61,30 +61,19 @@ export async function handleRegister(request: RegisterRequest) {
 export async function checkEmailExists(email: string) {
   try {
     // Create a service role client to check the database
-    const supabaseAdmin = createClient();
+    const supabaseAdmin = createServiceClient();
     
-    // Query the auth.users table correctly
-    const { data, error } = await supabaseAdmin.from('auth.users').select('id').eq('email', email).maybeSingle();
+    // Use the RPC function to check if email exists
+    const { data, error } = await supabaseAdmin.rpc('check_email_exists', { 
+      email_to_check: email 
+    });
     
     if (error) {
-      // Try a different approach if the first one fails
-      // This is a fallback using RPC if direct table access fails
-      try {
-        const { count, error: countError } = await supabaseAdmin.rpc('check_email_exists', { email_to_check: email });
-        
-        if (countError) {
-          logError("Error checking user existence via RPC", { error: countError });
-          throw createError("Error checking user existence", 500);
-        }
-        
-        return { exists: count > 0 };
-      } catch (rpcError) {
-        logError("Error checking user existence", { error, rpcError });
-        throw createError("Error checking user existence", 500);
-      }
+      logError("Error checking user existence via RPC", { error });
+      throw createError("Error checking user existence", 500);
     }
     
-    return { exists: !!data };
+    return { exists: data > 0 };
   } catch (error) {
     logError("Error checking if email exists", { error });
     throw createError("Error checking user existence", 500);
@@ -117,7 +106,7 @@ export async function handleLogin(request: LoginRequest) {
 
   try {
     // Create a new Supabase service client
-    const supabaseAdmin = createClient();
+    const supabaseAdmin = createServiceClient();
 
     // Sign in the user
     const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({

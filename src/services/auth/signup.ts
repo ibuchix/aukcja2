@@ -1,11 +1,8 @@
 
 import { validateEmail, validatePassword, safeTrim, checkAccountExists } from "./validation";
-import { invokeDealerFunction } from "../api/dealerApiClient";
 import { 
   SignUpResult, 
-  UserMetadata, 
-  RegisterResponse,
-  isRegisterResponse
+  UserMetadata
 } from "./models";
 import { supabase } from "@/integrations/supabase/client";
 
