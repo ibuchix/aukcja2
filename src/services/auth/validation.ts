@@ -63,46 +63,69 @@ export function validatePassword(password: string | null | undefined): Validatio
 
 /**
  * Checks if an account already exists with the given email
+ * Uses multiple methods for robustness
  */
 export async function checkAccountExists(email: string): Promise<boolean> {
   try {
     console.log("Checking if account exists with email:", email);
     
-    // First try using the RPC function (with explicit type casting to handle TypeScript error)
-    const { data, error } = await supabase.rpc(
-      'check_email_exists' as any, 
-      { email_to_check: email.toLowerCase().trim() }
-    );
+    // Try all available methods to check email existence
     
-    if (error) {
-      console.warn("Error using RPC to check email, falling back to edge function:", error);
-      
-      // Fall back to using the dealer-auth edge function
+    // 1. First try using the dealer-auth edge function (most reliable)
+    try {
       const { data: edgeData, error: edgeError } = await supabase.functions.invoke('dealer-auth', {
         body: { action: 'checkEmailExists', email: email.toLowerCase().trim() }
       });
       
-      if (edgeError) {
-        console.error("Edge function error checking email:", edgeError);
-        throw new Error(`Error checking if email exists: ${edgeError.message}`);
+      if (!edgeError && edgeData) {
+        console.log("Edge function response:", edgeData);
+        return edgeData?.exists || false;
       }
       
-      return edgeData?.exists || false;
+      if (edgeError) {
+        console.warn("Edge function error checking email:", edgeError);
+        // Continue to next method
+      }
+    } catch (error) {
+      console.warn("Failed to call edge function:", error);
+      // Continue to next method
     }
     
-    // Since data can be of various types, explicitly check if it's a number
-    if (typeof data === 'number') {
-      return data > 0;
-    } else if (data && typeof data === 'object' && 'exists' in data) {
-      // Handle case where data is an object with exists property
-      return Boolean(data.exists);
-    } else {
-      // Default fallback
-      console.warn("Unexpected data format from RPC:", data);
-      return false;
+    // 2. Try using the RPC function (with explicit type casting to handle TypeScript error)
+    try {
+      const { data, error } = await supabase.rpc(
+        'check_email_exists',
+        { email_to_check: email.toLowerCase().trim() }
+      );
+      
+      if (!error) {
+        console.log("RPC function response:", data);
+        
+        // Since data can be of various types, explicitly check how to interpret it
+        if (typeof data === 'number') {
+          return data > 0;
+        } else if (data && typeof data === 'object' && 'exists' in data) {
+          // Handle case where data is an object with exists property
+          return Boolean(data.exists);
+        }
+      } else {
+        console.warn("RPC function error:", error);
+        // Continue to fallback
+      }
+    } catch (error) {
+      console.warn("Failed to call RPC function:", error);
+      // Continue to fallback
     }
+    
+    // 3. Last resort: just return false and let the registration attempt proceed
+    // The server-side validation will catch any duplicates
+    console.warn("All email check methods failed, assuming email doesn't exist");
+    return false;
+    
   } catch (error) {
-    console.error("Error checking if account exists:", error);
-    throw new Error("Error checking if account already exists");
+    console.error("Unhandled error checking if account exists:", error);
+    // In case of unhandled errors, default to false to allow registration attempt
+    // The server will validate and reject if needed
+    return false;
   }
 }

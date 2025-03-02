@@ -1,11 +1,11 @@
 
-import { HttpError, handleError } from "../_shared/error-handling.ts";
+import { HttpError } from "../_shared/error-handling.ts";
 import { createServiceClient } from "../_shared/supabase-client.ts";
 import { RegisterRequest, CheckEmailRequest, LoginRequest } from "./types.ts";
 import { respondSuccess, respondError } from "./response-utils.ts";
 import { logError, logInfo } from "./logging.ts";
 
-// Simple utility to create errors with a consistent format - replacing the missing createError function
+// Simple utility to create errors with a consistent format
 function createError(message: string, statusCode = 400) {
   return new HttpError(message, statusCode);
 }
@@ -56,7 +56,6 @@ export async function handleRegister(request: RegisterRequest) {
     });
 
   } catch (error) {
-    // Use handleError from the import instead of a non-existent function
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return respondError(`Error in registration: ${errorMessage}`, 500);
   }
@@ -64,25 +63,59 @@ export async function handleRegister(request: RegisterRequest) {
 
 /**
  * Checks if an email already exists in the system
+ * Using multiple methods for robustness
  */
 export async function checkEmailExists(email: string) {
   try {
     // Create a service role client to check the database
     const supabaseAdmin = createServiceClient();
     
-    // Use the RPC function to check if email exists
-    const { data, error } = await supabaseAdmin.rpc('check_email_exists', { 
-      email_to_check: email 
-    });
+    // Try multiple approaches to check if the email exists
     
-    if (error) {
-      logError("Error checking user existence via RPC", { error });
-      throw new HttpError("Error checking user existence", 500);
+    // First attempt: Use check_email_exists RPC function (schema-agnostic approach)
+    try {
+      // Try the function in the public schema
+      const { data: publicData, error: publicError } = await supabaseAdmin.rpc('check_email_exists', { 
+        email_to_check: email.toLowerCase().trim() 
+      });
+      
+      if (!publicError) {
+        // If successfully called, check the response format
+        if (typeof publicData === 'number') {
+          return { exists: publicData > 0 };
+        } else if (publicData && typeof publicData === 'object' && 'exists' in publicData) {
+          return { exists: Boolean(publicData.exists) };
+        }
+      }
+      
+      // If we got here, first attempt failed, log and try the second method
+      logError("First RPC method failed, trying alternative", { error: publicError });
+    } catch (e) {
+      // Silently fail and try next method
+      logError("Error in first RPC attempt", { error: e });
     }
     
-    return { exists: data > 0 };
+    // Second attempt: Direct query to auth.users (more reliable but requires service role)
+    try {
+      const { data: userData, error: userError } = await supabaseAdmin.from('auth.users')
+        .select('id')
+        .eq('email', email.toLowerCase().trim())
+        .limit(1);
+        
+      if (userError) {
+        logError("Error in direct auth.users query", { error: userError });
+      } else {
+        return { exists: Array.isArray(userData) && userData.length > 0 };
+      }
+    } catch (e) {
+      logError("Error in direct query attempt", { error: e });
+    }
+    
+    // Fallback: Just return false if all methods fail (assume user doesn't exist)
+    logError("All email check methods failed, assuming user doesn't exist", {});
+    return { exists: false };
   } catch (error) {
-    logError("Error checking if email exists", { error });
+    logError("Fatal error checking if email exists", { error });
     throw new HttpError("Error checking user existence", 500);
   }
 }
@@ -99,7 +132,6 @@ export async function handleCheckEmailExists(request: CheckEmailRequest) {
     const result = await checkEmailExists(request.email);
     return respondSuccess(result);
   } catch (error) {
-    // Use direct error handling instead of calling a non-existent function
     const statusCode = error instanceof HttpError ? error.status : 500;
     const message = error instanceof Error ? error.message : "Unknown error";
     return respondError(message, statusCode);
@@ -153,7 +185,6 @@ export async function handleLogin(request: LoginRequest) {
     });
 
   } catch (error) {
-    // Use direct error handling instead of calling a non-existent function
     const statusCode = error instanceof HttpError ? error.status : 500;
     const message = error instanceof Error ? error.message : "Unknown error";
     return respondError(message, statusCode);

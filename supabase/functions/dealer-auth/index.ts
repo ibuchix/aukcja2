@@ -1,73 +1,92 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { logDebug, logError, logInfo, logWarn } from "./logging.ts";
-import { handleCheckEmailExists, handleLogin, handleRegister } from "./handlers.ts";
-import { respondError, respondSuccess } from "./response-utils.ts";
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { handleRegister, handleCheckEmailExists, handleLogin } from './handlers.ts';
+import { logError, logInfo } from './logging.ts';
 
-// CORS headers for cross-origin requests
+// CORS headers for browser requests
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 };
 
-// Log startup
-logInfo("Dealer auth edge function starting");
+console.log('Module initialized successfully');
 
-// Main request handler
-const handleRequest = async (req: Request): Promise<Response> => {
+serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { 
-      status: 204, // Use 204 No Content for OPTIONS
-      headers: corsHeaders 
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
     });
   }
 
-  try {
-    // Parse the request body
-    const requestData = await req.json();
-    logDebug('Received request', requestData);
+  // Add CORS headers to all responses
+  const headers = { ...corsHeaders, 'Content-Type': 'application/json' };
 
-    // Determine the action based on the request
-    const action = requestData.action;
-    
+  try {
+    // Only accept POST requests
+    if (req.method !== 'POST') {
+      return new Response(
+        JSON.stringify({ error: 'Method not allowed' }),
+        { status: 405, headers }
+      );
+    }
+
+    // Parse request body
+    let reqBody;
+    try {
+      reqBody = await req.json();
+    } catch (e) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON' }),
+        { status: 400, headers }
+      );
+    }
+
+    // Log the request for debugging
+    logInfo(`Received request with action: ${reqBody.action}`, { 
+      action: reqBody.action,
+      email: reqBody.email ? `${reqBody.email.substring(0, 3)}...` : undefined 
+    });
+
+    // Route requests based on action
     let result;
-    switch(action) {
+    switch (reqBody.action) {
       case 'register':
-        result = await handleRegister(requestData);
-        break;
-      case 'login':
-        result = await handleLogin(requestData);
+        result = await handleRegister(reqBody);
         break;
       case 'checkEmailExists':
-        result = await handleCheckEmailExists(requestData);
+        result = await handleCheckEmailExists(reqBody);
+        break;
+      case 'login':
+        result = await handleLogin(reqBody);
         break;
       default:
-        // Unknown action
-        logWarn('Unknown request action', { action });
         return new Response(
-          JSON.stringify(respondError('Invalid or missing action', 400)),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+          JSON.stringify({ error: 'Unknown action' }),
+          { status: 400, headers }
         );
     }
 
     return new Response(
       JSON.stringify(result),
-      { 
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        status: result.status || 200
-      }
+      { status: result.success ? 200 : (result.status || 400), headers }
     );
+
   } catch (error) {
-    // Handle unexpected errors
-    logError('Unexpected error handling request', { error });
+    // Log and return any unhandled errors
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStatus = error instanceof Error && 'status' in error ? (error as any).status : 500;
+    
+    logError(`Unhandled error in dealer-auth: ${errorMessage}`, { error });
+    
     return new Response(
-      JSON.stringify(respondError('Internal server error', 500)),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      JSON.stringify({ 
+        success: false, 
+        error: errorMessage 
+      }),
+      { status: errorStatus, headers }
     );
   }
-};
-
-// Start the server
-serve(handleRequest);
+});
