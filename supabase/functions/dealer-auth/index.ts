@@ -1,66 +1,65 @@
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { corsHeaders } from '../_shared/cors.ts';
+import { registerService } from './service-registry.ts';
+import { handlers } from './handlers.ts';
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { handlers } from "./handlers.ts";
-import { log, logError } from "./logging.ts";
-import { formatErrorResponse } from "./response-utils.ts";
-
-// CORS headers for browser requests
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-};
-
-// Process startup checks
-try {
-  log("Startup checks completed successfully");
-} catch (e) {
-  logError(`Startup checks failed: ${e.message}`);
-}
-
-const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
-  }
-
+// Main handler function
+serve(async (req: Request) => {
+  console.log('dealer-auth function started.');
+  
   try {
-    const { action, ...requestData } = await req.json();
+    // Check that startup requirements are met
+    await registerService();
 
-    // Validate input
-    if (!action || typeof action !== "string") {
-      return formatErrorResponse("Missing or invalid 'action' parameter", 400, corsHeaders);
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
     }
 
-    // Check if handler exists for action
-    if (!handlers[action] || typeof handlers[action] !== "function") {
-      return formatErrorResponse(`Unknown action: ${action}`, 400, corsHeaders);
+    // Parse request body
+    let requestData: any = {};
+    try {
+      requestData = await req.json();
+    } catch (e) {
+      console.error(`Error parsing request JSON: ${e.message}`);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid JSON' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    log(`Processing action: ${action}`);
+    const { action, ...payload } = requestData;
 
-    // Call the appropriate handler with request data
-    const response = await handlers[action](req, requestData);
-    
-    // Add CORS headers to response
-    const headers = { ...corsHeaders, ...response.headers };
-    
-    // Return the response with CORS headers
-    return new Response(response.body, {
-      status: response.status,
-      headers,
-    });
+    // Log the request for debugging
+    console.log(`Received action: ${action}`);
+
+    // Check if action is specified
+    if (!action) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'No action specified' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if handler exists for the action
+    if (!handlers[action]) {
+      return new Response(
+        JSON.stringify({ success: false, error: `Unknown action: ${action}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Call the appropriate handler
+    return await handlers[action](req, payload);
+
   } catch (error) {
-    logError(`Unhandled error in request processing: ${error.message}`);
-    return formatErrorResponse(
-      `Internal server error: ${error.message}`,
-      500, 
-      corsHeaders
+    console.error(`Unhandled error: ${error.message}`);
+    
+    return new Response(
+      JSON.stringify({ success: false, error: `Dealer auth service error: ${error.message}` }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
-};
+});
 
-serve(handler);
+export { handlers };

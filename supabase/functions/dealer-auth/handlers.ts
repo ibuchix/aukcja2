@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from "https://jspm.dev/uuid";
 import { supabaseAdmin } from '../_shared/supabase-client.ts';
 import { log, logError } from './logging.ts';
-import { formatErrorResponse, formatSuccessResponse } from './response-utils.ts';
+import { errorResponse, successResponse } from './response-utils.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
 const SUPABASE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
@@ -33,12 +33,12 @@ export async function checkEmailExists(req: Request, email: string) {
     const exists = userData && userData.users && userData.users.length > 0;
     log(`Email exists check result: ${exists}`);
 
-    return formatSuccessResponse({
+    return successResponse({
       exists: exists
     });
   } catch (error) {
     logError(`Error in checkEmailExists: ${error.message}`);
-    return formatErrorResponse(error.message, 400);
+    return errorResponse(error.message, 400);
   }
 }
 
@@ -51,7 +51,7 @@ export async function register(req: Request, requestData: any) {
     const { email, password, metadata } = requestData;
 
     if (!email || !password || !metadata?.name) {
-      return formatErrorResponse('Email, password, and name are required', 400);
+      return errorResponse('Email, password, and name are required', 400);
     }
 
     // Check if email already exists
@@ -63,11 +63,11 @@ export async function register(req: Request, requestData: any) {
 
     if (userError) {
       logError(`Error checking existing user: ${userError.message}`);
-      return formatErrorResponse(`Failed to check user existence: ${userError.message}`, 500);
+      return errorResponse(`Failed to check user existence: ${userError.message}`, 500);
     }
 
     if (userData && userData.users && userData.users.length > 0) {
-      return formatErrorResponse('User with this email already exists', 400);
+      return errorResponse('User with this email already exists', 400);
     }
 
     log('Email validation passed, creating user...');
@@ -87,14 +87,14 @@ export async function register(req: Request, requestData: any) {
 
     if (rpcError) {
       logError(`Error in creating dealer via RPC: ${rpcError.message}`);
-      return formatErrorResponse(`Failed to create dealer: ${rpcError.message}`, 500);
+      return errorResponse(`Failed to create dealer: ${rpcError.message}`, 500);
     }
 
     if (!rpcResult || (typeof rpcResult === 'object' && !rpcResult.success)) {
       const errorMsg = (typeof rpcResult === 'object' && rpcResult.error) 
         ? rpcResult.error 
         : 'Failed to create dealer account';
-      return formatErrorResponse(errorMsg, 500);
+      return errorResponse(errorMsg, 500);
     }
 
     log('Dealer registration successful, sending welcome email...');
@@ -119,14 +119,14 @@ export async function register(req: Request, requestData: any) {
       // Do not fail registration if email fails
     }
 
-    return formatSuccessResponse({
+    return successResponse({
       success: true,
       user: typeof rpcResult === 'object' ? rpcResult.user : null,
       message: "Registration successful. Please check your email for verification."
     });
   } catch (error) {
     logError(`Unexpected error in registration: ${error.message}`);
-    return formatErrorResponse(`Registration failed: ${error.message}`, 500);
+    return errorResponse(`Registration failed: ${error.message}`, 500);
   }
 }
 
@@ -142,7 +142,7 @@ export async function createDealerProfile(req: Request, requestData: any) {
     } = requestData;
 
     if (!userId || !email || !supervisorName) {
-      return formatErrorResponse('User ID, email and supervisor name are required', 400);
+      return errorResponse('User ID, email and supervisor name are required', 400);
     }
 
     // Call the RPC function to create dealer profile
@@ -160,16 +160,16 @@ export async function createDealerProfile(req: Request, requestData: any) {
 
     if (rpcError) {
       logError(`Error creating dealer profile: ${rpcError.message}`);
-      return formatErrorResponse(`Failed to create dealer profile: ${rpcError.message}`, 500);
+      return errorResponse(`Failed to create dealer profile: ${rpcError.message}`, 500);
     }
 
-    return formatSuccessResponse({
+    return successResponse({
       success: true,
       message: "Dealer profile created successfully"
     });
   } catch (error) {
     logError(`Error in createDealerProfile: ${error.message}`);
-    return formatErrorResponse(`Failed to create dealer profile: ${error.message}`, 500);
+    return errorResponse(`Failed to create dealer profile: ${error.message}`, 500);
   }
 }
 
