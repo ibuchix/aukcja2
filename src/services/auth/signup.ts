@@ -58,7 +58,8 @@ export const signUpDealerWithEmail = async (
           email: normalizedEmail,
           password,
           supervisorName: safeTrim(metadata.name),
-          companyName: safeTrim(metadata.companyName),
+          // FIX: This is the key issue - we need to match the exact field names expected by the edge function
+          companyName: safeTrim(metadata.companyName),           // Changed from dealershipName to companyName
           phoneNumber: safeTrim(metadata.phoneNumber),
           taxId: safeTrim(metadata.taxId),
           businessRegistryNumber: safeTrim(metadata.businessRegistryNumber),
