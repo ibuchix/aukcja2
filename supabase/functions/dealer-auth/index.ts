@@ -8,6 +8,7 @@ import { respondError, respondSuccess } from "./response-utils.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 };
 
 // Log startup
@@ -17,7 +18,10 @@ logInfo("Dealer auth edge function starting");
 const handleRequest = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      status: 204, // Use 204 No Content for OPTIONS
+      headers: corsHeaders 
+    });
   }
 
   try {

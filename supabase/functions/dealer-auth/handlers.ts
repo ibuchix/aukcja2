@@ -1,9 +1,14 @@
 
-import { createError, handleApiError } from "../_shared/error-handling.ts";
+import { HttpError, handleError } from "../_shared/error-handling.ts";
 import { createServiceClient } from "../_shared/supabase-client.ts";
 import { RegisterRequest, CheckEmailRequest, LoginRequest } from "./types.ts";
 import { respondSuccess, respondError } from "./response-utils.ts";
 import { logError, logInfo } from "./logging.ts";
+
+// Simple utility to create errors with a consistent format - replacing the missing createError function
+function createError(message: string, statusCode = 400) {
+  return new HttpError(message, statusCode);
+}
 
 /**
  * Handles dealer registration
@@ -51,7 +56,9 @@ export async function handleRegister(request: RegisterRequest) {
     });
 
   } catch (error) {
-    return handleApiError(error, "Error in registration");
+    // Use handleError from the import instead of a non-existent function
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return respondError(`Error in registration: ${errorMessage}`, 500);
   }
 }
 
@@ -70,13 +77,13 @@ export async function checkEmailExists(email: string) {
     
     if (error) {
       logError("Error checking user existence via RPC", { error });
-      throw createError("Error checking user existence", 500);
+      throw new HttpError("Error checking user existence", 500);
     }
     
     return { exists: data > 0 };
   } catch (error) {
     logError("Error checking if email exists", { error });
-    throw createError("Error checking user existence", 500);
+    throw new HttpError("Error checking user existence", 500);
   }
 }
 
@@ -92,7 +99,10 @@ export async function handleCheckEmailExists(request: CheckEmailRequest) {
     const result = await checkEmailExists(request.email);
     return respondSuccess(result);
   } catch (error) {
-    return handleApiError(error, "Error checking email");
+    // Use direct error handling instead of calling a non-existent function
+    const statusCode = error instanceof HttpError ? error.status : 500;
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return respondError(message, statusCode);
   }
 }
 
@@ -143,6 +153,9 @@ export async function handleLogin(request: LoginRequest) {
     });
 
   } catch (error) {
-    return handleApiError(error, "Error during login");
+    // Use direct error handling instead of calling a non-existent function
+    const statusCode = error instanceof HttpError ? error.status : 500;
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return respondError(message, statusCode);
   }
 }
