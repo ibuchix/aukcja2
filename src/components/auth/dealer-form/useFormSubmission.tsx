@@ -79,7 +79,7 @@ export function useFormSubmission({ moveToStep, resetError, setError }: UseFormS
       moveToStep(3);
       toast({
         title: "Registration Successful",
-        description: "Please check your email to verify your account.",
+        description: result.message || "Please check your email to verify your account.",
         variant: "default",
       });
       return true;

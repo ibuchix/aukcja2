@@ -3,6 +3,7 @@ export interface SignUpResult {
   success: boolean;
   error?: string;
   userId?: string;
+  message?: string;
 }
 
 export interface SignInResult {

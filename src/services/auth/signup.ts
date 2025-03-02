@@ -84,6 +84,16 @@ export const signUpDealerWithEmail = async (
         };
       }
 
+      // Handle simple success message response
+      if (typeof response.data === 'object' && response.data && 'message' in response.data) {
+        console.log("Registration successful with message:", response.data.message);
+        return {
+          success: true,
+          message: response.data.message as string
+        };
+      }
+
+      // Handle standard RegisterResponse format
       if (!isRegisterResponse(response.data)) {
         console.error("Invalid registration response format:", response.data);
         return {
