@@ -68,28 +68,39 @@ export async function checkAccountExists(email: string): Promise<boolean> {
   try {
     console.log("Checking if account exists with email:", email);
     
-    // First try using the RPC function
-    const { data: count, error: rpcError } = await supabase.rpc('check_email_exists', {
-      email_to_check: email.toLowerCase().trim()
-    });
+    // First try using the RPC function (with explicit type casting to handle TypeScript error)
+    const { data, error } = await supabase.rpc(
+      'check_email_exists' as any, 
+      { email_to_check: email.toLowerCase().trim() }
+    );
     
-    if (rpcError) {
-      console.warn("Error using RPC to check email, falling back to edge function:", rpcError);
+    if (error) {
+      console.warn("Error using RPC to check email, falling back to edge function:", error);
       
       // Fall back to using the dealer-auth edge function
-      const { data, error } = await supabase.functions.invoke('dealer-auth', {
+      const { data: edgeData, error: edgeError } = await supabase.functions.invoke('dealer-auth', {
         body: { action: 'checkEmailExists', email: email.toLowerCase().trim() }
       });
       
-      if (error) {
-        console.error("Edge function error checking email:", error);
-        throw new Error(`Error checking if email exists: ${error.message}`);
+      if (edgeError) {
+        console.error("Edge function error checking email:", edgeError);
+        throw new Error(`Error checking if email exists: ${edgeError.message}`);
       }
       
-      return data?.exists || false;
+      return edgeData?.exists || false;
     }
     
-    return count > 0;
+    // Since data can be of various types, explicitly check if it's a number
+    if (typeof data === 'number') {
+      return data > 0;
+    } else if (data && typeof data === 'object' && 'exists' in data) {
+      // Handle case where data is an object with exists property
+      return Boolean(data.exists);
+    } else {
+      // Default fallback
+      console.warn("Unexpected data format from RPC:", data);
+      return false;
+    }
   } catch (error) {
     console.error("Error checking if account exists:", error);
     throw new Error("Error checking if account already exists");
