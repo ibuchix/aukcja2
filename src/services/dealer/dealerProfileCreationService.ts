@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { executeWithRetry } from "@/utils/retryUtils";
+import { executeWithRetry, SupabaseResponse } from "@/utils/retryUtils";
 import { checkBusinessRegistryExists } from "@/services/validation/businessRegistryService";
 import { 
   ProfileResult, 
@@ -46,7 +46,7 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
 
     // Verify profile exists, create if missing
     try {
-      const profileResponse = await executeWithRetry(() => 
+      const profileResponse = await executeWithRetry<SupabaseResponse>(() => 
         supabase
           .from('profiles')
           .select('id')
@@ -59,7 +59,7 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
         console.log("Profile not found, creating as fallback for user:", userId);
         
         try {
-          const insertResponse = await executeWithRetry(() => 
+          const insertResponse = await executeWithRetry<SupabaseResponse>(() => 
             supabase
               .from('profiles')
               .insert({
@@ -86,7 +86,7 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
 
     // Insert dealer profile with retry
     try {
-      const dealerResult = await executeWithRetry(() => 
+      const dealerResult = await executeWithRetry<SupabaseResponse>(() => 
         supabase
           .from('dealers')
           .insert({

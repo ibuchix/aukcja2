@@ -1,5 +1,21 @@
 
 /**
+ * Type definition for Supabase-like responses
+ */
+export interface SupabaseResponse<T = any> {
+  data: T | null;
+  error: any | null;
+  [key: string]: any; // For any additional properties
+}
+
+/**
+ * Type guard to check if a response is a Supabase-like response
+ */
+function isSupabaseResponse(obj: any): obj is SupabaseResponse {
+  return obj && typeof obj === 'object' && ('data' in obj || 'error' in obj);
+}
+
+/**
  * Utility for retrying operations with exponential backoff
  */
 export async function executeWithRetry<T>(
@@ -26,7 +42,7 @@ export async function executeWithRetry<T>(
       
       // For Supabase responses, check if there's an error property
       // and throw it if it exists
-      if (result && typeof result === 'object' && 'error' in result && result.error) {
+      if (isSupabaseResponse(result) && result.error) {
         throw result.error;
       }
       
