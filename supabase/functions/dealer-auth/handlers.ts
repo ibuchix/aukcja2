@@ -1,149 +1,159 @@
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
-import { logDebug, logError, logInfo } from "./logging.ts";
-import { errorResponse, successResponse, authErrorResponse } from "./response-utils.ts";
-
-// Initialize Supabase client with environment variables
-const supabaseClient = createClient(
-  Deno.env.get("SUPABASE_URL") ?? "",
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-);
+import { createError, handleApiError } from "../_shared/error-handling.ts";
+import { createClient } from "../_shared/supabase-client.ts";
+import { RegisterRequest, CheckEmailRequest, LoginRequest } from "./types.ts";
+import { respondSuccess, respondError } from "./response-utils.ts";
+import { logError, logInfo } from "./logging.ts";
 
 /**
- * Handle user registration
+ * Handles dealer registration
  */
-export async function handleRegister(request: any) {
+export async function handleRegister(request: RegisterRequest) {
+  if (!request.email || !request.password || !request.metadata?.name) {
+    return respondError("Missing required fields", 400);
+  }
+
   try {
-    const { email, password, metadata } = request;
-    
-    logInfo("Processing registration request", { email });
-    
-    // Validate required fields
-    if (!email || !password) {
-      return errorResponse("Email and password are required", "validation_error");
+    // First check if user with this email already exists
+    const userExists = await checkEmailExists(request.email);
+    if (userExists.exists) {
+      return respondError("A user with this email already exists", 409);
     }
-    
-    if (!metadata || !metadata.name) {
-      return errorResponse("Name is required", "validation_error");
-    }
-    
-    // Check if email already exists
-    const { data: existingUsers, error: checkError } = await supabaseClient
-      .from("auth.users")
-      .select("id")
-      .eq("email", email)
-      .limit(1);
-      
-    if (checkError) {
-      logError("Error checking existing user", { error: checkError });
-      return errorResponse("Error checking user existence", "database_error");
-    }
-    
-    if (existingUsers && existingUsers.length > 0) {
-      return errorResponse("Email already in use", "validation_error");
-    }
-    
-    // Create user with provided metadata
-    const { data, error } = await supabaseClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: metadata
+
+    // Create a new Supabase service client
+    const supabaseAdmin = createClient();
+
+    // Use our custom RPC function to create the dealer with profile
+    const { data, error } = await supabaseAdmin.rpc('create_dealer_with_profile', {
+      p_email: request.email,
+      p_password: request.password,
+      p_supervisor_name: request.metadata.name,
+      p_company_name: request.metadata.companyName || '',
+      p_tax_id: request.metadata.taxId || '',
+      p_business_registry_number: request.metadata.businessRegistryNumber || '',
+      p_address: request.metadata.companyAddress || ''
     });
-    
+
     if (error) {
-      logError("Error creating user", { error });
-      return errorResponse(error.message, "auth_error");
+      logError(`Error creating dealer: ${error.message}`, { error });
+      if (error.message.includes("already exists")) {
+        return respondError("A user with this email already exists", 409);
+      }
+      return respondError(`Error creating user: ${error.message}`, 500);
     }
+
+    logInfo("Dealer registered successfully", { userId: data?.user?.id });
     
-    logInfo("User registered successfully", { userId: data.user.id });
-    
-    return successResponse({
-      user: data.user,
-      message: "Registration successful"
+    return respondSuccess({
+      success: true,
+      user: data?.user,
+      message: "Registration successful. Please check your email for verification."
     });
+
   } catch (error) {
-    logError("Unexpected error in registration", { error });
-    return errorResponse("Registration failed with an unexpected error");
+    return handleApiError(error, "Error in registration");
   }
 }
 
 /**
- * Handle user login
+ * Checks if an email already exists in the system
  */
-export async function handleLogin(request: any) {
+export async function checkEmailExists(email: string) {
   try {
-    const { email, password } = request;
+    // Create a service role client to check the database
+    const supabaseAdmin = createClient();
     
-    logInfo("Processing login request", { email });
-    
-    // Validate required fields
-    if (!email || !password) {
-      return errorResponse("Email and password are required", "validation_error");
-    }
-    
-    // Authenticate user
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-      email,
-      password
-    });
+    // Query the auth.users table correctly
+    const { data, error } = await supabaseAdmin.from('auth.users').select('id').eq('email', email).maybeSingle();
     
     if (error) {
-      logError("Login error", { error });
-      return authErrorResponse(error.message);
+      // Try a different approach if the first one fails
+      // This is a fallback using RPC if direct table access fails
+      try {
+        const { count, error: countError } = await supabaseAdmin.rpc('check_email_exists', { email_to_check: email });
+        
+        if (countError) {
+          logError("Error checking user existence via RPC", { error: countError });
+          throw createError("Error checking user existence", 500);
+        }
+        
+        return { exists: count > 0 };
+      } catch (rpcError) {
+        logError("Error checking user existence", { error, rpcError });
+        throw createError("Error checking user existence", 500);
+      }
     }
     
-    // Fetch dealer profile
-    const { data: dealer, error: profileError } = await supabaseClient
-      .from("dealers")
-      .select("*")
-      .eq("user_id", data.user.id)
+    return { exists: !!data };
+  } catch (error) {
+    logError("Error checking if email exists", { error });
+    throw createError("Error checking user existence", 500);
+  }
+}
+
+/**
+ * Handles checking if an email exists from an external request
+ */
+export async function handleCheckEmailExists(request: CheckEmailRequest) {
+  if (!request.email) {
+    return respondError("Email is required", 400);
+  }
+
+  try {
+    const result = await checkEmailExists(request.email);
+    return respondSuccess(result);
+  } catch (error) {
+    return handleApiError(error, "Error checking email");
+  }
+}
+
+/**
+ * Handles dealer login
+ */
+export async function handleLogin(request: LoginRequest) {
+  if (!request.email || !request.password) {
+    return respondError("Email and password are required", 400);
+  }
+
+  try {
+    // Create a new Supabase service client
+    const supabaseAdmin = createClient();
+
+    // Sign in the user
+    const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
+      email: request.email,
+      password: request.password,
+    });
+
+    if (authError) {
+      logError(`Login failed: ${authError.message}`, { error: authError });
+      return respondError("Invalid email or password", 401);
+    }
+
+    if (!authData.user) {
+      return respondError("Login failed: User not found", 404);
+    }
+
+    // Get dealer profile information
+    const { data: dealer, error: dealerError } = await supabaseAdmin
+      .from('dealers')
+      .select('*')
+      .eq('user_id', authData.user.id)
       .single();
-      
-    if (profileError && profileError.code !== "PGRST116") { // Not "found"
-      logError("Error fetching dealer profile", { error: profileError });
-    }
-    
-    logInfo("User logged in successfully", { userId: data.user.id });
-    
-    return successResponse({
-      session: data.session,
-      dealer: dealer || null
-    });
-  } catch (error) {
-    logError("Unexpected error in login", { error });
-    return errorResponse("Login failed with an unexpected error");
-  }
-}
 
-/**
- * Handle email existence check
- */
-export async function handleEmailCheck(request: any) {
-  try {
-    const { email } = request;
-    
-    if (!email) {
-      return errorResponse("Email is required", "validation_error");
+    if (dealerError && !dealerError.message.includes('No rows found')) {
+      logError(`Error fetching dealer profile: ${dealerError.message}`, { error: dealerError });
     }
-    
-    logInfo("Checking email existence", { email });
-    
-    // Call the check_email_exists RPC function
-    const { data, error } = await supabaseClient.rpc("check_email_exists", {
-      p_email: email
+
+    logInfo("Login successful", { userId: authData.user.id });
+
+    return respondSuccess({
+      success: true,
+      session: authData.session,
+      dealer,
     });
-    
-    if (error) {
-      logError("Error checking email existence", { error });
-      return errorResponse("Error checking email", "database_error");
-    }
-    
-    return successResponse({
-      exists: data.exists
-    });
+
   } catch (error) {
-    logError("Unexpected error checking email", { error });
-    return errorResponse("Email check failed with an unexpected error");
+    return handleApiError(error, "Error during login");
   }
 }
