@@ -45,11 +45,36 @@ export const sendDealerWelcomeEmail = async (name: string, email: string) => {
       throw error;
     }
 
+    // Handle Resend validation errors that are returned with success: false
+    if (data && !data.success && data.error) {
+      console.warn('Resend API warning:', data.error);
+      
+      // Handle domain verification issues
+      if (data.error.statusCode === 403 && data.error.message?.includes('verify a domain')) {
+        console.warn('Domain verification required. During testing, emails can only be sent to verified addresses.');
+        return { 
+          success: false, 
+          error: 'Email service requires domain verification. Contact admin or verify your domain at resend.com/domains.',
+          isConfigIssue: true
+        };
+      }
+      
+      return { 
+        success: false, 
+        error: data.error.message || 'Email service configuration issue', 
+        isConfigIssue: true 
+      };
+    }
+
     console.log('Dealer welcome email sent successfully:', data);
     return data;
   } catch (error) {
     console.error('Exception sending dealer welcome email:', error);
     // Don't fail the entire registration process if email fails
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      isConfigIssue: error instanceof Error && error.message.includes('domain') 
+    };
   }
 };

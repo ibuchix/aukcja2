@@ -43,8 +43,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending welcome email to ${name} (${email})`);
 
+    // Use a verified domain if available, or use the Resend test email for development
+    // When in production, this should be changed to your verified domain
+    const fromEmail = "onboarding@resend.dev";
+    const fromName = "Auto Auction";
+
     const emailResponse = await resend.emails.send({
-      from: "Auto Auction <onboarding@resend.dev>",
+      from: `${fromName} <${fromEmail}>`,
       to: [email],
       subject: "Welcome to Auto Auction - Dealer Registration",
       html: `
@@ -78,6 +83,23 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
+    if (emailResponse.error) {
+      console.error("Email sending error:", emailResponse.error);
+      
+      // Return more detailed error information for debugging
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: emailResponse.error,
+          message: "Failed to send email. If using Resend in test mode, make sure to use your verified email as recipient or verify a domain."
+        }),
+        {
+          status: 200, // Still return 200 to not fail registration process
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     console.log("Email sent successfully:", emailResponse);
 
     return new Response(JSON.stringify({ success: true, data: emailResponse }), {
@@ -87,9 +109,13 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error) {
     console.error("Error sending dealer welcome email:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Failed to send email" }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message || "Failed to send email",
+        message: "An unexpected error occurred while sending the welcome email."
+      }),
       {
-        status: 500,
+        status: 200, // Still return 200 to not fail registration process
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
