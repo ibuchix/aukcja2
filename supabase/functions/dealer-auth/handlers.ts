@@ -1,183 +1,125 @@
 
+import { corsHeaders } from '../_shared/cors.ts';
 import { createClient } from '@supabase/supabase-js';
-import { v4 as uuidv4 } from "https://jspm.dev/uuid";
-import { supabaseAdmin } from '../_shared/supabase-client.ts';
-import { log, logError } from './logging.ts';
 import { errorResponse, successResponse } from './response-utils.ts';
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
-const SUPABASE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+// Define handler types
+type RequestHandler = (req: Request, payload: any) => Promise<Response>;
 
-// Initialize Supabase client with service role key for admin privileges
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-/**
- * Check if an email already exists in the system
- */
-export async function checkEmailExists(req: Request, email: string) {
-  try {
-    log(`Checking if email exists: ${email}`);
-
-    // Check in auth.users table using admin client
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers({
-      filters: {
-        email: email
-      }
-    });
-
-    if (userError) {
-      logError(`Error checking users: ${userError.message}`);
-      throw new Error(`Failed to check user existence: ${userError.message}`);
-    }
-
-    const exists = userData && userData.users && userData.users.length > 0;
-    log(`Email exists check result: ${exists}`);
-
-    return successResponse({
-      exists: exists
-    });
-  } catch (error) {
-    logError(`Error in checkEmailExists: ${error.message}`);
-    return errorResponse(error.message, 400);
-  }
-}
-
-/**
- * Register a new dealer
- */
-export async function register(req: Request, requestData: any) {
-  try {
-    log('Starting dealer registration process...');
-    const { email, password, metadata } = requestData;
-
-    if (!email || !password || !metadata?.name) {
-      return errorResponse('Email, password, and name are required', 400);
-    }
-
-    // Check if email already exists
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers({
-      filters: {
-        email: email
-      }
-    });
-
-    if (userError) {
-      logError(`Error checking existing user: ${userError.message}`);
-      return errorResponse(`Failed to check user existence: ${userError.message}`, 500);
-    }
-
-    if (userData && userData.users && userData.users.length > 0) {
-      return errorResponse('User with this email already exists', 400);
-    }
-
-    log('Email validation passed, creating user...');
-
-    // Call the RPC function directly to create dealer with profile
-    const { data: rpcResult, error: rpcError } = await supabase.rpc('create_dealer_with_profile', {
-      p_email: email,
-      p_password: password,
-      p_supervisor_name: metadata.name,
-      p_company_name: metadata.companyName || '',
-      p_tax_id: metadata.taxId || '',
-      p_business_registry_number: metadata.businessRegistryNumber || '',
-      p_address: metadata.companyAddress || ''
-    });
-
-    log(`RPC function result: ${JSON.stringify(rpcResult)}, Error: ${rpcError?.message || 'None'}`);
-
-    if (rpcError) {
-      logError(`Error in creating dealer via RPC: ${rpcError.message}`);
-      return errorResponse(`Failed to create dealer: ${rpcError.message}`, 500);
-    }
-
-    if (!rpcResult || (typeof rpcResult === 'object' && !rpcResult.success)) {
-      const errorMsg = (typeof rpcResult === 'object' && rpcResult.error) 
-        ? rpcResult.error 
-        : 'Failed to create dealer account';
-      return errorResponse(errorMsg, 500);
-    }
-
-    log('Dealer registration successful, sending welcome email...');
-
-    // Send welcome email
+// Handler map
+export const handlers: Record<string, RequestHandler> = {
+  // User registration
+  'register': async (req, payload) => {
     try {
-      const welcomeEmailResponse = await fetch(`${SUPABASE_URL}/functions/v1/send-dealer-welcome`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_KEY}`
-        },
-        body: JSON.stringify({
-          email: email,
-          name: metadata.name
-        })
+      const { email, password, metadata } = payload;
+      
+      if (!email || !password) {
+        return errorResponse('Email and password are required');
+      }
+      
+      // Create Supabase client with admin privileges
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') || '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+      );
+      
+      // Register the user
+      const { data, error } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: metadata || {}
       });
-
-      log(`Welcome email response status: ${welcomeEmailResponse.status}`);
-    } catch (emailError) {
-      logError(`Failed to send welcome email: ${emailError.message}`);
-      // Do not fail registration if email fails
+      
+      if (error) {
+        console.error('Registration error:', error);
+        return errorResponse(error.message);
+      }
+      
+      return successResponse({
+        success: true,
+        user: data.user,
+        message: 'Registration successful'
+      });
+    } catch (error) {
+      console.error('Unexpected error during registration:', error);
+      return errorResponse(`Registration failed: ${error.message}`);
     }
+  },
 
-    return successResponse({
-      success: true,
-      user: typeof rpcResult === 'object' ? rpcResult.user : null,
-      message: "Registration successful. Please check your email for verification."
-    });
-  } catch (error) {
-    logError(`Unexpected error in registration: ${error.message}`);
-    return errorResponse(`Registration failed: ${error.message}`, 500);
+  // Login handler
+  'login': async (req, payload) => {
+    try {
+      const { email, password } = payload;
+      
+      if (!email || !password) {
+        return errorResponse('Email and password are required');
+      }
+      
+      // Create Supabase client
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') || '',
+        Deno.env.get('SUPABASE_ANON_KEY') || ''
+      );
+      
+      // Attempt to sign in
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        return errorResponse(error.message);
+      }
+      
+      // Get dealer profile
+      const { data: dealerData } = await supabase
+        .from('dealers')
+        .select('*')
+        .eq('user_id', data.user.id)
+        .single();
+      
+      return successResponse({
+        success: true,
+        session: data.session,
+        dealer: dealerData
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      return errorResponse(`Login failed: ${error.message}`);
+    }
+  },
+
+  // Check if email exists
+  'check-email-exists': async (req, payload) => {
+    try {
+      const { email } = payload;
+      
+      if (!email) {
+        return errorResponse('Email is required');
+      }
+      
+      // Create Supabase admin client
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') || '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+      );
+      
+      // Check if email exists in auth.users
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers();
+      
+      if (error) {
+        return errorResponse(error.message);
+      }
+      
+      const exists = data.users.some(user => 
+        user.email?.toLowerCase() === email.toLowerCase()
+      );
+      
+      return successResponse({ exists });
+    } catch (error) {
+      console.error('Email check error:', error);
+      return errorResponse(`Email check failed: ${error.message}`);
+    }
   }
-}
-
-/**
- * Create dealer profile
- */
-export async function createDealerProfile(req: Request, requestData: any) {
-  try {
-    log('Creating dealer profile...');
-    const { 
-      userId, email, password, supervisorName, companyName, 
-      companyAddress, taxId, businessRegistryNumber 
-    } = requestData;
-
-    if (!userId || !email || !supervisorName) {
-      return errorResponse('User ID, email and supervisor name are required', 400);
-    }
-
-    // Call the RPC function to create dealer profile
-    const { data: rpcResult, error: rpcError } = await supabase.rpc('create_dealer_with_profile', {
-      p_email: email,
-      p_password: password || '',
-      p_supervisor_name: supervisorName,
-      p_company_name: companyName || '',
-      p_tax_id: taxId || '',
-      p_business_registry_number: businessRegistryNumber || '',
-      p_address: companyAddress || ''
-    });
-
-    log(`Dealer profile creation result: ${JSON.stringify(rpcResult)}, Error: ${rpcError?.message || 'None'}`);
-
-    if (rpcError) {
-      logError(`Error creating dealer profile: ${rpcError.message}`);
-      return errorResponse(`Failed to create dealer profile: ${rpcError.message}`, 500);
-    }
-
-    return successResponse({
-      success: true,
-      message: "Dealer profile created successfully"
-    });
-  } catch (error) {
-    logError(`Error in createDealerProfile: ${error.message}`);
-    return errorResponse(`Failed to create dealer profile: ${error.message}`, 500);
-  }
-}
-
-/**
- * Handler mapping to route actions to handler functions
- */
-export const handlers = {
-  'check-email-exists': checkEmailExists,
-  'register': register,
-  'create-dealer-profile': createDealerProfile,
 };
