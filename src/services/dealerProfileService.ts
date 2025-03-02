@@ -70,7 +70,10 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
     // Check for existing business registry number FIRST, with retry
     let exists = false;
     try {
-      exists = await executeWithRetry(() => checkBusinessRegistryExists(values.businessRegistryNumber.trim()));
+      exists = await executeWithRetry(async () => {
+        const result = await checkBusinessRegistryExists(values.businessRegistryNumber.trim());
+        return result;
+      });
     } catch (error) {
       // If the check fails after retries, log but continue
       console.warn("Business registry check failed after retries, continuing:", error);
@@ -86,29 +89,30 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
     }
 
     // Verify profile exists, create if missing
-    const { data: profileData, error: profileError } = await executeWithRetry(() => 
-      supabase
+    const profileCheck = await executeWithRetry(async () => {
+      return await supabase
         .from('profiles')
         .select('id')
         .eq('id', userId)
-        .maybeSingle()
-    );
+        .maybeSingle();
+    });
 
     // If profile doesn't exist, create it as a fallback mechanism
-    if (!profileData && !profileError) {
+    if (!profileCheck.data && !profileCheck.error) {
       console.log("Profile not found, creating as fallback for user:", userId);
       
       try {
-        await executeWithRetry(() => 
-          supabase
+        await executeWithRetry(async () => {
+          const result = await supabase
             .from('profiles')
             .insert({
               id: userId,
               role: 'dealer',
               full_name: values.supervisorName.trim(),
               updated_at: new Date().toISOString()
-            })
-        );
+            });
+          return result;
+        });
       } catch (error) {
         console.warn("Failed to create profile as fallback, but continuing with dealer creation:", error);
         // Continue despite this error - the dealer profile is more important
@@ -116,8 +120,8 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
     }
 
     // Insert dealer profile with retry
-    const { error: dealerError } = await executeWithRetry(() => 
-      supabase
+    const dealerResult = await executeWithRetry(async () => {
+      return await supabase
         .from('dealers')
         .insert({
           user_id: userId,
@@ -131,20 +135,20 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
           is_verified: false,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        })
-    );
+        });
+    });
 
-    if (dealerError) {
+    if (dealerResult.error) {
       console.error("Dealer profile creation failed after retries:", {
-        error: dealerError,
-        errorCode: dealerError.code,
-        errorMessage: dealerError.message,
-        details: dealerError.details
+        error: dealerResult.error,
+        errorCode: dealerResult.error.code,
+        errorMessage: dealerResult.error.message,
+        details: dealerResult.error.details
       });
       
       // Handle specific database constraint violations
-      if (dealerError.code === '23505') { // Unique violation
-        const errorMessage = dealerError.message.toLowerCase();
+      if (dealerResult.error.code === '23505') { // Unique violation
+        const errorMessage = dealerResult.error.message.toLowerCase();
         if (errorMessage.includes('business_registry_number')) {
           return {
             success: false,
@@ -167,15 +171,15 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
       }
 
       // Detect network-related errors
-      if (dealerError.message && (
-        dealerError.message.toLowerCase().includes('network') ||
-        dealerError.message.toLowerCase().includes('connection') ||
-        dealerError.message.toLowerCase().includes('timeout') ||
-        dealerError.message.toLowerCase().includes('unavailable')
+      if (dealerResult.error.message && (
+        dealerResult.error.message.toLowerCase().includes('network') ||
+        dealerResult.error.message.toLowerCase().includes('connection') ||
+        dealerResult.error.message.toLowerCase().includes('timeout') ||
+        dealerResult.error.message.toLowerCase().includes('unavailable')
       )) {
         return {
           success: false,
-          error: `Network error: ${dealerError.message}`,
+          error: `Network error: ${dealerResult.error.message}`,
           errorType: 'network'
         };
       }
@@ -183,7 +187,7 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
       // Handle other database errors
       return {
         success: false,
-        error: `Database error: ${dealerError.message}`,
+        error: `Database error: ${dealerResult.error.message}`,
         errorType: 'database'
       };
     }

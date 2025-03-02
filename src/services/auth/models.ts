@@ -1,10 +1,12 @@
-
 export interface SignUpResult {
   success: boolean;
   error?: string;
   errorType?: 'auth' | 'database' | 'validation' | 'network';
   userId?: string;
   message?: string;
+  partialSuccess?: boolean;
+  warning?: string;
+  needsProfileCreation?: boolean;
 }
 
 export interface SignInResult {
