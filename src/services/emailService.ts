@@ -11,17 +11,22 @@ interface SendEmailParams {
 export const sendEmail = async (params: SendEmailParams) => {
   console.log('Sending email with params:', params);
   
-  const { data, error } = await supabase.functions.invoke('send-email', {
-    body: params,
-  });
+  try {
+    const { data, error } = await supabase.functions.invoke('send-email', {
+      body: params,
+    });
 
-  if (error) {
-    console.error('Error sending email:', error);
+    if (error) {
+      console.error('Error sending email:', error);
+      throw error;
+    }
+
+    console.log('Email sent successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('Exception in sendEmail:', error);
     throw error;
   }
-
-  console.log('Email sent successfully:', data);
-  return data;
 };
 
 export const sendDealerWelcomeEmail = async (name: string, email: string) => {
@@ -44,6 +49,7 @@ export const sendDealerWelcomeEmail = async (name: string, email: string) => {
     return data;
   } catch (error) {
     console.error('Exception sending dealer welcome email:', error);
-    throw error;
+    // Don't fail the entire registration process if email fails
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 };

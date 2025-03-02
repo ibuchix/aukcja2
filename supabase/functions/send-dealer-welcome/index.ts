@@ -1,8 +1,13 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+if (!resendApiKey) {
+  console.error("Missing RESEND_API_KEY environment variable");
+}
+
+const resend = new Resend(resendApiKey);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,7 +15,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-interface WelcomeEmailRequest {
+interface DealerWelcomeEmailRequest {
   name: string;
   email: string;
 }
@@ -22,13 +27,13 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { name, email }: WelcomeEmailRequest = await req.json();
+    console.log("Received dealer welcome email request");
+    const { name, email }: DealerWelcomeEmailRequest = await req.json();
 
-    console.log(`Sending welcome email to ${email} for ${name}`);
-
-    if (!email || !name) {
+    if (!name || !email) {
+      console.error("Missing required fields in request", { name, email });
       return new Response(
-        JSON.stringify({ error: "Email and name are required" }),
+        JSON.stringify({ error: "Name and email are required" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -36,40 +41,53 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    console.log(`Sending welcome email to ${name} (${email})`);
+
     const emailResponse = await resend.emails.send({
-      from: "Auto-Strada <onboarding@resend.dev>",
+      from: "Auto Auction <onboarding@resend.dev>",
       to: [email],
-      subject: "Welcome to Auto-Strada Dealer Network!",
+      subject: "Welcome to Auto Auction - Dealer Registration",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #DC143C;">Welcome to Auto-Strada!</h1>
-          <p>Hello ${name},</p>
-          <p>Thank you for registering as a dealer with Auto-Strada. We're excited to have you join our network of trusted automotive dealers.</p>
-          <p>Your account has been created successfully. You can now log in to your dealer dashboard to:</p>
-          <ul>
-            <li>Participate in vehicle auctions</li>
-            <li>Manage your dealer profile</li>
-            <li>Track your bids and purchases</li>
-          </ul>
-          <p>If you have any questions or need assistance, please don't hesitate to contact our dealer support team.</p>
-          <p>Best regards,<br>The Auto-Strada Team</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+          <h1 style="color: #DC143C; border-bottom: 2px solid #DC143C; padding-bottom: 10px;">Welcome to Auto Auction!</h1>
+          
+          <p><strong>Hello ${name},</strong></p>
+          
+          <p>Thank you for registering as a dealer on our Auto Auction platform. We're excited to have you join our community of automotive professionals!</p>
+          
+          <h2 style="color: #444; margin-top: 25px;">What's Next?</h2>
+          
+          <ol style="line-height: 1.6;">
+            <li><strong>Verify your account</strong> - We'll review your dealer information within 1-2 business days.</li>
+            <li><strong>Complete your profile</strong> - Add additional details about your dealership.</li>
+            <li><strong>Browse available auctions</strong> - Start exploring vehicles that match your inventory needs.</li>
+          </ol>
+          
+          <div style="background-color: #f8f8f8; border-left: 4px solid #DC143C; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>Note:</strong> If you have any questions or need assistance, please contact our dealer support team at <a href="mailto:support@autoauction.com">support@autoauction.com</a> or call us at (555) 123-4567.</p>
+          </div>
+          
+          <p>We look forward to helping you grow your business!</p>
+          
+          <p>Best regards,<br>The Auto Auction Team</p>
+          
+          <div style="border-top: 1px solid #ddd; margin-top: 30px; padding-top: 15px; font-size: 12px; color: #777;">
+            <p>This email was sent to ${email}. If you did not register for an Auto Auction dealer account, please disregard this email.</p>
+          </div>
         </div>
       `,
     });
 
     console.log("Email sent successfully:", emailResponse);
 
-    return new Response(JSON.stringify(emailResponse), {
+    return new Response(JSON.stringify({ success: true, data: emailResponse }), {
       status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     });
-  } catch (error: any) {
-    console.error("Error in send-dealer-welcome function:", error);
+  } catch (error) {
+    console.error("Error sending dealer welcome email:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message || "Failed to send email" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
