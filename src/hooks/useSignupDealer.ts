@@ -28,12 +28,17 @@ export function useSignupDealer() {
     try {
       console.log("Starting dealer registration process");
       
-      // Create user account without role in metadata since it's handled by DB trigger
+      // Create user account with ALL required metadata
       const signUpResult = await signUpDealerWithEmail(
         values.email.trim().toLowerCase(),
         values.password,
         {
-          name: values.supervisorName.trim()
+          name: values.supervisorName.trim(),
+          companyName: values.companyName.trim(),
+          phoneNumber: values.phoneNumber.trim(),
+          taxId: values.taxId.trim(),
+          businessRegistryNumber: values.businessRegistryNumber.trim(),
+          companyAddress: values.companyAddress.trim()
         }
       );
 
