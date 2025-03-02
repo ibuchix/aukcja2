@@ -1,5 +1,6 @@
+
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createErrorResponse, createSuccessResponse } from './response-utils';
+import { createErrorResponse, createSuccessResponse } from './response-utils.ts';
 import { logError, logInfo } from './logging';
 import { LoginRequest, RegisterRequest, EmailCheckRequest } from './types';
 
