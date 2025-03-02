@@ -50,7 +50,9 @@ export const signUpDealerWithEmail = async (
             businessRegistryNumber: safeTrim(metadata.businessRegistryNumber || ''),
             companyAddress: safeTrim(metadata.companyAddress || ''),
             phoneNumber: safeTrim(metadata.phoneNumber || '')
-          }
+          },
+          requestId: crypto.randomUUID(), // Add a unique request ID for tracking retries
+          timestamp: new Date().toISOString()
         }
       });
       
@@ -91,6 +93,19 @@ export const signUpDealerWithEmail = async (
         return {
           success: false,
           error: response.error || "Registration failed with an unknown error"
+        };
+      }
+
+      // Check for partial success in the response (new feature)
+      if (response.warning) {
+        console.warn("Partial success detected:", response.warning);
+        return {
+          success: true,
+          partialSuccess: true,
+          warning: response.warning,
+          userId: response.user?.id || response.userId,
+          needsProfileCreation: true,
+          message: "Account created with some limitations"
         };
       }
 

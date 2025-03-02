@@ -6,28 +6,76 @@ interface ProfileResult {
   success: boolean;
   error?: string;
   errorType?: 'database' | 'validation' | 'network';
+  partialSuccess?: boolean;
+  warning?: string;
 }
 
 async function checkBusinessRegistryExists(businessRegistryNumber: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('dealers')
-    .select('business_registry_number')
-    .eq('business_registry_number', businessRegistryNumber)
-    .maybeSingle();
-  
-  if (error) {
-    console.error("Error checking business registry:", error);
+  try {
+    const { data, error } = await supabase
+      .from('dealers')
+      .select('business_registry_number')
+      .eq('business_registry_number', businessRegistryNumber)
+      .maybeSingle();
+    
+    if (error) {
+      console.error("Error checking business registry:", error);
+      throw error;
+    }
+    
+    return !!data;
+  } catch (error) {
+    // Fail silently but log the error
+    console.error("Error in business registry check:", error);
+    return false; // Continue the flow despite this check failing
   }
-  
-  return !!data;
 }
 
 export async function createDealerProfile(userId: string, values: DealerFormValues): Promise<ProfileResult> {
+  let retryCount = 0;
+  const maxRetries = 3;
+  const baseDelay = 1000;
+
+  // Implement retry with exponential backoff
+  const executeWithRetry = async <T>(operation: () => Promise<T>): Promise<T> => {
+    while (true) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        // Don't retry validation errors 
+        if (error.message?.includes('already registered') || 
+            error.code === '23505') {
+          throw error;
+        }
+
+        // Don't retry if we've reached the limit
+        if (retryCount >= maxRetries) {
+          throw error;
+        }
+
+        // Calculate delay with exponential backoff
+        const delay = baseDelay * Math.pow(2, retryCount);
+        console.log(`Retrying operation in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, delay));
+        retryCount++;
+      }
+    }
+  };
+
   try {
     console.log("Starting dealer profile creation for user:", userId);
     
-    // Check for existing business registry number FIRST
-    const exists = await checkBusinessRegistryExists(values.businessRegistryNumber.trim());
+    // Check for existing business registry number FIRST, with retry
+    let exists = false;
+    try {
+      exists = await executeWithRetry(() => checkBusinessRegistryExists(values.businessRegistryNumber.trim()));
+    } catch (error) {
+      // If the check fails after retries, log but continue
+      console.warn("Business registry check failed after retries, continuing:", error);
+    }
+
     if (exists) {
       console.warn("Attempted to register duplicate business registry number:", values.businessRegistryNumber);
       return {
@@ -37,25 +85,57 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
       };
     }
 
-    // Insert dealer profile directly
-    const { error: dealerError } = await supabase
-      .from('dealers')
-      .insert({
-        user_id: userId,
-        supervisor_name: values.supervisorName.trim(),
-        dealership_name: values.companyName.trim(),
-        tax_id: values.taxId.trim(),
-        business_registry_number: values.businessRegistryNumber.trim(),
-        license_number: values.businessRegistryNumber.trim(),
-        address: values.companyAddress.trim(),
-        verification_status: 'pending',
-        is_verified: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
+    // Verify profile exists, create if missing
+    const { data: profileData, error: profileError } = await executeWithRetry(() => 
+      supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle()
+    );
+
+    // If profile doesn't exist, create it as a fallback mechanism
+    if (!profileData && !profileError) {
+      console.log("Profile not found, creating as fallback for user:", userId);
+      
+      try {
+        await executeWithRetry(() => 
+          supabase
+            .from('profiles')
+            .insert({
+              id: userId,
+              role: 'dealer',
+              full_name: values.supervisorName.trim(),
+              updated_at: new Date().toISOString()
+            })
+        );
+      } catch (error) {
+        console.warn("Failed to create profile as fallback, but continuing with dealer creation:", error);
+        // Continue despite this error - the dealer profile is more important
+      }
+    }
+
+    // Insert dealer profile with retry
+    const { error: dealerError } = await executeWithRetry(() => 
+      supabase
+        .from('dealers')
+        .insert({
+          user_id: userId,
+          supervisor_name: values.supervisorName.trim(),
+          dealership_name: values.companyName.trim(),
+          tax_id: values.taxId.trim(),
+          business_registry_number: values.businessRegistryNumber.trim(),
+          license_number: values.businessRegistryNumber.trim(),
+          address: values.companyAddress.trim(),
+          verification_status: 'pending',
+          is_verified: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+    );
 
     if (dealerError) {
-      console.error("Dealer profile creation failed:", {
+      console.error("Dealer profile creation failed after retries:", {
         error: dealerError,
         errorCode: dealerError.code,
         errorMessage: dealerError.message,
@@ -116,7 +196,8 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
       error,
       userId,
       businessRegistryNumber: values.businessRegistryNumber,
-      taxId: values.taxId
+      taxId: values.taxId,
+      retryAttempts: retryCount
     });
     
     // Check if error is network-related

@@ -1,268 +1,163 @@
 
-import { SupabaseClient } from '@supabase/supabase-js';
-import { createErrorResponse, createSuccessResponse } from './response-utils.ts';
-import { logError, logInfo } from './logging.ts';
-import { LoginRequest, RegisterRequest, EmailCheckRequest } from './types.ts';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
+import { respondSuccess, respondError } from "./response-utils.ts";
+import { logInfo, logError, logWarning } from "./logging.ts";
 
-export const checkEmailExists = async (
-  supabase: SupabaseClient,
-  request: EmailCheckRequest
-): Promise<Response> => {
-  try {
-    const { email } = request;
-    logInfo(`Checking if email exists: ${email}`);
-    
-    let exists = false;
-    
-    try {
-      logInfo('Checking email using RPC function');
-      const { data: rpcResult, error: rpcError } = await supabase.rpc(
-        'check_email_exists',
-        { email_to_check: email }
-      );
-      
-      if (!rpcError && rpcResult) {
-        exists = rpcResult.exists === true;
-        logInfo(`RPC check result: ${exists}`);
-        return createSuccessResponse({ exists });
-      }
-      
-      if (rpcError) {
-        logError('RPC check failed:', rpcError);
-        // Fall through to next method
-      }
-    } catch (err) {
-      logError('Error in RPC check:', err);
-      // Fall through to next method
-    }
-    
-    try {
-      logInfo('Checking email using auth admin API');
-      const { data: userData, error: userError } = await supabase.auth.admin.listUsers({
-        page: 1,
-        perPage: 1,
-        filters: {
-          email: email
-        }
-      });
-      
-      if (!userError && userData && userData.users && userData.users.length > 0) {
-        exists = true;
-        logInfo(`Admin API check result: ${exists}`);
-        return createSuccessResponse({ exists });
-      }
-      
-      if (userError) {
-        logError('Admin API check failed:', userError);
-        // Fall through to next method
-      }
-    } catch (err) {
-      logError('Error in admin API check:', err);
-      // Fall through to next method
-    }
-    
-    try {
-      logInfo('Checking email using direct SQL query');
-      const { data: queryResult, error: queryError } = await supabase
-        .from('auth.users')
-        .select('id')
-        .eq('email', email)
-        .limit(1);
-      
-      if (!queryError && queryResult && queryResult.length > 0) {
-        exists = true;
-        logInfo(`SQL query check result: ${exists}`);
-        return createSuccessResponse({ exists });
-      }
-      
-      if (queryError) {
-        logError('SQL query check failed:', queryError);
-        // Fall through to final method
-      }
-    } catch (err) {
-      logError('Error in SQL query check:', err);
-      // Fall through to final method
-    }
-    
-    try {
-      logInfo('Checking email using signIn attempt');
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: 'ThIsShOuLdNoTmAtCh!123',
-      });
-      
-      if (error) {
-        if (error.message.includes('Invalid login credentials') || 
-            error.message.includes('Email not confirmed')) {
-          exists = true;
-        } else if (error.message.includes('User not found')) {
-          exists = false;
-        } else {
-          logError('Unexpected error in signIn check:', error);
-        }
-      }
-      
-      logInfo(`SignIn attempt check result: ${exists}`);
-    } catch (err) {
-      logError('Error in signIn attempt check:', err);
-    }
-    
-    return createSuccessResponse({ exists });
-    
-  } catch (error) {
-    logError('Error checking for existing user', error);
-    return createErrorResponse('Failed to check if email exists', 500);
-  }
+// Initialize the Supabase client with service role for admin operations
+const supabaseAdmin = createClient(
+  Deno.env.get("SUPABASE_URL") ?? "",
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+);
+
+type RegistrationMetadata = {
+  name: string;
+  companyName?: string;
+  taxId?: string;
+  businessRegistryNumber?: string;
+  companyAddress?: string;
+  phoneNumber?: string;
 };
 
-export const registerUser = async (
-  supabase: SupabaseClient,
-  request: RegisterRequest
-): Promise<Response> => {
+/**
+ * Handle dealer registration
+ */
+export async function handleDealerRegister(
+  body: any,
+  requestId: string
+): Promise<Response> {
   try {
-    const { email, password, metadata } = request;
+    const { email, password, metadata = {} } = body;
     
-    let userExists = false;
-    
-    try {
-      const { data: existsData, error: existsError } = await supabase.rpc(
-        'check_email_exists',
-        { email_to_check: email }
-      );
+    logInfo(`Processing registration for email: ${email}, request ID: ${requestId}`);
+
+    if (!email || !password) {
+      return respondError("Email and password are required", 400);
+    }
+
+    // Validate required metadata
+    if (!metadata.name) {
+      return respondError("Name is required in metadata", 400);
+    }
+
+    // Sanitize and prepare metadata
+    const cleanedMetadata = sanitizeMetadata(metadata);
+
+    // Check if email already exists
+    const { data: existsData, error: existsError } = await supabaseAdmin.rpc(
+      "check_email_exists",
+      { email_to_check: email.toLowerCase().trim() }
+    );
+
+    if (existsError) {
+      logError("Error checking if email exists", existsError);
+      // Continue despite this error - the procedure will check again
+    } else if (existsData?.exists) {
+      return respondError("Email already exists", 409);
+    }
+
+    // Call the improved stored procedure to handle the dealer registration
+    const { data: result, error: rpcError } = await supabaseAdmin.rpc(
+      "create_dealer_with_profile",
+      {
+        p_email: email.toLowerCase().trim(),
+        p_password: password,
+        p_supervisor_name: cleanedMetadata.name,
+        p_company_name: cleanedMetadata.companyName || cleanedMetadata.name,
+        p_tax_id: cleanedMetadata.taxId || "",
+        p_business_registry_number: cleanedMetadata.businessRegistryNumber || "",
+        p_address: cleanedMetadata.companyAddress || "",
+        p_phone_number: cleanedMetadata.phoneNumber || ""
+      }
+    );
+
+    if (rpcError) {
+      logError(`RPC error during registration (request ID: ${requestId})`, rpcError);
       
-      if (!existsError && existsData) {
-        userExists = existsData.exists === true;
-      } else {
-        const { data: userData, error: userError } = await supabase.auth.admin.listUsers({
-          page: 1,
-          perPage: 1,
-          filters: {
-            email: email
-          }
-        });
-        
-        userExists = !userError && userData && userData.users && userData.users.length > 0;
+      // Check for duplicate key errors
+      if (rpcError.message?.includes("duplicate") || 
+          rpcError.message?.includes("already exists") ||
+          rpcError.message?.toLowerCase().includes("unique violation")) {
+        if (rpcError.message?.includes("email")) {
+          return respondError("An account with this email already exists", 409);
+        }
+        if (rpcError.message?.toLowerCase().includes("tax_id")) {
+          return respondError("This tax ID is already registered", 409);
+        }
+        if (rpcError.message?.toLowerCase().includes("business_registry_number")) {
+          return respondError("This business registry number is already registered", 409);
+        }
+        return respondError("A duplicate entry was detected", 409);
       }
-    } catch (err) {
-      logError('Error checking if user exists:', err);
-    }
-    
-    if (userExists) {
-      logError('User already exists during registration attempt');
-      return createErrorResponse('User with this email already exists', 409);
-    }
-    
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: email,
-      password: password,
-      email_confirm: true,
-      user_metadata: metadata || {}
-    });
-    
-    if (authError) {
-      logError('Error creating user:', authError);
-      return createErrorResponse(
-        authError.message || 'Failed to create user',
-        authError.status || 500
+      
+      // Internal server errors
+      return respondError(
+        `Registration failed: ${rpcError.message}`,
+        500
       );
     }
-    
-    if (!authData || !authData.user) {
-      logError('No user data returned from auth.admin.createUser');
-      return createErrorResponse('Failed to create user account', 500);
+
+    if (!result) {
+      logError(`Empty result from registration RPC (request ID: ${requestId})`, null);
+      return respondError("Registration failed with no result", 500);
     }
-    
-    if (metadata && metadata.companyName) {
-      try {
-        const { data: dealerData, error: dealerError } = await supabase.rpc(
-          'create_dealer_with_profile',
-          {
-            p_email: email,
-            p_password: password,
-            p_supervisor_name: metadata.name || '',
-            p_company_name: metadata.companyName || '',
-            p_tax_id: metadata.taxId || '',
-            p_business_registry_number: metadata.businessRegistryNumber || '',
-            p_address: metadata.companyAddress || ''
-          }
-        );
-        
-        if (dealerError) {
-          logError('Error creating dealer profile via RPC:', dealerError);
-        } else {
-          logInfo('Dealer profile created successfully via RPC');
-        }
-      } catch (err) {
-        logError('Exception during dealer profile creation:', err);
-      }
+
+    if (!result.success) {
+      logError(`Registration unsuccessful (request ID: ${requestId})`, result);
+      return respondError(
+        result.error || "Registration failed for unknown reason",
+        result.error_code === "unique_violation" ? 409 : 500
+      );
     }
+
+    // Check for warnings (partial success)
+    if (result.warning) {
+      logWarning(`Registration partial success (request ID: ${requestId}): ${result.warning}`);
+      
+      // Return partial success response
+      return respondSuccess({
+        success: true,
+        partialSuccess: true,
+        warning: result.warning,
+        userId: result.user?.id,
+        message: "Account created but with some limitations. You may need to complete profile setup."
+      });
+    }
+
+    // Successfully created user
+    logInfo(`User registered successfully (request ID: ${requestId}): ${result.user?.id}`);
     
-    return createSuccessResponse({
+    return respondSuccess({
       success: true,
-      message: 'User registered successfully',
-      userId: authData.user.id,
-      user: {
-        id: authData.user.id,
-        email: authData.user.email
-      }
+      userId: result.user?.id,
+      message: "Registration successful. Please check your email for verification."
     });
-    
   } catch (error) {
-    logError('Unexpected error during registration:', error);
-    return createErrorResponse(
-      error instanceof Error ? error.message : 'An unexpected error occurred',
+    logError(`Unexpected error in registration handler (request ID: ${requestId})`, error);
+    return respondError(
+      `Registration failed unexpectedly: ${error.message}`,
       500
     );
   }
-};
+}
 
-export const loginUser = async (
-  supabase: SupabaseClient,
-  request: LoginRequest
-): Promise<Response> => {
-  try {
-    logInfo(`Login attempt for: ${request.email}`);
-    
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: request.email,
-      password: request.password,
-    });
-    
-    if (authError) {
-      logError('Login error:', authError);
-      return createErrorResponse(
-        authError.message || 'Authentication failed',
-        authError.status || 401
-      );
-    }
-    
-    if (!authData || !authData.session) {
-      logError('No session returned from signInWithPassword');
-      return createErrorResponse('Authentication failed - no session created', 401);
-    }
-    
-    const userId = authData.user.id;
-    const { data: dealerData, error: dealerError } = await supabase
-      .from('dealers')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    
-    if (dealerError && dealerError.code !== 'PGRST116') {
-      logError('Error fetching dealer profile:', dealerError);
-    }
-    
-    return createSuccessResponse({
-      success: true,
-      session: authData.session,
-      dealer: dealerData || null
-    });
-    
-  } catch (error) {
-    logError('Unexpected error during login:', error);
-    return createErrorResponse(
-      error instanceof Error ? error.message : 'An unexpected error occurred',
-      500
-    );
-  }
-};
+/**
+ * Sanitize and validate registration metadata
+ */
+function sanitizeMetadata(metadata: any): RegistrationMetadata {
+  return {
+    name: sanitizeString(metadata.name),
+    companyName: sanitizeString(metadata.companyName),
+    taxId: sanitizeString(metadata.taxId),
+    businessRegistryNumber: sanitizeString(metadata.businessRegistryNumber),
+    companyAddress: sanitizeString(metadata.companyAddress),
+    phoneNumber: sanitizeString(metadata.phoneNumber)
+  };
+}
+
+/**
+ * Sanitize a string value
+ */
+function sanitizeString(value: any): string {
+  if (typeof value !== "string") return "";
+  return value.trim();
+}
