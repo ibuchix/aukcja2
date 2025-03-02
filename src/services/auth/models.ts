@@ -5,6 +5,13 @@ export interface SignUpResult {
   userId?: string;
 }
 
+export interface SignInResult {
+  success: boolean;
+  error?: string;
+  session?: any;
+  dealer?: any;
+}
+
 export interface UserMetadata {
   name: string;
   companyName?: string;
@@ -22,6 +29,11 @@ export interface RegisterResponse {
   };
 }
 
+export interface LoginResponse {
+  session: any;
+  dealer: any;
+}
+
 export function isRegisterResponse(obj: any): obj is RegisterResponse {
   return (
     obj &&
@@ -32,5 +44,14 @@ export function isRegisterResponse(obj: any): obj is RegisterResponse {
     typeof obj.user.email === 'string' &&
     obj.user.user_metadata &&
     typeof obj.user.user_metadata === 'object'
+  );
+}
+
+export function isLoginResponse(data: any): data is LoginResponse {
+  return (
+    !!data &&
+    typeof data === 'object' &&
+    'session' in data &&
+    'dealer' in data
   );
 }
