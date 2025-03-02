@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Parse request to determine the action
+    // Parse request body ONCE - this is the critical fix
     const body = await req.json();
     const action = body.action;
 
@@ -45,19 +45,19 @@ Deno.serve(async (req) => {
 
     let response;
     
-    // Route to appropriate handler based on action
+    // Route to appropriate handler based on action, passing the parsed body
     switch (action) {
       case 'register':
       case 'register-with-lock':
-        response = await handleRegister(req);
+        response = await handleRegister(body, req.headers);
         break;
       
       case 'login':
-        response = await handleLogin(req);
+        response = await handleLogin(body, req.headers);
         break;
       
       case 'verify-password':
-        response = await handleVerifyPassword(req);
+        response = await handleVerifyPassword(body, req.headers);
         break;
         
       default:

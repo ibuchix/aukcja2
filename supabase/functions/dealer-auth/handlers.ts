@@ -7,10 +7,9 @@ import { verifyDependencies } from '@shared/dependencies.ts';
 verifyDependencies();
 const adminClient = createServiceClient();
 
-export async function handleRegister(req: Request) {
+// Modified to accept parsed body and headers instead of raw request
+export async function handleRegister(body: any, headers: Headers) {
   try {
-    const body = await req.json();
-    
     // Validate required fields
     const requiredFields = ['email', 'password', 'supervisorName', 'companyName'];
     for (const field of requiredFields) {
@@ -23,7 +22,8 @@ export async function handleRegister(req: Request) {
       }
     }
     
-    const supabaseClient = createEdgeClient(req);
+    // Create client using just the headers
+    const supabaseClient = createEdgeClient(headers);
 
     // Check if user already exists to provide better error messages
     const { data: existingUser } = await adminClient
@@ -73,7 +73,8 @@ export async function handleRegister(req: Request) {
       const { error: signInError } = await supabaseClient.auth.signInWithOtp({
         email: body.email.toLowerCase(),
         options: {
-          emailRedirectTo: new URL(req.url).origin + '/auth?verify=true'
+          // Use a simpler approach to get origin for redirect
+          emailRedirectTo: body.redirectUrl || 'http://localhost:3000/auth?verify=true'
         }
       });
 
@@ -92,10 +93,9 @@ export async function handleRegister(req: Request) {
   }
 }
 
-export async function handleLogin(req: Request) {
+// Updated to accept parsed body and headers
+export async function handleLogin(body: any, headers: Headers) {
   try {
-    const body = await req.json();
-    
     // Validate required fields
     if (!body.email || !body.password) {
       return createErrorResponse({
@@ -105,7 +105,7 @@ export async function handleLogin(req: Request) {
       });
     }
     
-    const supabaseClient = createEdgeClient(req);
+    const supabaseClient = createEdgeClient(headers);
     
     const { data, error } = await supabaseClient.auth.signInWithPassword({
       email: body.email.toLowerCase(),
@@ -166,10 +166,9 @@ function createErrorResponse(error: { message: string, code?: string, status?: n
   }, error.status || 400);
 }
 
-// Handle password verification (used for additional security checks)
-export async function handleVerifyPassword(req: Request) {
+// Updated to accept parsed body instead of raw request
+export async function handleVerifyPassword(body: any, headers: Headers) {
   try {
-    const body = await req.json();
     if (!body.userId || !body.password) {
       return createErrorResponse({
         message: !body.userId ? 'User ID is required' : 'Password is required',
@@ -198,4 +197,10 @@ export async function handleVerifyPassword(req: Request) {
   } catch (error) {
     return createErrorResponse(error);
   }
+}
+
+// Helper function to create Supabase client from headers only
+function createEdgeClientFromHeaders(headers: Headers) {
+  // Implementation details would go here if needed
+  return createEdgeClient(headers);
 }
