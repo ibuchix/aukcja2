@@ -1,5 +1,4 @@
 
-
 import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 
@@ -125,7 +124,7 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
 
     // Insert dealer profile with retry
     const dealerResult = await executeWithRetry(async () => {
-      return await supabase
+      const response = await supabase
         .from('dealers')
         .insert({
           user_id: userId,
@@ -140,6 +139,7 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
+      return response;
     });
 
     if (dealerResult.error) {

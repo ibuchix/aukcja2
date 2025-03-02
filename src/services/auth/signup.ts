@@ -127,7 +127,7 @@ export const signUpDealerWithEmail = async (
       console.error("Error in registration process:", error);
       
       // Enhanced error type detection
-      let errorType: 'auth' | 'database' | 'validation' | 'network' | 'unknown' = 'unknown';
+      let errorType: 'auth' | 'database' | 'validation' | 'network' = 'auth';
       let errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
       
       if (errorMessage.includes('network') || 
@@ -140,7 +140,7 @@ export const signUpDealerWithEmail = async (
       return {
         success: false,
         error: errorMessage,
-        errorType: errorType as any
+        errorType: errorType
       };
     }
   } catch (error) {
