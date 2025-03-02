@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { signUpDealerWithEmail } from "@/services/auth/signup";
@@ -8,6 +7,7 @@ interface SignupResult {
   success: boolean;
   error?: string;
   errorType?: 'auth' | 'database' | 'validation' | 'network';
+  message?: string;
 }
 
 export function useSignupDealer() {
@@ -95,7 +95,7 @@ export function useSignupDealer() {
         };
       }
 
-      return { success: true };
+      return { success: true, message: signUpResult.message };
       
     } catch (error) {
       console.error("Registration error:", error);
