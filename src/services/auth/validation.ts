@@ -91,26 +91,35 @@ export async function checkAccountExists(email: string): Promise<boolean> {
       // Continue to next method
     }
     
-    // 2. Try using a direct query instead of RPC (which has type compatibility issues)
+    // 2. Try using the RPC function (with correct parameter name)
     try {
-      // Direct query to the auth.users table using service role client
-      // This is done via the edge function to maintain security
-      const { data: directData, error: directError } = await supabase.functions.invoke('dealer-auth', {
-        body: { 
-          action: 'directCheckEmail', 
-          email: email.toLowerCase().trim() 
-        }
-      });
+      const { data, error } = await supabase.rpc(
+        'check_email_exists',
+        { email_to_check: email.toLowerCase().trim() }
+      );
       
-      if (!directError) {
-        console.log("Direct query response:", directData);
-        return Boolean(directData?.exists);
+      if (!error) {
+        console.log("RPC function response:", data);
+        
+        // Handle the jsonb response format
+        if (data && typeof data === 'object' && 'exists' in data) {
+          return Boolean(data.exists);
+        }
+        
+        // Handle potential legacy formats
+        if (typeof data === 'number') {
+          return data > 0;
+        } 
+        
+        if (typeof data === 'boolean') {
+          return data;
+        }
       } else {
-        console.warn("Direct query error:", directError);
+        console.warn("RPC function error:", error);
         // Continue to fallback
       }
     } catch (error) {
-      console.warn("Failed direct query attempt:", error);
+      console.warn("Failed to call RPC function:", error);
       // Continue to fallback
     }
     

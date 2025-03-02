@@ -265,6 +265,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_email_exists: {
+        Args: {
+          email_to_check: string
+        }
+        Returns: Json
+      }
       create_dealer_with_profile: {
         Args: {
           p_email: string
