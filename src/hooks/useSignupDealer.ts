@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { signUpDealerWithEmail } from "@/services/auth/signup";
@@ -10,6 +11,7 @@ import {
 } from "./signup/signupErrorHandler";
 import { SignupResult } from "./signup/types";
 import { handleProfileCreation } from "./signup/handleProfileCreation";
+import { sendDealerWelcomeEmail } from "@/services/emailService";
 
 export type { SignupResult } from "./signup/types";
 
@@ -112,6 +114,21 @@ export function useSignupDealer() {
             userId: signUpResult.userId
           };
         }
+      }
+
+      // Send welcome email after successful registration
+      try {
+        if (signUpResult.userId) {
+          console.log("Attempting to send welcome email to new dealer");
+          await sendDealerWelcomeEmail(
+            values.supervisorName.trim(), 
+            values.email.trim().toLowerCase()
+          );
+          console.log("Welcome email sent successfully");
+        }
+      } catch (emailError) {
+        // Don't fail registration if email fails, just log the error
+        console.error("Failed to send welcome email:", emailError);
       }
 
       return { 

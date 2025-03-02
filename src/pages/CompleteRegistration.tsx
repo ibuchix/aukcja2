@@ -12,6 +12,7 @@ import { dealerFormSchema, type DealerFormValues } from "@/schemas/dealerFormSch
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { sendDealerWelcomeEmail } from "@/services/emailService";
 
 export default function CompleteRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -130,6 +131,18 @@ export default function CompleteRegistration() {
         } else {
           throw error;
         }
+      }
+
+      // Send welcome email
+      try {
+        await sendDealerWelcomeEmail(
+          values.supervisorName.trim(),
+          values.email.trim().toLowerCase()
+        );
+        console.log("Welcome email sent successfully after profile completion");
+      } catch (emailError) {
+        console.error("Failed to send welcome email after profile completion:", emailError);
+        // Continue with registration even if email fails
       }
 
       toast({
