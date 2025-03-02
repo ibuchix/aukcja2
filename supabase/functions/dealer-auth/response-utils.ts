@@ -4,7 +4,7 @@ import { corsHeaders } from '../_shared/cors.ts';
 /**
  * Creates a successful response with proper headers
  */
-export function createSuccessResponse(data: any, status = 200): Response {
+export function respondSuccess(data: any, status = 200): Response {
   return new Response(
     JSON.stringify(data),
     {
@@ -20,7 +20,7 @@ export function createSuccessResponse(data: any, status = 200): Response {
 /**
  * Creates an error response with proper headers
  */
-export function createErrorResponse(
+export function respondError(
   message: string,
   status = 400,
   details?: Record<string, any>
