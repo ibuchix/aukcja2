@@ -1,4 +1,5 @@
 
+
 import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 
@@ -89,13 +90,16 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
     }
 
     // Verify profile exists, create if missing
-    const profileCheck = await executeWithRetry(async () => {
-      return await supabase
+    const profileCheckOperation = async () => {
+      const response = await supabase
         .from('profiles')
         .select('id')
         .eq('id', userId)
         .maybeSingle();
-    });
+      return response;
+    };
+
+    const profileCheck = await executeWithRetry(profileCheckOperation);
 
     // If profile doesn't exist, create it as a fallback mechanism
     if (!profileCheck.data && !profileCheck.error) {
