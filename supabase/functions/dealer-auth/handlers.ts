@@ -1,245 +1,150 @@
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
-import { logInfo, logError, logDebug } from "./logging.ts";
-import { buildSuccessResponse, buildErrorResponse } from "./response-utils.ts";
-import { UserMetadata, RegisterResponse } from "./types.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { corsHeaders } from '../_shared/cors.ts'
+import { validateEmailFormat, validatePasswordStrength } from './validation.ts'
+import { createErrorResponse, createSuccessResponse } from './response-utils.ts'
+import { log, logError } from './logging.ts'
 
-// Initialize Supabase client with admin privileges
-const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Create Supabase client
+const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
+const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
-export async function handleRequest(req: Request): Promise<Response> {
-  try {
-    // Parse request body
-    const body = await req.json();
-    const { action } = body;
-
-    logInfo(`Processing ${action} request`);
-
-    // Route to appropriate handler based on action
-    switch (action) {
-      case "register":
-        return await handleRegister(body);
-      case "login":
-        return await handleLogin(body);
-      case "checkEmailExists":
-        return await handleCheckEmailExists(body);
-      default:
-        return buildErrorResponse(400, `Unsupported action: ${action}`);
-    }
-  } catch (error) {
-    logError("Error processing request", error);
-    return buildErrorResponse(500, "Failed to process request");
+// Create a client with the service role key for admin operations
+const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
   }
-}
+})
 
-async function handleRegister(body: any): Promise<Response> {
+// Create a regular client for operations that should respect RLS
+const regularClient = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+})
+
+export async function handleRegister(req: Request): Promise<Response> {
   try {
-    const { email, password, metadata } = body;
-    
+    const { email, password, metadata } = await req.json()
+
+    // Validate required fields
     if (!email || !password) {
-      return buildErrorResponse(400, "Email and password are required");
+      return createErrorResponse('Email and password are required', 400)
     }
 
-    logDebug("Registration request received", { email, metadata });
-    
-    // Check if user already exists - FIXED: using auth.users table
-    const { data: existingUsers, error: checkError } = await supabase
-      .from("auth.users")
-      .select("id")
-      .eq("email", email.toLowerCase())
-      .limit(1);
+    // Validate email format
+    if (!validateEmailFormat(email)) {
+      return createErrorResponse('Invalid email format', 400)
+    }
+
+    // Validate password strength
+    const passwordValidation = validatePasswordStrength(password)
+    if (!passwordValidation.valid) {
+      return createErrorResponse(passwordValidation.message, 400)
+    }
+
+    // Check if user already exists
+    try {
+      // First attempt with auth API
+      const { data: existingUser, error: userError } = await adminClient.auth.admin.getUserByEmail(email)
       
-    if (checkError) {
-      logError("Error checking for existing user", checkError);
-      
-      // If the error is about the table not existing, check differently
-      if (checkError.message?.includes("does not exist")) {
-        // Alternative check using the direct auth API
-        const { data: userList, error: authError } = await supabase.auth.admin.listUsers({
-          page: 1,
-          perPage: 1,
-          filter: {
-            email: email.toLowerCase()
+      if (userError) {
+        log(`Error checking user with auth API: ${userError.message}`)
+        // Fall back to direct DB query
+        const { data: users, error: queryError } = await adminClient
+          .from('auth.users')
+          .select('id, email')
+          .eq('email', email)
+          .limit(1)
+        
+        if (queryError) {
+          logError('Error checking for existing user', queryError)
+          // Third fallback to a simpler query
+          const { data, error: fallbackError } = await adminClient.rpc('check_email_exists', {
+            email_to_check: email
+          })
+          
+          if (fallbackError) {
+            logError('All methods to check user existence failed', fallbackError)
+            return createErrorResponse('Error checking user existence', 500)
           }
-        });
-        
-        if (authError) {
-          logError("Auth API error when checking existing user", authError);
-          return buildErrorResponse(500, "Failed to verify account availability");
+          
+          if (data && data.exists) {
+            return createErrorResponse('User with this email already exists', 409)
+          }
+        } else if (users && users.length > 0) {
+          return createErrorResponse('User with this email already exists', 409)
         }
-        
-        if (userList && userList.users && userList.users.length > 0) {
-          return buildErrorResponse(409, "A user with this email already exists");
-        }
-      } else {
-        // For other errors, continue but log the issue
-        logError("Warning: User existence check failed, proceeding with caution", checkError);
+      } else if (existingUser) {
+        return createErrorResponse('User with this email already exists', 409)
       }
-    } else if (existingUsers && existingUsers.length > 0) {
-      return buildErrorResponse(409, "A user with this email already exists");
+    } catch (err) {
+      logError('Exception checking user existence', err)
+      return createErrorResponse('Error checking user existence', 500)
     }
 
-    // Create user via direct SQL function call for atomic transaction
-    const { data: result, error: funcError } = await supabase.rpc(
-      "create_dealer_with_profile",
-      {
-        p_email: email.toLowerCase(),
-        p_password: password,
-        p_supervisor_name: metadata.name || "",
-        p_company_name: metadata.companyName || "",
-        p_tax_id: metadata.taxId || "",
-        p_business_registry_number: metadata.businessRegistryNumber || "",
-        p_address: metadata.companyAddress || ""
-      }
-    );
+    // Create the user with profile using the database function
+    const { data, error } = await adminClient.rpc('create_dealer_with_profile', {
+      p_email: email,
+      p_password: password,
+      p_supervisor_name: metadata?.name || '',
+      p_company_name: metadata?.companyName || '',
+      p_tax_id: metadata?.taxId || '',
+      p_business_registry_number: metadata?.businessRegistryNumber || '',
+      p_address: metadata?.companyAddress || ''
+    })
 
-    if (funcError) {
-      logError("Error in create_dealer_with_profile function", funcError);
-      
-      if (funcError.message?.includes("already exists")) {
-        return buildErrorResponse(409, "A user with this email already exists");
-      }
-      
-      return buildErrorResponse(500, `Registration failed: ${funcError.message}`);
+    if (error) {
+      logError('Error creating dealer with profile', error)
+      return createErrorResponse(`Registration failed: ${error.message}`, 500)
     }
 
-    // Check the result structure
-    if (!result || typeof result !== 'object') {
-      logError("Unexpected result from create_dealer_with_profile", { result });
-      return buildErrorResponse(500, "Registration failed with invalid server response");
+    if (!data.success) {
+      logError('create_dealer_with_profile returned failure', data)
+      return createErrorResponse(data.error || 'User creation failed', 500)
     }
 
-    const parsedResult = result as any;
-    
-    if (!parsedResult.success) {
-      logError("create_dealer_with_profile returned failure", parsedResult);
-      return buildErrorResponse(
-        500, 
-        parsedResult.error || "Registration failed with unknown error"
-      );
-    }
-
-    // Verify user was created and extract ID
-    if (!parsedResult.user || !parsedResult.user.id) {
-      logError("User created but ID missing from response", { parsedResult });
-      return buildErrorResponse(500, "Registration partially completed but user data is incomplete");
-    }
-
-    const userId = parsedResult.user.id;
-    logInfo("Dealer registered successfully", { userId });
-
-    // Send verification email
-    const { error: emailError } = await supabase.auth.admin.sendEmailInvite({
-      email: email,
-    });
-
-    if (emailError) {
-      logError("Failed to send verification email", emailError);
-      // Continue despite email error - we'll let user know
-    }
-
-    const response: RegisterResponse = {
-      success: true,
-      user: {
-        id: userId,
-        email: email,
-        user_metadata: metadata
-      },
-      message: emailError 
-        ? "Account created successfully, but verification email could not be sent." 
-        : "Registration successful. Please check your email for verification."
-    };
-
-    return buildSuccessResponse(response);
-  } catch (error) {
-    logError("Unexpected error in registration process", error);
-    return buildErrorResponse(500, "Registration failed with server error");
+    // Registration successful
+    log(`Successfully registered user with email: ${email}`)
+    return createSuccessResponse({
+      message: 'Registration successful',
+      user: data.user
+    })
+  } catch (err) {
+    logError('Unexpected error in handleRegister', err)
+    return createErrorResponse('Unexpected error during registration', 500)
   }
 }
 
-async function handleLogin(body: any): Promise<Response> {
+export async function handleLogin(req: Request): Promise<Response> {
   try {
-    const { email, password } = body;
-    
+    const { email, password } = await req.json()
+
+    // Validate required fields
     if (!email || !password) {
-      return buildErrorResponse(400, "Email and password are required");
+      return createErrorResponse('Email and password are required', 400)
     }
 
-    logDebug("Login request received", { email });
-    
-    // Attempt to sign in user
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
+    // Attempt to sign in
+    const { data, error } = await regularClient.auth.signInWithPassword({
+      email,
+      password,
+    })
 
-    if (authError) {
-      logError("Login failed", authError);
-      return buildErrorResponse(401, "Invalid login credentials");
+    if (error) {
+      return createErrorResponse(`Login failed: ${error.message}`, 401)
     }
 
-    if (!authData.user || !authData.session) {
-      logError("Login succeeded but missing user/session data");
-      return buildErrorResponse(500, "Authentication succeeded but session data is incomplete");
-    }
-
-    // Get dealer profile details
-    const { data: dealer, error: dealerError } = await supabase
-      .from("dealers")
-      .select("*")
-      .eq("user_id", authData.user.id)
-      .single();
-
-    if (dealerError && dealerError.code !== "PGRST116") { // PGRST116 is "no rows returned"
-      logError("Error fetching dealer profile", dealerError);
-    }
-
-    logInfo("User logged in successfully", { 
-      userId: authData.user.id,
-      hasProfile: !!dealer
-    });
-
-    return buildSuccessResponse({
-      success: true,
-      session: authData.session,
-      dealer: dealer || null
-    });
-  } catch (error) {
-    logError("Unexpected error in login process", error);
-    return buildErrorResponse(500, "Login failed with server error");
-  }
-}
-
-async function handleCheckEmailExists(body: any): Promise<Response> {
-  try {
-    const { email } = body;
-    
-    if (!email) {
-      return buildErrorResponse(400, "Email is required");
-    }
-
-    // Check if user exists using the auth API instead of direct table access
-    const { data: userList, error: authError } = await supabase.auth.admin.listUsers({
-      page: 1,
-      perPage: 1,
-      filter: {
-        email: email.toLowerCase()
-      }
-    });
-    
-    if (authError) {
-      logError("Error checking email existence", authError);
-      return buildErrorResponse(500, "Failed to check if email exists");
-    }
-
-    const exists = userList && userList.users && userList.users.length > 0;
-    logInfo(`Email existence check: ${exists ? "exists" : "does not exist"}`);
-
-    return buildSuccessResponse({ exists });
-  } catch (error) {
-    logError("Unexpected error checking email existence", error);
-    return buildErrorResponse(500, "Email check failed with server error");
+    return createSuccessResponse({
+      message: 'Login successful',
+      session: data.session,
+      user: data.user
+    })
+  } catch (err) {
+    logError('Unexpected error in handleLogin', err)
+    return createErrorResponse('Unexpected error during login', 500)
   }
 }
