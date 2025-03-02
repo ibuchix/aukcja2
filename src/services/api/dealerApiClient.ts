@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 interface ApiResponse<T = any> {
@@ -136,22 +137,25 @@ export const invokeDealerFunction = async <T = any>(
  * Creates a dealer profile with proper TypeScript types
  */
 export const createDealerProfile = async (
-  email: string,
-  password: string,
-  supervisorName: string,
-  dealershipName: string,
-  address: string,
-  taxId: string,
-  businessRegistryNumber: string
+  userId: string,
+  values: {
+    email: string;
+    password: string;
+    supervisorName: string;
+    companyName: string;
+    companyAddress: string;
+    taxId: string;
+    businessRegistryNumber: string;
+  }
 ) => {
-  // Match the parameters expected by the create_dealer_with_profile function
+  // Map the function parameters to exactly match the SQL function parameters
   return await supabase.rpc('create_dealer_with_profile', {
-    p_email: email,
-    p_password: password,
-    p_supervisor_name: supervisorName,
-    p_company_name: dealershipName, 
-    p_address: address,
-    p_tax_id: taxId,
-    p_business_registry_number: businessRegistryNumber
+    p_email: values.email,
+    p_password: values.password,
+    p_supervisor_name: values.supervisorName,
+    p_company_name: values.companyName, 
+    p_address: values.companyAddress,
+    p_tax_id: values.taxId,
+    p_business_registry_number: values.businessRegistryNumber
   });
 };

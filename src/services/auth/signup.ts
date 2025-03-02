@@ -49,72 +49,69 @@ export const signUpDealerWithEmail = async (
       };
     }
 
-    // Try direct signup with Supabase using transaction for atomic operations
     try {
-      // Use edge function with locking mechanism to prevent race conditions
-      const response = await invokeDealerFunction<RegisterResponse>(
-        'register-with-lock', 
-        {
-          email: normalizedEmail,
-          password,
-          supervisorName: safeTrim(metadata.name),
-          // FIX: This is the key issue - we need to match the exact field names expected by the edge function
-          companyName: safeTrim(metadata.companyName),           // Changed from dealershipName to companyName
-          phoneNumber: safeTrim(metadata.phoneNumber),
-          taxId: safeTrim(metadata.taxId),
-          businessRegistryNumber: safeTrim(metadata.businessRegistryNumber),
-          companyAddress: safeTrim(metadata.companyAddress)
-        }
-      );
+      // Call the RPC function directly to create dealer profile
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('create_dealer_with_profile', {
+        p_email: normalizedEmail,
+        p_password: password,
+        p_supervisor_name: safeTrim(metadata.name),
+        p_company_name: safeTrim(metadata.companyName || ''),
+        p_tax_id: safeTrim(metadata.taxId || ''),
+        p_business_registry_number: safeTrim(metadata.businessRegistryNumber || ''),
+        p_address: safeTrim(metadata.companyAddress || '')
+      });
 
-      if (!response.success) {
-        // Check for concurrent registration error
-        if (response.error?.includes("registration in progress") || response.error?.includes("concurrent")) {
-          console.warn("Concurrent registration detected:", response.error);
+      console.log("Direct RPC result:", rpcResult, "Error:", rpcError);
+
+      if (rpcError) {
+        if (rpcError.message?.includes("already exists")) {
           return {
             success: false,
-            error: "Another registration with this email is already in progress. Please try again in a moment."
+            error: "An account with this email already exists. Please login instead."
           };
         }
         
-        // Handle specific error messages from edge function
         return {
           success: false,
-          error: response.error || "Registration failed. Please try again."
+          error: rpcError.message || "Registration failed"
         };
       }
-
-      // Handle simple success message response
-      if (typeof response.data === 'object' && response.data && 'message' in response.data) {
-        console.log("Registration successful with message:", response.data.message);
+      
+      if (rpcResult && typeof rpcResult === 'object') {
+        if (!rpcResult.success) {
+          return {
+            success: false,
+            error: rpcResult.error || "Registration failed with database error"
+          };
+        }
+        
+        // Registration successful
+        console.log("Registration successful via direct RPC call:", rpcResult);
+        
+        // Call the send-welcome-email edge function
+        try {
+          const welcomeResponse = await supabase.functions.invoke('send-dealer-welcome', {
+            body: {
+              email: normalizedEmail,
+              name: safeTrim(metadata.name)
+            }
+          });
+          console.log("Welcome email response:", welcomeResponse);
+        } catch (emailError) {
+          console.error("Failed to send welcome email:", emailError);
+          // Do not fail registration if email fails
+        }
+        
         return {
           success: true,
-          message: response.data.message as string
+          userId: rpcResult.user?.id,
+          message: "Registration successful. Please check your email for verification."
         };
       }
-
-      // Handle standard RegisterResponse format
-      if (!isRegisterResponse(response.data)) {
-        console.error("Invalid registration response format:", response.data);
-        return {
-          success: false,
-          error: "Registration failed - invalid response format from server"
-        };
-      }
-
-      const userId = response.data?.user?.id;
-      if (!userId) {
-        console.error("No user ID in response:", response.data);
-        return {
-          success: false,
-          error: "Registration failed - missing user ID in response"
-        };
-      }
-
-      console.log("Registration successful via edge function with locking! User ID:", userId);
+      
       return {
-        success: true,
-        userId
+        success: false,
+        error: "Invalid response from registration service"
       };
     } catch (error) {
       console.error("Error in registration process:", error);

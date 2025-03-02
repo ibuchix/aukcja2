@@ -59,54 +59,42 @@ export const validatePassword = (password: string): { isValid: boolean; error?: 
  */
 export const checkAccountExists = async (email: string): Promise<boolean> => {
   try {
-    // Try searching in profiles table first (more reliable method)
-    const { data: profileData, error: profileError } = await supabase
+    // Use direct database query approach instead of edge function
+    const { data: userData, error: userError } = await supabase
       .from('profiles')
       .select('id')
+      .eq('id', supabase.auth.user()?.id)
       .maybeSingle();
     
-    if (profileError) {
-      console.error("Error checking profiles table:", profileError);
-    } else if (profileData) {
+    if (userError) {
+      console.error("Error checking profiles:", userError);
+    } else if (userData) {
       return true; // Found a matching profile
     }
     
-    // Try edge function method
+    // Fallback: check if auth can send a reset password to this email
     try {
-      const { data: authData, error: authError } = await supabase.functions.invoke('dealer-auth', {
-        body: {
-          action: 'check-email-exists',
-          email: email
-        }
+      const { error } = await supabase.auth.api.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin
       });
 
-      if (authError) {
-        console.error("Error checking if email exists via edge function:", authError);
-      } else {
-        return authData?.exists || false;
-      }
-    } catch (e) {
-      console.error("Error in edge function check:", e);
-    }
-    
-    // Final attempt - use auth API directly
-    try {
-      const { data, error } = await supabase.auth.signInWithOtp({
-        email: email,
-        options: {
-          shouldCreateUser: false
-        }
-      });
-      
+      // If there's no error, the email exists
       if (!error) {
-        // If this succeeded, the user exists
         return true;
       }
+      
+      // If the error is "User not found", the email doesn't exist
+      if (error && error.message && error.message.toLowerCase().includes('user not found')) {
+        return false;
+      }
+      
+      // For any other error, we'll need to be cautious and assume the email might exist
+      console.error("Error checking email existence:", error);
+      return false;
     } catch (e) {
-      console.error("Error in final auth check:", e);
+      console.error("Error in email existence check:", e);
+      return false;
     }
-    
-    return false; // No evidence the email exists
   } catch (error) {
     console.error("Error in checkAccountExists:", error);
     return false;
