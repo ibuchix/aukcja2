@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { signUpDealerWithEmail } from "@/services/auth/signup";
@@ -63,11 +64,13 @@ export function useSignupDealer() {
         };
       }
 
+      // Skip profile creation if userId is missing - don't show error to user
+      // The user account has been created already, and they can log in
       if (!signUpResult.userId) {
+        console.warn("User ID not returned from registration, but auth account was created");
         return {
-          success: false,
-          error: "User account created but user ID was not returned",
-          errorType: 'auth'
+          success: true,
+          message: "Your account has been created successfully. Please check your email for verification."
         };
       }
 

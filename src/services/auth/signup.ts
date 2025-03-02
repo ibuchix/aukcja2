@@ -80,12 +80,18 @@ export const signUpDealerWithEmail = async (
         };
       }
 
-      // Registration successful
-      console.log("Registration successful via edge function:", response);
+      // Improved user ID extraction with better logging and fallbacks
+      const userId = response.user?.id || response.userId;
+      console.log("Registration successful, extracted userId:", userId);
       
+      if (!userId) {
+        console.warn("User ID is missing from the registration response:", response);
+      }
+
+      // Registration successful
       return {
         success: true,
-        userId: response.user?.id,
+        userId: userId,
         message: response.message || "Registration successful. Please check your email for verification."
       };
     } catch (error) {

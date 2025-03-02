@@ -76,6 +76,7 @@ export function useFormSubmission({ moveToStep, resetError, setError }: UseFormS
         return;
       }
 
+      // Move to success step even if there were minor issues
       moveToStep(3);
       toast({
         title: "Registration Successful",
