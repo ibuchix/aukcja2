@@ -1,55 +1,30 @@
 
-export interface SignUpResult {
-  success: boolean;
-  error?: string;
-  errorType?: 'auth' | 'database' | 'validation' | 'network';
-  userId?: string;
-  message?: string;
-}
-
-export interface UserMetadata {
-  name: string;
-  companyName?: string;
-  phoneNumber?: string;
-  taxId?: string;
-  businessRegistryNumber?: string;
-  companyAddress?: string;
-}
-
-export interface RegisterRequestBody {
-  action: 'register';
+// Define request types
+export interface RegisterRequest {
   email: string;
   password: string;
-  metadata: UserMetadata;
-}
-
-export interface LoginRequestBody {
-  action: 'login';
-  email: string;
-  password: string;
-}
-
-export interface CheckEmailExistsRequestBody {
-  action: 'checkEmailExists';
-  email: string;
-}
-
-export type RequestBody = 
-  | RegisterRequestBody
-  | LoginRequestBody
-  | CheckEmailExistsRequestBody;
-
-export interface RegisterResponse {
-  success: boolean;
-  error?: string;
-  user?: {
-    id: string;
-    email: string;
-    user_metadata: UserMetadata;
+  metadata?: {
+    name?: string;
+    companyName?: string;
+    taxId?: string;
+    businessRegistryNumber?: string;
+    companyAddress?: string;
+    phoneNumber?: string;
+    role?: string;
+    [key: string]: any;
   };
-  message?: string;
 }
 
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface EmailCheckRequest {
+  email: string;
+}
+
+// Response types
 export interface LoginResponse {
   success: boolean;
   session?: any;
@@ -57,6 +32,31 @@ export interface LoginResponse {
   error?: string;
 }
 
-export interface CheckEmailExistsResponseData {
+export interface RegisterResponse {
+  success: boolean;
+  userId?: string;
+  user?: any;
+  error?: string;
+  message?: string;
+}
+
+export interface EmailCheckResponse {
   exists: boolean;
+}
+
+// Type guards
+export function isLoginResponse(obj: any): obj is LoginResponse {
+  return (
+    typeof obj === 'object' && 
+    'success' in obj &&
+    typeof obj.success === 'boolean'
+  );
+}
+
+export function isRegisterResponse(obj: any): obj is RegisterResponse {
+  return (
+    typeof obj === 'object' && 
+    'success' in obj &&
+    typeof obj.success === 'boolean'
+  );
 }
