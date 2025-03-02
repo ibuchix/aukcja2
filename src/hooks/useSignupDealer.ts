@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { signUpDealerWithEmail } from "@/services/auth/signup";
@@ -12,7 +11,7 @@ import {
 import { SignupResult } from "./signup/types";
 import { handleProfileCreation } from "./signup/handleProfileCreation";
 
-export { SignupResult } from "./signup/types";
+export type { SignupResult } from "./signup/types";
 
 export function useSignupDealer() {
   const [isSubmitting, setIsSubmitting] = useState(false);
