@@ -50,68 +50,60 @@ export const signUpDealerWithEmail = async (
     }
 
     try {
-      // Call the RPC function directly to create dealer profile
-      const { data: rpcResult, error: rpcError } = await supabase.rpc('create_dealer_with_profile', {
-        p_email: normalizedEmail,
-        p_password: password,
-        p_supervisor_name: safeTrim(metadata.name),
-        p_company_name: safeTrim(metadata.companyName || ''),
-        p_tax_id: safeTrim(metadata.taxId || ''),
-        p_business_registry_number: safeTrim(metadata.businessRegistryNumber || ''),
-        p_address: safeTrim(metadata.companyAddress || '')
-      });
-
-      console.log("Direct RPC result:", rpcResult, "Error:", rpcError);
-
-      if (rpcError) {
-        if (rpcError.message?.includes("already exists")) {
-          return {
-            success: false,
-            error: "An account with this email already exists. Please login instead."
-          };
+      console.log("Calling dealer-auth function with register action");
+      
+      // Call the dealer-auth edge function to handle registration
+      const { data, error } = await supabase.functions.invoke('dealer-auth', {
+        body: {
+          action: 'register',
+          email: normalizedEmail,
+          password: password,
+          metadata: {
+            name: safeTrim(metadata.name),
+            companyName: safeTrim(metadata.companyName || ''),
+            taxId: safeTrim(metadata.taxId || ''),
+            businessRegistryNumber: safeTrim(metadata.businessRegistryNumber || ''),
+            companyAddress: safeTrim(metadata.companyAddress || ''),
+            phoneNumber: safeTrim(metadata.phoneNumber || '')
+          }
         }
-        
+      });
+      
+      console.log("Edge function response:", data, "Error:", error);
+
+      if (error) {
         return {
           success: false,
-          error: rpcError.message || "Registration failed"
+          error: error.message || "Registration failed with server error"
         };
       }
       
-      if (rpcResult && typeof rpcResult === 'object') {
-        if (!rpcResult.success) {
-          return {
-            success: false,
-            error: rpcResult.error || "Registration failed with database error"
-          };
-        }
-        
-        // Registration successful
-        console.log("Registration successful via direct RPC call:", rpcResult);
-        
-        // Call the send-welcome-email edge function
-        try {
-          const welcomeResponse = await supabase.functions.invoke('send-dealer-welcome', {
-            body: {
-              email: normalizedEmail,
-              name: safeTrim(metadata.name)
-            }
-          });
-          console.log("Welcome email response:", welcomeResponse);
-        } catch (emailError) {
-          console.error("Failed to send welcome email:", emailError);
-          // Do not fail registration if email fails
-        }
-        
+      if (!data) {
         return {
-          success: true,
-          userId: rpcResult.user?.id,
-          message: "Registration successful. Please check your email for verification."
+          success: false,
+          error: "No response from registration service"
         };
       }
+      
+      // Parse the response
+      const response = data as any;
+      
+      if (!response.success) {
+        return {
+          success: false,
+          error: response.error || "Registration failed with an unknown error"
+        };
+      }
+
+      // Registration successful
+      console.log("Registration successful via edge function:", response);
+      
+      // Welcome email should be sent by the edge function
       
       return {
-        success: false,
-        error: "Invalid response from registration service"
+        success: true,
+        userId: response.user?.id,
+        message: response.message || "Registration successful. Please check your email for verification."
       };
     } catch (error) {
       console.error("Error in registration process:", error);

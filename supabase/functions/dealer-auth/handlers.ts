@@ -1,206 +1,183 @@
 
-import { createEdgeClient, createServiceClient } from '@shared/supabase-client.ts';
-import { corsHeaders } from '@shared/cors.ts';
-import { verifyDependencies } from '@shared/dependencies.ts';
+import { createClient } from '@supabase/supabase-js';
+import { v4 as uuidv4 } from "https://jspm.dev/uuid";
+import { supabaseAdmin } from '../_shared/supabase-client.ts';
+import { log, logError } from './logging.ts';
+import { formatErrorResponse, formatSuccessResponse } from './response-utils.ts';
 
-// Initialize early with dependency verification
-verifyDependencies();
-const adminClient = createServiceClient();
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
+const SUPABASE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
-// Modified to accept parsed body and headers instead of raw request
-export async function handleRegister(body: any, headers: Headers) {
+// Initialize Supabase client with service role key for admin privileges
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/**
+ * Check if an email already exists in the system
+ */
+export async function checkEmailExists(req: Request, email: string) {
   try {
-    // Validate required fields
-    const requiredFields = ['email', 'password', 'supervisorName', 'companyName'];
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return createErrorResponse({
-          message: `Missing required field: ${field}`,
-          code: 'missing_field',
-          status: 400
-        });
+    log(`Checking if email exists: ${email}`);
+
+    // Check in auth.users table using admin client
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers({
+      filters: {
+        email: email
       }
-    }
-    
-    // Create client using just the headers
-    const supabaseClient = createEdgeClient(headers);
-
-    // Check if user already exists to provide better error messages
-    const { data: existingUser } = await adminClient
-      .from('profiles')
-      .select('id')
-      .eq('email', body.email.toLowerCase())
-      .maybeSingle();
-
-    if (existingUser) {
-      return createErrorResponse({
-        message: 'User with this email already exists',
-        code: 'user_exists',
-        status: 409
-      });
-    }
-
-    // Use RPC function for atomic registration
-    const { data, error } = await adminClient.rpc('create_dealer_with_profile', {
-      p_email: body.email.toLowerCase(),
-      p_password: body.password,
-      p_supervisor_name: body.supervisorName,
-      p_company_name: body.companyName,
-      p_tax_id: body.taxId || '',
-      p_business_registry_number: body.businessRegistryNumber || '',
-      p_address: body.companyAddress || ''
     });
 
-    if (error) {
-      // Handle specific error codes
-      if (error.message?.includes('already exists')) {
-        return createErrorResponse({
-          message: 'User with this email already exists',
-          code: 'user_exists',
-          status: 409
-        });
-      }
-      
-      return createErrorResponse({
-        message: error.message,
-        code: error.code,
-        status: 400
-      });
+    if (userError) {
+      logError(`Error checking users: ${userError.message}`);
+      throw new Error(`Failed to check user existence: ${userError.message}`);
     }
 
-    // Send verification email if registration successful
-    if (data?.success) {
-      const { error: signInError } = await supabaseClient.auth.signInWithOtp({
-        email: body.email.toLowerCase(),
-        options: {
-          // Use a simpler approach to get origin for redirect
-          emailRedirectTo: body.redirectUrl || 'http://localhost:3000/auth?verify=true'
-        }
-      });
+    const exists = userData && userData.users && userData.users.length > 0;
+    log(`Email exists check result: ${exists}`);
 
-      if (signInError) {
-        console.error('Error sending verification email:', signInError);
-      }
-    }
-
-    return createResponse({
-      success: true,
-      message: 'Registration successful. Please check your email for verification.',
-      userId: data?.user?.id
-    }, 201);
+    return formatSuccessResponse({
+      exists: exists
+    });
   } catch (error) {
-    return createErrorResponse(error);
+    logError(`Error in checkEmailExists: ${error.message}`);
+    return formatErrorResponse(error.message, 400);
   }
 }
 
-// Updated to accept parsed body and headers
-export async function handleLogin(body: any, headers: Headers) {
+/**
+ * Register a new dealer
+ */
+export async function register(req: Request, requestData: any) {
   try {
-    // Validate required fields
-    if (!body.email || !body.password) {
-      return createErrorResponse({
-        message: !body.email ? 'Email is required' : 'Password is required',
-        code: 'missing_credentials',
-        status: 400
-      });
-    }
-    
-    const supabaseClient = createEdgeClient(headers);
-    
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-      email: body.email.toLowerCase(),
-      password: body.password,
-    });
+    log('Starting dealer registration process...');
+    const { email, password, metadata } = requestData;
 
-    if (error) {
-      console.error('Login error:', error);
-      return createErrorResponse({
-        message: 'Invalid login credentials',
-        code: 'invalid_credentials',
-        status: 401
-      });
+    if (!email || !password || !metadata?.name) {
+      return formatErrorResponse('Email, password, and name are required', 400);
     }
 
-    // Fetch dealer profile
-    const { data: dealer, error: dealerError } = await adminClient
-      .from('dealers')
-      .select('*')
-      .eq('user_id', data.user.id)
-      .single();
-
-    if (dealerError && dealerError.code !== 'PGRST116') {
-      console.error('Error fetching dealer profile:', dealerError);
-    }
-
-    return createResponse({
-      success: true,
-      session: data.session,
-      dealer: dealer || null
-    });
-  } catch (error) {
-    console.error('Unexpected error during login:', error);
-    return createErrorResponse(error);
-  }
-}
-
-// Helper to create standardized responses
-function createResponse(data: any, status = 200) {
-  return new Response(
-    JSON.stringify(data),
-    {
-      status,
-      headers: {
-        'Content-Type': 'application/json',
-        ...corsHeaders
+    // Check if email already exists
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers({
+      filters: {
+        email: email
       }
-    }
-  );
-}
-
-function createErrorResponse(error: { message: string, code?: string, status?: number }) {
-  console.error(`Error: ${error.message}`, error);
-  return createResponse({ 
-    success: false, 
-    error: error.message,
-    code: error.code || 'unknown_error'
-  }, error.status || 400);
-}
-
-// Updated to accept parsed body instead of raw request
-export async function handleVerifyPassword(body: any, headers: Headers) {
-  try {
-    if (!body.userId || !body.password) {
-      return createErrorResponse({
-        message: !body.userId ? 'User ID is required' : 'Password is required',
-        code: 'missing_field',
-        status: 400
-      });
-    }
-    
-    const { data, error } = await adminClient.rpc('verify_password', {
-      uuid: body.userId,
-      plain_text: body.password
     });
 
-    if (error) {
-      return createErrorResponse({
-        message: 'Password verification failed',
-        code: 'verification_failed',
-        status: 400
-      });
+    if (userError) {
+      logError(`Error checking existing user: ${userError.message}`);
+      return formatErrorResponse(`Failed to check user existence: ${userError.message}`, 500);
     }
 
-    return createResponse({
+    if (userData && userData.users && userData.users.length > 0) {
+      return formatErrorResponse('User with this email already exists', 400);
+    }
+
+    log('Email validation passed, creating user...');
+
+    // Call the RPC function directly to create dealer with profile
+    const { data: rpcResult, error: rpcError } = await supabase.rpc('create_dealer_with_profile', {
+      p_email: email,
+      p_password: password,
+      p_supervisor_name: metadata.name,
+      p_company_name: metadata.companyName || '',
+      p_tax_id: metadata.taxId || '',
+      p_business_registry_number: metadata.businessRegistryNumber || '',
+      p_address: metadata.companyAddress || ''
+    });
+
+    log(`RPC function result: ${JSON.stringify(rpcResult)}, Error: ${rpcError?.message || 'None'}`);
+
+    if (rpcError) {
+      logError(`Error in creating dealer via RPC: ${rpcError.message}`);
+      return formatErrorResponse(`Failed to create dealer: ${rpcError.message}`, 500);
+    }
+
+    if (!rpcResult || (typeof rpcResult === 'object' && !rpcResult.success)) {
+      const errorMsg = (typeof rpcResult === 'object' && rpcResult.error) 
+        ? rpcResult.error 
+        : 'Failed to create dealer account';
+      return formatErrorResponse(errorMsg, 500);
+    }
+
+    log('Dealer registration successful, sending welcome email...');
+
+    // Send welcome email
+    try {
+      const welcomeEmailResponse = await fetch(`${SUPABASE_URL}/functions/v1/send-dealer-welcome`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_KEY}`
+        },
+        body: JSON.stringify({
+          email: email,
+          name: metadata.name
+        })
+      });
+
+      log(`Welcome email response status: ${welcomeEmailResponse.status}`);
+    } catch (emailError) {
+      logError(`Failed to send welcome email: ${emailError.message}`);
+      // Do not fail registration if email fails
+    }
+
+    return formatSuccessResponse({
       success: true,
-      verified: data
+      user: typeof rpcResult === 'object' ? rpcResult.user : null,
+      message: "Registration successful. Please check your email for verification."
     });
   } catch (error) {
-    return createErrorResponse(error);
+    logError(`Unexpected error in registration: ${error.message}`);
+    return formatErrorResponse(`Registration failed: ${error.message}`, 500);
   }
 }
 
-// Helper function to create Supabase client from headers only
-function createEdgeClientFromHeaders(headers: Headers) {
-  // Implementation details would go here if needed
-  return createEdgeClient(headers);
+/**
+ * Create dealer profile
+ */
+export async function createDealerProfile(req: Request, requestData: any) {
+  try {
+    log('Creating dealer profile...');
+    const { 
+      userId, email, password, supervisorName, companyName, 
+      companyAddress, taxId, businessRegistryNumber 
+    } = requestData;
+
+    if (!userId || !email || !supervisorName) {
+      return formatErrorResponse('User ID, email and supervisor name are required', 400);
+    }
+
+    // Call the RPC function to create dealer profile
+    const { data: rpcResult, error: rpcError } = await supabase.rpc('create_dealer_with_profile', {
+      p_email: email,
+      p_password: password || '',
+      p_supervisor_name: supervisorName,
+      p_company_name: companyName || '',
+      p_tax_id: taxId || '',
+      p_business_registry_number: businessRegistryNumber || '',
+      p_address: companyAddress || ''
+    });
+
+    log(`Dealer profile creation result: ${JSON.stringify(rpcResult)}, Error: ${rpcError?.message || 'None'}`);
+
+    if (rpcError) {
+      logError(`Error creating dealer profile: ${rpcError.message}`);
+      return formatErrorResponse(`Failed to create dealer profile: ${rpcError.message}`, 500);
+    }
+
+    return formatSuccessResponse({
+      success: true,
+      message: "Dealer profile created successfully"
+    });
+  } catch (error) {
+    logError(`Error in createDealerProfile: ${error.message}`);
+    return formatErrorResponse(`Failed to create dealer profile: ${error.message}`, 500);
+  }
 }
+
+/**
+ * Handler mapping to route actions to handler functions
+ */
+export const handlers = {
+  'check-email-exists': checkEmailExists,
+  'register': register,
+  'create-dealer-profile': createDealerProfile,
+};

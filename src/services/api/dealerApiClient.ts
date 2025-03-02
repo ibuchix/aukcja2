@@ -72,10 +72,10 @@ export const invokeDealerFunction = async <T = any>(
         continue;
       }
       
-      if (data.error && typeof data.error === 'string' && 
-          (data.error.includes('already in progress') || 
-           data.error.includes('concurrent'))) {
-        console.warn(`${action} blocked due to concurrent operation:`, data.error);
+      if ((data as any).error && typeof (data as any).error === 'string' && 
+          ((data as any).error.includes('already in progress') || 
+           (data as any).error.includes('concurrent'))) {
+        console.warn(`${action} blocked due to concurrent operation:`, (data as any).error);
         
         if (attempt < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, Math.min(retryDelay * Math.pow(3, attempt - 1), 10000)));
@@ -83,9 +83,9 @@ export const invokeDealerFunction = async <T = any>(
         }
       }
 
-      if (typeof data.success === 'boolean' && !data.success) {
+      if (typeof (data as any).success === 'boolean' && !(data as any).success) {
         console.error(`Attempt ${attempt} failed with success: false:`, data);
-        lastError = new Error(data.message || `Failed to execute ${action}`);
+        lastError = new Error((data as any).message || `Failed to execute ${action}`);
         
         if (attempt < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, Math.min(retryDelay * Math.pow(2, attempt - 1), 5000)));
@@ -148,14 +148,15 @@ export const createDealerProfile = async (
     businessRegistryNumber: string;
   }
 ) => {
-  // Map the function parameters to exactly match the SQL function parameters
-  return await supabase.rpc('create_dealer_with_profile', {
-    p_email: values.email,
-    p_password: values.password,
-    p_supervisor_name: values.supervisorName,
-    p_company_name: values.companyName, 
-    p_address: values.companyAddress,
-    p_tax_id: values.taxId,
-    p_business_registry_number: values.businessRegistryNumber
+  // Use invokeDealerFunction to create dealer profile
+  return await invokeDealerFunction('create-dealer-profile', {
+    userId,
+    email: values.email,
+    password: values.password,
+    supervisorName: values.supervisorName,
+    companyName: values.companyName,
+    companyAddress: values.companyAddress,
+    taxId: values.taxId,
+    businessRegistryNumber: values.businessRegistryNumber
   });
 };

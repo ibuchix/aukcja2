@@ -59,42 +59,31 @@ export const validatePassword = (password: string): { isValid: boolean; error?: 
  */
 export const checkAccountExists = async (email: string): Promise<boolean> => {
   try {
-    // Use direct database query approach instead of edge function
-    const { data: userData, error: userError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', supabase.auth.user()?.id)
-      .maybeSingle();
-    
-    if (userError) {
-      console.error("Error checking profiles:", userError);
-    } else if (userData) {
-      return true; // Found a matching profile
-    }
-    
-    // Fallback: check if auth can send a reset password to this email
-    try {
-      const { error } = await supabase.auth.api.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin
-      });
-
-      // If there's no error, the email exists
-      if (!error) {
-        return true;
+    // Use invokeDealerFunction to check if email exists
+    const { data, error } = await supabase.functions.invoke('dealer-auth', {
+      body: { 
+        action: 'check-email-exists',
+        email 
       }
-      
-      // If the error is "User not found", the email doesn't exist
-      if (error && error.message && error.message.toLowerCase().includes('user not found')) {
-        return false;
-      }
-      
-      // For any other error, we'll need to be cautious and assume the email might exist
+    });
+    
+    if (error) {
       console.error("Error checking email existence:", error);
       return false;
-    } catch (e) {
-      console.error("Error in email existence check:", e);
-      return false;
     }
+    
+    if (data && typeof data === 'object' && 'exists' in data) {
+      return data.exists === true;
+    }
+    
+    // Fallback: check if profiles contain the email
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('id')
+      .ilike('email', email)
+      .maybeSingle();
+      
+    return !!profileData;
   } catch (error) {
     console.error("Error in checkAccountExists:", error);
     return false;

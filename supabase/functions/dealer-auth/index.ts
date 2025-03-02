@@ -1,109 +1,66 @@
 
-import { corsHeaders } from '@shared/cors.ts';
-import { handleRegister, handleLogin, handleVerifyPassword } from './handlers.ts';
-import { performStartupChecks } from '@shared/startup.ts';
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { handlers } from "./handlers.ts";
+import { log, logError } from "./logging.ts";
+import { formatErrorResponse } from "./response-utils.ts";
 
-// Perform startup validation checks at the entry point
-performStartupChecks('dealer-auth/index');
-
-// Define explicit CORS headers for this function
-const dealerAuthCorsHeaders = {
+// CORS headers for browser requests
+const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey, x-client-info",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
-// Primary function handler for all dealer auth requests
-Deno.serve(async (req) => {
-  // Handle health check endpoint
-  if (req.url.endsWith("/health")) {
-    return new Response(JSON.stringify({
-      status: "ok",
-      timestamp: new Date().toISOString()
-    }), {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json"
-      }
-    });
-  }
+// Process startup checks
+try {
+  log("Startup checks completed successfully");
+} catch (e) {
+  logError(`Startup checks failed: ${e.message}`);
+}
 
-  // Handle preflight requests
+const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { 
-      headers: dealerAuthCorsHeaders,
-      status: 204
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
     });
   }
 
   try {
-    // Parse request body ONCE - this is the critical fix
-    const body = await req.json();
-    const action = body.action;
+    const { action, ...requestData } = await req.json();
 
-    console.log(`Dealer auth request received for action: ${action}`);
-
-    let response;
-    
-    // Route to appropriate handler based on action, passing the parsed body
-    switch (action) {
-      case 'register':
-      case 'register-with-lock':
-        response = await handleRegister(body, req.headers);
-        break;
-      
-      case 'login':
-        response = await handleLogin(body, req.headers);
-        break;
-      
-      case 'verify-password':
-        response = await handleVerifyPassword(body, req.headers);
-        break;
-        
-      default:
-        response = new Response(
-          JSON.stringify({
-            success: false,
-            error: `Unknown action: ${action}`
-          }),
-          {
-            status: 400,
-            headers: {
-              'Content-Type': 'application/json',
-              ...corsHeaders
-            }
-          }
-        );
+    // Validate input
+    if (!action || typeof action !== "string") {
+      return formatErrorResponse("Missing or invalid 'action' parameter", 400, corsHeaders);
     }
 
-    // Add the CORS headers to the response
-    const responseHeaders = new Headers(response.headers);
-    Object.entries(dealerAuthCorsHeaders).forEach(([key, value]) => {
-      responseHeaders.set(key, value);
-    });
+    // Check if handler exists for action
+    if (!handlers[action] || typeof handlers[action] !== "function") {
+      return formatErrorResponse(`Unknown action: ${action}`, 400, corsHeaders);
+    }
 
+    log(`Processing action: ${action}`);
+
+    // Call the appropriate handler with request data
+    const response = await handlers[action](req, requestData);
+    
+    // Add CORS headers to response
+    const headers = { ...corsHeaders, ...response.headers };
+    
     // Return the response with CORS headers
     return new Response(response.body, {
       status: response.status,
-      statusText: response.statusText,
-      headers: responseHeaders
+      headers,
     });
-    
   } catch (error) {
-    console.error('Unexpected error processing dealer-auth request:', error);
-    
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred'
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          ...dealerAuthCorsHeaders
-        }
-      }
+    logError(`Unhandled error in request processing: ${error.message}`);
+    return formatErrorResponse(
+      `Internal server error: ${error.message}`,
+      500, 
+      corsHeaders
     );
   }
-});
+};
+
+serve(handler);
