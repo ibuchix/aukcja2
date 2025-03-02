@@ -1,10 +1,10 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { logDebug, logError, logInfo } from "./logging";
-import { registerService, executeServiceAction } from "./service-registry";
-import { handleEmailCheck, handleLogin, handleRegister } from "./handlers";
-import { errorResponse, successResponse } from "./response-utils";
-import { isEmailCheckRequest, isLoginRequest, isRegisterRequest } from "./types";
+import { logDebug, logError, logInfo, logWarn } from "./logging.ts";
+import { registerService, executeServiceAction } from "./service-registry.ts";
+import { handleEmailCheck, handleLogin, handleRegister } from "./handlers.ts";
+import { errorResponse, successResponse } from "./response-utils.ts";
+import { isEmailCheckRequest, isLoginRequest, isRegisterRequest } from "./types.ts";
 
 // CORS headers for cross-origin requests
 const corsHeaders = {
@@ -79,8 +79,3 @@ const handleRequest = async (req: Request): Promise<Response> => {
 
 // Start the server
 serve(handleRequest);
-
-// Log missing import
-function logWarn(message: string, context: any = {}) {
-  console.warn(`[dealer-auth] [WARN] ${message}`, context);
-}

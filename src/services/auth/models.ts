@@ -1,3 +1,4 @@
+
 export interface SignUpResult {
   success: boolean;
   error?: string;
@@ -23,12 +24,12 @@ export interface UserMetadata {
 
 export interface RegisterResponse {
   success: boolean;
+  error?: string;
   user?: {
     id: string;
     email: string;
     user_metadata: UserMetadata;
   };
-  error?: string;
   message?: string;
 }
 
