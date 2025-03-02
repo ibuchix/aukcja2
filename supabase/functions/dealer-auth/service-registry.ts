@@ -1,30 +1,66 @@
 
-// Simple service registry for the dealer-auth function
-// This ensures all necessary services and dependencies are available
+// A simple service registry for the dealer auth function
+// This helps organize different services and their functionality
 
 /**
- * Initializes and registers all services needed by the dealer-auth function
+ * Service registration interface
  */
-export async function registerService(): Promise<void> {
-  // This is a placeholder for any initialization that might be needed
-  // For now, it just validates that the environment is properly set up
+export interface ServiceDefinition {
+  name: string;
+  handlers: Record<string, (...args: any[]) => Promise<any>>;
+}
+
+// Store registered services
+const serviceRegistry: Record<string, ServiceDefinition> = {};
+
+/**
+ * Register a service with its handlers
+ */
+export function registerService(service: ServiceDefinition): void {
+  if (serviceRegistry[service.name]) {
+    console.warn(`Service ${service.name} already registered. Overwriting.`);
+  }
+  serviceRegistry[service.name] = service;
+  console.log(`Service ${service.name} registered successfully`);
+}
+
+/**
+ * Get a service handler by name and action
+ */
+export function getServiceHandler(serviceName: string, handlerName: string): ((...args: any[]) => Promise<any>) | null {
+  const service = serviceRegistry[serviceName];
+  if (!service) {
+    console.error(`Service ${serviceName} not found`);
+    return null;
+  }
+
+  const handler = service.handlers[handlerName];
+  if (!handler) {
+    console.error(`Handler ${handlerName} not found in service ${serviceName}`);
+    return null;
+  }
+
+  return handler;
+}
+
+/**
+ * Execute a service action
+ */
+export async function executeServiceAction(
+  serviceName: string, 
+  actionName: string, 
+  params: any
+): Promise<any> {
+  const handler = getServiceHandler(serviceName, actionName);
   
-  // Check that required environment variables are available
-  const requiredEnvVars = [
-    'SUPABASE_URL',
-    'SUPABASE_SERVICE_ROLE_KEY',
-    'SUPABASE_ANON_KEY'
-  ];
-  
-  const missingVars = requiredEnvVars.filter(
-    envVar => !Deno.env.get(envVar)
-  );
-  
-  if (missingVars.length > 0) {
-    console.warn(`Warning: Missing environment variables: ${missingVars.join(', ')}`);
-    // We don't throw an error here as the function might still work with fallbacks
+  if (!handler) {
+    throw new Error(`Action ${actionName} not available in service ${serviceName}`);
   }
   
-  console.log('Dealer auth service registered successfully');
-  return Promise.resolve();
+  try {
+    return await handler(params);
+  } catch (error) {
+    console.error(`Error executing ${serviceName}.${actionName}:`, error);
+    throw error;
+  }
 }

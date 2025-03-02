@@ -1,31 +1,41 @@
 
-import { corsHeaders } from '../_shared/cors.ts';
+// Standard response utilities for dealer authentication functions
 
 /**
- * Creates a standardized success response
+ * Standard success response format
  */
-export function successResponse(data: any, status = 200) {
-  return new Response(
-    JSON.stringify(data),
-    {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status,
-    }
-  );
+export function successResponse(data: any = {}, message: string = "Operation successful") {
+  return {
+    success: true,
+    message,
+    ...data
+  };
 }
 
 /**
- * Creates a standardized error response
+ * Standard error response format
  */
-export function errorResponse(error: string, status = 400) {
-  return new Response(
-    JSON.stringify({
-      success: false,
-      error: error,
-    }),
-    {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status,
-    }
-  );
+export function errorResponse(error: string | Error, code: string = "general_error", status: number = 400) {
+  const errorMessage = error instanceof Error ? error.message : error;
+  
+  return {
+    success: false,
+    error: errorMessage,
+    code,
+    status
+  };
+}
+
+/**
+ * Format validation errors
+ */
+export function validationErrorResponse(errors: Record<string, string>) {
+  return errorResponse("Validation failed", "validation_error", 422);
+}
+
+/**
+ * Authentication error response
+ */
+export function authErrorResponse(message: string = "Authentication failed") {
+  return errorResponse(message, "auth_error", 401);
 }

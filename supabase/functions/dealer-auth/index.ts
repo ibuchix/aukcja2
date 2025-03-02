@@ -1,65 +1,86 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { corsHeaders } from '../_shared/cors.ts';
-import { registerService } from './service-registry.ts';
-import { handlers } from './handlers.ts';
 
-// Main handler function
-serve(async (req: Request) => {
-  console.log('dealer-auth function started.');
-  
-  try {
-    // Check that startup requirements are met
-    await registerService();
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { logDebug, logError, logInfo } from "./logging";
+import { registerService, executeServiceAction } from "./service-registry";
+import { handleEmailCheck, handleLogin, handleRegister } from "./handlers";
+import { errorResponse, successResponse } from "./response-utils";
+import { isEmailCheckRequest, isLoginRequest, isRegisterRequest } from "./types";
 
-    // Handle CORS preflight requests
-    if (req.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
-    }
+// CORS headers for cross-origin requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
-    // Parse request body
-    let requestData: any = {};
-    try {
-      requestData = await req.json();
-    } catch (e) {
-      console.error(`Error parsing request JSON: ${e.message}`);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Invalid JSON' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const { action, ...payload } = requestData;
-
-    // Log the request for debugging
-    console.log(`Received action: ${action}`);
-
-    // Check if action is specified
-    if (!action) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'No action specified' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Check if handler exists for the action
-    if (!handlers[action]) {
-      return new Response(
-        JSON.stringify({ success: false, error: `Unknown action: ${action}` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Call the appropriate handler
-    return await handlers[action](req, payload);
-
-  } catch (error) {
-    console.error(`Unhandled error: ${error.message}`);
-    
-    return new Response(
-      JSON.stringify({ success: false, error: `Dealer auth service error: ${error.message}` }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+// Register dealer authentication service
+registerService({
+  name: 'auth',
+  handlers: {
+    register: handleRegister,
+    login: handleLogin,
+    checkEmailExists: handleEmailCheck,
   }
 });
 
-export { handlers };
+// Log startup
+logInfo("Startup checks completed successfully");
+
+// Main request handler
+const handleRequest = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    // Parse the request body
+    const requestData = await req.json();
+    logDebug('Received request', requestData);
+
+    // Determine the action based on the request
+    if (isRegisterRequest(requestData)) {
+      const result = await handleRegister(requestData);
+      return new Response(
+        JSON.stringify(result),
+        { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    } 
+    else if (isLoginRequest(requestData)) {
+      const result = await handleLogin(requestData);
+      return new Response(
+        JSON.stringify(result),
+        { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    } 
+    else if (isEmailCheckRequest(requestData)) {
+      const result = await handleEmailCheck(requestData);
+      return new Response(
+        JSON.stringify(result),
+        { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+    else {
+      // Unknown action
+      logWarn('Unknown request action', { action: requestData.action });
+      return new Response(
+        JSON.stringify(errorResponse('Invalid or missing action')),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+  } catch (error) {
+    // Handle unexpected errors
+    logError('Unexpected error handling request', { error });
+    return new Response(
+      JSON.stringify(errorResponse('Internal server error')),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  }
+};
+
+// Start the server
+serve(handleRequest);
+
+// Log missing import
+function logWarn(message: string, context: any = {}) {
+  console.warn(`[dealer-auth] [WARN] ${message}`, context);
+}

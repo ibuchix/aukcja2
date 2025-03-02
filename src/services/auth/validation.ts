@@ -54,12 +54,16 @@ export const validatePassword = (password: string): { isValid: boolean; error?: 
   return { isValid: true };
 };
 
+// Import supabase client
+import { supabase } from "@/integrations/supabase/client";
+
 /**
  * Checks if an account already exists with the given email
+ * using the new edge function approach
  */
 export const checkAccountExists = async (email: string): Promise<boolean> => {
   try {
-    // Use invokeDealerFunction to check if email exists
+    // Use edge function to check if email exists
     const { data, error } = await supabase.functions.invoke('dealer-auth', {
       body: { 
         action: 'check-email-exists',
@@ -72,23 +76,9 @@ export const checkAccountExists = async (email: string): Promise<boolean> => {
       return false;
     }
     
-    if (data && typeof data === 'object' && 'exists' in data) {
-      return data.exists === true;
-    }
-    
-    // Fallback: check if profiles contain the email
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('id')
-      .ilike('email', email)
-      .maybeSingle();
-      
-    return !!profileData;
+    return data?.exists === true;
   } catch (error) {
     console.error("Error in checkAccountExists:", error);
     return false;
   }
 };
-
-// Import supabase client
-import { supabase } from "@/integrations/supabase/client";

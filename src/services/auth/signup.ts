@@ -37,18 +37,6 @@ export const signUpDealerWithEmail = async (
       return { success: false, error: "Name is required" };
     }
 
-    // Normalize inputs
-    const normalizedEmail = safeTrim(email).toLowerCase();
-
-    // Check if email already exists
-    const emailExists = await checkAccountExists(normalizedEmail);
-    if (emailExists) {
-      return {
-        success: false,
-        error: "An account with this email already exists. Please login instead."
-      };
-    }
-
     try {
       console.log("Calling dealer-auth function with register action");
       
@@ -56,7 +44,7 @@ export const signUpDealerWithEmail = async (
       const { data, error } = await supabase.functions.invoke('dealer-auth', {
         body: {
           action: 'register',
-          email: normalizedEmail,
+          email: safeTrim(email).toLowerCase(),
           password: password,
           metadata: {
             name: safeTrim(metadata.name),
@@ -97,8 +85,6 @@ export const signUpDealerWithEmail = async (
 
       // Registration successful
       console.log("Registration successful via edge function:", response);
-      
-      // Welcome email should be sent by the edge function
       
       return {
         success: true,
