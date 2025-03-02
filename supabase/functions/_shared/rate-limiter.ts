@@ -1,35 +1,57 @@
 
-export class RateLimiter {
-  private tokens: number;
-  private lastRefill: number;
-  private tokensPerInterval: number;
-  private interval: number;
+/**
+ * Rate limiting functionality for Supabase Edge Functions
+ * Simple in-memory implementation (for demo purposes)
+ */
 
-  constructor({ tokensPerInterval, interval }: { tokensPerInterval: number, interval: string }) {
-    this.tokens = tokensPerInterval;
-    this.lastRefill = Date.now();
-    this.tokensPerInterval = tokensPerInterval;
-    this.interval = interval === 'minute' ? 60000 : 3600000;
+// Store for rate limit counters - will reset on function restarts
+const rateLimits: Record<string, { count: number, lastReset: number }> = {};
+
+export interface RateLimitResult {
+  isLimited: boolean;
+  retryAfter: number;
+}
+
+/**
+ * Check if a request should be rate limited
+ * @param key The key to use for rate limiting (e.g. IP address, user ID)
+ * @param prefix A prefix to add to the key (e.g. function name)
+ * @param windowSeconds The time window in seconds
+ * @param maxRequests The maximum number of requests allowed in the time window
+ * @returns Whether the request is rate limited and retry time if limited
+ */
+export async function checkForRateLimit(
+  key: string,
+  prefix: string,
+  windowSeconds: number,
+  maxRequests: number
+): Promise<RateLimitResult> {
+  // Create a combined key for the rate limit
+  const limitKey = `${prefix}:${key}`;
+  const now = Date.now();
+  
+  // Initialize or get current entry
+  let entry = rateLimits[limitKey];
+  if (!entry) {
+    entry = { count: 0, lastReset: now };
+    rateLimits[limitKey] = entry;
   }
-
-  async check(request: Request): Promise<boolean> {
-    const now = Date.now();
-    const timePassed = now - this.lastRefill;
-    
-    if (timePassed > this.interval) {
-      this.tokens = this.tokensPerInterval;
-      this.lastRefill = now;
-    } else {
-      const tokensToAdd = Math.floor(timePassed * (this.tokensPerInterval / this.interval));
-      this.tokens = Math.min(this.tokensPerInterval, this.tokens + tokensToAdd);
-      this.lastRefill = now;
-    }
-
-    if (this.tokens > 0) {
-      this.tokens--;
-      return true;
-    }
-
-    return false;
+  
+  // Check if window has expired and reset if needed
+  if (now - entry.lastReset > windowSeconds * 1000) {
+    entry.count = 0;
+    entry.lastReset = now;
   }
+  
+  // Increment counter
+  entry.count += 1;
+  
+  // Check if over limit
+  if (entry.count > maxRequests) {
+    // Calculate retry time
+    const retryAfter = Math.ceil((entry.lastReset + windowSeconds * 1000 - now) / 1000);
+    return { isLimited: true, retryAfter: retryAfter > 0 ? retryAfter : 1 };
+  }
+  
+  return { isLimited: false, retryAfter: 0 };
 }

@@ -1,10 +1,5 @@
 
-import { RegisterRequest, LoginRequest, EmailCheckRequest } from './types.ts';
-
-interface ValidationResult {
-  valid: boolean;
-  error?: string;
-}
+import { RegisterRequest, LoginRequest, EmailCheckRequest, ValidationResult } from './types.ts';
 
 // Validate registration request
 export function validateRegisterRequest(request: any): ValidationResult {

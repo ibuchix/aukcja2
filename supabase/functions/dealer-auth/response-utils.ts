@@ -1,32 +1,42 @@
 
-// Helper to build a standardized success response
-export function createSuccessResponse(data: any): Response {
+import { corsHeaders } from '../_shared/cors.ts';
+
+/**
+ * Creates a successful response with proper headers
+ */
+export function createSuccessResponse(data: any, status = 200): Response {
   return new Response(
     JSON.stringify(data),
     {
-      status: 200,
-      headers: { 
-        "Content-Type": "application/json",
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+      status,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
       }
     }
   );
 }
 
-// Helper to build a standardized error response
-export function createErrorResponse(message: string, status: number = 400): Response {
+/**
+ * Creates an error response with proper headers
+ */
+export function createErrorResponse(
+  message: string,
+  status = 400,
+  details?: Record<string, any>
+): Response {
+  const errorBody = {
+    error: message,
+    ...(details ? { details } : {})
+  };
+
   return new Response(
-    JSON.stringify({
-      success: false,
-      error: message
-    }),
+    JSON.stringify(errorBody),
     {
       status,
-      headers: { 
-        "Content-Type": "application/json",
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
       }
     }
   );

@@ -1,8 +1,8 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createErrorResponse, createSuccessResponse } from './response-utils.ts';
-import { logError, logInfo } from './logging';
-import { LoginRequest, RegisterRequest, EmailCheckRequest } from './types';
+import { logError, logInfo } from './logging.ts';
+import { LoginRequest, RegisterRequest, EmailCheckRequest } from './types.ts';
 
 export const checkEmailExists = async (
   supabase: SupabaseClient,
@@ -18,7 +18,7 @@ export const checkEmailExists = async (
       logInfo('Checking email using RPC function');
       const { data: rpcResult, error: rpcError } = await supabase.rpc(
         'check_email_exists',
-        { p_email: email }
+        { email_to_check: email }
       );
       
       if (!rpcError && rpcResult) {
@@ -127,7 +127,7 @@ export const registerUser = async (
     try {
       const { data: existsData, error: existsError } = await supabase.rpc(
         'check_email_exists',
-        { p_email: email }
+        { email_to_check: email }
       );
       
       if (!existsError && existsData) {
