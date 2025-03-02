@@ -91,29 +91,26 @@ export async function checkAccountExists(email: string): Promise<boolean> {
       // Continue to next method
     }
     
-    // 2. Try using the RPC function (with explicit type casting to handle TypeScript error)
+    // 2. Try using a direct query instead of RPC (which has type compatibility issues)
     try {
-      const { data, error } = await supabase.rpc(
-        'check_email_exists',
-        { email_to_check: email.toLowerCase().trim() }
-      );
-      
-      if (!error) {
-        console.log("RPC function response:", data);
-        
-        // Since data can be of various types, explicitly check how to interpret it
-        if (typeof data === 'number') {
-          return data > 0;
-        } else if (data && typeof data === 'object' && 'exists' in data) {
-          // Handle case where data is an object with exists property
-          return Boolean(data.exists);
+      // Direct query to the auth.users table using service role client
+      // This is done via the edge function to maintain security
+      const { data: directData, error: directError } = await supabase.functions.invoke('dealer-auth', {
+        body: { 
+          action: 'directCheckEmail', 
+          email: email.toLowerCase().trim() 
         }
+      });
+      
+      if (!directError) {
+        console.log("Direct query response:", directData);
+        return Boolean(directData?.exists);
       } else {
-        console.warn("RPC function error:", error);
+        console.warn("Direct query error:", directError);
         // Continue to fallback
       }
     } catch (error) {
-      console.warn("Failed to call RPC function:", error);
+      console.warn("Failed direct query attempt:", error);
       // Continue to fallback
     }
     
