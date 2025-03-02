@@ -4,7 +4,7 @@
 /**
  * Standard success response format
  */
-export function successResponse(data: any = {}, message: string = "Operation successful") {
+export function respondSuccess(data: any = {}, message: string = "Operation successful") {
   return {
     success: true,
     message,
@@ -15,14 +15,13 @@ export function successResponse(data: any = {}, message: string = "Operation suc
 /**
  * Standard error response format
  */
-export function errorResponse(error: string | Error, code: string = "general_error", status: number = 400) {
+export function respondError(error: string | Error, statusCode: number = 400) {
   const errorMessage = error instanceof Error ? error.message : error;
   
   return {
     success: false,
     error: errorMessage,
-    code,
-    status
+    status: statusCode
   };
 }
 
@@ -30,12 +29,16 @@ export function errorResponse(error: string | Error, code: string = "general_err
  * Format validation errors
  */
 export function validationErrorResponse(errors: Record<string, string>) {
-  return errorResponse("Validation failed", "validation_error", 422);
+  return respondError("Validation failed", 422);
 }
 
 /**
  * Authentication error response
  */
 export function authErrorResponse(message: string = "Authentication failed") {
-  return errorResponse(message, "auth_error", 401);
+  return respondError(message, 401);
 }
+
+// For backward compatibility with existing code that might use these names
+export const successResponse = respondSuccess;
+export const errorResponse = respondError;
