@@ -57,3 +57,8 @@ export function logError(message: string, error?: any): void {
     }
   }
 }
+
+// Add a function to log request details
+export function logRequest(requestId: string, method: string, body: any): void {
+  logInfo(`Request ${requestId} | ${method}`, body);
+}

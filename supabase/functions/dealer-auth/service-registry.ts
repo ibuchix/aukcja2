@@ -1,42 +1,68 @@
 
-// Service registry for dealer authentication
+import { RegisterRequest, LoginRequest, EmailCheckRequest } from './types.ts';
 
-type ServiceHandler = (...args: any[]) => Promise<any>;
-
-interface Service {
-  name: string;
-  handlers: Record<string, ServiceHandler>;
+interface ValidationResult {
+  valid: boolean;
+  error?: string;
 }
 
-const services: Record<string, Service> = {};
+// Validate registration request
+export function validateRegisterRequest(request: any): ValidationResult {
+  if (!request || typeof request !== 'object') {
+    return { valid: false, error: 'Invalid request format' };
+  }
 
-/**
- * Register a service with its handlers
- */
-export function registerService(service: Service): void {
-  services[service.name] = service;
-  console.log(`Service "${service.name}" registered with handlers: ${Object.keys(service.handlers).join(', ')}`);
+  if (!request.email || typeof request.email !== 'string') {
+    return { valid: false, error: 'Email is required and must be a string' };
+  }
+
+  if (!request.password || typeof request.password !== 'string') {
+    return { valid: false, error: 'Password is required and must be a string' };
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(request.email)) {
+    return { valid: false, error: 'Invalid email format' };
+  }
+
+  if (request.password.length < 8) {
+    return { valid: false, error: 'Password must be at least 8 characters long' };
+  }
+
+  return { valid: true };
 }
 
-/**
- * Execute a service action
- */
-export async function executeServiceAction(
-  serviceName: string,
-  action: string,
-  payload: any
-): Promise<any> {
-  const service = services[serviceName];
-  
-  if (!service) {
-    throw new Error(`Service "${serviceName}" not found`);
+// Validate login request
+export function validateLoginRequest(request: any): ValidationResult {
+  if (!request || typeof request !== 'object') {
+    return { valid: false, error: 'Invalid request format' };
   }
-  
-  const handler = service.handlers[action];
-  
-  if (!handler) {
-    throw new Error(`Action "${action}" not found in service "${serviceName}"`);
+
+  if (!request.email || typeof request.email !== 'string') {
+    return { valid: false, error: 'Email is required and must be a string' };
   }
-  
-  return await handler(payload);
+
+  if (!request.password || typeof request.password !== 'string') {
+    return { valid: false, error: 'Password is required and must be a string' };
+  }
+
+  return { valid: true };
+}
+
+// Validate email check request
+export function validateEmailCheckRequest(request: any): ValidationResult {
+  if (!request || typeof request !== 'object') {
+    return { valid: false, error: 'Invalid request format' };
+  }
+
+  if (!request.email || typeof request.email !== 'string') {
+    return { valid: false, error: 'Email is required and must be a string' };
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(request.email)) {
+    return { valid: false, error: 'Invalid email format' };
+  }
+
+  return { valid: true };
 }
