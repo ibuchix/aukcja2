@@ -26,7 +26,7 @@ export const signInDealerWithEmail = async (
     console.log("Starting dealer login with native Supabase auth");
     
     // Step 1: Use Supabase's native auth for sign in with retry capability
-    const authResult = await executeWithRetry(
+    const authResult = await executeWithRetry<{ session: Session | null; user: User | null }>(
       async () => {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: normalizedEmail,
@@ -59,17 +59,19 @@ export const signInDealerWithEmail = async (
     // Step 2: After authentication, fetch dealer profile data directly from the database
     // with retry capability for network issues
     try {
-      const { data: dealer, error: profileError } = await executeWithRetry(
-        () => supabase
+      const result = await executeWithRetry<{ data: any; error: any }>(
+        async () => supabase
           .from('dealers')
           .select('*')
-          .eq('user_id', authResult.user.id)
+          .eq('user_id', authResult.user!.id)
           .single(),
         {
           maxRetries: 2,
           baseDelay: 300
         }
       );
+
+      const { data: dealer, error: profileError } = result;
 
       if (profileError) {
         console.warn("Profile fetch error (non-fatal):", profileError);
