@@ -1,3 +1,4 @@
+
 export interface SignUpResult {
   success: boolean;
   error?: string;
@@ -14,6 +15,8 @@ export interface SignInResult {
   error?: string;
   session?: any;
   dealer?: any;
+  partialSuccess?: boolean;
+  warning?: string;
 }
 
 export interface UserMetadata {
@@ -41,6 +44,8 @@ export interface LoginResponse {
   session?: any;
   dealer?: any;
   error?: string;
+  partialSuccess?: boolean;
+  warning?: string;
 }
 
 export interface ProfileUpdateResponse {

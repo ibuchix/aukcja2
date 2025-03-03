@@ -1,6 +1,6 @@
 
 import { validateEmail, safeTrim } from "./validation";
-import { SignInResult, LoginResponse, isLoginResponse } from "./models";
+import { SignInResult, LoginResponse } from "./models";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -20,55 +20,54 @@ export const signInDealerWithEmail = async (
   const normalizedEmail = safeTrim(email).toLowerCase();
 
   try {
-    console.log("Calling dealer-auth function with login action");
+    console.log("Starting dealer login with native Supabase auth");
     
-    // Use the edge function for login
-    const { data, error } = await supabase.functions.invoke('dealer-auth', {
-      body: {
-        action: 'login',
-        email: normalizedEmail,
-        password
-      }
+    // Step 1: Use Supabase's native auth for sign in
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password
     });
 
-    if (error) {
-      console.error("Login function error:", error);
+    if (authError) {
+      console.error("Login auth error:", authError);
       return {
         success: false,
-        error: error.message || "Login failed. Please check your credentials."
+        error: authError.message || "Login failed. Please check your credentials."
       };
     }
 
-    if (!data) {
+    if (!authData.session) {
       return {
         success: false,
-        error: "No response from authentication service"
+        error: "Authentication successful but no session was created"
       };
     }
 
-    console.log("Login data structure:", JSON.stringify(data, null, 2));
+    // Step 2: After authentication, fetch dealer profile data
+    const { data: dealer, error: profileError } = await supabase
+      .from('dealers')
+      .select('*')
+      .eq('user_id', authData.user.id)
+      .single();
 
-    // Use type guard to validate login response
-    if (!isLoginResponse(data)) {
-      console.error("Invalid login response format:", data);
+    if (profileError) {
+      console.warn("Profile fetch error (non-fatal):", profileError);
+      // Still return success if auth worked but profile fetch failed
+      // The user can still log in but might have limited functionality
       return {
-        success: false,
-        error: "Login failed - invalid response format from server"
+        success: true,
+        session: authData.session,
+        dealer: null,
+        partialSuccess: true,
+        warning: "Your account was authenticated, but we couldn't fetch your dealer profile."
       };
     }
 
-    if (!data.success) {
-      return {
-        success: false,
-        error: data.error || "Login failed with unknown error"
-      };
-    }
-
-    console.log("Login successful via edge function!");
+    console.log("Login successful with profile fetch!");
     return {
       success: true,
-      session: data.session,
-      dealer: data.dealer
+      session: authData.session,
+      dealer
     };
   } catch (error) {
     console.error("Unexpected login error:", error);

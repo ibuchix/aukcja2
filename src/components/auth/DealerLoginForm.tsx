@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { signInDealerWithEmail } from "@/services/auth/signin";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const loginFormSchema = z.object({
   email: z.string()
@@ -37,6 +37,7 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 export function DealerLoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -51,6 +52,7 @@ export function DealerLoginForm() {
   async function onSubmit(values: LoginFormValues) {
     setIsSubmitting(true);
     setLoginError(null);
+    setWarningMessage(null);
     
     try {
       console.log("Attempting login with email:", values.email);
@@ -60,6 +62,12 @@ export function DealerLoginForm() {
         console.error("Login failed:", result.error);
         setLoginError(result.error || "Invalid credentials. Please check your email and password.");
         return;
+      }
+
+      // Handle partial success case (authenticated but profile issues)
+      if (result.partialSuccess && result.warning) {
+        setWarningMessage(result.warning);
+        console.warn("Partial login success:", result.warning);
       }
 
       toast({
@@ -84,6 +92,14 @@ export function DealerLoginForm() {
         {loginError && (
           <Alert variant="destructive" className="mb-4">
             <AlertDescription>{loginError}</AlertDescription>
+          </Alert>
+        )}
+        
+        {warningMessage && (
+          <Alert variant="warning" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Warning</AlertTitle>
+            <AlertDescription>{warningMessage}</AlertDescription>
           </Alert>
         )}
         
