@@ -25,7 +25,35 @@ export const signInDealerWithEmail = async (
   try {
     console.log("Starting dealer login with native Supabase auth");
     
-    // Step 1: Use Supabase's native auth for sign in with retry capability
+    // Try first with direct dealer-auth function call (compatible with custom registration)
+    try {
+      console.log("Attempting login via dealer-auth function for custom registration compatibility");
+      const { data: authFuncData, error: authFuncError } = await supabase.functions.invoke('dealer-auth', {
+        body: {
+          action: 'login',
+          email: normalizedEmail,
+          password,
+          requestId: crypto.randomUUID(),
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+      if (!authFuncError && authFuncData && authFuncData.success) {
+        console.log("Login successful via dealer-auth function!");
+        return {
+          success: true,
+          session: authFuncData.session,
+          dealer: authFuncData.dealer
+        };
+      }
+      
+      console.log("Login via dealer-auth not successful, falling back to native auth");
+    } catch (funcError) {
+      console.warn("Error in dealer-auth function call (non-fatal):", funcError);
+      // Continue to native auth as fallback
+    }
+    
+    // Fallback: Use Supabase's native auth for sign in with retry capability
     const authResult = await executeWithRetry<{ session: Session | null; user: User | null }>(
       async () => {
         const { data, error } = await supabase.auth.signInWithPassword({
