@@ -43,9 +43,12 @@ serve(async (req) => {
       );
     }
 
-    // Generate a session using the admin API
+    // Generate a session using the admin API with explicit options
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createSession({
-      userId: userId
+      userId: userId,
+      properties: {
+        created_at: new Date().toISOString()
+      }
     });
 
     if (authError) {
@@ -62,7 +65,7 @@ serve(async (req) => {
       );
     }
 
-    console.log("Session created successfully");
+    console.log("Session created successfully:", authData.session.user.id);
     
     // Return the session data
     return new Response(

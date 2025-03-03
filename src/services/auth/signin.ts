@@ -77,7 +77,7 @@ export const signInDealerWithEmail = async (
       };
     }
     
-    console.log("Authentication successful, creating session");
+    console.log("Authentication successful, creating session for user ID:", typedResult.user_id);
     
     // Instead of using signInWithPassword, use our edge function to create a session
     // This bypasses the password verification that was causing issues
@@ -90,15 +90,15 @@ export const signInDealerWithEmail = async (
     }
     
     // Call our secure edge function to create a session
-    const { data: sessionResponse, error: functionError } = await supabase.functions.invoke(
+    const response = await supabase.functions.invoke(
       'create-dealer-session',
       {
         body: { userId: typedResult.user_id }
       }
     );
     
-    if (functionError) {
-      console.error("Session creation error:", functionError);
+    if (response.error) {
+      console.error("Session creation error:", response.error);
       
       // Even though authentication succeeded, session creation failed
       // This is a partial success case
@@ -110,30 +110,19 @@ export const signInDealerWithEmail = async (
       };
     }
     
-    if (!sessionResponse.success || !sessionResponse.session) {
+    const sessionResponse = response.data;
+    
+    if (!sessionResponse || !sessionResponse.success || !sessionResponse.session) {
       console.error("No session created despite successful auth:", sessionResponse);
       return {
         success: false,
         error: "Authentication succeeded but session creation failed."
       };
     }
+
+    console.log("Session created successfully:", sessionResponse.session.user.id);
     
-    // Store the session in the Supabase client
-    const { data: setSessionData, error: setSessionError } = await supabase.auth.setSession({
-      access_token: sessionResponse.session.access_token,
-      refresh_token: sessionResponse.session.refresh_token
-    });
-    
-    if (setSessionError) {
-      console.error("Error setting session:", setSessionError);
-      return {
-        success: false,
-        error: "Authentication succeeded but there was an error setting your session."
-      };
-    }
-    
-    // Return the complete successful result
-    console.log("Login fully successful with session and dealer profile");
+    // Return the complete successful result with session
     return {
       success: true,
       session: sessionResponse.session,

@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { signInDealerWithEmail } from "@/services/auth/signin";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 const loginFormSchema = z.object({
   email: z.string()
@@ -61,27 +62,52 @@ export function DealerLoginForm() {
       if (!result.success) {
         console.error("Login failed:", result.error);
         setLoginError(result.error || "Invalid credentials. Please check your email and password.");
+        setIsSubmitting(false);
         return;
       }
 
-      // Handle partial success case (authenticated but profile issues)
-      if (result.partialSuccess && result.warning) {
-        setWarningMessage(result.warning);
-        console.warn("Partial login success:", result.warning);
+      // Check if we got a session back
+      if (result.session) {
+        console.log("Login successful, got session:", result.session.user.id);
+        
+        // Store the session
+        const { error: setSessionError } = await supabase.auth.setSession({
+          access_token: result.session.access_token,
+          refresh_token: result.session.refresh_token
+        });
+        
+        if (setSessionError) {
+          console.error("Error setting session:", setSessionError);
+          setWarningMessage("Authenticated but session setup failed. Please try again.");
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // Verify the session was set correctly
+        const { data: currentSession } = await supabase.auth.getSession();
+        console.log("Current session after login:", currentSession?.session?.user?.id);
+        
+        toast({
+          title: "Login Successful",
+          description: "Redirecting to dashboard...",
+        });
+        
+        // Navigate to dashboard with a slight delay to ensure session is processed
+        setTimeout(() => {
+          navigate('/dealer/dashboard');
+          setIsSubmitting(false);
+        }, 500);
+      } else {
+        // Handle partial success case
+        if (result.partialSuccess && result.warning) {
+          setWarningMessage(result.warning);
+          console.warn("Partial login success:", result.warning);
+        }
+        setIsSubmitting(false);
       }
-
-      toast({
-        title: "Login Successful",
-        description: "Redirecting to dashboard...",
-      });
-      
-      // Navigate to dashboard
-      navigate('/dealer/dashboard');
-
     } catch (error) {
       console.error("Login error:", error);
       setLoginError(error instanceof Error ? error.message : "An unexpected error occurred");
-    } finally {
       setIsSubmitting(false);
     }
   }
