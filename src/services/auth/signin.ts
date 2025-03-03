@@ -34,7 +34,22 @@ export const signInDealerWithEmail = async (
   try {
     console.log("Starting dealer login process with email:", normalizedEmail);
     
-    // Use the specialized login function that handles custom registration
+    // First, try direct login which is the simplest approach
+    const { data: directSignIn, error: directSignInError } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password: password
+    });
+    
+    if (!directSignInError && directSignIn.session) {
+      console.log("Direct login successful, returning session");
+      return {
+        success: true,
+        session: directSignIn.session
+      };
+    }
+    
+    // If direct login fails, use the specialized function that handles custom registration
+    console.log("Direct login failed, falling back to RPC authentication");
     const { data: authResult, error: authError } = await supabase.rpc(
       'authenticate_dealer',
       { 
@@ -79,8 +94,6 @@ export const signInDealerWithEmail = async (
     
     console.log("Authentication successful, creating session for user ID:", typedResult.user_id);
     
-    // Instead of using signInWithPassword, use our edge function to create a session
-    // This bypasses the password verification that was causing issues
     if (!typedResult.user_id) {
       console.error("Authentication succeeded but no user_id was returned");
       return {
@@ -89,19 +102,39 @@ export const signInDealerWithEmail = async (
       };
     }
     
-    // Call our secure edge function to create a session
+    // Try to sign in again now that we've verified credentials
+    console.log("Attempting direct signin after credential verification");
+    const { data: verifiedSignIn, error: verifiedSignInError } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password: password
+    });
+    
+    if (!verifiedSignInError && verifiedSignIn.session) {
+      console.log("Post-verification direct login successful");
+      return {
+        success: true,
+        session: verifiedSignIn.session,
+        dealer: typedResult.dealer
+      };
+    }
+    
+    // If direct login still fails, use our edge function as last resort
+    console.log("Direct login still failed, using edge function");
+    
+    // Call the edge function with both userId and email for redundancy
     const response = await supabase.functions.invoke(
       'create-dealer-session',
       {
-        body: { userId: typedResult.user_id }
+        body: { 
+          userId: typedResult.user_id,
+          email: normalizedEmail
+        }
       }
     );
     
     if (response.error) {
       console.error("Session creation error:", response.error);
       
-      // Even though authentication succeeded, session creation failed
-      // This is a partial success case
       return {
         success: true,
         partialSuccess: true,

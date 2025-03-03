@@ -32,9 +32,9 @@ serve(async (req) => {
 
   try {
     // Parse request body
-    const { userId } = await req.json();
+    const { userId, email } = await req.json();
     
-    console.log(`Creating session for user: ${userId}`);
+    console.log(`Creating session for user: ${userId} with email: ${email || 'not provided'}`);
     
     if (!userId) {
       return new Response(
@@ -49,25 +49,84 @@ serve(async (req) => {
       );
     }
 
-    // First verify the user exists
+    // If email is provided, use it directly (preferred approach)
+    if (email) {
+      console.log(`Attempting to sign in with email: ${email}`);
+      
+      // Sign in directly using the admin client
+      const { data: sessionData, error: signInError } = await supabaseAdmin.auth.admin.signInWithEmail(email);
+      
+      if (signInError) {
+        console.error("Error signing in with email:", signInError.message);
+        
+        // Fall back to getting user by ID if direct signin fails
+        console.log("Falling back to user lookup by ID");
+      } else if (sessionData?.session) {
+        console.log("Successfully created session via email signin");
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            session: sessionData.session
+          }),
+          { 
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200 
+          }
+        );
+      }
+    }
+
+    // Try to get user by ID as fallback
+    console.log("Looking up user by ID:", userId);
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
     
     if (userError || !userData?.user) {
       console.error("Error finding user:", userError?.message || "User not found");
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: userError?.message || "User not found" 
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 404 
+      
+      // Try to look up user by email as a last resort
+      if (email) {
+        console.log("Attempting to look up user by email as fallback");
+        const { data: userByEmailData, error: emailLookupError } = await supabaseAdmin.auth.admin.listUsers({
+          filter: {
+            email: email
+          }
+        });
+        
+        if (emailLookupError || !userByEmailData?.users?.length) {
+          console.error("Email lookup failed:", emailLookupError?.message || "No users found with that email");
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: "User not found by either ID or email" 
+            }),
+            { 
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 404 
+            }
+          );
         }
-      );
+        
+        // Use the found user
+        userData.user = userByEmailData.users[0];
+        console.log("Found user by email lookup:", userData.user.id);
+      } else {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: userError?.message || "User not found" 
+          }),
+          { 
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 404 
+          }
+        );
+      }
     }
 
-    // Generate a session - Using the correct method
-    // Use signInWithUser method instead which is available in this version
+    console.log("User found:", userData.user.id, "Email:", userData.user.email);
+
+    // Create a sign-in link for the user
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'magiclink',
       email: userData.user.email || '',
@@ -77,7 +136,7 @@ serve(async (req) => {
     });
 
     if (authError) {
-      console.error("Error creating session:", authError.message);
+      console.error("Error generating auth link:", authError.message);
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -90,10 +149,10 @@ serve(async (req) => {
       );
     }
 
-    // Now use the token to sign in manually
+    // Now create the session by signing in directly with admin privileges
     const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.signInWithPassword({
       email: userData.user.email || '',
-      password: 'not-used', // This won't be checked as we're using admin
+      password: 'admin-bypassed', // This won't be checked with admin powers
     });
 
     if (sessionError) {
@@ -110,7 +169,7 @@ serve(async (req) => {
       );
     }
 
-    console.log("Session created successfully:", sessionData.session.user.id);
+    console.log("Session created successfully for user:", sessionData.session.user.id);
     
     // Return the session data
     return new Response(

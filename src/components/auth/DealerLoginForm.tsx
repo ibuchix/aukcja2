@@ -50,37 +50,71 @@ export function DealerLoginForm() {
     },
   });
 
+  // Function to check session and navigate if valid
+  const checkSessionAndNavigate = async () => {
+    const { data } = await supabase.auth.getSession();
+    
+    if (data?.session) {
+      console.log("Valid session detected, navigating to dashboard");
+      toast({
+        title: "Login Successful",
+        description: "Redirecting to dashboard...",
+      });
+      
+      setTimeout(() => {
+        navigate('/dealer/dashboard');
+      }, 500);
+      
+      return true;
+    }
+    
+    return false;
+  };
+
+  // Simple direct login attempt
+  const attemptDirectLogin = async (email: string, password: string) => {
+    try {
+      console.log("Attempting direct login");
+      const { error, data } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (!error && data.session) {
+        console.log("Direct login successful");
+        return true;
+      }
+      
+      console.log("Direct login failed:", error?.message);
+      return false;
+    } catch (error) {
+      console.error("Direct login threw exception:", error);
+      return false;
+    }
+  };
+
   async function onSubmit(values: LoginFormValues) {
     setIsSubmitting(true);
     setLoginError(null);
     setWarningMessage(null);
     
     try {
-      console.log("Attempting login with email:", values.email);
+      const email = values.email.trim().toLowerCase();
+      console.log("Starting login process for:", email);
       
-      // Try direct login first - this is the simplest approach
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
+      // First try the direct approach (most reliable)
+      const directLoginSuccessful = await attemptDirectLogin(email, values.password);
       
-      if (!signInError && signInData.session) {
-        console.log("Regular login successful");
-        toast({
-          title: "Login Successful",
-          description: "Redirecting to dashboard...",
-        });
-        
-        // Navigate to dashboard with a slight delay
-        setTimeout(() => {
-          navigate('/dealer/dashboard');
-        }, 500);
-        
-        return;
+      if (directLoginSuccessful) {
+        // Check if we have a valid session and navigate
+        if (await checkSessionAndNavigate()) {
+          return; // Login successful, we're done
+        }
       }
       
-      // If direct login fails, try the custom auth flow
-      const result = await signInDealerWithEmail(values.email, values.password);
+      // If direct login didn't work, try the custom flow
+      console.log("Direct login unsuccessful, trying custom authentication flow");
+      const result = await signInDealerWithEmail(email, values.password);
 
       if (!result.success) {
         console.error("Login failed:", result.error);
@@ -88,9 +122,9 @@ export function DealerLoginForm() {
         return;
       }
 
-      // Check if we got a session back
+      // If we got a session back, try to set it
       if (result.session) {
-        console.log("Custom login successful, got session:", result.session.user.id);
+        console.log("Custom login returned a session, setting it");
         
         try {
           // Store the session
@@ -101,35 +135,26 @@ export function DealerLoginForm() {
           
           if (setSessionError) {
             console.error("Error setting session:", setSessionError);
+            
+            // Try a direct login one more time as a fallback
+            console.log("Trying one more direct login as fallback");
+            if (await attemptDirectLogin(email, values.password)) {
+              if (await checkSessionAndNavigate()) {
+                return; // Login successful via fallback
+              }
+            }
+            
             setWarningMessage("Authenticated but session setup failed. Please try again.");
-            
-            // As a fallback, try simple login again
-            await supabase.auth.signInWithPassword({
-              email: values.email,
-              password: values.password,
-            });
-            
             return;
           }
           
-          // Verify the session was set correctly
-          const { data: currentSession } = await supabase.auth.getSession();
-          console.log("Current session after login:", currentSession?.session?.user?.id);
-          
-          if (!currentSession?.session) {
-            setWarningMessage("Session created but not detected by browser. Please try logging in again.");
-            return;
+          // Check if we now have a valid session
+          if (await checkSessionAndNavigate()) {
+            return; // Login successful after setting session
           }
           
-          toast({
-            title: "Login Successful",
-            description: "Redirecting to dashboard...",
-          });
-          
-          // Navigate to dashboard with a slight delay to ensure session is processed
-          setTimeout(() => {
-            navigate('/dealer/dashboard');
-          }, 500);
+          // If we're still here, something is wrong
+          setWarningMessage("Session created but not detected by browser. Please try logging in again.");
         } catch (sessionError) {
           console.error("Session handling error:", sessionError);
           setWarningMessage("Login succeeded but there was an issue setting up your session. Please try again.");
@@ -139,6 +164,14 @@ export function DealerLoginForm() {
         if (result.partialSuccess && result.warning) {
           setWarningMessage(result.warning);
           console.warn("Partial login success:", result.warning);
+          
+          // Try one more direct login
+          console.log("Trying one final direct login attempt");
+          if (await attemptDirectLogin(email, values.password)) {
+            if (await checkSessionAndNavigate()) {
+              return;
+            }
+          }
         } else {
           setLoginError("Authentication succeeded but no session was created. Please try again.");
         }
