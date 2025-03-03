@@ -3,6 +3,7 @@ import { validateEmail, safeTrim } from "./validation";
 import { SignInResult, LoginResponse } from "./models";
 import { supabase } from "@/integrations/supabase/client";
 import { executeWithRetry } from "@/utils/retryUtils";
+import { Session, User } from '@supabase/supabase-js';
 
 /**
  * Handles the sign-in process for dealers with email authentication
