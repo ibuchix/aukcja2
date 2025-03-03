@@ -4,6 +4,7 @@ import { SignInResult, LoginResponse } from "./models";
 import { supabase } from "@/integrations/supabase/client";
 import { executeWithRetry } from "@/utils/retryUtils";
 import { Session, User } from '@supabase/supabase-js';
+import { Database } from "@/integrations/supabase/types";
 
 // Define the type for the specific RPC response to match what the authenticate_dealer function returns
 interface AuthenticateDealerResponse {
@@ -56,14 +57,23 @@ export const signInDealerWithEmail = async (
       throw authError;
     }
     
-    // Parse the result and ensure it's properly typed
-    const typedResult = authResult as AuthenticateDealerResponse;
-    
-    if (!typedResult || !typedResult.success) {
-      console.warn("Authentication failed:", typedResult?.error || "Unknown error");
+    // Safe type conversion with proper type checking
+    if (!authResult || typeof authResult !== 'object') {
+      console.warn("Authentication failed: Invalid response format");
       return {
         success: false,
-        error: typedResult?.error || "Authentication failed. Please check your credentials."
+        error: "Authentication failed due to server error. Please try again."
+      };
+    }
+    
+    // Check if response has the expected structure
+    const typedResult = authResult as unknown as AuthenticateDealerResponse;
+    
+    if (!typedResult.success) {
+      console.warn("Authentication failed:", typedResult.error || "Unknown error");
+      return {
+        success: false,
+        error: typedResult.error || "Authentication failed. Please check your credentials."
       };
     }
     
