@@ -26,7 +26,12 @@ export const signInDealerWithEmail = async (
     console.log("Starting dealer login process with email:", normalizedEmail);
     
     // Use the specialized login function that handles custom registration
-    const { data: authResult, error: authError } = await supabase.rpc(
+    const { data: authResult, error: authError } = await supabase.rpc<{
+      success: boolean;
+      error?: string;
+      user_id?: string;
+      dealer?: any;
+    }>(
       'authenticate_dealer',
       { 
         p_email: normalizedEmail,
@@ -120,4 +125,3 @@ export const signInDealerWithEmail = async (
     };
   }
 };
-
