@@ -34,11 +34,7 @@ export const signInDealerWithEmail = async (
     console.log("Starting dealer login process with email:", normalizedEmail);
     
     // Use the specialized login function that handles custom registration
-    // Properly type the RPC call with both the return type and the parameters
-    const { data: authResult, error: authError } = await supabase.rpc<AuthenticateDealerResponse, {
-      p_email: string;
-      p_password: string;
-    }>(
+    const { data: authResult, error: authError } = await supabase.rpc(
       'authenticate_dealer',
       { 
         p_email: normalizedEmail,
@@ -60,11 +56,14 @@ export const signInDealerWithEmail = async (
       throw authError;
     }
     
-    if (!authResult || !authResult.success) {
-      console.warn("Authentication failed:", authResult?.error || "Unknown error");
+    // Parse the result and ensure it's properly typed
+    const typedResult = authResult as AuthenticateDealerResponse;
+    
+    if (!typedResult || !typedResult.success) {
+      console.warn("Authentication failed:", typedResult?.error || "Unknown error");
       return {
         success: false,
-        error: authResult?.error || "Authentication failed. Please check your credentials."
+        error: typedResult?.error || "Authentication failed. Please check your credentials."
       };
     }
     
@@ -85,7 +84,7 @@ export const signInDealerWithEmail = async (
         success: true,
         partialSuccess: true,
         warning: "Your credentials were verified, but we couldn't create a session. Please try again.",
-        dealer: authResult.dealer
+        dealer: typedResult.dealer
       };
     }
     
@@ -102,7 +101,7 @@ export const signInDealerWithEmail = async (
     return {
       success: true,
       session: sessionData.session,
-      dealer: authResult.dealer
+      dealer: typedResult.dealer
     };
     
   } catch (error) {
