@@ -43,9 +43,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending welcome email to ${name} (${email})`);
 
-    // Use a verified domain if available, or use the Resend test email for development
-    // When in production, this should be changed to your verified domain
-    const fromEmail = "onboarding@resend.dev";
+    // Use the verified domain for the from address
+    const fromEmail = "welcome@auto-strada.pl";
     const fromName = "Auto Auction";
 
     const emailResponse = await resend.emails.send({
@@ -69,7 +68,7 @@ const handler = async (req: Request): Promise<Response> => {
           </ol>
           
           <div style="background-color: #f8f8f8; border-left: 4px solid #DC143C; padding: 15px; margin: 20px 0;">
-            <p style="margin: 0;"><strong>Note:</strong> If you have any questions or need assistance, please contact our dealer support team at <a href="mailto:support@autoauction.com">support@autoauction.com</a> or call us at (555) 123-4567.</p>
+            <p style="margin: 0;"><strong>Note:</strong> If you have any questions or need assistance, please contact our dealer support team at <a href="mailto:support@auto-strada.pl">support@auto-strada.pl</a> or call us at (555) 123-4567.</p>
           </div>
           
           <p>We look forward to helping you grow your business!</p>
@@ -86,12 +85,11 @@ const handler = async (req: Request): Promise<Response> => {
     if (emailResponse.error) {
       console.error("Email sending error:", emailResponse.error);
       
-      // Return more detailed error information for debugging
       return new Response(
         JSON.stringify({ 
           success: false, 
           error: emailResponse.error,
-          message: "Failed to send email. If using Resend in test mode, make sure to use your verified email as recipient or verify a domain."
+          message: "Failed to send email. Please contact support if this issue persists."
         }),
         {
           status: 200, // Still return 200 to not fail registration process

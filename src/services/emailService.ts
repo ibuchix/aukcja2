@@ -49,12 +49,13 @@ export const sendDealerWelcomeEmail = async (name: string, email: string) => {
     if (data && !data.success && data.error) {
       console.warn('Resend API warning:', data.error);
       
-      // Handle domain verification issues
-      if (data.error.statusCode === 403 && data.error.message?.includes('verify a domain')) {
-        console.warn('Domain verification required. During testing, emails can only be sent to verified addresses.');
+      // Now that domain is verified, this specific check is less important
+      // but kept for robustness in case of other validation issues
+      if (data.error.statusCode === 403) {
+        console.warn('Email service issue:', data.error.message);
         return { 
           success: false, 
-          error: 'Email service requires domain verification. Contact admin or verify your domain at resend.com/domains.',
+          error: 'Email service issue. Please try again later or contact support.',
           isConfigIssue: true
         };
       }
