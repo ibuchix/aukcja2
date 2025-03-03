@@ -7,7 +7,7 @@ import { Session, User } from '@supabase/supabase-js';
 
 /**
  * Handles the sign-in process for dealers with email authentication
- * Uses Supabase's native auth + direct database query for reliability
+ * Uses a dedicated SQL function that safely verifies credentials
  */
 export const signInDealerWithEmail = async (
   email: string,
@@ -23,113 +23,76 @@ export const signInDealerWithEmail = async (
   const normalizedEmail = safeTrim(email).toLowerCase();
 
   try {
-    console.log("Starting dealer login with native Supabase auth");
+    console.log("Starting dealer login process with email:", normalizedEmail);
     
-    // Try first with direct dealer-auth function call (compatible with custom registration)
-    try {
-      console.log("Attempting login via dealer-auth function for custom registration compatibility");
-      const { data: authFuncData, error: authFuncError } = await supabase.functions.invoke('dealer-auth', {
-        body: {
-          action: 'login',
-          email: normalizedEmail,
-          password,
-          requestId: crypto.randomUUID(),
-          timestamp: new Date().toISOString()
-        }
-      });
-      
-      if (!authFuncError && authFuncData && authFuncData.success) {
-        console.log("Login successful via dealer-auth function!");
-        return {
-          success: true,
-          session: authFuncData.session,
-          dealer: authFuncData.dealer
-        };
-      }
-      
-      console.log("Login via dealer-auth not successful, falling back to native auth");
-    } catch (funcError) {
-      console.warn("Error in dealer-auth function call (non-fatal):", funcError);
-      // Continue to native auth as fallback
-    }
-    
-    // Fallback: Use Supabase's native auth for sign in with retry capability
-    const authResult = await executeWithRetry<{ session: Session | null; user: User | null }>(
-      async () => {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: normalizedEmail,
-          password
-        });
-        
-        if (error) throw error;
-        return data;
-      },
-      {
-        maxRetries: 3,
-        baseDelay: 500,
-        shouldRetry: (error) => {
-          // Retry only for network/server errors, not for auth failures
-          const errorMsg = error?.message?.toLowerCase() || '';
-          return !errorMsg.includes('invalid login') && 
-                 !errorMsg.includes('invalid credentials') &&
-                 !errorMsg.includes('password');
-        }
+    // Use the specialized login function that handles custom registration
+    const { data: authResult, error: authError } = await supabase.rpc(
+      'authenticate_dealer',
+      { 
+        p_email: normalizedEmail,
+        p_password: password
       }
     );
-
-    if (!authResult || !authResult.session) {
-      return {
-        success: false,
-        error: "Authentication failed. Please check your credentials."
-      };
-    }
-
-    // Step 2: After authentication, fetch dealer profile data directly from the database
-    // with retry capability for network issues
-    try {
-      const result = await executeWithRetry<{ data: any; error: any }>(
-        async () => supabase
-          .from('dealers')
-          .select('*')
-          .eq('user_id', authResult.user!.id)
-          .single(),
-        {
-          maxRetries: 2,
-          baseDelay: 300
-        }
-      );
-
-      const { data: dealer, error: profileError } = result;
-
-      if (profileError) {
-        console.warn("Profile fetch error (non-fatal):", profileError);
-        // Still return success if auth worked but profile fetch failed
+    
+    if (authError) {
+      console.error("DB auth function error:", authError);
+      
+      // Provide user-friendly error messages
+      if (authError.message.includes('Invalid credentials')) {
         return {
-          success: true,
-          session: authResult.session,
-          dealer: null,
-          partialSuccess: true,
-          warning: "Your account was authenticated, but we couldn't fetch your dealer profile."
+          success: false,
+          error: "Invalid email or password. Please check your credentials."
         };
       }
-
-      console.log("Login successful with profile fetch!");
+      
+      throw authError;
+    }
+    
+    if (!authResult || !authResult.success) {
+      console.warn("Authentication failed:", authResult?.error || "Unknown error");
       return {
-        success: true,
-        session: authResult.session,
-        dealer
-      };
-    } catch (profileError) {
-      console.warn("Profile fetch error with retry (non-fatal):", profileError);
-      // Still return success if auth worked but profile fetch failed even after retries
-      return {
-        success: true,
-        session: authResult.session,
-        dealer: null,
-        partialSuccess: true,
-        warning: "Your account was authenticated, but we couldn't fetch your dealer profile after multiple attempts."
+        success: false,
+        error: authResult?.error || "Authentication failed. Please check your credentials."
       };
     }
+    
+    console.log("Authentication successful, creating session");
+    
+    // Use the Supabase auth API to create a valid session with the verified user
+    const { data: sessionData, error: sessionError } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password: password
+    });
+    
+    if (sessionError) {
+      console.error("Session creation error:", sessionError);
+      
+      // Even though authentication succeeded, session creation failed
+      // This is a partial success case
+      return {
+        success: true,
+        partialSuccess: true,
+        warning: "Your credentials were verified, but we couldn't create a session. Please try again.",
+        dealer: authResult.dealer
+      };
+    }
+    
+    if (!sessionData.session) {
+      console.error("No session created despite successful auth");
+      return {
+        success: false,
+        error: "Authentication succeeded but session creation failed."
+      };
+    }
+    
+    // Return the complete successful result
+    console.log("Login fully successful with session and dealer profile");
+    return {
+      success: true,
+      session: sessionData.session,
+      dealer: authResult.dealer
+    };
+    
   } catch (error) {
     console.error("Login error:", error);
     
@@ -157,3 +120,4 @@ export const signInDealerWithEmail = async (
     };
   }
 };
+

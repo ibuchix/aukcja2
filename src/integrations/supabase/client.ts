@@ -14,8 +14,9 @@ export const supabase = createClient<Database>(
   SUPABASE_PUBLISHABLE_KEY,
   {
     auth: {
-      debug: true,
-      // Logger is removed as it's causing type errors
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
     }
   }
 );
