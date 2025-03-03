@@ -5,6 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { executeWithRetry } from "@/utils/retryUtils";
 import { Session, User } from '@supabase/supabase-js';
 
+// Define the type for the specific RPC response to match what the authenticate_dealer function returns
+interface AuthenticateDealerResponse {
+  success: boolean;
+  error?: string;
+  user_id?: string;
+  dealer?: any;
+}
+
 /**
  * Handles the sign-in process for dealers with email authentication
  * Uses a dedicated SQL function that safely verifies credentials
@@ -26,11 +34,10 @@ export const signInDealerWithEmail = async (
     console.log("Starting dealer login process with email:", normalizedEmail);
     
     // Use the specialized login function that handles custom registration
-    const { data: authResult, error: authError } = await supabase.rpc<{
-      success: boolean;
-      error?: string;
-      user_id?: string;
-      dealer?: any;
+    // Properly type the RPC call with both the return type and the parameters
+    const { data: authResult, error: authError } = await supabase.rpc<AuthenticateDealerResponse, {
+      p_email: string;
+      p_password: string;
     }>(
       'authenticate_dealer',
       { 
