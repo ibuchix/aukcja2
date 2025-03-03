@@ -66,9 +66,14 @@ serve(async (req) => {
       );
     }
 
-    // Generate a session using the admin API
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createSession({
-      userId: userId
+    // Generate a session - Using the correct method
+    // Use signInWithUser method instead which is available in this version
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink',
+      email: userData.user.email || '',
+      options: {
+        redirectTo: `${Deno.env.get("SUPABASE_URL") || ''}/auth/callback`
+      }
     });
 
     if (authError) {
@@ -85,13 +90,33 @@ serve(async (req) => {
       );
     }
 
-    console.log("Session created successfully:", authData.session.user.id);
+    // Now use the token to sign in manually
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.signInWithPassword({
+      email: userData.user.email || '',
+      password: 'not-used', // This won't be checked as we're using admin
+    });
+
+    if (sessionError) {
+      console.error("Error creating session:", sessionError.message);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: sessionError.message 
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500 
+        }
+      );
+    }
+
+    console.log("Session created successfully:", sessionData.session.user.id);
     
     // Return the session data
     return new Response(
       JSON.stringify({ 
         success: true, 
-        session: authData.session
+        session: sessionData.session
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },

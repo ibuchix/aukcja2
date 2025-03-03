@@ -57,18 +57,40 @@ export function DealerLoginForm() {
     
     try {
       console.log("Attempting login with email:", values.email);
+      
+      // Try direct login first - this is the simplest approach
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+      
+      if (!signInError && signInData.session) {
+        console.log("Regular login successful");
+        toast({
+          title: "Login Successful",
+          description: "Redirecting to dashboard...",
+        });
+        
+        // Navigate to dashboard with a slight delay
+        setTimeout(() => {
+          navigate('/dealer/dashboard');
+        }, 500);
+        
+        return;
+      }
+      
+      // If direct login fails, try the custom auth flow
       const result = await signInDealerWithEmail(values.email, values.password);
 
       if (!result.success) {
         console.error("Login failed:", result.error);
         setLoginError(result.error || "Invalid credentials. Please check your email and password.");
-        setIsSubmitting(false);
         return;
       }
 
       // Check if we got a session back
       if (result.session) {
-        console.log("Login successful, got session:", result.session.user.id);
+        console.log("Custom login successful, got session:", result.session.user.id);
         
         try {
           // Store the session
@@ -80,7 +102,13 @@ export function DealerLoginForm() {
           if (setSessionError) {
             console.error("Error setting session:", setSessionError);
             setWarningMessage("Authenticated but session setup failed. Please try again.");
-            setIsSubmitting(false);
+            
+            // As a fallback, try simple login again
+            await supabase.auth.signInWithPassword({
+              email: values.email,
+              password: values.password,
+            });
+            
             return;
           }
           
@@ -89,12 +117,8 @@ export function DealerLoginForm() {
           console.log("Current session after login:", currentSession?.session?.user?.id);
           
           if (!currentSession?.session) {
-            // Final fallback - try sign in with email/password one last time
-            // This is sometimes necessary due to cookie handling
-            await supabase.auth.signInWithPassword({
-              email: values.email,
-              password: values.password,
-            });
+            setWarningMessage("Session created but not detected by browser. Please try logging in again.");
+            return;
           }
           
           toast({
@@ -105,7 +129,7 @@ export function DealerLoginForm() {
           // Navigate to dashboard with a slight delay to ensure session is processed
           setTimeout(() => {
             navigate('/dealer/dashboard');
-          }, 800);
+          }, 500);
         } catch (sessionError) {
           console.error("Session handling error:", sessionError);
           setWarningMessage("Login succeeded but there was an issue setting up your session. Please try again.");
