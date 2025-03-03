@@ -2,20 +2,17 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
-const resendApiKey = Deno.env.get("RESEND_API_KEY");
-if (!resendApiKey) {
-  console.error("Missing RESEND_API_KEY environment variable");
-}
+// Initialize the Resend client with the API key
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-const resend = new Resend(resendApiKey);
-
+// CORS headers for cross-origin requests
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface DealerWelcomeEmailRequest {
+// Interface for the request body
+interface WelcomeEmailRequest {
   name: string;
   email: string;
 }
@@ -27,13 +24,15 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log("Received dealer welcome email request");
-    const { name, email }: DealerWelcomeEmailRequest = await req.json();
+    // Parse request body
+    const { name, email }: WelcomeEmailRequest = await req.json();
 
     if (!name || !email) {
-      console.error("Missing required fields in request", { name, email });
       return new Response(
-        JSON.stringify({ error: "Name and email are required" }),
+        JSON.stringify({
+          success: false,
+          error: "Missing required fields: name and email must be provided",
+        }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -47,25 +46,34 @@ const handler = async (req: Request): Promise<Response> => {
     const fromEmail = "welcome@auto-strada.pl";
     const fromName = "Auto Auction";
 
+    // Get the application URL from environment variable or use a default
+    const appUrl = Deno.env.get("APP_URL") || "https://auto-strada.pl";
+    const dashboardUrl = `${appUrl}/dealer/dashboard`;
+
     const emailResponse = await resend.emails.send({
       from: `${fromName} <${fromEmail}>`,
-      to: [email],
-      subject: "Welcome to Auto Auction - Dealer Registration",
+      to: email,
+      subject: "Welcome to Auto Auction - Your Dealer Registration is Complete",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-          <h1 style="color: #DC143C; border-bottom: 2px solid #DC143C; padding-bottom: 10px;">Welcome to Auto Auction!</h1>
+          <h1 style="color: #DC143C; margin-bottom: 20px;">Welcome to Auto Auction!</h1>
           
-          <p><strong>Hello ${name},</strong></p>
+          <p>Dear ${name},</p>
           
-          <p>Thank you for registering as a dealer on our Auto Auction platform. We're excited to have you join our community of automotive professionals!</p>
+          <p>Thank you for registering as a dealer with Auto Auction. Your account has been created and you're ready to start exploring our platform.</p>
           
-          <h2 style="color: #444; margin-top: 25px;">What's Next?</h2>
+          <p>Here's what you can do now:</p>
           
-          <ol style="line-height: 1.6;">
-            <li><strong>Verify your account</strong> - We'll review your dealer information within 1-2 business days.</li>
-            <li><strong>Complete your profile</strong> - Add additional details about your dealership.</li>
-            <li><strong>Browse available auctions</strong> - Start exploring vehicles that match your inventory needs.</li>
+          <ol style="margin-bottom: 20px;">
+            <li><strong>Browse available auctions</strong> - Find vehicles that match your inventory needs</li>
+            <li><strong>Place bids</strong> - Participate in live auctions and secure vehicles for your dealership</li>
+            <li><strong>Manage your profile</strong> - Update your business information and preferences</li>
+            <li><strong>Track your activity</strong> - Monitor your bids, purchases, and transactions</li>
           </ol>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${dashboardUrl}" style="background-color: #DC143C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Go to Your Dashboard</a>
+          </div>
           
           <div style="background-color: #f8f8f8; border-left: 4px solid #DC143C; padding: 15px; margin: 20px 0;">
             <p style="margin: 0;"><strong>Note:</strong> If you have any questions or need assistance, please contact our dealer support team at <a href="mailto:support@auto-strada.pl">support@auto-strada.pl</a> or call us at (555) 123-4567.</p>
@@ -74,14 +82,13 @@ const handler = async (req: Request): Promise<Response> => {
           <p>We look forward to helping you grow your business!</p>
           
           <p>Best regards,<br>The Auto Auction Team</p>
-          
-          <div style="border-top: 1px solid #ddd; margin-top: 30px; padding-top: 15px; font-size: 12px; color: #777;">
-            <p>This email was sent to ${email}. If you did not register for an Auto Auction dealer account, please disregard this email.</p>
-          </div>
         </div>
       `,
     });
 
+    console.log("Email sending response:", emailResponse);
+
+    // Handle email sending response
     if (emailResponse.error) {
       console.error("Email sending error:", emailResponse.error);
       
@@ -98,22 +105,23 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("Email sent successfully:", emailResponse);
-
-    return new Response(JSON.stringify({ success: true, data: emailResponse }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+    return new Response(
+      JSON.stringify({ success: true, id: emailResponse.data?.id }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
   } catch (error) {
-    console.error("Error sending dealer welcome email:", error);
+    console.error("Error in send-dealer-welcome function:", error);
+    
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || "Failed to send email",
-        message: "An unexpected error occurred while sending the welcome email."
+        error: error instanceof Error ? error.message : "Unknown error",
       }),
       {
-        status: 200, // Still return 200 to not fail registration process
+        status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
