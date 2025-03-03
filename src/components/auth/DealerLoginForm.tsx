@@ -70,44 +70,59 @@ export function DealerLoginForm() {
       if (result.session) {
         console.log("Login successful, got session:", result.session.user.id);
         
-        // Store the session
-        const { error: setSessionError } = await supabase.auth.setSession({
-          access_token: result.session.access_token,
-          refresh_token: result.session.refresh_token
-        });
-        
-        if (setSessionError) {
-          console.error("Error setting session:", setSessionError);
-          setWarningMessage("Authenticated but session setup failed. Please try again.");
-          setIsSubmitting(false);
-          return;
+        try {
+          // Store the session
+          const { error: setSessionError } = await supabase.auth.setSession({
+            access_token: result.session.access_token,
+            refresh_token: result.session.refresh_token
+          });
+          
+          if (setSessionError) {
+            console.error("Error setting session:", setSessionError);
+            setWarningMessage("Authenticated but session setup failed. Please try again.");
+            setIsSubmitting(false);
+            return;
+          }
+          
+          // Verify the session was set correctly
+          const { data: currentSession } = await supabase.auth.getSession();
+          console.log("Current session after login:", currentSession?.session?.user?.id);
+          
+          if (!currentSession?.session) {
+            // Final fallback - try sign in with email/password one last time
+            // This is sometimes necessary due to cookie handling
+            await supabase.auth.signInWithPassword({
+              email: values.email,
+              password: values.password,
+            });
+          }
+          
+          toast({
+            title: "Login Successful",
+            description: "Redirecting to dashboard...",
+          });
+          
+          // Navigate to dashboard with a slight delay to ensure session is processed
+          setTimeout(() => {
+            navigate('/dealer/dashboard');
+          }, 800);
+        } catch (sessionError) {
+          console.error("Session handling error:", sessionError);
+          setWarningMessage("Login succeeded but there was an issue setting up your session. Please try again.");
         }
-        
-        // Verify the session was set correctly
-        const { data: currentSession } = await supabase.auth.getSession();
-        console.log("Current session after login:", currentSession?.session?.user?.id);
-        
-        toast({
-          title: "Login Successful",
-          description: "Redirecting to dashboard...",
-        });
-        
-        // Navigate to dashboard with a slight delay to ensure session is processed
-        setTimeout(() => {
-          navigate('/dealer/dashboard');
-          setIsSubmitting(false);
-        }, 500);
       } else {
         // Handle partial success case
         if (result.partialSuccess && result.warning) {
           setWarningMessage(result.warning);
           console.warn("Partial login success:", result.warning);
+        } else {
+          setLoginError("Authentication succeeded but no session was created. Please try again.");
         }
-        setIsSubmitting(false);
       }
     } catch (error) {
       console.error("Login error:", error);
       setLoginError(error instanceof Error ? error.message : "An unexpected error occurred");
+    } finally {
       setIsSubmitting(false);
     }
   }

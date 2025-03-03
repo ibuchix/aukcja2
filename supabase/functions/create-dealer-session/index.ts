@@ -11,7 +11,13 @@ const corsHeaders = {
 // Create a Supabase client with the admin key
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
 );
 
 // Handle requests
@@ -43,12 +49,26 @@ serve(async (req) => {
       );
     }
 
-    // Generate a session using the admin API with explicit options
+    // First verify the user exists
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+    
+    if (userError || !userData?.user) {
+      console.error("Error finding user:", userError?.message || "User not found");
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: userError?.message || "User not found" 
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404 
+        }
+      );
+    }
+
+    // Generate a session using the admin API
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createSession({
-      userId: userId,
-      properties: {
-        created_at: new Date().toISOString()
-      }
+      userId: userId
     });
 
     if (authError) {
