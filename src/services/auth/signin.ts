@@ -2,9 +2,11 @@
 import { validateEmail, safeTrim } from "./validation";
 import { SignInResult, LoginResponse } from "./models";
 import { supabase } from "@/integrations/supabase/client";
+import { executeWithRetry } from "@/utils/retryUtils";
 
 /**
  * Handles the sign-in process for dealers with email authentication
+ * Uses Supabase's native auth + direct database query for reliability
  */
 export const signInDealerWithEmail = async (
   email: string,
@@ -22,58 +24,105 @@ export const signInDealerWithEmail = async (
   try {
     console.log("Starting dealer login with native Supabase auth");
     
-    // Step 1: Use Supabase's native auth for sign in
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: normalizedEmail,
-      password
-    });
+    // Step 1: Use Supabase's native auth for sign in with retry capability
+    const authResult = await executeWithRetry(
+      async () => {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password
+        });
+        
+        if (error) throw error;
+        return data;
+      },
+      {
+        maxRetries: 3,
+        baseDelay: 500,
+        shouldRetry: (error) => {
+          // Retry only for network/server errors, not for auth failures
+          const errorMsg = error?.message?.toLowerCase() || '';
+          return !errorMsg.includes('invalid login') && 
+                 !errorMsg.includes('invalid credentials') &&
+                 !errorMsg.includes('password');
+        }
+      }
+    );
 
-    if (authError) {
-      console.error("Login auth error:", authError);
+    if (!authResult || !authResult.session) {
       return {
         success: false,
-        error: authError.message || "Login failed. Please check your credentials."
+        error: "Authentication failed. Please check your credentials."
       };
     }
 
-    if (!authData.session) {
-      return {
-        success: false,
-        error: "Authentication successful but no session was created"
-      };
-    }
+    // Step 2: After authentication, fetch dealer profile data directly from the database
+    // with retry capability for network issues
+    try {
+      const { data: dealer, error: profileError } = await executeWithRetry(
+        () => supabase
+          .from('dealers')
+          .select('*')
+          .eq('user_id', authResult.user.id)
+          .single(),
+        {
+          maxRetries: 2,
+          baseDelay: 300
+        }
+      );
 
-    // Step 2: After authentication, fetch dealer profile data
-    const { data: dealer, error: profileError } = await supabase
-      .from('dealers')
-      .select('*')
-      .eq('user_id', authData.user.id)
-      .single();
+      if (profileError) {
+        console.warn("Profile fetch error (non-fatal):", profileError);
+        // Still return success if auth worked but profile fetch failed
+        return {
+          success: true,
+          session: authResult.session,
+          dealer: null,
+          partialSuccess: true,
+          warning: "Your account was authenticated, but we couldn't fetch your dealer profile."
+        };
+      }
 
-    if (profileError) {
-      console.warn("Profile fetch error (non-fatal):", profileError);
-      // Still return success if auth worked but profile fetch failed
-      // The user can still log in but might have limited functionality
+      console.log("Login successful with profile fetch!");
       return {
         success: true,
-        session: authData.session,
+        session: authResult.session,
+        dealer
+      };
+    } catch (profileError) {
+      console.warn("Profile fetch error with retry (non-fatal):", profileError);
+      // Still return success if auth worked but profile fetch failed even after retries
+      return {
+        success: true,
+        session: authResult.session,
         dealer: null,
         partialSuccess: true,
-        warning: "Your account was authenticated, but we couldn't fetch your dealer profile."
+        warning: "Your account was authenticated, but we couldn't fetch your dealer profile after multiple attempts."
       };
     }
-
-    console.log("Login successful with profile fetch!");
-    return {
-      success: true,
-      session: authData.session,
-      dealer
-    };
   } catch (error) {
-    console.error("Unexpected login error:", error);
+    console.error("Login error:", error);
+    
+    // Provide user-friendly error messages based on the error type
+    const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred during login";
+    
+    // Check for specific error messages and provide clearer feedback
+    if (errorMessage.toLowerCase().includes('invalid login')) {
+      return {
+        success: false,
+        error: "Invalid email or password. Please check your credentials."
+      };
+    }
+    
+    if (errorMessage.toLowerCase().includes('too many requests')) {
+      return {
+        success: false,
+        error: "Too many login attempts. Please try again later."
+      };
+    }
+    
     return {
       success: false,
-      error: error instanceof Error ? error.message : "An unexpected error occurred during login"
+      error: errorMessage
     };
   }
 };
