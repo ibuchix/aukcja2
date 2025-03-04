@@ -1,3 +1,4 @@
+
 import { validateEmail, safeTrim } from "./validation";
 import { SignInResult } from "./models";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,10 +33,13 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     // User exists, proceed with OTP
     console.log("User exists, sending OTP for signin");
     
-    // Simplify the call - for existing users, we want the most basic OTP request
-    // without any options that might trigger user creation behavior
+    // Critical fix: Explicitly tell Supabase not to create a user when sending OTP
+    // This prevents the "Database error saving new user" error
     const { data, error } = await supabase.auth.signInWithOtp({
-      email: normalizedEmail
+      email: normalizedEmail,
+      options: {
+        shouldCreateUser: false // This is the key fix - explicitly prevent user creation
+      }
     });
     
     if (error) {
