@@ -8,13 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, AlertTriangle, Mail } from "lucide-react";
-import { signInDealerWithEmail, initiateOtpSignIn, verifyOtp } from "@/services/auth/signin";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loader2, Mail } from "lucide-react";
+import { initiateOtpSignIn, verifyOtp } from "@/services/auth/signin";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
-const loginFormSchema = z.object({
+const emailSchema = z.object({
   email: z.string()
     .email({
       message: "Please enter a valid email address",
@@ -25,13 +25,6 @@ const loginFormSchema = z.object({
     .max(255, {
       message: "Email cannot exceed 255 characters",
     }),
-  password: z.string()
-    .min(8, {
-      message: "Password must be at least 8 characters",
-    })
-    .max(72, {
-      message: "Password cannot exceed 72 characters",
-    }),
 });
 
 const otpSchema = z.object({
@@ -40,23 +33,21 @@ const otpSchema = z.object({
   }),
 });
 
-type LoginFormValues = z.infer<typeof loginFormSchema>;
+type EmailFormValues = z.infer<typeof emailSchema>;
 type OtpFormValues = z.infer<typeof otpSchema>;
 
 export function DealerLoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [warningMessage, setWarningMessage] = useState<string | null>(null);
-  const [otpMode, setOtpMode] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
   const [activeEmail, setActiveEmail] = useState<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const loginForm = useForm<LoginFormValues>({
-    resolver: zodResolver(loginFormSchema),
+  const emailForm = useForm<EmailFormValues>({
+    resolver: zodResolver(emailSchema),
     defaultValues: {
       email: "",
-      password: "",
     },
   });
 
@@ -88,53 +79,32 @@ export function DealerLoginForm() {
     return false;
   };
 
-  // Simple direct login attempt
-  const attemptDirectLogin = async (email: string, password: string) => {
-    try {
-      console.log("Attempting direct login");
-      const { error, data } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (!error && data.session) {
-        console.log("Direct login successful");
-        return true;
-      }
-      
-      console.log("Direct login failed:", error?.message);
-      return false;
-    } catch (error) {
-      console.error("Direct login threw exception:", error);
-      return false;
-    }
-  };
-
-  // Request OTP without password
-  const requestOtp = async () => {
+  // Request OTP
+  const requestOtp = async (email: string) => {
     setIsSubmitting(true);
     setLoginError(null);
-    setWarningMessage(null);
     
     try {
-      const email = activeEmail.trim().toLowerCase();
-      console.log("Requesting OTP for:", email);
+      const trimmedEmail = email.trim().toLowerCase();
+      console.log("Requesting OTP for:", trimmedEmail);
       
-      const result = await initiateOtpSignIn(email);
+      const result = await initiateOtpSignIn(trimmedEmail);
       
       if (result.success) {
+        setActiveEmail(trimmedEmail);
+        setOtpSent(true);
         toast({
-          title: "OTP Sent",
-          description: result.message,
+          title: "Verification Code Sent",
+          description: result.message || "Please check your email for the login code",
         });
         return true;
       } else {
-        setLoginError(result.error || "Failed to send OTP. Please try again.");
+        setLoginError(result.error || "Failed to send verification code. Please try again.");
         return false;
       }
     } catch (error) {
       console.error("OTP request error:", error);
-      setLoginError(error instanceof Error ? error.message : "Failed to send OTP");
+      setLoginError(error instanceof Error ? error.message : "Failed to send verification code");
       return false;
     } finally {
       setIsSubmitting(false);
@@ -154,154 +124,55 @@ export function DealerLoginForm() {
       if (result.success && result.session) {
         toast({
           title: "Login Successful",
-          description: "OTP verified successfully",
+          description: "Verification successful",
         });
         
         await checkSessionAndNavigate();
       } else {
-        setLoginError(result.error || "Invalid OTP. Please check and try again.");
+        setLoginError(result.error || "Invalid verification code. Please check and try again.");
       }
     } catch (error) {
       console.error("OTP verification error:", error);
-      setLoginError(error instanceof Error ? error.message : "Failed to verify OTP");
+      setLoginError(error instanceof Error ? error.message : "Failed to verify code");
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  async function onSubmit(values: LoginFormValues) {
-    setIsSubmitting(true);
-    setLoginError(null);
-    setWarningMessage(null);
-    
-    try {
-      const email = values.email.trim().toLowerCase();
-      setActiveEmail(email); // Store the email for OTP flow
-      console.log("Starting login process for:", email);
-      
-      // First try the direct approach (most reliable)
-      const directLoginSuccessful = await attemptDirectLogin(email, values.password);
-      
-      if (directLoginSuccessful) {
-        // Check if we have a valid session and navigate
-        if (await checkSessionAndNavigate()) {
-          return; // Login successful, we're done
-        }
-      }
-      
-      // If direct login didn't work, try the custom flow
-      console.log("Direct login unsuccessful, trying custom authentication flow");
-      const result = await signInDealerWithEmail(email, values.password);
-
-      if (!result.success) {
-        console.error("Login failed:", result.error);
-        setLoginError(result.error || "Invalid credentials. Please check your email and password.");
-        return;
-      }
-
-      // Check if OTP is required
-      if (result.requiresOtp) {
-        console.log("OTP required for authentication");
-        setOtpMode(true);
-        // Initiate OTP request
-        await requestOtp();
-        return;
-      }
-
-      // If we got a session back, try to set it
-      if (result.session) {
-        console.log("Custom login returned a session, setting it");
-        
-        try {
-          // Store the session
-          const { error: setSessionError } = await supabase.auth.setSession({
-            access_token: result.session.access_token,
-            refresh_token: result.session.refresh_token
-          });
-          
-          if (setSessionError) {
-            console.error("Error setting session:", setSessionError);
-            
-            // Try a direct login one more time as a fallback
-            console.log("Trying one more direct login as fallback");
-            if (await attemptDirectLogin(email, values.password)) {
-              if (await checkSessionAndNavigate()) {
-                return; // Login successful via fallback
-              }
-            }
-            
-            setWarningMessage("Authenticated but session setup failed. Please try again.");
-            return;
-          }
-          
-          // Check if we now have a valid session
-          if (await checkSessionAndNavigate()) {
-            return; // Login successful after setting session
-          }
-          
-          // If we're still here, something is wrong
-          setWarningMessage("Session created but not detected by browser. Please try logging in again.");
-        } catch (sessionError) {
-          console.error("Session handling error:", sessionError);
-          setWarningMessage("Login succeeded but there was an issue setting up your session. Please try again.");
-        }
-      } else {
-        // Handle partial success case
-        if (result.partialSuccess && result.warning) {
-          setWarningMessage(result.warning);
-          console.warn("Partial login success:", result.warning);
-          
-          // Try one more direct login
-          console.log("Trying one final direct login attempt");
-          if (await attemptDirectLogin(email, values.password)) {
-            if (await checkSessionAndNavigate()) {
-              return;
-            }
-          }
-        } else if (result.requiresOtp) {
-          // This is handled above but adding as a safeguard
-          setOtpMode(true);
-          return;
-        } else {
-          setLoginError("Authentication succeeded but no session was created. Please try again.");
-        }
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      setLoginError(error instanceof Error ? error.message : "An unexpected error occurred");
-    } finally {
-      setIsSubmitting(false);
-    }
+  // Handle email submission
+  async function onEmailSubmit(values: EmailFormValues) {
+    const email = values.email.trim().toLowerCase();
+    setActiveEmail(email);
+    await requestOtp(email);
   }
 
-  // Switch back to password entry
-  const switchToPasswordMode = () => {
-    setOtpMode(false);
+  // Return to email entry
+  const returnToEmailEntry = () => {
+    setOtpSent(false);
     setLoginError(null);
-    setWarningMessage(null);
   };
 
   return (
     <>
-      {!otpMode ? (
-        <Form {...loginForm}>
-          <form onSubmit={loginForm.handleSubmit(onSubmit)} className="space-y-4">
+      {!otpSent ? (
+        <Form {...emailForm}>
+          <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
             {loginError && (
               <Alert variant="destructive" className="mb-4">
                 <AlertDescription>{loginError}</AlertDescription>
               </Alert>
             )}
             
-            {warningMessage && (
-              <Alert variant="warning" className="mb-4">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Warning</AlertTitle>
-                <AlertDescription>{warningMessage}</AlertDescription>
-              </Alert>
-            )}
+            <div className="text-center mb-4">
+              <Mail className="w-12 h-12 mx-auto text-primary mb-2" />
+              <h3 className="text-lg font-medium">Log in to your account</h3>
+              <p className="text-sm text-muted-foreground">
+                Enter your email to receive a verification code
+              </p>
+            </div>
             
             <FormField
-              control={loginForm.control}
+              control={emailForm.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
@@ -313,19 +184,7 @@ export function DealerLoginForm() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={loginForm.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            
             <Button 
               type="submit" 
               className="w-full"
@@ -334,31 +193,10 @@ export function DealerLoginForm() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Logging in...
+                  Sending code...
                 </>
-              ) : "Login"}
+              ) : "Send verification code"}
             </Button>
-            <div className="text-center mt-4">
-              <Button
-                type="button"
-                variant="link"
-                className="p-0"
-                onClick={() => {
-                  const email = loginForm.getValues().email;
-                  if (email) {
-                    setActiveEmail(email);
-                    setOtpMode(true);
-                    requestOtp();
-                  } else {
-                    loginForm.setError("email", {
-                      message: "Please enter your email to receive an OTP"
-                    });
-                  }
-                }}
-              >
-                Login with one-time password
-              </Button>
-            </div>
           </form>
         </Form>
       ) : (
@@ -411,7 +249,7 @@ export function DealerLoginForm() {
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Verifying...
                   </>
-                ) : "Verify"}
+                ) : "Verify & Login"}
               </Button>
             </form>
           </Form>
@@ -424,7 +262,7 @@ export function DealerLoginForm() {
               type="button"
               variant="link"
               className="p-0 text-sm"
-              onClick={requestOtp}
+              onClick={() => requestOtp(activeEmail)}
               disabled={isSubmitting}
             >
               {isSubmitting ? "Sending..." : "Send again"}
@@ -434,9 +272,9 @@ export function DealerLoginForm() {
                 type="button"
                 variant="link"
                 className="p-0 text-sm"
-                onClick={switchToPasswordMode}
+                onClick={returnToEmailEntry}
               >
-                Back to password login
+                Use a different email
               </Button>
             </div>
           </div>
