@@ -13,6 +13,7 @@ export interface SignUpResult {
 export interface SignInResult {
   success: boolean;
   error?: string;
+  message?: string;  // Add this property
   session?: any;
   dealer?: any;
   partialSuccess?: boolean;
