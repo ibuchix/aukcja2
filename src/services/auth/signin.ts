@@ -1,4 +1,3 @@
-
 import { validateEmail, safeTrim } from "./validation";
 import { SignInResult } from "./models";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,14 +30,14 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     }
     
     // User exists, proceed with OTP
-    console.log("User exists, sending OTP for signin with shouldCreateUser: true");
+    console.log("User exists, sending OTP for email signin");
     
-    // Following the Supabase documentation approach
+    // Use email sign-in that doesn't attempt to create a new user
     const { data, error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
       options: {
-        // Setting this to true to allow OTP to work, while using our manual check above
-        shouldCreateUser: true,
+        // For email OTP, don't set shouldCreateUser at all - let Supabase use its default behavior
+        // for existing users which is to send an OTP without trying to create a user
         emailRedirectTo: window.location.origin + '/auth'
       }
     });
@@ -62,15 +61,7 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
         };
       }
       
-      // Special handling for the "Signups not allowed" error
-      if (error.message.includes('Signups not allowed')) {
-        console.error("OTP signups not allowed. This might be a project configuration issue.");
-        return {
-          success: false,
-          error: "OTP authentication is not properly configured. Please check your email templates in Supabase."
-        };
-      }
-
+      // Handle general errors
       return {
         success: false,
         error: error.message
