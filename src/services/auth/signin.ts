@@ -38,7 +38,9 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     const { data, error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
       options: {
-        shouldCreateUser: false
+        shouldCreateUser: false,
+        // Specify email as the OTP delivery method
+        emailRedirectTo: window.location.origin + '/auth'
       }
     });
     
@@ -53,7 +55,7 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
         };
       }
       
-      // Special handling for the "Signups not allowed" error to provide a clearer message
+      // Special handling for the "Signups not allowed" error
       if (error.message.includes('Signups not allowed')) {
         console.error("OTP signups not allowed. This might be a project configuration issue.");
         return {
