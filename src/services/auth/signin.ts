@@ -1,4 +1,3 @@
-
 import { validateEmail, safeTrim } from "./validation";
 import { SignInResult } from "./models";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,23 +30,28 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     }
     
     // User exists, proceed with OTP
-    console.log("User exists, sending OTP for signin");
+    console.log("User exists, sending OTP for signin with shouldCreateUser: false");
     
-    // For existing users, we need to configure OTP properly
-    // In Supabase, we must use the right configuration based on latest docs
+    // Following the Supabase documentation approach
     const { data, error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
       options: {
-        // This setting should now match your Supabase configuration
-        // Based on the Supabase documentation, we should set this to true
-        // but only send OTPs to existing users (which we check above)
-        shouldCreateUser: true,
+        // Setting this to false as per Supabase docs to prevent new user creation
+        shouldCreateUser: false,
         emailRedirectTo: window.location.origin + '/auth'
       }
     });
     
     if (error) {
+      // Enhanced error logging
       console.error("Error initiating OTP signin:", error);
+      console.error("Error details:", {
+        message: error.message,
+        status: error.status,
+        name: error.name,
+        stack: error.stack,
+        details: JSON.stringify(error)
+      });
       
       // Provide more detailed error messages for debugging purposes
       if (error.message.includes('rate limit')) {
@@ -78,7 +82,11 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
       message: "A verification code has been sent to your email"
     };
   } catch (error) {
-    console.error("Error in OTP initiation:", error);
+    // Enhanced error logging for unexpected errors
+    console.error("Unexpected error in OTP initiation:", error);
+    console.error("Error type:", typeof error);
+    console.error("Error details:", JSON.stringify(error, null, 2));
+    
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to send verification code"
