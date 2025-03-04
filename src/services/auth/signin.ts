@@ -2,6 +2,7 @@
 import { validateEmail, safeTrim } from "./validation";
 import { SignInResult } from "./models";
 import { supabase } from "@/integrations/supabase/client";
+import { checkAccountExists } from "./validation";
 
 /**
  * Initiates an OTP sign-in flow for dealers
@@ -17,6 +18,20 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     // Normalize email
     const normalizedEmail = safeTrim(email).toLowerCase();
     console.log("Initiating OTP signin for email:", normalizedEmail);
+    
+    // First check if user exists in database
+    const userExists = await checkAccountExists(normalizedEmail);
+    
+    if (!userExists) {
+      console.log("User does not exist, cannot send OTP for login");
+      return {
+        success: false,
+        error: "No account found with this email. Please register first."
+      };
+    }
+    
+    // User exists, proceed with OTP
+    console.log("User exists, sending OTP for signin");
     
     // Request OTP to be sent to user's email
     const { data, error } = await supabase.auth.signInWithOtp({
