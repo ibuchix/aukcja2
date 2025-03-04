@@ -1,4 +1,3 @@
-
 import { validateEmail, safeTrim } from "./validation";
 import { SignInResult } from "./models";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,15 +32,10 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     // User exists, proceed with OTP
     console.log("User exists, sending OTP for signin");
     
-    // Important: For users that already exist in the system, we don't use options.shouldCreateUser
-    // This flag can cause conflicts with Supabase's behavior
+    // Simplify the call - for existing users, we want the most basic OTP request
+    // without any options that might trigger user creation behavior
     const { data, error } = await supabase.auth.signInWithOtp({
-      email: normalizedEmail,
-      options: {
-        // Don't use magic link, use pure OTP verification
-        // emailRedirectTo is not needed for OTP verification - removing it ensures we get a code instead of a magic link
-        emailRedirectTo: undefined
-      }
+      email: normalizedEmail
     });
     
     if (error) {
