@@ -112,8 +112,8 @@ serve(async (req) => {
 
     console.log(`Creating session for User ID: ${targetUserId}, Email: ${targetEmail}`);
 
-    // Use admin API to create a session directly
-    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
+    // Use auth API to create a session directly (fixed method call)
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.createSession({
       userId: targetUserId
     });
 
