@@ -122,13 +122,13 @@ export const signInDealerWithEmail = async (
     // If direct login still fails, use our edge function as last resort
     console.log("Direct login still failed, using edge function with user ID and email");
     
-    // Call the edge function with both userId and email for redundancy and clarity
+    // IMPORTANT: Always send BOTH userId and email for reliability
     const response = await supabase.functions.invoke(
       'create-dealer-session',
       {
         body: { 
           userId: typedResult.user_id,
-          email: normalizedEmail // Always send the email we're trying to authenticate with
+          email: normalizedEmail // Always send the normalized email
         }
       }
     );

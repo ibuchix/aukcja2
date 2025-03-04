@@ -49,46 +49,50 @@ serve(async (req) => {
       );
     }
 
-    // We'll maintain a single userData variable to track the user we want to authenticate
+    // IMPORTANT: We'll prioritize user lookup by userId for consistency
     let userData = null;
-    let targetEmail = null;
-    let targetUserId = null;
+    let targetEmail = email?.toLowerCase();
+    let targetUserId = userId;
+    
+    // If userId is provided, try lookup by ID first (most reliable)
+    if (userId) {
+      console.log(`Looking up user by ID: ${userId}`);
+      const { data: userById, error: userByIdError } = await supabaseAdmin.auth.admin.getUserById(userId);
+      
+      if (userByIdError) {
+        console.error(`Error finding user by ID ${userId}:`, userByIdError.message);
+      } else if (userById?.user) {
+        console.log(`User found by ID: ${userId}, Email: ${userById.user.email}`);
+        userData = userById;
+        targetUserId = userId;
+        
+        // If no email was provided, use the one from the user record
+        if (!targetEmail && userById.user.email) {
+          targetEmail = userById.user.email.toLowerCase();
+          console.log(`Using email from user record: ${targetEmail}`);
+        }
+      }
+    }
 
-    // If email is provided, look up user by email first
-    if (email) {
-      console.log(`Looking up user by email: ${email}`);
+    // If still no user data and email is provided, try lookup by email
+    if (!userData?.user && targetEmail) {
+      console.log(`Looking up user by email: ${targetEmail}`);
       
       const { data: usersByEmail, error: emailLookupError } = await supabaseAdmin.auth.admin.listUsers({
         filter: {
-          email: email
+          email: targetEmail
         }
       });
       
       if (emailLookupError) {
         console.error("Error looking up user by email:", emailLookupError.message);
       } else if (usersByEmail?.users?.length > 0) {
-        // Found user by email - this is our target user
+        // Found user by email - use this as our target user
         userData = { user: usersByEmail.users[0] };
-        targetEmail = email; // Use the exact email we searched with
         targetUserId = usersByEmail.users[0].id;
-        console.log(`User found by email: ${email}, ID: ${targetUserId}`);
+        console.log(`User found by email: ${targetEmail}, ID: ${targetUserId}`);
       } else {
-        console.log(`No user found with email: ${email}`);
-      }
-    }
-
-    // If user wasn't found by email or email wasn't provided, try by ID
-    if (!userData?.user && userId) {
-      console.log(`Looking up user by ID: ${userId}`);
-      const userByIdResult = await supabaseAdmin.auth.admin.getUserById(userId);
-      
-      if (userByIdResult.error) {
-        console.error(`Error finding user by ID ${userId}:`, userByIdResult.error.message);
-      } else if (userByIdResult.data?.user) {
-        userData = userByIdResult.data;
-        targetEmail = userByIdResult.data.user.email;
-        targetUserId = userId;
-        console.log(`User found by ID: ${userId}, Email: ${targetEmail}`);
+        console.log(`No user found with email: ${targetEmail}`);
       }
     }
 
@@ -106,23 +110,19 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Proceeding with authentication for User ID: ${targetUserId}, Email: ${targetEmail}`);
+    console.log(`Creating session for User ID: ${targetUserId}, Email: ${targetEmail}`);
 
-    // Create a sign-in link for the user (available in v2.38.4)
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
-      email: targetEmail || '',
-      options: {
-        redirectTo: `${Deno.env.get("SUPABASE_URL") || ''}/auth/callback`
-      }
+    // Use admin API to create a session directly
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
+      userId: targetUserId
     });
 
-    if (authError) {
-      console.error("Error generating auth link:", authError.message);
+    if (sessionError) {
+      console.error("Error creating session:", sessionError.message);
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: authError.message 
+          error: `Session creation failed: ${sessionError.message}` 
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -131,47 +131,7 @@ serve(async (req) => {
       );
     }
 
-    // Use admin powers to directly sign in
-    // Note: Using auth, not auth.admin here - this method exists in the base auth namespace
-    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.signInWithPassword({
-      email: targetEmail || '',
-      password: 'admin-bypassed', // This won't be checked with admin powers
-    });
-
-    if (sessionError) {
-      console.error("Error creating session:", sessionError.message);
-      
-      // Try alternative approach for session creation
-      try {
-        console.log("Attempting alternative session creation approach");
-        // For older Supabase versions, we might need direct API calls here
-        // This is just a placeholder - we should investigate further if needed
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: `Session creation failed: ${sessionError.message}. Please try regular login.` 
-          }),
-          { 
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 500 
-          }
-        );
-      } catch (altError) {
-        console.error("Alternative session creation also failed:", altError.message);
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: `All session creation methods failed. Please contact support.` 
-          }),
-          { 
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 500 
-          }
-        );
-      }
-    }
-
-    console.log(`Session created successfully for user ID: ${sessionData.session.user.id}, Email: ${sessionData.session.user.email}`);
+    console.log(`Session created successfully for user ID: ${sessionData.session.user.id}`);
     
     // Return the session data
     return new Response(
