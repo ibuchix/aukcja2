@@ -33,12 +33,13 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     // User exists, proceed with OTP
     console.log("User exists, sending OTP for email signin");
     
-    // Use email sign-in with shouldCreateUser explicitly set to false since we know the user exists
+    // Use email sign-in with explicitly set parameters to work with current Supabase configuration
     const { data, error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
       options: {
-        // Explicitly set shouldCreateUser to false to prevent Supabase from trying to create a user
+        // Explicitly set shouldCreateUser to false to prevent the database error
         shouldCreateUser: false,
+        // Use the current URL as redirect to ensure it matches site URL config
         emailRedirectTo: window.location.origin + '/auth'
       }
     });
