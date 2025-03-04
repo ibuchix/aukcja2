@@ -39,8 +39,6 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
         // Set this to false to prevent creation of new users
         shouldCreateUser: false,
         // Use the current URL as redirect to ensure it matches site URL config
-        emailRedirectTo: window.location.origin + '/auth',
-        // Explicitly specify this as a magic link login, not just OTP
         emailRedirectTo: window.location.origin + '/auth'
       }
     });
