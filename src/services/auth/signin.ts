@@ -48,8 +48,9 @@ export const signInDealerWithEmail = async (
       };
     }
     
-    // If direct login fails, use the specialized function that handles custom registration
     console.log("Direct login failed, falling back to RPC authentication");
+    
+    // If direct login fails, use the specialized function that handles custom registration
     const { data: authResult, error: authError } = await supabase.rpc(
       'authenticate_dealer',
       { 
@@ -119,15 +120,15 @@ export const signInDealerWithEmail = async (
     }
     
     // If direct login still fails, use our edge function as last resort
-    console.log("Direct login still failed, using edge function");
+    console.log("Direct login still failed, using edge function with user ID and email");
     
-    // Call the edge function with both userId and email for redundancy
+    // Call the edge function with both userId and email for redundancy and clarity
     const response = await supabase.functions.invoke(
       'create-dealer-session',
       {
         body: { 
           userId: typedResult.user_id,
-          email: normalizedEmail // Ensure we always send email for better lookup
+          email: normalizedEmail // Always send the email we're trying to authenticate with
         }
       }
     );
