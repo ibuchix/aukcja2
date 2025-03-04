@@ -119,47 +119,13 @@ export const signInDealerWithEmail = async (
       };
     }
     
-    // If direct login still fails, use our edge function as last resort
-    console.log("Direct login still failed, using edge function with user ID and email");
-    
-    // IMPORTANT: Always send BOTH userId and email for reliability
-    const response = await supabase.functions.invoke(
-      'create-dealer-session',
-      {
-        body: { 
-          userId: typedResult.user_id,
-          email: normalizedEmail // Always send the normalized email
-        }
-      }
-    );
-    
-    if (response.error) {
-      console.error("Session creation error:", response.error);
-      
-      return {
-        success: true,
-        partialSuccess: true,
-        warning: "Your credentials were verified, but we couldn't create a session. Please try again.",
-        dealer: typedResult.dealer
-      };
-    }
-    
-    const sessionResponse = response.data;
-    
-    if (!sessionResponse || !sessionResponse.success || !sessionResponse.session) {
-      console.error("No session created despite successful auth:", sessionResponse);
-      return {
-        success: false,
-        error: "Authentication succeeded but session creation failed."
-      };
-    }
-
-    console.log("Session created successfully:", sessionResponse.session.user.id);
-    
-    // Return the complete successful result with session
+    // If direct login still fails, try OTP method
+    console.log("Direct login still failed, trying OTP method");
     return {
       success: true,
-      session: sessionResponse.session,
+      requiresOtp: true, 
+      userId: typedResult.user_id,
+      email: normalizedEmail,
       dealer: typedResult.dealer
     };
     
@@ -187,6 +153,88 @@ export const signInDealerWithEmail = async (
     return {
       success: false,
       error: errorMessage
+    };
+  }
+};
+
+/**
+ * Initiates an OTP sign-in flow for dealers
+ */
+export const initiateOtpSignIn = async (email: string): Promise<SignInResult> => {
+  try {
+    console.log("Initiating OTP signin for email:", email);
+    
+    // Request OTP to be sent to user's email
+    const { data, error } = await supabase.auth.signInWithOtp({
+      email: email,
+      options: {
+        // OTP valid for 5 minutes
+        emailRedirectTo: window.location.origin + '/auth'
+      }
+    });
+    
+    if (error) {
+      console.error("Error initiating OTP signin:", error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+    
+    console.log("OTP signin initiated successfully");
+    return {
+      success: true,
+      message: "A one-time password has been sent to your email"
+    };
+  } catch (error) {
+    console.error("Error in OTP initiation:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to send OTP"
+    };
+  }
+};
+
+/**
+ * Verifies an OTP for dealer sign-in
+ */
+export const verifyOtp = async (email: string, otp: string): Promise<SignInResult> => {
+  try {
+    console.log("Verifying OTP for email:", email);
+    
+    // Verify the OTP
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: email,
+      token: otp,
+      type: 'email'
+    });
+    
+    if (error) {
+      console.error("OTP verification error:", error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+    
+    if (!data.session) {
+      console.error("OTP verification succeeded but no session was returned");
+      return {
+        success: false,
+        error: "Authentication successful but session creation failed."
+      };
+    }
+    
+    console.log("OTP verification successful, session created");
+    return {
+      success: true,
+      session: data.session
+    };
+  } catch (error) {
+    console.error("Error in OTP verification:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to verify OTP"
     };
   }
 };
