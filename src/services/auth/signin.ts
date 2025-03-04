@@ -127,7 +127,7 @@ export const signInDealerWithEmail = async (
       {
         body: { 
           userId: typedResult.user_id,
-          email: normalizedEmail
+          email: normalizedEmail // Ensure we always send email for better lookup
         }
       }
     );
