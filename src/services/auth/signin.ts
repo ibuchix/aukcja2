@@ -1,4 +1,3 @@
-
 import { validateEmail, safeTrim } from "./validation";
 import { SignInResult } from "./models";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,9 +36,11 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     const { data, error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
       options: {
-        // Explicitly set shouldCreateUser to false to prevent the database error
+        // Set this to false to prevent creation of new users
         shouldCreateUser: false,
         // Use the current URL as redirect to ensure it matches site URL config
+        emailRedirectTo: window.location.origin + '/auth',
+        // Explicitly specify this as a magic link login, not just OTP
         emailRedirectTo: window.location.origin + '/auth'
       }
     });

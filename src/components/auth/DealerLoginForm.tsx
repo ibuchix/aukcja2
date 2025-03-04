@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -43,7 +42,6 @@ export function DealerLoginForm() {
     },
   });
 
-  // Function to check session and navigate if valid
   const checkSessionAndNavigate = async () => {
     const { data } = await supabase.auth.getSession();
     
@@ -64,12 +62,9 @@ export function DealerLoginForm() {
     return false;
   };
 
-  // Set up auth state change monitoring
   useEffect(() => {
-    // First check if there's an existing session
     checkSessionAndNavigate();
 
-    // Then set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state change in DealerLoginForm:', event, session?.user?.id);
       
@@ -85,7 +80,6 @@ export function DealerLoginForm() {
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
 
-  // Send Magic Link
   const sendMagicLink = async (email: string) => {
     setIsSubmitting(true);
     setLoginError(null);
@@ -117,14 +111,12 @@ export function DealerLoginForm() {
     }
   };
 
-  // Handle email submission
   async function onEmailSubmit(values: EmailFormValues) {
     const email = values.email.trim().toLowerCase();
     setActiveEmail(email);
     await sendMagicLink(email);
   }
 
-  // Return to email entry
   const resetForm = () => {
     setMagicLinkSent(false);
     setLoginError(null);
@@ -235,6 +227,3 @@ export function DealerLoginForm() {
     </>
   );
 }
-
-// Import React's useEffect hook at the top
-import { useEffect } from "react";
