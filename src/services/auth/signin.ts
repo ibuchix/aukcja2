@@ -33,13 +33,15 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     // User exists, proceed with OTP
     console.log("User exists, sending OTP for signin");
     
-    // For existing users, we want to prevent account creation
-    // According to Supabase docs, this is the correct configuration for OTP
+    // For existing users, we need to configure OTP properly
+    // In Supabase, we must use the right configuration based on latest docs
     const { data, error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
       options: {
-        shouldCreateUser: false,
-        // Specify email as the OTP delivery method
+        // This setting should now match your Supabase configuration
+        // Based on the Supabase documentation, we should set this to true
+        // but only send OTPs to existing users (which we check above)
+        shouldCreateUser: true,
         emailRedirectTo: window.location.origin + '/auth'
       }
     });
