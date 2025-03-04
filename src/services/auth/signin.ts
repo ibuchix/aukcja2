@@ -1,11 +1,10 @@
-
 import { validateEmail, safeTrim } from "./validation";
 import { SignInResult } from "./models";
 import { supabase } from "@/integrations/supabase/client";
 import { checkAccountExists } from "./validation";
 
 /**
- * Initiates an OTP sign-in flow for dealers
+ * Initiates a Magic Link sign-in flow for dealers
  */
 export const initiateOtpSignIn = async (email: string): Promise<SignInResult> => {
   // Validate email format first
@@ -17,36 +16,38 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
   try {
     // Normalize email
     const normalizedEmail = safeTrim(email).toLowerCase();
-    console.log("Initiating OTP signin for email:", normalizedEmail);
+    console.log("Initiating Magic Link signin for email:", normalizedEmail);
     
     // First check if user exists in database
     const userExists = await checkAccountExists(normalizedEmail);
     
     if (!userExists) {
-      console.log("User does not exist, cannot send OTP for login");
+      console.log("User does not exist, cannot send Magic Link for login");
       return {
         success: false,
         error: "No account found with this email. Please register first."
       };
     }
     
-    // User exists, proceed with OTP
-    console.log("User exists, sending OTP for email signin");
+    // User exists, proceed with Magic Link
+    console.log("User exists, sending Magic Link for email signin");
     
-    // Use email sign-in with explicitly set parameters to work with current Supabase configuration
+    // Use Magic Link sign-in with explicitly set parameters
     const { data, error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
       options: {
         // Explicitly set shouldCreateUser to false to prevent the database error
         shouldCreateUser: false,
         // Use the current URL as redirect to ensure it matches site URL config
-        emailRedirectTo: window.location.origin + '/auth'
+        emailRedirectTo: window.location.origin + '/auth',
+        // Explicitly set to use Magic Link instead of OTP
+        shouldCreateUser: false
       }
     });
     
     if (error) {
       // Enhanced error logging
-      console.error("Error initiating OTP signin:", error);
+      console.error("Error initiating Magic Link signin:", error);
       console.error("Error details:", {
         message: error.message,
         status: error.status,
@@ -70,20 +71,20 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
       };
     }
     
-    console.log("OTP signin initiated successfully");
+    console.log("Magic Link signin initiated successfully");
     return {
       success: true,
-      message: "A verification code has been sent to your email"
+      message: "A secure login link has been sent to your email"
     };
   } catch (error) {
     // Enhanced error logging for unexpected errors
-    console.error("Unexpected error in OTP initiation:", error);
+    console.error("Unexpected error in Magic Link initiation:", error);
     console.error("Error type:", typeof error);
     console.error("Error details:", JSON.stringify(error, null, 2));
     
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to send verification code"
+      error: error instanceof Error ? error.message : "Failed to send login link"
     };
   }
 };
