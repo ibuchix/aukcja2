@@ -36,12 +36,12 @@ serve(async (req: Request) => {
           subject: "Welcome to Auto-Strada - Please Confirm Your Email",
           html: `
             <div style="font-family: 'Kanit', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h1 style="color: #9b87f5; font-family: 'Oswald', Arial, sans-serif; font-weight: bold;">Welcome to Auto-Strada!</h1>
+              <h1 style="color: #DC143C; font-family: 'Oswald', Arial, sans-serif; font-weight: bold;">Welcome to Auto-Strada!</h1>
               <p>Thank you for registering as a dealer on Auto-Strada. To get started, please confirm your email address:</p>
               
               <div style="text-align: center; margin: 30px 0;">
                 <a href="${data.confirmationURL}" 
-                   style="display: inline-block; background-color: #9b87f5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; font-family: 'Kanit', Arial, sans-serif;">
+                   style="display: inline-block; background-color: #DC143C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; font-family: 'Kanit', Arial, sans-serif;">
                   Confirm Email Address
                 </a>
               </div>
@@ -98,7 +98,7 @@ serve(async (req: Request) => {
           subject: "Your Login Code for Auto-Strada",
           html: `
             <div style="font-family: 'Kanit', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h1 style="color: #9b87f5; font-family: 'Oswald', Arial, sans-serif; font-weight: bold;">Auto-Strada Security Code</h1>
+              <h1 style="color: #DC143C; font-family: 'Oswald', Arial, sans-serif; font-weight: bold;">Auto-Strada Security Code</h1>
               
               <p style="margin: 20px 0; font-size: 16px;">Use the code below to securely log in to your Auto-Strada dealer account:</p>
               
