@@ -8,24 +8,36 @@ import { SupabaseClient } from "@supabase/supabase-js";
 export async function verifyUserExists(supabase: SupabaseClient, email: string) {
   console.log(`Verifying user exists with email: ${email}`);
   
-  const { data: userData, error: userError } = await supabase
-    .from('auth.users')
-    .select('id')
-    .eq('email', email)
-    .maybeSingle();
+  // Use the database function to safely check if email exists
+  const { data, error } = await supabase
+    .rpc('check_email_exists', { email_to_check: email });
   
-  if (userError) {
-    console.error("Error querying auth.users table:", userError);
+  if (error) {
+    console.error("Error checking if email exists:", error);
     throw new HttpError("Failed to verify email address", 500);
   }
   
-  if (!userData) {
+  // The first function returns a count, the second returns an object with exists property
+  // Handle both possible return types
+  const userExists = typeof data === 'number' ? data > 0 : 
+                    (data && typeof data === 'object' && 'exists' in data) ? data.exists : false;
+  
+  if (!userExists) {
     console.log("User not found for email:", email);
     throw new NotFoundError("Invalid email address");
   }
   
+  // Get user ID using raw SQL query since we can't directly access auth.users
+  const { data: userData, error: userIdError } = await supabase
+    .rpc('get_user_id_by_email', { p_email: email });
+  
+  if (userIdError || !userData) {
+    console.error("Error getting user ID:", userIdError);
+    throw new HttpError("Failed to verify email address", 500);
+  }
+  
   console.log("User found with ID:", userData.id);
-  return userData;
+  return { id: userData.id };
 }
 
 /**
@@ -34,11 +46,9 @@ export async function verifyUserExists(supabase: SupabaseClient, email: string) 
 export async function getUserByEmail(supabase: SupabaseClient, email: string) {
   console.log(`Getting user information for ${email}`);
   
+  // Get user ID using our database function
   const { data: userData, error: userError } = await supabase
-    .from('auth.users')
-    .select('id')
-    .eq('email', email)
-    .single();
+    .rpc('get_user_id_by_email', { p_email: email });
   
   if (userError || !userData) {
     console.error("User fetch failed:", userError || "User not found");
@@ -46,5 +56,5 @@ export async function getUserByEmail(supabase: SupabaseClient, email: string) {
   }
   
   console.log("Found user with ID:", userData.id);
-  return userData;
+  return { id: userData.id };
 }
