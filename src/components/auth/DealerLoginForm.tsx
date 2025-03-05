@@ -55,6 +55,8 @@ export function DealerLoginForm() {
       
       if (result.success) {
         setEmail(values.email);
+        // Reset OTP form to ensure no previous values
+        otpForm.reset({ otp: "" });
         setStep("otp");
         toast({
           title: "Code sent!",
@@ -117,6 +119,8 @@ export function DealerLoginForm() {
       const result = await initiateOtpSignIn(email);
       
       if (result.success) {
+        // Reset OTP form when resending
+        otpForm.reset({ otp: "" });
         toast({
           title: "Code resent!",
           description: "A new code has been sent to your email.",
@@ -143,7 +147,8 @@ export function DealerLoginForm() {
   // Go back to email step
   const handleBackToEmail = () => {
     setStep("email");
-    otpForm.reset();
+    // Reset both forms when going back
+    otpForm.reset({ otp: "" });
   };
 
   return (
@@ -196,10 +201,11 @@ export function DealerLoginForm() {
                   <FormLabel>One-Time Code</FormLabel>
                   <FormControl>
                     <InputOTP 
-                      maxLength={6} 
-                      disabled={isLoading} 
-                      value={field.value} 
-                      onChange={field.onChange}
+                      maxLength={6}
+                      disabled={isLoading}
+                      value={field.value || ""}
+                      onChange={(value) => field.onChange(value)}
+                      pattern="[0-9]"
                     >
                       <InputOTPGroup>
                         <InputOTPSlot index={0} />
