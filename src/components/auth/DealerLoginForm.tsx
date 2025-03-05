@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { initiateOtpSignIn, verifyOtp } from "@/services/auth/signin";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";

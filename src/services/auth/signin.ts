@@ -1,144 +1,129 @@
 
-import { validateEmail, safeTrim } from "./validation";
-import { SignInResult } from "./models";
 import { supabase } from "@/integrations/supabase/client";
-import { checkAccountExists } from "./validation";
+import { SignInResult } from "./models";
+import { validateEmail, safeTrim } from "./validation";
 
 /**
- * Initiates a Magic Link sign-in flow for dealers
+ * Initiates an OTP sign-in flow for dealers using our custom implementation
  */
 export const initiateOtpSignIn = async (email: string): Promise<SignInResult> => {
-  // Validate email format first
-  const emailValidation = validateEmail(email);
-  if (!emailValidation.isValid) {
-    return { success: false, error: emailValidation.error };
-  }
-
   try {
-    // Normalize email
-    const normalizedEmail = safeTrim(email).toLowerCase();
-    console.log("Initiating Magic Link signin for email:", normalizedEmail);
-    
-    // First check if user exists in database
-    const userExists = await checkAccountExists(normalizedEmail);
-    
-    if (!userExists) {
-      console.log("User does not exist, cannot send Magic Link for login");
-      return {
-        success: false,
-        error: "No account found with this email. Please register first."
+    // Validate email format
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      return { 
+        success: false, 
+        error: emailValidation.error || "Invalid email format" 
       };
     }
+
+    const normalizedEmail = safeTrim(email).toLowerCase();
     
-    // User exists, proceed with Magic Link
-    console.log("User exists, sending Magic Link for email signin");
-    
-    // Use Magic Link sign-in with explicitly set parameters
-    const { data, error } = await supabase.auth.signInWithOtp({
-      email: normalizedEmail,
-      options: {
-        // Set this to false to prevent creation of new users
-        shouldCreateUser: false,
-        // Use the current URL as redirect to ensure it matches site URL config
-        emailRedirectTo: window.location.origin + '/auth'
+    // Call our custom dealer-otp edge function
+    const { data, error } = await supabase.functions.invoke('dealer-otp', {
+      body: {
+        action: 'generate',
+        email: normalizedEmail
       }
     });
     
     if (error) {
-      // Enhanced error logging
-      console.error("Error initiating Magic Link signin:", error);
-      console.error("Error details:", {
-        message: error.message,
-        status: error.status,
-        name: error.name,
-        stack: error.stack,
-        details: JSON.stringify(error)
-      });
-      
-      // Provide more detailed error messages for debugging purposes
-      if (error.message.includes('rate limit')) {
-        return {
-          success: false,
-          error: "Too many requests. Please try again in a few minutes."
-        };
-      }
-      
-      // Handle general errors
-      return {
-        success: false,
-        error: error.message
+      console.error("Error initiating OTP signin:", error);
+      return { 
+        success: false, 
+        error: error.message || "Failed to initiate login"
       };
     }
     
-    console.log("Magic Link signin initiated successfully");
-    return {
-      success: true,
-      message: "A secure login link has been sent to your email"
-    };
-  } catch (error) {
-    // Enhanced error logging for unexpected errors
-    console.error("Unexpected error in Magic Link initiation:", error);
-    console.error("Error type:", typeof error);
-    console.error("Error details:", JSON.stringify(error, null, 2));
+    if (!data || !data.success) {
+      console.error("OTP generation failed:", data?.error || "Unknown error");
+      return { 
+        success: false, 
+        error: data?.error || "Failed to send login code"
+      };
+    }
     
     return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to send login link"
+      success: true,
+      message: "Login code sent successfully" 
+    };
+  } catch (error) {
+    console.error("Exception in initiateOtpSignIn:", error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "An unexpected error occurred"
     };
   }
 };
 
 /**
- * Verifies an OTP for dealer sign-in
+ * Verifies the OTP code and creates a session if valid
  */
 export const verifyOtp = async (email: string, otp: string): Promise<SignInResult> => {
   try {
-    // Normalize email
-    const normalizedEmail = safeTrim(email).toLowerCase();
-    console.log("Verifying OTP for email:", normalizedEmail);
+    // Validate email format
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      return { 
+        success: false, 
+        error: emailValidation.error || "Invalid email format" 
+      };
+    }
     
-    // Verify the OTP - making sure to specify 'email' as the type
-    const { data, error } = await supabase.auth.verifyOtp({
-      email: normalizedEmail,
-      token: otp,
-      type: 'email'
+    const normalizedEmail = safeTrim(email).toLowerCase();
+    
+    // Call our custom dealer-otp edge function
+    const { data, error } = await supabase.functions.invoke('dealer-otp', {
+      body: {
+        action: 'verify',
+        email: normalizedEmail,
+        otp
+      }
     });
     
     if (error) {
-      console.error("OTP verification error:", error);
+      console.error("Error verifying OTP:", error);
+      return { 
+        success: false, 
+        error: error.message || "Failed to verify code"
+      };
+    }
+    
+    if (!data || !data.success) {
+      console.error("OTP verification failed:", data?.error || "Unknown error");
+      return { 
+        success: false, 
+        error: data?.error || "Invalid or expired verification code"
+      };
+    }
+    
+    // Set the session in Supabase auth client locally
+    if (data.session) {
+      const { data: setSessionData, error: setSessionError } = await supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token
+      });
       
-      // Provide user-friendly error messages based on the error type
-      if (error.message.includes('Invalid') || error.message.includes('expired')) {
-        return {
-          success: false,
-          error: "Invalid or expired verification code. Please request a new one."
+      if (setSessionError) {
+        console.error("Error setting session:", setSessionError);
+        return { 
+          success: false, 
+          error: "Failed to initialize session"
         };
       }
-      
-      return {
-        success: false,
-        error: error.message
-      };
     }
     
-    if (!data.session) {
-      console.error("OTP verification succeeded but no session was returned");
-      return {
-        success: false,
-        error: "Authentication successful but session creation failed. Please try again."
-      };
-    }
-    
-    console.log("OTP verification successful, session created");
     return {
       success: true,
-      session: data.session
+      message: "Login successful",
+      session: data.session,
+      dealer: data.dealer
     };
   } catch (error) {
-    console.error("Error in OTP verification:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to verify code"
+    console.error("Exception in verifyOtp:", error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "An unexpected error occurred"
     };
   }
 };
