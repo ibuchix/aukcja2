@@ -15,22 +15,19 @@ export function createServiceClient() {
   }
   
   // Create client with service role for bypassing RLS
-  const client = createClient(supabaseUrl, supabaseServiceKey, {
+  return createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
     },
     global: {
       headers: {
-        // Add explicit headers to ensure service role is used
+        // Ensure correct case for headers
         'Authorization': `Bearer ${supabaseServiceKey}`,
         'apikey': supabaseServiceKey
       }
     }
   });
-  
-  console.log('Service client created successfully with service role key');
-  return client;
 }
 
 // Edge client that can be created from headers or a request object
