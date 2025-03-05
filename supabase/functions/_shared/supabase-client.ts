@@ -18,11 +18,17 @@ export function createServiceClient() {
   const client = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       persistSession: false,
-      autoRefreshToken: false
+      autoRefreshToken: false,
+    },
+    global: {
+      headers: {
+        // Add explicit headers to ensure service role is used
+        'Authorization': `Bearer ${supabaseServiceKey}`
+      }
     }
   });
   
-  console.log('Service client created successfully');
+  console.log('Service client created successfully with service role key');
   return client;
 }
 

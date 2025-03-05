@@ -9,37 +9,21 @@ export async function verifyUserExists(supabase: SupabaseClient, email: string) 
   console.log(`Verifying user exists with email: ${email}`);
   
   try {
-    // Test database access first
-    try {
-      const { error: testError } = await supabase
-        .from('profiles')
-        .select('id')
-        .limit(1);
-      
-      if (testError) {
-        console.error("Database access test failed:", testError);
-        throw new HttpError("Failed to verify email address - database access error", 500);
-      }
-    } catch (dbError) {
-      console.error("Database access test exception:", dbError);
-      throw new HttpError("Failed to verify email address - database connection error", 500);
-    }
-    
-    // Use the database function to safely check if email exists
-    const { data, error } = await supabase
+    // Use the database function instead of direct table access
+    // This is more reliable as it explicitly uses SECURITY DEFINER
+    console.log("Checking if email exists using database function");
+    const { data: emailCheck, error: emailError } = await supabase
       .rpc('check_email_exists', { email_to_check: email });
     
-    if (error) {
-      console.error("Error checking if email exists:", error);
-      throw new HttpError(`Failed to verify email address: ${error.message}`, 500);
+    if (emailError) {
+      console.error("Error checking if email exists:", emailError);
+      throw new HttpError(`Failed to verify email address: ${emailError.message}`, 500);
     }
     
     // Check if the data is in the expected format
-    const userExists = typeof data === 'object' && data && 'exists' in data 
-      ? data.exists 
-      : typeof data === 'number' 
-        ? data > 0 
-        : false;
+    const userExists = typeof emailCheck === 'object' && emailCheck && 'exists' in emailCheck 
+      ? emailCheck.exists 
+      : false;
     
     if (!userExists) {
       console.log("User not found for email:", email);
@@ -47,6 +31,7 @@ export async function verifyUserExists(supabase: SupabaseClient, email: string) 
     }
     
     // Get user ID using database function
+    console.log("Getting user ID by email");
     const { data: userData, error: userIdError } = await supabase
       .rpc('get_user_id_by_email', { p_email: email });
     
