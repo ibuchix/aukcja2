@@ -25,6 +25,10 @@ const handleRequest = async (req: Request): Promise<Response> => {
     const supabase = createServiceClient();
     console.log(`[dealer-otp] Created Supabase client with service role`);
     
+    // Verify the client has the expected headers for debugging
+    console.log(`[dealer-otp] Client has Authorization header: ${!!supabase.auth.headers()['Authorization']}`);
+    console.log(`[dealer-otp] Client has apikey header: ${!!supabase.auth.headers()['apikey']}`);
+    
     // Parse request body
     const requestData = await req.json().catch(err => {
       console.error(`[dealer-otp] Error parsing request JSON:`, err);
