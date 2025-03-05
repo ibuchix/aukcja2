@@ -53,77 +53,30 @@ const handler = async (req: Request): Promise<Response> => {
     if (action === 'generate') {
       console.log(`Generating OTP for ${normalizedEmail}`);
       
-      // Try different parameter names since we have conflicting database function definitions
-      let userExists = null;
-      let userCheckError = null;
+      // Use a direct query to auth.users table instead of relying on functions
+      console.log("Directly checking if user exists in auth.users table");
+      const { data: userData, error: userError } = await supabase
+        .from('auth.users')
+        .select('id')
+        .eq('email', normalizedEmail)
+        .maybeSingle();
       
-      // First try with email_to_check parameter (from the first migration)
-      try {
-        console.log("Trying check_email_exists with email_to_check parameter");
-        const result = await supabase.rpc(
-          'check_email_exists', 
-          { email_to_check: normalizedEmail }
+      if (userError) {
+        console.error("Error querying auth.users table:", userError);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: "Failed to verify email address" 
+          }),
+          { 
+            status: 500, 
+            headers: { "Content-Type": "application/json", ...corsHeaders } 
+          }
         );
-        
-        userCheckError = result.error;
-        
-        // Handle integer return type (from the first migration)
-        if (!userCheckError && typeof result.data === 'number') {
-          userExists = { exists: result.data > 0 };
-          console.log("Found user using email_to_check parameter:", userExists);
-        } 
-        // Handle jsonb return type (from the second migration)
-        else if (!userCheckError && result.data && typeof result.data === 'object') {
-          userExists = result.data;
-          console.log("Found user using email_to_check parameter with jsonb return:", userExists);
-        }
-      } catch (error) {
-        console.error("Error calling check_email_exists with email_to_check parameter:", error);
       }
       
-      // If first attempt failed, try with p_email parameter (from the second migration)
-      if (!userExists || userCheckError) {
-        try {
-          console.log("Trying check_email_exists with p_email parameter");
-          const result = await supabase.rpc(
-            'check_email_exists', 
-            { p_email: normalizedEmail }
-          );
-          
-          userCheckError = result.error;
-          
-          if (!userCheckError && result.data) {
-            userExists = result.data;
-            console.log("Found user using p_email parameter:", userExists);
-          }
-        } catch (error) {
-          console.error("Error calling check_email_exists with p_email parameter:", error);
-        }
-      }
-      
-      // As a last resort, try a direct query to the auth.users table
-      if (!userExists || userCheckError) {
-        try {
-          console.log("Trying direct query to auth.users table");
-          const { data, error } = await supabase
-            .from('auth.users')
-            .select('id')
-            .eq('email', normalizedEmail)
-            .maybeSingle();
-          
-          userCheckError = error;
-          
-          if (!error) {
-            userExists = { exists: data !== null };
-            console.log("Direct query result:", userExists);
-          }
-        } catch (error) {
-          console.error("Error querying auth.users directly:", error);
-        }
-      }
-      
-      if (userCheckError || !userExists || !userExists.exists) {
-        console.error("User check failed:", userCheckError || "User not found");
+      if (!userData) {
+        console.log("User not found for email:", normalizedEmail);
         return new Response(
           JSON.stringify({ 
             success: false, 
@@ -135,6 +88,8 @@ const handler = async (req: Request): Promise<Response> => {
           }
         );
       }
+      
+      console.log("User found with ID:", userData.id);
       
       // Generate a new OTP
       const otp = generateOTP();
@@ -257,7 +212,7 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
       
-      // Get user information
+      // Get user information directly from auth.users
       const { data: userData, error: userError } = await supabase
         .from('auth.users')
         .select('id')
