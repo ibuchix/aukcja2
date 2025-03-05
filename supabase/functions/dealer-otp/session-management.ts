@@ -17,8 +17,51 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
       throw new Error('Missing required Supabase environment variables');
     }
     
-    // Use direct API call to create a session with the service role
-    // Fix: Use the correct endpoint format for v2 API
+    // First, verify that the user exists in auth.users
+    // This additional check helps diagnose user ID issues
+    console.log(`Verifying user ${userId} exists before creating session`);
+    const userCheckResponse = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${serviceRoleKey}`,
+        'apikey': serviceRoleKey,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    // Debug user verification response
+    const userCheckStatus = userCheckResponse.status;
+    console.log(`User verification status: ${userCheckStatus}`);
+    
+    if (userCheckStatus === 404) {
+      console.error(`User ${userId} not found in auth system`);
+      
+      // Additional debug - check if this user ID exists in our database
+      const { data: userInDB, error: dbError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .single();
+        
+      if (dbError) {
+        console.error(`Error checking user in profiles: ${dbError.message}`);
+      } else if (userInDB) {
+        console.error(`User exists in profiles but not in auth system. Profile ID: ${userInDB.id}`);
+      } else {
+        console.error(`User does not exist in profiles table either`);
+      }
+      
+      throw new HttpError(`User with ID ${userId} not found in auth system`, 404);
+    }
+    
+    if (!userCheckResponse.ok) {
+      const errorText = await userCheckResponse.text();
+      console.error(`Error verifying user: ${errorText}`);
+      throw new HttpError(`Failed to verify user: ${userCheckResponse.status} ${userCheckResponse.statusText}`, 500);
+    }
+    
+    // Now create the session
+    console.log(`User verified, creating session for ${userId}`);
     const response = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}/sessions`, {
       method: 'POST',
       headers: {
