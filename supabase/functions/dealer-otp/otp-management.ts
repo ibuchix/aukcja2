@@ -126,4 +126,4 @@ export async function deleteOtp(supabase: SupabaseClient, email: string) {
   }
 }
 
-export { OTP_EXPIRY_MINUTES };
+// Removed the duplicate export at the end to fix the SyntaxError
