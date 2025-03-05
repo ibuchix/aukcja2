@@ -5,11 +5,14 @@ import { verifyUserExists, getUserByEmail } from "./user-verification.ts";
 import { storeOtp, verifyOtp, deleteOtp } from "./otp-management.ts";
 import { sendOtpEmail } from "./email-service.ts";
 import { createUserSession, getDealerProfile } from "./session-management.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
 /**
  * Handles OTP generation action
  */
 export async function handleGenerateOtp(supabase: SupabaseClient, email: string) {
+  console.log(`[dealer-otp] Generating OTP for email: ${email?.substring(0, 3)}...`);
+  
   const normalizedEmail = validateEmail(email);
   
   // Verify user exists
@@ -31,6 +34,8 @@ export async function handleGenerateOtp(supabase: SupabaseClient, email: string)
  * Handles OTP verification action
  */
 export async function handleVerifyOtp(supabase: SupabaseClient, email: string, otp: string) {
+  console.log(`[dealer-otp] Verifying OTP for email: ${email?.substring(0, 3)}...`);
+  
   const normalizedEmail = validateEmail(email);
   const validatedOtp = validateOtp(otp);
   

@@ -3,6 +3,8 @@
  * Centralized error handling utilities for Supabase Edge Functions
  */
 
+import { corsHeaders } from "./cors.ts";
+
 interface ErrorContext {
   module?: string;
   handler?: string;
@@ -59,7 +61,8 @@ export const handleError = (error: Error, context: ErrorContext = {}): Response 
     { 
       status,
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        ...corsHeaders  // Add CORS headers to all error responses
       }
     }
   );
@@ -155,7 +158,17 @@ export function withErrorHandling<T>(
   return handler()
     .then(result => {
       if (result instanceof Response) {
-        return result;
+        // Make sure any direct Response objects also have CORS headers
+        const headers = new Headers(result.headers);
+        Object.entries(corsHeaders).forEach(([key, value]) => {
+          headers.set(key, value);
+        });
+        
+        return new Response(result.body, {
+          status: result.status,
+          statusText: result.statusText,
+          headers
+        });
       }
       
       return new Response(
@@ -163,7 +176,8 @@ export function withErrorHandling<T>(
         {
           status: 200,
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            ...corsHeaders  // Add CORS headers to success responses
           }
         }
       );
