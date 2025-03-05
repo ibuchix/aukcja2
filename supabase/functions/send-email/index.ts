@@ -25,7 +25,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     console.log("Received request to send email");
-    const { to, subject, html, from = "Auto-Strada <onboarding@resend.dev>" }: EmailRequest = await req.json();
+    const { to, subject, html, from = "Auto-Strada <welcome@auto-strada.pl>" }: EmailRequest = await req.json();
 
     console.log(`Sending email to ${to} with subject "${subject}"`);
     

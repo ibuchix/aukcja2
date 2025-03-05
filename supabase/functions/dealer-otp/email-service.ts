@@ -45,18 +45,20 @@ export async function sendOtpEmail(email: string, otp: string): Promise<void> {
               <p>If you didn't request this code, please ignore this email.</p>
               <p>Thank you,<br>The Auto-Strada Team</p>
             </div>
-          `
+          `,
+          from: "Auto-Strada <welcome@auto-strada.pl>" // Use verified domain
         })
       }
     );
     
     if (!emailResponse.ok) {
-      const errorText = await emailResponse.text();
-      console.error("Error sending email:", errorText);
-      throw new HttpError(`Failed to send login code: ${errorText}`, 500);
+      const errorResponse = await emailResponse.json().catch(() => null);
+      console.error("Error sending email:", errorResponse || await emailResponse.text());
+      throw new HttpError(`Failed to send login code: ${errorResponse?.error || emailResponse.statusText}`, 500);
     }
     
-    console.log("OTP email sent successfully");
+    const responseData = await emailResponse.json();
+    console.log("OTP email sent successfully. Response:", responseData);
   } catch (error) {
     console.error("Exception in sendOtpEmail:", error);
     if (error instanceof HttpError) {
