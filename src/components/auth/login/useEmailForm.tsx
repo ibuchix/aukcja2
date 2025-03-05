@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -6,9 +5,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { initiateOtpSignIn } from "@/services/auth/signin";
 
-// Email validation schema
+// Enhanced email validation schema
 const emailSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string()
+    .min(5, "Email must be at least 5 characters")
+    .max(100, "Email cannot exceed 100 characters")
+    .email("Please enter a valid email address")
+    .refine(
+      (email) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email),
+      { message: "Please enter a valid email format" }
+    )
 });
 
 export type EmailFormValues = z.infer<typeof emailSchema>;
@@ -21,19 +27,28 @@ export function useEmailForm(
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // Email form
+  // Email form with enhanced validation
   const emailForm = useForm<EmailFormValues>({
     resolver: zodResolver(emailSchema),
     defaultValues: {
       email: "",
     },
+    mode: "onChange" // Validate on change for immediate feedback
   });
 
   // Handle email submit and send OTP
   const onEmailSubmit = async (values: EmailFormValues) => {
     setIsLoading(true);
     try {
-      const result = await initiateOtpSignIn(values.email);
+      // Sanitize the email one more time before submission
+      const sanitizedEmail = values.email.trim().toLowerCase().replace(/[^a-zA-Z0-9@._+-]/g, '');
+      
+      if (sanitizedEmail !== values.email) {
+        emailForm.setValue('email', sanitizedEmail);
+        values.email = sanitizedEmail;
+      }
+      
+      const result = await initiateOtpSignIn(sanitizedEmail);
       
       if (result.success) {
         setEmail(values.email);
