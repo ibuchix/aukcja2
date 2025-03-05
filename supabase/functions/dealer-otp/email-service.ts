@@ -9,13 +9,27 @@ export async function sendOtpEmail(email: string, otp: string): Promise<void> {
   console.log(`Sending OTP email to ${email}`);
   
   try {
+    // Make sure environment variables are available
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Missing environment variables for email sending:',  {
+        urlPresent: !!supabaseUrl,
+        keyPresent: !!supabaseAnonKey
+      });
+      throw new HttpError("Server configuration error - email service", 500);
+    }
+    
+    console.log(`Calling email service at ${supabaseUrl}/functions/v1/send-email`);
+    
     const emailResponse = await fetch(
-      `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-email`,
+      `${supabaseUrl}/functions/v1/send-email`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
+          'Authorization': `Bearer ${supabaseAnonKey}`
         },
         body: JSON.stringify({
           to: email,
@@ -39,12 +53,15 @@ export async function sendOtpEmail(email: string, otp: string): Promise<void> {
     if (!emailResponse.ok) {
       const errorText = await emailResponse.text();
       console.error("Error sending email:", errorText);
-      throw new HttpError("Failed to send login code", 500);
+      throw new HttpError(`Failed to send login code: ${errorText}`, 500);
     }
     
     console.log("OTP email sent successfully");
   } catch (error) {
     console.error("Exception in sendOtpEmail:", error);
+    if (error instanceof HttpError) {
+      throw error;
+    }
     throw new HttpError("Failed to send login code", 500);
   }
 }

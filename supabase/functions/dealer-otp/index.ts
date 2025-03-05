@@ -18,6 +18,10 @@ const handleRequest = async (req: Request): Promise<Response> => {
   
   try {
     // Create Supabase client with service role for full access
+    // Log environment variables availability (without exposing values)
+    console.log(`[dealer-otp] SUPABASE_URL available: ${!!Deno.env.get('SUPABASE_URL')}`);
+    console.log(`[dealer-otp] SUPABASE_SERVICE_ROLE_KEY available: ${!!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`);
+    
     const supabase = createServiceClient();
     console.log(`[dealer-otp] Created Supabase client with service role`);
     
@@ -42,7 +46,9 @@ const handleRequest = async (req: Request): Promise<Response> => {
       );
     }
     
-    console.log(`[dealer-otp] Processing action: ${action} for email: ${email?.substring(0, 3)}...`);
+    // Mask email for logging
+    const maskedEmail = email ? email.substring(0, 3) + '...' + email.split('@')[1] : 'none';
+    console.log(`[dealer-otp] Processing action: ${action} for email: ${maskedEmail}`);
     
     // Process different actions
     if (action === 'generate') {

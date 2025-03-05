@@ -7,15 +7,23 @@ export function createServiceClient() {
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   
   if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('Missing Supabase environment variables:', {
+      urlPresent: !!supabaseUrl,
+      keyPresent: !!supabaseServiceKey
+    });
     throw new Error('Missing Supabase environment variables. Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
   }
   
-  return createClient(supabaseUrl, supabaseServiceKey, {
+  // Create client with service role for bypassing RLS
+  const client = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false
     }
   });
+  
+  console.log('Service client created successfully');
+  return client;
 }
 
 // Edge client that can be created from headers or a request object
@@ -24,6 +32,7 @@ export function createEdgeClient(reqOrHeaders: Request | Headers) {
   const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
   
   if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase environment variables for edge client');
     throw new Error('Missing Supabase environment variables. Check SUPABASE_URL and SUPABASE_ANON_KEY.');
   }
   
