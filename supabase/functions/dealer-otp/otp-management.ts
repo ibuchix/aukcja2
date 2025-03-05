@@ -4,6 +4,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { OTP_LENGTH } from "./validation.ts";
 
 export const OTP_EXPIRY_MINUTES = 15;
+const MAX_OTP_ATTEMPTS = 5; // Maximum attempts before rate limiting
 
 /**
  * Generates a numeric OTP of specified length
@@ -28,6 +29,7 @@ export async function storeOtp(supabase: SupabaseClient, email: string): Promise
   
   try {
     // Use the secure RPC function with SECURITY DEFINER to store the OTP
+    // This function has "ON CONFLICT (email) DO UPDATE" logic to handle concurrent requests
     const { data: otpId, error: storeError } = await supabase
       .rpc('store_dealer_otp', {
         p_email: email,
@@ -58,7 +60,21 @@ export async function verifyOtp(supabase: SupabaseClient, email: string, otp: st
   console.log(`Verifying OTP for ${email}`);
   
   try {
-    const { data: otpData, error: otpError } = await supabase
+    // First check if user is rate limited due to too many attempts
+    const { data: otpData, error: fetchError } = await supabase
+      .from('dealer_otps')
+      .select('attempts')
+      .eq('email', email)
+      .single();
+    
+    // If there's a record and attempts exceeds the limit, reject
+    if (otpData && otpData.attempts >= MAX_OTP_ATTEMPTS) {
+      console.error("Too many failed attempts for email:", email);
+      throw new ValidationError("Too many failed attempts. Please request a new code.");
+    }
+    
+    // Now try to verify the OTP
+    const { data: verifiedOtp, error: otpError } = await supabase
       .from('dealer_otps')
       .select('*')
       .eq('email', email)
@@ -66,18 +82,24 @@ export async function verifyOtp(supabase: SupabaseClient, email: string, otp: st
       .gt('expires_at', new Date().toISOString())
       .single();
     
-    if (otpError) {
-      console.error("OTP verification failed:", otpError);
-      throw new ValidationError("Invalid or expired verification code");
-    }
-    
-    if (!otpData) {
-      console.error("OTP verification failed: No matching OTP found");
+    if (otpError || !verifiedOtp) {
+      console.error("OTP verification failed:", otpError || "No matching OTP found");
+      
+      // Increment the attempts counter
+      const { error: updateError } = await supabase
+        .from('dealer_otps')
+        .update({ attempts: (otpData?.attempts || 0) + 1 })
+        .eq('email', email);
+      
+      if (updateError) {
+        console.error("Error updating attempts counter:", updateError);
+      }
+      
       throw new ValidationError("Invalid or expired verification code");
     }
     
     console.log("OTP verified successfully");
-    return otpData;
+    return verifiedOtp;
   } catch (error) {
     if (error instanceof ValidationError) {
       throw error;
