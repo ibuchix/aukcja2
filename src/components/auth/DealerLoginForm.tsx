@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useEmailForm } from "./login/useEmailForm";
 import { useOtpForm } from "./login/useOtpForm";
 import { EmailForm } from "./login/EmailForm";
@@ -25,6 +25,13 @@ export function DealerLoginForm() {
     emailForm,
     onEmailSubmit
   } = useEmailForm(setStep, setEmail, resetOtpForm);
+
+  // Reset OTP form when switching steps
+  useEffect(() => {
+    if (step === "otp") {
+      resetOtpForm();
+    }
+  }, [step, resetOtpForm]);
 
   return (
     <div className="space-y-4">
