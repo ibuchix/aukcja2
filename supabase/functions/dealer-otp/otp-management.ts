@@ -67,6 +67,18 @@ export async function verifyOtp(supabase: SupabaseClient, email: string, otp: st
       .eq('email', email)
       .single();
     
+    if (fetchError) {
+      console.error("Error fetching OTP record:", fetchError);
+      
+      // Check specifically for permission errors
+      if (fetchError.code === '42501') {
+        throw new HttpError("Database permission denied. Please contact support.", 500);
+      }
+      
+      // For other errors, use a generic message
+      throw new ValidationError("Could not verify code. Please try again.");
+    }
+    
     // If there's a record and attempts exceeds the limit, reject
     if (otpData && otpData.attempts >= MAX_OTP_ATTEMPTS) {
       console.error("Too many failed attempts for email:", email);
@@ -101,7 +113,7 @@ export async function verifyOtp(supabase: SupabaseClient, email: string, otp: st
     console.log("OTP verified successfully");
     return verifiedOtp;
   } catch (error) {
-    if (error instanceof ValidationError) {
+    if (error instanceof ValidationError || error instanceof HttpError) {
       throw error;
     }
     console.error("Exception in verifyOtp:", error);
