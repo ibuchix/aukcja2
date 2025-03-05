@@ -7,13 +7,9 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { initiateOtpSignIn, verifyOtp } from "@/services/auth/signin";
 
-// OTP validation schema - updated to properly validate numeric codes
+// OTP validation schema
 const otpSchema = z.object({
-  otp: z
-    .string()
-    .min(6, "OTP must be 6 characters")
-    .max(6, "OTP must be 6 characters")
-    .regex(/^\d{6}$/, "OTP must contain 6 digits only")
+  otp: z.string().length(6, "Code must be 6 characters")
 });
 
 export type OtpFormValues = z.infer<typeof otpSchema>;
@@ -32,17 +28,13 @@ export function useOtpForm(
     defaultValues: {
       otp: "",
     },
-    mode: "onChange", // Validate on change for better user feedback
   });
 
   // Handle OTP verification
   const onOtpSubmit = async (values: OtpFormValues) => {
     setIsLoading(true);
     try {
-      // Ensure OTP is a clean string without spaces or non-digits
-      const cleanOtp = values.otp.replace(/\D/g, '');
-      
-      const result = await verifyOtp(email, cleanOtp);
+      const result = await verifyOtp(email, values.otp);
       
       if (result.success) {
         toast({
@@ -76,8 +68,6 @@ export function useOtpForm(
       const result = await initiateOtpSignIn(email);
       
       if (result.success) {
-        // Reset OTP form when resending
-        otpForm.reset({ otp: "" });
         toast({
           title: "Code resent!",
           description: "A new code has been sent to your email.",
@@ -104,8 +94,6 @@ export function useOtpForm(
   // Go back to email step
   const handleBackToEmail = () => {
     setStep("email");
-    // Reset OTP form when going back
-    otpForm.reset({ otp: "" });
   };
 
   return {

@@ -4,7 +4,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { OtpFormValues } from "./useOtpForm";
 import { UseFormReturn } from "react-hook-form";
-import { useEffect } from "react";
 
 interface OtpFormProps {
   form: UseFormReturn<OtpFormValues>;
@@ -21,11 +20,6 @@ export function OtpForm({
   onBackToEmail,
   onResendOtp
 }: OtpFormProps) {
-  // Clear form on mount to prevent stale values
-  useEffect(() => {
-    form.reset({ otp: "" });
-  }, [form]);
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -39,13 +33,8 @@ export function OtpForm({
                 <InputOTP 
                   maxLength={6}
                   disabled={isLoading}
-                  value={field.value || ""}
-                  onChange={(value) => {
-                    // Only allow digits
-                    const numericValue = value.replace(/\D/g, '');
-                    field.onChange(numericValue);
-                  }}
-                  pattern="[0-9]"
+                  value={field.value}
+                  onChange={field.onChange}
                 >
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
