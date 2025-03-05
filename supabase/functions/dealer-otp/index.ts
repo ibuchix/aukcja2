@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "../_shared/supabase-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,23 +21,6 @@ function generateOTP(length = OTP_LENGTH) {
   return otp;
 }
 
-// Create a Supabase client with the service role key
-const createServiceClient = () => {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables');
-  }
-  
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
-}
-
 // Handler function for the edge function
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -46,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
   
   try {
     const supabase = createServiceClient();
-    const { action, email } = await req.json();
+    const { action, email, otp } = await req.json();
     
     // Validate input
     if (!email || typeof email !== 'string') {
@@ -69,9 +53,11 @@ const handler = async (req: Request): Promise<Response> => {
     if (action === 'generate') {
       console.log(`Generating OTP for ${normalizedEmail}`);
       
-      // Check if user exists and is a dealer
-      const { data: userExists, error: userCheckError } = await supabase
-        .rpc('check_email_exists', { p_email: normalizedEmail });
+      // Check if user exists
+      const { data: userExists, error: userCheckError } = await supabase.rpc(
+        'check_email_exists', 
+        { p_email: normalizedEmail }
+      );
       
       if (userCheckError || !userExists || !userExists.exists) {
         console.error("User check failed:", userCheckError || "User not found");
@@ -172,9 +158,6 @@ const handler = async (req: Request): Promise<Response> => {
     
     // Check if this is a request to verify an OTP
     else if (action === 'verify') {
-      const { otp } = await req.json();
-      console.log(`Verifying OTP for ${normalizedEmail}`);
-      
       if (!otp || typeof otp !== 'string' || otp.length !== OTP_LENGTH) {
         return new Response(
           JSON.stringify({ 
@@ -213,9 +196,9 @@ const handler = async (req: Request): Promise<Response> => {
       
       // Get user information
       const { data: userData, error: userError } = await supabase
-        .from('auth')
-        .select('users.id')
-        .eq('users.email', normalizedEmail)
+        .from('auth.users')
+        .select('id')
+        .eq('email', normalizedEmail)
         .single();
       
       if (userError || !userData) {
