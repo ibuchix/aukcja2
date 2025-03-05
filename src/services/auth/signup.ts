@@ -1,5 +1,5 @@
 
-import { validateEmail, validatePassword, safeTrim, checkAccountExists } from "./validation";
+import { validateEmail, safeTrim, checkAccountExists } from "./validation";
 import { 
   SignUpResult, 
   UserMetadata
@@ -7,11 +7,10 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Handles the signup process for dealers with email authentication
+ * Handles the signup process for dealers with passwordless authentication
  */
 export const signUpDealerWithEmail = async (
   email: string,
-  password: string,
   metadata: UserMetadata
 ): Promise<SignUpResult> => {
   try {
@@ -23,12 +22,6 @@ export const signUpDealerWithEmail = async (
       return { success: false, error: emailValidation.error };
     }
 
-    // Use centralized password validation with better error handling
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      return { success: false, error: passwordValidation.error };
-    }
-
     // Validate required metadata with better handling
     if (!safeTrim(metadata.name)) {
       return { success: false, error: "Name is required" };
@@ -37,12 +30,16 @@ export const signUpDealerWithEmail = async (
     try {
       console.log("Calling dealer-auth function with register action");
       
+      // Generate a secure random password for the initial account creation
+      // This is needed for Supabase account creation but won't be used by the user
+      const securePassword = crypto.randomUUID() + crypto.randomUUID();
+      
       // Call the dealer-auth edge function to handle registration
       const { data, error } = await supabase.functions.invoke('dealer-auth', {
         body: {
           action: 'register',
           email: safeTrim(email).toLowerCase(),
-          password: password,
+          password: securePassword, // Using secure random password
           metadata: {
             name: safeTrim(metadata.name),
             companyName: safeTrim(metadata.companyName || ''),
@@ -51,6 +48,7 @@ export const signUpDealerWithEmail = async (
             companyAddress: safeTrim(metadata.companyAddress || ''),
             phoneNumber: safeTrim(metadata.phoneNumber || '')
           },
+          passwordless: true, // Indicate this is a passwordless registration
           requestId: crypto.randomUUID(), // Add a unique request ID for tracking retries
           timestamp: new Date().toISOString()
         }
@@ -96,7 +94,7 @@ export const signUpDealerWithEmail = async (
         };
       }
 
-      // Check for partial success in the response (new feature)
+      // Check for warnings (partial success)
       if (response.warning) {
         console.warn("Partial success detected:", response.warning);
         return {
@@ -121,7 +119,7 @@ export const signUpDealerWithEmail = async (
       return {
         success: true,
         userId: userId,
-        message: response.message || "Registration successful. Please check your email for verification."
+        message: "Registration successful. Please check your email for verification."
       };
     } catch (error) {
       console.error("Error in registration process:", error);

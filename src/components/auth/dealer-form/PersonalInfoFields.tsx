@@ -1,11 +1,10 @@
+
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { PasswordValidation } from "../PasswordValidation";
 import { useState, useEffect } from "react";
-import { Eye, EyeOff, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PersonalInfoFieldsProps {
@@ -13,13 +12,6 @@ interface PersonalInfoFieldsProps {
 }
 
 export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
-  const [passwordValue, setPasswordValue] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
   const formatPhoneNumber = (value: string) => {
     const digitsOnly = value.replace(/\D/g, '');
     
@@ -114,7 +106,7 @@ export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
                     <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent side="right" className="max-w-xs">
-                    Use a valid business email for verification purposes
+                    Use a valid business email for verification purposes. You will receive a login code at this email when signing in.
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -135,44 +127,8 @@ export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
               />
             </FormControl>
             <FormDescription className="text-xs text-muted-foreground" id="email-description">
-              This will be your login email
+              This will be your login email for passwordless authentication
             </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="password"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Password</FormLabel>
-            <FormControl>
-              <div className="relative">
-                <Input 
-                  type={showPassword ? "text" : "password"} 
-                  {...field} 
-                  onChange={(e) => {
-                    field.onChange(e);
-                    setPasswordValue(e.target.value);
-                  }}
-                  disabled={form.formState.isSubmitting}
-                  className="pr-10" 
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-10 w-10"
-                  onClick={togglePasswordVisibility}
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-            </FormControl>
-            <PasswordValidation password={passwordValue} />
             <FormMessage />
           </FormItem>
         )}

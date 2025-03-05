@@ -26,12 +26,17 @@ export async function handleDealerRegister(
   requestId: string
 ): Promise<Response> {
   try {
-    const { email, password, metadata = {} } = body;
+    const { email, password, metadata = {}, passwordless = false } = body;
     
-    logInfo(`Processing registration for email: ${email}, request ID: ${requestId}`);
+    logInfo(`Processing registration for email: ${email}, passwordless: ${passwordless}, request ID: ${requestId}`);
 
-    if (!email || !password) {
-      return respondError("Email and password are required", 400);
+    if (!email) {
+      return respondError("Email is required", 400);
+    }
+
+    // Only require password for non-passwordless registration
+    if (!passwordless && !password) {
+      return respondError("Password is required for non-passwordless registration", 400);
     }
 
     // Validate required metadata
@@ -60,7 +65,7 @@ export async function handleDealerRegister(
       "create_dealer_with_profile",
       {
         p_email: email.toLowerCase().trim(),
-        p_password: password,
+        p_password: password || crypto.randomUUID() + crypto.randomUUID(), // Use random UUID as password for passwordless
         p_supervisor_name: cleanedMetadata.name,
         p_company_name: cleanedMetadata.companyName || cleanedMetadata.name,
         p_tax_id: cleanedMetadata.taxId || "",
@@ -126,10 +131,15 @@ export async function handleDealerRegister(
     // Successfully created user
     logInfo(`User registered successfully (request ID: ${requestId}): ${result.user?.id}`);
     
+    // For passwordless registration, add a special note in the response message
+    const message = passwordless 
+      ? "Registration successful. You will receive a login code via email when you sign in."
+      : "Registration successful. Please check your email for verification.";
+    
     return respondSuccess({
       success: true,
       userId: result.user?.id,
-      message: "Registration successful. Please check your email for verification."
+      message: message
     });
   } catch (error) {
     logError(`Unexpected error in registration handler (request ID: ${requestId})`, error);

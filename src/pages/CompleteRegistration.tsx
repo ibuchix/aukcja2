@@ -26,7 +26,6 @@ export default function CompleteRegistration() {
     defaultValues: {
       supervisorName: "",
       email: state?.email || "",
-      password: "",
       phoneNumber: "+",
       companyName: "",
       taxId: "",
@@ -103,10 +102,13 @@ export default function CompleteRegistration() {
     try {
       setIsSubmitting(true);
 
+      // Generate a random password that won't be used (passwordless auth)
+      const securePassword = crypto.randomUUID() + crypto.randomUUID();
+
       // Format and normalize data before submission
       const formattedData = {
         p_email: values.email.trim().toLowerCase(),
-        p_password: values.password,
+        p_password: securePassword, // Random password as we're using passwordless login
         p_supervisor_name: values.supervisorName.trim(),
         p_company_name: values.companyName.trim(),
         p_tax_id: values.taxId.trim(),
@@ -126,8 +128,6 @@ export default function CompleteRegistration() {
           throw new Error("An account with this email already exists. Please use a different email address.");
         } else if (error.message.includes("Invalid email")) {
           throw new Error("The email format is invalid. Please check and try again.");
-        } else if (error.message.toLowerCase().includes("password")) {
-          throw new Error("Password doesn't meet security requirements. Please choose a stronger password.");
         } else {
           throw error;
         }
@@ -147,7 +147,7 @@ export default function CompleteRegistration() {
 
       toast({
         title: "Registration Complete",
-        description: "Your dealer profile has been created successfully.",
+        description: "Your dealer profile has been created successfully. You'll receive a login code via email when you sign in.",
       });
 
       navigate('/dealer/dashboard');
@@ -209,4 +209,4 @@ export default function CompleteRegistration() {
       </Card>
     </div>
   );
-};
+}

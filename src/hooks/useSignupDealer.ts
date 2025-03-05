@@ -41,14 +41,13 @@ export function useSignupDealer() {
       networkRetry.resetRetry();
       authRetry.resetRetry();
       
-      // Create user account with ALL required metadata
+      // Create user account with required metadata (no password)
       let signUpResult;
       
       try {
         signUpResult = await authRetry.executeWithRetry(
           () => signUpDealerWithEmail(
             values.email.trim().toLowerCase(),
-            values.password,
             {
               name: values.supervisorName.trim(),
               companyName: values.companyName.trim(),
@@ -76,7 +75,7 @@ export function useSignupDealer() {
         return handleAuthResult(signUpResult);
       }
 
-      // Check for partial success in the response (new feature)
+      // Check for partial success in the response
       if (signUpResult.partialSuccess) {
         console.log("Partial success detected, user account created but additional steps needed");
         console.warn(signUpResult.warning);

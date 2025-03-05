@@ -22,16 +22,6 @@ export const dealerFormSchema = z.object({
     .max(255, {
       message: "Email cannot exceed 255 characters",
     }),
-  password: z.string()
-    .min(8, {
-      message: "Password must be at least 8 characters",
-    })
-    .max(72, {
-      message: "Password cannot exceed 72 characters",
-    })
-    .refine((value) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(value), {
-      message: "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
-    }),
   phoneNumber: z.string()
     .min(9, {
       message: "Please enter a valid phone number",
