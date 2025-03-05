@@ -8,18 +8,42 @@ import { SupabaseClient } from "@supabase/supabase-js";
 export async function createUserSession(supabase: SupabaseClient, userId: string) {
   console.log(`Creating session for user ${userId}`);
   
-  const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession({
-    user_id: userId,
-    expires_in: 60 * 60 * 24 * 7 // 1 week
-  });
-  
-  if (sessionError || !sessionData) {
-    console.error("Session creation failed:", sessionError);
+  try {
+    // Get Supabase URL and service key from environment
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error('Missing required Supabase environment variables');
+    }
+    
+    // Use direct API call to create a session with the service role
+    const response = await fetch(`${supabaseUrl}/auth/v1/admin/sessions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${serviceRoleKey}`,
+        'apikey': serviceRoleKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        expires_in: 60 * 60 * 24 * 7 // 1 week
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Session creation API error:", errorData);
+      throw new HttpError(`Session creation failed: ${response.status} ${response.statusText}`, 500);
+    }
+    
+    const sessionData = await response.json();
+    console.log("Session created successfully");
+    return sessionData;
+  } catch (error) {
+    console.error("Session creation failed:", error);
     throw new HttpError("Failed to create user session", 500);
   }
-  
-  console.log("Session created successfully");
-  return sessionData;
 }
 
 /**
