@@ -1,13 +1,32 @@
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { DealerSignupForm } from "@/pages/auth/DealerSignupForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DealerLoginForm } from "@/components/auth/DealerLoginForm";
 
 const Auth = () => {
-  const [activeTab, setActiveTab] = useState<"register" | "login">("register");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  
+  // Get the active tab from URL query parameter, default to "register" if not present
+  const tabFromUrl = searchParams.get("tab");
+  const initialTab = (tabFromUrl === "login" || tabFromUrl === "register") 
+    ? tabFromUrl 
+    : "register";
+  
+  const [activeTab, setActiveTab] = useState<"register" | "login">(initialTab as "register" | "login");
+
+  // Update URL when tab changes
+  const handleTabChange = (value: string) => {
+    const newTab = value as "register" | "login";
+    setActiveTab(newTab);
+    
+    // Update the URL with new tab parameter
+    searchParams.set("tab", newTab);
+    setSearchParams(searchParams);
+  };
 
   return (
     <div className="container relative h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
@@ -40,7 +59,7 @@ const Auth = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "register" | "login")}>
+              <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="grid w-full grid-cols-2 mb-4">
                   <TabsTrigger value="register">Register</TabsTrigger>
                   <TabsTrigger value="login">Login</TabsTrigger>
