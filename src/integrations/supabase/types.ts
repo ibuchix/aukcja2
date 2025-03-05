@@ -322,6 +322,12 @@ export type Database = {
         }
         Returns: Json
       }
+      get_user_id_by_email: {
+        Args: {
+          p_email: string
+        }
+        Returns: Json
+      }
       verify_password: {
         Args: {
           uuid: string
