@@ -17,11 +17,31 @@ const handleRequest = async (req: Request): Promise<Response> => {
   }
   
   try {
-    // Create Supabase client
+    // Create Supabase client with service role for full access
     const supabase = createServiceClient();
+    console.log(`[dealer-otp] Created Supabase client with service role`);
     
     // Parse request body
-    const { action, email, otp } = await req.json();
+    const requestData = await req.json().catch(err => {
+      console.error(`[dealer-otp] Error parsing request JSON:`, err);
+      throw new Error("Invalid JSON in request body");
+    });
+    
+    const { action, email, otp } = requestData;
+    
+    if (!action) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Missing required 'action' parameter" 
+        }),
+        { 
+          status: 400, 
+          headers: { "Content-Type": "application/json", ...corsHeaders } 
+        }
+      );
+    }
+    
     console.log(`[dealer-otp] Processing action: ${action} for email: ${email?.substring(0, 3)}...`);
     
     // Process different actions

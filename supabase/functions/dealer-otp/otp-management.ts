@@ -26,21 +26,26 @@ export async function storeOtp(supabase: SupabaseClient, email: string): Promise
   
   console.log(`Storing OTP for ${email}, expires at ${expiresAt.toISOString()}`);
   
-  const { error: insertError } = await supabase
-    .from('dealer_otps')
-    .upsert({
-      email: email,
-      otp_code: otp,
-      expires_at: expiresAt.toISOString(),
-      created_at: new Date().toISOString()
-    }, { onConflict: 'email' });
-  
-  if (insertError) {
-    console.error("Error saving OTP:", insertError);
+  try {
+    const { error: insertError } = await supabase
+      .from('dealer_otps')
+      .upsert({
+        email: email,
+        otp_code: otp,
+        expires_at: expiresAt.toISOString(),
+        created_at: new Date().toISOString()
+      }, { onConflict: 'email' });
+    
+    if (insertError) {
+      console.error("Error saving OTP:", insertError);
+      throw new HttpError("Failed to generate login code", 500);
+    }
+    
+    return otp;
+  } catch (error) {
+    console.error("Exception in storeOtp:", error);
     throw new HttpError("Failed to generate login code", 500);
   }
-  
-  return otp;
 }
 
 /**
@@ -49,21 +54,29 @@ export async function storeOtp(supabase: SupabaseClient, email: string): Promise
 export async function verifyOtp(supabase: SupabaseClient, email: string, otp: string) {
   console.log(`Verifying OTP for ${email}`);
   
-  const { data: otpData, error: otpError } = await supabase
-    .from('dealer_otps')
-    .select('*')
-    .eq('email', email)
-    .eq('otp_code', otp)
-    .gt('expires_at', new Date().toISOString())
-    .single();
-  
-  if (otpError || !otpData) {
-    console.error("OTP verification failed:", otpError || "Invalid or expired OTP");
+  try {
+    const { data: otpData, error: otpError } = await supabase
+      .from('dealer_otps')
+      .select('*')
+      .eq('email', email)
+      .eq('otp_code', otp)
+      .gt('expires_at', new Date().toISOString())
+      .single();
+    
+    if (otpError || !otpData) {
+      console.error("OTP verification failed:", otpError || "Invalid or expired OTP");
+      throw new ValidationError("Invalid or expired verification code");
+    }
+    
+    console.log("OTP verified successfully");
+    return otpData;
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+    console.error("Exception in verifyOtp:", error);
     throw new ValidationError("Invalid or expired verification code");
   }
-  
-  console.log("OTP verified successfully");
-  return otpData;
 }
 
 /**
@@ -72,10 +85,15 @@ export async function verifyOtp(supabase: SupabaseClient, email: string, otp: st
 export async function deleteOtp(supabase: SupabaseClient, email: string) {
   console.log(`Deleting used OTP for ${email}`);
   
-  await supabase
-    .from('dealer_otps')
-    .delete()
-    .eq('email', email);
+  try {
+    await supabase
+      .from('dealer_otps')
+      .delete()
+      .eq('email', email);
+  } catch (error) {
+    console.error("Error deleting OTP:", error);
+    // Don't throw here - just log the error since this is cleanup
+  }
 }
 
 export { OTP_EXPIRY_MINUTES };
