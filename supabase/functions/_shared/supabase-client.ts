@@ -23,7 +23,8 @@ export function createServiceClient() {
     global: {
       headers: {
         // Add explicit headers to ensure service role is used
-        'Authorization': `Bearer ${supabaseServiceKey}`
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'apiKey': supabaseServiceKey
       }
     }
   });

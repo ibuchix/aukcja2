@@ -27,35 +27,20 @@ export async function storeOtp(supabase: SupabaseClient, email: string): Promise
   console.log(`Storing OTP for ${email}, expires at ${expiresAt.toISOString()}`);
   
   try {
-    // Test if we can access the table at all
-    const { data: testData, error: testError } = await supabase
-      .from('dealer_otps')
-      .select('id')
-      .limit(1);
+    // Use the secure RPC function with SECURITY DEFINER to store the OTP
+    const { data: otpId, error: storeError } = await supabase
+      .rpc('store_dealer_otp', {
+        p_email: email,
+        p_otp: otp,
+        p_expires_at: expiresAt.toISOString()
+      });
     
-    if (testError) {
-      console.error("Database access test failed:", testError);
-      throw new HttpError("Failed to generate login code - database access error", 500);
+    if (storeError) {
+      console.error("Error saving OTP:", storeError);
+      throw new HttpError(`Failed to generate login code: ${storeError.message}`, 500);
     }
     
-    console.log("Database access test successful, proceeding with OTP insert");
-    
-    // Proceed with OTP insert
-    const { error: insertError } = await supabase
-      .from('dealer_otps')
-      .upsert({
-        email: email,
-        otp_code: otp,
-        expires_at: expiresAt.toISOString(),
-        created_at: new Date().toISOString()
-      }, { onConflict: 'email' });
-    
-    if (insertError) {
-      console.error("Error saving OTP:", insertError);
-      throw new HttpError(`Failed to generate login code: ${insertError.message}`, 500);
-    }
-    
-    console.log("OTP stored successfully");
+    console.log("OTP stored successfully with ID:", otpId);
     return otp;
   } catch (error) {
     if (error instanceof HttpError) {
@@ -125,5 +110,3 @@ export async function deleteOtp(supabase: SupabaseClient, email: string) {
     // Don't throw here - just log the error since this is cleanup
   }
 }
-
-// Removed the duplicate export at the end to fix the SyntaxError

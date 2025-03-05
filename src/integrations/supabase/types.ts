@@ -328,6 +328,14 @@ export type Database = {
         }
         Returns: Json
       }
+      store_dealer_otp: {
+        Args: {
+          p_email: string
+          p_otp: string
+          p_expires_at: string
+        }
+        Returns: string
+      }
       verify_password: {
         Args: {
           uuid: string
