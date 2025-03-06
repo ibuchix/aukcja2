@@ -1,50 +1,57 @@
-
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import Auth from "@/pages/Auth";
+import DealerDashboard from "@/pages/dealer/DealerDashboard";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/contexts/AuthContext";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import DealerDashboard from "./pages/dealer/Dashboard";
-import DealerProfile from "./pages/dealer/Profile";
-import DealerDocuments from "./pages/dealer/Documents";
-import Auctions from "./pages/Auctions";
-import HowItWorks from "./pages/HowItWorks";
-import CompleteRegistration from "./pages/CompleteRegistration";
+import Profile from "@/pages/dealer/Profile";
+import DealerProfileManagement from "@/pages/dealer/DealerProfileManagement";
+import CompleteRegistration from "@/pages/CompleteRegistration";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
+const router = createBrowserRouter([
+  {
+    path: "/auth",
+    element: <Auth />,
   },
-});
+  {
+    path: "/",
+    element: <Auth />,
+  },
+  {
+    path: "/dealer/dashboard",
+    element: (
+      <ProtectedRoute>
+        <DealerDashboard />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/dealer/profile",
+    element: (
+      <ProtectedRoute>
+        <Profile />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/dealer/profile-management",
+    element: (
+      <ProtectedRoute>
+        <DealerProfileManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/complete-registration",
+    element: <CompleteRegistration />,
+  },
+]);
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+function App() {
+  return (
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/dealer/dashboard" element={<DealerDashboard />} />
-            <Route path="/dealer/profile" element={<DealerProfile />} />
-            <Route path="/dealer/documents" element={<DealerDocuments />} />
-            <Route path="/auctions" element={<Auctions />} />
-            <Route path="/how-it-works" element={<HowItWorks />} />
-            <Route path="/complete-registration" element={<CompleteRegistration />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <RouterProvider router={router} />
     </AuthProvider>
-  </QueryClientProvider>
-);
+  );
+}
 
 export default App;

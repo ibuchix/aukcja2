@@ -54,7 +54,7 @@ export async function handleVerifyOtp(supabase: SupabaseClient, email: string, o
   // Delete the used OTP
   await deleteOtp(supabase, normalizedEmail);
   
-  return {
+  const response = {
     success: true,
     exchangeToken: exchangeToken,
     user: {
@@ -63,4 +63,12 @@ export async function handleVerifyOtp(supabase: SupabaseClient, email: string, o
     },
     dealer: dealerData || null
   };
+  
+  // If dealer profile needs completion, include specific flag for client handling
+  if (dealerData && dealerData.needsProfileCompletion) {
+    response.profileStatus = 'incomplete';
+    response.completionRequired = true;
+  }
+  
+  return response;
 }

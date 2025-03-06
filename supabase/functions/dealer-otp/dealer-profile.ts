@@ -37,12 +37,56 @@ export async function getDealerProfile(supabase: SupabaseClient, userId: string)
       
       // Debug: Perform a direct SQL check when in development
       console.log(`Direct check: Verify dealer exists for user ${userId}`);
+      
+      try {
+        // Directly query the database as a backup check
+        const { data: directData, error: directError } = await serviceClient
+          .from('dealers')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+          
+        if (directError) {
+          console.error("Direct query also failed:", directError.message);
+        } else if (directData) {
+          console.log("Found dealer via direct query - RPC function may have issues");
+          return directData;
+        } else {
+          console.log("No dealer found via direct query either - profile likely missing");
+        }
+      } catch (directQueryError) {
+        console.error("Exception in direct dealer query:", directQueryError);
+      }
+      
       return null;
     }
     
     if (!data) {
       console.log(`No dealer profile found for user ${userId} using RPC function`);
       console.log(`This may indicate the dealer record doesn't exist or has a different user_id`);
+      
+      // Check if user exists in profiles table but not in dealers table
+      try {
+        const { data: profileData, error: profileError } = await serviceClient
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+          
+        if (profileData && !profileError) {
+          console.log("User found in profiles but dealer profile is missing");
+          
+          // Return a special marker that indicates profile exists but needs completion
+          return { 
+            needsProfileCompletion: true,
+            userId: userId,
+            profileData: profileData 
+          };
+        }
+      } catch (profileCheckError) {
+        console.error("Exception checking profile:", profileCheckError);
+      }
+      
       return null;
     }
     
