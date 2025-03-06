@@ -42,7 +42,7 @@ export function useOtpForm(email: string, setStep: (step: "email" | "otp") => vo
     try {
       const { data, error } = await supabase.functions.invoke("dealer-otp", {
         body: {
-          action: "generate-otp",
+          action: "generate", // Changed from "generate-otp" to "generate"
           email: email.trim().toLowerCase()
         }
       });
@@ -83,7 +83,7 @@ export function useOtpForm(email: string, setStep: (step: "email" | "otp") => vo
     try {
       const { data, error } = await supabase.functions.invoke("dealer-otp", {
         body: {
-          action: "verify-otp",
+          action: "verify", // Changed from "verify-otp" to "verify"
           email: email.trim().toLowerCase(),
           otp: otpValue
         }
