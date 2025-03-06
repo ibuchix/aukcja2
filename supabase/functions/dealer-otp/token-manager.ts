@@ -16,6 +16,18 @@ export async function generateExchangeToken(userId: string, email: string) {
       throw new Error("Missing JWT secret");
     }
     
+    // Get Supabase URL to extract project ref
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    if (!supabaseUrl) {
+      throw new Error("Missing SUPABASE_URL");
+    }
+    
+    // Extract project ref from Supabase URL
+    const projectRef = supabaseUrl.match(/https:\/\/(.*?)\.supabase\.co/)?.[1];
+    if (!projectRef) {
+      throw new Error("Invalid SUPABASE_URL format");
+    }
+    
     // Create a key for signing from the JWT secret
     const key = await crypto.subtle.importKey(
       "raw",
@@ -25,7 +37,10 @@ export async function generateExchangeToken(userId: string, email: string) {
       ["sign"]
     );
     
-    // Create a temporary token with a short expiry (5 minutes)
+    // Current timestamp in seconds
+    const now = Math.floor(Date.now() / 1000);
+    
+    // Create a token with the proper claims for Supabase Auth
     const exchangeToken = await create(
       { 
         alg: "HS256", 
@@ -34,7 +49,10 @@ export async function generateExchangeToken(userId: string, email: string) {
       { 
         sub: userId,
         email: email,
-        exp: Math.floor(Date.now() / 1000) + 300, // 5 minute expiry
+        role: "authenticated",
+        aud: projectRef,   // Set audience to the project ref
+        iat: now,          // Issued at time
+        exp: now + 300,    // 5 minute expiry
         type: "dealer-exchange-token"
       },
       key

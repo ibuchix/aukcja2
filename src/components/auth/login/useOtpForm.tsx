@@ -114,13 +114,25 @@ export function useOtpForm(email: string, setStep: (step: "email" | "otp") => vo
       
       // Check if we have an exchange token and use it
       if (data.exchangeToken) {
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: data.exchangeToken,
-          refresh_token: data.exchangeToken
-        });
+        console.log("Using exchange token to create session");
         
-        if (sessionError) {
-          console.error("Session creation failed:", sessionError);
+        try {
+          // Use the exchange token as the access token only
+          // Let Supabase generate the refresh token automatically
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: data.exchangeToken,
+            refresh_token: '' // Let Supabase generate it
+          });
+          
+          if (sessionError) {
+            console.error("Session creation failed:", sessionError);
+            setError("Failed to create session. Please try again.");
+            return;
+          }
+          
+          console.log("Session created successfully");
+        } catch (sessionErr) {
+          console.error("Error during session creation:", sessionErr);
           setError("Failed to create session. Please try again.");
           return;
         }
