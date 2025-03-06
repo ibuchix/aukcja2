@@ -1,3 +1,4 @@
+
 import { HttpError } from "../_shared/error-handling.ts";
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
 
@@ -39,10 +40,9 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
     
     console.log('User verified, creating session...');
     
-    // Create session using the admin API
-    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
-      userId: userId
-    });
+    // Fix: Use the correct API to create a session
+    // The method wasn't available as auth.admin.createSession but is correctly available as:
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.signInWithUserId(userId);
     
     if (sessionError) {
       console.error('Error creating session:', sessionError);
