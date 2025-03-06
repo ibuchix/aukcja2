@@ -153,21 +153,35 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
 export async function getDealerProfile(supabase: SupabaseClient, userId: string) {
   console.log(`Getting dealer profile for user ${userId}`);
   
-  // We'll need to ensure this client has the correct service role headers
-  // Since the supabase client is passed in, we should document for the caller
-  // that they need to use a properly configured service role client
-  
-  const { data: dealerData, error: dealerError } = await supabase
-    .from('dealers')
-    .select('*')
-    .eq('user_id', userId)
-    .single();
-  
-  // Don't throw error if dealer profile not found, just return null
-  if (dealerError) {
-    console.log("Dealer profile not found or error:", dealerError);
+  try {
+    // First try to get dealer profile using the new secure function
+    const { data: dealerData, error: functionError } = await supabase
+      .rpc('get_dealer_by_user_id', { p_user_id: userId });
+      
+    if (!functionError && dealerData) {
+      console.log("Retrieved dealer profile using secure function");
+      return dealerData;
+    }
+    
+    if (functionError) {
+      console.log("Function error, falling back to direct query:", functionError);
+    }
+    
+    // Fallback to direct query if function approach failed
+    const { data: directData, error: directError } = await supabase
+      .from('dealers')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    
+    if (directError) {
+      console.log("Dealer profile not found or error:", directError);
+      return null;
+    }
+    
+    return directData;
+  } catch (error) {
+    console.error("Exception in getDealerProfile:", error);
     return null;
   }
-  
-  return dealerData;
 }

@@ -70,3 +70,25 @@ export function createEdgeClient(reqOrHeaders: Request | Headers) {
     }
   });
 }
+
+// Safe wrapper around RPC functions to handle permission errors
+export async function callRpcSafely<T>(
+  supabase: ReturnType<typeof createServiceClient>,
+  functionName: string,
+  params: Record<string, any> = {}
+): Promise<{ data: T | null; error: Error | null }> {
+  try {
+    console.log(`Calling RPC function: ${functionName} with params:`, params);
+    const { data, error } = await supabase.rpc(functionName, params);
+    
+    if (error) {
+      console.error(`Error calling ${functionName}:`, error);
+      return { data: null, error };
+    }
+    
+    return { data, error: null };
+  } catch (err) {
+    console.error(`Exception calling ${functionName}:`, err);
+    return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
+  }
+}
