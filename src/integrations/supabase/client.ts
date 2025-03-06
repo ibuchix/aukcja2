@@ -17,26 +17,43 @@ export const supabase = createClient<Database>(
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
-      storageKey: 'dealer_auth_token', // Custom storage key
-      storage: localStorage, // Explicitly use localStorage for persistence
-      flowType: 'pkce', // Use PKCE flow for better security
-      debug: false // Disable debug logs
-    },
-    realtime: {
-      params: {
-        eventsPerSecond: 2 // Reduce realtime events to prevent 400 errors
-      }
+      storageKey: 'dealer_auth_token',
+      storage: localStorage
     },
     global: {
+      headers: {
+        // Always include the API key in headers
+        'apikey': SUPABASE_PUBLISHABLE_KEY,
+        'Content-Type': 'application/json'
+      },
       // Add retries for fetch operations
       fetch: (url, options) => {
+        const headers = new Headers(options?.headers || {});
+        
+        // Ensure apikey is always present
+        if (!headers.has('apikey')) {
+          headers.set('apikey', SUPABASE_PUBLISHABLE_KEY);
+        }
+        
+        // Add authorization from localStorage if available
+        const currentSession = localStorage.getItem('dealer_auth_token');
+        if (currentSession) {
+          try {
+            const session = JSON.parse(currentSession);
+            if (session?.access_token && !headers.has('Authorization')) {
+              headers.set('Authorization', `Bearer ${session.access_token}`);
+            }
+          } catch (e) {
+            console.warn('Failed to parse session from localStorage', e);
+          }
+        }
+        
+        // Add cache control
+        headers.set('Cache-Control', 'no-cache');
+        
         return fetch(url, {
           ...options,
-          // Add cache control to prevent stale responses
-          headers: {
-            ...options?.headers,
-            'Cache-Control': 'no-cache'
-          }
+          headers
         });
       }
     }

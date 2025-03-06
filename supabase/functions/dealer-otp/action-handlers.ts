@@ -1,4 +1,3 @@
-
 import { SupabaseClient } from "@supabase/supabase-js";
 import { validateEmail, validateOtp } from "./validation.ts";
 import { verifyUserExists, getUserByEmail } from "./user-verification.ts";
@@ -72,4 +71,56 @@ export async function handleVerifyOtp(supabase: SupabaseClient, email: string, o
   }
   
   return response;
+}
+
+/**
+ * Handles checking if an email exists without sending OTP
+ * This is a helper endpoint to validate emails before attempting login
+ */
+export async function handleCheckEmail(supabase: SupabaseClient, email: string) {
+  console.log(`[dealer-otp] Checking if email exists: ${email?.substring(0, 3)}...`);
+  
+  try {
+    const normalizedEmail = validateEmail(email);
+    
+    // Simple check in auth.users table via DB function
+    const { data, error } = await supabase.rpc('check_email_exists', { 
+      email_to_check: normalizedEmail 
+    });
+    
+    if (error) {
+      console.error("Error checking email:", error);
+      return {
+        success: false,
+        error: "Failed to check email status",
+        exists: false
+      };
+    }
+    
+    // Parse the response based on various possible return formats
+    let exists = false;
+    
+    if (data !== null) {
+      if (typeof data === 'object' && 'exists' in data) {
+        exists = Boolean(data.exists);
+      } else if (typeof data === 'number') {
+        exists = data > 0;
+      } else if (typeof data === 'boolean') {
+        exists = data;
+      }
+    }
+    
+    return {
+      success: true,
+      exists: exists
+    };
+    
+  } catch (error) {
+    console.error("Exception in handleCheckEmail:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+      exists: false
+    };
+  }
 }
