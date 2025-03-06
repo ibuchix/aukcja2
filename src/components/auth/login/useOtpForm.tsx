@@ -3,26 +3,28 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
 
 export interface OtpFormValues {
   otp: string;
 }
 
 export function useOtpForm(email: string, setStep: (step: "email" | "otp") => void) {
-  const [otp, setOtp] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const handleChange = (value: string) => {
-    setOtp(value);
-    if (error) setError("");
-  };
+  
+  // Initialize the form with react-hook-form
+  const otpForm = useForm<OtpFormValues>({
+    defaultValues: {
+      otp: ""
+    }
+  });
 
   const resetOtpForm = () => {
-    setOtp("");
+    otpForm.reset();
     setError("");
   };
 
@@ -67,7 +69,10 @@ export function useOtpForm(email: string, setStep: (step: "email" | "otp") => vo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (otp.length !== 6) {
+    // Get the current OTP value from the form
+    const otpValue = otpForm.getValues().otp;
+    
+    if (otpValue.length !== 6) {
       setError("Please enter all 6 digits of your login code");
       return;
     }
@@ -80,7 +85,7 @@ export function useOtpForm(email: string, setStep: (step: "email" | "otp") => vo
         body: {
           action: "verify-otp",
           email: email.trim().toLowerCase(),
-          otp: otp
+          otp: otpValue
         }
       });
       
@@ -133,15 +138,13 @@ export function useOtpForm(email: string, setStep: (step: "email" | "otp") => vo
   };
 
   return {
-    otp,
     isSubmitting,
     isResending,
     error,
-    handleChange,
+    otpForm,
     handleSubmit,
     handleResendOtp,
     handleBackToEmail,
-    resetOtpForm,
-    otpForm: { otp }
+    resetOtpForm
   };
 }

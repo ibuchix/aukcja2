@@ -18,7 +18,8 @@ export function DealerLoginForm() {
     handleSubmit: onOtpSubmit,
     handleResendOtp,
     handleBackToEmail,
-    resetOtpForm
+    resetOtpForm,
+    error: otpError
   } = useOtpForm(email, setStep);
   
   // Use the email form hook with the step setter and email setter
