@@ -78,12 +78,18 @@ export async function callRpcSafely<T>(
   params: Record<string, any> = {}
 ): Promise<{ data: T | null; error: Error | null }> {
   try {
-    console.log(`Calling RPC function: ${functionName} with params:`, params);
+    // Log the exact parameters being passed to the RPC function
+    console.log(`Calling RPC function: ${functionName}`);
+    console.log(`Parameters: ${JSON.stringify(params)}`);
+    
+    // Print supabase client info to verify it's correctly configured
+    console.log(`Using Supabase client with URL: ${supabase.getUrl ? supabase.getUrl() : 'unknown'}`);
     
     // Ensure headers are properly set before RPC call
     const headers = supabase.auth.headers || {};
     console.log(`Request headers for RPC call:`, headers);
     
+    // Make the RPC call with exact parameter format
     const { data, error } = await supabase.rpc(functionName, params);
     
     if (error) {
@@ -103,7 +109,13 @@ export async function callRpcSafely<T>(
       return { data: null, error };
     }
     
-    console.log(`Successfully called ${functionName}`);
+    // Log the result success/failure
+    if (data === null) {
+      console.log(`${functionName} returned null data (no error)`);
+    } else {
+      console.log(`Successfully called ${functionName} with data`);
+    }
+    
     return { data, error: null };
   } catch (err) {
     console.error(`Exception calling ${functionName}:`, err);

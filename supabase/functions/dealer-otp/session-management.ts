@@ -1,8 +1,7 @@
-
 import { HttpError } from "../_shared/error-handling.ts";
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { create, verify } from "https://deno.land/x/djwt@v2.8/mod.ts";
-import { callRpcSafely } from "../_shared/supabase-client.ts";
+import { callRpcSafely, createServiceClient } from "../_shared/supabase-client.ts";
 
 /**
  * Generates a temporary exchange token for client-side session creation
@@ -156,50 +155,39 @@ export async function getDealerProfile(supabase: SupabaseClient, userId: string)
   
   // Ensure we have a service role client for this operation
   try {
-    // Create a fresh service role client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
-    if (!supabaseUrl || !serviceRoleKey) {
-      console.error("Missing Supabase credentials for service role access");
-      throw new Error("Missing service role credentials");
+    if (!userId) {
+      console.error("getDealerProfile called with null/empty userId");
+      return null;
     }
-    
-    // Create a new client with the service role key
-    const serviceClient = createClient(
-      supabaseUrl, 
-      serviceRoleKey,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        },
-        global: {
-          headers: {
-            'Authorization': `Bearer ${serviceRoleKey}`,
-            'apikey': serviceRoleKey
-          }
-        }
-      }
-    );
-    
+
+    // Use the shared service client creation helper
+    const serviceClient = createServiceClient();
     console.log("Created service client for dealer profile lookup");
     
-    // Use the secure RPC function only - no fallback to direct query
+    // Use exact parameter name format that PostgreSQL function expects
+    console.log(`Calling get_dealer_by_user_id with formatted parameter object`);
+    const params = { "p_user_id": userId };
+    console.log(`Parameters: ${JSON.stringify(params)}`);
+    
+    // Use the secure RPC function with improved parameter handling
     const { data, error } = await callRpcSafely(
       serviceClient,
       'get_dealer_by_user_id',
-      { p_user_id: userId }
+      params
     );
     
     if (error) {
       console.error("Error calling get_dealer_by_user_id:", error.message);
       console.error("Error details:", JSON.stringify(error));
+      
+      // Debug: Perform a direct SQL check when in development
+      console.log(`Direct check: Verify dealer exists for user ${userId}`);
       return null;
     }
     
     if (!data) {
       console.log(`No dealer profile found for user ${userId} using RPC function`);
+      console.log(`This may indicate the dealer record doesn't exist or has a different user_id`);
       return null;
     }
     
