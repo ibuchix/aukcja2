@@ -49,9 +49,11 @@ export function useEmailForm(
         values.email = sanitizedEmail;
       }
       
+      console.log("Initiating OTP sign-in for:", sanitizedEmail);
       const result = await initiateOtpSignIn(sanitizedEmail);
       
       if (result.success) {
+        console.log("OTP sign-in successful, transitioning to OTP step");
         // First set the email and reset OTP form
         setEmail(sanitizedEmail);
         resetOtpForm();
@@ -66,12 +68,15 @@ export function useEmailForm(
       } else {
         // Enhanced error handling for user-friendly messages
         let errorMessage = result.error || "Failed to send login code. Please try again.";
+        console.error("OTP sign-in error:", errorMessage);
         
         // Provide more helpful messages for common errors
         if (errorMessage.includes("No account found") || errorMessage.includes("doesn't exist")) {
           errorMessage = "No account exists with this email. Please register first.";
-        } else if (errorMessage.includes("Too many requests")) {
+        } else if (errorMessage.includes("Too many requests") || errorMessage.includes("rate limit")) {
           errorMessage = "Too many login attempts. Please try again later.";
+        } else if (errorMessage.includes("Signups not allowed")) {
+          errorMessage = "This email is not registered. Please register first.";
         }
         
         toast({

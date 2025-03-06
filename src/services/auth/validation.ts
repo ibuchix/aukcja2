@@ -1,4 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 export interface ValidationResult {
   isValid: boolean;
@@ -77,9 +79,13 @@ export async function checkAccountExists(email: string): Promise<boolean> {
         { p_email: email.toLowerCase().trim() }
       );
       
-      if (!userError && userData && userData.id) {
-        console.log("User exists according to get_user_id_by_email:", userData);
-        return true;
+      if (!userError && userData) {
+        // Check if userData has an id property
+        const userId = userData.id;
+        if (userId) {
+          console.log("User exists according to get_user_id_by_email:", userData);
+          return true;
+        }
       }
       
       if (userError) {
@@ -100,7 +106,10 @@ export async function checkAccountExists(email: string): Promise<boolean> {
       
       if (!emailError && emailData) {
         console.log("User exists according to check_email_exists:", emailData);
-        return emailData.exists || false;
+        // Check if emailData has an exists property
+        if (typeof emailData === 'object' && 'exists' in emailData) {
+          return emailData.exists === true;
+        }
       }
       
       if (emailError) {
@@ -144,10 +153,27 @@ export async function checkAccountExists(email: string): Promise<boolean> {
       
       if (!edgeError && edgeData) {
         console.log("Edge function response:", edgeData);
-        return edgeData?.exists || false;
+        if (typeof edgeData === 'object' && edgeData.exists !== undefined) {
+          return edgeData.exists === true;
+        }
       }
     } catch (error) {
       console.warn("Failed to call edge function:", error);
+    }
+    
+    // Method 5: Direct query as last resort (this may fail due to RLS)
+    try {
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('id', await getUserIdByEmail(email));
+      
+      if (!error && count !== null && count > 0) {
+        console.log("User exists based on profiles count:", count);
+        return true;
+      }
+    } catch (error) {
+      console.warn("Failed to check profile count:", error);
     }
     
     // If all checks failed, default to false - request will fail gracefully with appropriate message
@@ -158,5 +184,26 @@ export async function checkAccountExists(email: string): Promise<boolean> {
     console.error("Unhandled error checking if account exists:", error);
     // In case of unhandled errors, default to false for fail-safe behavior
     return false;
+  }
+}
+
+/**
+ * Helper function to get user ID by email
+ */
+async function getUserIdByEmail(email: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from('auth.users')
+      .select('id')
+      .eq('email', email.toLowerCase().trim())
+      .single();
+    
+    if (error || !data) {
+      return null;
+    }
+    
+    return data.id;
+  } catch (error) {
+    return null;
   }
 }

@@ -20,6 +20,7 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     const normalizedEmail = safeTrim(email).toLowerCase();
     
     // First, check if the user account exists
+    console.log("Checking if account exists before OTP signin:", normalizedEmail);
     const accountExists = await checkAccountExists(normalizedEmail);
     if (!accountExists) {
       console.log("User does not exist:", normalizedEmail);
@@ -28,6 +29,8 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
         error: "No account found with this email. Please register first."
       };
     }
+    
+    console.log("Account exists, proceeding with OTP signin for:", normalizedEmail);
     
     // Use Supabase's built-in OTP functionality with explicit options
     const { data, error } = await supabase.auth.signInWithOtp({
@@ -40,6 +43,22 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     
     if (error) {
       console.error("Error initiating OTP signin:", error);
+      
+      // Provide more specific error messages for common errors
+      if (error.message.includes("Email rate limit exceeded")) {
+        return { 
+          success: false, 
+          error: "Too many login attempts. Please try again in a few minutes."
+        };
+      }
+      
+      if (error.message.includes("Signups not allowed")) {
+        return { 
+          success: false, 
+          error: "Login failed. Please ensure you've registered first."
+        };
+      }
+      
       return { 
         success: false, 
         error: error.message || "Failed to initiate login"
