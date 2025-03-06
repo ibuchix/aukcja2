@@ -18,14 +18,15 @@ const Auth = () => {
   
   const [activeTab, setActiveTab] = useState<"register" | "login">(initialTab as "register" | "login");
 
-  // Update URL when tab changes
+  // Update URL when tab changes without causing a page reload
   const handleTabChange = (value: string) => {
     const newTab = value as "register" | "login";
     setActiveTab(newTab);
     
-    // Update the URL with new tab parameter
-    searchParams.set("tab", newTab);
-    setSearchParams(searchParams);
+    // Update the URL with new tab parameter - without forcing a reload
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("tab", newTab);
+    setSearchParams(newParams, { replace: true });
   };
 
   return (

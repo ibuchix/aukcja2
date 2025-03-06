@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -51,10 +52,13 @@ export function useEmailForm(
       const result = await initiateOtpSignIn(sanitizedEmail);
       
       if (result.success) {
-        setEmail(values.email);
-        // Reset OTP form to ensure no previous values
+        // First set the email and reset OTP form
+        setEmail(sanitizedEmail);
         resetOtpForm();
+        
+        // Then transition to OTP step - this should trigger showing the OTP form
         setStep("otp");
+        
         toast({
           title: "Code sent!",
           description: "Check your email for the login code.",
@@ -80,7 +84,6 @@ export function useEmailForm(
 
   return {
     isLoading,
-    setIsLoading,
     emailForm,
     onEmailSubmit
   };

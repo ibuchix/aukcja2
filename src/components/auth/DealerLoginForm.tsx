@@ -6,6 +6,7 @@ import { EmailForm } from "./login/EmailForm";
 import { OtpForm } from "./login/OtpForm";
 
 export function DealerLoginForm() {
+  // Use state to track the current step and email
   const [step, setStep] = useState<"email" | "otp">("email");
   const [email, setEmail] = useState("");
   
@@ -26,6 +27,7 @@ export function DealerLoginForm() {
     onEmailSubmit
   } = useEmailForm(setStep, setEmail, resetOtpForm);
 
+  // Prevent form from being replaced during rerenders
   return (
     <div className="space-y-4">
       <div className="text-center mb-4">

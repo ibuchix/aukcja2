@@ -32,6 +32,16 @@ export function useOtpForm(
 
   // Handle OTP verification
   const onOtpSubmit = async (values: OtpFormValues) => {
+    if (!email) {
+      toast({
+        title: "Error",
+        description: "Email information is missing. Please go back and enter your email.",
+        variant: "destructive",
+      });
+      setStep("email");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const result = await verifyOtp(email, values.otp);
@@ -61,8 +71,18 @@ export function useOtpForm(
     }
   };
 
-  // Handle resend OTP
+  // Handle resend OTP - make sure we don't lose the step
   const handleResendOtp = async () => {
+    if (!email) {
+      toast({
+        title: "Error",
+        description: "Email information is missing. Please go back and enter your email.",
+        variant: "destructive",
+      });
+      setStep("email");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const result = await initiateOtpSignIn(email);
@@ -72,6 +92,7 @@ export function useOtpForm(
           title: "Code resent!",
           description: "A new code has been sent to your email.",
         });
+        // We stay on the OTP step - no state change here
       } else {
         toast({
           title: "Error",
@@ -91,14 +112,14 @@ export function useOtpForm(
     }
   };
 
-  // Go back to email step
+  // Go back to email step without page reload
   const handleBackToEmail = () => {
+    // Simply change the step - don't reset anything else
     setStep("email");
   };
 
   return {
     isLoading,
-    setIsLoading,
     otpForm,
     onOtpSubmit,
     handleResendOtp,
