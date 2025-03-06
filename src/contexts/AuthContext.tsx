@@ -1,8 +1,8 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useSessionManager } from "@/hooks/useSessionManager";
 
 // Define the shape of the context
 type AuthContextType = {
@@ -25,6 +25,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { toast } = useToast();
+  
+  // Use our session manager hook to keep the session alive
+  useSessionManager();
 
   // Initialize - check for existing session
   useEffect(() => {
@@ -41,6 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         if (data?.session) {
+          console.log("Existing session found");
           setSession(data.session);
           setUser(data.session.user);
           
@@ -68,8 +72,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (event === "SIGNED_IN" && currentSession?.user) {
           await fetchProfile(currentSession.user.id);
+          toast({
+            title: "Signed in successfully",
+            description: "Welcome back to your dealer dashboard",
+          });
         } else if (event === "SIGNED_OUT") {
           setProfile(null);
+        } else if (event === "TOKEN_REFRESHED" && currentSession) {
+          console.log("Session token refreshed successfully");
         }
       }
     );
@@ -78,11 +88,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [toast]);
 
   // Fetch dealer profile
   const fetchProfile = async (userId: string) => {
     try {
+      console.log(`Fetching profile for user: ${userId}`);
       const { data, error } = await supabase
         .from("dealers")
         .select("*")
@@ -94,7 +105,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      setProfile(data);
+      if (data) {
+        console.log("Dealer profile fetched successfully");
+        setProfile(data);
+      } else {
+        console.log("No dealer profile found for user");
+      }
     } catch (error) {
       console.error("Profile fetch error:", error);
     }
@@ -140,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshSession = async () => {
     try {
       setIsLoading(true);
+      console.log("Manually refreshing session");
       const { data, error } = await supabase.auth.refreshSession();
       
       if (error) {
@@ -148,6 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       if (data.session) {
+        console.log("Session refreshed successfully");
         setSession(data.session);
         setUser(data.session.user);
         

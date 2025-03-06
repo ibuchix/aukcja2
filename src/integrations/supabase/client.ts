@@ -16,7 +16,9 @@ export const supabase = createClient<Database>(
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: true
+      detectSessionInUrl: true,
+      storageKey: 'dealer_auth_token', // Custom storage key
+      storage: localStorage // Explicitly use localStorage for persistence
     }
   }
 );
