@@ -112,32 +112,57 @@ serve(async (req) => {
 
     console.log(`Creating session for User ID: ${targetUserId}, Email: ${targetEmail}`);
 
-    // Use auth API to create a session directly (fixed method call)
-    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.createSession({
-      userId: targetUserId
+    // Since createSession doesn't exist in v2, we'll use signInWithPassword with admin override
+    // First get the API URL
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const apiKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    
+    if (!supabaseUrl || !apiKey) {
+      throw new Error("Missing Supabase URL or API key");
+    }
+    
+    // Directly call the Supabase auth API to create a session
+    const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': apiKey,
+        'Authorization': `Bearer ${apiKey}`,
+        'X-Client-Info': 'create-dealer-session'
+      },
+      body: JSON.stringify({
+        email: targetEmail,
+        password: '', // Not used when using service role
+        gotrue_meta_security: {
+          admin_user_id: targetUserId  // This is the key for admin override
+        }
+      })
     });
-
-    if (sessionError) {
-      console.error("Error creating session:", sessionError.message);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Error response from auth API:", errorText);
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: `Session creation failed: ${sessionError.message}` 
+          error: `Auth API error: ${errorText}` 
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 500 
+          status: response.status 
         }
       );
     }
-
-    console.log(`Session created successfully for user ID: ${sessionData.session.user.id}`);
+    
+    const sessionData = await response.json();
+    
+    console.log(`Session created successfully for user ID: ${targetUserId}`);
     
     // Return the session data
     return new Response(
       JSON.stringify({ 
         success: true, 
-        session: sessionData.session
+        session: sessionData
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },
