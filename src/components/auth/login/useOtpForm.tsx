@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { verifyOtp } from "@/services/auth/signin";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 // OTP validation schema
 const otpSchema = z.object({
@@ -22,6 +23,7 @@ export function useOtpForm(
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { refreshSession } = useAuth();
 
   // OTP form
   const otpForm = useForm<OtpFormValues>({
@@ -48,6 +50,9 @@ export function useOtpForm(
       const result = await verifyOtp(email, values.otp);
       
       if (result.success) {
+        // Refresh the session in our auth context
+        await refreshSession();
+        
         toast({
           title: "Login successful!",
           description: "Redirecting to your dashboard...",

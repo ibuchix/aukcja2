@@ -1,46 +1,20 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { NavbarLogo } from "./navbar/NavbarLogo";
 import { NavbarDesktopMenu } from "./navbar/NavbarDesktopMenu";
 import { NavbarMobileMenu } from "./navbar/NavbarMobileMenu";
 import { NavbarMobileButton } from "./navbar/NavbarMobileButton";
-import { Session } from "@supabase/supabase-js";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, session, isLoading, signOut } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Get the initial session state
-    const getInitialSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      setLoading(false);
-    };
-
-    getInitialSession();
-
-    // Set up the auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
-      console.log("Navbar auth state change:", event);
-      setSession(currentSession);
-    });
-
-    // Cleanup the subscription when component unmounts
-    return () => subscription.unsubscribe();
-  }, []);
-
   const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      navigate('/');
-    } catch (error) {
-      console.error("Error during logout:", error);
-    }
+    await signOut();
+    navigate('/');
   };
 
   return (

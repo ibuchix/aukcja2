@@ -5,12 +5,12 @@ import { DealerSignupForm } from "@/pages/auth/DealerSignupForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DealerLoginForm } from "@/components/auth/DealerLoginForm";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Auth = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated, isLoading } = useAuth();
   
   // Get the active tab from URL query parameter, default to "register" if not present
   const tabFromUrl = searchParams.get("tab");
@@ -20,40 +20,13 @@ const Auth = () => {
   
   const [activeTab, setActiveTab] = useState<"register" | "login">(initialTab as "register" | "login");
 
-  // Check if user is already logged in
+  // Redirect if already authenticated
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        
-        if (data.session) {
-          console.log("User already logged in, redirecting to dashboard");
-          navigate("/dealer/dashboard");
-        }
-      } catch (error) {
-        console.error("Error checking session:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    checkSession();
-    
-    // Also set up auth state listener to handle OTP completion
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event);
-      
-      if (event === 'SIGNED_IN' && session) {
-        console.log("User signed in via auth state change, redirecting to dashboard");
-        navigate("/dealer/dashboard");
-      }
-    });
-    
-    // Cleanup listener on unmount
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, [navigate]);
+    if (isAuthenticated && !isLoading) {
+      console.log("User already logged in, redirecting to dashboard");
+      navigate("/dealer/dashboard");
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   // Update URL when tab changes without causing a page reload
   const handleTabChange = (value: string) => {

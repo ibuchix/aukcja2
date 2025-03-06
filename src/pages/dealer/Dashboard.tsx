@@ -1,6 +1,4 @@
-
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +7,8 @@ import { DealerHeader } from "@/components/dealer/DealerHeader";
 import { QuickActions } from "@/components/dealer/QuickActions";
 import { AuctionManagement } from "@/components/dealer/AuctionManagement";
 import { WatchlistManagement } from "@/components/dealer/WatchlistManagement";
+import { useAuth } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 interface DealerProfile {
   id: string;
@@ -21,35 +21,37 @@ interface DealerProfile {
 const DealerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [dealerProfile, setDealerProfile] = useState<DealerProfile | null>(null);
-  const navigate = useNavigate();
+  const { profile, user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     let mounted = true;
 
-    const checkAuthAndProfile = async () => {
+    const loadDealerProfile = async () => {
       try {
-        // Get session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-        if (sessionError) {
-          console.error('Session error details:', sessionError);
-          throw new Error('Failed to get session');
-        }
-
-        if (!session || !session.user) {
-          console.log('No active session found');
-          navigate('/auth');
+        if (!user) return;
+        
+        setLoading(true);
+        
+        // Use profile from auth context if available
+        if (profile) {
+          setDealerProfile({
+            id: profile.id,
+            dealership_name: profile.dealership_name,
+            license_number: profile.license_number,
+            address: profile.address,
+            verification_status: profile.verification_status
+          });
+          setLoading(false);
           return;
         }
-
-        console.log('Attempting to fetch dealer profile with user_id:', session.user.id);
-
-        // Try to fetch the dealer profile directly
+        
+        // Otherwise fetch dealer profile
+        console.log('Attempting to fetch dealer profile with user_id:', user.id);
         const { data: dealerData, error: dealerError } = await supabase
           .from('dealers')
           .select('id, dealership_name, license_number, address, verification_status')
-          .eq('user_id', session.user.id)
+          .eq('user_id', user.id)
           .maybeSingle();
 
         if (dealerError) {
@@ -58,14 +60,13 @@ const DealerDashboard = () => {
         }
 
         if (!dealerData) {
-          console.error('No dealer profile found for user:', session.user.id);
+          console.error('No dealer profile found for user:', user.id);
           throw new Error('No dealer profile found. Please complete registration.');
         }
 
         if (mounted) {
           console.log('Successfully loaded dealer profile:', dealerData);
           setDealerProfile(dealerData);
-          setLoading(false);
 
           if (dealerData.verification_status === 'pending') {
             toast({
@@ -79,53 +80,51 @@ const DealerDashboard = () => {
         console.error('Profile loading error:', error);
         
         if (mounted) {
-          setLoading(false);
           toast({
             title: "Error Loading Profile",
             description: error instanceof Error ? error.message : "Failed to load dealer profile",
             variant: "destructive",
           });
-          navigate('/auth');
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
         }
       }
     };
 
-    checkAuthAndProfile();
+    loadDealerProfile();
 
     return () => {
       mounted = false;
     };
-  }, [navigate, toast]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
-      </div>
-    );
-  }
-
-  if (!dealerProfile) {
-    return null;
-  }
+  }, [user, profile, toast]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <VerificationBanner verificationStatus={dealerProfile.verification_status} />
-        <DealerHeader dealerProfile={dealerProfile} />
-        <div className="mt-8">
-          <QuickActions />
-        </div>
-        <div className="mt-8">
-          <WatchlistManagement />
-        </div>
-        <div className="mt-8">
-          <AuctionManagement dealerId={dealerProfile.id} />
-        </div>
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        {loading ? (
+          <div className="min-h-screen bg-background flex items-center justify-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
+          </div>
+        ) : dealerProfile ? (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <VerificationBanner verificationStatus={dealerProfile.verification_status} />
+            <DealerHeader dealerProfile={dealerProfile} />
+            <div className="mt-8">
+              <QuickActions />
+            </div>
+            <div className="mt-8">
+              <WatchlistManagement />
+            </div>
+            <div className="mt-8">
+              <AuctionManagement dealerId={dealerProfile.id} />
+            </div>
+          </div>
+        ) : null}
       </div>
-    </div>
+    </ProtectedRoute>
   );
 };
 
