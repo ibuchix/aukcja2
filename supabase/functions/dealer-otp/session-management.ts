@@ -60,11 +60,9 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
       throw new HttpError(`Failed to verify user: ${userCheckResponse.status} ${userCheckResponse.statusText}`, 500);
     }
     
-    // Generate auth link using current Admin API endpoint
-    console.log(`User verified, generating auth link for ${userId} with email ${userEmail.substring(0, 3)}...`);
-    
-    const generateLinkUrl = `${supabaseUrl}/auth/v1/admin/generate_link`;
-    console.log(`Using generate_link endpoint: ${generateLinkUrl}`);
+    // UPDATED: Use the direct session creation endpoint
+    const sessionUrl = `${supabaseUrl}/auth/v1/admin/users/${userId}/session`;
+    console.log(`Using session creation endpoint: ${sessionUrl}`);
     
     const headers = {
       'Authorization': `Bearer ${serviceRoleKey}`,
@@ -72,49 +70,60 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
       'Content-Type': 'application/json'
     };
     
-    // IMPORTANT CHANGE: Restructured request to avoid creating a user
-    // For existing users, we need to pass the userId in the options.data
-    // and NOT use the type=signup flow
+    // New request body structure for session endpoint
     const requestBody = {
-      type: "magiclink",
-      email: userEmail,
-      options: {
-        data: {
-          userId: userId
-        },
-        redirect_to: null, // No redirect needed since we're handling programmatically
-      }
+      expires_in: 60 * 60 * 24 * 7 // 1 week in seconds
     };
     
-    console.log('Sending request to generate auth link...');
-    const response = await fetch(generateLinkUrl, {
+    console.log('Sending request to create session...');
+    const response = await fetch(sessionUrl, {
       method: 'POST',
       headers: headers,
       body: JSON.stringify(requestBody)
     });
     
-    // Debug the response
-    console.log(`Generate link API response status: ${response.status}`);
+    // Enhanced error logging
+    console.log(`Session creation API response status: ${response.status}`);
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Error generating auth link: ${errorText}`);
+      console.error(`Error creating session: ${errorText}`);
+      
+      // Try to parse the error if possible
+      try {
+        const errorJson = JSON.parse(errorText);
+        console.error('Parsed error details:', JSON.stringify(errorJson));
+      } catch (e) {
+        console.error('Could not parse error response as JSON');
+      }
+      
       throw new HttpError(`Failed to create session: ${response.status} ${response.statusText}`, 500);
     }
     
-    const linkData = await response.json();
-    console.log('Successfully generated auth link');
+    // Parse the session data from response
+    const sessionData = await response.json();
+    console.log('Successfully created session');
     
-    // Extract the properties we need for the session
+    // Log session token info (without exposing the actual tokens)
+    console.log(`Access token received: ${sessionData.access_token ? 'Yes (length: ' + sessionData.access_token.length + ')' : 'No'}`);
+    console.log(`Refresh token received: ${sessionData.refresh_token ? 'Yes (length: ' + sessionData.refresh_token.length + ')' : 'No'}`);
+    console.log(`Expires in: ${sessionData.expires_in || 'not specified'} seconds`);
+    
+    // Return the session data in the expected format
     return {
-      access_token: linkData.properties.access_token,
-      refresh_token: linkData.properties.refresh_token,
-      expires_in: 60 * 60 * 24 * 7 // 1 week
+      access_token: sessionData.access_token,
+      refresh_token: sessionData.refresh_token,
+      expires_in: sessionData.expires_in || 60 * 60 * 24 * 7 // Default to 1 week if not specified
     };
     
   } catch (error) {
     console.error("Session creation failed:", error);
-    throw new HttpError("Failed to create user session", 500);
+    // Include the error message in the thrown error for better debugging
+    if (error instanceof HttpError) {
+      throw error; // Re-throw HttpError instances as they already have status codes
+    } else {
+      throw new HttpError(`Failed to create user session: ${error.message || 'Unknown error'}`, 500);
+    }
   }
 }
 
