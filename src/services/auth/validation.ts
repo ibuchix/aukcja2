@@ -1,6 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
+import { User } from "@supabase/supabase-js";
 
 export interface ValidationResult {
   isValid: boolean;
@@ -83,7 +83,7 @@ export async function checkAccountExists(email: string): Promise<boolean> {
     
     // If we received users data, search for the email in the list
     if (data?.users) {
-      const userExists = data.users.some(user => 
+      const userExists = data.users.some((user: User) => 
         user.email && user.email.toLowerCase() === email.toLowerCase()
       );
       
@@ -191,4 +191,3 @@ export async function getUserIdByEmail(email: string): Promise<string | null> {
     return null;
   }
 }
-
