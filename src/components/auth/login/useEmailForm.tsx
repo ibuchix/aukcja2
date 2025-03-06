@@ -64,9 +64,19 @@ export function useEmailForm(
           description: "Check your email for the login code.",
         });
       } else {
+        // Enhanced error handling for user-friendly messages
+        let errorMessage = result.error || "Failed to send login code. Please try again.";
+        
+        // Provide more helpful messages for common errors
+        if (errorMessage.includes("No account found") || errorMessage.includes("doesn't exist")) {
+          errorMessage = "No account exists with this email. Please register first.";
+        } else if (errorMessage.includes("Too many requests")) {
+          errorMessage = "Too many login attempts. Please try again later.";
+        }
+        
         toast({
           title: "Error",
-          description: result.error || "Failed to send login code. Please try again.",
+          description: errorMessage,
           variant: "destructive",
         });
       }

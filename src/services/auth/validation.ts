@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ValidationResult {
@@ -62,16 +61,82 @@ export function validatePassword(password: string | null | undefined): Validatio
 }
 
 /**
- * Checks if an account already exists with the given email
- * Uses multiple methods for robustness
+ * Improved method to check if an account exists with the given email
+ * Uses multiple verification approaches for reliability
  */
 export async function checkAccountExists(email: string): Promise<boolean> {
   try {
     console.log("Checking if account exists with email:", email);
     
-    // Try all available methods to check email existence
+    // Try all available methods to verify email existence
     
-    // 1. First try using the dealer-auth edge function (most reliable)
+    // Method 1: Direct check using get_user_id_by_email function
+    try {
+      const { data: userData, error: userError } = await supabase.rpc(
+        'get_user_id_by_email',
+        { p_email: email.toLowerCase().trim() }
+      );
+      
+      if (!userError && userData && userData.id) {
+        console.log("User exists according to get_user_id_by_email:", userData);
+        return true;
+      }
+      
+      if (userError) {
+        console.warn("Error checking user with get_user_id_by_email:", userError);
+        // Continue to next method
+      }
+    } catch (error) {
+      console.warn("Failed to call get_user_id_by_email:", error);
+      // Continue to next method
+    }
+    
+    // Method 2: Check using check_email_exists function
+    try {
+      const { data: emailData, error: emailError } = await supabase.rpc(
+        'check_email_exists',
+        { p_email: email.toLowerCase().trim() }
+      );
+      
+      if (!emailError && emailData) {
+        console.log("User exists according to check_email_exists:", emailData);
+        return emailData.exists || false;
+      }
+      
+      if (emailError) {
+        console.warn("Error checking email with check_email_exists:", emailError);
+        // Continue to next method
+      }
+    } catch (error) {
+      console.warn("Failed to call check_email_exists:", error);
+      // Continue to next method
+    }
+    
+    // Method 3: Try using the older format function
+    try {
+      const { data: legacyData, error: legacyError } = await supabase.rpc(
+        'check_email_exists',
+        { email_to_check: email.toLowerCase().trim() }
+      );
+      
+      if (!legacyError) {
+        console.log("Legacy check_email_exists response:", legacyData);
+        
+        if (typeof legacyData === 'number') {
+          return legacyData > 0;
+        } 
+        
+        if (typeof legacyData === 'boolean') {
+          return legacyData;
+        }
+      } else {
+        console.warn("Legacy function error:", legacyError);
+      }
+    } catch (error) {
+      console.warn("Failed to call legacy check function:", error);
+    }
+    
+    // Method 4: Edge function fallback
     try {
       const { data: edgeData, error: edgeError } = await supabase.functions.invoke('dealer-auth', {
         body: { action: 'checkEmailExists', email: email.toLowerCase().trim() }
@@ -81,57 +146,17 @@ export async function checkAccountExists(email: string): Promise<boolean> {
         console.log("Edge function response:", edgeData);
         return edgeData?.exists || false;
       }
-      
-      if (edgeError) {
-        console.warn("Edge function error checking email:", edgeError);
-        // Continue to next method
-      }
     } catch (error) {
       console.warn("Failed to call edge function:", error);
-      // Continue to next method
     }
     
-    // 2. Try using the RPC function (with correct parameter name)
-    try {
-      const { data, error } = await supabase.rpc(
-        'check_email_exists',
-        { email_to_check: email.toLowerCase().trim() }
-      );
-      
-      if (!error) {
-        console.log("RPC function response:", data);
-        
-        // Handle the jsonb response format
-        if (data && typeof data === 'object' && 'exists' in data) {
-          return Boolean(data.exists);
-        }
-        
-        // Handle potential legacy formats
-        if (typeof data === 'number') {
-          return data > 0;
-        } 
-        
-        if (typeof data === 'boolean') {
-          return data;
-        }
-      } else {
-        console.warn("RPC function error:", error);
-        // Continue to fallback
-      }
-    } catch (error) {
-      console.warn("Failed to call RPC function:", error);
-      // Continue to fallback
-    }
-    
-    // 3. Last resort: just return false and let the registration attempt proceed
-    // The server-side validation will catch any duplicates
-    console.warn("All email check methods failed, assuming email doesn't exist");
+    // If all checks failed, default to false - request will fail gracefully with appropriate message
+    console.warn("All email existence checks failed, assuming email doesn't exist");
     return false;
     
   } catch (error) {
     console.error("Unhandled error checking if account exists:", error);
-    // In case of unhandled errors, default to false to allow registration attempt
-    // The server will validate and reject if needed
+    // In case of unhandled errors, default to false for fail-safe behavior
     return false;
   }
 }
