@@ -70,8 +70,14 @@ export async function checkAccountExists(email: string): Promise<boolean> {
   try {
     console.log("Checking if account exists with email:", email);
     
-    // Use Supabase Auth API directly - this is the most reliable method
-    const { data, error } = await supabase.auth.admin.getUserByEmail(email);
+    // Corrected: Use getUserByEmail correctly from the admin API
+    // The previous method name was incorrect
+    const { data, error } = await supabase.auth.admin.listUsers({
+      // Filter by email
+      filters: {
+        email: email
+      }
+    });
     
     if (error) {
       console.warn("Error checking user with Supabase Auth API:", error);
@@ -80,8 +86,8 @@ export async function checkAccountExists(email: string): Promise<boolean> {
       return await checkAccountExistsWithDbFunctions(email);
     }
     
-    // If we got user data, the account exists
-    if (data?.user) {
+    // If we found users that match the email, the account exists
+    if (data?.users && data.users.length > 0) {
       console.log("User exists according to Supabase Auth API");
       return true;
     }
@@ -184,3 +190,4 @@ export async function getUserIdByEmail(email: string): Promise<string | null> {
     return null;
   }
 }
+
