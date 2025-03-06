@@ -112,63 +112,20 @@ serve(async (req) => {
 
     console.log(`Creating session for User ID: ${targetUserId}, Email: ${targetEmail}`);
 
-    // Get Supabase URL and service key from environment
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error("Missing Supabase URL or API key");
-    }
-    
-    // NEW APPROACH: Use the generate_link endpoint to create a sign-in token
-    // This is a completely different approach from the magiclink endpoint
-    console.log("Using generate_link endpoint to create auth token");
-    
-    const generateLinkResponse = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': serviceRoleKey,
-        'Authorization': `Bearer ${serviceRoleKey}`
-      },
-      body: JSON.stringify({
-        type: 'magiclink',
-        email: targetEmail,
-        options: {
-          // Don't send the email, we just want the token
-          data: { user_id: targetUserId }
-        }
-      })
+    // DIRECT SESSION CREATION APPROACH
+    // Create session directly using the createSession API
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
+      userId: targetUserId,
+      // Optional: Set session properties if needed
+      // expiresIn: 3600 // 1 hour in seconds
     });
     
-    if (!generateLinkResponse.ok) {
-      const errorText = await generateLinkResponse.text();
-      console.error("Error generating auth link:", errorText);
-      
+    if (sessionError) {
+      console.error("Error creating session:", sessionError.message);
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: `Auth link generation error: ${errorText}` 
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: generateLinkResponse.status 
-        }
-      );
-    }
-    
-    // Get the generated token data
-    const linkData = await generateLinkResponse.json();
-    console.log("Successfully generated auth token");
-    
-    // The linkData contains properties we need to exchange for a session
-    // Now exchange this token for a session
-    if (!linkData.action_link) {
-      console.error("No action link returned from generate_link endpoint");
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Failed to generate authentication token" 
+          error: `Session creation error: ${sessionError.message}` 
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -177,17 +134,12 @@ serve(async (req) => {
       );
     }
     
-    // Extract the token from the action link
-    // The action link format is typically: https://your-project.supabase.co/auth/v1/verify?token=TOKEN&type=magiclink&redirect_to=
-    const url = new URL(linkData.action_link);
-    const token = url.searchParams.get('token');
-    
-    if (!token) {
-      console.error("Could not extract token from action link");
+    if (!sessionData) {
+      console.error("No session data returned");
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: "Invalid authentication token format" 
+          error: "Failed to create session data" 
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -196,41 +148,7 @@ serve(async (req) => {
       );
     }
     
-    console.log("Exchanging token for session");
-    
-    // Use the token to create a session
-    const verifyResponse = await fetch(`${supabaseUrl}/auth/v1/verify`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': serviceRoleKey
-      },
-      body: JSON.stringify({
-        type: 'magiclink',
-        token: token
-      })
-    });
-    
-    if (!verifyResponse.ok) {
-      const errorText = await verifyResponse.text();
-      console.error("Error verifying token:", errorText);
-      
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: `Token verification error: ${errorText}` 
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: verifyResponse.status 
-        }
-      );
-    }
-    
-    // Get the session data
-    const sessionData = await verifyResponse.json();
-    
-    console.log("Session created successfully using token verification");
+    console.log("Session created successfully");
     
     // Return the session data
     return new Response(
