@@ -322,6 +322,12 @@ export type Database = {
         }
         Returns: Json
       }
+      get_dealer_by_user_id: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: Json
+      }
       get_user_id_by_email: {
         Args: {
           p_email: string

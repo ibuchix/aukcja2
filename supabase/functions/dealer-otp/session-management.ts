@@ -2,6 +2,7 @@
 import { HttpError } from "../_shared/error-handling.ts";
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { create, verify } from "https://deno.land/x/djwt@v2.8/mod.ts";
+import { callRpcSafely } from "../_shared/supabase-client.ts";
 
 /**
  * Generates a temporary exchange token for client-side session creation
@@ -155,8 +156,11 @@ export async function getDealerProfile(supabase: SupabaseClient, userId: string)
   
   try {
     // First try to get dealer profile using the new secure function
-    const { data: dealerData, error: functionError } = await supabase
-      .rpc('get_dealer_by_user_id', { p_user_id: userId });
+    const { data: dealerData, error: functionError } = await callRpcSafely(
+      supabase,
+      'get_dealer_by_user_id', 
+      { p_user_id: userId }
+    );
       
     if (!functionError && dealerData) {
       console.log("Retrieved dealer profile using secure function");
