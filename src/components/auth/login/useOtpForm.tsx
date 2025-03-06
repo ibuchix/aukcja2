@@ -1,11 +1,17 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+export interface OtpFormValues {
+  otp: string;
+}
+
 export function useOtpForm(email: string, onBack: () => void) {
   const [otp, setOtp] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -13,6 +19,49 @@ export function useOtpForm(email: string, onBack: () => void) {
   const handleChange = (value: string) => {
     setOtp(value);
     if (error) setError("");
+  };
+
+  const resetOtpForm = () => {
+    setOtp("");
+    setError("");
+  };
+
+  const handleBackToEmail = () => {
+    resetOtpForm();
+    onBack();
+  };
+
+  const handleResendOtp = async () => {
+    if (isResending) return;
+    
+    setIsResending(true);
+    setError("");
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("dealer-otp", {
+        body: {
+          action: "generate-otp",
+          email: email.trim().toLowerCase()
+        }
+      });
+      
+      if (error || !data?.success) {
+        console.error("OTP generation failed:", error || data?.error);
+        setError(data?.message || "Failed to send verification code. Please try again.");
+        return;
+      }
+      
+      toast({
+        title: "Verification Code Sent",
+        description: "A new verification code has been sent to your email",
+      });
+      
+    } catch (err) {
+      console.error("Error during OTP generation:", err);
+      setError("Failed to send verification code. Please try again later.");
+    } finally {
+      setIsResending(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,8 +135,13 @@ export function useOtpForm(email: string, onBack: () => void) {
   return {
     otp,
     isSubmitting,
+    isResending,
     error,
     handleChange,
     handleSubmit,
+    handleResendOtp,
+    handleBackToEmail,
+    resetOtpForm,
+    otpForm: { otp }
   };
 }
