@@ -1,6 +1,5 @@
-
 import { HttpError } from "../_shared/error-handling.ts";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { SupabaseClient, createClient } from '@supabase/supabase-js';
 
 /**
  * Creates a session for a user using Supabase Admin API
@@ -16,114 +15,59 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
     if (!supabaseUrl || !serviceRoleKey) {
       throw new Error('Missing required Supabase environment variables');
     }
+
+    // Create admin client for session management
+    const supabaseAdmin = createClient(
+      supabaseUrl,
+      serviceRoleKey,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
     
-    // First verify that the user exists in auth.users
-    // This additional check helps diagnose user ID issues
+    // First verify that the user exists
     console.log(`Verifying user ${userId} exists before creating session`);
-    const userCheckResponse = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${serviceRoleKey}`,
-        'apikey': serviceRoleKey,
-        'Content-Type': 'application/json'
-      }
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+    
+    if (userError || !userData.user) {
+      console.error(`Error verifying user: ${userError?.message || 'User not found'}`);
+      throw new HttpError(`User with ID ${userId} not found`, 404);
+    }
+    
+    console.log('User verified, creating session...');
+    
+    // Create session using the admin API
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
+      userId: userId
     });
     
-    // Debug user verification response
-    const userCheckStatus = userCheckResponse.status;
-    console.log(`User verification status: ${userCheckStatus}`);
-    
-    if (userCheckStatus === 404) {
-      console.error(`User ${userId} not found in auth system`);
-      
-      // Additional debug - check if this user ID exists in our database
-      const { data: userInDB, error: dbError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', userId)
-        .single();
-        
-      if (dbError) {
-        console.error(`Error checking user in profiles: ${dbError.message}`);
-      } else if (userInDB) {
-        console.error(`User exists in profiles but not in auth system. Profile ID: ${userInDB.id}`);
-      } else {
-        console.error(`User does not exist in profiles table either`);
-      }
-      
-      throw new HttpError(`User with ID ${userId} not found in auth system`, 404);
+    if (sessionError) {
+      console.error('Error creating session:', sessionError);
+      throw new HttpError(`Failed to create session: ${sessionError.message}`, 500);
     }
     
-    if (!userCheckResponse.ok) {
-      const errorText = await userCheckResponse.text();
-      console.error(`Error verifying user: ${errorText}`);
-      throw new HttpError(`Failed to verify user: ${userCheckResponse.status} ${userCheckResponse.statusText}`, 500);
+    if (!sessionData?.session) {
+      console.error('No session data returned');
+      throw new HttpError('Failed to create session - no data returned', 500);
     }
     
-    // FIXED: Use the correct token creation endpoint
-    const tokenUrl = `${supabaseUrl}/auth/v1/admin/users/${userId}/token`;
-    console.log(`Using token creation endpoint: ${tokenUrl}`);
+    console.log('Session created successfully');
     
-    const headers = {
-      'Authorization': `Bearer ${serviceRoleKey}`,
-      'apikey': serviceRoleKey,
-      'Content-Type': 'application/json'
-    };
-    
-    // Request body for token endpoint
-    const requestBody = {
-      // Standard token expiration, can be customized as needed
-      expires_in: 60 * 60 * 24 * 7 // 1 week in seconds
-    };
-    
-    console.log('Sending request to create user token...');
-    const response = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify(requestBody)
-    });
-    
-    // Enhanced error logging
-    console.log(`Token creation API response status: ${response.status}`);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Error creating token: ${errorText}`);
-      
-      // Try to parse the error if possible
-      try {
-        const errorJson = JSON.parse(errorText);
-        console.error('Parsed error details:', JSON.stringify(errorJson));
-      } catch (e) {
-        console.error('Could not parse error response as JSON');
-      }
-      
-      throw new HttpError(`Failed to create session: ${response.status} ${response.statusText}`, 500);
-    }
-    
-    // Parse the token data from response
-    const tokenData = await response.json();
-    console.log('Successfully created user token');
-    
-    // Log token info (without exposing the actual tokens)
-    console.log(`Access token received: ${tokenData.access_token ? 'Yes (length: ' + tokenData.access_token.length + ')' : 'No'}`);
-    console.log(`Refresh token received: ${tokenData.refresh_token ? 'Yes (length: ' + tokenData.refresh_token.length + ')' : 'No'}`);
-    console.log(`Token type: ${tokenData.token_type || 'not specified'}`);
-    console.log(`Expires in: ${tokenData.expires_in || 'not specified'} seconds`);
-    
-    // Return the session data in the expected format
+    // Return the session data
     return {
-      access_token: tokenData.access_token,
-      refresh_token: tokenData.refresh_token,
-      expires_in: tokenData.expires_in || 60 * 60 * 24 * 7, // Default to 1 week if not specified
-      token_type: tokenData.token_type || 'bearer'
+      access_token: sessionData.session.access_token,
+      refresh_token: sessionData.session.refresh_token,
+      expires_in: sessionData.session.expires_in,
+      token_type: sessionData.session.token_type
     };
     
   } catch (error) {
     console.error("Session creation failed:", error);
-    // Include the error message in the thrown error for better debugging
     if (error instanceof HttpError) {
-      throw error; // Re-throw HttpError instances as they already have status codes
+      throw error;
     } else {
       throw new HttpError(`Failed to create user session: ${error.message || 'Unknown error'}`, 500);
     }
