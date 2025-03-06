@@ -12,9 +12,10 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
     // Get Supabase URL and service key from environment
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const projectId = supabaseUrl?.match(/https:\/\/(.*?)\.supabase\.co/)?.[1];
     
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error('Missing required Supabase environment variables');
+    if (!supabaseUrl || !serviceRoleKey || !projectId) {
+      throw new Error('Missing required Supabase environment variables or invalid URL format');
     }
 
     // Create admin client for session management
@@ -40,8 +41,12 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
     
     console.log('User verified, creating session...');
 
-    // Call the create-dealer-session edge function
-    const createSessionResponse = await fetch(`${supabaseUrl}/functions/v1/create-dealer-session`, {
+    // Correctly construct the full URL for the edge function
+    const edgeFunctionUrl = `https://${projectId}.supabase.co/functions/v1/create-dealer-session`;
+    console.log(`Calling edge function at: ${edgeFunctionUrl}`);
+
+    // Call the create-dealer-session edge function with the full URL
+    const createSessionResponse = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
