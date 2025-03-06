@@ -5,10 +5,12 @@ import { DealerSignupForm } from "@/pages/auth/DealerSignupForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DealerLoginForm } from "@/components/auth/DealerLoginForm";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
   
   // Get the active tab from URL query parameter, default to "register" if not present
   const tabFromUrl = searchParams.get("tab");
@@ -17,6 +19,26 @@ const Auth = () => {
     : "register";
   
   const [activeTab, setActiveTab] = useState<"register" | "login">(initialTab as "register" | "login");
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        
+        if (data.session) {
+          console.log("User already logged in, redirecting to dashboard");
+          navigate("/dealer/dashboard");
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
 
   // Update URL when tab changes without causing a page reload
   const handleTabChange = (value: string) => {
@@ -28,6 +50,14 @@ const Auth = () => {
     newParams.set("tab", newTab);
     setSearchParams(newParams, { replace: true });
   };
+
+  if (isLoading) {
+    return (
+      <div className="container flex items-center justify-center h-screen">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="container relative h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">

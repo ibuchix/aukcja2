@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { initiateOtpSignIn, verifyOtp } from "@/services/auth/signin";
+import { supabase } from "@/integrations/supabase/client";
 
 // OTP validation schema
 const otpSchema = z.object({
@@ -47,11 +48,47 @@ export function useOtpForm(
       const result = await verifyOtp(email, values.otp);
       
       if (result.success) {
+        // If we got session tokens back from the verification process
+        if (result.session) {
+          try {
+            // Set the session in supabase auth client
+            const { error: sessionError } = await supabase.auth.setSession({
+              access_token: result.session.access_token,
+              refresh_token: result.session.refresh_token
+            });
+            
+            if (sessionError) {
+              console.error("Error setting session:", sessionError);
+              throw new Error(sessionError.message);
+            }
+            
+            // Check that the session was actually set
+            const { data: sessionData } = await supabase.auth.getSession();
+            if (!sessionData.session) {
+              throw new Error("Failed to establish session");
+            }
+            
+            console.log("Session established successfully:", sessionData.session.user.id);
+          } catch (sessionErr) {
+            console.error("Session establishment error:", sessionErr);
+            toast({
+              title: "Authentication error",
+              description: "Failed to establish your session. Please try logging in again.",
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+        
         toast({
           title: "Login successful!",
           description: "Redirecting to your dashboard...",
         });
-        navigate("/dealer/dashboard");
+        
+        // Small delay to allow the success toast to be seen
+        setTimeout(() => {
+          navigate("/dealer/dashboard");
+        }, 500);
       } else {
         toast({
           title: "Invalid code",

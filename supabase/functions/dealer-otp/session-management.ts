@@ -60,9 +60,9 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
       throw new HttpError(`Failed to verify user: ${userCheckResponse.status} ${userCheckResponse.statusText}`, 500);
     }
     
-    // UPDATED: Use the direct session creation endpoint
-    const sessionUrl = `${supabaseUrl}/auth/v1/admin/users/${userId}/session`;
-    console.log(`Using session creation endpoint: ${sessionUrl}`);
+    // FIXED: Use the correct token creation endpoint
+    const tokenUrl = `${supabaseUrl}/auth/v1/admin/users/${userId}/token`;
+    console.log(`Using token creation endpoint: ${tokenUrl}`);
     
     const headers = {
       'Authorization': `Bearer ${serviceRoleKey}`,
@@ -70,24 +70,25 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
       'Content-Type': 'application/json'
     };
     
-    // New request body structure for session endpoint
+    // Request body for token endpoint
     const requestBody = {
+      // Standard token expiration, can be customized as needed
       expires_in: 60 * 60 * 24 * 7 // 1 week in seconds
     };
     
-    console.log('Sending request to create session...');
-    const response = await fetch(sessionUrl, {
+    console.log('Sending request to create user token...');
+    const response = await fetch(tokenUrl, {
       method: 'POST',
       headers: headers,
       body: JSON.stringify(requestBody)
     });
     
     // Enhanced error logging
-    console.log(`Session creation API response status: ${response.status}`);
+    console.log(`Token creation API response status: ${response.status}`);
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Error creating session: ${errorText}`);
+      console.error(`Error creating token: ${errorText}`);
       
       // Try to parse the error if possible
       try {
@@ -100,20 +101,22 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
       throw new HttpError(`Failed to create session: ${response.status} ${response.statusText}`, 500);
     }
     
-    // Parse the session data from response
-    const sessionData = await response.json();
-    console.log('Successfully created session');
+    // Parse the token data from response
+    const tokenData = await response.json();
+    console.log('Successfully created user token');
     
-    // Log session token info (without exposing the actual tokens)
-    console.log(`Access token received: ${sessionData.access_token ? 'Yes (length: ' + sessionData.access_token.length + ')' : 'No'}`);
-    console.log(`Refresh token received: ${sessionData.refresh_token ? 'Yes (length: ' + sessionData.refresh_token.length + ')' : 'No'}`);
-    console.log(`Expires in: ${sessionData.expires_in || 'not specified'} seconds`);
+    // Log token info (without exposing the actual tokens)
+    console.log(`Access token received: ${tokenData.access_token ? 'Yes (length: ' + tokenData.access_token.length + ')' : 'No'}`);
+    console.log(`Refresh token received: ${tokenData.refresh_token ? 'Yes (length: ' + tokenData.refresh_token.length + ')' : 'No'}`);
+    console.log(`Token type: ${tokenData.token_type || 'not specified'}`);
+    console.log(`Expires in: ${tokenData.expires_in || 'not specified'} seconds`);
     
     // Return the session data in the expected format
     return {
-      access_token: sessionData.access_token,
-      refresh_token: sessionData.refresh_token,
-      expires_in: sessionData.expires_in || 60 * 60 * 24 * 7 // Default to 1 week if not specified
+      access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token,
+      expires_in: tokenData.expires_in || 60 * 60 * 24 * 7, // Default to 1 week if not specified
+      token_type: tokenData.token_type || 'bearer'
     };
     
   } catch (error) {
