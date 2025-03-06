@@ -1,4 +1,3 @@
-
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Auth from "@/pages/Auth";
 import DealerDashboard from "@/pages/dealer/DealerDashboard";
@@ -8,6 +7,7 @@ import Profile from "@/pages/dealer/Profile";
 import DealerProfileManagement from "@/pages/dealer/DealerProfileManagement";
 import CompleteRegistration from "@/pages/CompleteRegistration";
 import Index from "@/pages/Index";
+import { Toaster } from "@/components/ui/toaster";
 
 const router = createBrowserRouter([
   {
@@ -52,6 +52,7 @@ function App() {
   return (
     <AuthProvider>
       <RouterProvider router={router} />
+      <Toaster />
     </AuthProvider>
   );
 }
