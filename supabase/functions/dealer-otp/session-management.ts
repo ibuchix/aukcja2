@@ -40,13 +40,10 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
     
     console.log('User verified, creating session...');
     
-    // Fix: Use the correct API to create a session
-    // The method wasn't available as auth.admin.createSession but is correctly available as:
-    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createUser({
-      email: userEmail,
-      email_confirm: true,
-      user_metadata: { id: userId },
-      password: crypto.randomUUID() // Generate a random password
+    // Fix: Using the correct Auth API for session generation
+    // In Supabase JS v2, we need to use admin.createSession for this purpose
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
+      user_id: userId
     });
     
     if (sessionError) {
@@ -54,7 +51,7 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
       throw new HttpError(`Failed to create session: ${sessionError.message}`, 500);
     }
     
-    if (!sessionData?.user) {
+    if (!sessionData) {
       console.error('No session data returned');
       throw new HttpError('Failed to create session - no data returned', 500);
     }
@@ -63,10 +60,10 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
     
     // Return the session data
     return {
-      access_token: sessionData.user.id,
-      refresh_token: sessionData.user.id,
-      expires_in: 3600,
-      token_type: "bearer"
+      access_token: sessionData.session.access_token,
+      refresh_token: sessionData.session.refresh_token,
+      expires_in: sessionData.session.expires_in,
+      token_type: sessionData.session.token_type
     };
     
   } catch (error) {
