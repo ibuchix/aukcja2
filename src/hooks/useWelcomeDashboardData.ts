@@ -24,6 +24,7 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
       try {
         if (!user || !user.id) {
           console.log("No user or user ID available for profile fetch");
+          setIsProfileLoading(false);
           return;
         }
 
@@ -44,6 +45,7 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
             description: "There was a problem loading your dealer profile. Please try again.",
             variant: "destructive",
           });
+          setIsProfileLoading(false);
           return;
         }
 
@@ -85,7 +87,7 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
 
     if (user && !isAuthLoading) {
       fetchDealerProfile();
-    } else if (!user && !isAuthLoading) {
+    } else if (!isAuthLoading) {
       setIsProfileLoading(false);
     }
   }, [user, isAuthLoading, toast]);
