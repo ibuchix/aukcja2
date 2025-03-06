@@ -1,3 +1,4 @@
+
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Auth from "@/pages/Auth";
 import DealerDashboard from "@/pages/dealer/DealerDashboard";
@@ -6,14 +7,15 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Profile from "@/pages/dealer/Profile";
 import DealerProfileManagement from "@/pages/dealer/DealerProfileManagement";
 import CompleteRegistration from "@/pages/CompleteRegistration";
+import Index from "@/pages/Index";
 
 const router = createBrowserRouter([
   {
-    path: "/auth",
-    element: <Auth />,
+    path: "/",
+    element: <Index />,
   },
   {
-    path: "/",
+    path: "/auth",
     element: <Auth />,
   },
   {
