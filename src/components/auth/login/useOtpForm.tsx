@@ -21,6 +21,7 @@ export function useOtpForm(
   setStep: (step: "email" | "otp") => void
 ) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { refreshSession } = useAuth();
@@ -93,7 +94,8 @@ export function useOtpForm(
       return;
     }
 
-    setIsLoading(true);
+    // Use a separate loading state for resending to avoid clearing the form
+    setIsResending(true);
     try {
       // Call our custom dealer-otp function to resend the code
       const { data, error } = await supabase.functions.invoke('dealer-otp', {
@@ -120,7 +122,7 @@ export function useOtpForm(
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsResending(false);
     }
   };
 
@@ -132,6 +134,7 @@ export function useOtpForm(
 
   return {
     isLoading,
+    isResending, // Expose the resending state
     otpForm,
     onOtpSubmit,
     handleResendOtp,
@@ -139,3 +142,4 @@ export function useOtpForm(
     resetOtpForm: () => otpForm.reset({ otp: "" })
   };
 }
+

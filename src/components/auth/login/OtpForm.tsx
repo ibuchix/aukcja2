@@ -4,11 +4,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { OtpFormValues } from "./useOtpForm";
 import { UseFormReturn } from "react-hook-form";
+import { Loader2 } from "lucide-react";
 
 interface OtpFormProps {
   form: UseFormReturn<OtpFormValues>;
   onSubmit: (values: OtpFormValues) => Promise<void>;
   isLoading: boolean;
+  isResending?: boolean;
   onBackToEmail: () => void;
   onResendOtp: () => Promise<void>;
 }
@@ -17,6 +19,7 @@ export function OtpForm({
   form, 
   onSubmit, 
   isLoading,
+  isResending = false,
   onBackToEmail,
   onResendOtp
 }: OtpFormProps) {
@@ -67,9 +70,10 @@ export function OtpForm({
           <button 
             type="button" 
             onClick={onResendOtp} 
-            className="text-primary underline"
-            disabled={isLoading}
+            className="text-primary underline flex items-center gap-1"
+            disabled={isResending || isLoading}
           >
+            {isResending && <Loader2 className="h-3 w-3 animate-spin" />}
             Resend code
           </button>
         </div>

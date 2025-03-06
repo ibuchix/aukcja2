@@ -13,6 +13,7 @@ export function DealerLoginForm() {
   // Create otpForm first since we need its resetOtpForm function for emailForm
   const {
     isLoading: otpIsLoading,
+    isResending: otpIsResending,
     otpForm,
     onOtpSubmit,
     handleResendOtp,
@@ -50,6 +51,7 @@ export function DealerLoginForm() {
           form={otpForm}
           onSubmit={onOtpSubmit}
           isLoading={otpIsLoading}
+          isResending={otpIsResending}
           onBackToEmail={handleBackToEmail}
           onResendOtp={handleResendOtp}
         />
