@@ -66,7 +66,7 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
       throw new Error('Missing required Supabase environment variables or invalid URL format');
     }
 
-    // Create admin client for session management
+    // Create admin client for session management with properly formatted headers
     const supabaseAdmin = createClient(
       supabaseUrl,
       serviceRoleKey,
@@ -74,6 +74,13 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
         auth: {
           autoRefreshToken: false,
           persistSession: false
+        },
+        global: {
+          headers: {
+            // Ensure correct case for headers
+            'Authorization': `Bearer ${serviceRoleKey}`,
+            'apikey': serviceRoleKey
+          }
         }
       }
     );
@@ -93,7 +100,7 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
     const edgeFunctionUrl = `https://${projectId}.supabase.co/functions/v1/create-dealer-session`;
     console.log(`Calling edge function at: ${edgeFunctionUrl}`);
 
-    // Call the create-dealer-session edge function with the full URL
+    // Call the create-dealer-session edge function with the full URL and proper headers
     const createSessionResponse = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
@@ -145,6 +152,10 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
  */
 export async function getDealerProfile(supabase: SupabaseClient, userId: string) {
   console.log(`Getting dealer profile for user ${userId}`);
+  
+  // We'll need to ensure this client has the correct service role headers
+  // Since the supabase client is passed in, we should document for the caller
+  // that they need to use a properly configured service role client
   
   const { data: dealerData, error: dealerError } = await supabase
     .from('dealers')

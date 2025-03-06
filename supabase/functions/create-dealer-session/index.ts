@@ -10,13 +10,24 @@ const corsHeaders = {
 };
 
 // Create a Supabase client with the admin key
+const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+// Create admin client for session management with properly formatted headers
 const supabaseAdmin = createClient(
-  Deno.env.get("SUPABASE_URL") ?? "",
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  supabaseUrl,
+  serviceRoleKey,
   {
     auth: {
       autoRefreshToken: false,
       persistSession: false
+    },
+    global: {
+      headers: {
+        // Ensure correct case for headers
+        'Authorization': `Bearer ${serviceRoleKey}`,
+        'apikey': serviceRoleKey
+      }
     }
   }
 );
@@ -169,7 +180,10 @@ serve(async (req) => {
     
     console.log("Exchange token generated successfully");
     
-    // Get dealer profile information
+    // Get dealer profile information - adding detailed logging
+    console.log(`Attempting to fetch dealer profile for user_id: ${targetUserId}`);
+    console.log(`Using service role key: ${serviceRoleKey ? "present (redacted)" : "missing!"}`);
+    
     const { data: dealerData, error: dealerError } = await supabaseAdmin
       .from('dealers')
       .select('*')
@@ -177,7 +191,9 @@ serve(async (req) => {
       .single();
       
     if (dealerError) {
-      console.log("Dealer profile not found or error:", dealerError.message);
+      console.log("Dealer profile not found or error:", dealerError);
+    } else {
+      console.log("Dealer profile found:", dealerData ? "Yes" : "No");
     }
     
     // Return the exchange token and user/dealer data
