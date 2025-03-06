@@ -60,9 +60,9 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
       throw new HttpError(`Failed to verify user: ${userCheckResponse.status} ${userCheckResponse.statusText}`, 500);
     }
     
-    // Now create the session
+    // Now create the session - FIXED URL: changed from "sessions" to "session"
     console.log(`User verified, creating session for ${userId}`);
-    const response = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}/sessions`, {
+    const response = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}/session`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${serviceRoleKey}`,
