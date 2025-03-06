@@ -40,34 +40,37 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
     
     console.log('User verified, creating session...');
 
-    // Generate a fresh JWT token
-    // Using auth.refreshSession() method in Supabase v2 API
-    const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail({
-      email: userEmail,
-      data: { id: userId }
+    // Call the create-dealer-session edge function
+    const createSessionResponse = await fetch(`${supabaseUrl}/functions/v1/create-dealer-session`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceRoleKey}`,
+        'apikey': serviceRoleKey
+      },
+      body: JSON.stringify({
+        userId: userId,
+        email: userEmail
+      })
     });
     
-    if (error) {
-      console.error('Error creating session:', error);
-      throw new HttpError(`Failed to create session: ${error.message}`, 500);
-    }
-
-    if (!data) {
-      console.error('No data returned');
-      throw new HttpError('Failed to create session - no data returned', 500);
+    if (!createSessionResponse.ok) {
+      const errorText = await createSessionResponse.text();
+      console.error('Error response from create-dealer-session:', errorText);
+      throw new HttpError(`Failed to create session: ${errorText || createSessionResponse.statusText}`, createSessionResponse.status);
     }
     
-    console.log('Session invitation sent successfully');
+    const sessionData = await createSessionResponse.json();
     
-    // Return a temporary session object
-    // This is not ideal, but will work until we find a better solution
-    return {
-      access_token: `temporary_${userId}`,
-      refresh_token: `temporary_${userId}`,
-      expires_in: 3600,
-      token_type: "bearer",
-      temporary: true
-    };
+    if (!sessionData.success || !sessionData.session) {
+      console.error('Invalid session data returned:', sessionData);
+      throw new HttpError('Failed to create valid session', 500);
+    }
+    
+    console.log('Session created successfully');
+    
+    // Return the session object from the edge function
+    return sessionData.session;
     
   } catch (error) {
     console.error("Session creation failed:", error);
