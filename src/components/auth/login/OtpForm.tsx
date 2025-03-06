@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 
 interface OtpFormProps {
   form: UseFormReturn<OtpFormValues>;
-  onSubmit: (values: OtpFormValues) => Promise<void>;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
   isLoading: boolean;
   isResending?: boolean;
   onBackToEmail: () => void;
@@ -25,7 +25,7 @@ export function OtpForm({
 }: OtpFormProps) {
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-4">
         <FormField
           control={form.control}
           name="otp"

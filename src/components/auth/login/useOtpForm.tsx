@@ -8,7 +8,7 @@ export interface OtpFormValues {
   otp: string;
 }
 
-export function useOtpForm(email: string, onBack: () => void) {
+export function useOtpForm(email: string, setStep: (step: "email" | "otp") => void) {
   const [otp, setOtp] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -28,7 +28,7 @@ export function useOtpForm(email: string, onBack: () => void) {
 
   const handleBackToEmail = () => {
     resetOtpForm();
-    onBack();
+    setStep("email");
   };
 
   const handleResendOtp = async () => {

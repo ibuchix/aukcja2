@@ -10,25 +10,24 @@ export function DealerLoginForm() {
   const [step, setStep] = useState<"email" | "otp">("email");
   const [email, setEmail] = useState("");
   
-  // Create otpForm first since we need its resetOtpForm function for emailForm
+  // Use the OTP form hook with the current email and step setter
   const {
-    isLoading: otpIsLoading,
+    isSubmitting: otpIsLoading,
     isResending: otpIsResending,
     otpForm,
-    onOtpSubmit,
+    handleSubmit: onOtpSubmit,
     handleResendOtp,
     handleBackToEmail,
     resetOtpForm
   } = useOtpForm(email, setStep);
   
-  // Then create emailForm with the resetOtpForm function
+  // Use the email form hook with the step setter and email setter
   const {
     isLoading: emailIsLoading,
     emailForm,
     onEmailSubmit
   } = useEmailForm(setStep, setEmail, resetOtpForm);
 
-  // Prevent form from being replaced during rerenders
   return (
     <div className="space-y-4">
       <div className="text-center mb-4">
