@@ -71,9 +71,13 @@ export function useEmailForm(
         console.error("OTP sign-in error:", errorMessage);
         
         // Provide more helpful messages for common errors
-        if (errorMessage.includes("No account found") || errorMessage.includes("doesn't exist")) {
+        if (errorMessage.includes("No account found") || 
+            errorMessage.includes("doesn't exist") || 
+            errorMessage.includes("not registered") ||
+            errorMessage.includes("This email is not registered")) {
           errorMessage = "No account exists with this email. Please register first.";
-        } else if (errorMessage.includes("Too many requests") || errorMessage.includes("rate limit")) {
+        } else if (errorMessage.includes("Too many requests") || 
+                  errorMessage.includes("rate limit")) {
           errorMessage = "Too many login attempts. Please try again later.";
         } else if (errorMessage.includes("Signups not allowed")) {
           errorMessage = "This email is not registered. Please register first.";

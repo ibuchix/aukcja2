@@ -4,7 +4,7 @@ import { SignInResult } from "./models";
 import { validateEmail, safeTrim, checkAccountExists } from "./validation";
 
 /**
- * Initiates an OTP sign-in flow for dealers using Supabase's built-in OTP functionality
+ * Initiates an OTP sign-in flow using Supabase's built-in OTP functionality
  */
 export const initiateOtpSignIn = async (email: string): Promise<SignInResult> => {
   try {
@@ -22,6 +22,7 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     // First, check if the user account exists
     console.log("Checking if account exists before OTP signin:", normalizedEmail);
     const accountExists = await checkAccountExists(normalizedEmail);
+    
     if (!accountExists) {
       console.log("User does not exist:", normalizedEmail);
       return {
@@ -32,11 +33,12 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     
     console.log("Account exists, proceeding with OTP signin for:", normalizedEmail);
     
-    // Use Supabase's built-in OTP functionality with explicit options
+    // Use Supabase auth's built-in signInWithOtp
+    // Important: We explicitly set shouldCreateUser to false
     const { data, error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
       options: {
-        shouldCreateUser: false, // This is key - don't try to create user during sign-in
+        shouldCreateUser: false, // Critical: NEVER create users during login
         emailRedirectTo: window.location.origin + '/auth?tab=login',
       }
     });
@@ -44,7 +46,7 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     if (error) {
       console.error("Error initiating OTP signin:", error);
       
-      // Provide more specific error messages for common errors
+      // Handle common errors with user-friendly messages
       if (error.message.includes("Email rate limit exceeded")) {
         return { 
           success: false, 
@@ -53,9 +55,10 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
       }
       
       if (error.message.includes("Signups not allowed")) {
+        // This means the user doesn't exist in auth system despite our check
         return { 
           success: false, 
-          error: "Login failed. Please ensure you've registered first."
+          error: "This email is not registered. Please sign up first."
         };
       }
       

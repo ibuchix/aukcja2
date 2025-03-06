@@ -64,85 +64,88 @@ export function validatePassword(password: string | null | undefined): Validatio
 
 /**
  * Improved method to check if an account exists with the given email
- * Uses multiple verification approaches for reliability
+ * Uses Supabase auth directly to avoid signup errors
  */
 export async function checkAccountExists(email: string): Promise<boolean> {
   try {
     console.log("Checking if account exists with email:", email);
     
-    // Try all available methods to verify email existence
+    // Use Supabase Auth API directly - this is the most reliable method
+    const { data, error } = await supabase.auth.admin.getUserByEmail(email);
     
-    // Method 1: Direct check using get_user_id_by_email function
-    try {
-      const { data: userData, error: userError } = await supabase.rpc(
-        'get_user_id_by_email',
-        { p_email: email.toLowerCase().trim() }
-      );
+    if (error) {
+      console.warn("Error checking user with Supabase Auth API:", error);
       
-      if (!userError && userData) {
-        // Type check userData to safely access id property
-        if (typeof userData === 'object' && userData !== null && 'id' in userData) {
-          const userId = userData.id;
-          if (userId) {
-            console.log("User exists according to get_user_id_by_email:", userData);
-            return true;
-          }
-        }
-      }
-      
-      if (userError) {
-        console.warn("Error checking user with get_user_id_by_email:", userError);
-        // Continue to next method
-      }
-    } catch (error) {
-      console.warn("Failed to call get_user_id_by_email:", error);
-      // Continue to next method
+      // Try fallback method using database function
+      return await checkAccountExistsWithDbFunctions(email);
     }
     
-    // Method 2: Check using check_email_exists function (newer format)
-    try {
-      const { data: emailData, error: emailError } = await supabase.rpc(
-        'check_email_exists',
-        { email_to_check: email.toLowerCase().trim() }
-      );
+    // If we got user data, the account exists
+    if (data?.user) {
+      console.log("User exists according to Supabase Auth API");
+      return true;
+    }
+    
+    // If no user data but also no error, the user doesn't exist
+    console.log("User doesn't exist according to Supabase Auth API");
+    return false;
+  } catch (error) {
+    console.error("Unhandled error checking if account exists:", error);
+    
+    // Try fallback method using database function
+    return await checkAccountExistsWithDbFunctions(email);
+  }
+}
+
+/**
+ * Fallback method to check if account exists using database functions
+ */
+async function checkAccountExistsWithDbFunctions(email: string): Promise<boolean> {
+  try {
+    // Method 1: Use check_email_exists RPC function
+    const { data: emailData, error: emailError } = await supabase.rpc(
+      'check_email_exists', 
+      { email_to_check: email.toLowerCase().trim() }
+    );
+    
+    if (!emailError && emailData !== null) {
+      console.log("check_email_exists result:", emailData);
       
-      if (!emailError && emailData !== null) {
-        console.log("User exists according to check_email_exists:", emailData);
-        // Handle different possible return types from the function
-        if (typeof emailData === 'object' && 'exists' in emailData) {
+      // Handle different possible return types from the function
+      if (typeof emailData === 'object' && emailData !== null) {
+        if ('exists' in emailData) {
           return emailData.exists === true;
         }
-        if (typeof emailData === 'number') {
-          return emailData > 0;
-        }
-        if (typeof emailData === 'boolean') {
-          return emailData;
-        }
       }
       
-      if (emailError) {
-        console.warn("Error checking email with check_email_exists:", emailError);
-        // Continue to next method
+      if (typeof emailData === 'number') {
+        return emailData > 0;
       }
-    } catch (error) {
-      console.warn("Failed to call check_email_exists:", error);
-      // Continue to next method
+      
+      if (typeof emailData === 'boolean') {
+        return emailData;
+      }
     }
     
-    // Method 3: Edge function fallback
-    try {
-      const { data: edgeData, error: edgeError } = await supabase.functions.invoke('dealer-auth', {
-        body: { action: 'checkEmailExists', email: email.toLowerCase().trim() }
-      });
+    if (emailError) {
+      console.warn("Error checking email with check_email_exists:", emailError);
+    }
+    
+    // Method 2: Try with get_user_id_by_email function
+    const { data: userData, error: userError } = await supabase.rpc(
+      'get_user_id_by_email',
+      { p_email: email.toLowerCase().trim() }
+    );
+    
+    if (!userError && userData) {
+      console.log("get_user_id_by_email result:", userData);
       
-      if (!edgeError && edgeData) {
-        console.log("Edge function response:", edgeData);
-        if (typeof edgeData === 'object' && edgeData !== null && 'exists' in edgeData) {
-          return edgeData.exists === true;
+      // Check if userData contains an id property
+      if (typeof userData === 'object' && userData !== null) {
+        if ('id' in userData && userData.id) {
+          return true;
         }
       }
-    } catch (error) {
-      console.warn("Failed to call edge function:", error);
     }
     
     // If all checks failed, default to false
@@ -150,18 +153,15 @@ export async function checkAccountExists(email: string): Promise<boolean> {
     return false;
     
   } catch (error) {
-    console.error("Unhandled error checking if account exists:", error);
-    // In case of unhandled errors, default to false for fail-safe behavior
+    console.error("Error in checkAccountExistsWithDbFunctions:", error);
     return false;
   }
 }
 
 /**
- * Helper function to get user ID by email
- * Note: This function tries to access auth.users which may be restricted by RLS
- * and should be used cautiously
+ * Helper function to get user ID by email safely
  */
-async function getUserIdByEmail(email: string): Promise<string | null> {
+export async function getUserIdByEmail(email: string): Promise<string | null> {
   try {
     const { data, error } = await supabase.rpc(
       'get_user_id_by_email',
@@ -169,17 +169,18 @@ async function getUserIdByEmail(email: string): Promise<string | null> {
     );
     
     if (error || !data) {
+      console.warn("Error in getUserIdByEmail:", error);
       return null;
     }
     
     // Safely extract ID
     if (typeof data === 'object' && data !== null && 'id' in data) {
-      return data.id as string;
+      return String(data.id);
     }
     
     return null;
   } catch (error) {
-    console.warn("Error in getUserIdByEmail:", error);
+    console.warn("Exception in getUserIdByEmail:", error);
     return null;
   }
 }
