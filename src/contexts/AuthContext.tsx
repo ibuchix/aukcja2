@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react";
+
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +25,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const isInitializedRef = useRef(false);
+  const authChangeInProgressRef = useRef(false);
   const { toast } = useToast();
   
   // Use our session manager hook to keep the session alive
@@ -32,14 +35,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Initialize - check for existing session
   useEffect(() => {
     const initializeAuth = async () => {
+      if (isInitializedRef.current) return;
+      
       try {
         setIsLoading(true);
+        isInitializedRef.current = true;
         
         // Get current session
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Error getting session:", error);
+          setIsLoading(false);
           return;
         }
         
@@ -61,25 +68,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     initializeAuth();
+  }, []);
 
-    // Set up auth state change listener
+  // Set up auth state change listener
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
+        // Prevent double processing
+        if (authChangeInProgressRef.current) {
+          return;
+        }
+
+        authChangeInProgressRef.current = true;
         console.log("Auth state changed:", event);
         
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        
-        if (event === "SIGNED_IN" && currentSession?.user) {
-          await fetchProfile(currentSession.user.id);
-          toast({
-            title: "Signed in successfully",
-            description: "Welcome back to your dealer dashboard",
-          });
-        } else if (event === "SIGNED_OUT") {
-          setProfile(null);
-        } else if (event === "TOKEN_REFRESHED" && currentSession) {
-          console.log("Session token refreshed successfully");
+        try {
+          setSession(currentSession);
+          setUser(currentSession?.user ?? null);
+          
+          if (event === "SIGNED_IN" && currentSession?.user) {
+            await fetchProfile(currentSession.user.id);
+            toast({
+              title: "Signed in successfully",
+              description: "Welcome back to your dealer dashboard",
+            });
+          } else if (event === "SIGNED_OUT") {
+            setProfile(null);
+          } else if (event === "TOKEN_REFRESHED" && currentSession) {
+            console.log("Session token refreshed successfully");
+          }
+        } finally {
+          // Reset the lock after a small delay
+          setTimeout(() => {
+            authChangeInProgressRef.current = false;
+          }, 100);
         }
       }
     );
@@ -120,7 +142,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({
+        scope: 'local' // Only sign out from this client
+      });
       
       if (error) {
         toast({

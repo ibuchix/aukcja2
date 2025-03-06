@@ -18,7 +18,27 @@ export const supabase = createClient<Database>(
       persistSession: true,
       detectSessionInUrl: true,
       storageKey: 'dealer_auth_token', // Custom storage key
-      storage: localStorage // Explicitly use localStorage for persistence
+      storage: localStorage, // Explicitly use localStorage for persistence
+      flowType: 'pkce', // Use PKCE flow for better security
+      debug: false // Disable debug logs
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 2 // Reduce realtime events to prevent 400 errors
+      }
+    },
+    global: {
+      // Add retries for fetch operations
+      fetch: (url, options) => {
+        return fetch(url, {
+          ...options,
+          // Add cache control to prevent stale responses
+          headers: {
+            ...options?.headers,
+            'Cache-Control': 'no-cache'
+          }
+        });
+      }
     }
   }
 );

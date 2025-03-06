@@ -11,6 +11,7 @@ const Auth = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
   
   // Get the active tab from URL query parameter, default to "register" if not present
   const tabFromUrl = searchParams.get("tab");
@@ -20,13 +21,14 @@ const Auth = () => {
   
   const [activeTab, setActiveTab] = useState<"register" | "login">(initialTab as "register" | "login");
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated - but only once
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
+    if (isAuthenticated && !isLoading && !redirectAttempted) {
       console.log("User already logged in, redirecting to dashboard");
+      setRedirectAttempted(true); // Prevent multiple redirects
       navigate("/dealer/dashboard");
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigate, redirectAttempted]);
 
   // Update URL when tab changes without causing a page reload
   const handleTabChange = (value: string) => {

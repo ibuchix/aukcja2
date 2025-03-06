@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,6 +81,7 @@ export function useOtpForm(email: string, setStep: (step: "email" | "otp") => vo
     setError("");
     
     try {
+      console.log("Verifying OTP:", email, otpValue);
       const { data, error } = await supabase.functions.invoke("dealer-otp", {
         body: {
           action: "verify",
@@ -91,13 +93,9 @@ export function useOtpForm(email: string, setStep: (step: "email" | "otp") => vo
       if (error || !data?.success) {
         console.error("OTP verification failed:", error || data?.error);
         setError(data?.message || "Invalid verification code. Please try again.");
+        setIsSubmitting(false);
         return;
       }
-      
-      toast({
-        title: "Verification successful",
-        description: "You've been logged in successfully",
-      });
       
       // Handle the case where dealer profile needs to be completed
       if (data.profileStatus === 'incomplete' || data.completionRequired) {
@@ -108,6 +106,7 @@ export function useOtpForm(email: string, setStep: (step: "email" | "otp") => vo
             email: data.user?.email 
           }
         });
+        setIsSubmitting(false);
         return;
       }
       
@@ -124,14 +123,27 @@ export function useOtpForm(email: string, setStep: (step: "email" | "otp") => vo
           if (sessionError) {
             console.error("Session creation failed:", sessionError);
             setError("Failed to create session. Please try again.");
+            setIsSubmitting(false);
             return;
           }
           
           console.log("Session created successfully");
+          
+          toast({
+            title: "Verification successful",
+            description: "You've been logged in successfully",
+          });
+          
+          // Only redirect after confirming successful session creation
+          // Add a small delay to allow session to be fully established
+          setTimeout(() => {
+            navigate('/dealer/dashboard');
+          }, 300);
+          
         } catch (sessionErr) {
           console.error("Error during session creation:", sessionErr);
           setError("Failed to create session. Please try again.");
-          return;
+          setIsSubmitting(false);
         }
       } else {
         console.error("Missing tokens for session creation", {
@@ -139,16 +151,12 @@ export function useOtpForm(email: string, setStep: (step: "email" | "otp") => vo
           hasRefreshToken: !!data.refreshToken
         });
         setError("Authentication failed. Please try again.");
-        return;
+        setIsSubmitting(false);
       }
-      
-      // Redirect to dashboard on success
-      navigate('/dealer/dashboard');
       
     } catch (err) {
       console.error("Error during OTP verification:", err);
       setError("Verification failed. Please try again later.");
-    } finally {
       setIsSubmitting(false);
     }
   };
