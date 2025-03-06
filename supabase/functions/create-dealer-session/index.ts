@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { create, verify } from "https://deno.land/x/djwt@v2.8/mod.ts";
 
 // CORS headers
 const corsHeaders = {
@@ -19,6 +20,42 @@ const supabaseAdmin = createClient(
     }
   }
 );
+
+// Generate a temporary exchange token
+async function generateExchangeToken(userId: string, email: string) {
+  // Get the JWT secret
+  const jwtSecret = Deno.env.get("SUPABASE_JWT_SECRET");
+  
+  if (!jwtSecret) {
+    throw new Error("Missing JWT secret");
+  }
+  
+  // Create a key for signing from the JWT secret
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(jwtSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  
+  // Create a temporary token with a short expiry (5 minutes)
+  const exchangeToken = await create(
+    { 
+      alg: "HS256", 
+      typ: "JWT" 
+    },
+    { 
+      sub: userId,
+      email: email,
+      exp: Math.floor(Date.now() / 1000) + 300, // 5 minute expiry
+      type: "dealer-exchange-token"
+    },
+    key
+  );
+  
+  return exchangeToken;
+}
 
 // Handle requests
 serve(async (req) => {
@@ -110,22 +147,18 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Creating session for User ID: ${targetUserId}, Email: ${targetEmail}`);
+    console.log(`Generating exchange token for User ID: ${targetUserId}, Email: ${targetEmail}`);
 
-    // DIRECT SESSION CREATION APPROACH
-    // Create session directly using the createSession API
-    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
-      userId: targetUserId,
-      // Optional: Set session properties if needed
-      // expiresIn: 3600 // 1 hour in seconds
-    });
+    // CLIENT-SIDE TOKEN EXCHANGE APPROACH
+    // Generate a temporary exchange token that the client will use
+    const exchangeToken = await generateExchangeToken(targetUserId, targetEmail);
     
-    if (sessionError) {
-      console.error("Error creating session:", sessionError.message);
+    if (!exchangeToken) {
+      console.error("Failed to generate exchange token");
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: `Session creation error: ${sessionError.message}` 
+          error: "Failed to generate authentication token" 
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -134,27 +167,29 @@ serve(async (req) => {
       );
     }
     
-    if (!sessionData) {
-      console.error("No session data returned");
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Failed to create session data" 
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 500 
-        }
-      );
+    console.log("Exchange token generated successfully");
+    
+    // Get dealer profile information
+    const { data: dealerData, error: dealerError } = await supabaseAdmin
+      .from('dealers')
+      .select('*')
+      .eq('user_id', targetUserId)
+      .single();
+      
+    if (dealerError) {
+      console.log("Dealer profile not found or error:", dealerError.message);
     }
     
-    console.log("Session created successfully");
-    
-    // Return the session data
+    // Return the exchange token and user/dealer data
     return new Response(
       JSON.stringify({ 
         success: true, 
-        session: sessionData
+        exchangeToken: exchangeToken,
+        user: {
+          id: targetUserId,
+          email: targetEmail
+        },
+        dealer: dealerData || null
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },

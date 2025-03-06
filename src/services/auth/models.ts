@@ -13,8 +13,10 @@ export interface SignUpResult {
 export interface SignInResult {
   success: boolean;
   error?: string;
-  message?: string;  // Add this property
+  message?: string; 
   session?: any;
+  exchangeToken?: string; // Add exchange token support
+  user?: any;
   dealer?: any;
   partialSuccess?: boolean;
   warning?: string;

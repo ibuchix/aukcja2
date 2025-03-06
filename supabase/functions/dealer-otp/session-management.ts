@@ -1,6 +1,54 @@
 
 import { HttpError } from "../_shared/error-handling.ts";
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
+import { create, verify } from "https://deno.land/x/djwt@v2.8/mod.ts";
+
+/**
+ * Generates a temporary exchange token for client-side session creation
+ */
+export async function generateExchangeToken(userId: string, email: string) {
+  console.log(`Generating exchange token for user ${userId}`);
+  
+  try {
+    // Get JWT secret
+    const jwtSecret = Deno.env.get("SUPABASE_JWT_SECRET");
+    
+    if (!jwtSecret) {
+      throw new Error("Missing JWT secret");
+    }
+    
+    // Create a key for signing from the JWT secret
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(jwtSecret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    
+    // Create a temporary token with a short expiry (5 minutes)
+    const exchangeToken = await create(
+      { 
+        alg: "HS256", 
+        typ: "JWT" 
+      },
+      { 
+        sub: userId,
+        email: email,
+        exp: Math.floor(Date.now() / 1000) + 300, // 5 minute expiry
+        type: "dealer-exchange-token"
+      },
+      key
+    );
+    
+    console.log("Exchange token generated successfully");
+    return exchangeToken;
+    
+  } catch (error) {
+    console.error("Exchange token generation failed:", error);
+    throw new HttpError(`Failed to generate token: ${error.message || 'Unknown error'}`, 500);
+  }
+}
 
 /**
  * Creates a session for a user using Supabase Admin API
@@ -67,12 +115,17 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
     
     const sessionData = await createSessionResponse.json();
     
-    if (!sessionData.success || !sessionData.session) {
+    if (!sessionData.success) {
       console.error('Invalid session data returned:', sessionData);
       throw new HttpError('Failed to create valid session', 500);
     }
     
     console.log('Session created successfully');
+    
+    // Return the exchange token if available, otherwise the session
+    if (sessionData.exchangeToken) {
+      return { exchangeToken: sessionData.exchangeToken };
+    }
     
     // Return the session object from the edge function
     return sessionData.session;

@@ -120,9 +120,21 @@ export const verifyOtp = async (email: string, otp: string): Promise<SignInResul
       };
     }
     
-    // If verification is successful, set the returned session in Supabase client
+    // Return the exchange token from the verification response
+    if (data.exchangeToken) {
+      console.log("Received exchange token from verification");
+      return {
+        success: true,
+        message: "Login verification successful",
+        exchangeToken: data.exchangeToken,
+        user: data.user,
+        dealer: data.dealer
+      };
+    }
+    
+    // Fallback for if no exchange token is present (backwards compatibility)
     if (data.session) {
-      // Set session in Supabase client
+      // Set session in Supabase client 
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token
@@ -135,19 +147,20 @@ export const verifyOtp = async (email: string, otp: string): Promise<SignInResul
           error: "Failed to establish session"
         };
       }
-    } else {
-      console.error("Missing session data from verification");
+      
       return {
-        success: false,
-        error: "Failed to establish session - missing data"
+        success: true,
+        message: "Login successful",
+        session: data.session,
+        dealer: data.dealer
       };
     }
     
+    // If neither exchange token nor session is present
+    console.error("Missing session data and exchange token from verification");
     return {
-      success: true,
-      message: "Login successful",
-      session: data.session,
-      dealer: data.dealer
+      success: false,
+      error: "Failed to establish session - missing data"
     };
   } catch (error) {
     console.error("Exception in verifyOtp:", error);

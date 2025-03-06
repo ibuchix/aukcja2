@@ -50,7 +50,21 @@ export function useOtpForm(
     try {
       const result = await verifyOtp(email, values.otp);
       
-      if (result.success) {
+      if (result.success && result.exchangeToken) {
+        // NEW: Exchange the temporary token for a session
+        console.log("Received exchange token, creating session...");
+        
+        // Set the auth override
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: result.exchangeToken,
+          refresh_token: result.exchangeToken // Use the same token as refresh
+        });
+        
+        if (sessionError) {
+          console.error("Error setting session:", sessionError);
+          throw new Error(sessionError.message);
+        }
+        
         // Refresh the session in our auth context
         await refreshSession();
         
@@ -60,6 +74,18 @@ export function useOtpForm(
         });
         
         // Small delay to allow the success toast to be seen
+        setTimeout(() => {
+          navigate("/dealer/dashboard");
+        }, 500);
+      } else if (result.success) {
+        // Fall back to the old method if no exchange token
+        await refreshSession();
+        
+        toast({
+          title: "Login successful!",
+          description: "Redirecting to your dashboard...",
+        });
+        
         setTimeout(() => {
           navigate("/dealer/dashboard");
         }, 500);
@@ -142,4 +168,3 @@ export function useOtpForm(
     resetOtpForm: () => otpForm.reset({ otp: "" })
   };
 }
-

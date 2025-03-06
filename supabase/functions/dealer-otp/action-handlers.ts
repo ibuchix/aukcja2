@@ -4,7 +4,7 @@ import { validateEmail, validateOtp } from "./validation.ts";
 import { verifyUserExists, getUserByEmail } from "./user-verification.ts";
 import { storeOtp, verifyOtp, deleteOtp } from "./otp-management.ts";
 import { sendOtpEmail } from "./email-service.ts";
-import { createUserSession, getDealerProfile } from "./session-management.ts";
+import { createUserSession, getDealerProfile, generateExchangeToken } from "./session-management.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 /**
@@ -45,8 +45,8 @@ export async function handleVerifyOtp(supabase: SupabaseClient, email: string, o
   // Get user information
   const userData = await getUserByEmail(supabase, normalizedEmail);
   
-  // Create a new session - passing both user ID and email
-  const sessionData = await createUserSession(supabase, userData.id, normalizedEmail);
+  // Generate exchange token for client-side session creation
+  const exchangeToken = await generateExchangeToken(userData.id, normalizedEmail);
   
   // Get dealer profile information
   const dealerData = await getDealerProfile(supabase, userData.id);
@@ -56,7 +56,11 @@ export async function handleVerifyOtp(supabase: SupabaseClient, email: string, o
   
   return {
     success: true,
-    session: sessionData,
+    exchangeToken: exchangeToken,
+    user: {
+      id: userData.id,
+      email: normalizedEmail
+    },
     dealer: dealerData || null
   };
 }
