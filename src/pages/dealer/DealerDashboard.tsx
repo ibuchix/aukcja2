@@ -18,10 +18,15 @@ import {
   Activity 
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function DealerDashboard() {
-  const { profile, user, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
+  const [dealerProfile, setDealerProfile] = useState<any>(null);
   const [recentActivity, setRecentActivity] = useState<boolean>(false);
+  const [isProfileLoading, setIsProfileLoading] = useState<boolean>(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Set a timeout to simulate loading recent activity
@@ -31,6 +36,48 @@ export default function DealerDashboard() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    const fetchDealerProfile = async () => {
+      try {
+        if (!user) return;
+
+        setIsProfileLoading(true);
+        
+        // Fetch dealer profile from the dealers table
+        const { data, error } = await supabase
+          .from('dealers')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching dealer profile:", error);
+          toast({
+            title: "Failed to load profile",
+            description: "There was a problem loading your dealer profile",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data) {
+          console.log("Dealer profile fetched:", data);
+          setDealerProfile(data);
+        }
+      } catch (error) {
+        console.error("Unexpected error:", error);
+      } finally {
+        setIsProfileLoading(true);
+      }
+    };
+
+    if (user && !isLoading) {
+      fetchDealerProfile();
+    }
+  }, [user, isLoading, toast]);
+
+  const profileDataLoading = isLoading || isProfileLoading;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -42,7 +89,7 @@ export default function DealerDashboard() {
         {/* Welcome Card */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Welcome, {isLoading ? <Skeleton className="h-6 w-32" /> : profile?.supervisor_name || "Dealer"}</CardTitle>
+            <CardTitle>Welcome, {profileDataLoading ? <Skeleton className="h-6 w-32" /> : dealerProfile?.supervisor_name || "Dealer"}</CardTitle>
             <CardDescription>
               This is your personal dashboard where you can manage your dealer activities
             </CardDescription>
@@ -64,7 +111,7 @@ export default function DealerDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {profileDataLoading ? (
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-3/4" />
@@ -72,9 +119,9 @@ export default function DealerDashboard() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <p><span className="font-medium">Name:</span> {profile?.supervisor_name || "Not available"}</p>
+                  <p><span className="font-medium">Name:</span> {dealerProfile?.supervisor_name || "Not available"}</p>
                   <p><span className="font-medium">Email:</span> {user?.email || "Not available"}</p>
-                  <p><span className="font-medium">Verification:</span> {profile?.is_verified ? "Verified" : "Pending Verification"}</p>
+                  <p><span className="font-medium">Verification:</span> {dealerProfile?.is_verified ? "Verified" : "Pending Verification"}</p>
                 </div>
               )}
             </CardContent>
@@ -89,7 +136,7 @@ export default function DealerDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {profileDataLoading ? (
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-3/4" />
@@ -97,9 +144,9 @@ export default function DealerDashboard() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <p><span className="font-medium">Dealership:</span> {profile?.dealership_name || "Not available"}</p>
-                  <p><span className="font-medium">Address:</span> {profile?.address || "Not available"}</p>
-                  <p><span className="font-medium">License:</span> {profile?.license_number || "Not available"}</p>
+                  <p><span className="font-medium">Dealership:</span> {dealerProfile?.dealership_name || "Not available"}</p>
+                  <p><span className="font-medium">Address:</span> {dealerProfile?.address || "Not available"}</p>
+                  <p><span className="font-medium">License:</span> {dealerProfile?.license_number || "Not available"}</p>
                 </div>
               )}
             </CardContent>
@@ -114,15 +161,15 @@ export default function DealerDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {profileDataLoading ? (
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-3/4" />
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <p><span className="font-medium">Tax ID:</span> {profile?.tax_id || "Not available"}</p>
-                  <p><span className="font-medium">Business Registry:</span> {profile?.business_registry_number || "Not available"}</p>
+                  <p><span className="font-medium">Tax ID:</span> {dealerProfile?.tax_id || "Not available"}</p>
+                  <p><span className="font-medium">Business Registry:</span> {dealerProfile?.business_registry_number || "Not available"}</p>
                 </div>
               )}
             </CardContent>
