@@ -19,11 +19,11 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
 
     const normalizedEmail = safeTrim(email).toLowerCase();
     
-    // Use Supabase's built-in OTP functionality instead of custom edge function
+    // Use Supabase's built-in OTP functionality
     const { data, error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
       options: {
-        // Make sure email OTP is only valid for 15 minutes for security
+        shouldCreateUser: false, // This is key - don't try to create user during sign-in
         emailRedirectTo: window.location.origin + '/auth?tab=login',
       }
     });
