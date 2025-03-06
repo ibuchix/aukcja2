@@ -80,11 +80,13 @@ export async function checkAccountExists(email: string): Promise<boolean> {
       );
       
       if (!userError && userData) {
-        // Check if userData has an id property
-        const userId = userData.id;
-        if (userId) {
-          console.log("User exists according to get_user_id_by_email:", userData);
-          return true;
+        // Type check userData to safely access id property
+        if (typeof userData === 'object' && userData !== null && 'id' in userData) {
+          const userId = userData.id;
+          if (userId) {
+            console.log("User exists according to get_user_id_by_email:", userData);
+            return true;
+          }
         }
       }
       
@@ -97,18 +99,24 @@ export async function checkAccountExists(email: string): Promise<boolean> {
       // Continue to next method
     }
     
-    // Method 2: Check using check_email_exists function
+    // Method 2: Check using check_email_exists function (newer format)
     try {
       const { data: emailData, error: emailError } = await supabase.rpc(
         'check_email_exists',
-        { p_email: email.toLowerCase().trim() }
+        { email_to_check: email.toLowerCase().trim() }
       );
       
-      if (!emailError && emailData) {
+      if (!emailError && emailData !== null) {
         console.log("User exists according to check_email_exists:", emailData);
-        // Check if emailData has an exists property
+        // Handle different possible return types from the function
         if (typeof emailData === 'object' && 'exists' in emailData) {
           return emailData.exists === true;
+        }
+        if (typeof emailData === 'number') {
+          return emailData > 0;
+        }
+        if (typeof emailData === 'boolean') {
+          return emailData;
         }
       }
       
@@ -121,31 +129,7 @@ export async function checkAccountExists(email: string): Promise<boolean> {
       // Continue to next method
     }
     
-    // Method 3: Try using the older format function
-    try {
-      const { data: legacyData, error: legacyError } = await supabase.rpc(
-        'check_email_exists',
-        { email_to_check: email.toLowerCase().trim() }
-      );
-      
-      if (!legacyError) {
-        console.log("Legacy check_email_exists response:", legacyData);
-        
-        if (typeof legacyData === 'number') {
-          return legacyData > 0;
-        } 
-        
-        if (typeof legacyData === 'boolean') {
-          return legacyData;
-        }
-      } else {
-        console.warn("Legacy function error:", legacyError);
-      }
-    } catch (error) {
-      console.warn("Failed to call legacy check function:", error);
-    }
-    
-    // Method 4: Edge function fallback
+    // Method 3: Edge function fallback
     try {
       const { data: edgeData, error: edgeError } = await supabase.functions.invoke('dealer-auth', {
         body: { action: 'checkEmailExists', email: email.toLowerCase().trim() }
@@ -153,7 +137,7 @@ export async function checkAccountExists(email: string): Promise<boolean> {
       
       if (!edgeError && edgeData) {
         console.log("Edge function response:", edgeData);
-        if (typeof edgeData === 'object' && edgeData.exists !== undefined) {
+        if (typeof edgeData === 'object' && edgeData !== null && 'exists' in edgeData) {
           return edgeData.exists === true;
         }
       }
@@ -161,22 +145,7 @@ export async function checkAccountExists(email: string): Promise<boolean> {
       console.warn("Failed to call edge function:", error);
     }
     
-    // Method 5: Direct query as last resort (this may fail due to RLS)
-    try {
-      const { count, error } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('id', await getUserIdByEmail(email));
-      
-      if (!error && count !== null && count > 0) {
-        console.log("User exists based on profiles count:", count);
-        return true;
-      }
-    } catch (error) {
-      console.warn("Failed to check profile count:", error);
-    }
-    
-    // If all checks failed, default to false - request will fail gracefully with appropriate message
+    // If all checks failed, default to false
     console.warn("All email existence checks failed, assuming email doesn't exist");
     return false;
     
@@ -189,21 +158,28 @@ export async function checkAccountExists(email: string): Promise<boolean> {
 
 /**
  * Helper function to get user ID by email
+ * Note: This function tries to access auth.users which may be restricted by RLS
+ * and should be used cautiously
  */
 async function getUserIdByEmail(email: string): Promise<string | null> {
   try {
-    const { data, error } = await supabase
-      .from('auth.users')
-      .select('id')
-      .eq('email', email.toLowerCase().trim())
-      .single();
+    const { data, error } = await supabase.rpc(
+      'get_user_id_by_email',
+      { p_email: email.toLowerCase().trim() }
+    );
     
     if (error || !data) {
       return null;
     }
     
-    return data.id;
+    // Safely extract ID
+    if (typeof data === 'object' && data !== null && 'id' in data) {
+      return data.id as string;
+    }
+    
+    return null;
   } catch (error) {
+    console.warn("Error in getUserIdByEmail:", error);
     return null;
   }
 }
