@@ -1,11 +1,12 @@
+
 import { HttpError } from "../_shared/error-handling.ts";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Creates a session for a user using Supabase Admin API
  */
-export async function createUserSession(supabase: SupabaseClient, userId: string) {
-  console.log(`Creating session for user ${userId}`);
+export async function createUserSession(supabase: SupabaseClient, userId: string, userEmail: string) {
+  console.log(`Creating session for user ${userId} with email ${userEmail.substring(0, 3)}...`);
   
   try {
     // Get Supabase URL and service key from environment
@@ -60,7 +61,7 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
     }
     
     // Generate auth link using current Admin API endpoint
-    console.log(`User verified, generating auth link for ${userId}`);
+    console.log(`User verified, generating auth link for ${userId} with email ${userEmail.substring(0, 3)}...`);
     
     const generateLinkUrl = `${supabaseUrl}/auth/v1/admin/generate_link`;
     console.log(`Using generate_link endpoint: ${generateLinkUrl}`);
@@ -71,9 +72,10 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
       'Content-Type': 'application/json'
     };
     
+    // Fix: Use the actual email address in the email field, not the user ID
     const requestBody = {
-      type: 'magiclink',
-      email: userId, // The user's email
+      type: "magiclink",
+      email: userEmail, // Use the actual email address here
       options: {
         data: {
           userId: userId

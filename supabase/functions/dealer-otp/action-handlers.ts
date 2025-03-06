@@ -45,8 +45,8 @@ export async function handleVerifyOtp(supabase: SupabaseClient, email: string, o
   // Get user information
   const userData = await getUserByEmail(supabase, normalizedEmail);
   
-  // Create a new session
-  const sessionData = await createUserSession(supabase, userData.id);
+  // Create a new session - passing both user ID and email
+  const sessionData = await createUserSession(supabase, userData.id, normalizedEmail);
   
   // Get dealer profile information
   const dealerData = await getDealerProfile(supabase, userData.id);
