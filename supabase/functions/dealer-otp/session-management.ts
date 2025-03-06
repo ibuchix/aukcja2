@@ -60,30 +60,40 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
       throw new HttpError(`Failed to verify user: ${userCheckResponse.status} ${userCheckResponse.statusText}`, 500);
     }
     
-    // Now create the session - FIXED URL: changed from "sessions" to "session"
+    // Now create the session with enhanced debugging
     console.log(`User verified, creating session for ${userId}`);
-    const response = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}/session`, {
+    
+    // Log the complete URL and headers for debugging
+    const sessionUrl = `${supabaseUrl}/auth/v1/admin/users/${userId}/session`;
+    console.log(`Session creation URL: ${sessionUrl}`);
+    
+    const headers = {
+      'Authorization': `Bearer ${serviceRoleKey}`,
+      'apikey': serviceRoleKey,
+      'Content-Type': 'application/json'
+    };
+    console.log(`Using headers: ${JSON.stringify(Object.keys(headers))}`);
+    
+    const sessionBody = {
+      expires_in: 60 * 60 * 24 * 7 // 1 week
+    };
+    console.log(`Request body: ${JSON.stringify(sessionBody)}`);
+    
+    const response = await fetch(sessionUrl, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${serviceRoleKey}`,
-        'apikey': serviceRoleKey,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        // No need to specify user_id in the body when it's in the URL
-        expires_in: 60 * 60 * 24 * 7 // 1 week
-      })
+      headers: headers,
+      body: JSON.stringify(sessionBody)
     });
     
-    // Debug the response
+    // Debug the response in detail
     console.log(`Session API response status: ${response.status} ${response.statusText}`);
     
-    // Check for failed requests
+    // Check for failed requests with detailed error information
     if (!response.ok) {
-      // Safely try to get error details (but don't assume JSON)
-      let errorDetails = `${response.status} ${response.statusText}`;
+      // Try to get the response body for more details
+      let errorDetails = "";
       try {
-        // Only try to parse JSON if the content type indicates JSON
+        // Check if the response is JSON
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
           const errorData = await response.json();
@@ -93,13 +103,40 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
           errorDetails = await response.text();
         }
       } catch (parseError) {
-        // If parsing fails, use the response status text
-        console.error("Error parsing response:", parseError);
-        errorDetails = `Parse error: ${response.statusText}`;
+        console.error("Error parsing error response:", parseError);
+        errorDetails = response.statusText;
       }
       
-      console.error("Session creation API error:", errorDetails);
-      throw new HttpError(`Session creation failed: ${errorDetails}`, 500);
+      console.error(`Session creation API error: ${response.status} ${errorDetails}`);
+      
+      // If it's a 404, try alternative URL format as fallback
+      if (response.status === 404) {
+        console.log("Trying alternative admin session endpoint format...");
+        
+        // Try alternative session creation endpoint
+        const alternativeUrl = `${supabaseUrl}/auth/v1/session`;
+        console.log(`Trying alternative URL: ${alternativeUrl}`);
+        
+        const alternativeResponse = await fetch(alternativeUrl, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({
+            ...sessionBody,
+            user_id: userId
+          })
+        });
+        
+        // Check if alternative worked
+        if (alternativeResponse.ok) {
+          console.log("Alternative session endpoint succeeded!");
+          const sessionData = await alternativeResponse.json();
+          return sessionData;
+        } else {
+          console.error(`Alternative session endpoint also failed: ${alternativeResponse.status}`);
+        }
+      }
+      
+      throw new HttpError(`Session creation failed: ${response.status} ${errorDetails}`, 500);
     }
     
     // Safe JSON parsing with content type check
