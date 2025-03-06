@@ -72,10 +72,12 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
       'Content-Type': 'application/json'
     };
     
-    // Fix: Use the actual email address in the email field, not the user ID
+    // IMPORTANT CHANGE: Restructured request to avoid creating a user
+    // For existing users, we need to pass the userId in the options.data
+    // and NOT use the type=signup flow
     const requestBody = {
       type: "magiclink",
-      email: userEmail, // Use the actual email address here
+      email: userEmail,
       options: {
         data: {
           userId: userId
