@@ -1,9 +1,8 @@
-
 import { HttpError } from "../_shared/error-handling.ts";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Creates a session for a user
+ * Creates a session for a user using Supabase Admin API
  */
 export async function createUserSession(supabase: SupabaseClient, userId: string) {
   console.log(`Creating session for user ${userId}`);
@@ -17,7 +16,7 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
       throw new Error('Missing required Supabase environment variables');
     }
     
-    // First, verify that the user exists in auth.users
+    // First verify that the user exists in auth.users
     // This additional check helps diagnose user ID issues
     console.log(`Verifying user ${userId} exists before creating session`);
     const userCheckResponse = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
@@ -60,96 +59,55 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
       throw new HttpError(`Failed to verify user: ${userCheckResponse.status} ${userCheckResponse.statusText}`, 500);
     }
     
-    // Now create the session with enhanced debugging
-    console.log(`User verified, creating session for ${userId}`);
+    // Generate auth link using current Admin API endpoint
+    console.log(`User verified, generating auth link for ${userId}`);
     
-    // Log the complete URL and headers for debugging
-    const sessionUrl = `${supabaseUrl}/auth/v1/admin/users/${userId}/session`;
-    console.log(`Session creation URL: ${sessionUrl}`);
+    const generateLinkUrl = `${supabaseUrl}/auth/v1/admin/generate_link`;
+    console.log(`Using generate_link endpoint: ${generateLinkUrl}`);
     
     const headers = {
       'Authorization': `Bearer ${serviceRoleKey}`,
       'apikey': serviceRoleKey,
       'Content-Type': 'application/json'
     };
-    console.log(`Using headers: ${JSON.stringify(Object.keys(headers))}`);
     
-    const sessionBody = {
-      expires_in: 60 * 60 * 24 * 7 // 1 week
+    const requestBody = {
+      type: 'magiclink',
+      email: userId, // The user's email
+      options: {
+        data: {
+          userId: userId
+        },
+        redirect_to: null, // No redirect needed since we're handling programmatically
+      }
     };
-    console.log(`Request body: ${JSON.stringify(sessionBody)}`);
     
-    const response = await fetch(sessionUrl, {
+    console.log('Sending request to generate auth link...');
+    const response = await fetch(generateLinkUrl, {
       method: 'POST',
       headers: headers,
-      body: JSON.stringify(sessionBody)
+      body: JSON.stringify(requestBody)
     });
     
-    // Debug the response in detail
-    console.log(`Session API response status: ${response.status} ${response.statusText}`);
+    // Debug the response
+    console.log(`Generate link API response status: ${response.status}`);
     
-    // Check for failed requests with detailed error information
     if (!response.ok) {
-      // Try to get the response body for more details
-      let errorDetails = "";
-      try {
-        // Check if the response is JSON
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await response.json();
-          errorDetails = JSON.stringify(errorData);
-        } else {
-          // For non-JSON responses, get the text
-          errorDetails = await response.text();
-        }
-      } catch (parseError) {
-        console.error("Error parsing error response:", parseError);
-        errorDetails = response.statusText;
-      }
-      
-      console.error(`Session creation API error: ${response.status} ${errorDetails}`);
-      
-      // If it's a 404, try alternative URL format as fallback
-      if (response.status === 404) {
-        console.log("Trying alternative admin session endpoint format...");
-        
-        // Try alternative session creation endpoint
-        const alternativeUrl = `${supabaseUrl}/auth/v1/session`;
-        console.log(`Trying alternative URL: ${alternativeUrl}`);
-        
-        const alternativeResponse = await fetch(alternativeUrl, {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify({
-            ...sessionBody,
-            user_id: userId
-          })
-        });
-        
-        // Check if alternative worked
-        if (alternativeResponse.ok) {
-          console.log("Alternative session endpoint succeeded!");
-          const sessionData = await alternativeResponse.json();
-          return sessionData;
-        } else {
-          console.error(`Alternative session endpoint also failed: ${alternativeResponse.status}`);
-        }
-      }
-      
-      throw new HttpError(`Session creation failed: ${response.status} ${errorDetails}`, 500);
+      const errorText = await response.text();
+      console.error(`Error generating auth link: ${errorText}`);
+      throw new HttpError(`Failed to create session: ${response.status} ${response.statusText}`, 500);
     }
     
-    // Safe JSON parsing with content type check
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      console.error("Unexpected non-JSON response:", await response.text());
-      throw new HttpError("API returned non-JSON response", 500);
-    }
+    const linkData = await response.json();
+    console.log('Successfully generated auth link');
     
-    // Now safely parse the JSON
-    const sessionData = await response.json();
-    console.log("Session created successfully");
-    return sessionData;
+    // Extract the properties we need for the session
+    return {
+      access_token: linkData.properties.access_token,
+      refresh_token: linkData.properties.refresh_token,
+      expires_in: 60 * 60 * 24 * 7 // 1 week
+    };
+    
   } catch (error) {
     console.error("Session creation failed:", error);
     throw new HttpError("Failed to create user session", 500);
