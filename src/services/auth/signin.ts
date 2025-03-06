@@ -4,7 +4,7 @@ import { SignInResult } from "./models";
 import { validateEmail, safeTrim, checkAccountExists } from "./validation";
 
 /**
- * Initiates an OTP sign-in flow using Supabase's built-in OTP functionality
+ * Initiates an OTP sign-in flow using our custom edge function
  */
 export const initiateOtpSignIn = async (email: string): Promise<SignInResult> => {
   try {
@@ -33,44 +33,42 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     
     console.log("Account exists, proceeding with OTP signin for:", normalizedEmail);
     
-    // Use Supabase auth's built-in signInWithOtp
-    // Important: We explicitly set shouldCreateUser to false
-    const { data, error } = await supabase.auth.signInWithOtp({
-      email: normalizedEmail,
-      options: {
-        shouldCreateUser: false, // Critical: NEVER create users during login
-        emailRedirectTo: window.location.origin + '/auth?tab=login',
+    // Use the dealer-otp edge function to generate and send OTP
+    const { data, error } = await supabase.functions.invoke('dealer-otp', {
+      body: {
+        action: 'generate',
+        email: normalizedEmail
       }
     });
     
     if (error) {
-      console.error("Error initiating OTP signin:", error);
+      console.error("Error invoking dealer-otp function:", error);
+      return { 
+        success: false, 
+        error: error.message || "Failed to send login code" 
+      };
+    }
+    
+    if (!data.success) {
+      console.error("dealer-otp function returned error:", data.error);
       
       // Handle common errors with user-friendly messages
-      if (error.message.includes("Email rate limit exceeded")) {
+      if (data.error && data.error.includes("Too many requests")) {
         return { 
           success: false, 
           error: "Too many login attempts. Please try again in a few minutes."
         };
       }
       
-      if (error.message.includes("Signups not allowed")) {
-        // This means the user doesn't exist in auth system despite our check
-        return { 
-          success: false, 
-          error: "This email is not registered. Please sign up first."
-        };
-      }
-      
       return { 
         success: false, 
-        error: error.message || "Failed to initiate login"
+        error: data.error || "Failed to send login code"
       };
     }
     
     return {
       success: true,
-      message: "Login code sent successfully" 
+      message: data.message || "Login code sent successfully" 
     };
   } catch (error) {
     console.error("Exception in initiateOtpSignIn:", error);
@@ -82,7 +80,7 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
 };
 
 /**
- * Verifies the OTP code using Supabase's built-in OTP verification
+ * Verifies the OTP code using our custom edge function
  */
 export const verifyOtp = async (email: string, otp: string): Promise<SignInResult> => {
   try {
@@ -97,50 +95,59 @@ export const verifyOtp = async (email: string, otp: string): Promise<SignInResul
     
     const normalizedEmail = safeTrim(email).toLowerCase();
     
-    // Use Supabase's built-in OTP verification
-    const { data, error } = await supabase.auth.verifyOtp({
-      email: normalizedEmail,
-      token: otp,
-      type: 'email'
+    // Use the dealer-otp edge function to verify OTP and create session
+    const { data, error } = await supabase.functions.invoke('dealer-otp', {
+      body: {
+        action: 'verify',
+        email: normalizedEmail,
+        otp: otp
+      }
     });
     
     if (error) {
-      console.error("Error verifying OTP:", error);
+      console.error("Error invoking dealer-otp function for verification:", error);
       return { 
         success: false, 
         error: error.message || "Failed to verify code"
       };
     }
     
-    // If verification is successful, data will contain session and user
-    if (!data.session) {
-      console.error("Session data missing after OTP verification");
-      return {
-        success: false,
-        error: "Failed to establish session"
+    if (!data.success) {
+      console.error("dealer-otp verification returned error:", data.error);
+      return { 
+        success: false, 
+        error: data.error || "Failed to verify code"
       };
     }
     
-    // Get dealer profile information if available
-    let dealerProfile = null;
-    try {
-      const { data: dealerData } = await supabase
-        .from('dealers')
-        .select('*')
-        .eq('user_id', data.user.id)
-        .single();
-        
-      dealerProfile = dealerData;
-    } catch (profileError) {
-      console.warn("Could not fetch dealer profile:", profileError);
-      // Continue anyway, just won't have profile data
+    // If verification is successful, set the returned session in Supabase client
+    if (data.session) {
+      // Set session in Supabase client
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token
+      });
+      
+      if (sessionError) {
+        console.error("Error setting session:", sessionError);
+        return {
+          success: false,
+          error: "Failed to establish session"
+        };
+      }
+    } else {
+      console.error("Missing session data from verification");
+      return {
+        success: false,
+        error: "Failed to establish session - missing data"
+      };
     }
     
     return {
       success: true,
       message: "Login successful",
       session: data.session,
-      dealer: dealerProfile
+      dealer: data.dealer
     };
   } catch (error) {
     console.error("Exception in verifyOtp:", error);

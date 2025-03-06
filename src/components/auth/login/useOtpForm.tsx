@@ -76,7 +76,7 @@ export function useOtpForm(
     }
   };
 
-  // Handle resend OTP - make sure we don't lose the step
+  // Handle resend OTP - make sure we use our custom OTP edge function
   const handleResendOtp = async () => {
     if (!email) {
       toast({
@@ -90,16 +90,16 @@ export function useOtpForm(
 
     setIsLoading(true);
     try {
-      // Use Supabase's built-in OTP functionality to resend
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim().toLowerCase(),
-        options: {
-          emailRedirectTo: window.location.origin + '/auth?tab=login',
+      // Call our custom dealer-otp function to resend the code
+      const { data, error } = await supabase.functions.invoke('dealer-otp', {
+        body: {
+          action: 'generate',
+          email: email.trim().toLowerCase()
         }
       });
       
-      if (error) {
-        throw error;
+      if (error || !data.success) {
+        throw new Error(error?.message || data?.error || "Failed to resend code");
       }
       
       toast({
