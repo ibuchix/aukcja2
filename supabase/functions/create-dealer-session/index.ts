@@ -112,36 +112,37 @@ serve(async (req) => {
 
     console.log(`Creating session for User ID: ${targetUserId}, Email: ${targetEmail}`);
 
-    // Since createSession doesn't exist in v2, we'll use signInWithPassword with admin override
-    // First get the API URL
+    // Get Supabase URL and service key from environment
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const apiKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     
-    if (!supabaseUrl || !apiKey) {
+    if (!supabaseUrl || !serviceRoleKey) {
       throw new Error("Missing Supabase URL or API key");
     }
     
-    // Directly call the Supabase auth API to create a session
-    const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+    // Use the correct admin API endpoint to create a session
+    const response = await fetch(`${supabaseUrl}/auth/v1/admin/users/${targetUserId}/magiclink`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': apiKey,
-        'Authorization': `Bearer ${apiKey}`,
-        'X-Client-Info': 'create-dealer-session'
+        'apikey': serviceRoleKey,
+        'Authorization': `Bearer ${serviceRoleKey}`
       },
       body: JSON.stringify({
         email: targetEmail,
-        password: '', // Not used when using service role
-        gotrue_meta_security: {
-          admin_user_id: targetUserId  // This is the key for admin override
-        }
+        create_user: false,
+        // Most importantly, we set this to true to create an immediate session
+        // without sending a magic link email
+        should_create_session: true,
+        // Session will expire in 1 week (604800 seconds)
+        session_duration_seconds: 604800
       })
     });
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Error response from auth API:", errorText);
+      console.error("Error response from admin API:", errorText);
+      
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -154,6 +155,7 @@ serve(async (req) => {
       );
     }
     
+    // The response contains the session token
     const sessionData = await response.json();
     
     console.log(`Session created successfully for user ID: ${targetUserId}`);
