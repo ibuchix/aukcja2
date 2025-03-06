@@ -57,7 +57,12 @@ export const supabase = createClient<Database>(
         'Content-Type': 'application/json'
       },
       fetch: customFetch
-    }
+    },
+    // Add retryOptions for network resilience
+    maxRetryCount: 3,
+    retryIntervalMs: 500,
+    // Increase timeouts for edge functions
+    edgeFunctionsFetchTimeout: 15000
   }
 );
 

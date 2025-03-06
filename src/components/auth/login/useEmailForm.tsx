@@ -37,11 +37,12 @@ export function useEmailForm(
     mode: "onChange" // Validate on change for immediate feedback
   });
 
-  // Handle email submit and send OTP
+  // Handle email submit and send OTP with retries
   const onEmailSubmit = async (values: EmailFormValues) => {
     setIsLoading(true);
+    
     try {
-      // Sanitize the email one more time before submission
+      // Sanitize the email before submission
       const sanitizedEmail = values.email.trim().toLowerCase().replace(/[^a-zA-Z0-9@._+-]/g, '');
       
       if (sanitizedEmail !== values.email) {
@@ -50,9 +51,37 @@ export function useEmailForm(
       }
       
       console.log("Initiating OTP sign-in for:", sanitizedEmail);
-      const result = await initiateOtpSignIn(sanitizedEmail);
       
-      if (result.success) {
+      // Try up to 3 times with exponential backoff
+      let attempt = 0;
+      let result = null;
+      let lastError = null;
+      
+      while (attempt < 3 && !result?.success) {
+        try {
+          // Add delay for retries (0ms, 500ms, 1500ms)
+          if (attempt > 0) {
+            await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, attempt - 1)));
+            console.log(`Retry attempt ${attempt + 1} for OTP sign-in`);
+          }
+          
+          result = await initiateOtpSignIn(sanitizedEmail);
+          
+          if (result.success) {
+            break;
+          } else {
+            lastError = result.error;
+            console.warn(`OTP sign-in attempt ${attempt + 1} failed:`, lastError);
+          }
+        } catch (err) {
+          lastError = err instanceof Error ? err.message : "Unknown error";
+          console.error(`OTP sign-in attempt ${attempt + 1} error:`, err);
+        }
+        
+        attempt++;
+      }
+      
+      if (result?.success) {
         console.log("OTP sign-in successful, transitioning to OTP step");
         // First set the email and reset OTP form
         setEmail(sanitizedEmail);
@@ -67,7 +96,7 @@ export function useEmailForm(
         });
       } else {
         // Enhanced error handling for user-friendly messages
-        let errorMessage = result.error || "Failed to send login code. Please try again.";
+        let errorMessage = lastError || "Failed to send login code. Please try again.";
         console.error("OTP sign-in error:", errorMessage);
         
         // Provide more helpful messages for common errors
@@ -81,6 +110,10 @@ export function useEmailForm(
           errorMessage = "Too many login attempts. Please try again later.";
         } else if (errorMessage.includes("Signups not allowed")) {
           errorMessage = "This email is not registered. Please register first.";
+        } else if (errorMessage.includes("Failed to send a request") ||
+                  errorMessage.includes("network") ||
+                  errorMessage.includes("connect")) {
+          errorMessage = "Network error. Please check your connection and try again.";
         }
         
         toast({
