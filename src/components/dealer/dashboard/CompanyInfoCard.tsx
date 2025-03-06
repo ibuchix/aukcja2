@@ -31,9 +31,9 @@ export const CompanyInfoCard = ({ dealerProfile, isLoading }: CompanyInfoCardPro
           </div>
         ) : (
           <div className="space-y-2">
-            <p><span className="font-medium">Dealership:</span> {dealerProfile?.dealership_name || "Not available"}</p>
             <p><span className="font-medium">Address:</span> {dealerProfile?.address || "Not available"}</p>
             <p><span className="font-medium">License:</span> {dealerProfile?.license_number || "Not available"}</p>
+            <p><span className="font-medium">Tax ID:</span> {dealerProfile?.tax_id || "Not available"}</p>
           </div>
         )}
       </CardContent>

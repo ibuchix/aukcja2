@@ -19,6 +19,7 @@ export default function DealerDashboard() {
         
         <DealerWelcomeCard 
           dealerName={dealerProfile?.supervisor_name}
+          dealershipName={dealerProfile?.dealership_name}
           isLoading={profileDataLoading}
         />
         

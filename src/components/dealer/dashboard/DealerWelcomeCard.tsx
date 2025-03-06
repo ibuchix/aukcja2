@@ -1,31 +1,38 @@
 
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface DealerWelcomeCardProps {
-  dealerName: string;
+  dealerName?: string;
+  dealershipName?: string;
   isLoading: boolean;
 }
 
-export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardProps) => {
+export const DealerWelcomeCard = ({ 
+  dealerName, 
+  dealershipName,
+  isLoading 
+}: DealerWelcomeCardProps) => {
   return (
-    <Card className="mb-8">
-      <CardHeader>
-        <CardTitle>Welcome, {isLoading ? <Skeleton className="h-6 w-32" /> : dealerName || "Dealer"}</CardTitle>
-        <CardDescription>
-          This is your personal dashboard where you can manage your dealer activities
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p>
-          You can browse and bid on vehicles, manage your profile, and track your auctions from here.
-        </p>
+    <Card className="bg-gradient-to-r from-blue-500 to-indigo-600 mb-6">
+      <CardContent className="pt-6 text-white">
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-3/4 bg-white/20" />
+            <Skeleton className="h-4 w-1/2 bg-white/20" />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold">
+              Welcome, {dealerName || "Dealer"}
+            </h2>
+            <p className="opacity-90">
+              {dealershipName 
+                ? `Dashboard for ${dealershipName}` 
+                : "Your dealer dashboard - manage your inventory and track auctions"}
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

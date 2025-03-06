@@ -15,9 +15,6 @@ interface DealerInfoCardProps {
 }
 
 export const DealerInfoCard = ({ dealerProfile, userEmail, isLoading }: DealerInfoCardProps) => {
-  // Add validation to ensure data consistency
-  const isDataConsistent = dealerProfile && userEmail;
-  
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -33,16 +30,12 @@ export const DealerInfoCard = ({ dealerProfile, userEmail, isLoading }: DealerIn
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-4 w-5/6" />
           </div>
-        ) : isDataConsistent ? (
+        ) : (
           <div className="space-y-2">
             <p><span className="font-medium">Name:</span> {dealerProfile?.supervisor_name || "Not available"}</p>
             <p><span className="font-medium">Email:</span> {userEmail || "Not available"}</p>
-            <p><span className="font-medium">Verification:</span> {dealerProfile?.is_verified ? "Verified" : "Pending Verification"}</p>
-          </div>
-        ) : (
-          <div className="text-red-500">
-            <p>There appears to be an issue with your profile data.</p>
-            <p className="text-sm mt-1">Please contact support for assistance.</p>
+            <p><span className="font-medium">Dealership:</span> {dealerProfile?.dealership_name || "Not available"}</p>
+            <p><span className="font-medium">Business Reg. #:</span> {dealerProfile?.business_registry_number || "Not available"}</p>
           </div>
         )}
       </CardContent>
