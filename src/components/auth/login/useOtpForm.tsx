@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,7 +41,7 @@ export function useOtpForm(email: string, setStep: (step: "email" | "otp") => vo
     try {
       const { data, error } = await supabase.functions.invoke("dealer-otp", {
         body: {
-          action: "generate", // Changed from "generate-otp" to "generate"
+          action: "generate",
           email: email.trim().toLowerCase()
         }
       });
@@ -83,7 +82,7 @@ export function useOtpForm(email: string, setStep: (step: "email" | "otp") => vo
     try {
       const { data, error } = await supabase.functions.invoke("dealer-otp", {
         body: {
-          action: "verify", // Changed from "verify-otp" to "verify"
+          action: "verify",
           email: email.trim().toLowerCase(),
           otp: otpValue
         }
@@ -112,16 +111,14 @@ export function useOtpForm(email: string, setStep: (step: "email" | "otp") => vo
         return;
       }
       
-      // Check if we have an exchange token and use it
-      if (data.exchangeToken) {
-        console.log("Using exchange token to create session");
+      // Check if we have both tokens and use them to create a session
+      if (data.accessToken && data.refreshToken) {
+        console.log("Creating session with auth tokens");
         
         try {
-          // Use the exchange token as the access token only
-          // Let Supabase generate the refresh token automatically
           const { error: sessionError } = await supabase.auth.setSession({
-            access_token: data.exchangeToken,
-            refresh_token: '' // Let Supabase generate it
+            access_token: data.accessToken,
+            refresh_token: data.refreshToken
           });
           
           if (sessionError) {
@@ -136,6 +133,13 @@ export function useOtpForm(email: string, setStep: (step: "email" | "otp") => vo
           setError("Failed to create session. Please try again.");
           return;
         }
+      } else {
+        console.error("Missing tokens for session creation", {
+          hasAccessToken: !!data.accessToken,
+          hasRefreshToken: !!data.refreshToken
+        });
+        setError("Authentication failed. Please try again.");
+        return;
       }
       
       // Redirect to dashboard on success

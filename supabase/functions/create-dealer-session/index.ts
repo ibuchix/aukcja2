@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { create, verify } from "https://deno.land/x/djwt@v2.8/mod.ts";
@@ -32,7 +31,7 @@ const supabaseAdmin = createClient(
   }
 );
 
-// Generate a temporary exchange token
+// Generate authentication tokens
 async function generateExchangeToken(userId: string, email: string) {
   // Get the JWT secret
   const jwtSecret = Deno.env.get("JWT_SECRET");
@@ -66,7 +65,7 @@ async function generateExchangeToken(userId: string, email: string) {
   const now = Math.floor(Date.now() / 1000);
   
   // Create a token with the proper claims for Supabase Auth
-  const exchangeToken = await create(
+  const accessToken = await create(
     { 
       alg: "HS256", 
       typ: "JWT" 
@@ -77,13 +76,19 @@ async function generateExchangeToken(userId: string, email: string) {
       role: "authenticated",
       aud: projectRef,    // Set audience to the project ref
       iat: now,           // Issued at time
-      exp: now + 300,     // 5 minute expiry
-      type: "dealer-exchange-token"
+      exp: now + 3600,    // 1 hour expiry
+      type: "access_token"
     },
     key
   );
   
-  return exchangeToken;
+  // Generate a UUID v4 for the refresh token (Supabase expects this format)
+  const refreshToken = crypto.randomUUID();
+  
+  return {
+    accessToken,
+    refreshToken
+  };
 }
 
 // Handle requests
@@ -176,18 +181,17 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Generating exchange token for User ID: ${targetUserId}, Email: ${targetEmail}`);
+    console.log(`Generating auth tokens for User ID: ${targetUserId}, Email: ${targetEmail}`);
 
-    // CLIENT-SIDE TOKEN EXCHANGE APPROACH
-    // Generate a temporary exchange token that the client will use
-    const exchangeToken = await generateExchangeToken(targetUserId, targetEmail);
+    // Generate tokens for authentication
+    const tokens = await generateExchangeToken(targetUserId, targetEmail);
     
-    if (!exchangeToken) {
-      console.error("Failed to generate exchange token");
+    if (!tokens.accessToken || !tokens.refreshToken) {
+      console.error("Failed to generate authentication tokens");
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: "Failed to generate authentication token" 
+          error: "Failed to generate authentication tokens" 
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -196,7 +200,7 @@ serve(async (req) => {
       );
     }
     
-    console.log("Exchange token generated successfully");
+    console.log("Auth tokens generated successfully");
     
     // Get dealer profile information - adding detailed logging
     console.log(`Attempting to fetch dealer profile for user_id: ${targetUserId}`);
@@ -214,11 +218,12 @@ serve(async (req) => {
       console.log("Dealer profile found:", dealerData ? "Yes" : "No");
     }
     
-    // Return the exchange token and user/dealer data
+    // Return the tokens and user/dealer data
     return new Response(
       JSON.stringify({ 
         success: true, 
-        exchangeToken: exchangeToken,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
         user: {
           id: targetUserId,
           email: targetEmail

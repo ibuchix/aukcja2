@@ -3,10 +3,10 @@ import { HttpError } from "../_shared/error-handling.ts";
 import { create, verify } from "https://deno.land/x/djwt@v2.8/mod.ts";
 
 /**
- * Generates a temporary exchange token for client-side session creation
+ * Generates a full set of tokens for client-side session creation
  */
 export async function generateExchangeToken(userId: string, email: string) {
-  console.log(`Generating exchange token for user ${userId}`);
+  console.log(`Generating auth tokens for user ${userId}`);
   
   try {
     // Get JWT secret
@@ -41,7 +41,7 @@ export async function generateExchangeToken(userId: string, email: string) {
     const now = Math.floor(Date.now() / 1000);
     
     // Create a token with the proper claims for Supabase Auth
-    const exchangeToken = await create(
+    const accessToken = await create(
       { 
         alg: "HS256", 
         typ: "JWT" 
@@ -52,17 +52,23 @@ export async function generateExchangeToken(userId: string, email: string) {
         role: "authenticated",
         aud: projectRef,   // Set audience to the project ref
         iat: now,          // Issued at time
-        exp: now + 300,    // 5 minute expiry
-        type: "dealer-exchange-token"
+        exp: now + 3600,   // 1 hour expiry for access token
+        type: "access_token"
       },
       key
     );
     
-    console.log("Exchange token generated successfully");
-    return exchangeToken;
+    // Generate a UUID v4 for the refresh token (Supabase expects this format)
+    const refreshToken = crypto.randomUUID();
+    
+    console.log("Auth tokens generated successfully");
+    return {
+      accessToken,
+      refreshToken
+    };
     
   } catch (error) {
-    console.error("Exchange token generation failed:", error);
+    console.error("Token generation failed:", error);
     throw new HttpError(`Failed to generate token: ${error.message || 'Unknown error'}`, 500);
   }
 }
