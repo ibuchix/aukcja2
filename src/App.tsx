@@ -11,7 +11,8 @@ import Index from "@/pages/Index";
 import HowItWorks from "@/pages/HowItWorks";
 import { Toaster } from "@/components/ui/toaster";
 
-const router = createBrowserRouter([
+// Create the router with routes
+const routes = [
   {
     path: "/",
     element: <Index />,
@@ -52,7 +53,10 @@ const router = createBrowserRouter([
     path: "/complete-registration",
     element: <CompleteRegistration />,
   },
-]);
+];
+
+// Create the router instance outside of the render function
+const router = createBrowserRouter(routes);
 
 function App() {
   return (

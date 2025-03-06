@@ -6,9 +6,40 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://sdvakfhmoaoucmhbhwvy.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M";
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+// Create a fetch implementation with consistent headers
+const customFetch = (url: RequestInfo | URL, options?: RequestInit): Promise<Response> => {
+  const headers = new Headers(options?.headers || {});
+  
+  // Ensure apikey is always present
+  if (!headers.has('apikey')) {
+    headers.set('apikey', SUPABASE_PUBLISHABLE_KEY);
+  }
+  
+  // Add authorization from localStorage if available
+  try {
+    const currentSession = localStorage.getItem('dealer_auth_token');
+    if (currentSession) {
+      const session = JSON.parse(currentSession);
+      if (session?.access_token && !headers.has('Authorization')) {
+        headers.set('Authorization', `Bearer ${session.access_token}`);
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to parse session from localStorage', e);
+  }
+  
+  // Add cache control
+  if (!headers.has('Cache-Control')) {
+    headers.set('Cache-Control', 'no-cache');
+  }
+  
+  return fetch(url, {
+    ...options,
+    headers
+  });
+};
 
+// Create and export the supabase client
 export const supabase = createClient<Database>(
   SUPABASE_URL, 
   SUPABASE_PUBLISHABLE_KEY,
@@ -22,40 +53,25 @@ export const supabase = createClient<Database>(
     },
     global: {
       headers: {
-        // Always include the API key in headers
         'apikey': SUPABASE_PUBLISHABLE_KEY,
         'Content-Type': 'application/json'
       },
-      // Add retries for fetch operations
-      fetch: (url, options) => {
-        const headers = new Headers(options?.headers || {});
-        
-        // Ensure apikey is always present
-        if (!headers.has('apikey')) {
-          headers.set('apikey', SUPABASE_PUBLISHABLE_KEY);
-        }
-        
-        // Add authorization from localStorage if available
-        const currentSession = localStorage.getItem('dealer_auth_token');
-        if (currentSession) {
-          try {
-            const session = JSON.parse(currentSession);
-            if (session?.access_token && !headers.has('Authorization')) {
-              headers.set('Authorization', `Bearer ${session.access_token}`);
-            }
-          } catch (e) {
-            console.warn('Failed to parse session from localStorage', e);
-          }
-        }
-        
-        // Add cache control
-        headers.set('Cache-Control', 'no-cache');
-        
-        return fetch(url, {
-          ...options,
-          headers
-        });
-      }
+      fetch: customFetch
     }
   }
 );
+
+// Initialize client immediately to avoid lazy loading issues
+(async () => {
+  try {
+    // Test connection to ensure client is initialized properly
+    const { data, error } = await supabase.from('dealers').select('count').limit(1);
+    if (error) {
+      console.warn('Supabase client initialization warning:', error.message);
+    } else {
+      console.log('Supabase client initialized successfully');
+    }
+  } catch (err) {
+    console.error('Supabase client initialization error:', err);
+  }
+})();

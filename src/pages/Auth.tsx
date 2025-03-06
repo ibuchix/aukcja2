@@ -10,7 +10,18 @@ import { useAuth } from "@/contexts/AuthContext";
 const Auth = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useAuth();
+  
+  // Safely access auth context - wrap with error handling
+  const authContext = (() => {
+    try {
+      return useAuth();
+    } catch (error) {
+      console.error("Auth context error:", error);
+      return { isAuthenticated: false, isLoading: false };
+    }
+  })();
+  
+  const { isAuthenticated, isLoading } = authContext;
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   
   // Get the active tab from URL query parameter, default to "register" if not present

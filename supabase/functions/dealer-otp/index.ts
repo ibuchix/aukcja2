@@ -42,6 +42,7 @@ serve(async (req) => {
         );
         
       default:
+        console.error(`Invalid action requested: ${action}`);
         return Response.json({
           success: false,
           error: `Invalid action: ${action}`
