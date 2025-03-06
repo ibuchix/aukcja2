@@ -154,36 +154,58 @@ export async function createUserSession(supabase: SupabaseClient, userId: string
 export async function getDealerProfile(supabase: SupabaseClient, userId: string) {
   console.log(`Getting dealer profile for user ${userId}`);
   
+  // Ensure we have a service role client for this operation
   try {
-    // First try to get dealer profile using the new secure function
-    const { data: dealerData, error: functionError } = await callRpcSafely(
-      supabase,
-      'get_dealer_by_user_id', 
+    // Create a fresh service role client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error("Missing Supabase credentials for service role access");
+      throw new Error("Missing service role credentials");
+    }
+    
+    // Create a new client with the service role key
+    const serviceClient = createClient(
+      supabaseUrl, 
+      serviceRoleKey,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        },
+        global: {
+          headers: {
+            'Authorization': `Bearer ${serviceRoleKey}`,
+            'apikey': serviceRoleKey
+          }
+        }
+      }
+    );
+    
+    console.log("Created service client for dealer profile lookup");
+    
+    // Use the secure RPC function only - no fallback to direct query
+    const { data, error } = await callRpcSafely(
+      serviceClient,
+      'get_dealer_by_user_id',
       { p_user_id: userId }
     );
-      
-    if (!functionError && dealerData) {
-      console.log("Retrieved dealer profile using secure function");
-      return dealerData;
-    }
     
-    if (functionError) {
-      console.log("Function error, falling back to direct query:", functionError);
-    }
-    
-    // Fallback to direct query if function approach failed
-    const { data: directData, error: directError } = await supabase
-      .from('dealers')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    
-    if (directError) {
-      console.log("Dealer profile not found or error:", directError);
+    if (error) {
+      console.error("Error calling get_dealer_by_user_id:", error.message);
+      console.error("Error details:", JSON.stringify(error));
       return null;
     }
     
-    return directData;
+    if (!data) {
+      console.log(`No dealer profile found for user ${userId} using RPC function`);
+      return null;
+    }
+    
+    console.log("Successfully retrieved dealer profile using RPC function");
+    return data;
+    
   } catch (error) {
     console.error("Exception in getDealerProfile:", error);
     return null;

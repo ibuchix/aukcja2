@@ -79,13 +79,31 @@ export async function callRpcSafely<T>(
 ): Promise<{ data: T | null; error: Error | null }> {
   try {
     console.log(`Calling RPC function: ${functionName} with params:`, params);
+    
+    // Ensure headers are properly set before RPC call
+    const headers = supabase.auth.headers || {};
+    console.log(`Request headers for RPC call:`, headers);
+    
     const { data, error } = await supabase.rpc(functionName, params);
     
     if (error) {
       console.error(`Error calling ${functionName}:`, error);
+      
+      // Provide more details for debugging
+      if (error.code) {
+        console.error(`Error code: ${error.code}`);
+      }
+      if (error.message) {
+        console.error(`Error message: ${error.message}`);
+      }
+      if (error.details) {
+        console.error(`Error details: ${error.details}`);
+      }
+      
       return { data: null, error };
     }
     
+    console.log(`Successfully called ${functionName}`);
     return { data, error: null };
   } catch (err) {
     console.error(`Exception calling ${functionName}:`, err);
