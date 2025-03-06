@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { initiateOtpSignIn, verifyOtp } from "@/services/auth/signin";
+import { verifyOtp } from "@/services/auth/signin";
 import { supabase } from "@/integrations/supabase/client";
 
 // OTP validation schema
@@ -48,38 +48,6 @@ export function useOtpForm(
       const result = await verifyOtp(email, values.otp);
       
       if (result.success) {
-        // If we got session tokens back from the verification process
-        if (result.session) {
-          try {
-            // Set the session in supabase auth client
-            const { error: sessionError } = await supabase.auth.setSession({
-              access_token: result.session.access_token,
-              refresh_token: result.session.refresh_token
-            });
-            
-            if (sessionError) {
-              console.error("Error setting session:", sessionError);
-              throw new Error(sessionError.message);
-            }
-            
-            // Check that the session was actually set
-            const { data: sessionData } = await supabase.auth.getSession();
-            if (!sessionData.session) {
-              throw new Error("Failed to establish session");
-            }
-            
-            console.log("Session established successfully:", sessionData.session.user.id);
-          } catch (sessionErr) {
-            console.error("Session establishment error:", sessionErr);
-            toast({
-              title: "Authentication error",
-              description: "Failed to establish your session. Please try logging in again.",
-              variant: "destructive",
-            });
-            return;
-          }
-        }
-        
         toast({
           title: "Login successful!",
           description: "Redirecting to your dashboard...",
@@ -122,26 +90,28 @@ export function useOtpForm(
 
     setIsLoading(true);
     try {
-      const result = await initiateOtpSignIn(email);
+      // Use Supabase's built-in OTP functionality to resend
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim().toLowerCase(),
+        options: {
+          emailRedirectTo: window.location.origin + '/auth?tab=login',
+        }
+      });
       
-      if (result.success) {
-        toast({
-          title: "Code resent!",
-          description: "A new code has been sent to your email.",
-        });
-        // We stay on the OTP step - no state change here
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to resend code. Please try again.",
-          variant: "destructive",
-        });
+      if (error) {
+        throw error;
       }
+      
+      toast({
+        title: "Code resent!",
+        description: "A new code has been sent to your email.",
+      });
+      // We stay on the OTP step - no state change here
     } catch (error) {
       console.error("Resend OTP error:", error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to resend code. Please try again.",
         variant: "destructive",
       });
     } finally {

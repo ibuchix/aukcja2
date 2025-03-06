@@ -38,6 +38,21 @@ const Auth = () => {
     };
     
     checkSession();
+    
+    // Also set up auth state listener to handle OTP completion
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event);
+      
+      if (event === 'SIGNED_IN' && session) {
+        console.log("User signed in via auth state change, redirecting to dashboard");
+        navigate("/dealer/dashboard");
+      }
+    });
+    
+    // Cleanup listener on unmount
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, [navigate]);
 
   // Update URL when tab changes without causing a page reload

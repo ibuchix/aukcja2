@@ -4,7 +4,7 @@ import { SignInResult } from "./models";
 import { validateEmail, safeTrim } from "./validation";
 
 /**
- * Initiates an OTP sign-in flow for dealers using our custom implementation
+ * Initiates an OTP sign-in flow for dealers using Supabase's built-in OTP functionality
  */
 export const initiateOtpSignIn = async (email: string): Promise<SignInResult> => {
   try {
@@ -19,11 +19,12 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
 
     const normalizedEmail = safeTrim(email).toLowerCase();
     
-    // Call our custom dealer-otp edge function
-    const { data, error } = await supabase.functions.invoke('dealer-otp', {
-      body: {
-        action: 'generate',
-        email: normalizedEmail
+    // Use Supabase's built-in OTP functionality instead of custom edge function
+    const { data, error } = await supabase.auth.signInWithOtp({
+      email: normalizedEmail,
+      options: {
+        // Make sure email OTP is only valid for 15 minutes for security
+        emailRedirectTo: window.location.origin + '/auth?tab=login',
       }
     });
     
@@ -32,14 +33,6 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
       return { 
         success: false, 
         error: error.message || "Failed to initiate login"
-      };
-    }
-    
-    if (!data || !data.success) {
-      console.error("OTP generation failed:", data?.error || "Unknown error");
-      return { 
-        success: false, 
-        error: data?.error || "Failed to send login code"
       };
     }
     
@@ -57,7 +50,7 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
 };
 
 /**
- * Verifies the OTP code and creates a session if valid
+ * Verifies the OTP code using Supabase's built-in OTP verification
  */
 export const verifyOtp = async (email: string, otp: string): Promise<SignInResult> => {
   try {
@@ -72,13 +65,11 @@ export const verifyOtp = async (email: string, otp: string): Promise<SignInResul
     
     const normalizedEmail = safeTrim(email).toLowerCase();
     
-    // Call our custom dealer-otp edge function
-    const { data, error } = await supabase.functions.invoke('dealer-otp', {
-      body: {
-        action: 'verify',
-        email: normalizedEmail,
-        otp
-      }
+    // Use Supabase's built-in OTP verification
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: normalizedEmail,
+      token: otp,
+      type: 'email'
     });
     
     if (error) {
@@ -89,35 +80,35 @@ export const verifyOtp = async (email: string, otp: string): Promise<SignInResul
       };
     }
     
-    if (!data || !data.success) {
-      console.error("OTP verification failed:", data?.error || "Unknown error");
-      return { 
-        success: false, 
-        error: data?.error || "Invalid or expired verification code"
+    // If verification is successful, data will contain session and user
+    if (!data.session) {
+      console.error("Session data missing after OTP verification");
+      return {
+        success: false,
+        error: "Failed to establish session"
       };
     }
     
-    // Set the session in Supabase auth client locally
-    if (data.session) {
-      const { data: setSessionData, error: setSessionError } = await supabase.auth.setSession({
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token
-      });
-      
-      if (setSessionError) {
-        console.error("Error setting session:", setSessionError);
-        return { 
-          success: false, 
-          error: "Failed to initialize session"
-        };
-      }
+    // Get dealer profile information if available
+    let dealerProfile = null;
+    try {
+      const { data: dealerData } = await supabase
+        .from('dealers')
+        .select('*')
+        .eq('user_id', data.user.id)
+        .single();
+        
+      dealerProfile = dealerData;
+    } catch (profileError) {
+      console.warn("Could not fetch dealer profile:", profileError);
+      // Continue anyway, just won't have profile data
     }
     
     return {
       success: true,
       message: "Login successful",
       session: data.session,
-      dealer: data.dealer
+      dealer: dealerProfile
     };
   } catch (error) {
     console.error("Exception in verifyOtp:", error);
