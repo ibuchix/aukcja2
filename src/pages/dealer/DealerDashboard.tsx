@@ -68,7 +68,7 @@ export default function DealerDashboard() {
       } catch (error) {
         console.error("Unexpected error:", error);
       } finally {
-        setIsProfileLoading(true);
+        setIsProfileLoading(false); // Set loading to false when done
       }
     };
 
