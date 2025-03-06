@@ -24,7 +24,7 @@ const supabaseAdmin = createClient(
 // Generate a temporary exchange token
 async function generateExchangeToken(userId: string, email: string) {
   // Get the JWT secret
-  const jwtSecret = Deno.env.get("SUPABASE_JWT_SECRET");
+  const jwtSecret = Deno.env.get("JWT_SECRET");
   
   if (!jwtSecret) {
     throw new Error("Missing JWT secret");
