@@ -86,4 +86,4 @@ export const ProfileInfoSection = ({ dealerProfile, user, isLoading }: ProfileIn
       </div>
     </div>
   );
-};
+}
