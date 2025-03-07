@@ -17,6 +17,7 @@ const customFetch = (url: RequestInfo | URL, options?: RequestInit): Promise<Res
   
   // Add authorization from localStorage if available with better error handling
   try {
+    // Now use the correct storage key (dealer_auth_token)
     const currentSession = localStorage.getItem('dealer_auth_token');
     if (currentSession) {
       try {
@@ -49,9 +50,15 @@ const customFetch = (url: RequestInfo | URL, options?: RequestInit): Promise<Res
     headers.set('Cache-Control', 'no-cache');
   }
   
+  // Add some debugging headers for dev mode
+  if (import.meta.env.DEV) {
+    headers.set('X-Client-Request-Time', new Date().toISOString());
+  }
+  
   return fetch(url, {
     ...options,
-    headers
+    headers,
+    credentials: 'same-origin'
   });
 };
 
@@ -74,13 +81,13 @@ export const supabase = createClient<Database>(
       },
       fetch: customFetch
     },
-    // Use retryOptions configuration instead of maxRetryCount
+    // Use retryOptions configuration
     db: {
       schema: 'public'
     },
     // Increase timeouts for edge functions
     realtime: {
-      timeout: 15000
+      timeout: 20000
     }
   }
 );
@@ -89,22 +96,45 @@ export const supabase = createClient<Database>(
 (async () => {
   try {
     // Check for existing session and log its status
-    const { data: sessionData } = await supabase.auth.getSession();
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.warn('Supabase session check error:', sessionError.message);
+      return;
+    }
+    
     if (sessionData && sessionData.session) {
       console.log('Session exists and expires at:', new Date(sessionData.session.expires_at! * 1000).toLocaleString());
+      
+      // Check if token is close to expiry
+      const now = new Date();
+      const expiresAt = new Date(sessionData.session.expires_at! * 1000);
+      const timeUntilExpiry = expiresAt.getTime() - now.getTime();
+      
+      if (timeUntilExpiry < 60 * 60 * 1000) { // Less than 1 hour
+        console.log('Session token will expire soon, refreshing...');
+        try {
+          await supabase.auth.refreshSession();
+          console.log('Session token refreshed successfully');
+        } catch (refreshError) {
+          console.warn('Failed to refresh session token:', refreshError);
+        }
+      }
       
       // Only test connection to protected tables if we have an authenticated session
       try {
         const { error } = await supabase.from('dealers').select('count').limit(1);
         if (error) {
-          console.warn('Supabase client initialization warning:', error.message);
+          console.warn('RLS check warning:', error.message);
           
           // Special handling for auth errors
           if (error.code === '401') {
-            console.warn('Authentication error during initialization - you may need to login');
+            console.warn('Authentication error during initialization - token may be expired');
+          } else if (error.code === '42501') {
+            console.warn('Permission denied error - RLS policies may need configuration');
           }
         } else {
-          console.log('Supabase client initialized successfully');
+          console.log('Supabase client initialized successfully with database access');
         }
       } catch (err) {
         console.error('Error testing connection to dealers table:', err);

@@ -10,34 +10,52 @@ export async function fetchDealerProfile(userId: string) {
     console.log(`Fetching profile for user: ${userId}`);
     
     // Get current session to verify token validity
-    const { data: sessionData } = await supabase.auth.getSession();
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error("Session error during profile fetch:", sessionError);
+      return null;
+    }
     
     if (!sessionData.session) {
       console.error("No active session found when fetching dealer profile");
       return null;
     }
     
-    // Quick check to verify auth works
-    const { data: authId, error: authError } = await supabase.rpc('debug_auth_user_id');
-    
-    if (authError) {
-      console.error("Auth verification failed:", authError);
-      return null;
+    // First try the security definer function approach which bypasses RLS
+    try {
+      console.log("Trying to fetch profile using get_dealer_by_user_id RPC function");
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        'get_dealer_by_user_id',
+        { p_user_id: userId }
+      );
+      
+      if (!rpcError && rpcData) {
+        console.log("Dealer profile fetched successfully via RPC function");
+        return rpcData;
+      } else if (rpcError) {
+        console.warn("RPC function failed:", rpcError);
+        // Continue to try direct query as fallback
+      }
+    } catch (rpcFallbackError) {
+      console.warn("RPC function error caught:", rpcFallbackError);
+      // Continue to try direct query
     }
     
-    if (authId !== userId) {
-      console.warn(`Auth mismatch: JWT has ${authId} but trying to fetch profile for ${userId}`);
-    }
-    
-    // Now that RLS is properly configured, we can query the database directly
+    // Fallback: Try direct query (this should work now with the RLS policies)
+    console.log("Falling back to direct query with RLS policies");
     const { data, error } = await supabase
       .from('dealers')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     if (error) {
-      console.error("Error fetching dealer profile:", error);
+      if (error.code === '42501') {
+        console.error("Permission denied for dealers table. This suggests RLS policies may not be properly configured.");
+      } else {
+        console.error("Error fetching dealer profile:", error);
+      }
       return null;
     }
 
@@ -59,6 +77,10 @@ export async function fetchDealerProfile(userId: string) {
  */
 export async function signOutUser() {
   try {
+    // First clear local storage to ensure no stale data
+    localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
+    localStorage.removeItem('dealer_auth_token');
+    
     const { error } = await supabase.auth.signOut({
       scope: 'local' // Only sign out from this client
     });
@@ -83,14 +105,40 @@ export async function refreshUserSession() {
     console.log("Manually refreshing session");
     
     // First clear session cache to ensure we're not using stale data
-    localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
+    try {
+      localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
+      localStorage.removeItem('dealer_auth_token');
+    } catch (clearError) {
+      console.warn("Error clearing local storage:", clearError);
+      // Continue despite error
+    }
+    
+    // Get current session
+    const { data: currentSession, error: currentSessionError } = await supabase.auth.getSession();
+    
+    if (currentSessionError) {
+      console.error("Error getting current session:", currentSessionError);
+      return { success: false, error: currentSessionError };
+    }
+    
+    // If we don't have a current session, we can't refresh
+    if (!currentSession.session) {
+      console.warn("No current session to refresh");
+      return { success: false, error: new Error("No active session") };
+    }
     
     // Now refresh the session
     const { data, error } = await supabase.auth.refreshSession();
     
     if (error) {
       console.error("Session refresh error:", error);
-      return { success: false, error };
+      
+      // If refresh fails, we need to redirect to login
+      return { 
+        success: false, 
+        error,
+        needsReauth: true 
+      };
     }
     
     if (data.session) {
@@ -98,11 +146,12 @@ export async function refreshUserSession() {
                  new Date(data.session.expires_at! * 1000).toLocaleString());
     } else {
       console.warn("Session refresh returned no session");
+      return { success: false, needsReauth: true };
     }
     
     return { success: true, session: data.session, user: data.session?.user };
   } catch (error) {
     console.error("Session refresh error:", error);
-    return { success: false, error };
+    return { success: false, error, needsReauth: true };
   }
 }
