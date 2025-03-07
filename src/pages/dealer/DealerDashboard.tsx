@@ -16,12 +16,12 @@ import { useNavigate } from "react-router-dom";
 
 export default function DealerDashboard() {
   const { user, isLoading: isAuthLoading } = useAuth();
+  const loadStartTime = Date.now(); // Define loadStartTime first
   const { dealerProfile, recentActivity, profileDataLoading } = useWelcomeDashboardData(user, isAuthLoading);
   const navigate = useNavigate();
 
   // Combined loading state - shorter timeout for better UX
   const isLoading = isAuthLoading || (profileDataLoading && Date.now() - loadStartTime < 3000);
-  const loadStartTime = Date.now();
   
   // Add debug logging
   useEffect(() => {

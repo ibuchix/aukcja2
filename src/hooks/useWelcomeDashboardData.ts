@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { User } from "@supabase/supabase-js";
 import { hasProperty } from "@/utils/supabaseHelpers";
+import { DealerRecord } from "@/utils/databaseTypes";
 
 export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolean) {
-  const [dealerProfile, setDealerProfile] = useState<any>(null);
+  const [dealerProfile, setDealerProfile] = useState<DealerRecord | null>(null);
   const [recentActivity, setRecentActivity] = useState<boolean>(false);
   const [isProfileLoading, setIsProfileLoading] = useState<boolean>(true);
   const { toast } = useToast();
@@ -55,18 +56,28 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
         if (!data && !error && user.email) {
           console.log(`No profile found by user ID, trying by email: ${user.email}`);
           
-          // Get dealer profile directly using user's email
-          // This assumes auth.users and dealers are related by email
-          const { data: emailData, error: emailError } = await supabase.rpc(
-            'get_dealer_by_email',
+          // Get dealer profile using get_dealer_by_user_id function instead
+          // We'll pass the email to the RPC, but have it use the user_id internally
+          const { data: userData, error: userError } = await supabase.rpc(
+            'get_user_id_by_email',
             { p_email: user.email }
           );
           
-          if (emailError) {
-            console.error("Error fetching dealer by email:", emailError);
-          } else if (emailData) {
-            console.log("Dealer profile fetched by email:", emailData);
-            data = emailData;
+          if (userError) {
+            console.error("Error fetching user ID by email:", userError);
+          } else if (userData && userData.id) {
+            // Now we have the user ID, get the dealer profile
+            const { data: dealerData, error: dealerError } = await supabase.rpc(
+              'get_dealer_by_user_id',
+              { p_user_id: userData.id }
+            );
+            
+            if (dealerError) {
+              console.error("Error fetching dealer by user ID:", dealerError);
+            } else if (dealerData) {
+              console.log("Dealer profile fetched by user ID after email lookup:", dealerData);
+              data = dealerData;
+            }
           }
         }
 
@@ -80,7 +91,7 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
         } else if (data) {
           console.log("Dealer profile fetched successfully:", data);
           // Set the profile data regardless of whose it is - we'll display it anyway
-          setDealerProfile(data);
+          setDealerProfile(data as DealerRecord);
         } else {
           console.log("No dealer profile found for user:", user.id);
           // Instead of showing an error toast, we'll just continue with null profile
