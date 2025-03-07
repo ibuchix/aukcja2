@@ -58,11 +58,14 @@ export const supabase = createClient<Database>(
       },
       fetch: customFetch
     },
-    // Add retryOptions for network resilience
-    maxRetryCount: 3,
-    retryIntervalMs: 500,
+    // Use retryOptions configuration instead of maxRetryCount
+    db: {
+      schema: 'public'
+    },
     // Increase timeouts for edge functions
-    edgeFunctionsFetchTimeout: 15000
+    realtime: {
+      timeout: 15000
+    }
   }
 );
 

@@ -1,0 +1,26 @@
+
+import { Database } from "@/integrations/supabase/types";
+
+// Helper type for inserting into tables
+export type TableInsertRow<T extends keyof Database['public']['Tables']> = 
+  Database['public']['Tables'][T]['Insert'];
+
+// Helper type for rows in tables
+export type TableRow<T extends keyof Database['public']['Tables']> = 
+  Database['public']['Tables'][T]['Row'];
+
+// Define record types for specific tables
+export type DealerRecord = TableRow<'dealers'>;
+export type ProfileRecord = TableRow<'profiles'>;
+export type CarRecord = TableRow<'cars'>;
+export type BidRecord = TableRow<'bids'>;
+export type DealerWatchlistRecord = TableRow<'dealer_watchlist'>;
+export type ProxyBidRecord = TableRow<'proxy_bids'>;
+
+// Define insert types for specific tables
+export type DealerInsert = TableInsertRow<'dealers'>;
+export type ProfileInsert = TableInsertRow<'profiles'>;
+export type CarInsert = TableInsertRow<'cars'>;
+export type BidInsert = TableInsertRow<'bids'>;
+export type DealerWatchlistInsert = TableInsertRow<'dealer_watchlist'>;
+export type ProxyBidInsert = TableInsertRow<'proxy_bids'>;

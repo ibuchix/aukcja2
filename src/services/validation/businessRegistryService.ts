@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { SupabaseResponse } from "@/utils/retryUtils";
+import { filterString, hasData } from "@/utils/supabaseHelpers";
 
 /**
  * Checks if a business registry number already exists in the database
@@ -9,10 +10,13 @@ import { SupabaseResponse } from "@/utils/retryUtils";
  */
 export async function checkBusinessRegistryExists(businessRegistryNumber: string): Promise<boolean> {
   try {
+    const tableName = 'dealers';
+    const columnName = filterString(tableName, 'business_registry_number', businessRegistryNumber);
+    
     const response: SupabaseResponse = await supabase
-      .from('dealers')
+      .from(tableName)
       .select('business_registry_number')
-      .eq('business_registry_number', businessRegistryNumber)
+      .eq(columnName, businessRegistryNumber)
       .maybeSingle();
     
     if (response.error) {

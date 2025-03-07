@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { User } from "@supabase/supabase-js";
+import { hasData, hasProperty, userIDColumn } from "@/utils/supabaseHelpers";
 
 export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolean) {
   const [dealerProfile, setDealerProfile] = useState<any>(null);
@@ -32,10 +33,13 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
         console.log(`Fetching dealer profile for user ID: ${user.id}`);
         
         // Fetch dealer profile from the dealers table
+        const tableName = 'dealers';
+        const userID = userIDColumn(tableName);
+        
         const { data, error } = await supabase
-          .from('dealers')
+          .from(tableName)
           .select('*')
-          .eq('user_id', user.id)
+          .eq(userID, user.id)
           .maybeSingle();
 
         if (error) {
@@ -52,11 +56,11 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
         if (data) {
           console.log("Dealer profile fetched successfully:", data);
           // Verify that the profile matches the current user
-          if (data.user_id === user.id) {
+          if (hasProperty(data, 'user_id') && data.user_id === user.id) {
             setDealerProfile(data);
           } else {
             console.error("Profile user_id mismatch", { 
-              profileUserId: data.user_id, 
+              profileUserId: hasProperty(data, 'user_id') ? data.user_id : 'undefined', 
               currentUserId: user.id 
             });
             toast({

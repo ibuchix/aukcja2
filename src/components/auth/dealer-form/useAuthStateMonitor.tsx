@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { filterString, hasData, userIDColumn } from "@/utils/supabaseHelpers";
 
 export function useAuthStateMonitor(setEmailVerified: (verified: boolean) => void) {
   const navigate = useNavigate();
@@ -12,16 +13,22 @@ export function useAuthStateMonitor(setEmailVerified: (verified: boolean) => voi
     const checkExistingUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
+        const profileTable = 'profiles';
+        const idColumn = filterString(profileTable, 'id', session.user.id);
+        
         const { data: profile } = await supabase
-          .from('profiles')
+          .from(profileTable)
           .select('*')
-          .eq('id', session.user.id)
+          .eq(idColumn, session.user.id)
           .single();
 
+        const dealerTable = 'dealers';
+        const userIdColumn = userIDColumn(dealerTable);
+        
         const { data: dealer } = await supabase
-          .from('dealers')
+          .from(dealerTable)
           .select('*')
-          .eq('user_id', session.user.id)
+          .eq(userIdColumn, session.user.id)
           .single();
 
         if (profile && !dealer) {

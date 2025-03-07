@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
 import { CarListing } from "@/types/cars";
+import { filterString, filterBoolean, hasData } from "@/utils/supabaseHelpers";
 
 const Index = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
@@ -17,28 +18,49 @@ const Index = () => {
   const { data: featuredVehicles, isLoading } = useQuery({
     queryKey: ["featuredVehicles"],
     queryFn: async () => {
+      const tableName = 'cars';
+      const statusColumn = filterString(tableName, 'status', 'available');
+      const isDraftColumn = filterBoolean(tableName, 'is_draft', false);
+      
       const { data, error } = await supabase
-        .from("cars")
+        .from(tableName)
         .select("*")
-        .eq("status", "available")
-        .eq("is_draft", false)
+        .eq(statusColumn, "available")
+        .eq(isDraftColumn, false)
         .limit(4)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      return data.map(car => ({
-        ...car,
-        features: typeof car.features === 'string' 
-          ? JSON.parse(car.features) 
-          : car.features || {
-              satNav: false,
-              heatedSeats: false,
-              panoramicRoof: false,
-              reverseCamera: false,
-              upgradedSound: false
-            },
-      })) as CarListing[];
+      return data.map(car => {
+        // Using optional chaining and providing default values
+        let features = car.features;
+        try {
+          if (typeof features === 'string') {
+            features = JSON.parse(features);
+          }
+        } catch (e) {
+          console.error("Error parsing features:", e);
+          features = {
+            satNav: false,
+            heatedSeats: false,
+            panoramicRoof: false,
+            reverseCamera: false,
+            upgradedSound: false
+          };
+        }
+        
+        return {
+          ...car,
+          features: features || {
+            satNav: false,
+            heatedSeats: false,
+            panoramicRoof: false,
+            reverseCamera: false,
+            upgradedSound: false
+          },
+        };
+      }) as CarListing[];
     },
   });
 

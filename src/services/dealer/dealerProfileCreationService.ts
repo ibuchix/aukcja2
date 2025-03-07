@@ -11,6 +11,8 @@ import {
   createDatabaseErrorResult,
   handleDatabaseError
 } from "./dealerProfileResultHandler";
+import { createDealerRecord, createProfileRecord } from "./dealerProfileUtils";
+import { filterString } from "@/utils/supabaseHelpers";
 
 /**
  * Creates a dealer profile in the database
@@ -46,38 +48,18 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
 
     // Verify profile exists, create if missing
     try {
-      const profileResponse = await executeWithRetry<SupabaseResponse>(() => 
-        supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', userId)
-          .maybeSingle()
-      );
+      // Create or verify profile using our utility function
+      const profileData = {
+        role: 'dealer' as const,
+        full_name: values.supervisorName.trim(),
+        updated_at: new Date().toISOString()
+      };
 
-      // If profile doesn't exist, create it as a fallback mechanism
-      if (!profileResponse.data && !profileResponse.error) {
-        console.log("Profile not found, creating as fallback for user:", userId);
-        
-        try {
-          const insertResponse = await executeWithRetry<SupabaseResponse>(() => 
-            supabase
-              .from('profiles')
-              .insert({
-                id: userId,
-                role: 'dealer',
-                full_name: values.supervisorName.trim(),
-                updated_at: new Date().toISOString()
-              })
-          );
-          
-          if (insertResponse.error) {
-            console.warn("Failed to create profile as fallback:", insertResponse.error);
-            // Continue despite this error - the dealer profile is more important
-          }
-        } catch (error) {
-          console.warn("Failed to create profile as fallback, but continuing with dealer creation:", error);
-          // Continue despite this error - the dealer profile is more important
-        }
+      const profileResponse = await createProfileRecord(userId, profileData);
+      
+      if (profileResponse.error) {
+        console.warn("Failed to create profile as fallback:", profileResponse.error);
+        // Continue despite this error - the dealer profile is more important
       }
     } catch (error) {
       console.warn("Profile check failed, but continuing with dealer creation:", error);
@@ -86,23 +68,21 @@ export async function createDealerProfile(userId: string, values: DealerFormValu
 
     // Insert dealer profile with retry
     try {
-      const dealerResult = await executeWithRetry<SupabaseResponse>(() => 
-        supabase
-          .from('dealers')
-          .insert({
-            user_id: userId,
-            supervisor_name: values.supervisorName.trim(),
-            dealership_name: values.companyName.trim(),
-            tax_id: values.taxId.trim(),
-            business_registry_number: values.businessRegistryNumber.trim(),
-            license_number: values.businessRegistryNumber.trim(),
-            address: values.companyAddress.trim(),
-            verification_status: 'pending',
-            is_verified: false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-      );
+      const dealerData = {
+        user_id: userId,
+        supervisor_name: values.supervisorName.trim(),
+        dealership_name: values.companyName.trim(),
+        tax_id: values.taxId.trim(),
+        business_registry_number: values.businessRegistryNumber.trim(),
+        license_number: values.businessRegistryNumber.trim(),
+        address: values.companyAddress.trim(),
+        verification_status: 'pending',
+        is_verified: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const dealerResult = await createDealerRecord(dealerData);
 
       if (dealerResult.error) {
         return handleDatabaseError(dealerResult.error);
