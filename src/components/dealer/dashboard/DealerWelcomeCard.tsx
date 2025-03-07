@@ -1,5 +1,4 @@
 
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface DealerWelcomeCardProps {
@@ -14,8 +13,8 @@ export const DealerWelcomeCard = ({
   isLoading 
 }: DealerWelcomeCardProps) => {
   return (
-    <Card className="bg-gradient-to-r from-blue-500 to-indigo-600 mb-6">
-      <CardContent className="pt-6 text-white">
+    <div className="bg-gradient-to-r from-iris-light to-blue-50 border-l-4 border-iris rounded-r-lg mb-8 shadow-sm">
+      <div className="pt-6 pb-6 px-6 text-dark">
         {isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-6 w-3/4 bg-white/20" />
@@ -26,14 +25,14 @@ export const DealerWelcomeCard = ({
             <h2 className="text-2xl font-bold">
               Welcome, {dealerName || "Dealer"}
             </h2>
-            <p className="opacity-90">
+            <p className="text-subtitle-text">
               {dealershipName 
-                ? `Dashboard for ${dealershipName}` 
+                ? `Managing ${dealershipName}`
                 : "Your dealer dashboard - manage your inventory and track auctions"}
             </p>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

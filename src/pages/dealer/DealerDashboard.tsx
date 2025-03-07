@@ -6,7 +6,7 @@ import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard
 import { DealerWelcomeCard } from "@/components/dealer/dashboard/DealerWelcomeCard";
 import { ProfileInfoSection } from "@/components/dealer/dashboard/ProfileInfoSection";
 import { QuickActions } from "@/components/dealer/dashboard/QuickActions";
-import { ManagementCards } from "@/components/dealer/dashboard/ManagementCards";
+import { BusinessActionSection } from "@/components/dealer/dashboard/BusinessActionSection";
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
 
 export default function DealerDashboard() {
@@ -21,7 +21,7 @@ export default function DealerDashboard() {
       {isLoading ? (
         <LoadingDashboard />
       ) : (
-        <>
+        <div className="space-y-8">
           <DealerWelcomeCard 
             dealerName={dealerProfile?.supervisor_name}
             dealershipName={dealerProfile?.dealership_name}
@@ -36,10 +36,10 @@ export default function DealerDashboard() {
           
           <QuickActions />
           
-          <ManagementCards />
-          
           <StatsSection recentActivity={recentActivity} />
-        </>
+          
+          <BusinessActionSection />
+        </div>
       )}
     </DashboardLayout>
   );
