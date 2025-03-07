@@ -15,17 +15,33 @@ const customFetch = (url: RequestInfo | URL, options?: RequestInit): Promise<Res
     headers.set('apikey', SUPABASE_PUBLISHABLE_KEY);
   }
   
-  // Add authorization from localStorage if available
+  // Add authorization from localStorage if available with better error handling
   try {
     const currentSession = localStorage.getItem('dealer_auth_token');
     if (currentSession) {
-      const session = JSON.parse(currentSession);
-      if (session?.access_token && !headers.has('Authorization')) {
-        headers.set('Authorization', `Bearer ${session.access_token}`);
+      try {
+        const session = JSON.parse(currentSession);
+        if (session?.access_token && !headers.has('Authorization')) {
+          headers.set('Authorization', `Bearer ${session.access_token}`);
+          // Debug log to trace auth token during development
+          if (import.meta.env.DEV) {
+            const tokenPreview = session.access_token.substring(0, 10) + '...';
+            console.debug(`Added auth token to request: ${tokenPreview}`);
+          }
+        } else if (!session?.access_token) {
+          console.warn('Session exists but no access_token found');
+        }
+      } catch (parseError) {
+        // This likely means the session is corrupted
+        console.error('Failed to parse session JSON from localStorage', parseError);
+        // Remove the corrupted session
+        localStorage.removeItem('dealer_auth_token');
       }
+    } else {
+      console.debug('No auth session in localStorage for request to: ' + url.toString());
     }
   } catch (e) {
-    console.warn('Failed to parse session from localStorage', e);
+    console.error('Error accessing localStorage for auth token', e);
   }
   
   // Add cache control
@@ -72,10 +88,23 @@ export const supabase = createClient<Database>(
 // Initialize client immediately to avoid lazy loading issues
 (async () => {
   try {
+    // Check for existing session and log its status
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData && sessionData.session) {
+      console.log('Session exists and expires at:', new Date(sessionData.session.expires_at! * 1000).toLocaleString());
+    } else {
+      console.log('No active session found');
+    }
+    
     // Test connection to ensure client is initialized properly
-    const { data, error } = await supabase.from('dealers').select('count').limit(1);
+    const { error } = await supabase.from('dealers').select('count').limit(1);
     if (error) {
       console.warn('Supabase client initialization warning:', error.message);
+      
+      // Special handling for auth errors
+      if (error.code === '401') {
+        console.warn('Authentication error during initialization - you may need to login');
+      }
     } else {
       console.log('Supabase client initialized successfully');
     }

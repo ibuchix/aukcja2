@@ -12,10 +12,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard";
 
 export default function DealerDashboard() {
-  const { user } = useAuth();
-  const { dealerProfile, recentActivity } = useWelcomeDashboardData(user, false);
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const { dealerProfile, recentActivity, profileDataLoading } = useWelcomeDashboardData(user, isAuthLoading);
   const navigate = useNavigate();
   
   // Add debug logging
@@ -23,13 +24,23 @@ export default function DealerDashboard() {
     console.log("DealerDashboard state:", { 
       userExists: !!user,
       dealerProfileExists: !!dealerProfile,
+      isAuthLoading,
+      profileDataLoading,
       userData: user,
       profileData: dealerProfile
     });
-  }, [user, dealerProfile]);
+  }, [user, dealerProfile, isAuthLoading, profileDataLoading]);
+
+  // Determine if we're still in a loading state
+  const isLoading = isAuthLoading || profileDataLoading;
 
   // If we're not loading and there's no dealer profile, we need to handle this case
-  const noProfileFound = !dealerProfile && !!user;
+  const noProfileFound = !dealerProfile && !!user && !isLoading;
+
+  // Show loading state
+  if (isLoading) {
+    return <LoadingDashboard />;
+  }
 
   return (
     <DashboardLayout title="Dealer Dashboard">
