@@ -1,3 +1,4 @@
+
 import { createContext, useContext } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +15,7 @@ type AuthContextType = {
   isAuthenticated: boolean;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  signIn: (options: { exchangeToken?: string }) => Promise<{ error?: Error }>;
 };
 
 // Create the context with a default value
@@ -66,6 +68,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Sign in with exchange token
+  const signIn = async ({ exchangeToken }: { exchangeToken?: string }) => {
+    try {
+      setIsLoading(true);
+      
+      if (!exchangeToken) {
+        return { error: new Error("Missing exchange token") };
+      }
+      
+      // Exchange token for session
+      const { data, error } = await supabase.auth.exchangeCodeForSession(exchangeToken);
+      
+      if (error) {
+        console.error("Error exchanging token for session:", error);
+        return { error };
+      }
+      
+      if (data?.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+        
+        // Fetch profile data
+        if (data.session.user) {
+          const profileData = await fetchDealerProfile(data.session.user.id);
+          setProfile(profileData);
+        }
+      }
+      
+      return { error: undefined };
+    } catch (error) {
+      console.error("Sign in error:", error);
+      return { error: error instanceof Error ? error : new Error("Unknown error") };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Refresh the session
   const refreshSession = async () => {
     try {
@@ -101,6 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: !!user,
     signOut,
     refreshSession,
+    signIn,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -35,8 +36,8 @@ export function useOtpForm(
     mode: "onChange",
   });
 
-  // Handle OTP submit and session establishment
-  const handleSubmit = async (values: OtpFormValues) => {
+  // Handle OTP form submission
+  const handleSubmit = otpForm.handleSubmit(async (values: OtpFormValues) => {
     setIsSubmitting(true);
     
     try {
@@ -107,7 +108,7 @@ export function useOtpForm(
     } finally {
       setIsSubmitting(false);
     }
-  };
+  });
 
   // Handle resending the OTP
   const handleResendOtp = async () => {
