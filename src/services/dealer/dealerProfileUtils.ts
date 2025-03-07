@@ -1,15 +1,14 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { DealerInsert, ProfileInsert } from "@/utils/databaseTypes";
-import { executeWithRetry, SupabaseResponse } from "@/utils/retryUtils";
+import { SupabaseResponse } from "@/utils/retryUtils";
 
 export async function createProfileRecord(
   userId: string,
   profileData: Omit<ProfileInsert, 'id'>
 ): Promise<SupabaseResponse> {
   try {
-    // Check if profile exists before creating
-    // Use direct string literals instead of helper functions
+    // Check if profile exists before creating using direct string literals
     const existingProfile = await supabase
       .from('profiles')
       .select('id')

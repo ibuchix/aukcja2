@@ -41,4 +41,4 @@ export const NavbarMobileMenu = ({ isOpen, session, handleLogout }: NavbarMobile
       </div>
     </div>
   );
-};
+}

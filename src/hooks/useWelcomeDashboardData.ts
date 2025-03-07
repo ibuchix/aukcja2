@@ -32,8 +32,7 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
         setIsProfileLoading(true);
         console.log(`Fetching dealer profile for user ID: ${user.id}`);
         
-        // Fetch dealer profile from the dealers table
-        // Use direct string literals instead of helper functions to avoid type recursion
+        // Fetch dealer profile with direct string literals
         const { data, error } = await supabase
           .from('dealers')
           .select('*')

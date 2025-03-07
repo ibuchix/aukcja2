@@ -41,4 +41,4 @@ export const DealerInfoCard = ({ dealerProfile, userEmail, isLoading }: DealerIn
       </CardContent>
     </Card>
   );
-};
+}

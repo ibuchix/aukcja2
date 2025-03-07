@@ -36,4 +36,4 @@ export const NavbarDesktopMenu = ({ session, handleLogout }: NavbarDesktopMenuPr
       )}
     </div>
   );
-};
+}
