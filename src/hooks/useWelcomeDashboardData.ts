@@ -71,9 +71,12 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
             
             if (userId) {
               // Now we have the user ID, get the dealer profile
+              // Ensure userId is definitely a string type before using it
+              const userIdString = String(userId);
+              
               const { data: dealerData, error: dealerError } = await supabase.rpc(
                 'get_dealer_by_user_id',
-                { p_user_id: userId }
+                { p_user_id: userIdString }
               );
               
               if (dealerError) {
