@@ -13,24 +13,45 @@ import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function DealerDashboard() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const { dealerProfile, recentActivity, profileDataLoading, profileFetchAttempted } = useWelcomeDashboardData(user, isAuthLoading);
   const navigate = useNavigate();
   
-  // Add debug logging
+  // Enhanced debug logging
   useEffect(() => {
-    console.log("DealerDashboard state:", { 
-      userExists: !!user,
-      dealerProfileExists: !!dealerProfile,
-      isAuthLoading,
-      profileDataLoading,
-      profileFetchAttempted,
-      userData: user,
-      profileData: dealerProfile
-    });
-  }, [user, dealerProfile, isAuthLoading, profileDataLoading, profileFetchAttempted]);
+    const debugAuth = async () => {
+      if (user) {
+        console.log("DealerDashboard - Current auth state:", { 
+          userExists: !!user,
+          userId: user.id,
+          userEmail: user.email,
+          dealerProfileExists: !!dealerProfile,
+        });
+        
+        // Test direct query to verify RLS is working correctly
+        try {
+          const { data, error } = await supabase
+            .from('dealers')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+          
+          console.log("Direct query test result:", { 
+            success: !error, 
+            hasData: !!data,
+            error: error?.message 
+          });
+        } catch (err) {
+          console.error("Error in debug query:", err);
+        }
+      }
+    };
+    
+    debugAuth();
+  }, [user, dealerProfile]);
 
   // Determine if we're still in a loading state
   const isLoading = isAuthLoading || profileDataLoading;
