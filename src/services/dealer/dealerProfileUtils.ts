@@ -2,7 +2,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { DealerInsert, ProfileInsert } from "@/utils/databaseTypes";
 import { executeWithRetry, SupabaseResponse } from "@/utils/retryUtils";
-import { filterString } from "@/utils/supabaseHelpers";
 
 export async function createProfileRecord(
   userId: string,
@@ -10,8 +9,8 @@ export async function createProfileRecord(
 ): Promise<SupabaseResponse> {
   try {
     // Check if profile exists before creating
-    // Use the simplified helper function
-    const idColumn = filterString('id');
+    // Use direct string column name
+    const idColumn = "id";
     const existingProfile = await supabase
       .from('profiles')
       .select('id')

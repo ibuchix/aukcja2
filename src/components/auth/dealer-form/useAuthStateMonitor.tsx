@@ -13,21 +13,21 @@ export function useAuthStateMonitor(setEmailVerified: (verified: boolean) => voi
     const checkExistingUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        // Use the simplified helper functions
-        const idColumn = filterString('id');
+        // Get simple string column names
+        const idCol = "id";
         
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
-          .eq(idColumn, session.user.id)
+          .eq(idCol, session.user.id)
           .single();
 
-        const userIdColumn = userIDColumn();
+        const userIdCol = "user_id";
         
         const { data: dealer } = await supabase
           .from('dealers')
           .select('*')
-          .eq(userIdColumn, session.user.id)
+          .eq(userIdCol, session.user.id)
           .single();
 
         if (profile && !dealer) {

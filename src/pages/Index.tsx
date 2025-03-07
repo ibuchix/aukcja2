@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
@@ -9,7 +10,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
 import { CarListing } from "@/types/cars";
-import { filterString, filterBoolean } from "@/utils/supabaseHelpers";
 
 const Index = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
@@ -17,8 +17,8 @@ const Index = () => {
   const { data: featuredVehicles, isLoading } = useQuery({
     queryKey: ["featuredVehicles"],
     queryFn: async () => {
-      const statusColumn = filterString('status');
-      const isDraftColumn = filterBoolean('is_draft');
+      const statusColumn = "status";
+      const isDraftColumn = "is_draft";
       
       const { data, error } = await supabase
         .from('cars')

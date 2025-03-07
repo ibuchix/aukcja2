@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { User } from "@supabase/supabase-js";
-import { hasData, hasProperty, userIDColumn } from "@/utils/supabaseHelpers";
+import { hasProperty } from "@/utils/supabaseHelpers";
 
 export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolean) {
   const [dealerProfile, setDealerProfile] = useState<any>(null);
@@ -34,12 +34,12 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
         
         // Fetch dealer profile from the dealers table
         const tableName = 'dealers';
-        const userID = userIDColumn();
+        const userIdCol = "user_id";
         
         const { data, error } = await supabase
           .from(tableName)
           .select('*')
-          .eq(userID, user.id)
+          .eq(userIdCol, user.id)
           .maybeSingle();
 
         if (error) {

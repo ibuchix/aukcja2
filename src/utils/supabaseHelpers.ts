@@ -8,17 +8,13 @@ export function hasData<T>(
   return response.data !== null && !response.error;
 }
 
-// Simplified string column helper - returns the column name as a simple string
-export function filterString(
-  column: string
-): string {
+// Very simple string column helper - just returns the input string
+export function filterString(column: string): string {
   return column;
 }
 
-// Simplified boolean column helper - returns the column name as a simple string
-export function filterBoolean(
-  column: string
-): string {
+// Very simple boolean column helper - just returns the input string
+export function filterBoolean(column: string): string {
   return column;
 }
 
@@ -38,9 +34,7 @@ export function hasProperty<T, K extends string>(obj: T, prop: K): obj is T & Re
 }
 
 // Simplified insertion helper
-export function prepareInsert(
-  data: Record<string, any>
-): Record<string, any> {
+export function prepareInsert(data: Record<string, any>): Record<string, any> {
   return data;
 }
 
