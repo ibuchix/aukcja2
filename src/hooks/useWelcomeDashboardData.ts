@@ -34,7 +34,7 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
         
         // Fetch dealer profile from the dealers table
         const tableName = 'dealers';
-        const userID = userIDColumn(tableName);
+        const userID = userIDColumn();
         
         const { data, error } = await supabase
           .from(tableName)
