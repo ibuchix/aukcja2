@@ -65,18 +65,26 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
           
           if (userError) {
             console.error("Error fetching user ID by email:", userError);
-          } else if (userData && userData.id) {
-            // Now we have the user ID, get the dealer profile
-            const { data: dealerData, error: dealerError } = await supabase.rpc(
-              'get_dealer_by_user_id',
-              { p_user_id: userData.id }
-            );
+          } else if (userData) {
+            // Check if userData has an id property and it's not null
+            const userId = hasProperty(userData, 'id') ? userData.id : null;
             
-            if (dealerError) {
-              console.error("Error fetching dealer by user ID:", dealerError);
-            } else if (dealerData) {
-              console.log("Dealer profile fetched by user ID after email lookup:", dealerData);
-              data = dealerData;
+            if (userId) {
+              // Now we have the user ID, get the dealer profile
+              const { data: dealerData, error: dealerError } = await supabase.rpc(
+                'get_dealer_by_user_id',
+                { p_user_id: userId }
+              );
+              
+              if (dealerError) {
+                console.error("Error fetching dealer by user ID:", dealerError);
+              } else if (dealerData) {
+                console.log("Dealer profile fetched by user ID after email lookup:", dealerData);
+                // Check if dealerData has the required properties to be a DealerRecord
+                if (typeof dealerData === 'object' && dealerData !== null) {
+                  data = dealerData as unknown as DealerRecord;
+                }
+              }
             }
           }
         }
