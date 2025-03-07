@@ -10,9 +10,8 @@ serve(async (req) => {
   }
   
   try {
-    // Extract the user ID from the request
-    const url = new URL(req.url);
-    const userId = url.searchParams.get("userId");
+    // Extract the user ID from the headers instead of URL parameters
+    const userId = req.headers.get("userId");
     
     if (!userId) {
       return new Response(

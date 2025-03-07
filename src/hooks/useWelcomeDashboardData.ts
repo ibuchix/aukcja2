@@ -4,6 +4,7 @@ import { User } from "@supabase/supabase-js";
 import { useToast } from "@/components/ui/use-toast";
 import { DealerRecord } from "@/utils/databaseTypes";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolean) {
   const [dealerProfile, setDealerProfile] = useState<DealerRecord | null>(null);
@@ -38,10 +39,12 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
 
         console.log(`Fetching dealer profile for user ID: ${user.id}`);
         
-        // Use the imported function from authUtils that now uses the edge function
+        // Use the edge function instead of direct database access
         const { data, error } = await supabase.functions.invoke('get-dealer-profile', {
           method: 'GET',
-          params: { userId: user.id }
+          headers: {
+            'userId': user.id
+          }
         });
         
         if (error) {

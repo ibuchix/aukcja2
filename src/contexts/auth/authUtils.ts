@@ -12,7 +12,9 @@ export async function fetchDealerProfile(userId: string) {
     // Use the edge function instead of direct database access
     const { data, error } = await supabase.functions.invoke('get-dealer-profile', {
       method: 'GET',
-      params: { userId }
+      headers: {
+        'userId': userId,
+      }
     });
 
     if (error) {
