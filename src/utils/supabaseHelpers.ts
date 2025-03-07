@@ -1,6 +1,5 @@
 
 import { PostgrestError, PostgrestResponse, PostgrestSingleResponse } from '@supabase/supabase-js';
-import { Database } from '@/integrations/supabase/types';
 
 // Type-safe helper for checking if response contains data
 export function hasData<T>(
@@ -9,26 +8,26 @@ export function hasData<T>(
   return response.data !== null && !response.error;
 }
 
-// Simple string column helper - returns the column name without type checking
+// Simplified string column helper - returns the column name as a simple string
 export function filterString(
   column: string
 ): string {
   return column;
 }
 
-// Simple boolean column helper - returns the column name without type checking
+// Simplified boolean column helper - returns the column name as a simple string
 export function filterBoolean(
   column: string
 ): string {
   return column;
 }
 
-// Simple ID column helper - just returns 'id'
+// Simple ID column helper - just returns 'id' as a string
 export function matchID(): string {
   return 'id';
 }
 
-// Simple user_id column helper - just returns 'user_id'
+// Simple user_id column helper - just returns 'user_id' as a string
 export function userIDColumn(): string {
   return 'user_id';
 }

@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";

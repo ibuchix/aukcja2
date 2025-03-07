@@ -13,7 +13,7 @@ export function useAuthStateMonitor(setEmailVerified: (verified: boolean) => voi
     const checkExistingUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        // Use the simplified helper functions to completely avoid type recursion
+        // Use the simplified helper functions
         const idColumn = filterString('id');
         
         const { data: profile } = await supabase
