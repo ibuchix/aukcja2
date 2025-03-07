@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SupabaseResponse } from "@/utils/retryUtils";
 
 /**
  * Checks if a business registry number already exists in the database
@@ -10,7 +9,7 @@ import { SupabaseResponse } from "@/utils/retryUtils";
 export async function checkBusinessRegistryExists(businessRegistryNumber: string): Promise<boolean> {
   try {
     // Use direct string literals for simplicity and to avoid type recursion
-    const response: SupabaseResponse = await supabase
+    const response = await supabase
       .from('dealers')
       .select('business_registry_number')
       .eq('business_registry_number', businessRegistryNumber)
