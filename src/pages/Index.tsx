@@ -10,55 +10,83 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
 import { CarListing } from "@/types/cars";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
+  const { toast } = useToast();
 
-  const { data: featuredVehicles, isLoading } = useQuery({
+  const { data: featuredVehicles, isLoading, error } = useQuery({
     queryKey: ["featuredVehicles"],
     queryFn: async () => {
-      const statusColumn = "status";
-      const isDraftColumn = "is_draft";
-      
-      const { data, error } = await supabase
-        .from('cars')
-        .select("*")
-        .eq(statusColumn, "available")
-        .eq(isDraftColumn, false)
-        .limit(4)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      return data.map(car => {
-        let features = car.features;
-        try {
-          if (typeof features === 'string') {
-            features = JSON.parse(features);
-          }
-        } catch (e) {
-          console.error("Error parsing features:", e);
-          features = {
-            satNav: false,
-            heatedSeats: false,
-            panoramicRoof: false,
-            reverseCamera: false,
-            upgradedSound: false
-          };
-        }
+      try {
+        const statusColumn = "status";
+        const isDraftColumn = "is_draft";
         
-        return {
-          ...car,
-          features: features || {
-            satNav: false,
-            heatedSeats: false,
-            panoramicRoof: false,
-            reverseCamera: false,
-            upgradedSound: false
-          },
-        };
-      }) as CarListing[];
+        console.log("Fetching featured vehicles...");
+        const { data, error } = await supabase
+          .from('cars')
+          .select("*")
+          .eq(statusColumn, "available")
+          .eq(isDraftColumn, false)
+          .limit(4)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error fetching featured vehicles:", error);
+          throw error;
+        }
+
+        if (!data || data.length === 0) {
+          console.log("No featured vehicles found");
+          return [];
+        }
+
+        console.log(`Found ${data.length} featured vehicles`);
+        return data.map(car => {
+          let features = car.features;
+          try {
+            if (typeof features === 'string') {
+              features = JSON.parse(features);
+            }
+          } catch (e) {
+            console.error("Error parsing features:", e);
+            features = {
+              satNav: false,
+              heatedSeats: false,
+              panoramicRoof: false,
+              reverseCamera: false,
+              upgradedSound: false
+            };
+          }
+          
+          return {
+            ...car,
+            features: features || {
+              satNav: false,
+              heatedSeats: false,
+              panoramicRoof: false,
+              reverseCamera: false,
+              upgradedSound: false
+            },
+          };
+        }) as CarListing[];
+      } catch (err) {
+        console.error("Failed to fetch featured vehicles:", err);
+        // Don't show toast for 401/403 errors since we just implemented RLS
+        if (err && typeof err === 'object' && 'status' in err && 
+            (err.status !== 401 && err.status !== 403)) {
+          toast({
+            title: "Error",
+            description: "Failed to load featured vehicles",
+            variant: "destructive",
+          });
+        }
+        return [];
+      }
     },
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   return (
@@ -79,9 +107,13 @@ const Index = () => {
                 </div>
               ))}
             </div>
-          ) : (
+          ) : error ? (
+            <div className="text-center py-10">
+              <p className="text-gray-500">Unable to load featured vehicles at this time.</p>
+            </div>
+          ) : featuredVehicles && featuredVehicles.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {featuredVehicles?.map((vehicle) => (
+              {featuredVehicles.map((vehicle) => (
                 <div 
                   key={vehicle.id}
                   onClick={() => setSelectedCar(vehicle)}
@@ -97,6 +129,10 @@ const Index = () => {
                   />
                 </div>
               ))}
+            </div>
+          ) : (
+            <div className="text-center py-10">
+              <p className="text-gray-500">No vehicles available at the moment. Please check back later.</p>
             </div>
           )}
         </div>
