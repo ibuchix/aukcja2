@@ -10,6 +10,7 @@ export async function createProfileRecord(
 ): Promise<SupabaseResponse> {
   try {
     // Check if profile exists before creating
+    // Use the simplified helper function
     const idColumn = filterString('profiles', 'id', userId);
     const existingProfile = await supabase
       .from('profiles')

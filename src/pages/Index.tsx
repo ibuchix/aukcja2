@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
 import { CarListing } from "@/types/cars";
-import { filterString, filterBoolean, hasData } from "@/utils/supabaseHelpers";
+import { filterString, filterBoolean } from "@/utils/supabaseHelpers";
 
 const Index = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
@@ -19,6 +19,7 @@ const Index = () => {
     queryKey: ["featuredVehicles"],
     queryFn: async () => {
       const tableName = 'cars';
+      // Use the simplified helper functions to avoid excessive type recursion
       const statusColumn = filterString(tableName, 'status', 'available');
       const isDraftColumn = filterBoolean(tableName, 'is_draft', false);
       

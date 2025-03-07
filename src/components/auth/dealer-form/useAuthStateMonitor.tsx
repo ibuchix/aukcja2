@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { filterString, hasData, userIDColumn } from "@/utils/supabaseHelpers";
+import { filterString, userIDColumn } from "@/utils/supabaseHelpers";
 
 export function useAuthStateMonitor(setEmailVerified: (verified: boolean) => void) {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ export function useAuthStateMonitor(setEmailVerified: (verified: boolean) => voi
     const checkExistingUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
+        // Use the simplified helper functions to avoid excessive type recursion
         const profileTable = 'profiles';
         const idColumn = filterString(profileTable, 'id', session.user.id);
         

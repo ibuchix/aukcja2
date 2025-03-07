@@ -9,37 +9,34 @@ export function hasData<T>(
   return response.data !== null && !response.error;
 }
 
-// Type-safe wrapper for filter operations
-export function filterString<T extends keyof Database['public']['Tables']>(
-  table: T, 
+// Simplified filter helpers that avoid excessive type recursion
+export function filterString(
+  table: string, 
   column: string, 
   value: string | null | undefined
-) {
-  return column as any;
+): string {
+  return column;
 }
 
-// Type-safe wrapper for filter operations with boolean values
-export function filterBoolean<T extends keyof Database['public']['Tables']>(
-  table: T,
+export function filterBoolean(
+  table: string,
   column: string,
   value: boolean | null | undefined
-) {
-  return column as any;
+): string {
+  return column;
 }
 
-// Type-safe wrapper for matching a table by ID
-export function matchID<T extends keyof Database['public']['Tables']>(
-  table: T,
+export function matchID(
+  table: string,
   value: string | null | undefined
-) {
-  return 'id' as any;
+): string {
+  return 'id';
 }
 
-// Type-safe wrapper for user_id column
-export function userIDColumn<T extends keyof Database['public']['Tables']>(
-  table: T
-) {
-  return 'user_id' as any;
+export function userIDColumn(
+  table: string
+): string {
+  return 'user_id';
 }
 
 // Type guard for checking if an object has a property
@@ -47,12 +44,12 @@ export function hasProperty<T, K extends string>(obj: T, prop: K): obj is T & Re
   return obj !== null && obj !== undefined && typeof obj === 'object' && prop in obj;
 }
 
-// Type-safe insertion helper
-export function prepareInsert<T extends keyof Database['public']['Tables']>(
-  table: T,
+// Simplified insertion helper
+export function prepareInsert(
+  table: string,
   data: Record<string, any>
 ): Record<string, any> {
-  return data as any;
+  return data;
 }
 
 // Helper to safely access properties that might not exist on error objects

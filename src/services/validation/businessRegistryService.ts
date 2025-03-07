@@ -11,6 +11,7 @@ import { filterString, hasData } from "@/utils/supabaseHelpers";
 export async function checkBusinessRegistryExists(businessRegistryNumber: string): Promise<boolean> {
   try {
     const tableName = 'dealers';
+    // Use the simplified helper function without generic parameters
     const columnName = filterString(tableName, 'business_registry_number', businessRegistryNumber);
     
     const response: SupabaseResponse = await supabase
