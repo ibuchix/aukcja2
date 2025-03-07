@@ -5,11 +5,13 @@ import { useToast } from "@/components/ui/use-toast";
 import { DealerRecord } from "@/utils/databaseTypes";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { executeWithRetry } from "@/utils/retryUtils";
 
 export function useDealerProfile(user: User | null, isAuthLoading: boolean) {
   const [dealerProfile, setDealerProfile] = useState<DealerRecord | null>(null);
   const [profileDataLoading, setProfileDataLoading] = useState<boolean>(true);
   const [profileFetchAttempted, setProfileFetchAttempted] = useState<boolean>(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const { toast } = useToast();
   const { refreshSession } = useAuth();
 
@@ -29,48 +31,60 @@ export function useDealerProfile(user: User | null, isAuthLoading: boolean) {
         }
 
         console.log(`[RLS Debug] Fetching dealer profile for user ID: ${user.id}`);
+        console.log(`[RLS Debug] Current session info:`, await supabase.auth.getSession());
         
-        // Direct database access with improved error handling
-        const { data, error } = await supabase
-          .from('dealers')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle(); // Use maybeSingle instead of single to handle missing data more gracefully
-        
-        if (error) {
-          console.error("[RLS Debug] Error fetching dealer profile:", error);
+        // First try to directly get auth.uid() to see if authentication is working
+        try {
+          const { data: authIdData, error: authIdError } = await supabase.rpc('debug_auth_user_id');
+          console.log("[RLS Debug] Auth user ID from RPC:", authIdData, "Error:", authIdError);
           
-          if (error.code === 'PGRST116') {
-            console.log("[RLS Debug] No data found - this is not necessarily an error");
-            toast({
-              title: "Profile data not found",
-              description: "We couldn't find your dealer profile. Please complete your registration.",
-              variant: "destructive",
-            });
-          } else {
-            console.log("[RLS Debug] Request details:", {
-              userId: user.id,
-              errorCode: error.code,
-              errorMessage: error.message,
-              errorDetails: error.details
-            });
-            
-            toast({
-              title: "Data loading error",
-              description: "There was an error loading your profile data. Please try again.",
-              variant: "destructive",
-            });
+          if (authIdError) {
+            setFetchError(`Auth check failed: ${authIdError.message}`);
+          } else if (authIdData !== user.id) {
+            console.warn(`[RLS Debug] Auth mismatch: JWT has ${authIdData} but user is ${user.id}`);
+            // Try to refresh the session
+            await refreshSession();
           }
+        } catch (authCheckError) {
+          console.error("[RLS Debug] Auth check exception:", authCheckError);
         }
         
-        if (data) {
-          console.log("[RLS Debug] Dealer profile fetched successfully:", data);
-          if (isMounted) setDealerProfile(data as DealerRecord);
+        // Try with executeWithRetry for better reliability
+        const result = await executeWithRetry(
+          async () => {
+            const { data, error } = await supabase
+              .from('dealers')
+              .select('*')
+              .eq('user_id', user.id)
+              .maybeSingle();
+              
+            if (error) throw error;
+            return data;
+          },
+          {
+            maxRetries: 2,
+            baseDelay: 500,
+            shouldRetry: (error) => {
+              console.log("[RLS Debug] Query error in retry:", error);
+              // Only retry on specific errors that might be temporary
+              return error.code === '42501' || error.code === 'PGRST301';
+            }
+          }
+        ).catch(error => {
+          console.error("[RLS Debug] Final error after retries:", error);
+          setFetchError(error.message);
+          return null;
+        });
+        
+        if (result) {
+          console.log("[RLS Debug] Dealer profile fetched successfully:", result);
+          if (isMounted) setDealerProfile(result as DealerRecord);
         } else {
           console.log("[RLS Debug] No dealer profile found for user:", user.id);
         }
       } catch (error) {
         console.error("[RLS Debug] Unexpected error fetching profile:", error);
+        setFetchError(error instanceof Error ? error.message : String(error));
       } finally {
         if (isMounted) {
           setProfileDataLoading(false);
@@ -82,6 +96,7 @@ export function useDealerProfile(user: User | null, isAuthLoading: boolean) {
     // Only fetch if we have a user and we're not currently loading auth
     if (user && !isAuthLoading) {
       setProfileDataLoading(true);
+      setFetchError(null);
       fetchDealerProfile();
     } else if (!user && !isAuthLoading) {
       setProfileDataLoading(false);
@@ -96,6 +111,7 @@ export function useDealerProfile(user: User | null, isAuthLoading: boolean) {
   return {
     dealerProfile,
     profileDataLoading,
-    profileFetchAttempted
+    profileFetchAttempted,
+    fetchError
   };
 }

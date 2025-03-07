@@ -9,7 +9,7 @@ import { BusinessActionSection } from "@/components/dealer/dashboard/BusinessAct
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
 import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2, InfoIcon } from "lucide-react";
+import { AlertCircle, CheckCircle2, InfoIcon, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard";
@@ -17,13 +17,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DealerDashboard() {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading, refreshSession } = useAuth();
   const { 
     dealerProfile, 
     recentActivity, 
     profileDataLoading, 
     profileFetchAttempted,
-    directQueryResult 
+    directQueryResult,
+    fetchError 
   } = useWelcomeDashboardData(user, isAuthLoading);
   const navigate = useNavigate();
   
@@ -36,6 +37,7 @@ export default function DealerDashboard() {
           userId: user.id,
           userEmail: user.email,
           dealerProfileExists: !!dealerProfile,
+          fetchError
         });
         
         // Test direct query to verify RLS is working correctly
@@ -49,7 +51,8 @@ export default function DealerDashboard() {
           console.log("Direct query test result:", { 
             success: !error, 
             hasData: !!data,
-            error: error?.message 
+            error: error?.message,
+            errorCode: error?.code
           });
           
           // Verify JWT claim matches what RLS expects
@@ -78,7 +81,13 @@ export default function DealerDashboard() {
     };
     
     debugRls();
-  }, [user, dealerProfile]);
+  }, [user, dealerProfile, fetchError]);
+
+  // Handle manual session refresh
+  const handleManualRefresh = async () => {
+    await refreshSession();
+    window.location.reload(); // Force reload to ensure fresh state
+  };
 
   // Determine if we're still in a loading state
   const isLoading = isAuthLoading || profileDataLoading;
@@ -114,6 +123,24 @@ export default function DealerDashboard() {
 
   return (
     <DashboardLayout title="Dealer Dashboard">
+      {fetchError && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Database Access Error</AlertTitle>
+          <AlertDescription className="flex flex-col gap-2">
+            <p>{fetchError}</p>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="w-fit flex items-center gap-2 mt-2"
+              onClick={handleManualRefresh}
+            >
+              <RefreshCw className="h-4 w-4" /> Refresh Session
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {directQueryResult && (
         <Alert variant={directQueryResult.success ? "default" : "destructive"} className="mb-6">
           {directQueryResult.success ? 
@@ -154,6 +181,18 @@ export default function DealerDashboard() {
                 <p><strong>Email:</strong> {user?.email}</p>
                 <p><strong>Dealer Profile:</strong> Not Found</p>
                 <p><strong>Auth Status:</strong> Authentication successful, but dealer profile missing</p>
+                {fetchError && <p><strong>Error:</strong> {fetchError}</p>}
+              </div>
+              
+              <div className="mt-4">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={handleManualRefresh}
+                >
+                  <RefreshCw className="h-4 w-4" /> Refresh Session
+                </Button>
               </div>
             </CardContent>
           </Card>
