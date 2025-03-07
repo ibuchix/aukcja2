@@ -20,9 +20,9 @@ export default function DealerDashboard() {
   const { dealerProfile, recentActivity, profileDataLoading, profileFetchAttempted } = useWelcomeDashboardData(user, isAuthLoading);
   const navigate = useNavigate();
   
-  // Enhanced debug logging
+  // Enhanced RLS debug logging
   useEffect(() => {
-    const debugAuth = async () => {
+    const debugRls = async () => {
       if (user) {
         console.log("DealerDashboard - Current auth state:", { 
           userExists: !!user,
@@ -44,13 +44,33 @@ export default function DealerDashboard() {
             hasData: !!data,
             error: error?.message 
           });
+          
+          // Verify JWT claim matches what RLS expects
+          const { data: jwtData, error: jwtError } = await supabase
+            .rpc('debug_auth_user_id');
+          
+          console.log("JWT Auth Claim Check:", {
+            success: !jwtError,
+            jwtUserId: jwtData,
+            matchesCurrentUser: user.id === jwtData,
+            error: jwtError?.message
+          });
+          
+          // Check if session contains the correct headers
+          const { data: { session } } = await supabase.auth.getSession();
+          console.log("Session check:", {
+            hasSession: !!session,
+            hasAccessToken: !!session?.access_token,
+            expiresAt: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : null,
+            tokenType: session?.token_type
+          });
         } catch (err) {
-          console.error("Error in debug query:", err);
+          console.error("Error in RLS debug queries:", err);
         }
       }
     };
     
-    debugAuth();
+    debugRls();
   }, [user, dealerProfile]);
 
   // Determine if we're still in a loading state

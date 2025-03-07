@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import { useToast } from "@/components/ui/use-toast";
@@ -36,9 +37,26 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
           return;
         }
 
-        console.log(`Fetching dealer profile for user ID: ${user.id}`);
+        console.log(`[RLS Debug] Fetching dealer profile for user ID: ${user.id}`);
         
-        // Direct database access now that RLS is configured correctly
+        // Check JWT claim before making the query
+        try {
+          const { data: jwtUserId, error: jwtError } = await supabase.rpc('debug_auth_user_id');
+          console.log("[RLS Debug] JWT user ID check:", {
+            jwtUserId,
+            error: jwtError?.message,
+            matchesCurrentUser: jwtUserId === user.id
+          });
+          
+          if (jwtError || jwtUserId !== user.id) {
+            console.warn("[RLS Debug] JWT user ID mismatch or error. Refreshing session...");
+            await refreshSession();
+          }
+        } catch (jwtCheckError) {
+          console.error("[RLS Debug] Error checking JWT user ID:", jwtCheckError);
+        }
+        
+        // Direct database access with RLS
         const { data, error } = await supabase
           .from('dealers')
           .select('*')
@@ -46,18 +64,33 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
           .single();
         
         if (error) {
-          console.error("Error fetching dealer profile:", error);
-          // Continue execution - we'll handle the null profile case
+          console.error("[RLS Debug] Error fetching dealer profile:", error);
+          console.log("[RLS Debug] Request details:", {
+            userId: user.id,
+            errorCode: error.code,
+            errorMessage: error.message,
+            errorDetails: error.details
+          });
+          
+          // Attempt to check if the dealers table has any records (this will be filtered by RLS)
+          const { count, error: countError } = await supabase
+            .from('dealers')
+            .select('*', { count: 'exact', head: true });
+            
+          console.log("[RLS Debug] Dealers table count check:", { 
+            count, 
+            error: countError?.message 
+          });
         }
         
         if (data) {
-          console.log("Dealer profile fetched successfully:", data);
+          console.log("[RLS Debug] Dealer profile fetched successfully:", data);
           if (isMounted) setDealerProfile(data as DealerRecord);
         } else {
-          console.log("No dealer profile found for user:", user.id);
+          console.log("[RLS Debug] No dealer profile found for user:", user.id);
         }
       } catch (error) {
-        console.error("Unexpected error fetching profile:", error);
+        console.error("[RLS Debug] Unexpected error fetching profile:", error);
       } finally {
         if (isMounted) {
           setProfileDataLoading(false);
