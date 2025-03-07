@@ -10,13 +10,11 @@ import { hasData } from "@/utils/supabaseHelpers";
  */
 export async function checkBusinessRegistryExists(businessRegistryNumber: string): Promise<boolean> {
   try {
-    // Use direct string column name
-    const columnName = "business_registry_number";
-    
+    // Use direct string literals instead of helper functions
     const response: SupabaseResponse = await supabase
       .from('dealers')
       .select('business_registry_number')
-      .eq(columnName, businessRegistryNumber)
+      .eq('business_registry_number', businessRegistryNumber)
       .maybeSingle();
     
     if (response.error) {

@@ -8,22 +8,20 @@ export function hasData<T>(
   return response.data !== null && !response.error;
 }
 
-// Very simple string column helper - just returns the input string
+// Simple helpers that return string literals rather than complex generic types
+// This prevents TypeScript type instantiation from becoming excessively deep
 export function filterString(column: string): string {
   return column;
 }
 
-// Very simple boolean column helper - just returns the input string
 export function filterBoolean(column: string): string {
   return column;
 }
 
-// Simple ID column helper - just returns 'id' as a string
 export function matchID(): string {
   return 'id';
 }
 
-// Simple user_id column helper - just returns 'user_id' as a string
 export function userIDColumn(): string {
   return 'user_id';
 }

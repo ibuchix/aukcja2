@@ -9,12 +9,11 @@ export async function createProfileRecord(
 ): Promise<SupabaseResponse> {
   try {
     // Check if profile exists before creating
-    // Use direct string column name
-    const idColumn = "id";
+    // Use direct string literals instead of helper functions
     const existingProfile = await supabase
       .from('profiles')
       .select('id')
-      .eq(idColumn, userId)
+      .eq('id', userId)
       .maybeSingle();
     
     // Only create if it doesn't exist

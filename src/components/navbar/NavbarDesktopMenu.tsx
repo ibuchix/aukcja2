@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Compass, User, LayoutDashboard, HelpCircle } from "lucide-react";
+import { Compass, LayoutDashboard, HelpCircle } from "lucide-react";
 
 interface NavbarDesktopMenuProps {
   session: any;
@@ -23,21 +23,14 @@ export const NavbarDesktopMenu = ({ session, handleLogout }: NavbarDesktopMenuPr
         How It Works
       </Link>
       {session ? (
-        <div className="flex items-center space-x-4">
-          <Link to="/dealer/profile" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
-            <User size={20} />
-            Profile
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="btn-primary"
-          >
-            Logout
-          </button>
-        </div>
+        <button
+          onClick={handleLogout}
+          className="btn-primary"
+        >
+          Logout
+        </button>
       ) : (
-        <Link to="/auth" className="btn-primary flex items-center gap-2">
-          <User size={20} />
+        <Link to="/auth" className="btn-primary">
           Sign Up
         </Link>
       )}
