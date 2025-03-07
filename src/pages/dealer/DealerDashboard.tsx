@@ -9,13 +9,19 @@ import { QuickActions } from "@/components/dealer/dashboard/QuickActions";
 import { BusinessActionSection } from "@/components/dealer/dashboard/BusinessActionSection";
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
 import { useEffect } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export default function DealerDashboard() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const { dealerProfile, recentActivity, profileDataLoading } = useWelcomeDashboardData(user, isAuthLoading);
+  const navigate = useNavigate();
 
-  // Combined loading state
-  const isLoading = isAuthLoading || profileDataLoading;
+  // Combined loading state - shorter timeout for better UX
+  const isLoading = isAuthLoading || (profileDataLoading && Date.now() - loadStartTime < 3000);
+  const loadStartTime = Date.now();
   
   // Add debug logging
   useEffect(() => {
@@ -28,15 +34,34 @@ export default function DealerDashboard() {
     });
   }, [isAuthLoading, profileDataLoading, isLoading, user, dealerProfile]);
 
+  // If we're not loading and there's no dealer profile, we need to handle this case
+  const noProfileFound = !isLoading && !dealerProfile && !!user;
+
   return (
     <DashboardLayout title="Dealer Dashboard">
       {isLoading ? (
         <LoadingDashboard />
+      ) : noProfileFound ? (
+        <div className="space-y-6">
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Profile Not Found</AlertTitle>
+            <AlertDescription>
+              We couldn't find your dealer profile. You may need to complete your registration.
+            </AlertDescription>
+          </Alert>
+          <Button 
+            onClick={() => navigate('/complete-registration')}
+            className="w-full md:w-auto"
+          >
+            Complete Registration
+          </Button>
+        </div>
       ) : (
         <div className="space-y-8">
           <DealerWelcomeCard 
-            dealerName={dealerProfile?.supervisor_name}
-            dealershipName={dealerProfile?.dealership_name}
+            dealerName={dealerProfile?.supervisor_name || user?.email?.split('@')[0] || "Dealer"}
+            dealershipName={dealerProfile?.dealership_name || "Your Dealership"}
             isLoading={false}
           />
           

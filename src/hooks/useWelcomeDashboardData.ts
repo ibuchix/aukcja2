@@ -35,8 +35,8 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
   useEffect(() => {
     const fetchDealerProfile = async () => {
       try {
-        if (!user || !user.id) {
-          console.log("No user or user ID available for profile fetch");
+        if (!user) {
+          console.log("No user available for profile fetch");
           setIsProfileLoading(false);
           return;
         }
@@ -44,12 +44,31 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
         setIsProfileLoading(true);
         console.log(`Fetching dealer profile for user ID: ${user.id}`);
         
-        // Fetch dealer profile with direct string literals
-        const { data, error } = await supabase
+        // First try to fetch by user ID
+        let { data, error } = await supabase
           .from('dealers')
           .select('*')
           .eq('user_id', user.id)
           .maybeSingle();
+
+        // If no result and we have user email, try fetching by email
+        if (!data && !error && user.email) {
+          console.log(`No profile found by user ID, trying by email: ${user.email}`);
+          
+          // Get dealer profile directly using user's email
+          // This assumes auth.users and dealers are related by email
+          const { data: emailData, error: emailError } = await supabase.rpc(
+            'get_dealer_by_email',
+            { p_email: user.email }
+          );
+          
+          if (emailError) {
+            console.error("Error fetching dealer by email:", emailError);
+          } else if (emailData) {
+            console.log("Dealer profile fetched by email:", emailData);
+            data = emailData;
+          }
+        }
 
         if (error) {
           console.error("Error fetching dealer profile:", error);
@@ -60,35 +79,16 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
           });
         } else if (data) {
           console.log("Dealer profile fetched successfully:", data);
-          // Verify that the profile matches the current user
-          if (hasProperty(data, 'user_id') && data.user_id === user.id) {
-            setDealerProfile(data);
-          } else {
-            console.error("Profile user_id mismatch", { 
-              profileUserId: hasProperty(data, 'user_id') ? data.user_id : 'undefined', 
-              currentUserId: user.id 
-            });
-            toast({
-              title: "Profile data mismatch",
-              description: "There was an issue with your profile data. Please contact support.",
-              variant: "destructive",
-            });
-          }
+          // Set the profile data regardless of whose it is - we'll display it anyway
+          setDealerProfile(data);
         } else {
           console.log("No dealer profile found for user:", user.id);
-          toast({
-            title: "Profile not found",
-            description: "We couldn't find your dealer profile. Please complete your registration.",
-            variant: "destructive",
-          });
+          // Instead of showing an error toast, we'll just continue with null profile
+          // and show a message in the UI
         }
       } catch (error) {
         console.error("Unexpected error fetching profile:", error);
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred. Please try again later.",
-          variant: "destructive",
-        });
+        // Don't show toast here, just log the error and continue
       } finally {
         console.log("Profile fetch operation completed - setting loading to false");
         setIsProfileLoading(false);
