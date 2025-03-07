@@ -2,7 +2,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useWelcomeDashboardData } from "@/hooks/useWelcomeDashboardData";
 import { DashboardLayout } from "@/components/dealer/dashboard/DashboardLayout";
-import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard";
 import { DealerWelcomeCard } from "@/components/dealer/dashboard/DealerWelcomeCard";
 import { ProfileInfoSection } from "@/components/dealer/dashboard/ProfileInfoSection";
 import { QuickActions } from "@/components/dealer/dashboard/QuickActions";
@@ -15,34 +14,26 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 export default function DealerDashboard() {
-  const loadStartTime = Date.now(); // Define loadStartTime first
-  const { user, isLoading: isAuthLoading } = useAuth();
-  const { dealerProfile, recentActivity, profileDataLoading } = useWelcomeDashboardData(user, isAuthLoading);
+  const { user } = useAuth();
+  const { dealerProfile, recentActivity } = useWelcomeDashboardData(user, false);
   const navigate = useNavigate();
-
-  // Shorter loading timeout for better UX - only show loading for 1.5 seconds max
-  const isLoading = isAuthLoading || (profileDataLoading && Date.now() - loadStartTime < 1500);
   
   // Add debug logging
   useEffect(() => {
-    console.log("DealerDashboard loading state:", { 
-      isAuthLoading, 
-      profileDataLoading, 
-      isLoading,
+    console.log("DealerDashboard state:", { 
       userExists: !!user,
       dealerProfileExists: !!dealerProfile,
-      timeSinceStart: Date.now() - loadStartTime
+      userData: user,
+      profileData: dealerProfile
     });
-  }, [isAuthLoading, profileDataLoading, isLoading, user, dealerProfile, loadStartTime]);
+  }, [user, dealerProfile]);
 
   // If we're not loading and there's no dealer profile, we need to handle this case
-  const noProfileFound = !isLoading && !dealerProfile && !!user;
+  const noProfileFound = !dealerProfile && !!user;
 
   return (
     <DashboardLayout title="Dealer Dashboard">
-      {isLoading ? (
-        <LoadingDashboard />
-      ) : noProfileFound ? (
+      {noProfileFound ? (
         <div className="space-y-6">
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
