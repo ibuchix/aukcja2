@@ -92,21 +92,26 @@ export const supabase = createClient<Database>(
     const { data: sessionData } = await supabase.auth.getSession();
     if (sessionData && sessionData.session) {
       console.log('Session exists and expires at:', new Date(sessionData.session.expires_at! * 1000).toLocaleString());
-    } else {
-      console.log('No active session found');
-    }
-    
-    // Test connection to ensure client is initialized properly
-    const { error } = await supabase.from('dealers').select('count').limit(1);
-    if (error) {
-      console.warn('Supabase client initialization warning:', error.message);
       
-      // Special handling for auth errors
-      if (error.code === '401') {
-        console.warn('Authentication error during initialization - you may need to login');
+      // Only test connection to protected tables if we have an authenticated session
+      try {
+        const { error } = await supabase.from('dealers').select('count').limit(1);
+        if (error) {
+          console.warn('Supabase client initialization warning:', error.message);
+          
+          // Special handling for auth errors
+          if (error.code === '401') {
+            console.warn('Authentication error during initialization - you may need to login');
+          }
+        } else {
+          console.log('Supabase client initialized successfully');
+        }
+      } catch (err) {
+        console.error('Error testing connection to dealers table:', err);
       }
     } else {
-      console.log('Supabase client initialized successfully');
+      console.log('No active session found - skipping protected table tests');
+      console.log('Supabase client initialized successfully for unauthenticated access');
     }
   } catch (err) {
     console.error('Supabase client initialization error:', err);
