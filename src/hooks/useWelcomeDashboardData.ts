@@ -20,6 +20,18 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
     return () => clearTimeout(timer);
   }, []);
 
+  // Add a safety timeout to ensure loading state doesn't get stuck forever
+  useEffect(() => {
+    const safetyTimer = setTimeout(() => {
+      if (isProfileLoading) {
+        console.log("Safety timeout triggered - forcing profile loading to complete");
+        setIsProfileLoading(false);
+      }
+    }, 5000); // 5 second safety timeout
+
+    return () => clearTimeout(safetyTimer);
+  }, [isProfileLoading]);
+
   useEffect(() => {
     const fetchDealerProfile = async () => {
       try {
@@ -46,11 +58,7 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
             description: "There was a problem loading your dealer profile. Please try again.",
             variant: "destructive",
           });
-          setIsProfileLoading(false);
-          return;
-        }
-
-        if (data) {
+        } else if (data) {
           console.log("Dealer profile fetched successfully:", data);
           // Verify that the profile matches the current user
           if (hasProperty(data, 'user_id') && data.user_id === user.id) {
@@ -82,6 +90,7 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
           variant: "destructive",
         });
       } finally {
+        console.log("Profile fetch operation completed - setting loading to false");
         setIsProfileLoading(false);
       }
     };
@@ -89,6 +98,7 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
     if (user && !isAuthLoading) {
       fetchDealerProfile();
     } else if (!isAuthLoading) {
+      console.log("No authenticated user or still loading auth - skipping profile fetch");
       setIsProfileLoading(false);
     }
   }, [user, isAuthLoading, toast]);

@@ -8,6 +8,7 @@ import { ProfileInfoSection } from "@/components/dealer/dashboard/ProfileInfoSec
 import { QuickActions } from "@/components/dealer/dashboard/QuickActions";
 import { BusinessActionSection } from "@/components/dealer/dashboard/BusinessActionSection";
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
+import { useEffect } from "react";
 
 export default function DealerDashboard() {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -15,6 +16,17 @@ export default function DealerDashboard() {
 
   // Combined loading state
   const isLoading = isAuthLoading || profileDataLoading;
+  
+  // Add debug logging
+  useEffect(() => {
+    console.log("DealerDashboard loading state:", { 
+      isAuthLoading, 
+      profileDataLoading, 
+      isLoading,
+      userExists: !!user,
+      dealerProfileExists: !!dealerProfile
+    });
+  }, [isAuthLoading, profileDataLoading, isLoading, user, dealerProfile]);
 
   return (
     <DashboardLayout title="Dealer Dashboard">
