@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { SignInResult } from "./models";
 import { validateEmail, safeTrim, checkAccountExists } from "./validation";
@@ -44,9 +43,13 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     
     // Use the dealer-otp edge function to generate and send OTP
     const { data, error } = await supabase.functions.invoke('dealer-otp', {
+      method: 'POST',
       body: {
         action: 'generate',
         email: normalizedEmail
+      },
+      headers: {
+        'Content-Type': 'application/json'
       }
     });
     
@@ -71,11 +74,11 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
       };
     }
     
-    if (!data.success) {
-      console.error("dealer-otp function returned error:", data.error);
+    if (!data?.success) {
+      console.error("dealer-otp function returned error:", data?.error);
       
       // Handle common errors with user-friendly messages
-      if (data.error) {
+      if (data?.error) {
         // If the error indicates the user doesn't exist
         if (data.error.includes("not found") || 
             data.error.includes("doesn't exist") ||
@@ -96,7 +99,7 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
       
       return { 
         success: false, 
-        error: data.error || "Failed to send login code"
+        error: data?.error || "Failed to send login code"
       };
     }
     
@@ -106,6 +109,19 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     };
   } catch (error) {
     console.error("Exception in initiateOtpSignIn:", error);
+    
+    // Check if this is a CORS-related error
+    if (error instanceof Error && 
+        (error.message.includes("CORS") || 
+         error.message.includes("Failed to fetch") ||
+         error.message.includes("NetworkError") ||
+         error.message.includes("Failed to send a request"))) {
+      return {
+        success: false,
+        error: "Network error: Unable to connect to the server. Please try again later."
+      };
+    }
+    
     return { 
       success: false, 
       error: error instanceof Error ? error.message : "An unexpected error occurred"

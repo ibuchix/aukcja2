@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import { handleDealerRegister } from "./handlers.ts";
 import { respondSuccess, respondError } from "./response-utils.ts";
@@ -24,7 +25,7 @@ serve(async (req) => {
     try {
       body = await req.json();
     } catch (e) {
-      return respondError("Invalid JSON in request body", 400, corsHeaders);
+      return respondError("Invalid JSON in request body", 400);
     }
 
     const { action, requestId } = body;
@@ -39,20 +40,18 @@ serve(async (req) => {
         return await processWithRetry(
           () => handleDealerRegister(body, trackingId),
           trackingId,
-          startTime,
-          corsHeaders
+          startTime
         );
       // Add other action handlers as needed
       default:
-        return respondError(`Unknown action: ${action}`, 400, corsHeaders);
+        return respondError(`Unknown action: ${action}`, 400);
     }
   } catch (error) {
     // Handle unexpected errors
     logError("Unhandled exception in dealer-auth function", error);
     return respondError(
       `Internal server error: ${error.message}`,
-      500,
-      corsHeaders
+      500
     );
   }
 });
@@ -61,8 +60,7 @@ serve(async (req) => {
 async function processWithRetry(
   operation: () => Promise<Response>,
   requestId: string,
-  startTime: number,
-  corsHeaders: HeadersInit
+  startTime: number
 ): Promise<Response> {
   let retryCount = 0;
   let lastError: Error | null = null;
@@ -118,8 +116,7 @@ async function processWithRetry(
   // Return the error response
   return respondError(
     `Operation failed after ${retryCount} retries: ${lastError?.message || "Unknown error"}`,
-    500,
-    corsHeaders
+    500
   );
 }
 

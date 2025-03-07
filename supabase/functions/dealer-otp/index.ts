@@ -5,9 +5,12 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { handleGenerateOtp, handleVerifyOtp, handleCheckEmail } from "./action-handlers.ts";
 
 serve(async (req) => {
-  // Handle CORS
+  // Handle CORS preflight request
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, { 
+      status: 204,
+      headers: corsHeaders 
+    });
   }
   
   try {
@@ -22,44 +25,57 @@ serve(async (req) => {
     console.log(`Processing ${action} request for ${safeEmail}`);
     
     // Process based on action
+    let response;
     switch (action) {
       case "generate":
-        return Response.json(
-          await handleGenerateOtp(supabase, email),
-          { headers: corsHeaders }
-        );
+        response = await handleGenerateOtp(supabase, email);
+        break;
         
       case "verify":
-        return Response.json(
-          await handleVerifyOtp(supabase, email, otp),
-          { headers: corsHeaders }
-        );
+        response = await handleVerifyOtp(supabase, email, otp);
+        break;
         
       case "check_email":
-        return Response.json(
-          await handleCheckEmail(supabase, email),
-          { headers: corsHeaders }
-        );
+        response = await handleCheckEmail(supabase, email);
+        break;
         
       default:
         console.error(`Invalid action requested: ${action}`);
-        return Response.json({
+        response = {
           success: false,
           error: `Invalid action: ${action}`
-        }, { 
+        };
+        return new Response(JSON.stringify(response), { 
           status: 400,
-          headers: corsHeaders 
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          }
         });
     }
+    
+    // Return response with CORS headers
+    return new Response(JSON.stringify(response), { 
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
+      }
+    });
   } catch (error) {
     console.error(`Error processing request: ${error.message}`);
     
-    return Response.json({
-      success: false,
-      error: `Server error: ${error.message}`
-    }, { 
-      status: 500,
-      headers: corsHeaders 
-    });
+    // Return error response with CORS headers
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: `Server error: ${error.message}`
+      }), { 
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
   }
 });
