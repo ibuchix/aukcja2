@@ -15,8 +15,8 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
   const { toast } = useToast();
   const { refreshSession } = useAuth();
 
+  // Set a timeout to simulate loading recent activity
   useEffect(() => {
-    // Set a timeout to simulate loading recent activity
     const timer = setTimeout(() => {
       setRecentActivity(true);
     }, 800);
@@ -24,7 +24,7 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
     return () => clearTimeout(timer);
   }, []);
 
-  // Simple direct query test that runs once when component mounts
+  // Test direct query function
   useEffect(() => {
     const runDirectQueryTest = async () => {
       if (!user) return;
@@ -100,6 +100,7 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
     }
   }, [user, isAuthLoading]);
 
+  // Fetch dealer profile
   useEffect(() => {
     let isMounted = true;
     
@@ -116,48 +117,37 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
 
         console.log(`[RLS Debug] Fetching dealer profile for user ID: ${user.id}`);
         
-        // Check JWT claim before making the query
-        try {
-          const { data: jwtUserId, error: jwtError } = await supabase.rpc('debug_auth_user_id');
-          console.log("[RLS Debug] JWT user ID check:", {
-            jwtUserId,
-            error: jwtError?.message,
-            matchesCurrentUser: jwtUserId === user.id
-          });
-          
-          if (jwtError || jwtUserId !== user.id) {
-            console.warn("[RLS Debug] JWT user ID mismatch or error. Refreshing session...");
-            await refreshSession();
-          }
-        } catch (jwtCheckError) {
-          console.error("[RLS Debug] Error checking JWT user ID:", jwtCheckError);
-        }
-        
-        // Direct database access with RLS
+        // Direct database access with improved error handling
         const { data, error } = await supabase
           .from('dealers')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single to handle missing data more gracefully
         
         if (error) {
           console.error("[RLS Debug] Error fetching dealer profile:", error);
-          console.log("[RLS Debug] Request details:", {
-            userId: user.id,
-            errorCode: error.code,
-            errorMessage: error.message,
-            errorDetails: error.details
-          });
           
-          // Attempt to check if the dealers table has any records (this will be filtered by RLS)
-          const { count, error: countError } = await supabase
-            .from('dealers')
-            .select('*', { count: 'exact', head: true });
+          if (error.code === 'PGRST116') {
+            console.log("[RLS Debug] No data found - this is not necessarily an error");
+            toast({
+              title: "Profile data not found",
+              description: "We couldn't find your dealer profile. Please complete your registration.",
+              variant: "destructive",
+            });
+          } else {
+            console.log("[RLS Debug] Request details:", {
+              userId: user.id,
+              errorCode: error.code,
+              errorMessage: error.message,
+              errorDetails: error.details
+            });
             
-          console.log("[RLS Debug] Dealers table count check:", { 
-            count, 
-            error: countError?.message 
-          });
+            toast({
+              title: "Data loading error",
+              description: "There was an error loading your profile data. Please try again.",
+              variant: "destructive",
+            });
+          }
         }
         
         if (data) {

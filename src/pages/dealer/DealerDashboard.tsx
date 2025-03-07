@@ -9,11 +9,12 @@ import { BusinessActionSection } from "@/components/dealer/dashboard/BusinessAct
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
 import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, InfoIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DealerDashboard() {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -128,6 +129,7 @@ export default function DealerDashboard() {
         </Alert>
       )}
       
+      {/* Debug card when authenticated but no dealer profile found */}
       {noProfileFound ? (
         <div className="space-y-6">
           <Alert variant="destructive" className="mb-6">
@@ -137,6 +139,25 @@ export default function DealerDashboard() {
               We couldn't find your dealer profile. You may need to complete your registration.
             </AlertDescription>
           </Alert>
+          
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <InfoIcon className="h-5 w-5 text-blue-500" />
+                Debug Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <p><strong>Authenticated:</strong> Yes</p>
+                <p><strong>User ID:</strong> {user?.id}</p>
+                <p><strong>Email:</strong> {user?.email}</p>
+                <p><strong>Dealer Profile:</strong> Not Found</p>
+                <p><strong>Auth Status:</strong> Authentication successful, but dealer profile missing</p>
+              </div>
+            </CardContent>
+          </Card>
+          
           <Button 
             onClick={() => navigate('/complete-registration')}
             className="w-full md:w-auto"

@@ -4,11 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
 // Configure how long a session should last without activity before showing a warning
-const IDLE_WARNING_TIMEOUT = 25 * 60 * 1000; // 25 minutes
+const IDLE_WARNING_TIMEOUT = 60 * 60 * 1000; // 60 minutes (was 25 minutes)
 // Configure how long a session should last without activity before ending
-const IDLE_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+const IDLE_TIMEOUT = 2 * 60 * 60 * 1000; // 2 hours (was 30 minutes)
 // How often to refresh the token while active
-const TOKEN_REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
+const TOKEN_REFRESH_INTERVAL = 30 * 60 * 1000; // 30 minutes (was 10 minutes)
 
 export function useSessionManager() {
   const idleTimerRef = useRef<number | null>(null);
@@ -33,20 +33,20 @@ export function useSessionManager() {
       warningTimerRef.current = null;
     }
 
-    // Set warning timer (will show warning after 25 min of inactivity)
+    // Set warning timer (will show warning after 60 min of inactivity)
     warningTimerRef.current = window.setTimeout(() => {
       // Check if we're still in the same session
       const timeIdle = Date.now() - lastActivityRef.current;
       if (timeIdle >= IDLE_WARNING_TIMEOUT) {
         toast({
           title: "Session expiring soon",
-          description: "You'll be logged out in 5 minutes due to inactivity. Move your mouse or press a key to stay logged in.",
+          description: "You'll be logged out in 60 minutes due to inactivity. Move your mouse or press a key to stay logged in.",
           duration: 10000,
         });
       }
     }, IDLE_WARNING_TIMEOUT);
 
-    // Set idle timer (will log out after 30 min of inactivity)
+    // Set idle timer (will log out after 2 hours of inactivity)
     idleTimerRef.current = window.setTimeout(async () => {
       // Double-check we're really idle before logging out
       const timeIdle = Date.now() - lastActivityRef.current;
@@ -94,7 +94,7 @@ export function useSessionManager() {
       // Periodic token refresh while active - less frequent to reduce errors
       const refreshSession = async () => {
         try {
-          // Only refresh if we've had activity in the last 30 minutes
+          // Only refresh if we've had activity in the last 2 hours
           const timeSinceActivity = Date.now() - lastActivityRef.current;
           if (timeSinceActivity < IDLE_TIMEOUT) {
             console.log("Refreshing session token to extend session duration");
