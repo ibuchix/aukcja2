@@ -10,12 +10,11 @@ import { filterString, hasData } from "@/utils/supabaseHelpers";
  */
 export async function checkBusinessRegistryExists(businessRegistryNumber: string): Promise<boolean> {
   try {
-    const tableName = 'dealers';
-    // Use the simplified helper function without generic parameters
-    const columnName = filterString(tableName, 'business_registry_number', businessRegistryNumber);
+    // Use the simplified helper function without table parameter
+    const columnName = filterString('business_registry_number');
     
     const response: SupabaseResponse = await supabase
-      .from(tableName)
+      .from('dealers')
       .select('business_registry_number')
       .eq(columnName, businessRegistryNumber)
       .maybeSingle();

@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
@@ -18,13 +17,11 @@ const Index = () => {
   const { data: featuredVehicles, isLoading } = useQuery({
     queryKey: ["featuredVehicles"],
     queryFn: async () => {
-      const tableName = 'cars';
-      // Use the simplified helper functions to avoid excessive type recursion
-      const statusColumn = filterString(tableName, 'status', 'available');
-      const isDraftColumn = filterBoolean(tableName, 'is_draft', false);
+      const statusColumn = filterString('status');
+      const isDraftColumn = filterBoolean('is_draft');
       
       const { data, error } = await supabase
-        .from(tableName)
+        .from('cars')
         .select("*")
         .eq(statusColumn, "available")
         .eq(isDraftColumn, false)
@@ -34,7 +31,6 @@ const Index = () => {
       if (error) throw error;
 
       return data.map(car => {
-        // Using optional chaining and providing default values
         let features = car.features;
         try {
           if (typeof features === 'string') {

@@ -9,33 +9,27 @@ export function hasData<T>(
   return response.data !== null && !response.error;
 }
 
-// Simplified filter helpers that avoid excessive type recursion
+// Simple string column helper - returns the column name without type checking
 export function filterString(
-  table: string, 
-  column: string, 
-  value: string | null | undefined
+  column: string
 ): string {
   return column;
 }
 
+// Simple boolean column helper - returns the column name without type checking
 export function filterBoolean(
-  table: string,
-  column: string,
-  value: boolean | null | undefined
+  column: string
 ): string {
   return column;
 }
 
-export function matchID(
-  table: string,
-  value: string | null | undefined
-): string {
+// Simple ID column helper - just returns 'id'
+export function matchID(): string {
   return 'id';
 }
 
-export function userIDColumn(
-  table: string
-): string {
+// Simple user_id column helper - just returns 'user_id'
+export function userIDColumn(): string {
   return 'user_id';
 }
 
@@ -46,7 +40,6 @@ export function hasProperty<T, K extends string>(obj: T, prop: K): obj is T & Re
 
 // Simplified insertion helper
 export function prepareInsert(
-  table: string,
   data: Record<string, any>
 ): Record<string, any> {
   return data;
