@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import { useToast } from "@/components/ui/use-toast";
@@ -39,22 +38,21 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
 
         console.log(`Fetching dealer profile for user ID: ${user.id}`);
         
-        // Use the edge function instead of direct database access
-        const { data, error } = await supabase.functions.invoke('get-dealer-profile', {
-          method: 'GET',
-          headers: {
-            'userId': user.id
-          }
-        });
+        // Direct database access now that RLS is configured correctly
+        const { data, error } = await supabase
+          .from('dealers')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
         
         if (error) {
           console.error("Error fetching dealer profile:", error);
           // Continue execution - we'll handle the null profile case
         }
         
-        if (data && data.data) {
-          console.log("Dealer profile fetched successfully:", data.data);
-          if (isMounted) setDealerProfile(data.data as DealerRecord);
+        if (data) {
+          console.log("Dealer profile fetched successfully:", data);
+          if (isMounted) setDealerProfile(data as DealerRecord);
         } else {
           console.log("No dealer profile found for user:", user.id);
         }

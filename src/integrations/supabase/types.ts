@@ -322,6 +322,10 @@ export type Database = {
         }
         Returns: Json
       }
+      debug_auth_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_dealer_by_user_id: {
         Args: {
           p_user_id: string

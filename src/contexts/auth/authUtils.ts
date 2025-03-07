@@ -1,4 +1,3 @@
-
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -9,24 +8,23 @@ export async function fetchDealerProfile(userId: string) {
   try {
     console.log(`Fetching profile for user: ${userId}`);
     
-    // Use the edge function instead of direct database access
-    const { data, error } = await supabase.functions.invoke('get-dealer-profile', {
-      method: 'GET',
-      headers: {
-        'userId': userId,
-      }
-    });
+    // Now that RLS is properly configured, we can query the database directly
+    const { data, error } = await supabase
+      .from('dealers')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
 
     if (error) {
-      console.error("Error invoking get-dealer-profile function:", error);
+      console.error("Error fetching dealer profile:", error);
       return null;
     }
 
-    if (data && data.data) {
-      console.log("Dealer profile fetched successfully via edge function");
-      return data.data;
+    if (data) {
+      console.log("Dealer profile fetched successfully via direct query");
+      return data;
     } else {
-      console.log("No dealer profile found for user via edge function");
+      console.log("No dealer profile found for user via direct query");
       return null;
     }
   } catch (error) {
