@@ -9,7 +9,7 @@ import { BusinessActionSection } from "@/components/dealer/dashboard/BusinessAct
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
 import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard";
@@ -17,7 +17,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 export default function DealerDashboard() {
   const { user, isLoading: isAuthLoading } = useAuth();
-  const { dealerProfile, recentActivity, profileDataLoading, profileFetchAttempted } = useWelcomeDashboardData(user, isAuthLoading);
+  const { 
+    dealerProfile, 
+    recentActivity, 
+    profileDataLoading, 
+    profileFetchAttempted,
+    directQueryResult 
+  } = useWelcomeDashboardData(user, isAuthLoading);
   const navigate = useNavigate();
   
   // Enhanced RLS debug logging
@@ -107,6 +113,21 @@ export default function DealerDashboard() {
 
   return (
     <DashboardLayout title="Dealer Dashboard">
+      {directQueryResult && (
+        <Alert variant={directQueryResult.success ? "default" : "destructive"} className="mb-6">
+          {directQueryResult.success ? 
+            <CheckCircle2 className="h-4 w-4 text-green-500" /> : 
+            <AlertCircle className="h-4 w-4" />
+          }
+          <AlertTitle>
+            {directQueryResult.success ? "Direct Query Test Passed" : "Direct Query Test Failed"}
+          </AlertTitle>
+          <AlertDescription>
+            {directQueryResult.message}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {noProfileFound ? (
         <div className="space-y-6">
           <Alert variant="destructive" className="mb-6">
