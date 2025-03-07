@@ -13,10 +13,10 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set a timeout to simulate loading recent activity
+    // Set a timeout to simulate loading recent activity - reduced from 1500ms to 800ms
     const timer = setTimeout(() => {
       setRecentActivity(true);
-    }, 1500);
+    }, 800);
 
     return () => clearTimeout(timer);
   }, []);
@@ -28,7 +28,7 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
         console.log("Safety timeout triggered - forcing profile loading to complete");
         setIsProfileLoading(false);
       }
-    }, 5000); // 5 second safety timeout
+    }, 3000); // Reduced from 5 seconds to 3 seconds
 
     return () => clearTimeout(safetyTimer);
   }, [isProfileLoading]);
@@ -94,11 +94,14 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
 
         if (error) {
           console.error("Error fetching dealer profile:", error);
-          toast({
-            title: "Failed to load profile",
-            description: "There was a problem loading your dealer profile. Please try again.",
-            variant: "destructive",
-          });
+          // Only show toast for real errors, not for "not found"
+          if (error.code !== 'PGRST116') {
+            toast({
+              title: "Error loading profile",
+              description: "There was a problem loading your dealer profile: " + error.message,
+              variant: "destructive",
+            });
+          }
         } else if (data) {
           console.log("Dealer profile fetched successfully:", data);
           // Set the profile data regardless of whose it is - we'll display it anyway
@@ -117,6 +120,7 @@ export function useWelcomeDashboardData(user: User | null, isAuthLoading: boolea
       }
     };
 
+    // Only make the API call if we actually have a user to look up
     if (user && !isAuthLoading) {
       fetchDealerProfile();
     } else if (!isAuthLoading) {

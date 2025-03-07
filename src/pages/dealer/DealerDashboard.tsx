@@ -15,13 +15,13 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 export default function DealerDashboard() {
-  const { user, isLoading: isAuthLoading } = useAuth();
   const loadStartTime = Date.now(); // Define loadStartTime first
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { dealerProfile, recentActivity, profileDataLoading } = useWelcomeDashboardData(user, isAuthLoading);
   const navigate = useNavigate();
 
-  // Combined loading state - shorter timeout for better UX
-  const isLoading = isAuthLoading || (profileDataLoading && Date.now() - loadStartTime < 3000);
+  // Shorter loading timeout for better UX - only show loading for 1.5 seconds max
+  const isLoading = isAuthLoading || (profileDataLoading && Date.now() - loadStartTime < 1500);
   
   // Add debug logging
   useEffect(() => {
@@ -30,9 +30,10 @@ export default function DealerDashboard() {
       profileDataLoading, 
       isLoading,
       userExists: !!user,
-      dealerProfileExists: !!dealerProfile
+      dealerProfileExists: !!dealerProfile,
+      timeSinceStart: Date.now() - loadStartTime
     });
-  }, [isAuthLoading, profileDataLoading, isLoading, user, dealerProfile]);
+  }, [isAuthLoading, profileDataLoading, isLoading, user, dealerProfile, loadStartTime]);
 
   // If we're not loading and there's no dealer profile, we need to handle this case
   const noProfileFound = !isLoading && !dealerProfile && !!user;
