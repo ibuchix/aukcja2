@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { SignInResult } from "./models";
 import { validateEmail, safeTrim, checkAccountExists } from "./validation";
@@ -56,6 +57,17 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
     if (error) {
       console.error("Error invoking dealer-otp function:", error);
       
+      // Enhanced CORS error detection
+      if (error.message?.includes("Failed to send a request") ||
+          error.message?.includes("NetworkError") ||
+          error.message?.includes("Access-Control-Allow") ||
+          error.message?.includes("CORS")) {
+        return {
+          success: false,
+          error: "Network error. Please check your connection and try again."
+        };
+      }
+      
       // If we couldn't determine if the account exists earlier AND we got an error
       // that might indicate the user doesn't exist
       if (!accountChecked && 
@@ -110,12 +122,13 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
   } catch (error) {
     console.error("Exception in initiateOtpSignIn:", error);
     
-    // Check if this is a CORS-related error
+    // Enhanced CORS error detection
     if (error instanceof Error && 
         (error.message.includes("CORS") || 
          error.message.includes("Failed to fetch") ||
          error.message.includes("NetworkError") ||
-         error.message.includes("Failed to send a request"))) {
+         error.message.includes("Failed to send a request") ||
+         error.message.includes("Access-Control-Allow"))) {
       return {
         success: false,
         error: "Network error: Unable to connect to the server. Please try again later."
