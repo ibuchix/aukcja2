@@ -16,7 +16,7 @@ import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard
 
 export default function DealerDashboard() {
   const { user, isLoading: isAuthLoading } = useAuth();
-  const { dealerProfile, recentActivity, profileDataLoading } = useWelcomeDashboardData(user, isAuthLoading);
+  const { dealerProfile, recentActivity, profileDataLoading, profileFetchAttempted } = useWelcomeDashboardData(user, isAuthLoading);
   const navigate = useNavigate();
   
   // Add debug logging
@@ -26,20 +26,42 @@ export default function DealerDashboard() {
       dealerProfileExists: !!dealerProfile,
       isAuthLoading,
       profileDataLoading,
+      profileFetchAttempted,
       userData: user,
       profileData: dealerProfile
     });
-  }, [user, dealerProfile, isAuthLoading, profileDataLoading]);
+  }, [user, dealerProfile, isAuthLoading, profileDataLoading, profileFetchAttempted]);
 
   // Determine if we're still in a loading state
   const isLoading = isAuthLoading || profileDataLoading;
 
-  // If we're not loading and there's no dealer profile, we need to handle this case
-  const noProfileFound = !dealerProfile && !!user && !isLoading;
+  // If we're not loading, the user exists, but no dealer profile was found
+  const noProfileFound = !dealerProfile && !!user && !isLoading && profileFetchAttempted;
 
   // Show loading state
   if (isLoading) {
     return <LoadingDashboard />;
+  }
+
+  // Improve auth check to ensure we're only showing the dashboard to authenticated users
+  if (!user && !isLoading) {
+    return (
+      <DashboardLayout title="Authentication Required">
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Authentication Required</AlertTitle>
+          <AlertDescription>
+            You need to be logged in to access the dealer dashboard.
+          </AlertDescription>
+        </Alert>
+        <Button 
+          onClick={() => navigate('/auth')}
+          className="w-full md:w-auto"
+        >
+          Go to Login
+        </Button>
+      </DashboardLayout>
+    );
   }
 
   return (

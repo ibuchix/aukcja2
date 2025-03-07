@@ -8,22 +8,23 @@ import { supabase } from "@/integrations/supabase/client";
 export async function fetchDealerProfile(userId: string) {
   try {
     console.log(`Fetching profile for user: ${userId}`);
-    const { data, error } = await supabase
-      .from("dealers")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
+    
+    // Use the edge function instead of direct database access
+    const { data, error } = await supabase.functions.invoke('get-dealer-profile', {
+      method: 'GET',
+      params: { userId }
+    });
 
     if (error) {
-      console.error("Error fetching dealer profile:", error);
+      console.error("Error invoking get-dealer-profile function:", error);
       return null;
     }
 
-    if (data) {
-      console.log("Dealer profile fetched successfully");
-      return data;
+    if (data && data.data) {
+      console.log("Dealer profile fetched successfully via edge function");
+      return data.data;
     } else {
-      console.log("No dealer profile found for user");
+      console.log("No dealer profile found for user via edge function");
       return null;
     }
   } catch (error) {
