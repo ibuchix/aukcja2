@@ -78,22 +78,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: new Error("Missing exchange token") };
       }
       
-      // Exchange token for session
-      const { data, error } = await supabase.auth.exchangeCodeForSession(exchangeToken);
-      
-      if (error) {
-        console.error("Error exchanging token for session:", error);
-        return { error };
+      // Handle both token formats - JSON object or simple string
+      let tokenData;
+      try {
+        // Try to parse it as JSON first
+        tokenData = JSON.parse(exchangeToken);
+      } catch (e) {
+        // If it's not valid JSON, use it as a simple string
+        console.log("Exchange token is not a JSON string, using as-is");
       }
       
-      if (data?.session) {
-        setSession(data.session);
-        setUser(data.session.user);
+      // If we have parsed token data with access and refresh tokens
+      if (tokenData && tokenData.access_token && tokenData.refresh_token) {
+        console.log("Using parsed token data with setSession");
+        // Use setSession directly with the access and refresh tokens
+        const { data, error } = await supabase.auth.setSession({
+          access_token: tokenData.access_token,
+          refresh_token: tokenData.refresh_token
+        });
         
-        // Fetch profile data
-        if (data.session.user) {
-          const profileData = await fetchDealerProfile(data.session.user.id);
-          setProfile(profileData);
+        if (error) {
+          console.error("Error setting session with tokens:", error);
+          return { error };
+        }
+        
+        if (data?.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+          
+          // Fetch profile data
+          if (data.session.user) {
+            const profileData = await fetchDealerProfile(data.session.user.id);
+            setProfile(profileData);
+          }
+        }
+      } else {
+        // Fall back to exchangeCodeForSession if we don't have token object
+        console.log("Using exchangeCodeForSession with string token");
+        const { data, error } = await supabase.auth.exchangeCodeForSession(exchangeToken);
+        
+        if (error) {
+          console.error("Error exchanging token for session:", error);
+          return { error };
+        }
+        
+        if (data?.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+          
+          // Fetch profile data
+          if (data.session.user) {
+            const profileData = await fetchDealerProfile(data.session.user.id);
+            setProfile(profileData);
+          }
         }
       }
       

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -49,20 +48,13 @@ export function useOtpForm(
         
         // Handle successful login with exchange token
         if (result.exchangeToken) {
-          console.log("Exchanging token for session...");
+          console.log("Exchange token received:", result.exchangeToken);
           
           try {
-            // Parse the exchangeToken if it's a string
-            const tokenData = typeof result.exchangeToken === 'string' 
-              ? JSON.parse(result.exchangeToken) 
-              : result.exchangeToken;
-            
-            console.log("Token data prepared for exchange:", tokenData);
-            
-            // Sign in using the exchange token
-            // Fix: Pass the string exchangeToken directly to signIn instead of trying to use it as an object
+            // Pass the string exchangeToken directly to signIn
+            // Let the AuthProvider handle parsing if needed
             const { error } = await signIn({ 
-              exchangeToken: tokenData 
+              exchangeToken: result.exchangeToken
             });
             
             if (error) {
@@ -84,7 +76,7 @@ export function useOtpForm(
             // Redirect to dashboard after successful login
             navigate("/dealer/dashboard");
           } catch (parseError) {
-            console.error("Error parsing exchange token:", parseError);
+            console.error("Error during sign in:", parseError);
             toast({
               title: "Error",
               description: "Failed to process authentication data. Please try again.",
@@ -133,7 +125,6 @@ export function useOtpForm(
   // Handle resending the OTP
   const handleResendOtp = async () => {
     setIsResending(true);
-    // Implement resend logic here (e.g., call initiateOtpSignIn again)
     toast({
       title: "Resending code...",
       description: "A new code has been sent to your email.",
