@@ -1,4 +1,3 @@
-
 import { createContext, useContext } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
@@ -96,53 +95,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: new Error("Invalid exchange token: missing required fields") };
       }
       
-      // Instead of trying to use Supabase's token exchange, we'll sign in directly
-      // using the email and a one-time password mechanism
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Use magic link sign-in for the user instead of password
+      console.log("Attempting to sign in with magic link for", tokenData.email);
+      
+      const { data, error } = await supabase.auth.signInWithOtp({
         email: tokenData.email,
-        password: tokenData.code_verifier
+        options: {
+          // This is crucial - we're not creating a new user
+          shouldCreateUser: false
+        }
       });
       
       if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          console.log("Using fallback auth method due to invalid credentials");
+        console.error("Error sending magic link:", error);
+        
+        // Try a different approach - get a new session directly
+        try {
+          console.log("Attempting alternate authentication method");
+          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
           
-          // Fallback: try to sign in with a temporary email link
-          const { data: magicData, error: magicError } = await supabase.auth.signInWithOtp({
-            email: tokenData.email,
-            options: {
-              shouldCreateUser: false  // Don't create a new user
-            }
-          });
-          
-          if (magicError) {
-            console.error("Fallback auth method failed:", magicError);
-            return { error: magicError };
+          if (sessionError) {
+            console.error("Error getting session:", sessionError);
+            return { error: sessionError };
           }
           
-          toast({
-            title: "Verification email sent",
-            description: "We've sent a verification link to your email.",
-          });
-          
-          return { error: undefined };
+          // If we have a session somehow, use it
+          if (sessionData?.session) {
+            console.log("Existing session found, using it");
+            setSession(sessionData.session);
+            setUser(sessionData.session.user);
+            
+            // Fetch profile data
+            if (sessionData.session.user) {
+              const profileData = await fetchDealerProfile(sessionData.session.user.id);
+              setProfile(profileData);
+            }
+            
+            return { error: undefined };
+          }
+        } catch (altError) {
+          console.error("Alternative auth approach failed:", altError);
         }
         
-        console.error("Error signing in:", error);
         return { error };
       }
       
-      if (data?.session) {
-        console.log("Successfully signed in with session");
-        setSession(data.session);
-        setUser(data.session.user);
-        
-        // Fetch profile data
-        if (data.session.user) {
-          const profileData = await fetchDealerProfile(data.session.user.id);
-          setProfile(profileData);
-        }
-      }
+      toast({
+        title: "Verification email sent",
+        description: "We've sent a verification link to your email. Please check your inbox and click the link to sign in.",
+      });
       
       return { error: undefined };
     } catch (error) {

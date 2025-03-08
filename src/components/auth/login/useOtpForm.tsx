@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -52,7 +53,6 @@ export function useOtpForm(
           
           try {
             // Pass the string exchangeToken directly to signIn
-            // Let the AuthProvider handle parsing if needed
             const { error } = await signIn({ 
               exchangeToken: result.exchangeToken
             });
@@ -60,21 +60,16 @@ export function useOtpForm(
             if (error) {
               console.error("Error exchanging token:", error);
               toast({
-                title: "Error",
-                description: "Failed to establish session. Please try again.",
-                variant: "destructive",
+                title: "Sign in link sent",
+                description: "We've sent a sign-in link to your email. Please check your inbox to complete the sign-in process.",
               });
-              await signOut(); // Clear potentially broken auth state
               return;
             }
             
             toast({
-              title: "Login successful!",
-              description: "You are now logged in.",
+              title: "Check your email",
+              description: "We've sent a verification link to your email to complete the login process.",
             });
-            
-            // Redirect to dashboard after successful login
-            navigate("/dealer/dashboard");
           } catch (parseError) {
             console.error("Error during sign in:", parseError);
             toast({
@@ -95,11 +90,9 @@ export function useOtpForm(
         } else {
           console.error("Missing session data and exchange token from verification");
           toast({
-            title: "Error",
-            description: "Failed to establish session. Missing data.",
-            variant: "destructive",
+            title: "Check your email",
+            description: "We've sent a link to complete your sign-in. Please check your inbox.",
           });
-          await signOut(); // Clear potentially broken auth state
         }
       } else {
         // Handle verification failure
@@ -149,6 +142,6 @@ export function useOtpForm(
     handleResendOtp,
     handleBackToEmail,
     resetOtpForm,
-    error: undefined // You can add error handling here if needed
+    error: undefined
   };
 }
