@@ -19,6 +19,8 @@ export const verifyOtp = async (email: string, otp: string): Promise<SignInResul
     
     const normalizedEmail = safeTrim(email).toLowerCase();
     
+    console.log(`Calling dealer-otp function with verify action for ${normalizedEmail.substring(0, 3)}...`);
+    
     // Use the dealer-otp edge function to verify OTP and create session
     const { data, error } = await supabase.functions.invoke('dealer-otp', {
       body: {
@@ -44,6 +46,8 @@ export const verifyOtp = async (email: string, otp: string): Promise<SignInResul
       };
     }
     
+    console.log("Verification response data:", JSON.stringify(data, null, 2));
+    
     // Return the exchange token from the verification response
     if (data.exchangeToken) {
       console.log("Received exchange token from verification");
@@ -58,6 +62,7 @@ export const verifyOtp = async (email: string, otp: string): Promise<SignInResul
     
     // Fallback for if no exchange token is present (backwards compatibility)
     if (data.session) {
+      console.log("Received session from verification");
       // Set session in Supabase client 
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: data.session.access_token,
@@ -82,6 +87,7 @@ export const verifyOtp = async (email: string, otp: string): Promise<SignInResul
     
     // If neither exchange token nor session is present
     console.error("Missing session data and exchange token from verification");
+    console.error("Response data:", JSON.stringify(data, null, 2));
     return {
       success: false,
       error: "Failed to establish session - missing data"

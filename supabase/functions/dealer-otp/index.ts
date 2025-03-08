@@ -68,6 +68,7 @@ serve(async (req) => {
     return response;
   }, {
     module: "dealer-otp",
+    headers: corsHeaders,
     action: payload?.action,
     email: payload?.email ? `${payload.email.substring(0, 3)}...` : undefined
   });

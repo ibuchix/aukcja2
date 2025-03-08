@@ -41,6 +41,7 @@ export function useOtpForm(
     setIsSubmitting(true);
     
     try {
+      console.log(`Verifying OTP for ${email.substring(0, 3)}...`);
       const result = await verifyOtp(email, values.otp);
       
       if (result.success) {
@@ -50,27 +51,46 @@ export function useOtpForm(
         if (result.exchangeToken) {
           console.log("Exchanging token for session...");
           
-          // Sign in using the exchange token
-          const { error } = await signIn({ exchangeToken: result.exchangeToken });
-          
-          if (error) {
-            console.error("Error exchanging token:", error);
+          try {
+            // Parse the exchangeToken if it's a string
+            const tokenData = typeof result.exchangeToken === 'string' 
+              ? JSON.parse(result.exchangeToken) 
+              : result.exchangeToken;
+            
+            console.log("Token data prepared for exchange:", tokenData);
+            
+            // Sign in using the exchange token
+            const { error } = await signIn({ 
+              access_token: tokenData.access_token,
+              refresh_token: tokenData.refresh_token 
+            });
+            
+            if (error) {
+              console.error("Error exchanging token:", error);
+              toast({
+                title: "Error",
+                description: "Failed to establish session. Please try again.",
+                variant: "destructive",
+              });
+              await signOut(); // Clear potentially broken auth state
+              return;
+            }
+            
+            toast({
+              title: "Login successful!",
+              description: "You are now logged in.",
+            });
+            
+            // Redirect to dashboard after successful login
+            navigate("/dealer/dashboard");
+          } catch (parseError) {
+            console.error("Error parsing exchange token:", parseError);
             toast({
               title: "Error",
-              description: "Failed to establish session. Please try again.",
+              description: "Failed to process authentication data. Please try again.",
               variant: "destructive",
             });
-            await signOut(); // Clear potentially broken auth state
-            return;
           }
-          
-          toast({
-            title: "Login successful!",
-            description: "You are now logged in.",
-          });
-          
-          // Redirect to dashboard after successful login
-          navigate("/dealer/dashboard");
         } else if (result.session) {
           // Fallback for session-based login (legacy)
           toast({

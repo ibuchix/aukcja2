@@ -61,10 +61,19 @@ export async function generateExchangeToken(userId: string, email: string) {
     // Generate a UUID v4 for the refresh token (Supabase expects this format)
     const refreshToken = crypto.randomUUID();
     
+    // Now create the exchange token that the frontend expects
+    // This is a simple object with the accessToken and refreshToken
+    // The frontend will use this to establish a session
+    const exchangeToken = {
+      access_token: accessToken,
+      refresh_token: refreshToken
+    };
+    
     console.log("Auth tokens generated successfully");
     return {
       accessToken,
-      refreshToken
+      refreshToken,
+      exchangeToken: JSON.stringify(exchangeToken) // Stringify the token for transport
     };
     
   } catch (error) {

@@ -4,7 +4,8 @@ import { validateEmail, validateOtp } from "./validation.ts";
 import { verifyUserExists, getUserByEmail } from "./user-verification.ts";
 import { storeOtp, verifyOtp, deleteOtp } from "./otp-management.ts";
 import { sendOtpEmail } from "./email-service.ts";
-import { generateExchangeToken, getDealerProfile } from "./session-management.ts";
+import { generateExchangeToken } from "./token-manager.ts";
+import { getDealerProfile } from "./dealer-profile.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { ValidationError, NotFoundError } from "../_shared/error-handling.ts";
 
@@ -26,10 +27,18 @@ export async function handleGenerateOtp(supabase: SupabaseClient, email: string)
     // Send OTP email
     await sendOtpEmail(normalizedEmail, otp);
     
-    return {
-      success: true,
-      message: "Login code sent successfully"
-    };
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Login code sent successfully"
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
+      }
+    );
   } catch (error) {
     console.error(`[dealer-otp] Error generating OTP: ${error.message}`);
     
@@ -67,6 +76,9 @@ export async function handleVerifyOtp(supabase: SupabaseClient, email: string, o
     // Delete the used OTP
     await deleteOtp(supabase, normalizedEmail);
     
+    console.log(`[dealer-otp] OTP verified and tokens generated successfully`);
+    console.log(`[dealer-otp] Exchange token generated: ${tokens.exchangeToken ? 'Yes' : 'No'}`);
+    
     const response = {
       success: true,
       exchangeToken: tokens.exchangeToken,
@@ -83,7 +95,15 @@ export async function handleVerifyOtp(supabase: SupabaseClient, email: string, o
       response.completionRequired = true;
     }
     
-    return response;
+    return new Response(
+      JSON.stringify(response),
+      {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
+      }
+    );
   } catch (error) {
     console.error(`[dealer-otp] Error verifying OTP: ${error.message}`);
     
@@ -129,10 +149,18 @@ export async function handleCheckEmail(supabase: SupabaseClient, email: string) 
       }
     }
     
-    return {
-      success: true,
-      exists: exists
-    };
+    return new Response(
+      JSON.stringify({
+        success: true,
+        exists: exists
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
+      }
+    );
   } catch (error) {
     console.error("Exception in handleCheckEmail:", error);
     
