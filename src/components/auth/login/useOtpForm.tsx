@@ -60,16 +60,21 @@ export function useOtpForm(
             if (error) {
               console.error("Error exchanging token:", error);
               toast({
-                title: "Sign in link sent",
-                description: "We've sent a sign-in link to your email. Please check your inbox to complete the sign-in process.",
+                title: "Login error",
+                description: "We couldn't complete the sign-in process. Please try again.",
+                variant: "destructive",
               });
               return;
             }
             
+            // Let the user know they are being logged in
             toast({
-              title: "Check your email",
-              description: "We've sent a verification link to your email to complete the login process.",
+              title: "Login successful",
+              description: "You are now signed in.",
             });
+            
+            // Redirect to dashboard after successful login
+            navigate("/dealer/dashboard");
           } catch (parseError) {
             console.error("Error during sign in:", parseError);
             toast({
@@ -90,8 +95,8 @@ export function useOtpForm(
         } else {
           console.error("Missing session data and exchange token from verification");
           toast({
-            title: "Check your email",
-            description: "We've sent a link to complete your sign-in. Please check your inbox.",
+            title: "Authentication in progress",
+            description: "Please follow the steps to complete your sign-in.",
           });
         }
       } else {

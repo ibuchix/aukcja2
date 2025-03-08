@@ -6,7 +6,6 @@ import { useAuthState } from "./useAuthState";
 import { fetchDealerProfile, signOutUser, refreshUserSession } from "./authUtils";
 import { supabase } from "@/integrations/supabase/client";
 
-// Define the shape of the context
 type AuthContextType = {
   session: Session | null;
   user: User | null;
@@ -18,10 +17,8 @@ type AuthContextType = {
   signIn: (options: { exchangeToken?: string }) => Promise<{ error?: Error }>;
 };
 
-// Create the context with a default value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { 
     session, 
@@ -36,10 +33,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   const { toast } = useToast();
   
-  // Use our session manager hook to keep the session alive
   useSessionManager();
 
-  // Sign out function
   const signOut = async () => {
     try {
       setIsLoading(true);
@@ -54,7 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       
-      // Clear local state
       setUser(null);
       setSession(null);
       setProfile(null);
@@ -68,7 +62,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Sign in with exchange token
   const signIn = async ({ exchangeToken }: { exchangeToken?: string }) => {
     try {
       setIsLoading(true);
@@ -79,7 +72,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log("Received exchange token to process");
       
-      // Parse the exchange token
       let tokenData;
       try {
         tokenData = JSON.parse(exchangeToken);
@@ -89,61 +81,80 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: new Error("Invalid exchange token format") };
       }
       
-      // Check if we have the expected data in our token
       if (!tokenData.user_id || !tokenData.email) {
         console.error("Exchange token missing required fields", tokenData);
         return { error: new Error("Invalid exchange token: missing required fields") };
       }
       
-      // Use magic link sign-in for the user instead of password
-      console.log("Attempting to sign in with magic link for", tokenData.email);
-      
-      const { data, error } = await supabase.auth.signInWithOtp({
-        email: tokenData.email,
-        options: {
-          // This is crucial - we're not creating a new user
-          shouldCreateUser: false
-        }
-      });
-      
-      if (error) {
-        console.error("Error sending magic link:", error);
+      if (tokenData.properties && tokenData.properties.email_otp) {
+        console.log("Using email OTP verification");
         
-        // Try a different approach - get a new session directly
-        try {
-          console.log("Attempting alternate authentication method");
-          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.verifyOtp({
+          email: tokenData.email,
+          token: tokenData.properties.email_otp,
+          type: 'email'
+        });
+        
+        if (error) {
+          console.error("Error verifying OTP token:", error);
           
-          if (sessionError) {
-            console.error("Error getting session:", sessionError);
-            return { error: sessionError };
-          }
+          toast({
+            title: "Direct login failed",
+            description: "We've sent a backup verification link to your email. Please check your inbox.",
+            variant: "destructive",
+          });
           
-          // If we have a session somehow, use it
-          if (sessionData?.session) {
-            console.log("Existing session found, using it");
-            setSession(sessionData.session);
-            setUser(sessionData.session.user);
-            
-            // Fetch profile data
-            if (sessionData.session.user) {
-              const profileData = await fetchDealerProfile(sessionData.session.user.id);
-              setProfile(profileData);
+          const { error: magicLinkError } = await supabase.auth.signInWithOtp({
+            email: tokenData.email,
+            options: {
+              shouldCreateUser: false
             }
-            
-            return { error: undefined };
+          });
+          
+          if (magicLinkError) {
+            console.error("Fallback to magic link failed:", magicLinkError);
+            return { error: magicLinkError };
           }
-        } catch (altError) {
-          console.error("Alternative auth approach failed:", altError);
+          
+          return { error: undefined };
         }
         
-        return { error };
+        if (data.session) {
+          console.log("Successfully signed in with OTP verification");
+          setSession(data.session);
+          setUser(data.user);
+          
+          if (data.user) {
+            const profileData = await fetchDealerProfile(data.user.id);
+            setProfile(profileData);
+          }
+          
+          toast({
+            title: "Login successful",
+            description: "You have been successfully signed in.",
+          });
+          
+          return { error: undefined };
+        }
+      } else {
+        console.log("No OTP properties found, falling back to magic link");
+        const { error } = await supabase.auth.signInWithOtp({
+          email: tokenData.email,
+          options: {
+            shouldCreateUser: false
+          }
+        });
+        
+        if (error) {
+          console.error("Error sending magic link:", error);
+          return { error };
+        }
+        
+        toast({
+          title: "Verification email sent",
+          description: "We've sent a verification link to your email. Please check your inbox to complete sign-in.",
+        });
       }
-      
-      toast({
-        title: "Verification email sent",
-        description: "We've sent a verification link to your email. Please check your inbox and click the link to sign in.",
-      });
       
       return { error: undefined };
     } catch (error) {
@@ -154,7 +165,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Refresh the session
   const refreshSession = async () => {
     try {
       setIsLoading(true);
@@ -180,7 +190,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Context value
   const value = {
     session,
     user,
@@ -195,7 +204,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// Custom hook to use the auth context
 export function useAuth() {
   const context = useContext(AuthContext);
   
