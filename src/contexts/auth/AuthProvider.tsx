@@ -78,59 +78,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: new Error("Missing exchange token") };
       }
       
-      // Handle both token formats - JSON object or simple string
+      console.log("Received exchange token to process");
+      
+      // Parse the exchange token
       let tokenData;
       try {
-        // Try to parse it as JSON first
         tokenData = JSON.parse(exchangeToken);
+        console.log("Successfully parsed exchange token", { userId: tokenData.user_id });
       } catch (e) {
-        // If it's not valid JSON, use it as a simple string
-        console.log("Exchange token is not a JSON string, using as-is");
+        console.error("Failed to parse exchange token", e);
+        return { error: new Error("Invalid exchange token format") };
       }
       
-      // If we have parsed token data with access and refresh tokens
-      if (tokenData && tokenData.access_token && tokenData.refresh_token) {
-        console.log("Using parsed token data with setSession");
-        // Use setSession directly with the access and refresh tokens
-        const { data, error } = await supabase.auth.setSession({
-          access_token: tokenData.access_token,
-          refresh_token: tokenData.refresh_token
-        });
-        
-        if (error) {
-          console.error("Error setting session with tokens:", error);
-          return { error };
-        }
-        
-        if (data?.session) {
-          setSession(data.session);
-          setUser(data.session.user);
+      // Check if we have the expected data in our token
+      if (!tokenData.user_id || !tokenData.email) {
+        console.error("Exchange token missing required fields", tokenData);
+        return { error: new Error("Invalid exchange token: missing required fields") };
+      }
+      
+      // Instead of trying to use Supabase's token exchange, we'll sign in directly
+      // using the email and a one-time password mechanism
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: tokenData.email,
+        password: tokenData.code_verifier
+      });
+      
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          console.log("Using fallback auth method due to invalid credentials");
           
-          // Fetch profile data
-          if (data.session.user) {
-            const profileData = await fetchDealerProfile(data.session.user.id);
-            setProfile(profileData);
-          }
-        }
-      } else {
-        // Fall back to exchangeCodeForSession if we don't have token object
-        console.log("Using exchangeCodeForSession with string token");
-        const { data, error } = await supabase.auth.exchangeCodeForSession(exchangeToken);
-        
-        if (error) {
-          console.error("Error exchanging token for session:", error);
-          return { error };
-        }
-        
-        if (data?.session) {
-          setSession(data.session);
-          setUser(data.session.user);
+          // Fallback: try to sign in with a temporary email link
+          const { data: magicData, error: magicError } = await supabase.auth.signInWithOtp({
+            email: tokenData.email,
+            options: {
+              shouldCreateUser: false  // Don't create a new user
+            }
+          });
           
-          // Fetch profile data
-          if (data.session.user) {
-            const profileData = await fetchDealerProfile(data.session.user.id);
-            setProfile(profileData);
+          if (magicError) {
+            console.error("Fallback auth method failed:", magicError);
+            return { error: magicError };
           }
+          
+          toast({
+            title: "Verification email sent",
+            description: "We've sent a verification link to your email.",
+          });
+          
+          return { error: undefined };
+        }
+        
+        console.error("Error signing in:", error);
+        return { error };
+      }
+      
+      if (data?.session) {
+        console.log("Successfully signed in with session");
+        setSession(data.session);
+        setUser(data.session.user);
+        
+        // Fetch profile data
+        if (data.session.user) {
+          const profileData = await fetchDealerProfile(data.session.user.id);
+          setProfile(profileData);
         }
       }
       

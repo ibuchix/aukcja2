@@ -28,52 +28,24 @@ export async function generateExchangeToken(userId: string, email: string) {
       throw new Error("Invalid SUPABASE_URL format");
     }
     
-    // Create a key for signing from the JWT secret
-    const key = await crypto.subtle.importKey(
-      "raw",
-      new TextEncoder().encode(jwtSecret),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
+    console.log(`Using project ref: ${projectRef} for token generation`);
     
-    // Current timestamp in seconds
-    const now = Math.floor(Date.now() / 1000);
+    // Generate a code verifier that Supabase can use as an auth_code
+    // Instead of a custom JWT which requires a matching user, we'll generate a code
+    // that can be exchanged through Supabase's OAuth-like flow
+    const codeVerifier = crypto.randomUUID();
     
-    // Create a token with the proper claims for Supabase Auth
-    const accessToken = await create(
-      { 
-        alg: "HS256", 
-        typ: "JWT" 
-      },
-      { 
-        sub: userId,
-        email: email,
-        role: "authenticated",
-        aud: projectRef,   // Set audience to the project ref
-        iat: now,          // Issued at time
-        exp: now + 3600,   // 1 hour expiry for access token
-        type: "access_token"
-      },
-      key
-    );
-    
-    // Generate a UUID v4 for the refresh token (Supabase expects this format)
-    const refreshToken = crypto.randomUUID();
-    
-    // Now create the exchange token that the frontend expects
-    // This is a simple object with the accessToken and refreshToken
-    // The frontend will use this to establish a session
+    // Create a simpler exchange token that combines the user ID and the code verifier
+    // This will be used in a different way by the client
     const exchangeToken = {
-      access_token: accessToken,
-      refresh_token: refreshToken
+      user_id: userId,
+      email: email,
+      code_verifier: codeVerifier
     };
     
-    console.log("Auth tokens generated successfully");
+    console.log("Auth exchange data generated successfully");
     return {
-      accessToken,
-      refreshToken,
-      exchangeToken: JSON.stringify(exchangeToken) // Stringify the token for transport
+      exchangeToken: JSON.stringify(exchangeToken)
     };
     
   } catch (error) {

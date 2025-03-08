@@ -59,6 +59,30 @@ export async function handleVerifyOtp(supabase: SupabaseClient, email: string, o
     // Get user information
     const userData = await getUserByEmail(supabase, normalizedEmail);
     
+    console.log(`[dealer-otp] User found with ID: ${userData.id}`);
+    
+    // Ensure user has a working password for the temporary login
+    // We'll set a temporary password based on the OTP code combined with a secret
+    const tempSecret = Deno.env.get("JWT_SECRET") || "dealer-otp-secret";
+    const tempPassword = `${validatedOtp}-${tempSecret}-${Date.now()}`;
+    
+    try {
+      // Update the user's password to the temporary one
+      const { error: updateError } = await supabase.auth.admin.updateUserById(
+        userData.id,
+        { password: tempPassword }
+      );
+      
+      if (updateError) {
+        console.error(`[dealer-otp] Failed to update user password: ${updateError.message}`);
+      } else {
+        console.log(`[dealer-otp] Temporary password set for user ${userData.id}`);
+      }
+    } catch (updateError) {
+      console.error(`[dealer-otp] Exception updating user password: ${updateError.message}`);
+      // Continue despite error since we have fallbacks
+    }
+    
     // Generate auth tokens for client-side session creation
     const tokens = await generateExchangeToken(userData.id, normalizedEmail);
     
@@ -70,6 +94,16 @@ export async function handleVerifyOtp(supabase: SupabaseClient, email: string, o
     
     console.log(`[dealer-otp] OTP verified and tokens generated successfully`);
     console.log(`[dealer-otp] Exchange token generated: ${tokens.exchangeToken ? 'Yes' : 'No'}`);
+    
+    // Update the exchangeToken with the temporary password for auth
+    let exchangeData;
+    try {
+      exchangeData = JSON.parse(tokens.exchangeToken);
+      exchangeData.code_verifier = tempPassword;
+      tokens.exchangeToken = JSON.stringify(exchangeData);
+    } catch (e) {
+      console.error(`[dealer-otp] Error updating exchange token: ${e.message}`);
+    }
     
     const response = {
       success: true,
