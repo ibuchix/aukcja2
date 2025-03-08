@@ -6,7 +6,7 @@ import { handleGenerateOtp, handleVerifyOtp, handleCheckEmail } from "./action-h
 import { withErrorHandling } from "../_shared/error-handling.ts";
 
 serve(async (req) => {
-  // Handle CORS preflight request
+  // Handle CORS preflight request - OUTSIDE the error handling wrapper
   if (req.method === "OPTIONS") {
     return new Response(null, { 
       status: 204,
@@ -91,8 +91,6 @@ serve(async (req) => {
     );
   }, {
     module: "dealer-otp",
-    headers: corsHeaders,
-    action: payload?.action,
-    email: payload?.email ? `${payload.email.substring(0, 3)}...` : undefined
+    headers: corsHeaders
   });
 });

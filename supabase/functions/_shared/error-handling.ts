@@ -166,7 +166,9 @@ export function withErrorHandling<T>(
         // Make sure any direct Response objects also have CORS headers
         const headers = new Headers(result.headers);
         Object.entries(corsHeaders).forEach(([key, value]) => {
-          headers.set(key, value);
+          if (!headers.has(key)) {
+            headers.set(key, value);
+          }
         });
         
         return new Response(result.body, {
