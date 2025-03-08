@@ -48,9 +48,6 @@ export const initiateOtpSignIn = async (email: string): Promise<SignInResult> =>
       body: {
         action: 'generate',
         email: normalizedEmail
-      },
-      headers: {
-        'Content-Type': 'application/json'
       }
     });
     
