@@ -60,9 +60,9 @@ export function useOtpForm(
             console.log("Token data prepared for exchange:", tokenData);
             
             // Sign in using the exchange token
+            // Fix: Pass the string exchangeToken directly to signIn instead of trying to use it as an object
             const { error } = await signIn({ 
-              access_token: tokenData.access_token,
-              refresh_token: tokenData.refresh_token 
+              exchangeToken: tokenData 
             });
             
             if (error) {
