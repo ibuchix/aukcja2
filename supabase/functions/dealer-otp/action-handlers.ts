@@ -27,18 +27,10 @@ export async function handleGenerateOtp(supabase: SupabaseClient, email: string)
     // Send OTP email
     await sendOtpEmail(normalizedEmail, otp);
     
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Login code sent successfully"
-      }),
-      {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        }
-      }
-    );
+    return {
+      success: true,
+      message: "Login code sent successfully"
+    };
   } catch (error) {
     console.error(`[dealer-otp] Error generating OTP: ${error.message}`);
     
@@ -95,15 +87,7 @@ export async function handleVerifyOtp(supabase: SupabaseClient, email: string, o
       response.completionRequired = true;
     }
     
-    return new Response(
-      JSON.stringify(response),
-      {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        }
-      }
-    );
+    return response;
   } catch (error) {
     console.error(`[dealer-otp] Error verifying OTP: ${error.message}`);
     
@@ -149,18 +133,10 @@ export async function handleCheckEmail(supabase: SupabaseClient, email: string) 
       }
     }
     
-    return new Response(
-      JSON.stringify({
-        success: true,
-        exists: exists
-      }),
-      {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        }
-      }
-    );
+    return {
+      success: true,
+      exists: exists
+    };
   } catch (error) {
     console.error("Exception in handleCheckEmail:", error);
     

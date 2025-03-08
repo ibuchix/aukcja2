@@ -13,6 +13,7 @@ interface ErrorContext {
   requestId?: string;
   action?: string;
   metadata?: Record<string, any>;
+  headers?: Record<string, string>;
 }
 
 export type ErrorResponse = {
@@ -50,6 +51,13 @@ export const handleError = (error: Error, context: ErrorContext = {}): Response 
     ? "Internal server error" 
     : error.message;
   
+  // Merge provided headers with CORS headers to ensure they're always present
+  const responseHeaders = {
+    "Content-Type": "application/json",
+    ...corsHeaders,  // Always include CORS headers
+    ...(context.headers || {})  // Include any function-specific headers
+  };
+  
   // Create a standardized error response
   return new Response(
     JSON.stringify({
@@ -60,10 +68,7 @@ export const handleError = (error: Error, context: ErrorContext = {}): Response 
     }),
     { 
       status,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders  // Add CORS headers to all error responses
-      }
+      headers: responseHeaders
     }
   );
 };

@@ -65,7 +65,30 @@ serve(async (req) => {
         throw new Error(`Invalid action: ${action}`);
     }
     
-    return response;
+    // Ensure response has proper CORS headers
+    if (response instanceof Response) {
+      // Add CORS headers to existing Response
+      const responseHeaders = new Headers(response.headers);
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        responseHeaders.set(key, value);
+      });
+      
+      return new Response(response.body, {
+        status: response.status,
+        headers: responseHeaders
+      });
+    }
+    
+    // Create new response with CORS headers
+    return new Response(
+      JSON.stringify(response),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      }
+    );
   }, {
     module: "dealer-otp",
     headers: corsHeaders,
