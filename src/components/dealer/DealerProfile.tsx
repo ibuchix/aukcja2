@@ -1,11 +1,13 @@
 
 import { useDealerProfile } from "@/contexts/dealer-profile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, User as UserIcon, FileText, MapPin, BadgeCheck, AlertCircle } from "lucide-react";
+import { Building2, User as UserIcon, FileText, MapPin, BadgeCheck, AlertCircle, Phone, Mail } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { formatNameForDisplay, getValueWithFallback } from "@/utils/dealer-profile-utils/formatters";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function DealerProfile() {
   const { 
@@ -18,6 +20,7 @@ export function DealerProfile() {
     initiateProfileRecovery,
     profileIsComplete
   } = useDealerProfile();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   if (isLoading) {
@@ -57,14 +60,15 @@ export function DealerProfile() {
                 Dealer Information
               </h3>
               <div className="space-y-3 text-subtitle-text">
-                <p><span className="font-medium text-dark">Name:</span> {displayProfile?.supervisorName}</p>
-                <p><span className="font-medium text-dark">Dealership:</span> {displayProfile?.dealershipName}</p>
+                <p><span className="font-medium text-dark">Name:</span> {formatNameForDisplay(displayProfile?.supervisorName)}</p>
+                <p><span className="font-medium text-dark">Dealership:</span> {getValueWithFallback(displayProfile?.dealershipName)}</p>
                 <p>
                   <span className="font-medium text-dark">Verification:</span> 
                   <span className={`ml-1 ${displayProfile?.isVerified ? 'text-green-600' : 'text-amber-600'}`}>
-                    {displayProfile?.verificationStatus}
+                    {getValueWithFallback(displayProfile?.verificationStatus, 'Pending')}
                   </span>
                 </p>
+                <p><span className="font-medium text-dark">Email:</span> {getValueWithFallback(user?.email)}</p>
               </div>
             </div>
             
@@ -75,11 +79,11 @@ export function DealerProfile() {
                 Business Information
               </h3>
               <div className="space-y-3 text-subtitle-text">
-                <p><span className="font-medium text-dark">Tax ID:</span> {displayProfile?.formattedTaxId || displayProfile?.taxId}</p>
-                <p><span className="font-medium text-dark">License:</span> {displayProfile?.licenseNumber}</p>
+                <p><span className="font-medium text-dark">Tax ID:</span> {getValueWithFallback(displayProfile?.formattedTaxId || displayProfile?.taxId)}</p>
+                <p><span className="font-medium text-dark">License:</span> {getValueWithFallback(displayProfile?.licenseNumber)}</p>
                 <p>
-                  <span className="font-medium text-dark">Registry Number:</span> 
-                  {displayProfile?.formattedBusinessRegistry || displayProfile?.businessRegistryNumber}
+                  <span className="font-medium text-dark">Registry Number:</span> {" "}
+                  {getValueWithFallback(displayProfile?.formattedBusinessRegistry || displayProfile?.businessRegistryNumber)}
                 </p>
               </div>
             </div>
@@ -88,12 +92,26 @@ export function DealerProfile() {
             <div>
               <h3 className="font-medium text-dark mb-4 pb-2 border-b border-gray-100 flex items-center">
                 <MapPin className="mr-2 h-4 w-4 text-primary" />
-                Location
+                Location & Contact
               </h3>
               <div className="space-y-3 text-subtitle-text">
-                <p><span className="font-medium text-dark">Address:</span> {displayProfile?.address}</p>
+                <p><span className="font-medium text-dark">Address:</span> {getValueWithFallback(displayProfile?.address)}</p>
+                {user?.user_metadata?.phone_number && (
+                  <p><span className="font-medium text-dark">Phone:</span> {getValueWithFallback(user.user_metadata.phone_number)}</p>
+                )}
               </div>
             </div>
+          </div>
+          
+          <div className="mt-6 flex justify-end">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigate('/dealer/profile')}
+              className="text-primary border-primary hover:bg-primary/5"
+            >
+              Edit Profile
+            </Button>
           </div>
         </CardContent>
       </Card>

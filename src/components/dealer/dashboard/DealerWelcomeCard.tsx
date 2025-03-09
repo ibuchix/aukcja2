@@ -10,6 +10,7 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from "@/components/ui/tooltip";
+import { formatNameForDisplay, getValueWithFallback } from "@/utils/dealer-profile-utils/formatters";
 
 export function DealerWelcomeCard() {
   const { displayProfile, isLoading, profileIsComplete, missingFields = [] } = useDealerProfile();
@@ -18,18 +19,18 @@ export function DealerWelcomeCard() {
   // Get dealer name with better fallback handling
   const getDealerName = () => {
     if (displayProfile?.supervisorName) {
-      return displayProfile.supervisorName;
+      return formatNameForDisplay(displayProfile.supervisorName);
     } else if (user?.email) {
       // Extract name from email (before @ symbol)
       const namePart = user.email.split('@')[0];
-      // Capitalize first letter
-      return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+      // Format with proper casing
+      return formatNameForDisplay(namePart.replace(/[._-]/g, ' '));
     }
     return "Dealer";
   };
   
   const dealerName = getDealerName();
-  const dealershipName = displayProfile?.dealershipName || "Your Dealership";
+  const dealershipName = getValueWithFallback(displayProfile?.dealershipName, "Your Dealership");
 
   // Format missing fields for display
   const formatMissingFieldName = (field: string) => {
