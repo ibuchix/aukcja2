@@ -8,7 +8,7 @@ import { QuickActions } from "@/components/dealer/dashboard/QuickActions";
 import { BusinessActionSection } from "@/components/dealer/dashboard/BusinessActionSection";
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard";
@@ -19,21 +19,17 @@ export default function DealerDashboard() {
   const { dealerProfile, isLoading: isProfileLoading, error: profileError } = useCurrentDealerProfile();
   const navigate = useNavigate();
   
-  // Handle manual session refresh
   const handleManualRefresh = async () => {
     await refreshSession();
     window.location.reload();
   };
 
-  // Determine if we're still in a loading state (auth or profile)
   const isLoading = isAuthLoading || isProfileLoading;
 
-  // Show loading state
   if (isLoading) {
     return <LoadingDashboard />;
   }
 
-  // Not logged in
   if (!user && !isLoading) {
     return (
       <DashboardLayout title="Authentication Required">
@@ -77,7 +73,7 @@ export default function DealerDashboard() {
       {directQueryResult && (
         <Alert variant={directQueryResult.success ? "default" : "destructive"} className="mb-6">
           {directQueryResult.success ? 
-            <CheckCircle2 className="h-4 w-4 text-green-500" /> : 
+            <CheckCircle className="h-4 w-4 text-green-500" /> : 
             <AlertCircle className="h-4 w-4" />
           }
           <AlertTitle>

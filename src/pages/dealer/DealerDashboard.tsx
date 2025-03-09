@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useWelcomeDashboardData } from "@/hooks/useWelcomeDashboardData";
 import { DashboardLayout } from "@/components/dealer/dashboard/DashboardLayout";
@@ -9,7 +8,7 @@ import { BusinessActionSection } from "@/components/dealer/dashboard/BusinessAct
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
 import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2, InfoIcon, RefreshCw } from "lucide-react";
+import { AlertCircle, CheckCircle, InfoIcon, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard";
@@ -28,7 +27,6 @@ export default function DealerDashboard() {
   } = useWelcomeDashboardData(user, isAuthLoading);
   const navigate = useNavigate();
   
-  // Enhanced RLS debug logging
   useEffect(() => {
     const debugRls = async () => {
       if (user) {
@@ -40,7 +38,6 @@ export default function DealerDashboard() {
           fetchError
         });
         
-        // Test direct query to verify RLS is working correctly
         try {
           const { data, error } = await supabase
             .from('dealers')
@@ -55,7 +52,6 @@ export default function DealerDashboard() {
             errorCode: error?.code
           });
           
-          // Verify JWT claim matches what RLS expects
           const { data: jwtData, error: jwtError } = await supabase
             .rpc('debug_auth_user_id');
           
@@ -66,7 +62,6 @@ export default function DealerDashboard() {
             error: jwtError?.message
           });
           
-          // Check if session contains the correct headers
           const { data: { session } } = await supabase.auth.getSession();
           console.log("Session check:", {
             hasSession: !!session,
@@ -83,24 +78,19 @@ export default function DealerDashboard() {
     debugRls();
   }, [user, dealerProfile, fetchError]);
 
-  // Handle manual session refresh
   const handleManualRefresh = async () => {
     await refreshSession();
-    window.location.reload(); // Force reload to ensure fresh state
+    window.location.reload();
   };
 
-  // Determine if we're still in a loading state
   const isLoading = isAuthLoading || profileDataLoading;
 
-  // If we're not loading, the user exists, but no dealer profile was found
   const noProfileFound = !dealerProfile && !!user && !isLoading && profileFetchAttempted;
 
-  // Show loading state
   if (isLoading) {
     return <LoadingDashboard />;
   }
 
-  // Improve auth check to ensure we're only showing the dashboard to authenticated users
   if (!user && !isLoading) {
     return (
       <DashboardLayout title="Authentication Required">
@@ -144,7 +134,7 @@ export default function DealerDashboard() {
       {directQueryResult && (
         <Alert variant={directQueryResult.success ? "default" : "destructive"} className="mb-6">
           {directQueryResult.success ? 
-            <CheckCircle2 className="h-4 w-4 text-green-500" /> : 
+            <CheckCircle className="h-4 w-4 text-green-500" /> : 
             <AlertCircle className="h-4 w-4" />
           }
           <AlertTitle>
@@ -156,7 +146,6 @@ export default function DealerDashboard() {
         </Alert>
       )}
       
-      {/* Debug card when authenticated but no dealer profile found */}
       {noProfileFound ? (
         <div className="space-y-6">
           <Alert variant="destructive" className="mb-6">
