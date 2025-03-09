@@ -1,5 +1,5 @@
 
-import { useDealerProfile } from "@/contexts/DealerProfileContext";
+import { useDealerProfile } from "@/contexts/dealer-profile";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";

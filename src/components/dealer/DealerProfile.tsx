@@ -1,5 +1,5 @@
 
-import { useDealerProfile } from "@/contexts/DealerProfileContext";
+import { useDealerProfile } from "@/contexts/dealer-profile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, User as UserIcon, FileText, MapPin, BadgeCheck, AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
