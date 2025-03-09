@@ -79,10 +79,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
-      console.log(`Signing in with email: ${email.substring(0, 3)}...`);
+      console.log(`Signing in with email: ${email}`);
       
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.toLowerCase().trim(),
         password,
       });
       
@@ -96,7 +96,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(data.user);
       
       if (data.user) {
+        console.log("Fetching dealer profile for user ID:", data.user.id);
         const profileData = await fetchDealerProfile(data.user.id);
+        console.log("Retrieved profile data:", profileData);
         setProfile(profileData);
       }
       

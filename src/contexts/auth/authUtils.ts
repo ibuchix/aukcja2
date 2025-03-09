@@ -104,15 +104,6 @@ export async function refreshUserSession() {
   try {
     console.log("Manually refreshing session");
     
-    // First clear session cache to ensure we're not using stale data
-    try {
-      localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
-      localStorage.removeItem('dealer_auth_token');
-    } catch (clearError) {
-      console.warn("Error clearing local storage:", clearError);
-      // Continue despite error
-    }
-    
     // Get current session
     const { data: currentSession, error: currentSessionError } = await supabase.auth.getSession();
     

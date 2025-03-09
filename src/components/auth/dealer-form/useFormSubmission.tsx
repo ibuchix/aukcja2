@@ -25,12 +25,20 @@ export function useFormSubmission({
     
     try {
       console.log("Starting dealer registration process...");
+      console.log("Registration values:", { 
+        email: values.email, 
+        companyName: values.companyName,
+        supervisorName: values.supervisorName,
+        businessRegistryNumber: values.businessRegistryNumber,
+        taxId: values.taxId
+      });
       
       // Create the dealer account
       const result = await signupDealer(values);
       
       if (result.success) {
         console.log("Registration successful");
+        console.log("User data:", result.user);
         
         toast({
           title: "Registration successful",
@@ -102,7 +110,7 @@ function handleRegistrationError(error: any): string {
     }
     
     if (error.message.includes('Password should be')) {
-      return "Password must be at least 6 characters long and meet security requirements.";
+      return "Password must be at least 8 characters long and meet security requirements.";
     }
     
     if (error.message.includes('invalid email')) {

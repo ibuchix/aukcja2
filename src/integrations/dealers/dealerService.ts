@@ -76,6 +76,7 @@ export async function signupDealer(values: DealerFormValues) {
     
     if (procedureError) {
       console.error("Error from stored procedure:", procedureError);
+      console.error("Error details:", JSON.stringify(procedureError));
       
       // Handle specific error messages
       if (procedureError.message.includes("duplicate key") || 
@@ -91,7 +92,7 @@ export async function signupDealer(values: DealerFormValues) {
     
     // Cast result to the expected type to make TypeScript happy
     const typedResult = result as CreateDealerResponse;
-    console.log("Procedure result:", typedResult);
+    console.log("Procedure result:", JSON.stringify(typedResult));
     
     // Check if the procedure result indicates success
     if (!typedResult || !typedResult.success) {
