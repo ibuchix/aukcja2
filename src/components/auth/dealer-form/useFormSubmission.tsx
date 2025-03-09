@@ -70,7 +70,7 @@ export function useFormSubmission({
             address: values.companyAddress,
             verification_status: 'pending',
             is_verified: false,
-            license_number: values.businessRegistryNumber, // Add this line to fix the error
+            license_number: values.businessRegistryNumber,
           });
         
         if (dealerError) {
@@ -84,7 +84,7 @@ export function useFormSubmission({
           return false;
         }
         
-        // Success! Move to verification step
+        // Success! Move to success step
         console.log("Dealer profile created successfully");
         moveToStep(2); // Move to the "Check your email" step
         
