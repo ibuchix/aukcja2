@@ -22,6 +22,14 @@ export const dealerFormSchema = z.object({
     .max(255, {
       message: "Email cannot exceed 255 characters",
     }),
+  password: z.string()
+    .min(8, {
+      message: "Password must be at least 8 characters",
+    })
+    .max(72, {
+      message: "Password cannot exceed 72 characters",
+    }),
+  confirmPassword: z.string(),
   phoneNumber: z.string()
     .min(9, {
       message: "Please enter a valid phone number",
@@ -69,6 +77,9 @@ export const dealerFormSchema = z.object({
   acceptTerms: z.boolean().refine((val) => val === true, {
     message: "You must accept the terms and conditions",
   }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
 export type DealerFormValues = z.infer<typeof dealerFormSchema>;

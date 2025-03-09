@@ -13,19 +13,23 @@ interface RegistrationFormProps {
   defaultEmail?: string;
   isSubmitting: boolean;
   formErrors: string[];
+  showPasswordFields?: boolean;
 }
 
 export function RegistrationForm({ 
   onSubmit, 
   defaultEmail = "", 
   isSubmitting, 
-  formErrors 
+  formErrors,
+  showPasswordFields = false
 }: RegistrationFormProps) {
   const form = useForm<DealerFormValues>({
     resolver: zodResolver(dealerFormSchema),
     defaultValues: {
       supervisorName: "",
       email: defaultEmail,
+      password: "",
+      confirmPassword: "",
       phoneNumber: "+",
       companyName: "",
       taxId: "",
@@ -42,7 +46,7 @@ export function RegistrationForm({
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <DealerFormFields form={form} />
+          <DealerFormFields form={form} showPasswordFields={showPasswordFields} />
           <Button
             type="submit"
             className="w-full"

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { useSignupDealer } from "@/hooks/useSignupDealer";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseFormSubmissionParams {
   moveToStep: (step: number) => void;
@@ -14,102 +14,108 @@ interface UseFormSubmissionParams {
 export function useFormSubmission({ moveToStep, resetError, setError }: UseFormSubmissionParams) {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { signupDealer, isSubmitting } = useSignupDealer();
-  const [retryAttempt, setRetryAttempt] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFormSubmit = async (values: DealerFormValues) => {
     resetError();
     moveToStep(2);
+    setIsSubmitting(true);
     
     try {
-      const result = await signupDealer(values);
+      // Create user with email and password using Supabase
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            name: values.supervisorName,
+            phone_number: values.phoneNumber,
+            role: 'dealer'
+          }
+        }
+      });
       
-      if (!result.success) {
-        // Network error handling
-        if (result.errorType === 'network') {
-          setError("Network connection issue. Please try again.");
-          toast({
-            title: "Network Connection Issue",
-            description: "There was a problem connecting to our servers. This is often temporary. Please try again.",
-            variant: "destructive",
-          });
-          
-          console.log("Network error during registration, showing detailed guidance");
-          
-          // Add more detailed troubleshooting toast
-          setTimeout(() => {
-            toast({
-              title: "Troubleshooting Tips",
-              description: "Try refreshing the page or check if you have any extensions blocking requests.",
-              variant: "default",
-              duration: 8000,
-            });
-          }, 1000);
-          
-          return;
-        }
+      if (authError) {
+        console.error("Auth error:", authError);
+        setError(authError.message);
+        moveToStep(1);
         
-        setError(result.error || "Registration failed");
+        toast({
+          title: "Registration Failed",
+          description: authError.message,
+          variant: "destructive",
+        });
         
-        if (result.error?.includes("already in progress") || result.error?.includes("concurrent")) {
-          toast({
-            title: "Registration In Progress",
-            description: "There is already a registration in progress for this email. Please try again in a moment.",
-            variant: "default",
-          });
-        } else {
-          toast({
-            title: "Registration Failed",
-            description: result.error,
-            variant: "destructive",
-          });
-        }
-        
-        if (result.error?.includes("already exists")) {
-          toast({
-            title: "Account Exists",
-            description: "Try logging in with your email instead.",
-            variant: "default",
-          });
-        }
-        
-        return;
+        return false;
       }
-
-      // Move to success step even if there were minor issues
+      
+      if (!authData.user) {
+        setError("Failed to create user account");
+        moveToStep(1);
+        
+        toast({
+          title: "Registration Failed",
+          description: "Failed to create user account",
+          variant: "destructive",
+        });
+        
+        return false;
+      }
+      
+      // Create dealer profile
+      const { error: profileError } = await supabase
+        .from('dealers')
+        .insert({
+          user_id: authData.user.id,
+          supervisor_name: values.supervisorName,
+          dealership_name: values.companyName,
+          tax_id: values.taxId,
+          business_registry_number: values.businessRegistryNumber,
+          address: values.companyAddress,
+          license_number: values.businessRegistryNumber, // Using business registry as license
+          verification_status: 'pending',
+          is_verified: false
+        });
+      
+      if (profileError) {
+        console.error("Profile error:", profileError);
+        setError(profileError.message);
+        moveToStep(1);
+        
+        toast({
+          title: "Profile Creation Failed",
+          description: profileError.message,
+          variant: "destructive",
+        });
+        
+        return false;
+      }
+      
+      // Move to success step
       moveToStep(3);
+      
       toast({
         title: "Registration Successful",
-        description: result.message || "Please check your email to verify your account.",
-        variant: "default",
+        description: "Your account has been created successfully. Please check your email for verification.",
       });
+      
       return true;
     } catch (error) {
       console.error("Form submission error:", error);
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
       
-      // Check for network-related errors
-      const errorMessage = error instanceof Error ? error.message : "Unexpected error during registration";
-      if (errorMessage.includes('network') || 
-          errorMessage.includes('connection') || 
-          errorMessage.includes('internet') || 
-          errorMessage.includes('CORS') ||
-          errorMessage.includes('503')) {
-            
-        setError("Network connection issue. Please check your internet and try again.");
-        toast({
-          title: "Network Connection Issue",
-          description: "Please check your internet connection and try again shortly.",
-          variant: "destructive",
-        });
-      } else {
-        setError(errorMessage);
-        toast({
-          title: "Registration Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      }
+      setError(errorMessage);
+      moveToStep(1);
+      
+      toast({
+        title: "Registration Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
       return false;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

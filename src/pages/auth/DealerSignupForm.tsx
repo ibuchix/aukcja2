@@ -40,6 +40,8 @@ export function DealerSignupForm() {
     defaultValues: {
       supervisorName: "",
       email: "",
+      password: "",
+      confirmPassword: "",
       phoneNumber: "",
       companyName: "",
       taxId: "",
