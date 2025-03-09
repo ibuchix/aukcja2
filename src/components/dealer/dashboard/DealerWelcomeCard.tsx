@@ -70,7 +70,7 @@ export function DealerWelcomeCard() {
                   </TooltipTrigger>
                   <TooltipContent className="p-2 max-w-xs">
                     <div>
-                      {Array.isArray(missingFields) && missingFields.length > 0 ? (
+                      {missingFields && missingFields.length > 0 ? (
                         <>
                           <p className="font-semibold mb-1">Missing information:</p>
                           <ul className="list-disc pl-4 text-sm">

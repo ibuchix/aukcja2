@@ -24,6 +24,15 @@ type DealerProfileContextType = {
   refreshProfile: () => Promise<void>;
 };
 
+// Required fields for a complete profile
+const REQUIRED_PROFILE_FIELDS = [
+  'supervisor_name', 
+  'dealership_name', 
+  'tax_id', 
+  'business_registry_number', 
+  'address'
+];
+
 // Create context with default values
 const DealerProfileContext = createContext<DealerProfileContextType>({
   displayProfile: null,
@@ -74,6 +83,32 @@ export const DealerProfileProvider = ({ children }: { children: ReactNode }) => 
     });
   };
 
+  // Check if a profile is complete based on required fields
+  const checkProfileCompleteness = (profileData: any): { isComplete: boolean, missing: string[] } => {
+    if (!profileData) {
+      return { isComplete: false, missing: ["profile_not_found"] };
+    }
+
+    // Special case for profile_status explicitly set by backend
+    if (profileData.profile_status === "not_found") {
+      return { isComplete: false, missing: ["profile_not_found"] };
+    }
+    
+    if (profileData.profile_status === "incomplete") {
+      // Use missing_fields if provided by the backend
+      const missing = Array.isArray(profileData.missing_fields) ? profileData.missing_fields : [];
+      return { isComplete: false, missing };
+    }
+
+    // For normal profiles, check required fields
+    const missing = REQUIRED_PROFILE_FIELDS.filter(field => {
+      const value = profileData[field];
+      return value === undefined || value === null || value === '';
+    });
+
+    return { isComplete: missing.length === 0, missing };
+  };
+
   // Function to fetch the dealer profile
   const fetchDealerProfileData = async () => {
     try {
@@ -87,6 +122,9 @@ export const DealerProfileProvider = ({ children }: { children: ReactNode }) => 
         console.log("No authenticated user found when fetching dealer profile");
         setProfileStatus("not_found");
         setFetchAttempted(true);
+        setMissingFields(["profile_not_found"]);
+        setProfileIsComplete(false);
+        setIsLoading(false);
         return;
       }
       
@@ -97,48 +135,37 @@ export const DealerProfileProvider = ({ children }: { children: ReactNode }) => 
         setError("Failed to fetch dealer profile. Please try again later.");
         setProfileStatus("error");
         setFetchAttempted(true);
+        setMissingFields(["profile_not_found"]);
+        setProfileIsComplete(false);
+        setIsLoading(false);
         return;
       }
       
-      // Handle profile statuses and check for missing fields
+      // Process the profile data and determine completeness
+      setRawProfile(profileData);
+      
+      // Transform raw profile to display format if it's not a special status profile
+      if (profileData.profile_status !== "not_found" && profileData.profile_status !== "incomplete") {
+        setDisplayProfile(mapDatabaseToDisplay(profileData));
+      }
+      
+      // Check profile completeness
+      const { isComplete, missing } = checkProfileCompleteness(profileData);
+      
+      // Update state based on profile completeness
+      setMissingFields(missing);
+      setProfileIsComplete(isComplete);
+      
       if (profileData.profile_status === "not_found") {
         console.log("Dealer profile not found, setting status to not_found");
         setProfileStatus("not_found");
         setNeedsRecovery(Boolean(profileData.needs_recovery));
-        setRawProfile(profileData);
-        setMissingFields(["profile_not_found"]);
-        setProfileIsComplete(false);
-      } else if (profileData.profile_status === "incomplete") {
-        console.log("Dealer profile is incomplete, setting status to incomplete");
+      } else if (profileData.profile_status === "incomplete" || !isComplete) {
+        console.log("Dealer profile is incomplete");
         setProfileStatus("incomplete");
         setNeedsRecovery(Boolean(profileData.needs_recovery));
-        setRawProfile(profileData);
-        
-        // Set missing fields if available
-        const missingFieldsList = profileData.missing_fields || [];
-        setMissingFields(missingFieldsList);
-        setProfileIsComplete(false);
       } else {
-        // Check if any required fields are missing in a complete profile
-        const requiredFields = [
-          'supervisor_name', 
-          'dealership_name', 
-          'tax_id', 
-          'business_registry_number', 
-          'address'
-        ];
-        
-        const missingRequiredFields = requiredFields.filter(field => 
-          !profileData[field] || profileData[field].trim() === ''
-        );
-        
-        setMissingFields(missingRequiredFields);
-        setProfileIsComplete(missingRequiredFields.length === 0);
-        
-        // Set profile data and status to complete
-        setRawProfile(profileData);
-        setDisplayProfile(mapDatabaseToDisplay(profileData));
-        setProfileStatus(missingRequiredFields.length === 0 ? "complete" : "incomplete");
+        setProfileStatus("complete");
       }
       
       setFetchAttempted(true);

@@ -34,6 +34,35 @@ export function useFormSubmission({
         taxId: values.taxId
       });
       
+      // Make sure all required fields are present and not empty
+      const requiredFields = [
+        'supervisorName', 
+        'companyName', 
+        'taxId', 
+        'businessRegistryNumber', 
+        'companyAddress'
+      ];
+      
+      const missingFields = requiredFields.filter(field => 
+        !values[field as keyof DealerFormValues] || 
+        (typeof values[field as keyof DealerFormValues] === 'string' && 
+         (values[field as keyof DealerFormValues] as string).trim() === '')
+      );
+      
+      if (missingFields.length > 0) {
+        const formattedFields = missingFields.map(field => 
+          field.replace(/([A-Z])/g, ' $1').toLowerCase()
+        ).join(', ');
+        
+        setError(`Please complete all required fields: ${formattedFields}`);
+        toast({
+          title: "Missing information",
+          description: `Please complete all required fields: ${formattedFields}`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      
       // Create the dealer account
       const result = await signupDealer(values);
       
@@ -43,7 +72,7 @@ export function useFormSubmission({
         
         toast({
           title: "Registration successful",
-          description: "Your account has been created. You can now log in.",
+          description: "Your account has been created with a complete profile. You can now log in.",
           duration: 6000, // Show for 6 seconds
         });
         

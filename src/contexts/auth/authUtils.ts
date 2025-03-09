@@ -1,8 +1,16 @@
-
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { mapDatabaseToDisplay } from "@/utils/dealerProfileMapping";
 import { Json } from "@/integrations/supabase/types";
+
+// Required fields for a complete dealer profile
+const REQUIRED_DEALER_FIELDS = [
+  'supervisor_name', 
+  'dealership_name', 
+  'tax_id', 
+  'business_registry_number', 
+  'address'
+];
 
 /**
  * Fetches the dealer profile for a given user ID with enhanced error handling and fallbacks
@@ -85,29 +93,22 @@ export async function fetchDealerProfile(userId: string) {
         const rpcDataObj = rpcData as Record<string, Json>;
         
         // Check for required fields and log any missing ones
-        const requiredFields = ['supervisor_name', 'dealership_name', 'tax_id', 'business_registry_number', 'address'];
-        const missingFields = requiredFields.filter(field => !rpcDataObj[field]);
+        const missingFields = checkForMissingFields(rpcDataObj);
         
-        if (missingFields.length > 0) {
-          console.warn("Dealer profile is incomplete. Missing fields:", missingFields);
-          
-          // If too many critical fields are missing, mark as needing recovery
-          if (missingFields.length >= 3) {
-            return { 
-              ...rpcDataObj,
-              profile_status: "incomplete", 
-              user_id: rpcDataObj.user_id ? String(rpcDataObj.user_id) : userId,
-              needs_recovery: true,
-              missing_fields: missingFields
-            };
-          }
-        }
+        // Determine if profile is complete based on missing fields
+        const isComplete = missingFields.length === 0;
+        
+        // Add extra fields to indicate profile completeness
+        const profileStatus = isComplete ? "complete" : "incomplete";
         
         // Return object with consistent format and safe type conversions
         return {
           ...rpcDataObj,
           id: rpcDataObj.id ? String(rpcDataObj.id) : null,
-          user_id: rpcDataObj.user_id ? String(rpcDataObj.user_id) : userId
+          user_id: rpcDataObj.user_id ? String(rpcDataObj.user_id) : userId,
+          profile_status: profileStatus,
+          missing_fields: missingFields,
+          is_complete: isComplete
         };
       }
       
@@ -120,29 +121,19 @@ export async function fetchDealerProfile(userId: string) {
       console.log("Dealer profile successfully retrieved via direct query");
       
       // Check for required fields and log any missing ones
-      const requiredFields = ['supervisor_name', 'dealership_name', 'tax_id', 'business_registry_number', 'address'];
-      const missingFields = requiredFields.filter(field => !data[field]);
+      const missingFields = checkForMissingFields(data);
       
-      if (missingFields.length > 0) {
-        console.warn("Dealer profile is incomplete. Missing fields:", missingFields);
-        
-        // If too many critical fields are missing, mark as needing recovery
-        if (missingFields.length >= 3) {
-          return { 
-            ...data,
-            profile_status: "incomplete", 
-            user_id: data.user_id ? String(data.user_id) : userId,
-            needs_recovery: true,
-            missing_fields: missingFields
-          };
-        }
-      }
+      // Determine if profile is complete based on missing fields
+      const isComplete = missingFields.length === 0;
       
       // Return object with consistent format and safe type conversions
       return {
         ...data,
         id: data.id ? String(data.id) : null,
-        user_id: data.user_id ? String(data.user_id) : userId
+        user_id: data.user_id ? String(data.user_id) : userId,
+        profile_status: isComplete ? "complete" : "incomplete",
+        missing_fields: missingFields,
+        is_complete: isComplete
       };
     }
     
@@ -152,6 +143,18 @@ export async function fetchDealerProfile(userId: string) {
     console.error("Unexpected error during profile fetch:", error);
     return null;
   }
+}
+
+/**
+ * Helper function to check for missing required fields in a dealer profile
+ */
+function checkForMissingFields(profileData: Record<string, any>): string[] {
+  if (!profileData) return REQUIRED_DEALER_FIELDS;
+  
+  return REQUIRED_DEALER_FIELDS.filter(field => {
+    const value = profileData[field];
+    return !value || (typeof value === 'string' && value.trim() === '');
+  });
 }
 
 /**

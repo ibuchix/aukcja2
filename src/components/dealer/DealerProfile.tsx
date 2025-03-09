@@ -15,7 +15,8 @@ export function DealerProfile() {
     fetchAttempted, 
     profileStatus, 
     needsRecovery,
-    initiateProfileRecovery
+    initiateProfileRecovery,
+    profileIsComplete
   } = useDealerProfile();
   const navigate = useNavigate();
 
@@ -30,6 +31,72 @@ export function DealerProfile() {
         <AlertTitle>Error loading profile</AlertTitle>
         <AlertDescription>{error}</AlertDescription>
       </Alert>
+    );
+  }
+
+  // Check if profile is complete first
+  if (profileIsComplete && displayProfile) {
+    // Profile is complete, show the normal profile view
+    return (
+      <Card className="mb-6 shadow-sm">
+        <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+          <CardTitle className="flex items-center">
+            <UserIcon className="mr-2 h-5 w-5 text-primary" />
+            Dealer Profile
+          </CardTitle>
+          <CardDescription>
+            Your business profile information
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Dealer Information */}
+            <div>
+              <h3 className="font-medium text-dark mb-4 pb-2 border-b border-gray-100 flex items-center">
+                <UserIcon className="mr-2 h-4 w-4 text-primary" />
+                Dealer Information
+              </h3>
+              <div className="space-y-3 text-subtitle-text">
+                <p><span className="font-medium text-dark">Name:</span> {displayProfile?.supervisorName}</p>
+                <p><span className="font-medium text-dark">Dealership:</span> {displayProfile?.dealershipName}</p>
+                <p>
+                  <span className="font-medium text-dark">Verification:</span> 
+                  <span className={`ml-1 ${displayProfile?.isVerified ? 'text-green-600' : 'text-amber-600'}`}>
+                    {displayProfile?.verificationStatus}
+                  </span>
+                </p>
+              </div>
+            </div>
+            
+            {/* Business Information */}
+            <div>
+              <h3 className="font-medium text-dark mb-4 pb-2 border-b border-gray-100 flex items-center">
+                <Building2 className="mr-2 h-4 w-4 text-primary" />
+                Business Information
+              </h3>
+              <div className="space-y-3 text-subtitle-text">
+                <p><span className="font-medium text-dark">Tax ID:</span> {displayProfile?.formattedTaxId || displayProfile?.taxId}</p>
+                <p><span className="font-medium text-dark">License:</span> {displayProfile?.licenseNumber}</p>
+                <p>
+                  <span className="font-medium text-dark">Registry Number:</span> 
+                  {displayProfile?.formattedBusinessRegistry || displayProfile?.businessRegistryNumber}
+                </p>
+              </div>
+            </div>
+            
+            {/* Location */}
+            <div>
+              <h3 className="font-medium text-dark mb-4 pb-2 border-b border-gray-100 flex items-center">
+                <MapPin className="mr-2 h-4 w-4 text-primary" />
+                Location
+              </h3>
+              <div className="space-y-3 text-subtitle-text">
+                <p><span className="font-medium text-dark">Address:</span> {displayProfile?.address}</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -90,67 +157,7 @@ export function DealerProfile() {
     );
   }
 
-  return (
-    <Card className="mb-6 shadow-sm">
-      <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
-        <CardTitle className="flex items-center">
-          <UserIcon className="mr-2 h-5 w-5 text-primary" />
-          Dealer Profile
-        </CardTitle>
-        <CardDescription>
-          Your business profile information
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {/* Dealer Information */}
-          <div>
-            <h3 className="font-medium text-dark mb-4 pb-2 border-b border-gray-100 flex items-center">
-              <UserIcon className="mr-2 h-4 w-4 text-primary" />
-              Dealer Information
-            </h3>
-            <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Name:</span> {displayProfile?.supervisorName}</p>
-              <p><span className="font-medium text-dark">Dealership:</span> {displayProfile?.dealershipName}</p>
-              <p>
-                <span className="font-medium text-dark">Verification:</span> 
-                <span className={`ml-1 ${displayProfile?.isVerified ? 'text-green-600' : 'text-amber-600'}`}>
-                  {displayProfile?.verificationStatus}
-                </span>
-              </p>
-            </div>
-          </div>
-          
-          {/* Business Information */}
-          <div>
-            <h3 className="font-medium text-dark mb-4 pb-2 border-b border-gray-100 flex items-center">
-              <Building2 className="mr-2 h-4 w-4 text-primary" />
-              Business Information
-            </h3>
-            <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Tax ID:</span> {displayProfile?.formattedTaxId || displayProfile?.taxId}</p>
-              <p><span className="font-medium text-dark">License:</span> {displayProfile?.licenseNumber}</p>
-              <p>
-                <span className="font-medium text-dark">Registry Number:</span> 
-                {displayProfile?.formattedBusinessRegistry || displayProfile?.businessRegistryNumber}
-              </p>
-            </div>
-          </div>
-          
-          {/* Location */}
-          <div>
-            <h3 className="font-medium text-dark mb-4 pb-2 border-b border-gray-100 flex items-center">
-              <MapPin className="mr-2 h-4 w-4 text-primary" />
-              Location
-            </h3>
-            <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Address:</span> {displayProfile?.address}</p>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  return <DealerProfileSkeleton />;
 }
 
 function DealerProfileSkeleton() {
