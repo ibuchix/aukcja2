@@ -33,7 +33,7 @@ export async function signupDealer(values: DealerFormValues) {
     
     if (checkError) {
       console.error("Error checking if email exists:", checkError);
-      // Continue despite this error - the auth signup will catch duplicates anyway
+      // Continue despite this error - the stored procedure will catch duplicates anyway
     } else if (existingUser && (existingUser as CheckEmailExistsResponse).exists) {
       return { 
         success: false, 
@@ -41,58 +41,50 @@ export async function signupDealer(values: DealerFormValues) {
       };
     }
     
-    // Step 1: Create the user account
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: values.email,
-      password: values.password,
-      options: {
-        data: {
-          name: values.supervisorName,
-          phone: values.phoneNumber,
-          role: 'dealer'
-        }
+    console.log("Creating dealer account using stored procedure...");
+    
+    // Use the stored procedure to create the dealer account in a single transaction
+    const { data: result, error: procedureError } = await supabase.rpc(
+      'create_dealer_with_profile',
+      {
+        p_email: values.email.toLowerCase(),
+        p_password: values.password,
+        p_supervisor_name: values.supervisorName,
+        p_company_name: values.companyName,
+        p_tax_id: values.taxId,
+        p_business_registry_number: values.businessRegistryNumber,
+        p_address: values.companyAddress,
+        p_phone_number: values.phoneNumber
       }
-    });
+    );
     
-    if (authError) {
-      console.error("Auth error during signup:", authError);
-      return { success: false, error: authError.message };
+    if (procedureError) {
+      console.error("Error from stored procedure:", procedureError);
+      
+      // Handle specific error messages
+      if (procedureError.message.includes("duplicate") || 
+          procedureError.message.includes("already exists")) {
+        return { 
+          success: false, 
+          error: "An account with this email or business details already exists." 
+        };
+      }
+      
+      return { success: false, error: procedureError.message };
     }
     
-    if (!authData.user) {
-      console.error("No user returned from signup");
-      return { success: false, error: "Failed to create user account" };
-    }
-    
-    console.log("Auth account created successfully, creating dealer profile...");
-    
-    // Step 2: Create the dealer profile
-    const dealerData: DealerInsert = {
-      user_id: authData.user.id,
-      supervisor_name: values.supervisorName,
-      dealership_name: values.companyName,
-      tax_id: values.taxId,
-      business_registry_number: values.businessRegistryNumber,
-      address: values.companyAddress,
-      verification_status: "pending",
-      is_verified: false,
-      license_number: values.businessRegistryNumber // Using business registry as license number
-    };
-    
-    const { error: dealerError } = await supabase
-      .from('dealers')
-      .insert(dealerData);
-    
-    if (dealerError) {
-      console.error("Error creating dealer profile:", dealerError);
-      return { success: false, error: dealerError.message };
+    // Check if the procedure result indicates success
+    if (!result || !result.success) {
+      const errorMessage = result?.error || "Failed to create dealer account";
+      console.error("Procedure returned error:", errorMessage);
+      return { success: false, error: errorMessage };
     }
     
     console.log("Dealer registration completed successfully");
     
     return { 
       success: true, 
-      user: authData.user,
+      user: result.user,
       message: "Registration successful. Please check your email to verify your account."
     };
   } catch (error) {
