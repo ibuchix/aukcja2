@@ -2,7 +2,6 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 /**
@@ -10,8 +9,10 @@ import { useToast } from "@/hooks/use-toast";
  */
 export function useSessionManager() {
   const navigate = useNavigate();
-  const { refreshSession } = useAuth();
   const { toast } = useToast();
+
+  // Import useAuth inside the component to avoid circular dependency
+  const { refreshSession } = require("@/contexts/auth/AuthProvider").useAuth();
 
   // Set up automatic token refresh when token nears expiry
   useEffect(() => {

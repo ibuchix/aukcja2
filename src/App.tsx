@@ -8,7 +8,6 @@ import CompleteRegistration from "@/pages/CompleteRegistration";
 import Index from "@/pages/Index";
 import HowItWorks from "@/pages/HowItWorks";
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProviderWithRouter } from "@/contexts/auth/AuthProvider";
 
 // Create the router with routes
 const routes = [

@@ -6,8 +6,8 @@ import { useAuthState } from "./useAuthState";
 import { fetchDealerProfile, signOutUser, refreshUserSession } from "./authUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useSessionManager } from "@/hooks/useSessionManager";
 
+// Create the context with a default value
 type AuthContextType = {
   session: Session | null;
   user: User | null;
@@ -23,9 +23,21 @@ type AuthContextType = {
   }) => Promise<{ error?: Error }>;
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Set initial default values
+const defaultContextValue: AuthContextType = {
+  session: null,
+  user: null,
+  profile: null,
+  isLoading: false,
+  isAuthenticated: false,
+  signOut: async () => {},
+  refreshSession: async () => {},
+  signIn: async () => ({ error: new Error("Auth context not initialized") })
+};
 
-// This component can only be used within a Router context
+const AuthContext = createContext<AuthContextType>(defaultContextValue);
+
+// Provider that can be used with Router hooks
 export function AuthProviderWithRouter({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,9 +54,6 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
   } = useAuthState();
   
   const { toast } = useToast();
-  
-  // This hook uses navigate, so it must be inside the router context
-  useSessionManager();
 
   const signOut = async () => {
     try {
@@ -202,11 +211,10 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// This is a wrapper that provides the AuthContext and can be imported anywhere
+// Basic AuthProvider that doesn't depend on Router
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
-    // This is just a provider that doesn't use any router hooks
-    <AuthContext.Provider value={undefined}>
+    <AuthContext.Provider value={defaultContextValue}>
       {children}
     </AuthContext.Provider>
   );
@@ -215,7 +223,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   
