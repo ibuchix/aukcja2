@@ -88,7 +88,7 @@ export default function DealerDashboard() {
       )}
       
       <div className="space-y-8">
-        <DealerProfileProvider user={user}>
+        <DealerProfileProvider>
           <DealerWelcomeCard />
         </DealerProfileProvider>
         
