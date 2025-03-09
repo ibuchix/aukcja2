@@ -1,3 +1,4 @@
+
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { mapDatabaseToDisplay } from "@/utils/dealerProfileMapping";
@@ -48,12 +49,21 @@ export async function fetchDealerProfile(userId: string) {
           
           // Ensure rpcData is an object before spreading
           if (typeof rpcData === 'object' && rpcData !== null) {
+            // Check if it's an array (which it shouldn't be)
+            if (Array.isArray(rpcData)) {
+              console.warn("RPC data is unexpectedly an array:", rpcData);
+              return null;
+            }
+            
+            // Now we know it's an object, we can safely access properties
+            const jsonObject = rpcData as Record<string, Json>;
+            
             // Return consistent profile format with type safety
             return {
-              ...rpcData,
+              ...jsonObject,
               // Convert any non-string IDs to strings for consistency
-              id: typeof rpcData.id !== 'undefined' ? String(rpcData.id) : null,
-              user_id: typeof rpcData.user_id !== 'undefined' ? String(rpcData.user_id) : userId
+              id: jsonObject.id !== undefined ? String(jsonObject.id) : null,
+              user_id: jsonObject.user_id !== undefined ? String(jsonObject.user_id) : userId
             };
           } else {
             console.warn("RPC data is not in expected object format:", rpcData);
