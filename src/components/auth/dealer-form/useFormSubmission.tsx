@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { signupDealer } from "@/integrations/dealers/dealerService";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { normalizeEmail, normalizePhoneNumber } from "@/utils/dealerProfileMapping";
+import { normalizeEmail, normalizePhoneNumber } from "@/utils/dealer-profile-utils";
 
 export function useFormSubmission({
   moveToStep,
@@ -19,7 +18,6 @@ export function useFormSubmission({
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // Handle form submission
   const handleFormSubmit = async (values: DealerFormValues) => {
     setIsSubmitting(true);
     resetError();
@@ -34,7 +32,6 @@ export function useFormSubmission({
         taxId: values.taxId
       });
       
-      // Make sure all required fields are present and not empty
       const requiredFields = [
         'supervisorName', 
         'companyName', 
@@ -63,7 +60,6 @@ export function useFormSubmission({
         return false;
       }
       
-      // Create the dealer account
       const result = await signupDealer(values);
       
       if (result.success) {
@@ -73,14 +69,12 @@ export function useFormSubmission({
         toast({
           title: "Registration successful",
           description: "Your account has been created with a complete profile. You can now log in.",
-          duration: 6000, // Show for 6 seconds
+          duration: 6000,
         });
         
-        // Move to next step in the registration process
         moveToStep(2);
         return true;
       } else {
-        // Handle registration errors
         console.error("Registration failed:", result.error);
         const errorMessage = handleRegistrationError(result.error);
         setError(errorMessage);
@@ -89,7 +83,7 @@ export function useFormSubmission({
           title: "Registration failed",
           description: errorMessage,
           variant: "destructive",
-          duration: 8000, // Show error messages longer
+          duration: 8000,
         });
         return false;
       }
@@ -116,11 +110,9 @@ export function useFormSubmission({
   };
 }
 
-// Helper function to handle different registration errors
 function handleRegistrationError(error: any): string {
   if (!error) return "Unknown error occurred during registration";
   
-  // Common error messages with improved clarity
   if (typeof error === 'string') {
     if (error.includes('User already registered') || error.includes('already exists')) {
       return "This email is already registered. Please use a different email or login with your existing account.";
@@ -133,7 +125,6 @@ function handleRegistrationError(error: any): string {
     return error;
   }
   
-  // Supabase error objects
   if (error.message) {
     if (error.message.includes('email already exists') || error.message.includes('unique_violation')) {
       return "This email is already registered. Please use a different email or login with your existing account.";
@@ -150,17 +141,15 @@ function handleRegistrationError(error: any): string {
     return error.message;
   }
   
-  // PostgreSQL errors
   if (error.code) {
-    if (error.code === '23505') { // unique_violation
+    if (error.code === '23505') {
       return "This information is already registered in our system.";
     }
     
-    if (error.code === '23514') { // check_violation
+    if (error.code === '23514') {
       return "Some fields don't meet the required format. Please check and try again.";
     }
   }
   
-  // Fallback
   return "An error occurred during registration. Please try again or contact support.";
 }

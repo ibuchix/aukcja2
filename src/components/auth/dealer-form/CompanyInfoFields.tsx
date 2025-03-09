@@ -1,9 +1,8 @@
-
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { formatTaxIdForDisplay, formatBusinessRegistryForDisplay } from "@/utils/dealerProfileMapping";
+import { formatTaxIdForDisplay, formatBusinessRegistryForDisplay } from "@/utils/dealer-profile-utils";
 
 interface CompanyInfoFieldsProps {
   form: UseFormReturn<DealerFormValues>;
