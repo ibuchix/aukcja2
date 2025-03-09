@@ -54,7 +54,7 @@ export async function fetchDealerProfile(userId: string) {
           
           console.log("Access debugging results:", debugData);
           
-          if (debugData && debugData[0]) {
+          if (debugData && Array.isArray(debugData) && debugData.length > 0) {
             const { has_access, record_exists, error_message } = debugData[0];
             console.log(`Access debug: has_access=${has_access}, record_exists=${record_exists}, error=${error_message}`);
             
@@ -79,10 +79,10 @@ export async function fetchDealerProfile(userId: string) {
       
       console.log("Profile successfully retrieved via RPC function");
       
-      // Ensure data is properly shaped before returning
+      // TYPE SAFETY IMPROVEMENT: Check if rpcData is an object, not an array
       if (typeof rpcData === 'object' && rpcData !== null && !Array.isArray(rpcData)) {
-        // Type guard to ensure we're working with an object, not an array
-        const rpcDataObj = rpcData as { [key: string]: Json };
+        // Now we can safely cast it to an object with string keys
+        const rpcDataObj = rpcData as Record<string, Json>;
         
         // Check for required fields and log any missing ones
         const requiredFields = ['supervisor_name', 'dealership_name', 'tax_id', 'business_registry_number', 'address'];
@@ -92,11 +92,11 @@ export async function fetchDealerProfile(userId: string) {
           console.warn("Dealer profile is incomplete. Missing fields:", missingFields);
         }
         
-        // Return object with consistent format
+        // Return object with consistent format and safe type conversions
         return {
           ...rpcDataObj,
-          id: rpcDataObj.id?.toString() || null,
-          user_id: rpcDataObj.user_id?.toString() || userId
+          id: rpcDataObj.id ? String(rpcDataObj.id) : null,
+          user_id: rpcDataObj.user_id ? String(rpcDataObj.user_id) : userId
         };
       }
       
@@ -116,11 +116,11 @@ export async function fetchDealerProfile(userId: string) {
         console.warn("Dealer profile is incomplete. Missing fields:", missingFields);
       }
       
-      // Return object with consistent format
+      // Return object with consistent format and safe type conversions
       return {
         ...data,
-        id: data.id?.toString() || null,
-        user_id: data.user_id?.toString() || userId
+        id: data.id ? String(data.id) : null,
+        user_id: data.user_id ? String(data.user_id) : userId
       };
     }
     
