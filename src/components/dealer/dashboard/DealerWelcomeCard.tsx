@@ -4,7 +4,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle } from "lucide-react";
-import { Tooltip } from "@/components/ui/tooltip";
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
 
 export function DealerWelcomeCard() {
   const { displayProfile, isLoading, profileIsComplete, missingFields } = useDealerProfile();
@@ -55,21 +60,26 @@ export function DealerWelcomeCard() {
                 Profile Complete
               </Badge>
             ) : (
-              <Tooltip content={
-                <div className="p-2 max-w-xs">
-                  <p className="font-semibold mb-1">Missing information:</p>
-                  <ul className="list-disc pl-4 text-sm">
-                    {missingFields.map((field, i) => (
-                      <li key={i}>{formatMissingFieldName(field)}</li>
-                    ))}
-                  </ul>
-                </div>
-              }>
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1">
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  Incomplete Profile
-                </Badge>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1 cursor-help">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      Incomplete Profile
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent className="p-2 max-w-xs">
+                    <div>
+                      <p className="font-semibold mb-1">Missing information:</p>
+                      <ul className="list-disc pl-4 text-sm">
+                        {missingFields.map((field, i) => (
+                          <li key={i}>{formatMissingFieldName(field)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
         )}
