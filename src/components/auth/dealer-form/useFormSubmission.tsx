@@ -1,122 +1,103 @@
-
 import { useState } from "react";
-import { DealerFormValues } from "@/schemas/dealerFormSchema";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { signupDealer } from "@/integrations/dealers/dealerService";
+import { DealerFormValues } from "@/schemas/dealerFormSchema";
 
-interface UseFormSubmissionProps {
+export function useFormSubmission({
+  moveToStep,
+  resetError,
+  setError
+}: {
   moveToStep: (step: number) => void;
   resetError: () => void;
-  setError: (error: string) => void;
-}
-
-export function useFormSubmission({ 
-  moveToStep, 
-  resetError, 
-  setError 
-}: UseFormSubmissionProps) {
+  setError: (message: string) => void;
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-
-  const handleFormSubmit = async (values: DealerFormValues): Promise<boolean> => {
+  const navigate = useNavigate();
+  
+  // Handle form submission
+  const handleFormSubmit = async (values: DealerFormValues) => {
     setIsSubmitting(true);
     resetError();
     
     try {
-      console.log("Signing up dealer with email:", values.email);
+      // Create the dealer account
+      const result = await signupDealer(values);
       
-      // First, create the auth user account with email and password
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            role: 'dealer',
-            name: values.supervisorName,
-          },
-        },
-      });
-      
-      if (authError) {
-        console.error("Auth signup error:", authError);
-        
-        let errorMessage = "Failed to create account. Please try again.";
-        
-        if (authError.message.includes("User already registered")) {
-          errorMessage = "An account with this email already exists. Please use a different email or try logging in.";
-        }
-        
-        setError(errorMessage);
+      if (result.success) {
         toast({
-          title: "Signup Error",
+          title: "Registration started",
+          description: "Please check your email to verify your account",
+        });
+        
+        // Move to next step in the registration process
+        moveToStep(1);
+        return true;
+      } else {
+        // Handle registration errors
+        const errorMessage = handleRegistrationError(result.error);
+        setError(errorMessage);
+        
+        toast({
+          title: "Registration failed",
           description: errorMessage,
           variant: "destructive",
         });
         return false;
       }
-      
-      console.log("Auth signup successful, user created with ID:", authData.user?.id);
-      
-      // If user was created successfully, create the dealer profile
-      if (authData.user?.id) {
-        const { error: dealerError } = await supabase
-          .from('dealers')
-          .insert({
-            user_id: authData.user.id,
-            supervisor_name: values.supervisorName,
-            dealership_name: values.companyName,
-            tax_id: values.taxId,
-            business_registry_number: values.businessRegistryNumber,
-            address: values.companyAddress,
-            verification_status: 'pending',
-            is_verified: false,
-            license_number: values.businessRegistryNumber,
-          });
-        
-        if (dealerError) {
-          console.error("Dealer profile creation error:", dealerError);
-          setError("Account created but failed to set up dealer profile. Please contact support.");
-          toast({
-            title: "Profile Error",
-            description: "Account created but failed to set up dealer profile. Please contact support.",
-            variant: "destructive",
-          });
-          return false;
-        }
-        
-        // Success! Move to success step
-        console.log("Dealer profile created successfully");
-        moveToStep(2); // Move to the "Check your email" step
-        
-        toast({
-          title: "Registration Successful",
-          description: "Your account has been created. Please verify your email to continue.",
-        });
-        
-        return true;
-      }
-      
-      setError("Failed to complete registration. Please try again.");
-      return false;
     } catch (error) {
       console.error("Registration error:", error);
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       
       setError(errorMessage);
       toast({
-        title: "Registration Error",
-        description: errorMessage,
+        title: "Registration failed",
+        description: "An unexpected error occurred during registration.",
         variant: "destructive",
       });
-      
       return false;
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  
   return {
     handleFormSubmit,
     isSubmitting
   };
+}
+
+// Helper function to handle different registration errors
+function handleRegistrationError(error: any): string {
+  if (!error) return "Unknown error occurred";
+  
+  // Common error messages
+  if (typeof error === 'string') {
+    if (error.includes('User already registered')) {
+      return "This email is already registered. Please use a different email or login.";
+    }
+    return error;
+  }
+  
+  // Supabase error objects
+  if (error.message) {
+    if (error.message.includes('email already exists')) {
+      return "This email is already registered. Please use a different email or login.";
+    }
+    
+    if (error.message.includes('Password should be')) {
+      return "Password must be at least 6 characters long.";
+    }
+    
+    if (error.message.includes('invalid email')) {
+      return "Please enter a valid email address.";
+    }
+    
+    return error.message;
+  }
+  
+  // Fallback
+  return "An error occurred during registration. Please try again.";
 }

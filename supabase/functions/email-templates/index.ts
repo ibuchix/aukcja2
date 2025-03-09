@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 interface EmailTemplateRequest {
-  type: "signup" | "invite" | "recovery";
+  type: "signup" | "invite" | "recovery" | "email_change" | "magic_link";
   email: string;
   data: {
     confirmationURL?: string;
@@ -57,6 +57,74 @@ serve(async (req: Request) => {
               </div>
 
               <p>If you didn't create this account, you can safely ignore this email.</p>
+              
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ECF1F4;">
+                <p style="color: #6A6A77; font-size: 14px;">Best regards,<br>The Auto-Strada Team</p>
+              </div>
+            </div>
+          `,
+        }),
+        {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+    
+    // Handle password recovery emails
+    if (type === "recovery") {
+      return new Response(
+        JSON.stringify({
+          subject: "Reset Your Auto-Strada Password",
+          html: `
+            <div style="font-family: 'Kanit', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h1 style="color: #DC143C; font-family: 'Oswald', Arial, sans-serif; font-weight: bold;">Reset Your Password</h1>
+              <p>We received a request to reset your Auto-Strada dealer account password. Click the button below to create a new password:</p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.confirmationURL}" 
+                   style="display: inline-block; background-color: #DC143C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; font-family: 'Kanit', Arial, sans-serif;">
+                  Reset Password
+                </a>
+              </div>
+
+              <p>If you didn't request a password reset, you can safely ignore this email.</p>
+              
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ECF1F4;">
+                <p style="color: #6A6A77; font-size: 14px;">Best regards,<br>The Auto-Strada Team</p>
+              </div>
+            </div>
+          `,
+        }),
+        {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    // Handle email change confirmation
+    if (type === "email_change") {
+      return new Response(
+        JSON.stringify({
+          subject: "Confirm Your New Email Address",
+          html: `
+            <div style="font-family: 'Kanit', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h1 style="color: #DC143C; font-family: 'Oswald', Arial, sans-serif; font-weight: bold;">Confirm Email Change</h1>
+              <p>Please confirm your new email address for your Auto-Strada dealer account:</p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.confirmationURL}" 
+                   style="display: inline-block; background-color: #DC143C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; font-family: 'Kanit', Arial, sans-serif;">
+                  Confirm New Email
+                </a>
+              </div>
+
+              <p>If you didn't request this change, please contact support immediately.</p>
               
               <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ECF1F4;">
                 <p style="color: #6A6A77; font-size: 14px;">Best regards,<br>The Auto-Strada Team</p>

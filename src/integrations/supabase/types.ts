@@ -123,33 +123,6 @@ export type Database = {
         }
         Relationships: []
       }
-      dealer_otps: {
-        Row: {
-          attempts: number
-          created_at: string
-          email: string
-          expires_at: string
-          id: string
-          otp_code: string
-        }
-        Insert: {
-          attempts?: number
-          created_at?: string
-          email: string
-          expires_at: string
-          id?: string
-          otp_code: string
-        }
-        Update: {
-          attempts?: number
-          created_at?: string
-          email?: string
-          expires_at?: string
-          id?: string
-          otp_code?: string
-        }
-        Relationships: []
-      }
       dealer_watchlist: {
         Row: {
           buyer_id: string
@@ -305,10 +278,6 @@ export type Database = {
         }
         Returns: Json
       }
-      cleanup_expired_otps: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       create_dealer_with_profile: {
         Args: {
           p_email: string
@@ -337,14 +306,6 @@ export type Database = {
           p_email: string
         }
         Returns: Json
-      }
-      store_dealer_otp: {
-        Args: {
-          p_email: string
-          p_otp: string
-          p_expires_at: string
-        }
-        Returns: string
       }
       verify_password: {
         Args: {
