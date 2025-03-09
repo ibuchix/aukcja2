@@ -19,7 +19,7 @@ export async function signupDealer(values: DealerFormValues) {
   try {
     console.log("Starting dealer signup process with:", { 
       email: values.email.substring(0, 3) + "...", 
-      dealershipName: values.dealershipName 
+      companyName: values.companyName 
     });
     
     // Step 1: Create the user account
@@ -51,10 +51,10 @@ export async function signupDealer(values: DealerFormValues) {
     const dealerData: DealerInsert = {
       user_id: authData.user.id,
       supervisor_name: values.supervisorName,
-      dealership_name: values.dealershipName,
+      dealership_name: values.companyName, // Changed from dealershipName to companyName
       tax_id: values.taxId,
       business_registry_number: values.businessRegistryNumber,
-      address: values.address,
+      address: values.companyAddress, // Changed from address to companyAddress
       verification_status: "pending",
       is_verified: false,
       license_number: values.businessRegistryNumber // Using business registry as license number
