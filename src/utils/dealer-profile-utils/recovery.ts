@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * Attempts to recover a missing dealer profile for the current user
@@ -26,6 +26,16 @@ export async function recoverDealerProfile() {
       .maybeSingle();
     
     if (profileError) {
+      // Check if this is a permission error
+      if (profileError.code === '42501') {
+        console.error("Permission denied when checking profile. This may require admin intervention.");
+        return { 
+          success: false, 
+          error: profileError,
+          needsAdminHelp: true,
+          message: "Profile recovery requires administrator assistance due to permission issues."
+        };
+      }
       console.error("Error checking profile:", profileError);
     }
     
@@ -49,21 +59,20 @@ export async function recoverDealerProfile() {
         });
       
       if (createError) {
+        // Check if this is a permission error
+        if (createError.code === '42501') {
+          console.error("Permission denied when creating profile. This may require admin intervention.");
+          return { 
+            success: false, 
+            error: createError,
+            needsAdminHelp: true,
+            message: "Profile creation requires administrator assistance due to permission issues."
+          };
+        }
+        
         console.error("Failed to create recovery profile:", createError);
-        toast({
-          title: "Profile Recovery Failed",
-          description: "Please contact support for assistance.",
-          variant: "destructive"
-        });
         return { success: false, error: createError };
       }
-      
-      toast({
-        title: "Profile Recovered",
-        description: "Your basic profile has been restored."
-      });
-      
-      console.log("Successfully created recovery profile");
     }
     
     // Now check if dealer record exists
@@ -74,17 +83,22 @@ export async function recoverDealerProfile() {
       .maybeSingle();
     
     if (dealerError) {
+      // Check if this is a permission error
+      if (dealerError.code === '42501') {
+        console.error("Permission denied when checking dealer record. This may require admin intervention.");
+        return { 
+          success: false, 
+          error: dealerError,
+          needsAdminHelp: true,
+          message: "Dealer record check requires administrator assistance due to permission issues."
+        };
+      }
       console.error("Error checking dealer record:", dealerError);
     }
     
     // If no dealer record exists, we'll need to redirect to the completion form
     if (!dealerData) {
       console.log("No dealer record found, redirect needed to complete registration");
-      
-      toast({
-        title: "Profile Incomplete",
-        description: "Please complete your dealer profile information."
-      });
       
       return { 
         success: true, 
@@ -122,7 +136,17 @@ export async function verifyUserProfileIntegrity(): Promise<{complete: boolean, 
       .eq('id', userId)
       .maybeSingle();
       
-    if (profileError || !profileData) {
+    if (profileError) {
+      // Check if this is a permission error - don't trigger recovery for permission issues
+      if (profileError.code === '42501') {
+        console.warn("Profile integrity check: Permission denied when checking profile");
+        return { complete: false, needsRecovery: false };
+      }
+      console.warn("Profile integrity check: Error checking profile", profileError);
+      return { complete: false, needsRecovery: true };
+    }
+    
+    if (!profileData) {
       console.warn("Profile integrity check: Missing profile record");
       return { complete: false, needsRecovery: true };
     }
@@ -134,7 +158,17 @@ export async function verifyUserProfileIntegrity(): Promise<{complete: boolean, 
       .eq('user_id', userId)
       .maybeSingle();
       
-    if (dealerError || !dealerData) {
+    if (dealerError) {
+      // Check if this is a permission error - don't trigger recovery for permission issues  
+      if (dealerError.code === '42501') {
+        console.warn("Profile integrity check: Permission denied when checking dealer record");
+        return { complete: false, needsRecovery: false };
+      }
+      console.warn("Profile integrity check: Error checking dealer record", dealerError);
+      return { complete: false, needsRecovery: true };
+    }
+    
+    if (!dealerData) {
       console.warn("Profile integrity check: Missing dealer record");
       return { complete: false, needsRecovery: true };
     }
@@ -144,6 +178,6 @@ export async function verifyUserProfileIntegrity(): Promise<{complete: boolean, 
     
   } catch (error) {
     console.error("Error checking profile integrity:", error);
-    return { complete: false, needsRecovery: true };
+    return { complete: false, needsRecovery: false };
   }
 }

@@ -26,55 +26,76 @@ export function DealerWelcomeCard() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isRecovering, setIsRecovering] = useState(false);
+  const [recoveryAttempted, setRecoveryAttempted] = useState(false);
   
-  // Verify profile integrity on component mount
+  // Verify profile integrity on component mount, but only once
   useEffect(() => {
+    let isMounted = true;
+    
     async function checkProfileIntegrity() {
+      // Skip if already recovering, already attempted recovery, or no user is logged in
+      if (isRecovering || recoveryAttempted || !user || isLoading) {
+        return;
+      }
+
       try {
-        // Only proceed if we're not in a loading state
-        if (!isLoading && user) {
-          const { complete, needsRecovery } = await verifyUserProfileIntegrity();
+        console.log("Checking profile integrity...");
+        const { complete, needsRecovery } = await verifyUserProfileIntegrity();
+        
+        if (!complete && needsRecovery && isMounted) {
+          console.log("Profile integrity check failed, attempting recovery");
+          setIsRecovering(true);
           
-          if (!complete && needsRecovery && !isRecovering) {
-            console.log("Profile integrity check failed, attempting recovery");
-            setIsRecovering(true);
-            
-            const { success, needsCompletion } = await recoverDealerProfile();
-            
-            if (success) {
-              if (needsCompletion) {
-                toast({
-                  title: "Profile Needs Completion",
-                  description: "Your profile has been partially recovered, but requires more information.",
-                });
-                
-                // Navigate to completion form
-                navigate('/complete-registration', { 
-                  state: { userId: user.id, recovery: true } 
-                });
-              } else {
-                toast({
-                  title: "Profile Recovered",
-                  description: "Your profile has been recovered successfully.",
-                });
-                
-                // Refresh profile data
-                await refreshProfile();
-              }
+          const { success, needsCompletion } = await recoverDealerProfile();
+          
+          if (success && isMounted) {
+            if (needsCompletion) {
+              toast({
+                title: "Profile Needs Completion",
+                description: "Your profile has been partially recovered, but requires more information.",
+              });
+              
+              // Navigate to completion form
+              navigate('/complete-registration', { 
+                state: { userId: user.id, recovery: true } 
+              });
+            } else {
+              toast({
+                title: "Profile Recovered",
+                description: "Your profile has been recovered successfully.",
+              });
+              
+              // Refresh profile data
+              await refreshProfile();
             }
-            
-            setIsRecovering(false);
           }
+          
+          if (isMounted) {
+            setIsRecovering(false);
+            setRecoveryAttempted(true);
+          }
+        } else if (isMounted) {
+          // Mark as attempted even if recovery wasn't needed
+          setRecoveryAttempted(true);
         }
       } catch (error) {
         console.error("Error in profile integrity check:", error);
-        setIsRecovering(false);
+        if (isMounted) {
+          setIsRecovering(false);
+          setRecoveryAttempted(true); // Prevent further attempts
+        }
       }
     }
     
-    // Run the check
-    checkProfileIntegrity();
-  }, [isLoading, user, navigate, toast, refreshProfile]);
+    // Only run the check if we have a user and aren't loading
+    if (user && !isLoading && !recoveryAttempted && !isRecovering) {
+      checkProfileIntegrity();
+    }
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [user, isLoading, navigate, toast, refreshProfile, isRecovering, recoveryAttempted]);
   
   // Get dealer name with better fallback handling
   const getDealerName = () => {
