@@ -13,6 +13,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
   const navigate = useNavigate();
   const location = useLocation();
   
+  // Get all auth state and handlers
   const { 
     session, 
     user, 
@@ -38,13 +39,17 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
     setProfile
   );
   
+  // Get session manager
   const { registerRefreshFunction } = useSessionManager();
 
   // Register the refresh function with the session manager
   useEffect(() => {
-    registerRefreshFunction(refreshSession);
-  }, [registerRefreshFunction]);
+    if (refreshSession) {
+      registerRefreshFunction(refreshSession);
+    }
+  }, [registerRefreshFunction, refreshSession]);
 
+  // Create the auth context value
   const value = {
     session,
     user,
