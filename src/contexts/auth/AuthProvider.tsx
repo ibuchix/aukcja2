@@ -1,11 +1,12 @@
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthState } from "./useAuthState";
 import { fetchDealerProfile, signOutUser, refreshUserSession } from "./authUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useSessionManager } from "@/hooks/useSessionManager";
 
 // Create the context with a default value
 type AuthContextType = {
@@ -54,6 +55,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
   } = useAuthState();
   
   const { toast } = useToast();
+  const { registerRefreshFunction } = useSessionManager();
 
   const signOut = async () => {
     try {
@@ -79,6 +81,31 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
       });
       
       navigate('/');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshSession = async () => {
+    try {
+      setIsLoading(true);
+      const { success, session: newSession, user: newUser, error } = await refreshUserSession();
+      
+      if (!success || error) {
+        console.error("Session refresh error:", error);
+        return;
+      }
+      
+      if (newSession) {
+        console.log("Session refreshed successfully");
+        setSession(newSession);
+        setUser(newUser ?? null);
+        
+        if (newUser) {
+          const profileData = await fetchDealerProfile(newUser.id);
+          setProfile(profileData);
+        }
+      }
     } finally {
       setIsLoading(false);
     }
@@ -172,30 +199,10 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
     }
   };
 
-  const refreshSession = async () => {
-    try {
-      setIsLoading(true);
-      const { success, session: newSession, user: newUser, error } = await refreshUserSession();
-      
-      if (!success || error) {
-        console.error("Session refresh error:", error);
-        return;
-      }
-      
-      if (newSession) {
-        console.log("Session refreshed successfully");
-        setSession(newSession);
-        setUser(newUser ?? null);
-        
-        if (newUser) {
-          const profileData = await fetchDealerProfile(newUser.id);
-          setProfile(profileData);
-        }
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Register the refresh function with the session manager
+  useEffect(() => {
+    registerRefreshFunction(refreshSession);
+  }, [registerRefreshFunction]);
 
   const value = {
     session,

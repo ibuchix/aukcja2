@@ -1,79 +1,79 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 /**
- * Hook to manage session refresh and expiry
+ * Hook to manage session refresh and token expiry
  */
 export function useSessionManager() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [refreshFunction, setRefreshFunction] = useState<() => Promise<void>>(() => async () => {});
 
-  // Import useAuth inside the component to avoid circular dependency
-  const { refreshSession } = require("@/contexts/auth/AuthProvider").useAuth();
+  // Register the session refresh function from the auth context
+  const registerRefreshFunction = (fn: () => Promise<void>) => {
+    setRefreshFunction(() => fn);
+  };
 
   // Set up automatic token refresh when token nears expiry
   useEffect(() => {
-    const checkSessionExpiry = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        const session = data?.session;
-        
-        if (!session) {
-          console.log("No active session found during expiry check");
-          return;
-        }
-        
-        // Calculate time until session expires (in seconds)
-        const expiresAt = session.expires_at ? new Date(session.expires_at * 1000) : null;
-        if (!expiresAt) return;
-        
-        const now = new Date();
-        const timeUntilExpiry = Math.floor((expiresAt.getTime() - now.getTime()) / 1000);
-        
-        // If session expires in less than 5 minutes (300 seconds), refresh it
-        if (timeUntilExpiry < 300 && timeUntilExpiry > 0) {
-          console.log(`Session expiring soon (${timeUntilExpiry}s), refreshing...`);
-          refreshSession();
-        }
-      } catch (error) {
-        console.error("Error checking session expiry:", error);
-      }
-    };
+    if (!refreshFunction) return;
     
-    // Check on initial load
-    checkSessionExpiry();
+    console.log("Setting up session manager");
     
-    // Then set up interval to check every minute
-    const interval = setInterval(checkSessionExpiry, 60000);
-    
-    return () => clearInterval(interval);
-  }, [refreshSession, navigate, toast]);
-
-  // Listen for auth state changes from other tabs
-  useEffect(() => {
-    // Set up Supabase auth listener
+    // Check session status on auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === 'TOKEN_REFRESHED') {
-          console.log("Token was refreshed", new Date().toISOString());
-        } else if (event === 'SIGNED_OUT') {
-          console.log("User signed out in another tab");
-          navigate("/auth?tab=login");
-          
-          toast({
-            title: "Signed out",
-            description: "You were signed out in another tab or window.",
-          });
+      async (event, session) => {
+        console.log("Auth state changed:", event);
+        
+        if (event === "SIGNED_OUT") {
+          console.log("User signed out, redirecting to homepage");
+          navigate("/");
+        } else if (event === "TOKEN_REFRESHED") {
+          console.log("Token refreshed successfully");
+        } else if (event === "USER_UPDATED") {
+          console.log("User updated, refreshing session data");
+          await refreshFunction();
         }
       }
     );
     
-    // Cleanup subscription
+    // Set up timer to refresh token when needed
+    const checkSessionTimer = setInterval(async () => {
+      const { data } = await supabase.auth.getSession();
+      
+      if (!data.session) return;
+      
+      const expiresAt = data.session.expires_at * 1000; // Convert to ms
+      const now = Date.now();
+      const timeUntilExpiry = expiresAt - now;
+      
+      // If token expires in less than 5 minutes, refresh it
+      if (timeUntilExpiry < 5 * 60 * 1000) {
+        console.log("Session expiring soon, refreshing token");
+        try {
+          await refreshFunction();
+          console.log("Session refreshed successfully");
+        } catch (error) {
+          console.error("Failed to refresh session:", error);
+          toast({
+            title: "Session Error",
+            description: "Your session could not be refreshed. Please log in again.",
+            variant: "destructive",
+          });
+          navigate("/auth?tab=login");
+        }
+      }
+    }, 60 * 1000); // Check every minute
+    
     return () => {
+      console.log("Cleaning up session manager");
       subscription.unsubscribe();
+      clearInterval(checkSessionTimer);
     };
-  }, [navigate, toast]);
+  }, [navigate, toast, refreshFunction]);
+
+  return { registerRefreshFunction };
 }
