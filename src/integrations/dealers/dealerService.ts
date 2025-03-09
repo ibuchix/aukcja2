@@ -43,88 +43,54 @@ export async function signupDealer(values: DealerFormValues) {
       };
     }
     
-    console.log("Creating dealer account using Supabase Auth...");
+    console.log("Creating dealer account using create_dealer_with_profile RPC function...");
     
     // Format and clean input data
     const formattedPhone = values.phoneNumber ? values.phoneNumber.replace(/\s+/g, '') : '';
     const normalizedEmail = values.email.toLowerCase().trim();
     
-    // Use the Supabase auth API directly to create the user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: normalizedEmail,
-      password: values.password,
-      options: {
-        data: {
-          full_name: values.supervisorName,
-          role: 'dealer',
-          phone_number: formattedPhone
-        },
-        emailRedirectTo: window.location.origin + '/auth?tab=login'
+    // Use the RPC function to create both the user and dealer profile in a single transaction
+    const { data: result, error: rpcError } = await supabase.rpc(
+      'create_dealer_with_profile',
+      {
+        p_email: normalizedEmail,
+        p_password: values.password,
+        p_supervisor_name: values.supervisorName,
+        p_company_name: values.companyName,
+        p_tax_id: values.taxId,
+        p_business_registry_number: values.businessRegistryNumber,
+        p_address: values.companyAddress,
+        p_phone_number: formattedPhone
       }
-    });
+    );
     
-    if (authError) {
-      console.error("Error creating user with Supabase Auth:", authError);
+    if (rpcError) {
+      console.error("Error creating dealer with RPC function:", rpcError);
       return { 
         success: false, 
-        error: authError.message 
+        error: rpcError.message 
       };
     }
     
-    if (!authData.user) {
-      console.error("User object missing from Supabase Auth response");
+    // Parse the JSON result from the RPC function
+    const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
+    
+    if (!parsedResult.success) {
+      console.error("RPC function returned error:", parsedResult.error);
       return { 
         success: false, 
-        error: "Failed to create user account" 
+        error: parsedResult.error || "Failed to create dealer account" 
       };
     }
     
-    console.log("Auth user created successfully:", authData.user.id);
+    console.log("Dealer account created successfully:", parsedResult.user?.id);
     
-    // Now create the dealer profile
-    try {
-      const { data: dealerData, error: dealerError } = await supabase
-        .from('dealers')
-        .insert({
-          user_id: authData.user.id,
-          supervisor_name: values.supervisorName,
-          dealership_name: values.companyName,
-          tax_id: values.taxId,
-          business_registry_number: values.businessRegistryNumber,
-          address: values.companyAddress,
-          verification_status: 'pending',
-          is_verified: false,
-          license_number: values.businessRegistryNumber || 'pending'
-        })
-        .select()
-        .single();
-      
-      if (dealerError) {
-        console.error("Error creating dealer profile:", dealerError);
-        return { 
-          success: false, 
-          error: "Account created but dealer profile failed: " + dealerError.message,
-          user: authData.user
-        };
-      }
-      
-      console.log("Dealer profile created successfully:", dealerData);
-      
-      // Return success with user data
-      return { 
-        success: true, 
-        user: authData.user,
-        profile: dealerData,
-        message: "Registration successful. You can now sign in to your account."
-      };
-    } catch (dealerErr) {
-      console.error("Exception creating dealer profile:", dealerErr);
-      return { 
-        success: false, 
-        error: "Account created but dealer profile failed. Please contact support.",
-        user: authData.user
-      };
-    }
+    // Return success with user data
+    return { 
+      success: true, 
+      user: parsedResult.user,
+      message: "Registration successful. You can now sign in to your account."
+    };
   } catch (error) {
     console.error("Unexpected error during dealer signup:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
