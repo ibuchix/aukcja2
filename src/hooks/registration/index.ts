@@ -1,0 +1,2 @@
+
+export { useCompleteRegistration } from './useCompleteRegistration';

@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { RegistrationCard } from "@/components/complete-registration/RegistrationCard";
 import { RegistrationForm } from "@/components/complete-registration/RegistrationForm";
-import { useCompleteRegistration } from "@/hooks/useCompleteRegistration";
+import { useCompleteRegistration } from "@/hooks/registration";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
