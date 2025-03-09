@@ -1,131 +1,119 @@
-import { useState, useEffect } from "react";
-import Navbar from "@/components/Navbar";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { VerificationBanner } from "@/components/dealer/VerificationBanner";
-import { DealerHeader } from "@/components/dealer/DealerHeader";
-import { QuickActions } from "@/components/dealer/QuickActions";
-import { AuctionManagement } from "@/components/dealer/AuctionManagement";
-import { WatchlistManagement } from "@/components/dealer/WatchlistManagement";
-import { useAuth } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { useAuth } from "@/contexts/auth/context";
+import { useWelcomeDashboardData } from "@/hooks/useWelcomeDashboardData";
+import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
+import { DashboardLayout } from "@/components/dealer/dashboard/DashboardLayout";
+import { DealerWelcomeCard } from "@/components/dealer/dashboard/DealerWelcomeCard";
+import { DealerProfileOverview } from "@/components/dealer/DealerProfileOverview";
+import { QuickActions } from "@/components/dealer/dashboard/QuickActions";
+import { BusinessActionSection } from "@/components/dealer/dashboard/BusinessActionSection";
+import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard";
 
-interface DealerProfile {
-  id: string;
-  dealership_name: string;
-  license_number: string;
-  address: string | null;
-  verification_status: string;
-}
+export default function DealerDashboard() {
+  const { user, isLoading: isAuthLoading, refreshSession } = useAuth();
+  const { recentActivity, directQueryResult } = useWelcomeDashboardData(user, isAuthLoading);
+  const { dealerProfile, isLoading: isProfileLoading, error: profileError } = useCurrentDealerProfile();
+  const navigate = useNavigate();
+  
+  // Handle manual session refresh
+  const handleManualRefresh = async () => {
+    await refreshSession();
+    window.location.reload();
+  };
 
-const DealerDashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [dealerProfile, setDealerProfile] = useState<DealerProfile | null>(null);
-  const { profile, user } = useAuth();
-  const { toast } = useToast();
+  // Determine if we're still in a loading state (auth or profile)
+  const isLoading = isAuthLoading || isProfileLoading;
 
-  useEffect(() => {
-    let mounted = true;
+  // Show loading state
+  if (isLoading) {
+    return <LoadingDashboard />;
+  }
 
-    const loadDealerProfile = async () => {
-      try {
-        if (!user) return;
-        
-        setLoading(true);
-        
-        // Use profile from auth context if available
-        if (profile) {
-          setDealerProfile({
-            id: profile.id,
-            dealership_name: profile.dealership_name,
-            license_number: profile.license_number,
-            address: profile.address,
-            verification_status: profile.verification_status
-          });
-          setLoading(false);
-          return;
-        }
-        
-        // Otherwise fetch dealer profile
-        console.log('Attempting to fetch dealer profile with user_id:', user.id);
-        const { data: dealerData, error: dealerError } = await supabase
-          .from('dealers')
-          .select('id, dealership_name, license_number, address, verification_status')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (dealerError) {
-          console.error('Dealer profile fetch error:', dealerError);
-          throw new Error(dealerError.message);
-        }
-
-        if (!dealerData) {
-          console.error('No dealer profile found for user:', user.id);
-          throw new Error('No dealer profile found. Please complete registration.');
-        }
-
-        if (mounted) {
-          console.log('Successfully loaded dealer profile:', dealerData);
-          setDealerProfile(dealerData);
-
-          if (dealerData.verification_status === 'pending') {
-            toast({
-              title: "Account Pending Verification",
-              description: "Your account is currently under review. You'll be notified once verified.",
-              variant: "default",
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Profile loading error:', error);
-        
-        if (mounted) {
-          toast({
-            title: "Error Loading Profile",
-            description: error instanceof Error ? error.message : "Failed to load dealer profile",
-            variant: "destructive",
-          });
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadDealerProfile();
-
-    return () => {
-      mounted = false;
-    };
-  }, [user, profile, toast]);
+  // Not logged in
+  if (!user && !isLoading) {
+    return (
+      <DashboardLayout title="Authentication Required">
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Authentication Required</AlertTitle>
+          <AlertDescription>
+            You need to be logged in to access the dealer dashboard.
+          </AlertDescription>
+        </Alert>
+        <Button 
+          onClick={() => navigate('/auth')}
+          className="w-full md:w-auto"
+        >
+          Go to Login
+        </Button>
+      </DashboardLayout>
+    );
+  }
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        {loading ? (
-          <div className="min-h-screen bg-background flex items-center justify-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
+    <DashboardLayout title="Dealer Dashboard">
+      {profileError && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Profile Access Error</AlertTitle>
+          <AlertDescription className="flex flex-col gap-2">
+            <p>{profileError}</p>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="w-fit flex items-center gap-2 mt-2"
+              onClick={handleManualRefresh}
+            >
+              <RefreshCw className="h-4 w-4" /> Refresh Session
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {directQueryResult && (
+        <Alert variant={directQueryResult.success ? "default" : "destructive"} className="mb-6">
+          {directQueryResult.success ? 
+            <CheckCircle2 className="h-4 w-4 text-green-500" /> : 
+            <AlertCircle className="h-4 w-4" />
+          }
+          <AlertTitle>
+            {directQueryResult.success ? "Direct Query Test Passed" : "Direct Query Test Failed"}
+          </AlertTitle>
+          <AlertDescription>
+            {directQueryResult.message}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <div className="space-y-8">
+        <DealerWelcomeCard 
+          dealerName={dealerProfile?.supervisor_name || user?.email?.split('@')[0] || "Dealer"}
+          dealershipName={dealerProfile?.dealership_name || "Your Dealership"}
+          isLoading={false}
+        />
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-2">
+            <DealerProfileOverview 
+              dealerProfile={dealerProfile}
+              user={user}
+              isLoading={isProfileLoading}
+              error={profileError}
+            />
           </div>
-        ) : dealerProfile ? (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <VerificationBanner verificationStatus={dealerProfile.verification_status} />
-            <DealerHeader dealerProfile={dealerProfile} />
-            <div className="mt-8">
-              <QuickActions />
-            </div>
-            <div className="mt-8">
-              <WatchlistManagement />
-            </div>
-            <div className="mt-8">
-              <AuctionManagement dealerId={dealerProfile.id} />
-            </div>
+          <div>
+            <QuickActions />
           </div>
-        ) : null}
+        </div>
+        
+        <StatsSection recentActivity={recentActivity} />
+        
+        <BusinessActionSection />
       </div>
-    </ProtectedRoute>
+    </DashboardLayout>
   );
-};
-
-export default DealerDashboard;
+}

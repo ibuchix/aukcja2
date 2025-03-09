@@ -15,13 +15,12 @@ export function useSessionManager() {
   // Register the session refresh function from the auth context
   // Memoized to prevent infinite re-renders
   const registerRefreshFunction = useCallback((fn: () => Promise<void>) => {
+    console.log("Session manager: Registering refresh function");
     refreshFunctionRef.current = fn;
   }, []);
 
   // Set up automatic token refresh when token nears expiry
   useEffect(() => {
-    if (!refreshFunctionRef.current) return;
-    
     console.log("Setting up session manager");
     
     // Check session status on auth state changes
