@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
+import { DealerInsert } from "@/utils/databaseTypes";
 
 // Function to handle dealer signup
 export async function signupDealer(values: DealerFormValues) {
@@ -27,18 +28,23 @@ export async function signupDealer(values: DealerFormValues) {
     // Store additional dealer information in the database
     if (data.user) {
       try {
+        // Create dealer profile data object
+        const dealerData: DealerInsert = {
+          user_id: data.user.id,
+          supervisor_name: values.supervisorName,
+          dealership_name: values.companyName,
+          tax_id: values.taxId,
+          business_registry_number: values.businessRegistryNumber,
+          address: values.companyAddress,
+          verification_status: 'pending',
+          is_verified: false,
+          // Use business registry number as license number for now
+          license_number: values.businessRegistryNumber,
+        };
+
         const { error: profileError } = await supabase
           .from('dealers')
-          .insert({
-            user_id: data.user.id,
-            supervisor_name: values.supervisorName,
-            dealership_name: values.companyName,
-            tax_id: values.taxId,
-            business_registry_number: values.businessRegistryNumber,
-            address: values.companyAddress,
-            verification_status: 'pending',
-            is_verified: false,
-          });
+          .insert(dealerData);
 
         if (profileError) {
           console.error("Error creating dealer profile:", profileError);
