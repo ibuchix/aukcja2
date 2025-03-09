@@ -73,10 +73,13 @@ export async function fetchDealerProfile(userId: string) {
       console.log("Profile successfully retrieved via RPC function");
       
       // Ensure data is properly shaped before returning
-      if (typeof rpcData === 'object' && rpcData !== null) {
+      if (typeof rpcData === 'object' && rpcData !== null && !Array.isArray(rpcData)) {
+        // Type guard to ensure we're working with an object, not an array
+        const rpcDataObj = rpcData as { [key: string]: Json };
+        
         // Check for required fields and log any missing ones
         const requiredFields = ['supervisor_name', 'dealership_name', 'tax_id', 'business_registry_number', 'address'];
-        const missingFields = requiredFields.filter(field => !rpcData[field]);
+        const missingFields = requiredFields.filter(field => !rpcDataObj[field]);
         
         if (missingFields.length > 0) {
           console.warn("Dealer profile is incomplete. Missing fields:", missingFields);
@@ -84,9 +87,9 @@ export async function fetchDealerProfile(userId: string) {
         
         // Return object with consistent format
         return {
-          ...rpcData,
-          id: rpcData.id?.toString() || null,
-          user_id: rpcData.user_id?.toString() || userId
+          ...rpcDataObj,
+          id: rpcDataObj.id?.toString() || null,
+          user_id: rpcDataObj.user_id?.toString() || userId
         };
       }
       
