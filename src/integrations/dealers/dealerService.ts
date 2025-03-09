@@ -15,6 +15,11 @@ type DealerInsert = {
   license_number: string; // Required field
 };
 
+// Define the expected return type for the check_email_exists RPC function
+type CheckEmailExistsResponse = {
+  exists: boolean;
+};
+
 export async function signupDealer(values: DealerFormValues) {
   try {
     console.log("Starting dealer signup process with:", { 
@@ -29,7 +34,7 @@ export async function signupDealer(values: DealerFormValues) {
     if (checkError) {
       console.error("Error checking if email exists:", checkError);
       // Continue despite this error - the auth signup will catch duplicates anyway
-    } else if (existingUser?.exists) {
+    } else if (existingUser && (existingUser as CheckEmailExistsResponse).exists) {
       return { 
         success: false, 
         error: "An account with this email already exists. Please use a different email or sign in." 
