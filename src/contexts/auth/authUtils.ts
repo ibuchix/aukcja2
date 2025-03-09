@@ -22,28 +22,8 @@ export async function fetchDealerProfile(userId: string) {
       return null;
     }
     
-    // First try the security definer function approach which bypasses RLS
-    try {
-      console.log("Trying to fetch profile using get_dealer_by_user_id RPC function");
-      const { data: rpcData, error: rpcError } = await supabase.rpc(
-        'get_dealer_by_user_id',
-        { p_user_id: userId }
-      );
-      
-      if (!rpcError && rpcData) {
-        console.log("Dealer profile fetched successfully via RPC function");
-        return rpcData;
-      } else if (rpcError) {
-        console.warn("RPC function failed:", rpcError);
-        // Continue to try direct query as fallback
-      }
-    } catch (rpcFallbackError) {
-      console.warn("RPC function error caught:", rpcFallbackError);
-      // Continue to try direct query
-    }
-    
-    // Fallback: Try direct query (this should work now with the RLS policies)
-    console.log("Falling back to direct query with RLS policies");
+    // First try the direct query (with RLS policies)
+    console.log("Trying direct query to dealers table");
     const { data, error } = await supabase
       .from('dealers')
       .select('*')
@@ -51,16 +31,32 @@ export async function fetchDealerProfile(userId: string) {
       .maybeSingle();
 
     if (error) {
-      if (error.code === '42501') {
-        console.error("Permission denied for dealers table. This suggests RLS policies may not be properly configured.");
-      } else {
-        console.error("Error fetching dealer profile:", error);
+      console.error("Error fetching dealer profile:", error);
+      console.error("Error details:", JSON.stringify(error));
+      
+      // Try the RPC function as fallback
+      console.log("Trying fallback RPC method");
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+          'get_dealer_by_user_id',
+          { p_user_id: userId }
+        );
+        
+        if (!rpcError && rpcData) {
+          console.log("Dealer profile fetched successfully via RPC function", rpcData);
+          return rpcData;
+        } else if (rpcError) {
+          console.warn("RPC function failed:", rpcError);
+        }
+      } catch (rpcFallbackError) {
+        console.warn("RPC function error caught:", rpcFallbackError);
       }
+      
       return null;
     }
 
     if (data) {
-      console.log("Dealer profile fetched successfully via direct query");
+      console.log("Dealer profile fetched successfully via direct query", data);
       return data;
     } else {
       console.log("No dealer profile found for user via direct query");
@@ -77,9 +73,16 @@ export async function fetchDealerProfile(userId: string) {
  */
 export async function signOutUser() {
   try {
+    console.log("Signing out user");
+    
     // First clear local storage to ensure no stale data
-    localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
-    localStorage.removeItem('dealer_auth_token');
+    try {
+      localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
+      localStorage.removeItem('dealer_auth_token');
+    } catch (storageError) {
+      console.warn("Error clearing local storage:", storageError);
+      // Continue despite error
+    }
     
     const { error } = await supabase.auth.signOut({
       scope: 'local' // Only sign out from this client
@@ -90,6 +93,7 @@ export async function signOutUser() {
       return { success: false, error };
     }
     
+    console.log("User signed out successfully");
     return { success: true };
   } catch (error) {
     console.error("Sign out error:", error);

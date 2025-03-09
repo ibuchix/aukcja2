@@ -36,18 +36,20 @@ type CreateDealerResponse = {
 export async function signupDealer(values: DealerFormValues) {
   try {
     console.log("Starting dealer signup process with:", { 
-      email: values.email.substring(0, 3) + "...", 
-      companyName: values.companyName 
+      email: values.email, 
+      companyName: values.companyName,
+      password: "********" // Don't log actual password
     });
     
     // First check if user with this email already exists to provide better error message
     const { data: existingUser, error: checkError } = await supabase
-      .rpc('check_email_exists', { email_to_check: values.email.toLowerCase() });
+      .rpc('check_email_exists', { email_to_check: values.email.toLowerCase().trim() });
     
     if (checkError) {
       console.error("Error checking if email exists:", checkError);
       // Continue despite this error - the stored procedure will catch duplicates anyway
     } else if (existingUser && (existingUser as CheckEmailExistsResponse).exists) {
+      console.log("Email already exists:", values.email.toLowerCase().trim());
       return { 
         success: false, 
         error: "An account with this email already exists. Please use a different email or sign in." 
@@ -58,59 +60,82 @@ export async function signupDealer(values: DealerFormValues) {
     
     // Format and clean input data
     const formattedPhone = values.phoneNumber ? values.phoneNumber.replace(/\s+/g, '') : '';
+    const normalizedEmail = values.email.toLowerCase().trim();
     
-    // Use the stored procedure to create the dealer account in a single transaction
-    const { data: result, error: procedureError } = await supabase.rpc(
-      'create_dealer_with_profile',
-      {
-        p_email: values.email.toLowerCase(),
-        p_password: values.password,
-        p_supervisor_name: values.supervisorName,
-        p_company_name: values.companyName,
-        p_tax_id: values.taxId,
-        p_business_registry_number: values.businessRegistryNumber,
-        p_address: values.companyAddress,
-        p_phone_number: formattedPhone
+    // Use the Supabase auth API directly to create the user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: normalizedEmail,
+      password: values.password,
+      options: {
+        data: {
+          full_name: values.supervisorName,
+          role: 'dealer'
+        }
       }
-    );
+    });
     
-    if (procedureError) {
-      console.error("Error from stored procedure:", procedureError);
-      console.error("Error details:", JSON.stringify(procedureError));
+    if (authError) {
+      console.error("Error creating user with Supabase Auth:", authError);
+      return { 
+        success: false, 
+        error: authError.message 
+      };
+    }
+    
+    if (!authData.user) {
+      console.error("User object missing from Supabase Auth response");
+      return { 
+        success: false, 
+        error: "Failed to create user account" 
+      };
+    }
+    
+    console.log("Auth user created successfully:", authData.user.id);
+    
+    // Now create the dealer profile
+    try {
+      const { data: dealerData, error: dealerError } = await supabase
+        .from('dealers')
+        .insert({
+          user_id: authData.user.id,
+          supervisor_name: values.supervisorName,
+          dealership_name: values.companyName,
+          tax_id: values.taxId,
+          business_registry_number: values.businessRegistryNumber,
+          address: values.companyAddress,
+          verification_status: 'pending',
+          is_verified: false,
+          license_number: values.businessRegistryNumber || 'pending'
+        })
+        .select()
+        .single();
       
-      // Handle specific error messages
-      if (procedureError.message.includes("duplicate key") || 
-          procedureError.message.includes("already exists")) {
+      if (dealerError) {
+        console.error("Error creating dealer profile:", dealerError);
         return { 
           success: false, 
-          error: "An account with this email or business details already exists." 
+          error: "Account created but dealer profile failed: " + dealerError.message,
+          user: authData.user
         };
       }
       
-      return { success: false, error: procedureError.message };
-    }
-    
-    // Cast result to the expected type to make TypeScript happy
-    const typedResult = result as CreateDealerResponse;
-    console.log("Procedure result:", JSON.stringify(typedResult));
-    
-    // Check if the procedure result indicates success
-    if (!typedResult || !typedResult.success) {
-      const errorMessage = typedResult?.error || "Failed to create dealer account";
-      const errorCode = typedResult?.error_code || "unknown";
-      const operation = typedResult?.operation || "unknown";
+      console.log("Dealer profile created successfully:", dealerData);
       
-      console.error("Procedure returned error:", { errorMessage, errorCode, operation });
-      return { success: false, error: errorMessage };
+      // Return success with user data
+      return { 
+        success: true, 
+        user: authData.user,
+        profile: dealerData,
+        message: "Registration successful. You can now sign in to your account."
+      };
+    } catch (dealerErr) {
+      console.error("Exception creating dealer profile:", dealerErr);
+      return { 
+        success: false, 
+        error: "Account created but dealer profile failed. Please contact support.",
+        user: authData.user
+      };
     }
-    
-    console.log("Dealer registration completed successfully");
-    
-    return { 
-      success: true, 
-      user: typedResult.user,
-      message: "Registration successful. You can now sign in to your account."
-    };
   } catch (error) {
     console.error("Unexpected error during dealer signup:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";

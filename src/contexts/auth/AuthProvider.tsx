@@ -79,19 +79,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
-      console.log(`Signing in with email: ${email}`);
+      // Normalize the email for consistency
+      const normalizedEmail = email.toLowerCase().trim();
       
+      console.log(`Attempting to sign in with email: ${normalizedEmail} (length: ${normalizedEmail.length})`);
+      
+      // Clear local storage before attempting login to prevent stale token issues
+      try {
+        localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
+        localStorage.removeItem('dealer_auth_token');
+      } catch (clearError) {
+        console.warn("Error clearing local storage:", clearError);
+      }
+      
+      // First check if the email exists
+      const { data: emailCheck, error: checkError } = await supabase.rpc(
+        'check_email_exists', 
+        { email_to_check: normalizedEmail }
+      );
+      
+      if (checkError) {
+        console.error("Error checking if email exists:", checkError);
+      } else if (emailCheck && !(emailCheck as any).exists) {
+        console.error("Email does not exist in database:", normalizedEmail);
+        return { error: new Error("Email not found. Please check your email or register for a new account.") };
+      } else {
+        console.log("Email exists in database, proceeding with login attempt");
+      }
+      
+      // Attempt login
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.toLowerCase().trim(),
+        email: normalizedEmail,
         password,
       });
       
       if (error) {
         console.error("Sign in error:", error);
+        console.error("Error details:", JSON.stringify(error));
         return { error };
       }
       
       console.log("Sign in successful");
+      console.log("Session data:", {
+        sessionId: data.session?.access_token.substring(0, 10) + '...',
+        expires: data.session?.expires_at ? new Date(data.session.expires_at * 1000).toLocaleString() : 'unknown',
+        userId: data.user?.id
+      });
+      
       setSession(data.session);
       setUser(data.user);
       
@@ -99,6 +133,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log("Fetching dealer profile for user ID:", data.user.id);
         const profileData = await fetchDealerProfile(data.user.id);
         console.log("Retrieved profile data:", profileData);
+        
+        if (!profileData) {
+          console.warn("No dealer profile found for this user. The user may not be registered as a dealer.");
+        }
+        
         setProfile(profileData);
       }
       
@@ -109,6 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: undefined };
     } catch (error) {
       console.error("Sign in error:", error);
+      console.error("Error stack:", error instanceof Error ? error.stack : "No stack available");
       return { error: error instanceof Error ? error : new Error("Unknown error") };
     } finally {
       setIsLoading(false);

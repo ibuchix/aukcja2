@@ -1,101 +1,80 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 
-// Login form validation schema
-const loginSchema = z.object({
-  email: z.string()
-    .min(5, "Email must be at least 5 characters")
-    .max(100, "Email cannot exceed 100 characters")
-    .email("Please enter a valid email address"),
-  password: z.string()
-    .min(6, "Password must be at least 6 characters")
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
-
-interface DealerLoginFormProps {
-  returnUrl?: string;
+interface LoginFormValues {
+  email: string;
+  password: string;
 }
 
-export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: DealerLoginFormProps) {
+export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl?: string }) {
   const [isLoading, setIsLoading] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
+  
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
   const navigate = useNavigate();
   const { signIn } = useAuth();
+  const { toast } = useToast();
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: ""
-    },
-    mode: "onChange"
-  });
-
-  const onSubmit = async (values: LoginFormValues) => {
-    setIsLoading(true);
-    setLoginError(null);
-    
+  const onSubmit = async (data: LoginFormValues) => {
     try {
-      const { email, password } = values;
-      console.log(`Attempting to sign in with email: ${email.substring(0, 3)}...`);
+      setIsLoading(true);
+      setError(null);
+
+      console.log("Login form submitted for:", data.email);
       
-      const { error } = await signIn({ 
-        email, 
-        password,
-        redirectTo: returnUrl 
+      // Normalize email for consistency
+      const normalizedEmail = data.email.toLowerCase().trim();
+      
+      const { error: signInError } = await signIn({
+        email: normalizedEmail,
+        password: data.password,
+        redirectTo: returnUrl,
       });
-      
-      if (error) {
-        console.error("Login error:", error);
+
+      if (signInError) {
+        console.error("Login error:", signInError);
         
-        let errorMessage = "Failed to sign in. Please check your credentials.";
-        if (error.message.includes("Invalid login credentials")) {
-          errorMessage = "Invalid email or password. Please try again.";
-        } else if (error.message.includes("Email not confirmed")) {
-          errorMessage = "Please verify your email before logging in.";
+        // Handle specific errors more user-friendly
+        if (signInError.message.includes("Invalid login credentials")) {
+          setError("Invalid email or password. Please try again.");
+        } else if (signInError.message.includes("Email not found")) {
+          setError("No account found with this email. Please check your email or register.");
+        } else {
+          setError(signInError.message);
         }
-        
-        setLoginError(errorMessage);
         
         toast({
           title: "Login failed",
-          description: errorMessage,
+          description: signInError.message,
           variant: "destructive",
-          duration: 5000,
         });
+        
         return;
       }
-      
-      // Successfully logged in, redirect happens via the auth state change
-      setLoginError(null);
+
       toast({
         title: "Login successful",
-        description: "You have been signed in successfully.",
+        description: "Welcome back!",
       });
       
-    } catch (error) {
-      console.error("Login error:", error);
-      const errorMessage = "An unexpected error occurred. Please try again.";
-      setLoginError(errorMessage);
+      // A successful login redirects automatically to returnUrl, no need for navigate here
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      console.error("Login error:", err);
       
+      setError(errorMessage);
       toast({
-        title: "Error",
+        title: "Login failed",
         description: errorMessage,
         variant: "destructive",
-        duration: 5000,
       });
     } finally {
       setIsLoading(false);
@@ -103,88 +82,65 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: DealerLogin
   };
 
   return (
-    <div className="space-y-4">
-      <div className="text-center mb-4">
-        <h3 className="text-lg font-medium">Dealer Login</h3>
-        <p className="text-sm text-muted-foreground">
-          Enter your email and password to access your account
-        </p>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {error && (
+        <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+          {error}
+        </div>
+      )}
+      
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email" 
+          placeholder="you@example.com"
+          {...register("email", { 
+            required: "Email is required",
+            pattern: {
+              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+              message: "Invalid email address"
+            }
+          })}
+        />
+        {errors.email && (
+          <p className="text-sm text-destructive">{errors.email.message}</p>
+        )}
       </div>
       
-      {loginError && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{loginError}</AlertDescription>
-        </Alert>
-      )}
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="your@email.com" 
-                    type="email"
-                    autoComplete="email"
-                    disabled={isLoading}
-                    className={form.formState.errors.email ? "border-red-500" : ""}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="••••••••" 
-                    type="password"
-                    autoComplete="current-password"
-                    disabled={isLoading}
-                    className={form.formState.errors.password ? "border-red-500" : ""}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : "Sign In"}
-          </Button>
-        </form>
-      </Form>
-
-      <div className="text-center mt-4">
-        <p className="text-sm text-muted-foreground">
-          <Button 
-            variant="link" 
-            className="p-0 h-auto" 
-            onClick={() => navigate("/auth?tab=register")}
-            disabled={isLoading}
-          >
-            Don't have an account? Sign up
-          </Button>
-        </p>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">Password</Label>
+          <Link to="/password-reset" className="text-sm text-muted-foreground hover:text-primary">
+            Forgot password?
+          </Link>
+        </div>
+        <Input
+          id="password"
+          type="password"
+          placeholder="••••••••"
+          {...register("password", { required: "Password is required" })}
+        />
+        {errors.password && (
+          <p className="text-sm text-destructive">{errors.password.message}</p>
+        )}
       </div>
-    </div>
+      
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Signing in...
+          </>
+        ) : "Sign In"}
+      </Button>
+      
+      <div className="text-center text-sm mt-4">
+        Don't have an account?{" "}
+        <Link to="/auth?tab=register" className="text-primary hover:underline">
+          Register here
+        </Link>
+      </div>
+    </form>
   );
 }
