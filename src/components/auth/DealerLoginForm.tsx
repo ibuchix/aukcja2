@@ -148,6 +148,18 @@ export function DealerLoginForm() {
           </Button>
         </form>
       </Form>
+
+      <div className="text-center mt-4">
+        <p className="text-sm text-muted-foreground">
+          <Button 
+            variant="link" 
+            className="p-0 h-auto" 
+            onClick={() => navigate("/auth?tab=register")}
+          >
+            Don't have an account? Sign up
+          </Button>
+        </p>
+      </div>
     </div>
   );
 }
