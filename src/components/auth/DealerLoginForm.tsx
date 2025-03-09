@@ -9,7 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Login form validation schema
 const loginSchema = z.object({
@@ -25,6 +26,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function DealerLoginForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { signIn } = useAuth();
@@ -40,6 +42,7 @@ export function DealerLoginForm() {
 
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
+    setLoginError(null);
     
     try {
       const { email, password } = values;
@@ -61,15 +64,19 @@ export function DealerLoginForm() {
           errorMessage = "Please verify your email before logging in.";
         }
         
+        setLoginError(errorMessage);
+        
         toast({
           title: "Login failed",
           description: errorMessage,
           variant: "destructive",
+          duration: 5000,
         });
         return;
       }
       
       // Successfully logged in, redirect happens via the auth state change
+      setLoginError(null);
       toast({
         title: "Login successful",
         description: "You have been signed in successfully.",
@@ -77,10 +84,14 @@ export function DealerLoginForm() {
       
     } catch (error) {
       console.error("Login error:", error);
+      const errorMessage = "An unexpected error occurred. Please try again.";
+      setLoginError(errorMessage);
+      
       toast({
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: errorMessage,
         variant: "destructive",
+        duration: 5000,
       });
     } finally {
       setIsLoading(false);
@@ -95,6 +106,13 @@ export function DealerLoginForm() {
           Enter your email and password to access your account
         </p>
       </div>
+      
+      {loginError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{loginError}</AlertDescription>
+        </Alert>
+      )}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -110,6 +128,7 @@ export function DealerLoginForm() {
                     type="email"
                     autoComplete="email"
                     disabled={isLoading}
+                    className={form.formState.errors.email ? "border-red-500" : ""}
                     {...field}
                   />
                 </FormControl>
@@ -130,6 +149,7 @@ export function DealerLoginForm() {
                     type="password"
                     autoComplete="current-password"
                     disabled={isLoading}
+                    className={form.formState.errors.password ? "border-red-500" : ""}
                     {...field}
                   />
                 </FormControl>
@@ -155,6 +175,7 @@ export function DealerLoginForm() {
             variant="link" 
             className="p-0 h-auto" 
             onClick={() => navigate("/auth?tab=register")}
+            disabled={isLoading}
           >
             Don't have an account? Sign up
           </Button>
