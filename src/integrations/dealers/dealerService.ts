@@ -24,6 +24,8 @@ type CheckEmailExistsResponse = {
 type CreateDealerResponse = {
   success: boolean;
   error?: string;
+  error_code?: string;
+  operation?: string;
   user?: {
     id: string;
     email: string;
@@ -54,6 +56,9 @@ export async function signupDealer(values: DealerFormValues) {
     
     console.log("Creating dealer account using stored procedure...");
     
+    // Format and clean input data
+    const formattedPhone = values.phoneNumber ? values.phoneNumber.replace(/\s+/g, '') : '';
+    
     // Use the stored procedure to create the dealer account in a single transaction
     const { data: result, error: procedureError } = await supabase.rpc(
       'create_dealer_with_profile',
@@ -65,7 +70,7 @@ export async function signupDealer(values: DealerFormValues) {
         p_tax_id: values.taxId,
         p_business_registry_number: values.businessRegistryNumber,
         p_address: values.companyAddress,
-        p_phone_number: values.phoneNumber
+        p_phone_number: formattedPhone
       }
     );
     
@@ -73,7 +78,7 @@ export async function signupDealer(values: DealerFormValues) {
       console.error("Error from stored procedure:", procedureError);
       
       // Handle specific error messages
-      if (procedureError.message.includes("duplicate") || 
+      if (procedureError.message.includes("duplicate key") || 
           procedureError.message.includes("already exists")) {
         return { 
           success: false, 
@@ -86,11 +91,15 @@ export async function signupDealer(values: DealerFormValues) {
     
     // Cast result to the expected type to make TypeScript happy
     const typedResult = result as CreateDealerResponse;
+    console.log("Procedure result:", typedResult);
     
     // Check if the procedure result indicates success
     if (!typedResult || !typedResult.success) {
       const errorMessage = typedResult?.error || "Failed to create dealer account";
-      console.error("Procedure returned error:", errorMessage);
+      const errorCode = typedResult?.error_code || "unknown";
+      const operation = typedResult?.operation || "unknown";
+      
+      console.error("Procedure returned error:", { errorMessage, errorCode, operation });
       return { success: false, error: errorMessage };
     }
     
