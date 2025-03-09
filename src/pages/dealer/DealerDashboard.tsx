@@ -1,8 +1,8 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useWelcomeDashboardData } from "@/hooks/useWelcomeDashboardData";
 import { DashboardLayout } from "@/components/dealer/dashboard/DashboardLayout";
 import { DealerWelcomeCard } from "@/components/dealer/dashboard/DealerWelcomeCard";
-import { ProfileInfoSection } from "@/components/dealer/dashboard/ProfileInfoSection";
 import { QuickActions } from "@/components/dealer/dashboard/QuickActions";
 import { BusinessActionSection } from "@/components/dealer/dashboard/BusinessActionSection";
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
@@ -14,17 +14,12 @@ import { useNavigate } from "react-router-dom";
 import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DealerProfileProvider } from "@/contexts/DealerProfileContext";
+import { DealerProfile } from "@/components/dealer/DealerProfile";
 
 export default function DealerDashboard() {
   const { user, isLoading: isAuthLoading, refreshSession } = useAuth();
-  const { 
-    dealerProfile, 
-    recentActivity, 
-    profileDataLoading, 
-    profileFetchAttempted,
-    directQueryResult,
-    fetchError 
-  } = useWelcomeDashboardData(user, isAuthLoading);
+  const { recentActivity, directQueryResult } = useWelcomeDashboardData(user, isAuthLoading);
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -33,25 +28,10 @@ export default function DealerDashboard() {
         console.log("DealerDashboard - Current auth state:", { 
           userExists: !!user,
           userId: user.id,
-          userEmail: user.email,
-          dealerProfileExists: !!dealerProfile,
-          fetchError
+          userEmail: user.email
         });
         
         try {
-          const { data, error } = await supabase
-            .from('dealers')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-          
-          console.log("Direct query test result:", { 
-            success: !error, 
-            hasData: !!data,
-            error: error?.message,
-            errorCode: error?.code
-          });
-          
           const { data: jwtData, error: jwtError } = await supabase
             .rpc('debug_auth_user_id');
           
@@ -76,22 +56,18 @@ export default function DealerDashboard() {
     };
     
     debugRls();
-  }, [user, dealerProfile, fetchError]);
+  }, [user]);
 
   const handleManualRefresh = async () => {
     await refreshSession();
     window.location.reload();
   };
 
-  const isLoading = isAuthLoading || profileDataLoading;
-
-  const noProfileFound = !dealerProfile && !!user && !isLoading && profileFetchAttempted;
-
-  if (isLoading) {
+  if (isAuthLoading) {
     return <LoadingDashboard />;
   }
 
-  if (!user && !isLoading) {
+  if (!user && !isAuthLoading) {
     return (
       <DashboardLayout title="Authentication Required">
         <Alert variant="destructive" className="mb-6">
@@ -112,100 +88,27 @@ export default function DealerDashboard() {
   }
 
   return (
-    <DashboardLayout title="Dealer Dashboard">
-      {fetchError && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Database Access Error</AlertTitle>
-          <AlertDescription className="flex flex-col gap-2">
-            <p>{fetchError}</p>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="w-fit flex items-center gap-2 mt-2"
-              onClick={handleManualRefresh}
-            >
-              <RefreshCw className="h-4 w-4" /> Refresh Session
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {directQueryResult && (
-        <Alert variant={directQueryResult.success ? "default" : "destructive"} className="mb-6">
-          {directQueryResult.success ? 
-            <CheckCircle className="h-4 w-4 text-green-500" /> : 
-            <AlertCircle className="h-4 w-4" />
-          }
-          <AlertTitle>
-            {directQueryResult.success ? "Direct Query Test Passed" : "Direct Query Test Failed"}
-          </AlertTitle>
-          <AlertDescription>
-            {directQueryResult.message}
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {noProfileFound ? (
-        <div className="space-y-6">
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Profile Not Found</AlertTitle>
+    <DealerProfileProvider user={user}>
+      <DashboardLayout title="Dealer Dashboard">
+        {directQueryResult && (
+          <Alert variant={directQueryResult.success ? "default" : "destructive"} className="mb-6">
+            {directQueryResult.success ? 
+              <CheckCircle className="h-4 w-4 text-green-500" /> : 
+              <AlertCircle className="h-4 w-4" />
+            }
+            <AlertTitle>
+              {directQueryResult.success ? "Direct Query Test Passed" : "Direct Query Test Failed"}
+            </AlertTitle>
             <AlertDescription>
-              We couldn't find your dealer profile. You may need to complete your registration.
+              {directQueryResult.message}
             </AlertDescription>
           </Alert>
-          
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <InfoIcon className="h-5 w-5 text-blue-500" />
-                Debug Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <p><strong>Authenticated:</strong> Yes</p>
-                <p><strong>User ID:</strong> {user?.id}</p>
-                <p><strong>Email:</strong> {user?.email}</p>
-                <p><strong>Dealer Profile:</strong> Not Found</p>
-                <p><strong>Auth Status:</strong> Authentication successful, but dealer profile missing</p>
-                {fetchError && <p><strong>Error:</strong> {fetchError}</p>}
-              </div>
-              
-              <div className="mt-4">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                  onClick={handleManualRefresh}
-                >
-                  <RefreshCw className="h-4 w-4" /> Refresh Session
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Button 
-            onClick={() => navigate('/complete-registration')}
-            className="w-full md:w-auto"
-          >
-            Complete Registration
-          </Button>
-        </div>
-      ) : (
+        )}
+        
         <div className="space-y-8">
-          <DealerWelcomeCard 
-            dealerName={dealerProfile?.supervisor_name || user?.email?.split('@')[0] || "Dealer"}
-            dealershipName={dealerProfile?.dealership_name || "Your Dealership"}
-            isLoading={false}
-          />
+          <DealerWelcomeCard />
           
-          <ProfileInfoSection 
-            dealerProfile={dealerProfile}
-            user={user}
-            isLoading={false}
-          />
+          <DealerProfile />
           
           <QuickActions />
           
@@ -213,7 +116,7 @@ export default function DealerDashboard() {
           
           <BusinessActionSection />
         </div>
-      )}
-    </DashboardLayout>
+      </DashboardLayout>
+    </DealerProfileProvider>
   );
 }

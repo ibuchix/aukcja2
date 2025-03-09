@@ -2,14 +2,13 @@
 import { User } from "@supabase/supabase-js";
 import { Building2, User as UserIcon, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDealerProfile } from "@/contexts/DealerProfileContext";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface ProfileInfoSectionProps {
-  dealerProfile: any;
-  user: User | null;
-  isLoading: boolean;
-}
+export const ProfileInfoSection = () => {
+  const { profile, isLoading } = useDealerProfile();
+  const { user } = useAuth();
 
-export const ProfileInfoSection = ({ dealerProfile, user, isLoading }: ProfileInfoSectionProps) => {
   return (
     <div className="mb-10 bg-white shadow-sm rounded-lg overflow-hidden">
       <div className="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-100">
@@ -35,9 +34,9 @@ export const ProfileInfoSection = ({ dealerProfile, user, isLoading }: ProfileIn
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Name:</span> {dealerProfile?.supervisor_name || "Not available"}</p>
+              <p><span className="font-medium text-dark">Name:</span> {profile?.supervisor_name || "Not available"}</p>
               <p><span className="font-medium text-dark">Email:</span> {user?.email || "Not available"}</p>
-              <p><span className="font-medium text-dark">Dealership:</span> {dealerProfile?.dealership_name || "Not available"}</p>
+              <p><span className="font-medium text-dark">Dealership:</span> {profile?.dealership_name || "Not available"}</p>
             </div>
           )}
         </div>
@@ -57,9 +56,9 @@ export const ProfileInfoSection = ({ dealerProfile, user, isLoading }: ProfileIn
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Address:</span> {dealerProfile?.address || "Not available"}</p>
-              <p><span className="font-medium text-dark">License:</span> {dealerProfile?.license_number || "Not available"}</p>
-              <p><span className="font-medium text-dark">Tax ID:</span> {dealerProfile?.tax_id || "Not available"}</p>
+              <p><span className="font-medium text-dark">Address:</span> {profile?.address || "Not available"}</p>
+              <p><span className="font-medium text-dark">License:</span> {profile?.license_number || "Not available"}</p>
+              <p><span className="font-medium text-dark">Tax ID:</span> {profile?.tax_id || "Not available"}</p>
             </div>
           )}
         </div>
@@ -78,7 +77,7 @@ export const ProfileInfoSection = ({ dealerProfile, user, isLoading }: ProfileIn
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Business Registry:</span> {dealerProfile?.business_registry_number || "Not available"}</p>
+              <p><span className="font-medium text-dark">Business Registry:</span> {profile?.business_registry_number || "Not available"}</p>
               <p><span className="font-medium text-dark">Account Status:</span> <span className="text-success font-medium">Active</span></p>
             </div>
           )}
