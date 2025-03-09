@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -13,9 +13,10 @@ export function useSessionManager() {
   const [refreshFunction, setRefreshFunction] = useState<() => Promise<void>>(() => async () => {});
 
   // Register the session refresh function from the auth context
-  const registerRefreshFunction = (fn: () => Promise<void>) => {
+  // Memoized to prevent infinite re-renders
+  const registerRefreshFunction = useCallback((fn: () => Promise<void>) => {
     setRefreshFunction(() => fn);
-  };
+  }, []);
 
   // Set up automatic token refresh when token nears expiry
   useEffect(() => {
