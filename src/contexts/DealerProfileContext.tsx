@@ -4,6 +4,7 @@ import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { mapDatabaseToDisplay } from "@/utils/dealerProfileMapping";
+import { Json } from "@/integrations/supabase/types";
 
 // Define the dealer profile type
 export type DealerProfile = {
@@ -107,13 +108,20 @@ export function DealerProfileProvider({
           
           if (!rpcError && rpcData) {
             console.log("Profile fetched successfully via RPC function");
-            setProfile(rpcData);
             
-            // Transform data consistently using our mapping function
-            const transformedProfile = mapDatabaseToDisplay(rpcData);
-            setDisplayProfile(transformedProfile);
-            setError(null);
-            return;
+            // Type check and type assertion for rpcData
+            if (typeof rpcData === 'object' && rpcData !== null) {
+              const typedData = rpcData as DealerProfile;
+              setProfile(typedData);
+              
+              // Transform data consistently using our mapping function
+              const transformedProfile = mapDatabaseToDisplay(typedData);
+              setDisplayProfile(transformedProfile);
+              setError(null);
+              return;
+            } else {
+              throw new Error("RPC data is not in expected format");
+            }
           } else {
             // If RPC also failed, throw the original error
             throw error;
@@ -125,13 +133,14 @@ export function DealerProfileProvider({
       }
 
       console.log("Dealer profile fetched successfully:", data);
-      setProfile(data);
-      
       if (data) {
+        setProfile(data);
+        
         // Transform the database profile to display format consistently
         const transformedProfile = mapDatabaseToDisplay(data);
         setDisplayProfile(transformedProfile);
       } else {
+        setProfile(null);
         setDisplayProfile(null);
       }
     } catch (err) {

@@ -1,7 +1,7 @@
-
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { mapDatabaseToDisplay } from "@/utils/dealerProfileMapping";
+import { Json } from "@/integrations/supabase/types";
 
 /**
  * Fetches the dealer profile for a given user ID with enhanced error handling and fallbacks
@@ -46,13 +46,19 @@ export async function fetchDealerProfile(userId: string) {
         if (!rpcError && rpcData) {
           console.log("Dealer profile fetched successfully via RPC function", rpcData);
           
-          // Return consistent profile format
-          return {
-            ...rpcData,
-            // Convert any non-string IDs to strings for consistency
-            id: rpcData.id?.toString() || null,
-            user_id: rpcData.user_id?.toString() || userId
-          };
+          // Ensure rpcData is an object before spreading
+          if (typeof rpcData === 'object' && rpcData !== null) {
+            // Return consistent profile format with type safety
+            return {
+              ...rpcData,
+              // Convert any non-string IDs to strings for consistency
+              id: typeof rpcData.id !== 'undefined' ? String(rpcData.id) : null,
+              user_id: typeof rpcData.user_id !== 'undefined' ? String(rpcData.user_id) : userId
+            };
+          } else {
+            console.warn("RPC data is not in expected object format:", rpcData);
+            return null;
+          }
         } else if (rpcError) {
           console.warn("RPC function failed:", rpcError);
         }
