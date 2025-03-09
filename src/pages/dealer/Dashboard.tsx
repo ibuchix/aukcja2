@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/contexts/auth/context";
 import { useWelcomeDashboardData } from "@/hooks/useWelcomeDashboardData";
 import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
@@ -12,6 +13,7 @@ import { AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard";
+import { DealerProfileProvider } from "@/contexts/DealerProfileContext";
 
 export default function DealerDashboard() {
   const { user, isLoading: isAuthLoading, refreshSession } = useAuth();
@@ -86,11 +88,9 @@ export default function DealerDashboard() {
       )}
       
       <div className="space-y-8">
-        <DealerWelcomeCard 
-          dealerName={dealerProfile?.supervisor_name || user?.email?.split('@')[0] || "Dealer"}
-          dealershipName={dealerProfile?.dealership_name || "Your Dealership"}
-          isLoading={false}
-        />
+        <DealerProfileProvider user={user}>
+          <DealerWelcomeCard />
+        </DealerProfileProvider>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-2">
