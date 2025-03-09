@@ -108,7 +108,7 @@ export async function signupDealer(values: DealerFormValues) {
     return { 
       success: true, 
       user: typedResult.user,
-      message: "Registration successful. Please check your email to verify your account."
+      message: "Registration successful. You can now sign in to your account."
     };
   } catch (error) {
     console.error("Unexpected error during dealer signup:", error);

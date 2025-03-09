@@ -30,11 +30,11 @@ export function useFormSubmission({
       const result = await signupDealer(values);
       
       if (result.success) {
-        console.log("Registration successful, waiting for email verification");
+        console.log("Registration successful");
         
         toast({
           title: "Registration successful",
-          description: "Please check your email to verify your account",
+          description: "Your account has been created. You can now log in.",
           duration: 6000, // Show for 6 seconds
         });
         
