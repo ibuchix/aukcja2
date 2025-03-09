@@ -22,6 +22,20 @@ export async function signupDealer(values: DealerFormValues) {
       companyName: values.companyName 
     });
     
+    // First check if user with this email already exists to provide better error message
+    const { data: existingUser, error: checkError } = await supabase
+      .rpc('check_email_exists', { email_to_check: values.email.toLowerCase() });
+    
+    if (checkError) {
+      console.error("Error checking if email exists:", checkError);
+      // Continue despite this error - the auth signup will catch duplicates anyway
+    } else if (existingUser?.exists) {
+      return { 
+        success: false, 
+        error: "An account with this email already exists. Please use a different email or sign in." 
+      };
+    }
+    
     // Step 1: Create the user account
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: values.email,
@@ -51,10 +65,10 @@ export async function signupDealer(values: DealerFormValues) {
     const dealerData: DealerInsert = {
       user_id: authData.user.id,
       supervisor_name: values.supervisorName,
-      dealership_name: values.companyName, // Changed from dealershipName to companyName
+      dealership_name: values.companyName,
       tax_id: values.taxId,
       business_registry_number: values.businessRegistryNumber,
-      address: values.companyAddress, // Changed from address to companyAddress
+      address: values.companyAddress,
       verification_status: "pending",
       is_verified: false,
       license_number: values.businessRegistryNumber // Using business registry as license number
