@@ -58,6 +58,16 @@ export async function fetchDealerProfile(userId: string) {
             // Now we know it's an object, we can safely access properties
             const jsonObject = rpcData as Record<string, Json>;
             
+            // Check if any required fields are missing and log them
+            const requiredFields = ['supervisor_name', 'dealership_name', 'tax_id', 'business_registry_number', 'address'];
+            const missingFields = requiredFields.filter(field => !jsonObject[field]);
+            
+            if (missingFields.length > 0) {
+              console.warn("Dealer profile is incomplete. Missing fields:", missingFields);
+            } else {
+              console.log("Dealer profile is complete with all required fields");
+            }
+            
             // Return consistent profile format with type safety
             return {
               ...jsonObject,
@@ -81,6 +91,16 @@ export async function fetchDealerProfile(userId: string) {
 
     if (data) {
       console.log("Dealer profile fetched successfully via direct query", data);
+      
+      // Check if any required fields are missing and log them
+      const requiredFields = ['supervisor_name', 'dealership_name', 'tax_id', 'business_registry_number', 'address'];
+      const missingFields = requiredFields.filter(field => !data[field]);
+      
+      if (missingFields.length > 0) {
+        console.warn("Dealer profile is incomplete. Missing fields:", missingFields);
+      } else {
+        console.log("Dealer profile is complete with all required fields");
+      }
       
       // Ensure consistent format
       return {

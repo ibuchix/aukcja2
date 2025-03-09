@@ -47,6 +47,8 @@ type DealerProfileContextType = {
   error: string | null;
   fetchAttempted: boolean;
   refetchProfile: () => Promise<void>;
+  profileIsComplete: boolean;
+  missingFields: string[];
 };
 
 // Create the context with default values
@@ -57,6 +59,8 @@ const DealerProfileContext = createContext<DealerProfileContextType>({
   error: null,
   fetchAttempted: false,
   refetchProfile: async () => {},
+  profileIsComplete: false,
+  missingFields: [],
 });
 
 // Create a provider component
@@ -72,7 +76,33 @@ export function DealerProfileProvider({
   const [isLoading, setIsLoading] = useState<boolean>(true); // Start with loading true
   const [error, setError] = useState<string | null>(null);
   const [fetchAttempted, setFetchAttempted] = useState<boolean>(false);
+  const [profileIsComplete, setProfileIsComplete] = useState<boolean>(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
   const { toast } = useToast();
+
+  // Function to check if a dealer profile is complete
+  const checkProfileCompleteness = (data: any) => {
+    const requiredFields = [
+      'supervisor_name', 
+      'dealership_name', 
+      'tax_id', 
+      'business_registry_number', 
+      'address'
+    ];
+    
+    const missing = requiredFields.filter(field => !data[field]);
+    setMissingFields(missing);
+    
+    if (missing.length === 0) {
+      console.log("Profile is complete with all required fields");
+      setProfileIsComplete(true);
+      return true;
+    } else {
+      console.warn("Profile is incomplete. Missing fields:", missing);
+      setProfileIsComplete(false);
+      return false;
+    }
+  };
 
   // Function to fetch dealer profile with improved error handling and retries
   const fetchProfile = async (retryCount = 0) => {
@@ -114,6 +144,9 @@ export function DealerProfileProvider({
               const typedData = rpcData as DealerProfile;
               setProfile(typedData);
               
+              // Check profile completeness
+              checkProfileCompleteness(typedData);
+              
               // Transform data consistently using our mapping function
               const transformedProfile = mapDatabaseToDisplay(typedData);
               setDisplayProfile(transformedProfile);
@@ -136,12 +169,17 @@ export function DealerProfileProvider({
       if (data) {
         setProfile(data);
         
+        // Check if profile is complete
+        checkProfileCompleteness(data);
+        
         // Transform the database profile to display format consistently
         const transformedProfile = mapDatabaseToDisplay(data);
         setDisplayProfile(transformedProfile);
       } else {
         setProfile(null);
         setDisplayProfile(null);
+        setProfileIsComplete(false);
+        setMissingFields(['profile_not_found']);
       }
     } catch (err) {
       console.error("Error fetching dealer profile:", err);
@@ -175,6 +213,8 @@ export function DealerProfileProvider({
       setDisplayProfile(null);
       setIsLoading(false);
       setFetchAttempted(true);
+      setProfileIsComplete(false);
+      setMissingFields([]);
     }
   }, [user?.id]);
 
@@ -192,6 +232,8 @@ export function DealerProfileProvider({
         error,
         fetchAttempted,
         refetchProfile,
+        profileIsComplete,
+        missingFields,
       }}
     >
       {children}
