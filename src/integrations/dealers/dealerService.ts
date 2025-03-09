@@ -1,70 +1,84 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { DealerInsert } from "@/utils/databaseTypes";
 
-// Function to handle dealer signup
+// Type for inserting dealer records to match the database schema
+type DealerInsert = {
+  user_id: string;
+  supervisor_name: string;
+  dealership_name: string;
+  tax_id: string;
+  business_registry_number: string;
+  address: string;
+  verification_status: string;
+  is_verified: boolean;
+  license_number: string; // Required field
+};
+
 export async function signupDealer(values: DealerFormValues) {
   try {
-    // Create a new user with email and password
-    const { data, error } = await supabase.auth.signUp({
+    console.log("Starting dealer signup process with:", { 
+      email: values.email.substring(0, 3) + "...", 
+      dealershipName: values.dealershipName 
+    });
+    
+    // Step 1: Create the user account
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
       options: {
         data: {
-          full_name: values.supervisorName,
+          name: values.supervisorName,
           phone: values.phoneNumber,
-          company_name: values.companyName,
-          role: 'dealer',
-        },
-      },
-    });
-
-    if (error) {
-      console.error("Signup error:", error);
-      return { success: false, error };
-    }
-
-    // Store additional dealer information in the database
-    if (data.user) {
-      try {
-        // Create dealer profile data object
-        const dealerData: DealerInsert = {
-          user_id: data.user.id,
-          supervisor_name: values.supervisorName,
-          dealership_name: values.companyName,
-          tax_id: values.taxId,
-          business_registry_number: values.businessRegistryNumber,
-          address: values.companyAddress,
-          verification_status: 'pending',
-          is_verified: false,
-          // Use business registry number as license number for now
-          license_number: values.businessRegistryNumber,
-        };
-
-        const { error: profileError } = await supabase
-          .from('dealers')
-          .insert(dealerData);
-
-        if (profileError) {
-          console.error("Error creating dealer profile:", profileError);
-          return { success: false, error: profileError };
+          role: 'dealer'
         }
-      } catch (profileCreationError) {
-        console.error("Exception creating dealer profile:", profileCreationError);
-        return { 
-          success: false, 
-          error: profileCreationError instanceof Error ? profileCreationError : new Error("Unknown error creating profile") 
-        };
       }
+    });
+    
+    if (authError) {
+      console.error("Auth error during signup:", authError);
+      return { success: false, error: authError.message };
     }
-
-    return { success: true, data };
-  } catch (exception) {
-    console.error("Exception during signup:", exception);
-    return { 
-      success: false, 
-      error: exception instanceof Error ? exception : new Error("Unknown exception during signup") 
+    
+    if (!authData.user) {
+      console.error("No user returned from signup");
+      return { success: false, error: "Failed to create user account" };
+    }
+    
+    console.log("Auth account created successfully, creating dealer profile...");
+    
+    // Step 2: Create the dealer profile
+    const dealerData: DealerInsert = {
+      user_id: authData.user.id,
+      supervisor_name: values.supervisorName,
+      dealership_name: values.dealershipName,
+      tax_id: values.taxId,
+      business_registry_number: values.businessRegistryNumber,
+      address: values.address,
+      verification_status: "pending",
+      is_verified: false,
+      license_number: values.businessRegistryNumber // Using business registry as license number
     };
+    
+    const { error: dealerError } = await supabase
+      .from('dealers')
+      .insert(dealerData);
+    
+    if (dealerError) {
+      console.error("Error creating dealer profile:", dealerError);
+      return { success: false, error: dealerError.message };
+    }
+    
+    console.log("Dealer registration completed successfully");
+    
+    return { 
+      success: true, 
+      user: authData.user,
+      message: "Registration successful. Please check your email to verify your account."
+    };
+  } catch (error) {
+    console.error("Unexpected error during dealer signup:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    return { success: false, error: errorMessage };
   }
 }

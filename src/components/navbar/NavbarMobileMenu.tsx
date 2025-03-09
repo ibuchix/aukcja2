@@ -1,23 +1,27 @@
 
 import { Link } from "react-router-dom";
-import { Compass, LayoutDashboard, HelpCircle } from "lucide-react";
+import { Compass, LayoutDashboard, HelpCircle, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface NavbarMobileMenuProps {
   isOpen: boolean;
   session: any;
+  isLoading: boolean;
   handleLogout: () => Promise<void>;
 }
 
-export const NavbarMobileMenu = ({ isOpen, session, handleLogout }: NavbarMobileMenuProps) => {
+export const NavbarMobileMenu = ({ isOpen, session, isLoading, handleLogout }: NavbarMobileMenuProps) => {
   if (!isOpen) return null;
 
   return (
     <div className="md:hidden pb-4">
       <div className="space-y-4">
-        <Link to="/dealer/dashboard" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
-          <LayoutDashboard size={20} />
-          Dashboard
-        </Link>
+        {session && (
+          <Link to="/dealer/dashboard" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
+            <LayoutDashboard size={20} />
+            Dashboard
+          </Link>
+        )}
         <Link to="/auctions" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
           <Compass size={20} />
           Browse Vehicles
@@ -26,16 +30,23 @@ export const NavbarMobileMenu = ({ isOpen, session, handleLogout }: NavbarMobile
           <HelpCircle size={20} />
           How It Works
         </Link>
-        {session ? (
-          <button
+        
+        {isLoading ? (
+          <Button disabled className="block w-full">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Loading...
+          </Button>
+        ) : session ? (
+          <Button
             onClick={handleLogout}
-            className="block w-full text-left btn-primary"
+            variant="outline"
+            className="block w-full"
           >
             Logout
-          </button>
+          </Button>
         ) : (
-          <Link to="/auth" className="block w-full btn-primary">
-            Sign Up
+          <Link to="/auth" className="block w-full btn-primary text-center">
+            Sign In
           </Link>
         )}
       </div>

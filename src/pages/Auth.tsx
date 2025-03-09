@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Link, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { DealerSignupForm } from "@/pages/auth/DealerSignupForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +10,10 @@ import { useAuth } from "@/contexts/AuthContext";
 const Auth = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get return URL from state if it exists
+  const returnUrl = location.state?.returnUrl || "/dealer/dashboard";
   
   // Safely access auth context - wrap with error handling
   const authContext = (() => {
@@ -35,11 +39,11 @@ const Auth = () => {
   // Redirect if already authenticated - but only once
   useEffect(() => {
     if (isAuthenticated && !isLoading && !redirectAttempted) {
-      console.log("User already logged in, redirecting to dashboard");
+      console.log("User already logged in, redirecting to:", returnUrl);
       setRedirectAttempted(true); // Prevent multiple redirects
-      navigate("/dealer/dashboard");
+      navigate(returnUrl);
     }
-  }, [isAuthenticated, isLoading, navigate, redirectAttempted]);
+  }, [isAuthenticated, isLoading, navigate, redirectAttempted, returnUrl]);
 
   // Update URL when tab changes without causing a page reload
   const handleTabChange = (value: string) => {
@@ -55,7 +59,7 @@ const Auth = () => {
   if (isLoading) {
     return (
       <div className="container flex items-center justify-center h-screen">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="animate-pulse text-muted-foreground">Loading authentication status...</div>
       </div>
     );
   }
@@ -100,7 +104,7 @@ const Auth = () => {
                   <DealerSignupForm />
                 </TabsContent>
                 <TabsContent value="login">
-                  <DealerLoginForm />
+                  <DealerLoginForm returnUrl={returnUrl} />
                 </TabsContent>
               </Tabs>
             </CardContent>

@@ -24,7 +24,11 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export function DealerLoginForm() {
+interface DealerLoginFormProps {
+  returnUrl?: string;
+}
+
+export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: DealerLoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -51,7 +55,7 @@ export function DealerLoginForm() {
       const { error } = await signIn({ 
         email, 
         password,
-        redirectTo: "/dealer/dashboard" 
+        redirectTo: returnUrl 
       });
       
       if (error) {

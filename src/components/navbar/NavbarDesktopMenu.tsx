@@ -1,19 +1,23 @@
 
 import { Link } from "react-router-dom";
-import { Compass, LayoutDashboard, HelpCircle } from "lucide-react";
+import { Compass, LayoutDashboard, HelpCircle, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface NavbarDesktopMenuProps {
   session: any;
+  isLoading: boolean;
   handleLogout: () => Promise<void>;
 }
 
-export const NavbarDesktopMenu = ({ session, handleLogout }: NavbarDesktopMenuProps) => {
+export const NavbarDesktopMenu = ({ session, isLoading, handleLogout }: NavbarDesktopMenuProps) => {
   return (
     <div className="hidden md:flex items-center space-x-8">
-      <Link to="/dealer/dashboard" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
-        <LayoutDashboard size={20} />
-        Dashboard
-      </Link>
+      {session && (
+        <Link to="/dealer/dashboard" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
+          <LayoutDashboard size={20} />
+          Dashboard
+        </Link>
+      )}
       <Link to="/auctions" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
         <Compass size={20} />
         Browse Vehicles
@@ -22,16 +26,23 @@ export const NavbarDesktopMenu = ({ session, handleLogout }: NavbarDesktopMenuPr
         <HelpCircle size={20} />
         How It Works
       </Link>
-      {session ? (
-        <button
+      
+      {isLoading ? (
+        <Button disabled className="px-4 py-2">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Loading...
+        </Button>
+      ) : session ? (
+        <Button
           onClick={handleLogout}
-          className="btn-primary"
+          variant="outline"
+          className="px-4 py-2"
         >
           Logout
-        </button>
+        </Button>
       ) : (
         <Link to="/auth" className="btn-primary">
-          Sign Up
+          Sign In
         </Link>
       )}
     </div>

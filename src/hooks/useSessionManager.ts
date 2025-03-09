@@ -1,7 +1,7 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 // Configure how long a session should last without activity before showing a warning
 const IDLE_WARNING_TIMEOUT = 60 * 60 * 1000; // 60 minutes (was 25 minutes)
@@ -18,7 +18,8 @@ export function useSessionManager() {
   const hasSetupListenersRef = useRef<boolean>(false);
   const { toast } = useToast();
 
-  const resetIdleTimer = () => {
+  // Extract the reset function to be used in event listeners
+  const resetIdleTimer = useCallback(() => {
     // Update last activity timestamp
     lastActivityRef.current = Date.now();
     
@@ -60,7 +61,7 @@ export function useSessionManager() {
         });
       }
     }, IDLE_TIMEOUT);
-  };
+  }, [toast]);
 
   // Set up activity listeners and periodic token refresh
   useEffect(() => {
@@ -79,13 +80,9 @@ export function useSessionManager() {
         'scroll', 'touchstart', 'click', 'keypress'
       ];
       
-      const handleUserActivity = () => {
-        resetIdleTimer();
-      };
-      
       // Add all listeners
       activityEvents.forEach(event => {
-        document.addEventListener(event, handleUserActivity, { passive: true });
+        document.addEventListener(event, resetIdleTimer, { passive: true });
       });
 
       // Initial timer setup
@@ -135,5 +132,5 @@ export function useSessionManager() {
       if (warningTimerRef.current) window.clearTimeout(warningTimerRef.current);
       if (refreshTimerRef.current) window.clearInterval(refreshTimerRef.current);
     };
-  }, [toast]);
+  }, [resetIdleTimer, toast]);
 }
