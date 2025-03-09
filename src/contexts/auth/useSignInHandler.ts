@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchDealerProfile } from "./authUtils";
+import { normalizeEmail } from "@/utils/dealerProfileMapping";
 
 export function useSignInHandler(
   setIsLoading: (loading: boolean) => void,
@@ -24,8 +25,8 @@ export function useSignInHandler(
     try {
       setIsLoading(true);
       
-      // Normalize the email for consistency
-      const normalizedEmail = email.toLowerCase().trim();
+      // Normalize the email for consistency using our utility function
+      const normalizedEmail = normalizeEmail(email);
       
       console.log(`Attempting to sign in with email: ${normalizedEmail} (length: ${normalizedEmail.length})`);
       

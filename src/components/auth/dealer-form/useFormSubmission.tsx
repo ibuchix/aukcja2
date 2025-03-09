@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { signupDealer } from "@/integrations/dealers/dealerService";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
+import { normalizeEmail, normalizePhoneNumber } from "@/utils/dealerProfileMapping";
 
 export function useFormSubmission({
   moveToStep,
@@ -26,7 +27,7 @@ export function useFormSubmission({
     try {
       console.log("Starting dealer registration process...");
       console.log("Registration values:", { 
-        email: values.email, 
+        email: normalizeEmail(values.email), 
         companyName: values.companyName,
         supervisorName: values.supervisorName,
         businessRegistryNumber: values.businessRegistryNumber,

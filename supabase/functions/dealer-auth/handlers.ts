@@ -50,7 +50,7 @@ export async function handleDealerRegister(
     // Check if email already exists
     const { data: existsData, error: existsError } = await supabaseAdmin.rpc(
       "check_email_exists",
-      { email_to_check: email.toLowerCase().trim() }
+      { email_to_check: sanitizeString(email).toLowerCase() }
     );
 
     if (existsError) {
@@ -60,18 +60,23 @@ export async function handleDealerRegister(
       return respondError("Email already exists", 409);
     }
 
+    // Normalize phone number by removing spaces and ensuring it starts with +
+    const normalizedPhone = cleanedMetadata.phoneNumber || "";
+    const formattedPhone = normalizedPhone.replace(/\s+/g, '');
+    const phoneWithCode = formattedPhone.startsWith('+') ? formattedPhone : `+${formattedPhone}`;
+
     // Call the improved stored procedure to handle the dealer registration
     const { data: result, error: rpcError } = await supabaseAdmin.rpc(
       "create_dealer_with_profile",
       {
-        p_email: email.toLowerCase().trim(),
+        p_email: sanitizeString(email).toLowerCase(),
         p_password: password || crypto.randomUUID() + crypto.randomUUID(), // Use random UUID as password for passwordless
         p_supervisor_name: cleanedMetadata.name,
         p_company_name: cleanedMetadata.companyName || cleanedMetadata.name,
-        p_tax_id: cleanedMetadata.taxId || "",
-        p_business_registry_number: cleanedMetadata.businessRegistryNumber || "",
+        p_tax_id: (cleanedMetadata.taxId || "").replace(/\D/g, ''), // Remove non-digits
+        p_business_registry_number: (cleanedMetadata.businessRegistryNumber || "").replace(/\D/g, ''), // Remove non-digits
         p_address: cleanedMetadata.companyAddress || "",
-        p_phone_number: cleanedMetadata.phoneNumber || ""
+        p_phone_number: phoneWithCode
       }
     );
 

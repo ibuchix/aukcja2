@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
+import { mapFormToDatabase, normalizeEmail, normalizePhoneNumber } from "@/utils/dealerProfileMapping";
 
 // Type for inserting dealer records to match the database schema
 type DealerInsert = {
@@ -28,15 +29,18 @@ export async function signupDealer(values: DealerFormValues) {
       password: "********" // Don't log actual password
     });
     
+    // Normalize email before checking if it exists
+    const normalizedEmail = normalizeEmail(values.email);
+    
     // First check if user with this email already exists to provide better error message
     const { data: existingUser, error: checkError } = await supabase
-      .rpc('check_email_exists', { email_to_check: values.email.toLowerCase().trim() });
+      .rpc('check_email_exists', { email_to_check: normalizedEmail });
     
     if (checkError) {
       console.error("Error checking if email exists:", checkError);
       // Continue despite this error - the stored procedure will catch duplicates anyway
     } else if (existingUser && (existingUser as CheckEmailExistsResponse).exists) {
-      console.log("Email already exists:", values.email.toLowerCase().trim());
+      console.log("Email already exists:", normalizedEmail);
       return { 
         success: false, 
         error: "An account with this email already exists. Please use a different email or sign in." 
@@ -45,22 +49,21 @@ export async function signupDealer(values: DealerFormValues) {
     
     console.log("Creating dealer account using create_dealer_with_profile RPC function...");
     
-    // Format and clean input data
-    const formattedPhone = values.phoneNumber ? values.phoneNumber.replace(/\s+/g, '') : '';
-    const normalizedEmail = values.email.toLowerCase().trim();
+    // Use our mapping function to normalize and transform all data
+    const mappedData = mapFormToDatabase(values);
     
     // Use the RPC function to create both the user and dealer profile in a single transaction
     const { data: result, error: rpcError } = await supabase.rpc(
       'create_dealer_with_profile',
       {
-        p_email: normalizedEmail,
+        p_email: mappedData.email,
         p_password: values.password,
-        p_supervisor_name: values.supervisorName,
-        p_company_name: values.companyName,
-        p_tax_id: values.taxId,
-        p_business_registry_number: values.businessRegistryNumber,
-        p_address: values.companyAddress,
-        p_phone_number: formattedPhone
+        p_supervisor_name: mappedData.supervisor_name,
+        p_company_name: mappedData.dealership_name,
+        p_tax_id: mappedData.tax_id,
+        p_business_registry_number: mappedData.business_registry_number,
+        p_address: mappedData.address,
+        p_phone_number: mappedData.phone_number || ''
       }
     );
     

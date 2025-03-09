@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { sendDealerWelcomeEmail } from "@/services/emailService";
+import { mapFormToDatabase } from "@/utils/dealerProfileMapping";
 
 export function useCompleteRegistration(userId: string | undefined) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,16 +78,19 @@ export function useCompleteRegistration(userId: string | undefined) {
       // Generate a random password that won't be used (passwordless auth)
       const securePassword = crypto.randomUUID() + crypto.randomUUID();
 
-      // Format and normalize data before submission
+      // Use our mapping function to normalize and transform all data
+      const mappedData = mapFormToDatabase(values);
+
+      // Format data for the RPC function
       const formattedData = {
-        p_email: values.email.trim().toLowerCase(),
+        p_email: mappedData.email,
         p_password: securePassword, // Random password as we're using passwordless login
-        p_supervisor_name: values.supervisorName.trim(),
-        p_company_name: values.companyName.trim(),
-        p_tax_id: values.taxId.trim(),
-        p_business_registry_number: values.businessRegistryNumber.trim(),
-        p_address: values.companyAddress.trim(),
-        p_phone_number: values.phoneNumber.replace(/\s+/g, '') // Remove all spaces
+        p_supervisor_name: mappedData.supervisor_name,
+        p_company_name: mappedData.dealership_name,
+        p_tax_id: mappedData.tax_id,
+        p_business_registry_number: mappedData.business_registry_number,
+        p_address: mappedData.address,
+        p_phone_number: mappedData.phone_number
       };
 
       // Call Supabase RPC function
@@ -108,8 +112,8 @@ export function useCompleteRegistration(userId: string | undefined) {
       // Send welcome email
       try {
         await sendDealerWelcomeEmail(
-          values.supervisorName.trim(),
-          values.email.trim().toLowerCase()
+          mappedData.supervisor_name,
+          mappedData.email
         );
         console.log("Welcome email sent successfully after profile completion");
       } catch (emailError) {

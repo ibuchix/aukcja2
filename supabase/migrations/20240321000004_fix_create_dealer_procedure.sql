@@ -7,7 +7,8 @@ create or replace function create_dealer_with_profile(
   p_company_name text,
   p_tax_id text,
   p_business_registry_number text,
-  p_address text
+  p_address text,
+  p_phone_number text DEFAULT NULL
 ) returns json
 language plpgsql
 security definer -- Run with definer's permissions
@@ -41,7 +42,10 @@ begin
         p_email,
         crypt(p_password, gen_salt('bf')),
         now(),
-        jsonb_build_object('name', p_supervisor_name)
+        jsonb_build_object(
+          'name', p_supervisor_name,
+          'phone_number', p_phone_number
+        )
       )
       returning id, raw_user_meta_data into v_user_id, v_user;
     exception 

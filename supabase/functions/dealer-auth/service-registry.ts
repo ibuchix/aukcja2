@@ -1,6 +1,11 @@
 
 import { RegisterRequest, LoginRequest, EmailCheckRequest, ValidationResult } from './types.ts';
 
+// Normalize email
+function normalizeEmail(email: string): string {
+  return email.toLowerCase().trim();
+}
+
 // Validate registration request
 export function validateRegisterRequest(request: any): ValidationResult {
   if (!request || typeof request !== 'object') {
@@ -16,7 +21,7 @@ export function validateRegisterRequest(request: any): ValidationResult {
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(request.email)) {
+  if (!emailRegex.test(normalizeEmail(request.email))) {
     return { valid: false, error: 'Invalid email format' };
   }
 
@@ -55,7 +60,7 @@ export function validateEmailCheckRequest(request: any): ValidationResult {
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(request.email)) {
+  if (!emailRegex.test(normalizeEmail(request.email))) {
     return { valid: false, error: 'Invalid email format' };
   }
 
