@@ -76,12 +76,20 @@ export function useAuthState() {
                 
                 // Fetch profile data if authenticated
                 if (refreshData.session.user) {
-                  const profileData = await fetchDealerProfile(refreshData.session.user.id);
-                  setProfile(profileData);
+                  try {
+                    const profileData = await fetchDealerProfile(refreshData.session.user.id);
+                    setProfile(profileData);
+                  } catch (profileError) {
+                    console.error("Error fetching profile:", profileError);
+                    // Continue even if profile fetch fails - don't block auth
+                  }
                 }
               }
             } catch (refreshErr) {
               console.error("Exception during token refresh:", refreshErr);
+            } finally {
+              // Always set loading to false, even on error
+              setIsLoading(false);
             }
           } else {
             // Session is valid and not about to expire
@@ -90,22 +98,41 @@ export function useAuthState() {
             
             // Fetch profile data if authenticated
             if (data.session.user) {
-              const profileData = await fetchDealerProfile(data.session.user.id);
-              setProfile(profileData);
+              try {
+                const profileData = await fetchDealerProfile(data.session.user.id);
+                setProfile(profileData);
+              } catch (profileError) {
+                console.error("Error fetching profile:", profileError);
+                // Continue even if profile fetch fails - don't block auth
+              } finally {
+                setIsLoading(false);
+              }
+            } else {
+              setIsLoading(false);
             }
           }
         } else {
           console.log("No existing session found");
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
-      } finally {
         setIsLoading(false);
       }
     };
 
     initializeAuth();
-  }, []);
+    
+    // Set a safety timeout to prevent endless loading
+    const safetyTimeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn("Auth initialization safety timeout triggered");
+        setIsLoading(false);
+      }
+    }, 5000); // 5 second maximum loading time
+    
+    return () => clearTimeout(safetyTimeout);
+  }, [isLoading, toast]);
 
   // Set up auth state change listener
   useEffect(() => {
@@ -124,6 +151,8 @@ export function useAuthState() {
           setUser(currentSession?.user ?? null);
           
           if (event === "SIGNED_IN" && currentSession?.user) {
+            setIsLoading(true);
+            
             // Give a small delay to allow auth state to fully establish
             setTimeout(async () => {
               try {
@@ -135,10 +164,13 @@ export function useAuthState() {
                 });
               } catch (profileError) {
                 console.error("Error fetching profile after sign in:", profileError);
+              } finally {
+                setIsLoading(false);
               }
             }, 500);
           } else if (event === "SIGNED_OUT") {
             setProfile(null);
+            setIsLoading(false);
             toast({
               title: "Signed out",
               description: "You have been signed out successfully",
@@ -148,16 +180,26 @@ export function useAuthState() {
             
             // Refresh profile data when token is refreshed
             if (currentSession.user) {
+              setIsLoading(true);
+              
               setTimeout(async () => {
                 try {
                   const profileData = await fetchDealerProfile(currentSession.user.id);
                   setProfile(profileData);
                 } catch (profileError) {
                   console.error("Error fetching profile after token refresh:", profileError);
+                } finally {
+                  setIsLoading(false);
                 }
               }, 500);
             }
+          } else {
+            // For any other events, ensure loading is false
+            setIsLoading(false);
           }
+        } catch (error) {
+          console.error("Error in auth state change handler:", error);
+          setIsLoading(false);
         } finally {
           // Reset the lock after a small delay
           setTimeout(() => {
@@ -172,6 +214,18 @@ export function useAuthState() {
       subscription.unsubscribe();
     };
   }, [toast]);
+  
+  // Safety timeout to prevent endless loading state
+  useEffect(() => {
+    if (!isLoading) return;
+    
+    const safetyTimeout = setTimeout(() => {
+      console.warn("Auth state safety timeout triggered - forcing loading state to false");
+      setIsLoading(false);
+    }, 8000); // 8 second maximum loading time
+    
+    return () => clearTimeout(safetyTimeout);
+  }, [isLoading]);
 
   return {
     session,

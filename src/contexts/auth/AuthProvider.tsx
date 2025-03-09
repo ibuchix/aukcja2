@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthState } from "./useAuthState";
 import { useAuthActions } from "./useAuthActions";
@@ -42,12 +42,20 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
   // Get session manager
   const { registerRefreshFunction } = useSessionManager();
 
+  // Create memoized refresh function to avoid dependency issues
+  const memoizedRefreshSession = useCallback(() => {
+    console.log("Memoized refresh session called");
+    return refreshSession();
+  }, [refreshSession]);
+
   // Register the refresh function with the session manager
   useEffect(() => {
-    if (refreshSession) {
-      registerRefreshFunction(refreshSession);
-    }
-  }, [registerRefreshFunction, refreshSession]);
+    console.log("Registering refresh function with session manager");
+    registerRefreshFunction(memoizedRefreshSession);
+    
+    // No need to include memoizedRefreshSession in dependencies
+    // since it's already memoized with useCallback
+  }, [registerRefreshFunction]);
 
   // Create the auth context value
   const value = {

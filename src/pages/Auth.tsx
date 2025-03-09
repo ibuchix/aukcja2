@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DealerLoginForm } from "@/components/auth/DealerLoginForm";
 import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 const Auth = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,18 +16,20 @@ const Auth = () => {
   // Get return URL from state if it exists
   const returnUrl = location.state?.returnUrl || "/dealer/dashboard";
   
-  // Safely access auth context - wrap with error handling
-  const authContext = (() => {
+  // Use a try-catch to safely get the auth context
+  const [authContext, authError] = (() => {
     try {
-      return useAuth();
+      const ctx = useAuth();
+      return [ctx, null];
     } catch (error) {
       console.error("Auth context error:", error);
-      return { isAuthenticated: false, isLoading: false };
+      return [{ isAuthenticated: false, isLoading: false }, error];
     }
   })();
   
   const { isAuthenticated, isLoading } = authContext;
   const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
   
   // Get the active tab from URL query parameter, default to "register" if not present
   const tabFromUrl = searchParams.get("tab");
@@ -35,6 +38,17 @@ const Auth = () => {
     : "register";
   
   const [activeTab, setActiveTab] = useState<"register" | "login">(initialTab as "register" | "login");
+
+  // Set up a loading timeout to prevent endless loading
+  useEffect(() => {
+    if (isLoading) {
+      const timer = setTimeout(() => {
+        setLoadingTimeout(true);
+      }, 10000); // 10 seconds
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [isLoading]);
 
   // Redirect if already authenticated - but only once
   useEffect(() => {
@@ -58,8 +72,44 @@ const Auth = () => {
 
   if (isLoading) {
     return (
+      <div className="container flex flex-col items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+        <div className="text-muted-foreground">Loading authentication status...</div>
+        
+        {loadingTimeout && (
+          <div className="mt-8 p-4 border border-yellow-200 bg-yellow-50 rounded-md max-w-md">
+            <h3 className="font-medium text-yellow-800">Taking longer than expected</h3>
+            <p className="text-sm text-yellow-700 mt-1">
+              Authentication is taking longer than usual. You can try refreshing the page
+              or checking your network connection.
+            </p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-2 px-4 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 text-sm rounded-md transition-colors"
+            >
+              Refresh Page
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (authError) {
+    return (
       <div className="container flex items-center justify-center h-screen">
-        <div className="animate-pulse text-muted-foreground">Loading authentication status...</div>
+        <div className="p-4 border border-red-200 bg-red-50 rounded-md max-w-md">
+          <h3 className="font-medium text-red-800">Authentication Error</h3>
+          <p className="text-sm text-red-700 mt-1">
+            There was a problem initializing the authentication system. Please try refreshing the page.
+          </p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-2 px-4 py-2 bg-red-100 hover:bg-red-200 text-red-800 text-sm rounded-md transition-colors"
+          >
+            Refresh Page
+          </button>
+        </div>
       </div>
     );
   }
