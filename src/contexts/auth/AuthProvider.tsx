@@ -1,3 +1,4 @@
+
 import { createContext, useContext } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +19,6 @@ type AuthContextType = {
     email: string;
     password: string;
     redirectTo?: string;
-    exchangeToken?: string;
   }) => Promise<{ error?: Error }>;
 };
 
@@ -70,83 +70,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async ({ 
     email, 
     password, 
-    redirectTo,
-    exchangeToken 
+    redirectTo
   }: { 
-    email?: string;
-    password?: string;
+    email: string;
+    password: string;
     redirectTo?: string;
-    exchangeToken?: string;
   }) => {
     try {
       setIsLoading(true);
       
-      // Support for exchange token for backward compatibility
-      if (exchangeToken) {
-        console.log("Using exchange token for authentication (legacy support)");
-        try {
-          const tokenData = JSON.parse(exchangeToken);
-          
-          if (!tokenData.email) {
-            return { error: new Error("Invalid exchange token: missing email") };
-          }
-          
-          // Fall back to password sign in with magic link
-          const { error } = await supabase.auth.signInWithOtp({
-            email: tokenData.email,
-            options: {
-              shouldCreateUser: false
-            }
-          });
-          
-          if (error) {
-            console.error("Error with magic link fallback:", error);
-            return { error };
-          }
-          
-          toast({
-            title: "Verification email sent",
-            description: "We've sent a login link to your email. Please check your inbox.",
-          });
-          
-          return { error: undefined };
-        } catch (e) {
-          console.error("Failed to parse exchange token", e);
-          return { error: new Error("Invalid exchange token format") };
-        }
+      console.log(`Signing in with email: ${email.substring(0, 3)}...`);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        console.error("Sign in error:", error);
+        return { error };
       }
       
-      // Standard email & password sign in
-      if (email && password) {
-        console.log(`Signing in with email: ${email.substring(0, 3)}...`);
-        
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        
-        if (error) {
-          console.error("Sign in error:", error);
-          return { error };
-        }
-        
-        console.log("Sign in successful");
-        setSession(data.session);
-        setUser(data.user);
-        
-        if (data.user) {
-          const profileData = await fetchDealerProfile(data.user.id);
-          setProfile(profileData);
-        }
-        
-        if (redirectTo) {
-          window.location.href = redirectTo;
-        }
-        
-        return { error: undefined };
+      console.log("Sign in successful");
+      setSession(data.session);
+      setUser(data.user);
+      
+      if (data.user) {
+        const profileData = await fetchDealerProfile(data.user.id);
+        setProfile(profileData);
       }
       
-      return { error: new Error("Invalid sign in parameters") };
+      if (redirectTo) {
+        window.location.href = redirectTo;
+      }
+      
+      return { error: undefined };
     } catch (error) {
       console.error("Sign in error:", error);
       return { error: error instanceof Error ? error : new Error("Unknown error") };
