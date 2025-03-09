@@ -56,6 +56,41 @@ export function formatAddressForDisplay(address: string): string {
 }
 
 /**
+ * Formats a phone number for display
+ * Adds spacing between groups of digits
+ */
+export function formatPhoneNumberForDisplay(phoneNumber: string): string {
+  if (!phoneNumber) return 'N/A';
+  
+  // Normalize by removing non-digit characters except the leading +
+  let normalized = phoneNumber.startsWith('+') 
+    ? '+' + phoneNumber.substring(1).replace(/\D/g, '')
+    : phoneNumber.replace(/\D/g, '');
+  
+  // Add proper spacing based on common formats
+  if (normalized.startsWith('+')) {
+    // International format: +XX XXX XXX XXXX
+    if (normalized.length > 3) {
+      const countryCode = normalized.substring(0, 3);
+      const rest = normalized.substring(3);
+      
+      // Format the rest in groups of 3-3-4 or other patterns depending on length
+      let formatted = countryCode;
+      for (let i = 0; i < rest.length; i += 3) {
+        formatted += ' ' + rest.substring(i, Math.min(i + 3, rest.length));
+      }
+      return formatted.trim();
+    }
+  } else if (normalized.length === 10) {
+    // US format: XXX-XXX-XXXX
+    return `${normalized.substring(0, 3)}-${normalized.substring(3, 6)}-${normalized.substring(6, 10)}`;
+  }
+  
+  // If no specific format matches, return as is
+  return phoneNumber;
+}
+
+/**
  * Provides a fallback for empty values
  */
 export function getValueWithFallback(value: string | null | undefined, fallback: string = 'N/A'): string {
@@ -64,4 +99,3 @@ export function getValueWithFallback(value: string | null | undefined, fallback:
   }
   return value;
 }
-
