@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 export function DealerProfile() {
-  const { displayProfile, isLoading, error, fetchAttempted } = useDealerProfile();
+  const { displayProfile, isLoading, error, fetchAttempted, profileStatus } = useDealerProfile();
   const navigate = useNavigate();
 
   if (isLoading) {
@@ -25,13 +25,28 @@ export function DealerProfile() {
     );
   }
 
+  if (profileStatus === "not_found" && fetchAttempted) {
+    return (
+      <Alert className="mb-6 border-amber-200 bg-amber-50">
+        <AlertCircle className="h-4 w-4 text-amber-600" />
+        <AlertTitle className="text-amber-800">Profile not found</AlertTitle>
+        <AlertDescription className="space-y-4">
+          <p>We couldn't find your dealer profile. You may need to complete your registration.</p>
+          <Button onClick={() => navigate('/complete-registration')}>
+            Complete Registration
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   if (!displayProfile && fetchAttempted) {
     return (
       <Alert variant="warning" className="mb-6">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Profile not found</AlertTitle>
+        <AlertTitle>Profile not available</AlertTitle>
         <AlertDescription className="space-y-4">
-          <p>We couldn't find your dealer profile. You may need to complete your registration.</p>
+          <p>We couldn't access your dealer profile. This may be due to a permission issue.</p>
           <Button onClick={() => navigate('/complete-registration')}>
             Complete Registration
           </Button>

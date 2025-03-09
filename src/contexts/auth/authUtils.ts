@@ -24,7 +24,7 @@ export async function fetchDealerProfile(userId: string) {
       return null;
     }
     
-    // First try the direct query with our new RLS policies
+    // First try the direct query with our RLS policies
     console.log("Trying direct query to dealers table with RLS policies");
     const { data, error } = await supabase
       .from('dealers')
@@ -57,6 +57,13 @@ export async function fetchDealerProfile(userId: string) {
           if (debugData && debugData[0]) {
             const { has_access, record_exists, error_message } = debugData[0];
             console.log(`Access debug: has_access=${has_access}, record_exists=${record_exists}, error=${error_message}`);
+            
+            // If the debug function confirms the record doesn't exist, we can differentiate
+            // between "no profile" and "access denied"
+            if (has_access && !record_exists) {
+              console.log("Confirmed: No dealer profile exists for this user");
+              return { profile_status: "not_found", user_id: userId };
+            }
           }
         } catch (debugError) {
           console.error("Could not run access debugging:", debugError);
@@ -67,7 +74,7 @@ export async function fetchDealerProfile(userId: string) {
       
       if (!rpcData) {
         console.log("No profile data returned from RPC function");
-        return null;
+        return { profile_status: "not_found", user_id: userId };
       }
       
       console.log("Profile successfully retrieved via RPC function");
@@ -118,7 +125,7 @@ export async function fetchDealerProfile(userId: string) {
     }
     
     console.log("No dealer profile found for user");
-    return null;
+    return { profile_status: "not_found", user_id: userId };
   } catch (error) {
     console.error("Unexpected error during profile fetch:", error);
     return null;

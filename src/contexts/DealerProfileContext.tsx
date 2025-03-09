@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +21,7 @@ export type DealerProfile = {
   is_verified: boolean;
   created_at: string;
   updated_at: string;
+  profile_status?: string;
 };
 
 // Define the display profile type which uses frontend-friendly field names
@@ -49,6 +51,7 @@ type DealerProfileContextType = {
   refetchProfile: () => Promise<void>;
   profileIsComplete: boolean;
   missingFields: string[];
+  profileStatus: string;
 };
 
 // Create the context with default values
@@ -61,6 +64,7 @@ const DealerProfileContext = createContext<DealerProfileContextType>({
   refetchProfile: async () => {},
   profileIsComplete: false,
   missingFields: [],
+  profileStatus: "unknown",
 });
 
 // Create a provider component
@@ -78,6 +82,7 @@ export function DealerProfileProvider({
   const [fetchAttempted, setFetchAttempted] = useState<boolean>(false);
   const [profileIsComplete, setProfileIsComplete] = useState<boolean>(false);
   const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [profileStatus, setProfileStatus] = useState<string>("unknown");
   const { toast } = useToast();
 
   // Function to check if a dealer profile is complete
@@ -109,6 +114,7 @@ export function DealerProfileProvider({
     if (!user) {
       setIsLoading(false);
       setFetchAttempted(true);
+      setProfileStatus("no_user");
       return;
     }
 
@@ -122,24 +128,37 @@ export function DealerProfileProvider({
       const dealerProfile = await fetchDealerProfile(user.id);
       
       if (dealerProfile) {
-        console.log("Dealer profile fetched successfully");
-        setProfile(dealerProfile as DealerProfile);
-        
-        // Check profile completeness
-        checkProfileCompleteness(dealerProfile);
-        
-        // Transform the database profile to display format
-        const transformedProfile = mapDatabaseToDisplay(dealerProfile);
-        setDisplayProfile(transformedProfile);
+        // Check for special profile status
+        if (dealerProfile.profile_status === "not_found") {
+          console.log("No dealer profile found for user");
+          setProfile(null);
+          setDisplayProfile(null);
+          setProfileStatus("not_found");
+          setProfileIsComplete(false);
+          setMissingFields(['profile_not_found']);
+        } else {
+          console.log("Dealer profile fetched successfully");
+          setProfile(dealerProfile as DealerProfile);
+          setProfileStatus("found");
+          
+          // Check profile completeness
+          checkProfileCompleteness(dealerProfile);
+          
+          // Transform the database profile to display format
+          const transformedProfile = mapDatabaseToDisplay(dealerProfile);
+          setDisplayProfile(transformedProfile);
+        }
       } else {
         console.log("No dealer profile found for user");
         setProfile(null);
         setDisplayProfile(null);
+        setProfileStatus("error");
         setProfileIsComplete(false);
         setMissingFields(['profile_not_found']);
       }
     } catch (err) {
       console.error("Error fetching dealer profile:", err);
+      setProfileStatus("error");
       
       // Implement retry logic
       if (retryCount < 2) {
@@ -172,6 +191,7 @@ export function DealerProfileProvider({
       setFetchAttempted(true);
       setProfileIsComplete(false);
       setMissingFields([]);
+      setProfileStatus("no_user");
     }
   }, [user?.id]);
 
@@ -191,6 +211,7 @@ export function DealerProfileProvider({
         refetchProfile,
         profileIsComplete,
         missingFields,
+        profileStatus,
       }}
     >
       {children}
