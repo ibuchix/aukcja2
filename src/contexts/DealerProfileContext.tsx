@@ -18,6 +18,8 @@ type DealerProfileContextType = {
   fetchAttempted: boolean;
   profileStatus: ProfileStatus;
   needsRecovery: boolean;
+  missingFields: string[];
+  profileIsComplete: boolean;
   initiateProfileRecovery: () => void;
   refreshProfile: () => Promise<void>;
 };
@@ -31,6 +33,8 @@ const DealerProfileContext = createContext<DealerProfileContextType>({
   fetchAttempted: false,
   profileStatus: "loading",
   needsRecovery: false,
+  missingFields: [],
+  profileIsComplete: false,
   initiateProfileRecovery: () => {},
   refreshProfile: async () => {},
 });
@@ -43,6 +47,8 @@ export const DealerProfileProvider = ({ children }: { children: ReactNode }) => 
   const [fetchAttempted, setFetchAttempted] = useState<boolean>(false);
   const [profileStatus, setProfileStatus] = useState<ProfileStatus>("loading");
   const [needsRecovery, setNeedsRecovery] = useState<boolean>(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [profileIsComplete, setProfileIsComplete] = useState<boolean>(false);
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -94,22 +100,45 @@ export const DealerProfileProvider = ({ children }: { children: ReactNode }) => 
         return;
       }
       
-      // Handle profile statuses
+      // Handle profile statuses and check for missing fields
       if (profileData.profile_status === "not_found") {
         console.log("Dealer profile not found, setting status to not_found");
         setProfileStatus("not_found");
         setNeedsRecovery(Boolean(profileData.needs_recovery));
         setRawProfile(profileData);
+        setMissingFields(["profile_not_found"]);
+        setProfileIsComplete(false);
       } else if (profileData.profile_status === "incomplete") {
         console.log("Dealer profile is incomplete, setting status to incomplete");
         setProfileStatus("incomplete");
         setNeedsRecovery(Boolean(profileData.needs_recovery));
         setRawProfile(profileData);
+        
+        // Set missing fields if available
+        const missingFieldsList = profileData.missing_fields || [];
+        setMissingFields(missingFieldsList);
+        setProfileIsComplete(false);
       } else {
+        // Check if any required fields are missing in a complete profile
+        const requiredFields = [
+          'supervisor_name', 
+          'dealership_name', 
+          'tax_id', 
+          'business_registry_number', 
+          'address'
+        ];
+        
+        const missingRequiredFields = requiredFields.filter(field => 
+          !profileData[field] || profileData[field].trim() === ''
+        );
+        
+        setMissingFields(missingRequiredFields);
+        setProfileIsComplete(missingRequiredFields.length === 0);
+        
         // Set profile data and status to complete
         setRawProfile(profileData);
         setDisplayProfile(mapDatabaseToDisplay(profileData));
-        setProfileStatus("complete");
+        setProfileStatus(missingRequiredFields.length === 0 ? "complete" : "incomplete");
       }
       
       setFetchAttempted(true);
@@ -118,6 +147,8 @@ export const DealerProfileProvider = ({ children }: { children: ReactNode }) => 
       setError("An unexpected error occurred while fetching your profile.");
       setProfileStatus("error");
       setFetchAttempted(true);
+      setMissingFields([]);
+      setProfileIsComplete(false);
     } finally {
       setIsLoading(false);
     }
@@ -138,6 +169,8 @@ export const DealerProfileProvider = ({ children }: { children: ReactNode }) => 
         fetchAttempted,
         profileStatus,
         needsRecovery,
+        missingFields,
+        profileIsComplete,
         initiateProfileRecovery,
         refreshProfile
       }}

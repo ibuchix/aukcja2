@@ -103,7 +103,7 @@ export function useCompleteRegistration(userId: string | undefined) {
             business_registry_number: mappedData.business_registry_number,
             address: mappedData.address,
             license_number: mappedData.business_registry_number, // Use business registry as license for now
-            updated_at: new Date()
+            updated_at: new Date().toISOString() // Fix: Convert Date to string
           })
           .eq('user_id', userId)
           .select()

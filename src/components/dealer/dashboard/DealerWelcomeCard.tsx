@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 
 export function DealerWelcomeCard() {
-  const { displayProfile, isLoading, profileIsComplete, missingFields } = useDealerProfile();
+  const { displayProfile, isLoading, profileIsComplete, missingFields = [] } = useDealerProfile();
   const { user } = useAuth();
   
   // Get dealer name with better fallback handling
@@ -70,12 +70,18 @@ export function DealerWelcomeCard() {
                   </TooltipTrigger>
                   <TooltipContent className="p-2 max-w-xs">
                     <div>
-                      <p className="font-semibold mb-1">Missing information:</p>
-                      <ul className="list-disc pl-4 text-sm">
-                        {missingFields.map((field, i) => (
-                          <li key={i}>{formatMissingFieldName(field)}</li>
-                        ))}
-                      </ul>
+                      {Array.isArray(missingFields) && missingFields.length > 0 ? (
+                        <>
+                          <p className="font-semibold mb-1">Missing information:</p>
+                          <ul className="list-disc pl-4 text-sm">
+                            {missingFields.map((field, i) => (
+                              <li key={i}>{formatMissingFieldName(field)}</li>
+                            ))}
+                          </ul>
+                        </>
+                      ) : (
+                        <p>Your profile is incomplete. Please update your information.</p>
+                      )}
                     </div>
                   </TooltipContent>
                 </Tooltip>

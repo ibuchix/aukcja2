@@ -8,12 +8,11 @@ import { BusinessActionSection } from "@/components/dealer/dashboard/BusinessAct
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
 import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle, InfoIcon, RefreshCw } from "lucide-react";
+import { AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DealerProfileProvider } from "@/contexts/DealerProfileContext";
 import { DealerProfile } from "@/components/dealer/DealerProfile";
 
@@ -88,7 +87,7 @@ export default function DealerDashboard() {
   }
 
   return (
-    <DealerProfileProvider user={user}>
+    <DealerProfileProvider>
       <DashboardLayout title="Dealer Dashboard">
         {directQueryResult && (
           <Alert variant={directQueryResult.success ? "default" : "destructive"} className="mb-6">
