@@ -24,97 +24,100 @@ export async function fetchDealerProfile(userId: string) {
       return null;
     }
     
-    // First try the direct query (with RLS policies)
-    console.log("Trying direct query to dealers table");
+    // First try the direct query with our new RLS policies
+    console.log("Trying direct query to dealers table with RLS policies");
     const { data, error } = await supabase
       .from('dealers')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
-
+    
+    // If direct query fails, try the RPC function that bypasses RLS
     if (error) {
-      console.error("Error fetching dealer profile:", error);
-      console.error("Error details:", JSON.stringify(error));
+      console.error("Error fetching dealer profile via direct query:", error);
+      console.log("Falling back to security definer RPC function");
       
-      // Try the RPC function as fallback
-      console.log("Trying fallback RPC method");
-      try {
-        const { data: rpcData, error: rpcError } = await supabase.rpc(
-          'get_dealer_by_user_id',
-          { p_user_id: userId }
-        );
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        'get_dealer_by_user_id',
+        { p_user_id: userId }
+      );
+      
+      if (rpcError) {
+        console.error("RPC fallback also failed:", rpcError);
         
-        if (!rpcError && rpcData) {
-          console.log("Dealer profile fetched successfully via RPC function", rpcData);
+        // As a last resort, debug the access issue
+        try {
+          const { data: debugData } = await supabase.rpc(
+            'debug_dealer_access',
+            { p_user_id: userId }
+          );
           
-          // Ensure rpcData is an object before spreading
-          if (typeof rpcData === 'object' && rpcData !== null) {
-            // Check if it's an array (which it shouldn't be)
-            if (Array.isArray(rpcData)) {
-              console.warn("RPC data is unexpectedly an array:", rpcData);
-              return null;
-            }
-            
-            // Now we know it's an object, we can safely access properties
-            const jsonObject = rpcData as Record<string, Json>;
-            
-            // Check if any required fields are missing and log them
-            const requiredFields = ['supervisor_name', 'dealership_name', 'tax_id', 'business_registry_number', 'address'];
-            const missingFields = requiredFields.filter(field => !jsonObject[field]);
-            
-            if (missingFields.length > 0) {
-              console.warn("Dealer profile is incomplete. Missing fields:", missingFields);
-            } else {
-              console.log("Dealer profile is complete with all required fields");
-            }
-            
-            // Return consistent profile format with type safety
-            return {
-              ...jsonObject,
-              // Convert any non-string IDs to strings for consistency
-              id: jsonObject.id !== undefined ? String(jsonObject.id) : null,
-              user_id: jsonObject.user_id !== undefined ? String(jsonObject.user_id) : userId
-            };
-          } else {
-            console.warn("RPC data is not in expected object format:", rpcData);
-            return null;
+          console.log("Access debugging results:", debugData);
+          
+          if (debugData && debugData[0]) {
+            const { has_access, record_exists, error_message } = debugData[0];
+            console.log(`Access debug: has_access=${has_access}, record_exists=${record_exists}, error=${error_message}`);
           }
-        } else if (rpcError) {
-          console.warn("RPC function failed:", rpcError);
+        } catch (debugError) {
+          console.error("Could not run access debugging:", debugError);
         }
-      } catch (rpcFallbackError) {
-        console.warn("RPC function error caught:", rpcFallbackError);
+        
+        return null;
       }
       
+      if (!rpcData) {
+        console.log("No profile data returned from RPC function");
+        return null;
+      }
+      
+      console.log("Profile successfully retrieved via RPC function");
+      
+      // Ensure data is properly shaped before returning
+      if (typeof rpcData === 'object' && rpcData !== null) {
+        // Check for required fields and log any missing ones
+        const requiredFields = ['supervisor_name', 'dealership_name', 'tax_id', 'business_registry_number', 'address'];
+        const missingFields = requiredFields.filter(field => !rpcData[field]);
+        
+        if (missingFields.length > 0) {
+          console.warn("Dealer profile is incomplete. Missing fields:", missingFields);
+        }
+        
+        // Return object with consistent format
+        return {
+          ...rpcData,
+          id: rpcData.id?.toString() || null,
+          user_id: rpcData.user_id?.toString() || userId
+        };
+      }
+      
+      console.warn("RPC data not in expected format:", rpcData);
       return null;
     }
-
+    
+    // Handle successful direct query response
     if (data) {
-      console.log("Dealer profile fetched successfully via direct query", data);
+      console.log("Dealer profile successfully retrieved via direct query");
       
-      // Check if any required fields are missing and log them
+      // Check for required fields and log any missing ones
       const requiredFields = ['supervisor_name', 'dealership_name', 'tax_id', 'business_registry_number', 'address'];
       const missingFields = requiredFields.filter(field => !data[field]);
       
       if (missingFields.length > 0) {
         console.warn("Dealer profile is incomplete. Missing fields:", missingFields);
-      } else {
-        console.log("Dealer profile is complete with all required fields");
       }
       
-      // Ensure consistent format
+      // Return object with consistent format
       return {
         ...data,
-        // Convert any non-string IDs to strings for consistency
         id: data.id?.toString() || null,
         user_id: data.user_id?.toString() || userId
       };
-    } else {
-      console.log("No dealer profile found for user via direct query");
-      return null;
     }
+    
+    console.log("No dealer profile found for user");
+    return null;
   } catch (error) {
-    console.error("Profile fetch error:", error);
+    console.error("Unexpected error during profile fetch:", error);
     return null;
   }
 }

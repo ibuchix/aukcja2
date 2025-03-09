@@ -295,6 +295,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      debug_dealer_access: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: {
+          has_access: boolean
+          record_exists: boolean
+          error_message: string
+        }[]
+      }
       get_dealer_by_user_id: {
         Args: {
           p_user_id: string

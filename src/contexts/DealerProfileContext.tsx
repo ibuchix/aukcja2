@@ -1,9 +1,9 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { mapDatabaseToDisplay } from "@/utils/dealerProfileMapping";
+import { fetchDealerProfile } from "@/contexts/auth/authUtils";
 import { Json } from "@/integrations/supabase/types";
 
 // Define the dealer profile type
@@ -104,7 +104,7 @@ export function DealerProfileProvider({
     }
   };
 
-  // Function to fetch dealer profile with improved error handling and retries
+  // Function to fetch dealer profile using our shared utility function
   const fetchProfile = async (retryCount = 0) => {
     if (!user) {
       setIsLoading(false);
@@ -118,64 +118,21 @@ export function DealerProfileProvider({
 
       console.log("Fetching dealer profile for user:", user.id);
       
-      // First try direct query with RLS policies
-      const { data, error } = await supabase
-        .from('dealers')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle(); // Use maybeSingle instead of single to handle no results more gracefully
-
-      if (error) {
-        console.error("Error fetching dealer profile:", error);
+      // Use our improved fetchDealerProfile function
+      const dealerProfile = await fetchDealerProfile(user.id);
+      
+      if (dealerProfile) {
+        console.log("Dealer profile fetched successfully");
+        setProfile(dealerProfile as DealerProfile);
         
-        // Try the RPC function as fallback if available
-        try {
-          console.log("Attempting to use get_dealer_by_user_id RPC fallback");
-          const { data: rpcData, error: rpcError } = await supabase.rpc(
-            'get_dealer_by_user_id',
-            { p_user_id: user.id }
-          );
-          
-          if (!rpcError && rpcData) {
-            console.log("Profile fetched successfully via RPC function");
-            
-            // Type check and type assertion for rpcData
-            if (typeof rpcData === 'object' && rpcData !== null) {
-              const typedData = rpcData as DealerProfile;
-              setProfile(typedData);
-              
-              // Check profile completeness
-              checkProfileCompleteness(typedData);
-              
-              // Transform data consistently using our mapping function
-              const transformedProfile = mapDatabaseToDisplay(typedData);
-              setDisplayProfile(transformedProfile);
-              setError(null);
-              return;
-            } else {
-              throw new Error("RPC data is not in expected format");
-            }
-          } else {
-            // If RPC also failed, throw the original error
-            throw error;
-          }
-        } catch (rpcError) {
-          console.warn("RPC fallback also failed:", rpcError);
-          throw error;
-        }
-      }
-
-      console.log("Dealer profile fetched successfully:", data);
-      if (data) {
-        setProfile(data);
+        // Check profile completeness
+        checkProfileCompleteness(dealerProfile);
         
-        // Check if profile is complete
-        checkProfileCompleteness(data);
-        
-        // Transform the database profile to display format consistently
-        const transformedProfile = mapDatabaseToDisplay(data);
+        // Transform the database profile to display format
+        const transformedProfile = mapDatabaseToDisplay(dealerProfile);
         setDisplayProfile(transformedProfile);
       } else {
+        console.log("No dealer profile found for user");
         setProfile(null);
         setDisplayProfile(null);
         setProfileIsComplete(false);
