@@ -4,11 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function DealerWelcomeCard() {
-  const { profile, isLoading } = useDealerProfile();
+  const { displayProfile, isLoading } = useDealerProfile();
   const { user } = useAuth();
   
-  const dealerName = profile?.supervisor_name || user?.email?.split('@')[0] || "Dealer";
-  const dealershipName = profile?.dealership_name || "Your Dealership";
+  const dealerName = displayProfile?.supervisorName || user?.email?.split('@')[0] || "Dealer";
+  const dealershipName = displayProfile?.dealershipName || "Your Dealership";
 
   return (
     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 shadow-sm">

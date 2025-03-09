@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { mapDatabaseToDisplay } from "@/utils/dealerProfileMapping";
 
 // Define the dealer profile type
 export type DealerProfile = {
@@ -20,9 +21,24 @@ export type DealerProfile = {
   updated_at: string;
 };
 
+// Define the display profile type which uses frontend-friendly field names
+export type DisplayProfile = {
+  supervisorName: string;
+  dealershipName: string;
+  taxId: string;
+  businessRegistryNumber: string;
+  address: string;
+  licenseNumber: string;
+  verificationStatus: string;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 // Define the context type
 type DealerProfileContextType = {
   profile: DealerProfile | null;
+  displayProfile: DisplayProfile | null;
   isLoading: boolean;
   error: string | null;
   fetchAttempted: boolean;
@@ -32,6 +48,7 @@ type DealerProfileContextType = {
 // Create the context with default values
 const DealerProfileContext = createContext<DealerProfileContextType>({
   profile: null,
+  displayProfile: null,
   isLoading: false,
   error: null,
   fetchAttempted: false,
@@ -47,6 +64,7 @@ export function DealerProfileProvider({
   user: User | null;
 }) {
   const [profile, setProfile] = useState<DealerProfile | null>(null);
+  const [displayProfile, setDisplayProfile] = useState<DisplayProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [fetchAttempted, setFetchAttempted] = useState<boolean>(false);
@@ -74,6 +92,7 @@ export function DealerProfileProvider({
         console.error("Error fetching dealer profile:", error);
         setError(error.message);
         setProfile(null);
+        setDisplayProfile(null);
         
         toast({
           title: "Failed to load profile",
@@ -83,6 +102,10 @@ export function DealerProfileProvider({
       } else {
         console.log("Dealer profile fetched successfully:", data);
         setProfile(data);
+        
+        // Transform the database profile to display format
+        const transformedProfile = mapDatabaseToDisplay(data);
+        setDisplayProfile(transformedProfile);
       }
     } catch (err) {
       console.error("Unexpected error fetching dealer profile:", err);
@@ -113,6 +136,7 @@ export function DealerProfileProvider({
     <DealerProfileContext.Provider
       value={{
         profile,
+        displayProfile,
         isLoading,
         error,
         fetchAttempted,
