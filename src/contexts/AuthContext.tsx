@@ -1,5 +1,5 @@
 
 // Simplified file that re-exports from the refactored files
-import { AuthProvider, useAuth } from "./auth/AuthProvider";
+import { AuthProvider, AuthProviderWithRouter, useAuth } from "./auth/AuthProvider";
 
-export { AuthProvider, useAuth };
+export { AuthProvider, AuthProviderWithRouter, useAuth };

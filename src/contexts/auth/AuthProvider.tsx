@@ -2,10 +2,11 @@
 import { createContext, useContext } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
-import { useSessionManager } from "@/hooks/useSessionManager";
 import { useAuthState } from "./useAuthState";
 import { fetchDealerProfile, signOutUser, refreshUserSession } from "./authUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useSessionManager } from "@/hooks/useSessionManager";
 
 type AuthContextType = {
   session: Session | null;
@@ -24,7 +25,11 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+// This component can only be used within a Router context
+export function AuthProviderWithRouter({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   const { 
     session, 
     user, 
@@ -38,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   const { toast } = useToast();
   
+  // This hook uses navigate, so it must be inside the router context
   useSessionManager();
 
   const signOut = async () => {
@@ -62,6 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Signed out successfully",
         description: "You have been signed out of your account.",
       });
+      
+      navigate('/');
     } finally {
       setIsLoading(false);
     }
@@ -142,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       if (redirectTo) {
-        window.location.href = redirectTo;
+        navigate(redirectTo);
       }
       
       return { error: undefined };
@@ -192,6 +200,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+// This is a wrapper that provides the AuthContext and can be imported anywhere
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  return (
+    // This is just a provider that doesn't use any router hooks
+    <AuthContext.Provider value={undefined}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

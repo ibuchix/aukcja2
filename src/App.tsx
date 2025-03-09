@@ -3,12 +3,12 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Auth from "@/pages/Auth";
 import DealerDashboard from "@/pages/dealer/DealerDashboard";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { AuthProvider } from "@/contexts/AuthContext";
 import DealerProfileManagement from "@/pages/dealer/DealerProfileManagement";
 import CompleteRegistration from "@/pages/CompleteRegistration";
 import Index from "@/pages/Index";
 import HowItWorks from "@/pages/HowItWorks";
 import { Toaster } from "@/components/ui/toaster";
+import { AuthProviderWithRouter } from "@/contexts/auth/AuthProvider";
 
 // Create the router with routes
 const routes = [
@@ -51,10 +51,10 @@ const router = createBrowserRouter(routes);
 
 function App() {
   return (
-    <AuthProvider>
+    <>
       <RouterProvider router={router} />
       <Toaster />
-    </AuthProvider>
+    </>
   );
 }
 
