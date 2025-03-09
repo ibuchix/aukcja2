@@ -70,6 +70,7 @@ export function useFormSubmission({
             address: values.companyAddress,
             verification_status: 'pending',
             is_verified: false,
+            license_number: values.businessRegistryNumber, // Add this line to fix the error
           });
         
         if (dealerError) {
