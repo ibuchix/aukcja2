@@ -14,7 +14,12 @@ type AuthContextType = {
   isAuthenticated: boolean;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
-  signIn: (options: { exchangeToken?: string }) => Promise<{ error?: Error }>;
+  signIn: (options: { 
+    email: string;
+    password: string;
+    redirectTo?: string;
+    exchangeToken?: string;
+  }) => Promise<{ error?: Error }>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -62,101 +67,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signIn = async ({ exchangeToken }: { exchangeToken?: string }) => {
+  const signIn = async ({ 
+    email, 
+    password, 
+    redirectTo,
+    exchangeToken 
+  }: { 
+    email?: string;
+    password?: string;
+    redirectTo?: string;
+    exchangeToken?: string;
+  }) => {
     try {
       setIsLoading(true);
       
-      if (!exchangeToken) {
-        return { error: new Error("Missing exchange token") };
-      }
-      
-      console.log("Received exchange token to process");
-      
-      let tokenData;
-      try {
-        tokenData = JSON.parse(exchangeToken);
-        console.log("Successfully parsed exchange token", { userId: tokenData.user_id });
-      } catch (e) {
-        console.error("Failed to parse exchange token", e);
-        return { error: new Error("Invalid exchange token format") };
-      }
-      
-      if (!tokenData.user_id || !tokenData.email) {
-        console.error("Exchange token missing required fields", tokenData);
-        return { error: new Error("Invalid exchange token: missing required fields") };
-      }
-      
-      if (tokenData.properties && tokenData.properties.email_otp) {
-        console.log("Using email OTP verification");
-        
-        const { data, error } = await supabase.auth.verifyOtp({
-          email: tokenData.email,
-          token: tokenData.properties.email_otp,
-          type: 'email'
-        });
-        
-        if (error) {
-          console.error("Error verifying OTP token:", error);
+      // Support for exchange token for backward compatibility
+      if (exchangeToken) {
+        console.log("Using exchange token for authentication (legacy support)");
+        try {
+          const tokenData = JSON.parse(exchangeToken);
           
-          toast({
-            title: "Direct login failed",
-            description: "We've sent a backup verification link to your email. Please check your inbox.",
-            variant: "destructive",
-          });
+          if (!tokenData.email) {
+            return { error: new Error("Invalid exchange token: missing email") };
+          }
           
-          const { error: magicLinkError } = await supabase.auth.signInWithOtp({
+          // Fall back to password sign in with magic link
+          const { error } = await supabase.auth.signInWithOtp({
             email: tokenData.email,
             options: {
               shouldCreateUser: false
             }
           });
           
-          if (magicLinkError) {
-            console.error("Fallback to magic link failed:", magicLinkError);
-            return { error: magicLinkError };
-          }
-          
-          return { error: undefined };
-        }
-        
-        if (data.session) {
-          console.log("Successfully signed in with OTP verification");
-          setSession(data.session);
-          setUser(data.user);
-          
-          if (data.user) {
-            const profileData = await fetchDealerProfile(data.user.id);
-            setProfile(profileData);
+          if (error) {
+            console.error("Error with magic link fallback:", error);
+            return { error };
           }
           
           toast({
-            title: "Login successful",
-            description: "You have been successfully signed in.",
+            title: "Verification email sent",
+            description: "We've sent a login link to your email. Please check your inbox.",
           });
           
           return { error: undefined };
+        } catch (e) {
+          console.error("Failed to parse exchange token", e);
+          return { error: new Error("Invalid exchange token format") };
         }
-      } else {
-        console.log("No OTP properties found, falling back to magic link");
-        const { error } = await supabase.auth.signInWithOtp({
-          email: tokenData.email,
-          options: {
-            shouldCreateUser: false
-          }
+      }
+      
+      // Standard email & password sign in
+      if (email && password) {
+        console.log(`Signing in with email: ${email.substring(0, 3)}...`);
+        
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
         });
         
         if (error) {
-          console.error("Error sending magic link:", error);
+          console.error("Sign in error:", error);
           return { error };
         }
         
-        toast({
-          title: "Verification email sent",
-          description: "We've sent a verification link to your email. Please check your inbox to complete sign-in.",
-        });
+        console.log("Sign in successful");
+        setSession(data.session);
+        setUser(data.user);
+        
+        if (data.user) {
+          const profileData = await fetchDealerProfile(data.user.id);
+          setProfile(profileData);
+        }
+        
+        if (redirectTo) {
+          window.location.href = redirectTo;
+        }
+        
+        return { error: undefined };
       }
       
-      return { error: undefined };
+      return { error: new Error("Invalid sign in parameters") };
     } catch (error) {
       console.error("Sign in error:", error);
       return { error: error instanceof Error ? error : new Error("Unknown error") };
