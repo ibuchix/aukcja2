@@ -1,136 +1,78 @@
 
-import { useEffect, useRef, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
-// Configure how long a session should last without activity before showing a warning
-const IDLE_WARNING_TIMEOUT = 60 * 60 * 1000; // 60 minutes (was 25 minutes)
-// Configure how long a session should last without activity before ending
-const IDLE_TIMEOUT = 2 * 60 * 60 * 1000; // 2 hours (was 30 minutes)
-// How often to refresh the token while active
-const TOKEN_REFRESH_INTERVAL = 30 * 60 * 1000; // 30 minutes (was 10 minutes)
-
+/**
+ * Hook to manage session refresh and expiry
+ */
 export function useSessionManager() {
-  const idleTimerRef = useRef<number | null>(null);
-  const warningTimerRef = useRef<number | null>(null);
-  const refreshTimerRef = useRef<number | null>(null);
-  const lastActivityRef = useRef<number>(Date.now());
-  const hasSetupListenersRef = useRef<boolean>(false);
+  const navigate = useNavigate();
+  const { refreshSession } = useAuth();
   const { toast } = useToast();
 
-  // Extract the reset function to be used in event listeners
-  const resetIdleTimer = useCallback(() => {
-    // Update last activity timestamp
-    lastActivityRef.current = Date.now();
-    
-    // Clear existing timers
-    if (idleTimerRef.current) {
-      window.clearTimeout(idleTimerRef.current);
-      idleTimerRef.current = null;
-    }
-    
-    if (warningTimerRef.current) {
-      window.clearTimeout(warningTimerRef.current);
-      warningTimerRef.current = null;
-    }
-
-    // Set warning timer (will show warning after 60 min of inactivity)
-    warningTimerRef.current = window.setTimeout(() => {
-      // Check if we're still in the same session
-      const timeIdle = Date.now() - lastActivityRef.current;
-      if (timeIdle >= IDLE_WARNING_TIMEOUT) {
-        toast({
-          title: "Session expiring soon",
-          description: "You'll be logged out in 60 minutes due to inactivity. Move your mouse or press a key to stay logged in.",
-          duration: 10000,
-        });
-      }
-    }, IDLE_WARNING_TIMEOUT);
-
-    // Set idle timer (will log out after 2 hours of inactivity)
-    idleTimerRef.current = window.setTimeout(async () => {
-      // Double-check we're really idle before logging out
-      const timeIdle = Date.now() - lastActivityRef.current;
-      if (timeIdle >= IDLE_TIMEOUT) {
-        console.log("Idle timeout reached, logging out");
-        await supabase.auth.signOut();
-        toast({
-          title: "Session expired",
-          description: "You have been logged out due to inactivity.",
-          duration: 5000,
-        });
-      }
-    }, IDLE_TIMEOUT);
-  }, [toast]);
-
-  // Set up activity listeners and periodic token refresh
+  // Set up automatic token refresh when token nears expiry
   useEffect(() => {
-    const setupActivityTracking = async () => {
-      // Check if we have a session first and haven't already set up listeners
-      if (hasSetupListenersRef.current) return;
-      
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) return;
-      
-      hasSetupListenersRef.current = true;
-      
-      // Set up activity listeners
-      const activityEvents = [
-        'mousedown', 'mousemove', 'keydown',
-        'scroll', 'touchstart', 'click', 'keypress'
-      ];
-      
-      // Add all listeners
-      activityEvents.forEach(event => {
-        document.addEventListener(event, resetIdleTimer, { passive: true });
-      });
-
-      // Initial timer setup
-      resetIdleTimer();
-      
-      // Periodic token refresh while active - less frequent to reduce errors
-      const refreshSession = async () => {
-        try {
-          // Only refresh if we've had activity in the last 2 hours
-          const timeSinceActivity = Date.now() - lastActivityRef.current;
-          if (timeSinceActivity < IDLE_TIMEOUT) {
-            console.log("Refreshing session token to extend session duration");
-            const { error } = await supabase.auth.refreshSession();
-            if (error) {
-              console.error("Error refreshing session:", error);
-            }
-          }
-        } catch (error) {
-          console.error("Failed to refresh session:", error);
-        }
-      };
-      
-      // Set up periodic refresh - use a longer interval
-      refreshTimerRef.current = window.setInterval(refreshSession, TOKEN_REFRESH_INTERVAL);
-      
-      // Initial refresh to ensure token is fresh
-      refreshSession();
-    };
-    
-    setupActivityTracking();
-    
-    // Cleanup function
-    return () => {
-      if (hasSetupListenersRef.current) {
-        const activityEvents = [
-          'mousedown', 'mousemove', 'keydown',
-          'scroll', 'touchstart', 'click', 'keypress'
-        ];
+    const checkSessionExpiry = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const session = data?.session;
         
-        activityEvents.forEach(event => {
-          document.removeEventListener(event, resetIdleTimer);
-        });
+        if (!session) {
+          console.log("No active session found during expiry check");
+          return;
+        }
+        
+        // Calculate time until session expires (in seconds)
+        const expiresAt = session.expires_at ? new Date(session.expires_at * 1000) : null;
+        if (!expiresAt) return;
+        
+        const now = new Date();
+        const timeUntilExpiry = Math.floor((expiresAt.getTime() - now.getTime()) / 1000);
+        
+        // If session expires in less than 5 minutes (300 seconds), refresh it
+        if (timeUntilExpiry < 300 && timeUntilExpiry > 0) {
+          console.log(`Session expiring soon (${timeUntilExpiry}s), refreshing...`);
+          refreshSession();
+        }
+      } catch (error) {
+        console.error("Error checking session expiry:", error);
       }
-      
-      // Clear all timers
-      if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current);
-      if (warningTimerRef.current) window.clearTimeout(warningTimerRef.current);
-      if (refreshTimerRef.current) window.clearInterval(refreshTimerRef.current);
     };
-  }, [resetIdleTimer, toast]);
+    
+    // Check on initial load
+    checkSessionExpiry();
+    
+    // Then set up interval to check every minute
+    const interval = setInterval(checkSessionExpiry, 60000);
+    
+    return () => clearInterval(interval);
+  }, [refreshSession, navigate, toast]);
+
+  // Listen for auth state changes from other tabs
+  useEffect(() => {
+    // Set up Supabase auth listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'TOKEN_REFRESHED') {
+          console.log("Token was refreshed", new Date().toISOString());
+        } else if (event === 'SIGNED_OUT') {
+          console.log("User signed out in another tab");
+          navigate("/auth?tab=login");
+          
+          toast({
+            title: "Signed out",
+            description: "You were signed out in another tab or window.",
+          });
+        }
+      }
+    );
+    
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, toast]);
 }

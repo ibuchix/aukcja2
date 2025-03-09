@@ -20,19 +20,6 @@ type CheckEmailExistsResponse = {
   exists: boolean;
 };
 
-// Define the expected return type for the create_dealer_with_profile RPC function
-type CreateDealerResponse = {
-  success: boolean;
-  error?: string;
-  error_code?: string;
-  operation?: string;
-  user?: {
-    id: string;
-    email: string;
-    user_metadata: any;
-  };
-};
-
 export async function signupDealer(values: DealerFormValues) {
   try {
     console.log("Starting dealer signup process with:", { 
@@ -56,7 +43,7 @@ export async function signupDealer(values: DealerFormValues) {
       };
     }
     
-    console.log("Creating dealer account using stored procedure...");
+    console.log("Creating dealer account using Supabase Auth...");
     
     // Format and clean input data
     const formattedPhone = values.phoneNumber ? values.phoneNumber.replace(/\s+/g, '') : '';
@@ -69,8 +56,10 @@ export async function signupDealer(values: DealerFormValues) {
       options: {
         data: {
           full_name: values.supervisorName,
-          role: 'dealer'
-        }
+          role: 'dealer',
+          phone_number: formattedPhone
+        },
+        emailRedirectTo: window.location.origin + '/auth?tab=login'
       }
     });
     
