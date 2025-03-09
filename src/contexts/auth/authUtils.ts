@@ -1,9 +1,10 @@
 
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { mapDatabaseToDisplay } from "@/utils/dealerProfileMapping";
 
 /**
- * Fetches the dealer profile for a given user ID
+ * Fetches the dealer profile for a given user ID with enhanced error handling and fallbacks
  */
 export async function fetchDealerProfile(userId: string) {
   try {
@@ -44,7 +45,14 @@ export async function fetchDealerProfile(userId: string) {
         
         if (!rpcError && rpcData) {
           console.log("Dealer profile fetched successfully via RPC function", rpcData);
-          return rpcData;
+          
+          // Return consistent profile format
+          return {
+            ...rpcData,
+            // Convert any non-string IDs to strings for consistency
+            id: rpcData.id?.toString() || null,
+            user_id: rpcData.user_id?.toString() || userId
+          };
         } else if (rpcError) {
           console.warn("RPC function failed:", rpcError);
         }
@@ -57,7 +65,14 @@ export async function fetchDealerProfile(userId: string) {
 
     if (data) {
       console.log("Dealer profile fetched successfully via direct query", data);
-      return data;
+      
+      // Ensure consistent format
+      return {
+        ...data,
+        // Convert any non-string IDs to strings for consistency
+        id: data.id?.toString() || null,
+        user_id: data.user_id?.toString() || userId
+      };
     } else {
       console.log("No dealer profile found for user via direct query");
       return null;

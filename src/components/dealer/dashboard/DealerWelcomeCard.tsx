@@ -7,7 +7,20 @@ export function DealerWelcomeCard() {
   const { displayProfile, isLoading } = useDealerProfile();
   const { user } = useAuth();
   
-  const dealerName = displayProfile?.supervisorName || user?.email?.split('@')[0] || "Dealer";
+  // Get dealer name with better fallback handling
+  const getDealerName = () => {
+    if (displayProfile?.supervisorName) {
+      return displayProfile.supervisorName;
+    } else if (user?.email) {
+      // Extract name from email (before @ symbol)
+      const namePart = user.email.split('@')[0];
+      // Capitalize first letter
+      return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    }
+    return "Dealer";
+  };
+  
+  const dealerName = getDealerName();
   const dealershipName = displayProfile?.dealershipName || "Your Dealership";
 
   return (

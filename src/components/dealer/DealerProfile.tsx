@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 export function DealerProfile() {
-  const { profile, isLoading, error, fetchAttempted } = useDealerProfile();
+  const { displayProfile, isLoading, error, fetchAttempted } = useDealerProfile();
   const navigate = useNavigate();
 
   if (isLoading) {
@@ -25,7 +25,7 @@ export function DealerProfile() {
     );
   }
 
-  if (!profile && fetchAttempted) {
+  if (!displayProfile && fetchAttempted) {
     return (
       <Alert variant="warning" className="mb-6">
         <AlertCircle className="h-4 w-4" />
@@ -60,12 +60,12 @@ export function DealerProfile() {
               Dealer Information
             </h3>
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Name:</span> {profile?.supervisor_name}</p>
-              <p><span className="font-medium text-dark">Dealership:</span> {profile?.dealership_name}</p>
+              <p><span className="font-medium text-dark">Name:</span> {displayProfile?.supervisorName}</p>
+              <p><span className="font-medium text-dark">Dealership:</span> {displayProfile?.dealershipName}</p>
               <p>
                 <span className="font-medium text-dark">Verification:</span> 
-                <span className={`ml-1 ${profile?.is_verified ? 'text-green-600' : 'text-amber-600'}`}>
-                  {profile?.verification_status}
+                <span className={`ml-1 ${displayProfile?.isVerified ? 'text-green-600' : 'text-amber-600'}`}>
+                  {displayProfile?.verificationStatus}
                 </span>
               </p>
             </div>
@@ -78,9 +78,12 @@ export function DealerProfile() {
               Business Information
             </h3>
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Tax ID:</span> {profile?.tax_id}</p>
-              <p><span className="font-medium text-dark">License:</span> {profile?.license_number}</p>
-              <p><span className="font-medium text-dark">Registry Number:</span> {profile?.business_registry_number}</p>
+              <p><span className="font-medium text-dark">Tax ID:</span> {displayProfile?.formattedTaxId || displayProfile?.taxId}</p>
+              <p><span className="font-medium text-dark">License:</span> {displayProfile?.licenseNumber}</p>
+              <p>
+                <span className="font-medium text-dark">Registry Number:</span> 
+                {displayProfile?.formattedBusinessRegistry || displayProfile?.businessRegistryNumber}
+              </p>
             </div>
           </div>
           
@@ -91,7 +94,7 @@ export function DealerProfile() {
               Location
             </h3>
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Address:</span> {profile?.address}</p>
+              <p><span className="font-medium text-dark">Address:</span> {displayProfile?.address}</p>
             </div>
           </div>
         </div>

@@ -33,6 +33,9 @@ export type DisplayProfile = {
   isVerified: boolean;
   createdAt: string;
   updatedAt: string;
+  // Add formatted display versions of fields
+  formattedTaxId?: string;
+  formattedBusinessRegistry?: string;
 };
 
 // Define the context type
@@ -65,15 +68,16 @@ export function DealerProfileProvider({
 }) {
   const [profile, setProfile] = useState<DealerProfile | null>(null);
   const [displayProfile, setDisplayProfile] = useState<DisplayProfile | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Start with loading true
   const [error, setError] = useState<string | null>(null);
   const [fetchAttempted, setFetchAttempted] = useState<boolean>(false);
   const { toast } = useToast();
 
-  // Function to fetch dealer profile
-  const fetchProfile = async () => {
+  // Function to fetch dealer profile with improved error handling and retries
+  const fetchProfile = async (retryCount = 0) => {
     if (!user) {
       setIsLoading(false);
+      setFetchAttempted(true);
       return;
     }
 
@@ -82,38 +86,69 @@ export function DealerProfileProvider({
       setError(null);
 
       console.log("Fetching dealer profile for user:", user.id);
+      
+      // First try direct query with RLS policies
       const { data, error } = await supabase
         .from('dealers')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to handle no results more gracefully
 
       if (error) {
         console.error("Error fetching dealer profile:", error);
-        setError(error.message);
-        setProfile(null);
-        setDisplayProfile(null);
         
-        toast({
-          title: "Failed to load profile",
-          description: "There was an error loading your dealer profile.",
-          variant: "destructive",
-        });
-      } else {
-        console.log("Dealer profile fetched successfully:", data);
-        setProfile(data);
-        
-        // Transform the database profile to display format
+        // Try the RPC function as fallback if available
+        try {
+          console.log("Attempting to use get_dealer_by_user_id RPC fallback");
+          const { data: rpcData, error: rpcError } = await supabase.rpc(
+            'get_dealer_by_user_id',
+            { p_user_id: user.id }
+          );
+          
+          if (!rpcError && rpcData) {
+            console.log("Profile fetched successfully via RPC function");
+            setProfile(rpcData);
+            
+            // Transform data consistently using our mapping function
+            const transformedProfile = mapDatabaseToDisplay(rpcData);
+            setDisplayProfile(transformedProfile);
+            setError(null);
+            return;
+          } else {
+            // If RPC also failed, throw the original error
+            throw error;
+          }
+        } catch (rpcError) {
+          console.warn("RPC fallback also failed:", rpcError);
+          throw error;
+        }
+      }
+
+      console.log("Dealer profile fetched successfully:", data);
+      setProfile(data);
+      
+      if (data) {
+        // Transform the database profile to display format consistently
         const transformedProfile = mapDatabaseToDisplay(data);
         setDisplayProfile(transformedProfile);
+      } else {
+        setDisplayProfile(null);
       }
     } catch (err) {
-      console.error("Unexpected error fetching dealer profile:", err);
-      setError(err instanceof Error ? err.message : "Unknown error");
+      console.error("Error fetching dealer profile:", err);
+      
+      // Implement retry logic
+      if (retryCount < 2) {
+        console.log(`Retrying fetch (attempt ${retryCount + 1})...`);
+        setTimeout(() => fetchProfile(retryCount + 1), 1000 * (retryCount + 1));
+        return;
+      }
+      
+      setError(err instanceof Error ? err.message : "Unknown error loading profile");
       
       toast({
-        title: "Unexpected error",
-        description: "An unexpected error occurred while loading your profile.",
+        title: "Error loading profile",
+        description: "There was a problem loading your dealer profile. Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -124,7 +159,14 @@ export function DealerProfileProvider({
 
   // Fetch profile when user changes
   useEffect(() => {
-    fetchProfile();
+    if (user) {
+      fetchProfile();
+    } else {
+      setProfile(null);
+      setDisplayProfile(null);
+      setIsLoading(false);
+      setFetchAttempted(true);
+    }
   }, [user?.id]);
 
   // Refetch profile function - can be called manually

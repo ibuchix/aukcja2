@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for mapping dealer profile data between form and database
  * This ensures consistency in how data is transformed throughout the application
@@ -87,7 +88,8 @@ export function mapFormToDatabase(formValues: any) {
 export function mapDatabaseToDisplay(dbProfile: any) {
   if (!dbProfile) return null;
   
-  return {
+  // Create the basic transformed profile
+  const profile = {
     supervisorName: dbProfile.supervisor_name || '',
     dealershipName: dbProfile.dealership_name || '',
     taxId: dbProfile.tax_id || '',
@@ -98,6 +100,13 @@ export function mapDatabaseToDisplay(dbProfile: any) {
     isVerified: dbProfile.is_verified || false,
     createdAt: dbProfile.created_at,
     updatedAt: dbProfile.updated_at,
+  };
+  
+  // Add formatted display versions of key identifiers
+  return {
+    ...profile,
+    formattedTaxId: formatTaxIdForDisplay(profile.taxId),
+    formattedBusinessRegistry: formatBusinessRegistryForDisplay(profile.businessRegistryNumber)
   };
 }
 
