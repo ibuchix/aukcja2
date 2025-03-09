@@ -6,7 +6,7 @@ import { useDealerProfile } from "@/contexts/DealerProfileContext";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const ProfileInfoSection = () => {
-  const { profile, isLoading } = useDealerProfile();
+  const { displayProfile, rawProfile, isLoading } = useDealerProfile();
   const { user } = useAuth();
 
   return (
@@ -34,9 +34,9 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Name:</span> {profile?.supervisor_name || "Not available"}</p>
+              <p><span className="font-medium text-dark">Name:</span> {displayProfile?.supervisorName || rawProfile?.supervisor_name || "Not available"}</p>
               <p><span className="font-medium text-dark">Email:</span> {user?.email || "Not available"}</p>
-              <p><span className="font-medium text-dark">Dealership:</span> {profile?.dealership_name || "Not available"}</p>
+              <p><span className="font-medium text-dark">Dealership:</span> {displayProfile?.dealershipName || rawProfile?.dealership_name || "Not available"}</p>
             </div>
           )}
         </div>
@@ -56,9 +56,9 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Address:</span> {profile?.address || "Not available"}</p>
-              <p><span className="font-medium text-dark">License:</span> {profile?.license_number || "Not available"}</p>
-              <p><span className="font-medium text-dark">Tax ID:</span> {profile?.tax_id || "Not available"}</p>
+              <p><span className="font-medium text-dark">Address:</span> {displayProfile?.address || rawProfile?.address || "Not available"}</p>
+              <p><span className="font-medium text-dark">License:</span> {displayProfile?.licenseNumber || rawProfile?.license_number || "Not available"}</p>
+              <p><span className="font-medium text-dark">Tax ID:</span> {displayProfile?.taxId || rawProfile?.tax_id || "Not available"}</p>
             </div>
           )}
         </div>
@@ -77,7 +77,7 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Business Registry:</span> {profile?.business_registry_number || "Not available"}</p>
+              <p><span className="font-medium text-dark">Business Registry:</span> {displayProfile?.businessRegistryNumber || rawProfile?.business_registry_number || "Not available"}</p>
               <p><span className="font-medium text-dark">Account Status:</span> <span className="text-success font-medium">Active</span></p>
             </div>
           )}
