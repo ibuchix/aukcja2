@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { mapDatabaseToDisplay } from "@/utils/dealerProfileMapping";
 import { fetchDealerProfile } from "@/contexts/auth/authUtils";
 import { Json } from "@/integrations/supabase/types";
+import { useNavigate } from "react-router-dom";
 
 // Define the dealer profile type
 export type DealerProfile = {
@@ -22,6 +23,8 @@ export type DealerProfile = {
   created_at: string;
   updated_at: string;
   profile_status?: string;
+  needs_recovery?: boolean;
+  missing_fields?: string[];
 };
 
 // Define the display profile type which uses frontend-friendly field names
@@ -52,6 +55,8 @@ type DealerProfileContextType = {
   profileIsComplete: boolean;
   missingFields: string[];
   profileStatus: string;
+  needsRecovery: boolean;
+  initiateProfileRecovery: () => void;
 };
 
 // Create the context with default values
@@ -65,6 +70,8 @@ const DealerProfileContext = createContext<DealerProfileContextType>({
   profileIsComplete: false,
   missingFields: [],
   profileStatus: "unknown",
+  needsRecovery: false,
+  initiateProfileRecovery: () => {},
 });
 
 // Create a provider component
@@ -83,7 +90,9 @@ export function DealerProfileProvider({
   const [profileIsComplete, setProfileIsComplete] = useState<boolean>(false);
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const [profileStatus, setProfileStatus] = useState<string>("unknown");
+  const [needsRecovery, setNeedsRecovery] = useState<boolean>(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Function to check if a dealer profile is complete
   const checkProfileCompleteness = (data: any) => {
@@ -106,6 +115,21 @@ export function DealerProfileProvider({
       console.warn("Profile is incomplete. Missing fields:", missing);
       setProfileIsComplete(false);
       return false;
+    }
+  };
+
+  // Function to initiate profile recovery
+  const initiateProfileRecovery = () => {
+    if (user) {
+      console.log("Initiating profile recovery for user:", user.id);
+      navigate('/complete-registration', { 
+        state: { 
+          userId: user.id,
+          email: user.email,
+          recovery: true,
+          missingFields: missingFields
+        } 
+      });
     }
   };
 
@@ -136,10 +160,31 @@ export function DealerProfileProvider({
           setProfileStatus("not_found");
           setProfileIsComplete(false);
           setMissingFields(['profile_not_found']);
+          setNeedsRecovery(Boolean(dealerProfile.needs_recovery));
+        } else if (dealerProfile.profile_status === "incomplete") {
+          console.log("Dealer profile is incomplete and needs recovery");
+          setProfile(dealerProfile as DealerProfile);
+          setProfileStatus("incomplete");
+          setProfileIsComplete(false);
+          setMissingFields(dealerProfile.missing_fields || []);
+          setNeedsRecovery(Boolean(dealerProfile.needs_recovery));
+          
+          // Transform the database profile to display format even if incomplete
+          const transformedProfile = mapDatabaseToDisplay(dealerProfile);
+          setDisplayProfile(transformedProfile);
+          
+          // Show toast about incomplete profile
+          toast({
+            title: "Profile Incomplete",
+            description: "Your dealer profile is missing important information. Please complete your profile.",
+            variant: "warning",
+            duration: 6000,
+          });
         } else {
           console.log("Dealer profile fetched successfully");
           setProfile(dealerProfile as DealerProfile);
           setProfileStatus("found");
+          setNeedsRecovery(Boolean(dealerProfile.needs_recovery));
           
           // Check profile completeness
           checkProfileCompleteness(dealerProfile);
@@ -155,6 +200,7 @@ export function DealerProfileProvider({
         setProfileStatus("error");
         setProfileIsComplete(false);
         setMissingFields(['profile_not_found']);
+        setNeedsRecovery(true);
       }
     } catch (err) {
       console.error("Error fetching dealer profile:", err);
@@ -192,6 +238,7 @@ export function DealerProfileProvider({
       setProfileIsComplete(false);
       setMissingFields([]);
       setProfileStatus("no_user");
+      setNeedsRecovery(false);
     }
   }, [user?.id]);
 
@@ -212,6 +259,8 @@ export function DealerProfileProvider({
         profileIsComplete,
         missingFields,
         profileStatus,
+        needsRecovery,
+        initiateProfileRecovery,
       }}
     >
       {children}

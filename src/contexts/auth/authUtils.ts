@@ -62,7 +62,7 @@ export async function fetchDealerProfile(userId: string) {
             // between "no profile" and "access denied"
             if (has_access && !record_exists) {
               console.log("Confirmed: No dealer profile exists for this user");
-              return { profile_status: "not_found", user_id: userId };
+              return { profile_status: "not_found", user_id: userId, needs_recovery: true };
             }
           }
         } catch (debugError) {
@@ -74,7 +74,7 @@ export async function fetchDealerProfile(userId: string) {
       
       if (!rpcData) {
         console.log("No profile data returned from RPC function");
-        return { profile_status: "not_found", user_id: userId };
+        return { profile_status: "not_found", user_id: userId, needs_recovery: true };
       }
       
       console.log("Profile successfully retrieved via RPC function");
@@ -90,6 +90,17 @@ export async function fetchDealerProfile(userId: string) {
         
         if (missingFields.length > 0) {
           console.warn("Dealer profile is incomplete. Missing fields:", missingFields);
+          
+          // If too many critical fields are missing, mark as needing recovery
+          if (missingFields.length >= 3) {
+            return { 
+              ...rpcDataObj,
+              profile_status: "incomplete", 
+              user_id: rpcDataObj.user_id ? String(rpcDataObj.user_id) : userId,
+              needs_recovery: true,
+              missing_fields: missingFields
+            };
+          }
         }
         
         // Return object with consistent format and safe type conversions
@@ -114,6 +125,17 @@ export async function fetchDealerProfile(userId: string) {
       
       if (missingFields.length > 0) {
         console.warn("Dealer profile is incomplete. Missing fields:", missingFields);
+        
+        // If too many critical fields are missing, mark as needing recovery
+        if (missingFields.length >= 3) {
+          return { 
+            ...data,
+            profile_status: "incomplete", 
+            user_id: data.user_id ? String(data.user_id) : userId,
+            needs_recovery: true,
+            missing_fields: missingFields
+          };
+        }
       }
       
       // Return object with consistent format and safe type conversions
@@ -125,7 +147,7 @@ export async function fetchDealerProfile(userId: string) {
     }
     
     console.log("No dealer profile found for user");
-    return { profile_status: "not_found", user_id: userId };
+    return { profile_status: "not_found", user_id: userId, needs_recovery: true };
   } catch (error) {
     console.error("Unexpected error during profile fetch:", error);
     return null;
