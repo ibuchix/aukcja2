@@ -20,6 +20,17 @@ type CheckEmailExistsResponse = {
   exists: boolean;
 };
 
+// Define the expected return type for the create_dealer_with_profile RPC function
+type CreateDealerResponse = {
+  success: boolean;
+  error?: string;
+  user?: {
+    id: string;
+    email: string;
+    user_metadata: any;
+  };
+};
+
 export async function signupDealer(values: DealerFormValues) {
   try {
     console.log("Starting dealer signup process with:", { 
@@ -73,9 +84,12 @@ export async function signupDealer(values: DealerFormValues) {
       return { success: false, error: procedureError.message };
     }
     
+    // Cast result to the expected type to make TypeScript happy
+    const typedResult = result as CreateDealerResponse;
+    
     // Check if the procedure result indicates success
-    if (!result || !result.success) {
-      const errorMessage = result?.error || "Failed to create dealer account";
+    if (!typedResult || !typedResult.success) {
+      const errorMessage = typedResult?.error || "Failed to create dealer account";
       console.error("Procedure returned error:", errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -84,7 +98,7 @@ export async function signupDealer(values: DealerFormValues) {
     
     return { 
       success: true, 
-      user: result.user,
+      user: typedResult.user,
       message: "Registration successful. Please check your email to verify your account."
     };
   } catch (error) {
