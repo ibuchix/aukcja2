@@ -41,7 +41,7 @@ export const NavbarDesktopMenu = ({ session, isLoading, handleLogout }: NavbarDe
           Logout
         </Button>
       ) : (
-        <Link to="/auth" className="btn-primary">
+        <Link to="/auth?tab=login" className="btn-primary">
           Sign In
         </Link>
       )}

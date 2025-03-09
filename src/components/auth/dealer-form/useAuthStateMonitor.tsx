@@ -12,6 +12,19 @@ export function useAuthStateMonitor(setEmailVerified: (verified: boolean) => voi
     const checkExistingUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
+        console.log("Found existing session:", session.user.email);
+        
+        // Check if email is verified
+        if (session.user.email_confirmed_at) {
+          console.log("Email already verified, redirecting to dashboard");
+          setEmailVerified(true);
+          navigate('/dealer/dashboard');
+          return;
+        }
+        
+        // If not verified but has a session, we still need to wait for verification
+        setEmailVerified(false);
+        
         // Use direct string literals instead of helper functions
         const { data: profile } = await supabase
           .from('profiles')
@@ -36,17 +49,24 @@ export function useAuthStateMonitor(setEmailVerified: (verified: boolean) => voi
     };
 
     checkExistingUser();
-  }, [toast]);
+  }, [toast, navigate, setEmailVerified]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event, session?.user?.email_confirmed_at);
+      
       if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
         setEmailVerified(true);
         navigate('/dealer/dashboard');
       }
-      if (event === 'USER_UPDATED') {
+      else if (event === 'USER_UPDATED') {
+        console.log("User updated, email confirmed:", session?.user?.email_confirmed_at !== null);
         setEmailVerified(session?.user?.email_confirmed_at !== null);
+        
+        // If email is now verified, redirect to dashboard
+        if (session?.user?.email_confirmed_at) {
+          navigate('/dealer/dashboard');
+        }
       }
     });
 
