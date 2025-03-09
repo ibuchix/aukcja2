@@ -1,6 +1,8 @@
 
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter } from 'react-router-dom'
+import { AuthProviderWithRouter } from './contexts/auth/AuthProvider'
 import App from './App.tsx'
 import './index.css'
 
@@ -20,7 +22,11 @@ const root = document.getElementById('root')
 if (root) {
   createRoot(root).render(
     <QueryClientProvider client={queryClient}>
-      <App />
+      <BrowserRouter>
+        <AuthProviderWithRouter>
+          <App />
+        </AuthProviderWithRouter>
+      </BrowserRouter>
     </QueryClientProvider>
   )
 } else {
