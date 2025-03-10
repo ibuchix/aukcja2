@@ -1,5 +1,6 @@
 
 import { motion } from "framer-motion";
+import { formatCurrency } from "@/lib/utils";
 
 export const ProxyBiddingExample = () => {
   return (
@@ -13,13 +14,13 @@ export const ProxyBiddingExample = () => {
         >
           <h3 className="text-xl font-semibold mb-4 text-iris">How Proxy Bidding Works - An Example</h3>
           <div className="space-y-4 text-subtitle-text">
-            <p>1. Current bid on a vehicle is €10,000 with €500 minimum increments</p>
-            <p>2. You set your maximum bid to €15,000</p>
-            <p>3. If someone bids €11,000, our system automatically bids €11,500 for you</p>
+            <p>1. Current bid on a vehicle is {formatCurrency(10000)} with {formatCurrency(250)} minimum increments</p>
+            <p>2. You set your maximum bid to {formatCurrency(15000)}</p>
+            <p>3. If someone bids {formatCurrency(11000)}, our system automatically bids {formatCurrency(11250)} for you</p>
             <p>4. This continues until either:</p>
             <ul className="list-disc pl-8 space-y-2">
               <li>You win the auction</li>
-              <li>The bidding exceeds your €15,000 maximum</li>
+              <li>The bidding exceeds your {formatCurrency(15000)} maximum</li>
             </ul>
           </div>
         </motion.div>
