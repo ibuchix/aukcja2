@@ -98,6 +98,8 @@ const Index = () => {
             features: parsedFeatures,
             transmission: car.transmission || null,
             required_photos: requiredPhotos,
+            
+            // Add these properties with default values if they don't exist in car object
             description: car.description || null,
             service_history_files: car.service_history_files || null,
             is_auction: Boolean(car.is_auction),
@@ -108,10 +110,10 @@ const Index = () => {
             auction_status: car.auction_status || null,
             is_damaged: Boolean(car.is_damaged),
             address: car.address || null,
-            condition_rating: car.condition_rating || undefined,
+            condition_rating: car.condition_rating !== undefined ? car.condition_rating : undefined,
             distance: car.distance || null,
             created_at: car.created_at,
-            updated_at: car.updated_at,
+            updated_at: car.updated_at || car.created_at,
             status: car.status || null,
             is_draft: Boolean(car.is_draft)
           };
