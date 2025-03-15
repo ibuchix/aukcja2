@@ -85,7 +85,7 @@ const Index = () => {
             requiredPhotos = car.required_photos as Record<string, string | null>;
           }
           
-          // Create a properly typed object that matches the CarListing type
+          // Create the car listing with all properties explicitly declared
           const carListing: CarListing = {
             id: car.id,
             title: car.title || null,
@@ -99,21 +99,21 @@ const Index = () => {
             transmission: car.transmission || null,
             required_photos: requiredPhotos,
             
-            // Add these properties with default values if they don't exist in car object
-            description: car.description || null,
-            service_history_files: car.service_history_files || null,
-            is_auction: Boolean(car.is_auction),
-            auction_end_time: car.auction_end_time || null,
-            auction_start_time: car.auction_start_time || null,
-            reserve_price: car.reserve_price || null,
-            minimum_bid_increment: car.minimum_bid_increment || null,
-            auction_status: car.auction_status || null,
-            is_damaged: Boolean(car.is_damaged),
-            address: car.address || null,
-            condition_rating: car.condition_rating !== undefined ? car.condition_rating : undefined,
-            distance: car.distance || null,
+            // Add any optional properties that might be missing in the database
+            description: (car as any).description || null,
+            service_history_files: (car as any).service_history_files || null,
+            is_auction: Boolean((car as any).is_auction),
+            auction_end_time: (car as any).auction_end_time || null,
+            auction_start_time: (car as any).auction_start_time || null,
+            reserve_price: (car as any).reserve_price || null,
+            minimum_bid_increment: (car as any).minimum_bid_increment || null,
+            auction_status: (car as any).auction_status || null,
+            is_damaged: Boolean((car as any).is_damaged),
+            address: (car as any).address || null,
+            condition_rating: (car as any).condition_rating !== undefined ? (car as any).condition_rating : undefined,
+            distance: (car as any).distance || null,
             created_at: car.created_at,
-            updated_at: car.updated_at || car.created_at,
+            updated_at: (car as any).updated_at || car.created_at,
             status: car.status || null,
             is_draft: Boolean(car.is_draft)
           };
