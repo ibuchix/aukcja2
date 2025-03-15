@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
@@ -43,40 +44,48 @@ const Index = () => {
 
         console.log(`Found ${data.length} featured vehicles`);
         return data.map(car => {
-          let parsedFeatures: any = {};
+          let parsedFeatures: CarFeatures = {
+            satNav: false,
+            heatedSeats: false,
+            panoramicRoof: false,
+            reverseCamera: false,
+            upgradedSound: false
+          };
           
           // Parse the features object safely
           try {
             if (typeof car.features === 'string') {
-              parsedFeatures = JSON.parse(car.features);
+              const featuresObj = JSON.parse(car.features);
+              parsedFeatures = {
+                satNav: Boolean(featuresObj?.satNav),
+                heatedSeats: Boolean(featuresObj?.heatedSeats),
+                panoramicRoof: Boolean(featuresObj?.panoramicRoof),
+                reverseCamera: Boolean(featuresObj?.reverseCamera),
+                upgradedSound: Boolean(featuresObj?.upgradedSound)
+              };
             } else if (car.features && typeof car.features === 'object') {
-              parsedFeatures = car.features;
+              const featuresObj = car.features as Record<string, any>;
+              parsedFeatures = {
+                satNav: Boolean(featuresObj?.satNav),
+                heatedSeats: Boolean(featuresObj?.heatedSeats),
+                panoramicRoof: Boolean(featuresObj?.panoramicRoof),
+                reverseCamera: Boolean(featuresObj?.reverseCamera),
+                upgradedSound: Boolean(featuresObj?.upgradedSound)
+              };
             }
-            
-            // Ensure all required properties exist with proper types
-            parsedFeatures = {
-              satNav: Boolean(parsedFeatures?.satNav),
-              heatedSeats: Boolean(parsedFeatures?.heatedSeats),
-              panoramicRoof: Boolean(parsedFeatures?.panoramicRoof),
-              reverseCamera: Boolean(parsedFeatures?.reverseCamera),
-              upgradedSound: Boolean(parsedFeatures?.upgradedSound)
-            };
           } catch (e) {
             console.error("Error parsing features:", e);
-            parsedFeatures = {
-              satNav: false,
-              heatedSeats: false,
-              panoramicRoof: false,
-              reverseCamera: false,
-              upgradedSound: false
-            };
+            // Default features already set at initialization
+          }
+          
+          // Extract required_photos safely
+          let requiredPhotos: Record<string, string | null> | null = null;
+          if (car.required_photos && typeof car.required_photos === 'object') {
+            requiredPhotos = car.required_photos as Record<string, string | null>;
           }
           
           // Create a properly typed object that matches the CarListing type
           const carListing: CarListing = {
-            ...car,
-            features: parsedFeatures,
-            // Ensure other required properties are present
             id: car.id,
             title: car.title || null,
             price: car.price || 0,
@@ -85,8 +94,25 @@ const Index = () => {
             year: car.year || null,
             mileage: car.mileage || 0,
             images: car.images || null,
+            features: parsedFeatures,
             transmission: car.transmission || null,
-            required_photos: car.required_photos || null
+            required_photos: requiredPhotos,
+            description: car.description || null,
+            service_history_files: car.service_history_files || null,
+            is_auction: car.is_auction,
+            auction_end_time: car.auction_end_time || null,
+            auction_start_time: car.auction_start_time || null,
+            reserve_price: car.reserve_price || null,
+            minimum_bid_increment: car.minimum_bid_increment || null,
+            auction_status: car.auction_status || null,
+            is_damaged: car.is_damaged,
+            address: car.address || null,
+            condition_rating: car.condition_rating,
+            distance: car.distance || null,
+            created_at: car.created_at,
+            updated_at: car.updated_at,
+            status: car.status || null,
+            is_draft: car.is_draft
           };
           
           return carListing;
