@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
@@ -99,7 +98,7 @@ const Index = () => {
             transmission: car.transmission || null,
             required_photos: requiredPhotos,
             
-            // Add any optional properties that might be missing in the database
+            // Fix for TypeScript errors - add optional properties with proper type handling
             description: (car as any).description || null,
             service_history_files: (car as any).service_history_files || null,
             is_auction: Boolean((car as any).is_auction),
