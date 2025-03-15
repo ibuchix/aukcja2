@@ -43,22 +43,27 @@ const Index = () => {
 
         console.log(`Found ${data.length} featured vehicles`);
         return data.map(car => {
-          let features = car.features;
+          let parsedFeatures: any = {};
+          
+          // Parse the features object safely
           try {
-            if (typeof features === 'string') {
-              features = JSON.parse(features);
+            if (typeof car.features === 'string') {
+              parsedFeatures = JSON.parse(car.features);
+            } else if (car.features && typeof car.features === 'object') {
+              parsedFeatures = car.features;
             }
             
-            features = {
-              satNav: features?.satNav || false,
-              heatedSeats: features?.heatedSeats || false,
-              panoramicRoof: features?.panoramicRoof || false,
-              reverseCamera: features?.reverseCamera || false,
-              upgradedSound: features?.upgradedSound || false
+            // Ensure all required properties exist with proper types
+            parsedFeatures = {
+              satNav: Boolean(parsedFeatures?.satNav),
+              heatedSeats: Boolean(parsedFeatures?.heatedSeats),
+              panoramicRoof: Boolean(parsedFeatures?.panoramicRoof),
+              reverseCamera: Boolean(parsedFeatures?.reverseCamera),
+              upgradedSound: Boolean(parsedFeatures?.upgradedSound)
             };
           } catch (e) {
             console.error("Error parsing features:", e);
-            features = {
+            parsedFeatures = {
               satNav: false,
               heatedSeats: false,
               panoramicRoof: false,
@@ -67,10 +72,24 @@ const Index = () => {
             };
           }
           
-          return {
+          // Create a properly typed object that matches the CarListing type
+          const carListing: CarListing = {
             ...car,
-            features
-          } as CarListing;
+            features: parsedFeatures,
+            // Ensure other required properties are present
+            id: car.id,
+            title: car.title || null,
+            price: car.price || 0,
+            make: car.make || null,
+            model: car.model || null,
+            year: car.year || null,
+            mileage: car.mileage || 0,
+            images: car.images || null,
+            transmission: car.transmission || null,
+            required_photos: car.required_photos || null
+          };
+          
+          return carListing;
         });
       } catch (err) {
         console.error("Failed to fetch featured vehicles:", err);
