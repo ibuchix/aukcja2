@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
@@ -49,6 +48,14 @@ const Index = () => {
             if (typeof features === 'string') {
               features = JSON.parse(features);
             }
+            
+            features = {
+              satNav: features?.satNav || false,
+              heatedSeats: features?.heatedSeats || false,
+              panoramicRoof: features?.panoramicRoof || false,
+              reverseCamera: features?.reverseCamera || false,
+              upgradedSound: features?.upgradedSound || false
+            };
           } catch (e) {
             console.error("Error parsing features:", e);
             features = {
@@ -62,18 +69,11 @@ const Index = () => {
           
           return {
             ...car,
-            features: features || {
-              satNav: false,
-              heatedSeats: false,
-              panoramicRoof: false,
-              reverseCamera: false,
-              upgradedSound: false
-            },
-          };
-        }) as CarListing[];
+            features
+          } as CarListing;
+        });
       } catch (err) {
         console.error("Failed to fetch featured vehicles:", err);
-        // Don't show toast for 401/403 errors since we just implemented RLS
         if (err && typeof err === 'object' && 'status' in err && 
             (err.status !== 401 && err.status !== 403)) {
           toast({
