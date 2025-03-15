@@ -30,6 +30,9 @@ interface ProcessResult {
   newBid?: number;
   previousBid?: number;
   reason?: string;
+  error?: string;
+  checkpoint?: string;
+  transaction_id?: string;
 }
 
 async function processProxyBids(): Promise<{ 
@@ -65,8 +68,25 @@ async function processProxyBids(): Promise<{
     
     // 2. Process each auction
     for (const auction of activeAuctions || []) {
+      const transactionId = crypto.randomUUID();
       try {
-        const result = await processAuction(supabase, auction);
+        console.log(`Starting transaction ${transactionId} for auction ${auction.id}`);
+        
+        // Log transaction checkpoint - starting
+        await supabase.from('audit_logs').insert({
+          user_id: null,
+          action: 'proxy_bid_transaction',
+          entity_type: 'car',
+          entity_id: auction.id,
+          details: {
+            transaction_id: transactionId,
+            stage: 'start',
+            timestamp: new Date().toISOString()
+          }
+        });
+        
+        const result = await processAuctionWithTransaction(supabase, auction, transactionId);
+        result.transaction_id = transactionId;
         results.push(result);
         
         if (result.processed) {
@@ -74,12 +94,44 @@ async function processProxyBids(): Promise<{
         } else {
           skipped++;
         }
+        
+        // Log transaction checkpoint - completed
+        await supabase.from('audit_logs').insert({
+          user_id: null,
+          action: 'proxy_bid_transaction',
+          entity_type: 'car',
+          entity_id: auction.id,
+          details: {
+            transaction_id: transactionId,
+            stage: 'complete',
+            result: result.processed ? 'success' : 'skipped',
+            reason: result.reason,
+            timestamp: new Date().toISOString()
+          }
+        });
+        
       } catch (err) {
         console.error(`Error processing auction ${auction.id}:`, err);
+        
+        // Log transaction checkpoint - error
+        await supabase.from('audit_logs').insert({
+          user_id: null,
+          action: 'proxy_bid_transaction',
+          entity_type: 'car',
+          entity_id: auction.id,
+          details: {
+            transaction_id: transactionId,
+            stage: 'error',
+            error: err instanceof Error ? err.message : 'Unknown error',
+            timestamp: new Date().toISOString()
+          }
+        });
+        
         results.push({
           carId: auction.id,
           processed: false,
-          reason: `Error: ${err instanceof Error ? err.message : 'Unknown error'}`
+          reason: `Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
+          transaction_id: transactionId
         });
         errors++;
       }
@@ -95,13 +147,32 @@ async function processProxyBids(): Promise<{
   }
 }
 
-async function processAuction(supabase: any, auction: Car): Promise<ProcessResult> {
+async function processAuctionWithTransaction(supabase: any, auction: Car, transactionId: string): Promise<ProcessResult> {
   const { id: carId, current_bid, minimum_bid_increment, price } = auction;
   
   // Default to 250 if minimum_bid_increment is not set
   const bidIncrement = minimum_bid_increment || 250;
   
   console.log(`Processing auction ${carId} with current bid ${current_bid} and increment ${bidIncrement}`);
+  
+  // Create a checkpoint
+  const checkpoint = async (stage: string, details: Record<string, any> = {}) => {
+    console.log(`Checkpoint [${transactionId}] - ${stage}: ${JSON.stringify(details)}`);
+    return await supabase.from('audit_logs').insert({
+      user_id: null,
+      action: 'proxy_bid_checkpoint',
+      entity_type: 'car',
+      entity_id: carId,
+      details: {
+        transaction_id: transactionId,
+        stage,
+        ...details,
+        timestamp: new Date().toISOString()
+      }
+    });
+  };
+  
+  await checkpoint('fetch_proxy_bids');
   
   // 1. Get all proxy bids for this auction, ordered by max amount (highest first)
   const { data: proxyBids, error: proxyBidsError } = await supabase
@@ -112,24 +183,30 @@ async function processAuction(supabase: any, auction: Car): Promise<ProcessResul
   
   if (proxyBidsError) {
     console.error(`Error fetching proxy bids for auction ${carId}:`, proxyBidsError.message);
+    await checkpoint('error', { error: proxyBidsError.message, stage: 'fetch_proxy_bids' });
     return { carId, processed: false, reason: `Error fetching proxy bids: ${proxyBidsError.message}` };
   }
   
   if (!proxyBids || proxyBids.length === 0) {
     console.log(`No proxy bids found for auction ${carId}`);
+    await checkpoint('skipped', { reason: 'No proxy bids found' });
     return { carId, processed: false, reason: 'No proxy bids found' };
   }
   
   if (proxyBids.length === 1) {
     console.log(`Only one proxy bid found for auction ${carId}, nothing to process`);
+    await checkpoint('skipped', { reason: 'Only one proxy bid found' });
     return { carId, processed: false, reason: 'Only one proxy bid found' };
   }
   
   console.log(`Found ${proxyBids.length} proxy bids for auction ${carId}`);
+  await checkpoint('proxy_bids_found', { count: proxyBids.length });
   
   // Get the top two proxy bids
   const topBid = proxyBids[0];
   const secondBid = proxyBids[1];
+  
+  await checkpoint('fetch_current_high_bid');
   
   // Check if the current high bidder is already the top proxy bidder
   const { data: currentHighBid, error: highBidError } = await supabase
@@ -141,14 +218,18 @@ async function processAuction(supabase: any, auction: Car): Promise<ProcessResul
   
   if (highBidError && highBidError.code !== 'PGRST116') { // PGRST116 is "no rows returned" which is fine
     console.error(`Error fetching current high bid for auction ${carId}:`, highBidError.message);
+    await checkpoint('error', { error: highBidError.message, stage: 'fetch_current_high_bid' });
     return { carId, processed: false, reason: `Error fetching high bid: ${highBidError.message}` };
   }
   
   // If the top proxy bidder is already winning, we don't need to do anything
   if (currentHighBid && currentHighBid.dealer_id === topBid.dealer_id) {
     console.log(`Top proxy bidder ${topBid.dealer_id} is already winning auction ${carId}`);
+    await checkpoint('skipped', { reason: 'Top proxy bidder already winning' });
     return { carId, processed: false, reason: 'Top proxy bidder already winning' };
   }
+  
+  await checkpoint('calculate_next_bid');
   
   // Calculate what the next bid should be
   const minBid = Math.max(price, (current_bid || 0) + bidIncrement);
@@ -165,12 +246,27 @@ async function processAuction(supabase: any, auction: Car): Promise<ProcessResul
   }
   
   console.log(`Calculated next bid for auction ${carId}: ${nextBidAmount} (top max: ${topBid.max_bid_amount}, second max: ${secondBidderMax}, min increment: ${bidIncrement})`);
+  await checkpoint('bid_calculated', { 
+    nextBidAmount, 
+    topBidderMax: topBid.max_bid_amount, 
+    secondBidderMax,
+    minBid,
+    bidIncrement
+  });
   
   // If calculated bid is higher than top bidder's max, something went wrong
   if (nextBidAmount > topBid.max_bid_amount) {
     console.error(`Calculated bid ${nextBidAmount} exceeds top bidder's max ${topBid.max_bid_amount}`);
+    await checkpoint('error', { 
+      error: 'Bid calculation error',
+      nextBidAmount,
+      topBidderMax: topBid.max_bid_amount
+    });
     return { carId, processed: false, reason: 'Calculated bid exceeds top bidder maximum' };
   }
+  
+  // Begin trying to place the bid
+  await checkpoint('place_bid_attempt', { amount: nextBidAmount, dealer_id: topBid.dealer_id });
   
   // Place the bid via the place_bid function
   const { data: placeBidResult, error: placeBidError } = await supabase.rpc(
@@ -186,10 +282,18 @@ async function processAuction(supabase: any, auction: Car): Promise<ProcessResul
   
   if (placeBidError) {
     console.error(`Error placing proxy bid for auction ${carId}:`, placeBidError.message);
+    await checkpoint('error', { 
+      error: placeBidError.message,
+      stage: 'place_bid'
+    });
     return { carId, processed: false, reason: `Error placing bid: ${placeBidError.message}` };
   }
   
   console.log(`Successfully placed proxy bid for auction ${carId}:`, placeBidResult);
+  await checkpoint('bid_placed', { 
+    result: placeBidResult,
+    amount: nextBidAmount
+  });
   
   // Log the action
   await supabase.from('audit_logs').insert({
@@ -202,9 +306,12 @@ async function processAuction(supabase: any, auction: Car): Promise<ProcessResul
       max_amount: topBid.max_bid_amount,
       outbid_dealer_id: currentHighBid?.dealer_id,
       previous_bid: current_bid,
-      auto_processed: true
+      auto_processed: true,
+      transaction_id: transactionId
     }
   });
+  
+  await checkpoint('complete', { success: true });
   
   return { 
     carId, 
