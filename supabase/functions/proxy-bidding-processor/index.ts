@@ -1,4 +1,3 @@
-
 import { createServiceClient } from '../_shared/supabase-client.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { handleError, withErrorHandling } from '../_shared/error-handling.ts';
