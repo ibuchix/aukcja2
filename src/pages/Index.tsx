@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
-import { CarListing } from "@/types/cars";
+import { CarListing, CarFeatures } from "@/types/cars";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -44,6 +44,7 @@ const Index = () => {
 
         console.log(`Found ${data.length} featured vehicles`);
         return data.map(car => {
+          // Create default features object
           let parsedFeatures: CarFeatures = {
             satNav: false,
             heatedSeats: false,
@@ -99,20 +100,20 @@ const Index = () => {
             required_photos: requiredPhotos,
             description: car.description || null,
             service_history_files: car.service_history_files || null,
-            is_auction: car.is_auction,
+            is_auction: Boolean(car.is_auction),
             auction_end_time: car.auction_end_time || null,
             auction_start_time: car.auction_start_time || null,
             reserve_price: car.reserve_price || null,
             minimum_bid_increment: car.minimum_bid_increment || null,
             auction_status: car.auction_status || null,
-            is_damaged: car.is_damaged,
+            is_damaged: Boolean(car.is_damaged),
             address: car.address || null,
-            condition_rating: car.condition_rating,
+            condition_rating: car.condition_rating || undefined,
             distance: car.distance || null,
             created_at: car.created_at,
             updated_at: car.updated_at,
             status: car.status || null,
-            is_draft: car.is_draft
+            is_draft: Boolean(car.is_draft)
           };
           
           return carListing;
