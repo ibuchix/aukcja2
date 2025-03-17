@@ -1,8 +1,17 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Bot } from "lucide-react";
+import { User, Bot, TrendingUp, Clock, Check, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
 interface Bid {
   id: string;
@@ -16,6 +25,13 @@ interface Bid {
   is_proxy: boolean;
 }
 
+interface BidHistoryChartData {
+  time: string;
+  amount: number;
+  bidder: string;
+  isProxy: boolean;
+}
+
 interface BidHistoryProps {
   carId: string;
 }
@@ -23,6 +39,7 @@ interface BidHistoryProps {
 export const BidHistory = ({ carId }: BidHistoryProps) => {
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chartData, setChartData] = useState<BidHistoryChartData[]>([]);
 
   useEffect(() => {
     const fetchBidHistory = async () => {
@@ -85,6 +102,18 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
         );
 
         setBids(allBids);
+
+        // Prepare chart data - use oldest to newest for proper visualization
+        const chartDataArray = [...allBids]
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+          .map(bid => ({
+            time: format(new Date(bid.created_at), "HH:mm"),
+            amount: bid.amount,
+            bidder: bid.dealer_name,
+            isProxy: bid.is_proxy
+          }));
+        
+        setChartData(chartDataArray);
       } catch (error) {
         console.error("Error fetching bid history:", error);
       } finally {
@@ -122,6 +151,17 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
             is_proxy: false
           };
           setBids(prevBids => [formattedBid, ...prevBids]);
+          
+          // Update chart data
+          setChartData(prevChartData => [
+            ...prevChartData, 
+            {
+              time: format(new Date(newBid.created_at), "HH:mm"),
+              amount: newBid.amount,
+              bidder: "New Bidder",
+              isProxy: false
+            }
+          ]);
         }
       )
       .subscribe();
@@ -156,6 +196,17 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
     };
   }, [carId]);
 
+  const getBidStatusIcon = (bid: Bid) => {
+    switch (bid.status) {
+      case "active":
+        return <Check size={16} className="text-green-500" />;
+      case "outbid":
+        return <AlertCircle size={16} className="text-amber-500" />;
+      default:
+        return <Clock size={16} className="text-blue-500" />;
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-4">Loading bid history...</div>;
   }
@@ -165,30 +216,98 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
   }
 
   return (
-    <div className="space-y-2 max-h-[300px] overflow-y-auto p-2">
-      {bids.map((bid) => (
-        <div key={bid.id} className="flex items-start gap-2 p-2 border-b">
-          <div className="bg-muted p-2 rounded-full">
-            {bid.is_proxy ? <Bot size={16} /> : <User size={16} />}
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="text-heading-sm font-oswald flex items-center gap-2">
+          <TrendingUp className="h-5 w-5" />
+          Bid History
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Bid Chart Visualization */}
+        {chartData.length > 1 && (
+          <div className="h-48 w-full">
+            <ChartContainer
+              config={{
+                bidLine: {
+                  theme: {
+                    light: "#0284c7",
+                    dark: "#38bdf8"
+                  }
+                }
+              }}
+            >
+              <LineChart data={chartData}>
+                <XAxis 
+                  dataKey="time" 
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                />
+                <YAxis 
+                  tickFormatter={(value) => `$${value}`}
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent 
+                      formatter={(value: any, name: any) => [
+                        `$${value}`, 
+                        "Bid Amount"
+                      ]}
+                    />
+                  }
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="amount" 
+                  strokeWidth={2} 
+                  name="bidLine"
+                  dot={{ 
+                    stroke: "#0284c7", 
+                    strokeWidth: 2,
+                    r: 4
+                  }}
+                />
+              </LineChart>
+            </ChartContainer>
           </div>
-          <div className="flex-1">
-            <div className="flex justify-between">
-              <span className="font-medium">{bid.dealer_name}</span>
-              <span className="text-sm text-muted-foreground">
-                {format(new Date(bid.created_at), "MMM d, HH:mm")}
-              </span>
+        )}
+        
+        <Separator />
+        
+        {/* List of Bids */}
+        <div className="space-y-2 max-h-[300px] overflow-y-auto p-2">
+          {bids.map((bid) => (
+            <div key={bid.id} className="flex items-start gap-2 p-2 border-b">
+              <div className="bg-muted p-2 rounded-full">
+                {bid.is_proxy ? <Bot size={16} /> : <User size={16} />}
+              </div>
+              <div className="flex-1">
+                <div className="flex justify-between">
+                  <span className="font-medium">{bid.dealer_name}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {format(new Date(bid.created_at), "MMM d, HH:mm")}
+                  </span>
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className="text-primary font-semibold">
+                    ${bid.amount.toLocaleString()}
+                  </span>
+                  <div className="flex items-center space-x-2">
+                    {getBidStatusIcon(bid)}
+                    <Badge variant={bid.is_proxy ? "outline" : "secondary"} className="text-xs">
+                      {bid.is_proxy ? "Auto" : "Manual"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex justify-between mt-1">
-              <span className="text-primary font-semibold">
-                ${bid.amount.toLocaleString()}
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-muted">
-                {bid.is_proxy ? "Auto" : "Manual"}
-              </span>
-            </div>
-          </div>
+          ))}
         </div>
-      ))}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
