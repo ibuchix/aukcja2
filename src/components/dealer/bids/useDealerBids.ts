@@ -1,11 +1,12 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MyBid } from "./types";
 
 export function useDealerBids(dealerProfileId: string | undefined) {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [realtimeInitialized, setRealtimeInitialized] = useState(false);
 
   const {
     data: myBids,
@@ -57,6 +58,58 @@ export function useDealerBids(dealerProfileId: string | undefined) {
     },
     enabled: !!dealerProfileId,
   });
+
+  // Set up realtime listeners for bid status changes
+  useEffect(() => {
+    if (!dealerProfileId || !myBids || myBids.length === 0 || realtimeInitialized) return;
+
+    // Set up realtime subscription for the dealer's bids
+    const channel = supabase
+      .channel('dealer_bids_status')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'bids',
+          filter: `dealer_id=eq.${dealerProfileId}`,
+        },
+        (payload) => {
+          console.log('Bid status changed:', payload);
+          // Trigger a refetch to get updated data
+          refetch();
+        }
+      )
+      .subscribe();
+
+    // Set up realtime subscription for car status/current_bid changes
+    const carIds = myBids.map(bid => bid.car_id);
+    const carChannel = supabase
+      .channel('dealer_cars_status')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'cars',
+          filter: `id=in.(${carIds.join(',')})`,
+        },
+        (payload) => {
+          console.log('Car status changed:', payload);
+          // Trigger a refetch to get updated data
+          refetch();
+        }
+      )
+      .subscribe();
+
+    setRealtimeInitialized(true);
+
+    // Clean up subscriptions
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(carChannel);
+    };
+  }, [dealerProfileId, myBids, refetch, realtimeInitialized]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

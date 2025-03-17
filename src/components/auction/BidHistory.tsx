@@ -95,6 +95,65 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
     if (carId) {
       fetchBidHistory();
     }
+
+    // Set up real-time listener for new bids
+    const channel = supabase
+      .channel('public:bids')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'bids',
+          filter: `car_id=eq.${carId}`,
+        },
+        (payload) => {
+          const newBid = payload.new as any;
+          // Format the new bid and add it to the list
+          const formattedBid = {
+            id: newBid.id,
+            car_id: newBid.car_id,
+            dealer_id: newBid.dealer_id,
+            dealer_name: "New Bidder", // We don't have the dealer name from the payload
+            amount: newBid.amount,
+            status: newBid.status,
+            created_at: newBid.created_at,
+            updated_at: newBid.updated_at,
+            is_proxy: false
+          };
+          setBids(prevBids => [formattedBid, ...prevBids]);
+        }
+      )
+      .subscribe();
+
+    // Also listen for bid status changes (e.g., outbid)
+    const statusChannel = supabase
+      .channel('public:bids_status')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'bids',
+          filter: `car_id=eq.${carId}`,
+        },
+        (payload) => {
+          const updatedBid = payload.new as any;
+          // Update the bid in our list
+          setBids(prevBids => prevBids.map(bid => 
+            bid.id === updatedBid.id 
+              ? { ...bid, status: updatedBid.status, updated_at: updatedBid.updated_at }
+              : bid
+          ));
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(statusChannel);
+    };
   }, [carId]);
 
   if (loading) {
