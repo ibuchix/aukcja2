@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +10,7 @@ import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AuctionFilters, { AuctionFilters as FilterType } from "@/components/marketplace/AuctionFilters";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const calculateDistance = (lat1?: number, lon1?: number, lat2?: number, lon2?: number) => {
   if (!lat1 || !lon1 || !lat2 || !lon2) return null;
@@ -29,6 +31,7 @@ const calculateDistance = (lat1?: number, lon1?: number, lat2?: number, lon2?: n
 const Auctions = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
   const [filters, setFilters] = useState<FilterType>({});
+  const [bidDialogOpen, setBidDialogOpen] = useState<boolean>(false);
 
   const { data: activeAuctions, isLoading } = useQuery({
     queryKey: ["auctions", filters],
@@ -93,6 +96,11 @@ const Auctions = () => {
     },
   });
 
+  const handleViewBidding = (car: CarListing) => {
+    setSelectedCar(car);
+    setBidDialogOpen(true);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -129,19 +137,38 @@ const Auctions = () => {
         </div>
 
         <VehicleListings 
-          listings={activeAuctions || []} 
-          onSelectCar={setSelectedCar} 
+          listings={activeAuctions || []}
+          onSelectCar={setSelectedCar}
+          actionButton={(car) => 
+            dealerData?.id && (
+              <Button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewBidding(car);
+                }}
+                className="w-full mt-2"
+              >
+                Bid Now
+              </Button>
+            )
+          }
         />
       </div>
-      {selectedCar && dealerData?.id && (
-        <MaxBidInterface
-          carId={selectedCar.id}
-          dealerId={dealerData.id}
-          currentHighestBid={selectedCar.price}
-          minimumIncrement={selectedCar.minimum_bid_increment || 100}
-          auctionEndTime={selectedCar.auction_end_time || new Date().toISOString()}
-        />
-      )}
+
+      <Dialog open={bidDialogOpen} onOpenChange={setBidDialogOpen}>
+        <DialogContent className="sm:max-w-xl">
+          {selectedCar && dealerData?.id && (
+            <MaxBidInterface
+              carId={selectedCar.id}
+              dealerId={dealerData.id}
+              currentHighestBid={selectedCar.current_bid || selectedCar.price}
+              minimumIncrement={selectedCar.minimum_bid_increment || 100}
+              auctionEndTime={selectedCar.auction_end_time || new Date().toISOString()}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       <CarDetailsDialog 
         car={selectedCar} 
         onClose={() => setSelectedCar(null)} 

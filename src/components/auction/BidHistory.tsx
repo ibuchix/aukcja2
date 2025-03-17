@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { History } from "lucide-react";
+import { History, Bot, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database } from "@/integrations/supabase/types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type DatabaseBid = Database['public']['Tables']['bids']['Row'] & {
   dealer: {
@@ -32,6 +33,7 @@ interface Bid {
     dealership_name: string;
   };
   status: string;
+  is_proxy: boolean;
 }
 
 export const BidHistory = ({ carId }: BidHistoryProps) => {
@@ -50,7 +52,7 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
         console.error('Cache fetch failed, falling back to direct query:', error);
         
         // Use explicit string literal for equality check
-        const { data, error: dbError } = await supabase
+        const { data: bidsData, error: bidsError } = await supabase
           .from("bids")
           .select(`
             id,
@@ -61,16 +63,32 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
           `)
           .eq("car_id", carId as string);
 
-        if (dbError) throw dbError;
+        if (bidsError) throw bidsError;
         
-        if (!data) return [];
+        if (!bidsData) return [];
 
+        // Query the audit logs to see which bids were made by proxy
+        const { data: proxyBidLogs } = await supabase
+          .from("audit_logs")
+          .select('details')
+          .eq('entity_type', 'car')
+          .eq('entity_id', carId)
+          .eq('action', 'proxy_bid');
+
+        // Create a Set of bid IDs that were made by proxy
+        const proxyBidIds = new Set(
+          proxyBidLogs
+            ?.filter(log => log.details && log.details.bid_id)
+            .map(log => log.details.bid_id) || []
+        );
+        
         // Transform the data to match the Bid interface
-        return data.map((bid: any) => ({
+        return bidsData.map((bid: any) => ({
           id: bid.id,
           amount: bid.amount,
           created_at: bid.created_at,
           status: bid.status,
+          is_proxy: proxyBidIds.has(bid.id),
           dealer: {
             dealership_name: bid.dealer?.dealership_name || 'Unknown Dealer'
           }
@@ -110,6 +128,7 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
               <TableHead>Amount</TableHead>
               <TableHead>Time</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Type</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -126,6 +145,28 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
                   ) : (
                     bid.status
                   )}
+                </TableCell>
+                <TableCell>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        {bid.is_proxy ? (
+                          <span className="inline-flex items-center gap-1 text-slate-600">
+                            <Bot className="h-4 w-4" /> Auto
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-slate-600">
+                            <User className="h-4 w-4" /> Manual
+                          </span>
+                        )}
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {bid.is_proxy ? 
+                          "This bid was automatically placed by the proxy bidding system" : 
+                          "This bid was manually placed by the dealer"}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </TableCell>
               </TableRow>
             ))}

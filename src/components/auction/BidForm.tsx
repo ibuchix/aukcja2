@@ -18,44 +18,57 @@ export const BidForm = ({
   currentHighestBid,
   minimumIncrement,
 }: BidFormProps) => {
-  const [maxBid, setMaxBid] = useState<string>("");
+  const [bidAmount, setBidAmount] = useState<string>((currentHighestBid + minimumIncrement).toString());
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleSetMaxBid = async () => {
+  const handlePlaceBid = async () => {
     try {
-      const numericMaxBid = parseFloat(maxBid);
-      if (isNaN(numericMaxBid)) {
+      setIsSubmitting(true);
+      const numericBidAmount = parseFloat(bidAmount);
+      
+      if (isNaN(numericBidAmount)) {
         throw new Error("Please enter a valid number");
       }
 
-      if (numericMaxBid <= currentHighestBid) {
+      if (numericBidAmount <= currentHighestBid) {
         throw new Error(`Bid must be higher than current bid of $${currentHighestBid}`);
       }
 
-      // Fixed: Use properly typed object with exact database field names
-      const { error } = await supabase
-        .from('proxy_bids')
-        .upsert({
-          car_id: carId,
-          dealer_id: dealerId,
-          max_bid_amount: numericMaxBid,
-        }, {
-          // Use onConflict option to specify conflict resolution
-          onConflict: 'car_id,dealer_id'
-        });
+      // Check if the bid is divisible by the minimum increment
+      if (numericBidAmount % minimumIncrement !== 0) {
+        throw new Error(`Bid must be divisible by the minimum increment of $${minimumIncrement}`);
+      }
+
+      // Call the place_bid function on the server
+      const { data, error } = await supabase.rpc('place_bid', {
+        p_car_id: carId,
+        p_dealer_id: dealerId,
+        p_amount: numericBidAmount,
+        p_is_proxy: false
+      });
 
       if (error) throw error;
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to place bid');
+      }
 
       toast({
-        title: "Maximum Bid Set",
-        description: `Your maximum bid of $${numericMaxBid} has been set successfully`,
+        title: "Bid Placed",
+        description: `Your bid of $${numericBidAmount.toLocaleString()} has been placed successfully`,
       });
+
+      // Update the bid amount input field to be the current + minimum increment
+      setBidAmount((numericBidAmount + minimumIncrement).toString());
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to set maximum bid",
+        description: error instanceof Error ? error.message : "Failed to place bid",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -63,15 +76,15 @@ export const BidForm = ({
     <div className="flex gap-2">
       <Input
         type="number"
-        value={maxBid}
-        onChange={(e) => setMaxBid(e.target.value)}
-        placeholder="Enter your maximum bid"
+        value={bidAmount}
+        onChange={(e) => setBidAmount(e.target.value)}
+        placeholder="Enter bid amount"
         min={currentHighestBid + minimumIncrement}
         step={minimumIncrement}
         className="flex-1"
       />
-      <Button onClick={handleSetMaxBid}>
-        Set Max Bid
+      <Button onClick={handlePlaceBid} disabled={isSubmitting}>
+        {isSubmitting ? "Placing Bid..." : "Place Bid"}
       </Button>
     </div>
   );
