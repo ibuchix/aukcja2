@@ -5,6 +5,12 @@ export interface Auction {
   auction_end_time: string;
   auction_status: string;
   reserve_price: number;
+  price: number;
+  make: string | null;
+  model: string | null;
+  year: number | null;
+  mileage: number | null;
+  current_bid: number | null;
   highest_bid?: {
     amount: number;
     dealer_id: string;

@@ -91,7 +91,13 @@ export const DealerAuctionBrowser = ({ dealerId }: DealerAuctionBrowserProps) =>
         }
 
         // Count total before pagination
-        const { count } = await query.count();
+        const { count } = await supabase
+          .from("cars")
+          .select("id", { count: "exact", head: true })
+          .eq("is_auction", true)
+          .eq("auction_status", "active")
+          .eq("is_draft", false);
+          
         const totalCount = count || 0;
 
         // Apply pagination
@@ -126,7 +132,7 @@ export const DealerAuctionBrowser = ({ dealerId }: DealerAuctionBrowserProps) =>
               return new Date(b.auction_end_time).getTime() - new Date(a.auction_end_time).getTime();
             case "price-low-high":
               return (a.current_bid || a.price) - (b.current_bid || b.price);
-            case "price-high-high":
+            case "price-high-low":
               return (b.current_bid || b.price) - (a.current_bid || a.price);
             case "highest-bid":
               return (b.highest_bid?.amount || 0) - (a.highest_bid?.amount || 0);
