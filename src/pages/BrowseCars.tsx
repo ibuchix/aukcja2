@@ -1,7 +1,8 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Home, SlidersHorizontal } from "lucide-react";
+import { Home, SlidersHorizontal, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Database } from "@/integrations/supabase/types";
@@ -20,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 type CarRow = Database["public"]["Tables"]["cars"]["Row"];
 
@@ -28,10 +30,11 @@ const BrowseCars = () => {
   const [filters, setFilters] = useState<FilterTypes>({});
   const [sortOption, setSortOption] = useState<string>("newest");
   const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const { toast } = useToast();
 
   const { data: listings, isLoading } = useQuery({
-    queryKey: ["auctionListings", filters, sortOption],
+    queryKey: ["auctionListings", filters, sortOption, searchQuery],
     queryFn: async () => {
       let query = supabase
         .from("cars")
@@ -39,6 +42,11 @@ const BrowseCars = () => {
         .eq("is_auction", true)
         .eq("is_draft", false)
         .eq("auction_status", "active");
+
+      // Apply search query
+      if (searchQuery) {
+        query = query.or(`make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%`);
+      }
 
       // Apply filters
       if (filters.make) {
@@ -134,12 +142,17 @@ const BrowseCars = () => {
         <Link to="/" className="fixed top-6 left-6 p-2 text-gray-700 hover:text-primary transition-colors">
           <Home size={24} />
         </Link>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div key={i} className="space-y-4">
               <Skeleton className="h-48 w-full" />
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-2/3" />
+              <div className="flex gap-2">
+                <Skeleton className="h-10 w-1/2" />
+                <Skeleton className="h-10 w-1/2" />
+              </div>
             </div>
           ))}
         </div>
@@ -154,36 +167,46 @@ const BrowseCars = () => {
       </Link>
       <MarketplaceHero />
       <div className="container mx-auto px-4 py-12">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-          <h2 className="text-3xl font-bold mb-4 md:mb-0">Available Cars for Auction</h2>
-          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-2"
-              onClick={() => setShowFilters(!showFilters)}
+        <h2 className="text-3xl font-bold mb-6">Available Cars for Auction</h2>
+        
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
+          <div className="relative flex-grow">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Input
+              placeholder="Search by make, model or title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <SlidersHorizontal size={16} />
+            {showFilters ? "Hide Filters" : "Show Filters"}
+          </Button>
+          
+          <div className="w-full md:w-[200px]">
+            <Select
+              value={sortOption}
+              onValueChange={(value) => setSortOption(value)}
             >
-              <SlidersHorizontal size={16} />
-              {showFilters ? "Hide Filters" : "Show Filters"}
-            </Button>
-            <div className="w-full sm:w-[200px]">
-              <Select
-                value={sortOption}
-                onValueChange={(value) => setSortOption(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest First</SelectItem>
-                  <SelectItem value="price-low-high">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high-low">Price: High to Low</SelectItem>
-                  <SelectItem value="year-new-old">Year: New to Old</SelectItem>
-                  <SelectItem value="year-old-new">Year: Old to New</SelectItem>
-                  <SelectItem value="mileage-low-high">Mileage: Low to High</SelectItem>
-                  <SelectItem value="mileage-high-low">Mileage: High to Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <SelectTrigger>
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="price-low-high">Price: Low to High</SelectItem>
+                <SelectItem value="price-high-low">Price: High to Low</SelectItem>
+                <SelectItem value="year-new-old">Year: New to Old</SelectItem>
+                <SelectItem value="year-old-new">Year: Old to New</SelectItem>
+                <SelectItem value="mileage-low-high">Mileage: Low to High</SelectItem>
+                <SelectItem value="mileage-high-low">Mileage: High to Low</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -194,18 +217,15 @@ const BrowseCars = () => {
         )}
 
         {listings && listings.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings.map((listing) => (
-              <VehicleListings 
-                key={listing.id} 
-                listings={[listing]} 
-                onSelectCar={setSelectedCar} 
-              />
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <VehicleListings 
+              listings={listings} 
+              onSelectCar={setSelectedCar} 
+            />
           </div>
         ) : (
           <p className="text-center text-muted-foreground py-12">
-            {Object.keys(filters).length > 0 
+            {Object.keys(filters).length > 0 || searchQuery
               ? "No auctions match your filters. Try adjusting your criteria."
               : "No active auctions at this time."}
           </p>

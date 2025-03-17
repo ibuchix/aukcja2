@@ -1,7 +1,11 @@
+
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { Clock, Coin, Info } from "lucide-react";
 import { CarListing } from "@/types/cars";
-import VehicleCard from "@/components/VehicleCard";
+import { formatCurrency } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 interface VehicleListingsProps {
   listings: CarListing[] | undefined;
@@ -19,44 +23,92 @@ const VehicleListings = ({ listings, onSelectCar }: VehicleListingsProps) => {
     return "/placeholder.svg";
   };
 
-  return (
-    <div className="container mx-auto px-4 py-16">
-      <div className="flex justify-between items-center mb-8">
-        <div className="space-y-2">
-          <h2 className="text-3xl font-bold">Available Vehicles</h2>
-          <p className="text-subtitle-text">Find your next perfect match</p>
-        </div>
-        <button className="flex items-center gap-2 text-iris hover:text-primary transition-colors">
-          <span>View all</span>
-          <ArrowRight size={20} />
-        </button>
-      </div>
+  const formatAuctionEndTime = (endTime: string | null | undefined) => {
+    if (!endTime) return "N/A";
+    return format(new Date(endTime), "MMM dd, yyyy HH:mm");
+  };
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {listings?.map((car) => (
-          <motion.div
-            key={car.id}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.2 }}
-            onClick={() => onSelectCar(car)}
-            className="cursor-pointer"
-          >
-            <VehicleCard
-              image={getPrimaryImage(car)}
-              name={`${car.year || "N/A"} ${car.make || "Unknown"} ${
-                car.model || "Model"
-              }`}
-              price={car.price}
-              mileage={car.mileage}
-              transmission={car.transmission}
-              year={car.year}
+  return (
+    <>
+      {listings?.map((car) => (
+        <motion.div
+          key={car.id}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.2 }}
+          className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow border border-gray-200"
+        >
+          <div className="relative">
+            <img
+              src={getPrimaryImage(car)}
+              alt={`${car.make} ${car.model}`}
+              className="w-full h-48 object-cover"
             />
-          </motion.div>
-        ))}
-      </div>
-    </div>
+            <div className="absolute top-2 right-2">
+              <Badge variant="secondary" className="bg-white text-primary font-bold">
+                {car.current_bid ? formatCurrency(car.current_bid) : formatCurrency(car.price)}
+              </Badge>
+            </div>
+          </div>
+          
+          <div className="p-4">
+            <h3 className="text-lg font-semibold truncate">
+              {car.year} {car.make} {car.model}
+            </h3>
+            
+            <div className="mt-2 space-y-2 text-sm text-gray-600">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <Coin size={16} className="text-gray-400" />
+                  <span>Current Bid:</span>
+                </div>
+                <span className="font-medium">
+                  {car.current_bid ? formatCurrency(car.current_bid) : "No bids yet"}
+                </span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <Clock size={16} className="text-gray-400" />
+                  <span>Ends:</span>
+                </div>
+                <span className="font-medium">
+                  {formatAuctionEndTime(car.auction_end_time)}
+                </span>
+              </div>
+              
+              {car.mileage !== undefined && (
+                <div className="flex items-center justify-between">
+                  <span>Mileage:</span>
+                  <span className="font-medium">{car.mileage.toLocaleString()} km</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-4 flex justify-between items-center">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-1/2"
+                onClick={() => onSelectCar(car)}
+              >
+                <Info size={16} className="mr-1" />
+                Details
+              </Button>
+              
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="w-1/2 ml-2"
+                onClick={() => onSelectCar(car)}
+              >
+                View Auction
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      ))}
+    </>
   );
 };
 
