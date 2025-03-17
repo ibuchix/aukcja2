@@ -5,6 +5,7 @@ import { Building2, User as UserIcon, FileText, MapPin, BadgeCheck, AlertCircle,
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { formatNameForDisplay, getValueWithFallback } from "@/utils/dealer-profile-utils/formatters";
 import { useAuth } from "@/contexts/AuthContext";
