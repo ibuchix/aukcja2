@@ -1,7 +1,7 @@
 
 import { MapPin, Phone } from "lucide-react";
 
-interface DealerHeaderProps {
+export interface DealerHeaderProps {
   profile: any;
   isLoading: boolean;
   error: string | null;

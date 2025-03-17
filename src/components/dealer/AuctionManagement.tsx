@@ -11,7 +11,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AuctionTable } from "./auction/AuctionTable";
 import { useAuctionQueries } from "./auction/useAuctionQueries";
 
-export const AuctionManagement = ({ dealerId }: { dealerId: string }) => {
+interface AuctionManagementProps {
+  dealerId: string;
+}
+
+export const AuctionManagement = ({ dealerId }: AuctionManagementProps) => {
   const {
     activeAuctions,
     loadingActive,

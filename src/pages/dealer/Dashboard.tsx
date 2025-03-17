@@ -1,10 +1,9 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MainDashboard } from "@/components/dealer/dashboard/MainDashboard";
 import { DealerHeader } from "@/components/dealer/DealerHeader";
+import { MainDashboard } from "@/components/dealer/dashboard/MainDashboard";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchDealerProfile } from "@/contexts/auth/authUtils";

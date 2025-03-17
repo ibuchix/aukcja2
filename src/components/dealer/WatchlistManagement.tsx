@@ -26,17 +26,17 @@ interface WatchlistCar extends CarListing {
   watchlist_id: string;
 }
 
-export const WatchlistManagement = () => {
+interface WatchlistManagementProps {
+  dealerId: string;
+}
+
+export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: watchlistedCars, isLoading } = useQuery({
-    queryKey: ["watchlistedCars"],
+    queryKey: ["watchlistedCars", dealerId],
     queryFn: async () => {
-      // Get current user's ID
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
-      
       const { data: watchlistData, error } = await supabase
         .from('dealer_watchlist')
         .select(`
@@ -55,7 +55,7 @@ export const WatchlistManagement = () => {
             reserve_price
           )
         `)
-        .eq('buyer_id', user.id);
+        .eq('buyer_id', dealerId);
 
       if (error) throw error;
       
@@ -80,7 +80,7 @@ export const WatchlistManagement = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["watchlistedCars"] });
+      queryClient.invalidateQueries({ queryKey: ["watchlistedCars", dealerId] });
       toast({
         title: "Car removed from watchlist",
         description: "The car has been removed from your watchlist.",
