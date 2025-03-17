@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { Coins, Clock, Info } from "lucide-react";
+import { Coins, Clock, Info, ShieldAlert } from "lucide-react";
 import { CarListing } from "@/types/cars";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,26 @@ const VehicleListings = ({ listings, onSelectCar }: VehicleListingsProps) => {
     return format(new Date(endTime), "MMM dd, yyyy HH:mm");
   };
 
+  const getTimeRemaining = (endTime: string | null | undefined) => {
+    if (!endTime) return null;
+    
+    const end = new Date(endTime);
+    const now = new Date();
+    const diff = end.getTime() - now.getTime();
+    
+    if (diff <= 0) return "Ended";
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    
+    if (days > 0) {
+      return `${days}d ${hours}h left`;
+    } else {
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      return `${hours}h ${minutes}m left`;
+    }
+  };
+
   return (
     <>
       {listings?.map((car) => (
@@ -49,6 +69,23 @@ const VehicleListings = ({ listings, onSelectCar }: VehicleListingsProps) => {
                 {car.current_bid ? formatCurrency(car.current_bid) : formatCurrency(car.price)}
               </Badge>
             </div>
+            
+            {car.reserve_price && (
+              <div className="absolute bottom-2 right-2">
+                <Badge variant="outline" className="bg-white/80 border-primary text-primary text-xs">
+                  <ShieldAlert size={12} className="mr-1" />
+                  Reserve: {formatCurrency(car.reserve_price)}
+                </Badge>
+              </div>
+            )}
+            
+            {car.auction_end_time && (
+              <div className="absolute bottom-2 left-2">
+                <Badge variant="outline" className="bg-white/80 border-amber-500 text-amber-700 text-xs">
+                  {getTimeRemaining(car.auction_end_time)}
+                </Badge>
+              </div>
+            )}
           </div>
           
           <div className="p-4">
