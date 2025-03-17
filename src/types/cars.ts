@@ -35,4 +35,5 @@ export interface CarListing {
   updated_at?: string;
   status?: string | null;
   is_draft?: boolean;
+  current_bid?: number; // Added this property to fix the error
 }

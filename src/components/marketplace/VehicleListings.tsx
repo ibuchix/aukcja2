@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { Clock, Coin, Info } from "lucide-react";
+import { Coins, Clock, Info } from "lucide-react";
 import { CarListing } from "@/types/cars";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,7 @@ const VehicleListings = ({ listings, onSelectCar }: VehicleListingsProps) => {
             <div className="mt-2 space-y-2 text-sm text-gray-600">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
-                  <Coin size={16} className="text-gray-400" />
+                  <Coins size={16} className="text-gray-400" />
                   <span>Current Bid:</span>
                 </div>
                 <span className="font-medium">
