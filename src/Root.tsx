@@ -10,6 +10,7 @@ import Index from "@/pages/Index";
 import HowItWorks from "@/pages/HowItWorks";
 import { Toaster } from "@/components/ui/toaster";
 import BrowseCars from "@/pages/BrowseCars";
+import { DealerBids } from "@/components/dealer/DealerBids"; // Import the DealerBids component
 
 // Create a layout component that includes AuthProviderWithRouter
 function Layout({ children }: { children: React.ReactNode }) {
@@ -55,6 +56,17 @@ const router = createBrowserRouter([
       <Layout>
         <ProtectedRoute>
           <DealerProfileManagement />
+        </ProtectedRoute>
+      </Layout>
+    ),
+  },
+  // Add the new route for dealer/bids
+  {
+    path: "/dealer/bids",
+    element: (
+      <Layout>
+        <ProtectedRoute>
+          <DealerBids />
         </ProtectedRoute>
       </Layout>
     ),
