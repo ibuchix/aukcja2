@@ -15,6 +15,12 @@ export const useAuctionQueries = (dealerId: string) => {
           auction_end_time,
           auction_status,
           reserve_price,
+          price,
+          make,
+          model,
+          year,
+          mileage,
+          current_bid,
           highest_bid:bids(amount, dealer_id)
         `)
         .eq("is_auction", true)
@@ -59,6 +65,12 @@ export const useAuctionQueries = (dealerId: string) => {
           auction_end_time,
           auction_status,
           reserve_price,
+          price,
+          make,
+          model,
+          year,
+          mileage,
+          current_bid,
           highest_bid:bids(amount, dealer_id)
         `)
         .eq("is_auction", true)
@@ -86,6 +98,12 @@ export const useAuctionQueries = (dealerId: string) => {
           auction_end_time,
           auction_status,
           reserve_price,
+          price,
+          make,
+          model,
+          year,
+          mileage,
+          current_bid,
           highest_bid:bids(amount, dealer_id),
           my_bid:bids!inner(amount, status)
         `)
