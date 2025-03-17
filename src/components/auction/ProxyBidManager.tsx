@@ -23,6 +23,7 @@ export const ProxyBidManager = ({
   const [maxBid, setMaxBid] = useState<string>("");
   const [existingProxyBid, setExistingProxyBid] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   // Fetch existing proxy bid for this car
@@ -57,7 +58,10 @@ export const ProxyBidManager = ({
   }, [carId, dealerId]);
 
   const handleSetMaxBid = async () => {
+    if (isSubmitting) return; // Prevent multiple submissions
+    
     try {
+      setIsSubmitting(true);
       const numericMaxBid = parseFloat(maxBid);
       if (isNaN(numericMaxBid)) {
         throw new Error("Please enter a valid number");
@@ -72,6 +76,7 @@ export const ProxyBidManager = ({
         throw new Error(`Bid must be divisible by the minimum increment of $${minimumIncrement}`);
       }
 
+      // Use upsert with onConflict to handle concurrent submissions
       const { error } = await supabase
         .from('proxy_bids')
         .upsert({
@@ -96,11 +101,16 @@ export const ProxyBidManager = ({
         description: error instanceof Error ? error.message : "Failed to set maximum bid",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleRemoveMaxBid = async () => {
+    if (isSubmitting) return; // Prevent multiple submissions
+    
     try {
+      setIsSubmitting(true);
       const { error } = await supabase
         .from('proxy_bids')
         .delete()
@@ -122,6 +132,8 @@ export const ProxyBidManager = ({
         description: error instanceof Error ? error.message : "Failed to remove maximum bid",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -168,14 +180,22 @@ export const ProxyBidManager = ({
                 min={currentHighestBid + minimumIncrement}
                 step={minimumIncrement}
                 className="flex-1"
+                disabled={isSubmitting}
               />
-              <Button onClick={handleSetMaxBid}>
-                Set Max Bid
+              <Button 
+                onClick={handleSetMaxBid}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Setting..." : "Set Max Bid"}
               </Button>
               
               {existingProxyBid && (
-                <Button variant="outline" onClick={handleRemoveMaxBid}>
-                  Remove Max Bid
+                <Button 
+                  variant="outline" 
+                  onClick={handleRemoveMaxBid}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Removing..." : "Remove Max Bid"}
                 </Button>
               )}
             </div>
