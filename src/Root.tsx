@@ -9,6 +9,7 @@ import CompleteRegistration from "@/pages/CompleteRegistration";
 import Index from "@/pages/Index";
 import HowItWorks from "@/pages/HowItWorks";
 import { Toaster } from "@/components/ui/toaster";
+import BrowseCars from "@/pages/BrowseCars";
 
 // Create a layout component that includes AuthProviderWithRouter
 function Layout({ children }: { children: React.ReactNode }) {
@@ -33,6 +34,10 @@ const router = createBrowserRouter([
   {
     path: "/how-it-works",
     element: <Layout><HowItWorks /></Layout>,
+  },
+  {
+    path: "/browse-cars",
+    element: <Layout><BrowseCars /></Layout>,
   },
   {
     path: "/dealer/dashboard",
