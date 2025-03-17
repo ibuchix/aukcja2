@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/auth/context";
 import { useWelcomeDashboardData } from "@/hooks/useWelcomeDashboardData";
 import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
@@ -14,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard";
 import { DealerProfileProvider } from "@/contexts/DealerProfileContext";
+import { DealerBids } from "@/components/dealer/DealerBids";
 
 export default function DealerDashboard() {
   const { user, isLoading: isAuthLoading, refreshSession } = useAuth();
@@ -105,6 +105,10 @@ export default function DealerDashboard() {
             <QuickActions />
           </div>
         </div>
+        
+        {dealerProfile && (
+          <DealerBids />
+        )}
         
         <StatsSection recentActivity={recentActivity} />
         
