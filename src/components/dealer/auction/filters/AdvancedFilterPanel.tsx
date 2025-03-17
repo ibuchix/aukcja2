@@ -1,14 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { FilterFields } from "./FilterFields";
-import { AuctionFilters } from "./types";
-
-interface AdvancedFilterPanelProps {
-  showFilters: boolean;
-  filters: AuctionFilters;
-  onFilterChange: (key: keyof AuctionFilters, value: string) => void;
-  clearFilters: () => void;
-}
+import { AdvancedFilterPanelProps } from "../types";
 
 export const AdvancedFilterPanel = ({ 
   showFilters, 

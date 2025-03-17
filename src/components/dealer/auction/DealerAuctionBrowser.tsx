@@ -1,16 +1,11 @@
-
 import { useState, useEffect } from "react";
-import { Auction } from "./types";
 import { AuctionTable } from "./AuctionTable";
-import { DealerAuctionFilters, AuctionFilters } from "./DealerAuctionFilters";
+import { DealerAuctionFilters } from "./DealerAuctionFilters";
 import { AuctionPagination } from "./AuctionPagination";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuctionBrowser } from "./hooks/useAuctionBrowser";
 import { AuctionEmptyState } from "./components/AuctionEmptyState";
-
-interface DealerAuctionBrowserProps {
-  dealerId: string;
-}
+import { AuctionFilters, DealerAuctionBrowserProps } from "./types";
 
 export const DealerAuctionBrowser = ({ dealerId }: DealerAuctionBrowserProps) => {
   const [filters, setFilters] = useState<AuctionFilters>({});
@@ -18,7 +13,6 @@ export const DealerAuctionBrowser = ({ dealerId }: DealerAuctionBrowserProps) =>
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
 
-  // Reset to page 1 when filters or search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [filters, searchQuery, sortOption]);

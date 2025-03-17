@@ -6,12 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SortOption } from "./types";
-
-interface SortSelectorProps {
-  sortOption: string;
-  onSortChange: (sort: string) => void;
-}
+import { SortOption, SortSelectorProps } from "../types";
 
 export const sortOptions: SortOption[] = [
   { value: "ending-soon", label: "Ending Soon" },

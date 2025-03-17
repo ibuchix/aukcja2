@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import {
   Table,
@@ -8,17 +7,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Auction } from "./types";
+import { AuctionTableProps } from "./types";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Eye } from "lucide-react";
 import { AuctionWatchlistButton } from "@/components/auction/AuctionWatchlistButton";
-
-interface AuctionTableProps {
-  auctions: Auction[] | undefined;
-  isLoading: boolean;
-  dealerId: string;
-}
 
 export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProps) => {
   if (isLoading) {

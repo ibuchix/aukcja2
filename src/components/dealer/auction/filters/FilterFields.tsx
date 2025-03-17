@@ -1,7 +1,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FilterFieldProps } from "./types";
+import { FilterFieldProps } from "../types";
 
 export const FilterFields = ({ filters, onFilterChange }: FilterFieldProps) => {
   return (

@@ -5,15 +5,7 @@ import { Button } from "@/components/ui/button";
 import { SearchBar } from "./filters/SearchBar";
 import { SortSelector } from "./filters/SortSelector";
 import { AdvancedFilterPanel } from "./filters/AdvancedFilterPanel";
-import { AuctionFilters } from "./filters/types";
-
-interface DealerAuctionFiltersProps {
-  onFiltersChange: (filters: AuctionFilters) => void;
-  onSortChange: (sort: string) => void;
-  onSearchChange: (search: string) => void;
-  sortOption: string;
-  searchQuery: string;
-}
+import { AuctionFilters, DealerAuctionFiltersProps } from "./types";
 
 export const DealerAuctionFilters = ({
   onFiltersChange,
@@ -71,4 +63,4 @@ export const DealerAuctionFilters = ({
 };
 
 // Re-export for backward compatibility
-export type { AuctionFilters } from "./filters/types";
+export type { AuctionFilters } from "./types";
