@@ -7,6 +7,7 @@ export interface ProxyBid {
   car_id: string;
   dealer_id: string;
   max_bid_amount: number;
+  last_processed_amount?: number;
   created_at: string;
   updated_at: string;
 }

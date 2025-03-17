@@ -1,16 +1,12 @@
 
 import { createServiceClient } from '../_shared/supabase-client.ts';
+import { executeWithRetry } from '../_shared/retry-utils.ts';
 import { Car, ProcessResult, ProxyBid, ProcessSummary } from './types.ts';
-import { 
-  createCheckpointLogger, 
-  logTransactionStart, 
-  logTransactionComplete, 
-  logTransactionError,
-  logProxyBid
-} from './logging.ts';
+import { createCheckpointLogger, logProxyBid } from './logging.ts';
+import { processAuctionTransaction } from './transaction.ts';
 
 /**
- * Process a single auction with a transaction ID to track progress
+ * Process a single auction with transaction tracking
  */
 export async function processAuctionWithTransaction(
   auction: Car, 
@@ -219,15 +215,15 @@ export async function processProxyBids(): Promise<ProcessSummary> {
     
     // 2. Process each auction
     for (const auction of activeAuctions || []) {
-      const transactionId = crypto.randomUUID();
       try {
-        console.log(`Starting transaction ${transactionId} for auction ${auction.id}`);
+        // Process the auction with transaction handling
+        const result = await processAuctionTransaction(
+          auction,
+          async (auction, checkpoint, transactionId) => {
+            return await processAuctionWithTransaction(auction, transactionId);
+          }
+        );
         
-        // Log transaction start
-        await logTransactionStart(auction.id, transactionId);
-        
-        const result = await processAuctionWithTransaction(auction, transactionId);
-        result.transaction_id = transactionId;
         results.push(result);
         
         if (result.processed) {
@@ -235,21 +231,12 @@ export async function processProxyBids(): Promise<ProcessSummary> {
         } else {
           skipped++;
         }
-        
-        // Log transaction completion
-        await logTransactionComplete(auction.id, transactionId, result.processed, result.reason);
-        
       } catch (err) {
         console.error(`Error processing auction ${auction.id}:`, err);
-        
-        // Log transaction error
-        await logTransactionError(auction.id, transactionId, err);
-        
         results.push({
           carId: auction.id,
           processed: false,
-          reason: `Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
-          transaction_id: transactionId
+          reason: `Error: ${err instanceof Error ? err.message : 'Unknown error'}`
         });
         errors++;
       }

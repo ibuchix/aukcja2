@@ -4,12 +4,12 @@ import { corsHeaders } from '../_shared/cors.ts';
 import { handleError, withErrorHandling } from '../_shared/error-handling.ts';
 import { checkForRateLimit } from '../_shared/rate-limiter.ts';
 import { processProxyBids } from './processor.ts';
-import { ProcessSummary } from './types.ts';
+import { handleProxyBidRequest, createCorsResponse, createRateLimitResponse } from './api.ts';
 
 serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return createCorsResponse();
   }
 
   return withErrorHandling(async () => {
@@ -18,44 +18,11 @@ serve(async (req) => {
     const rateLimitResult = await checkForRateLimit(clientIP, 'proxy-bidding-processor', 60, 5);
     
     if (rateLimitResult.isLimited) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Too many requests', 
-          retryAfter: rateLimitResult.retryAfter 
-        }),
-        { 
-          status: 429,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-            'Retry-After': rateLimitResult.retryAfter.toString()
-          }
-        }
-      );
+      return createRateLimitResponse(rateLimitResult.retryAfter);
     }
     
-    // Check if this is a manual invocation or automated
-    const isManual = req.method === 'POST';
-    
-    // Process the proxy bids
-    const result: ProcessSummary = await processProxyBids();
-    
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        processed: result.processed,
-        skipped: result.skipped,
-        errors: result.errors,
-        results: isManual ? result.results : undefined,
-        timestamp: new Date().toISOString()
-      }),
-      { 
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    // Process the proxy bids through the API handler
+    return await handleProxyBidRequest(req, processProxyBids);
   }, {
     module: 'proxy-bidding-processor',
     action: 'process'

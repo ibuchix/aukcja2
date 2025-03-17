@@ -1,84 +1,62 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { CarListing, CarFeatures } from "@/types/cars";
 import { Skeleton } from "@/components/ui/skeleton";
-import VehicleListings from "@/components/marketplace/VehicleListings";
+import { Database } from "@/integrations/supabase/types";
+import { CarListing } from "@/types/cars";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
-import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import AuctionFilters, { AuctionFilters as FilterType } from "@/components/marketplace/AuctionFilters";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import MarketplaceHero from "@/components/marketplace/MarketplaceHero";
+import VehicleListings from "@/components/marketplace/VehicleListings";
+import TestimonialsSection from "@/components/marketplace/TestimonialsSection";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
-const calculateDistance = (lat1?: number, lon1?: number, lat2?: number, lon2?: number) => {
-  if (!lat1 || !lon1 || !lat2 || !lon2) return null;
-  
-  const R = 6371; // Earth's radius in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-};
+type CarRow = Database["public"]["Tables"]["cars"]["Row"];
 
 const Auctions = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
-  const [filters, setFilters] = useState<FilterType>({});
-  const [bidDialogOpen, setBidDialogOpen] = useState<boolean>(false);
+  const { toast } = useToast();
 
-  const { data: activeAuctions, isLoading } = useQuery({
-    queryKey: ["auctions", filters],
+  const { data: listings, isLoading } = useQuery({
+    queryKey: ["auctionListings"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cars")
         .select("*")
         .eq("is_auction", true)
-        .eq("auction_status", "active")
-        .order("auction_end_time", { ascending: true });
+        .eq("is_draft", false)
+        .eq("auction_status", "active");
 
       if (error) throw error;
 
-      return (data || [])
-        .map(car => {
-          const carFeatures = typeof car.features === 'string' 
-            ? JSON.parse(car.features) 
-            : car.features as Record<string, boolean>;
+      const transformedData: CarListing[] = (data || []).map((car: CarRow) => ({
+        id: car.id,
+        title: car.title,
+        price: car.price,
+        make: car.make,
+        model: car.model,
+        year: car.year,
+        mileage: car.mileage || 0,
+        images: car.images,
+        description: car.description || null,
+        features: car.features as CarListing["features"],
+        transmission: car.transmission,
+        service_history_files: car.service_history_files || null,
+        required_photos: car.required_photos as Record<string, string | null>,
+        is_auction: car.is_auction,
+        current_bid: car.current_bid || 0,
+        auction_end_time: car.auction_end_time,
+        auction_status: car.auction_status
+      }));
 
-          const features: CarFeatures = {
-            satNav: Boolean(carFeatures?.satNav),
-            heatedSeats: Boolean(carFeatures?.heatedSeats),
-            panoramicRoof: Boolean(carFeatures?.panoramicRoof),
-            reverseCamera: Boolean(carFeatures?.reverseCamera),
-            upgradedSound: Boolean(carFeatures?.upgradedSound)
-          };
-
-          return {
-            ...car,
-            features,
-            distance: null,
-          } as CarListing;
-        })
-        .filter(car => {
-          if (filters.priceMin && car.price < filters.priceMin) return false;
-          if (filters.priceMax && car.price > filters.priceMax) return false;
-          if (filters.make && !car.make?.toLowerCase().includes(filters.make.toLowerCase())) return false;
-          if (filters.model && !car.model?.toLowerCase().includes(filters.model.toLowerCase())) return false;
-          if (filters.yearMin && car.year && car.year < filters.yearMin) return false;
-          if (filters.yearMax && car.year && car.year > filters.yearMax) return false;
-          if (filters.mileageMin && car.mileage < filters.mileageMin) return false;
-          if (filters.mileageMax && car.mileage > filters.mileageMax) return false;
-          return true;
-        }) as CarListing[];
+      return transformedData;
     },
   });
 
+  // Fetch dealer ID for the current user
   const { data: dealerData } = useQuery({
     queryKey: ["dealerProfile"],
     queryFn: async () => {
@@ -96,84 +74,62 @@ const Auctions = () => {
     },
   });
 
-  const handleViewBidding = (car: CarListing) => {
-    setSelectedCar(car);
-    setBidDialogOpen(true);
+  // Action button for auctions
+  const auctionActionButton = (car: CarListing) => {
+    return (
+      <Button
+        onClick={() => setSelectedCar(car)}
+        variant="default"
+        className="w-full mt-2"
+      >
+        View Auction
+      </Button>
+    );
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="space-y-4">
-                <Skeleton className="h-48 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-              </div>
-            ))}
-          </div>
+      <div className="container mx-auto px-4 py-8">
+        <Link to="/" className="fixed top-6 left-6 p-2 text-gray-700 hover:text-primary transition-colors">
+          <Home size={24} />
+        </Link>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="space-y-4">
+              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          ))}
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto px-4 py-16">
-        <div className="space-y-4 mb-8">
-          <h1 className="text-4xl font-bold font-oswald">Live Auctions</h1>
-          <p className="text-subtitle-text">
-            Browse and bid on vehicles currently up for auction
-          </p>
-        </div>
-        
-        <div className="mb-8">
-          <AuctionFilters onFiltersChange={setFilters} />
-        </div>
-
-        <VehicleListings 
-          listings={activeAuctions || []}
-          onSelectCar={setSelectedCar}
-          actionButton={(car) => 
-            dealerData?.id && (
-              <Button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleViewBidding(car);
-                }}
-                className="w-full mt-2"
-              >
-                Bid Now
-              </Button>
-            )
-          }
-        />
+      <Link to="/" className="fixed top-6 left-6 p-2 text-gray-700 hover:text-primary transition-colors z-50">
+        <Home size={24} />
+      </Link>
+      <MarketplaceHero />
+      <div className="container mx-auto px-4 py-12">
+        <h2 className="text-3xl font-bold mb-8 text-center">Active Auctions</h2>
+        {listings && listings.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {listings.map((listing) => (
+              <VehicleListings 
+                key={listing.id} 
+                listings={[listing]} 
+                onSelectCar={setSelectedCar} 
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-muted-foreground py-12">No active auctions at this time.</p>
+        )}
       </div>
-
-      <Dialog open={bidDialogOpen} onOpenChange={setBidDialogOpen}>
-        <DialogContent className="sm:max-w-xl">
-          {selectedCar && dealerData?.id && (
-            <MaxBidInterface
-              carId={selectedCar.id}
-              dealerId={dealerData.id}
-              currentHighestBid={selectedCar.current_bid || selectedCar.price}
-              minimumIncrement={selectedCar.minimum_bid_increment || 100}
-              auctionEndTime={selectedCar.auction_end_time || new Date().toISOString()}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <CarDetailsDialog 
-        car={selectedCar} 
-        onClose={() => setSelectedCar(null)} 
-      />
-      <Footer />
+      <TestimonialsSection />
+      <CarDetailsDialog car={selectedCar} onClose={() => setSelectedCar(null)} />
     </div>
   );
 };
