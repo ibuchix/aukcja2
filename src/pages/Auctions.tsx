@@ -41,10 +41,10 @@ const Auctions = () => {
         year: car.year,
         mileage: car.mileage || 0,
         images: car.images,
-        description: car.description || null,
+        description: null, // Set default value for optional property
         features: car.features as CarListing["features"],
         transmission: car.transmission,
-        service_history_files: car.service_history_files || null,
+        service_history_files: null, // Set default value for optional property
         required_photos: car.required_photos as Record<string, string | null>,
         is_auction: car.is_auction,
         current_bid: car.current_bid || 0,

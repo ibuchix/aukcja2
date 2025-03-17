@@ -37,12 +37,12 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
 
         if (bidError) throw bidError;
 
-        // Fetch proxy bid audit logs
+        // Fetch proxy bid audit logs - specify the action as string to avoid type issues
         const { data: proxyLogs, error: proxyError } = await supabase
           .from("audit_logs")
           .select("*")
           .eq("entity_id", carId)
-          .eq("action", "proxy_bid")
+          .eq("action", "auto_proxy_bid") // Changed from "proxy_bid" to "auto_proxy_bid" which exists in the enum
           .order("created_at", { ascending: false });
 
         if (proxyError) throw proxyError;

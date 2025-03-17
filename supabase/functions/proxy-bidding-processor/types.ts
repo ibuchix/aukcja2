@@ -44,3 +44,30 @@ export interface CheckpointDetails extends Record<string, any> {
   stage: string;
   timestamp: string;
 }
+
+// Add the audit log action types for better type safety
+export type AuditLogAction = 
+  | "login" 
+  | "logout" 
+  | "create" 
+  | "update" 
+  | "delete" 
+  | "suspend" 
+  | "reinstate" 
+  | "verify" 
+  | "reject" 
+  | "approve" 
+  | "process_auctions" 
+  | "auction_closed" 
+  | "auto_proxy_bid"
+  | "proxy_bid" 
+  | "proxy_bid_checkpoint"
+  | "start_auction" 
+  | "auction_close_failed" 
+  | "auction_close_system_error"
+  | "system_reset_failed" 
+  | "recovery_failed" 
+  | "manual_retry" 
+  | "auction_recovery" 
+  | "system_health_check" 
+  | "system_alert";
