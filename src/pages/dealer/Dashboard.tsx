@@ -9,6 +9,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchDealerProfile } from "@/contexts/auth/authUtils";
 import { AuctionNotificationHandler } from "@/components/auction/AuctionNotificationHandler";
+import { DealerAuctionBrowser } from "@/components/dealer/auction/DealerAuctionBrowser";
 
 const Dashboard = () => {
   const [profile, setProfile] = useState<any>(null);
@@ -50,6 +51,13 @@ const Dashboard = () => {
         )}
         <DealerHeader profile={profile} isLoading={isLoading} error={error} />
         <MainDashboard profile={profile} isLoading={isLoading} error={error} />
+        
+        {/* Add our new auction browser component */}
+        {profile && profile.id && (
+          <div className="mt-8">
+            <DealerAuctionBrowser dealerId={profile.id} />
+          </div>
+        )}
       </DashboardLayout>
     </>
   );
