@@ -21,3 +21,15 @@ export interface Auction {
   };
   lost_by?: number;
 }
+
+export interface AuctionFilters {
+  priceMin?: number;
+  priceMax?: number;
+  make?: string;
+  model?: string;
+  yearMin?: number;
+  yearMax?: number;
+  mileageMin?: number;
+  mileageMax?: number;
+  searchQuery?: string;
+}
