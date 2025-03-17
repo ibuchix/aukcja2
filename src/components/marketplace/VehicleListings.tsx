@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Coins, Clock, Info, ShieldAlert } from "lucide-react";
 import { CarListing } from "@/types/cars";
@@ -6,6 +5,8 @@ import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { useState } from "react";
+import CarDetailsDialog from "@/components/CarDetailsDialog";
 
 interface VehicleListingsProps {
   listings: CarListing[] | undefined;
@@ -13,6 +14,8 @@ interface VehicleListingsProps {
 }
 
 const VehicleListings = ({ listings, onSelectCar }: VehicleListingsProps) => {
+  const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
+  
   const getPrimaryImage = (car: CarListing): string => {
     if (car.required_photos?.front) {
       return car.required_photos.front;
@@ -46,6 +49,11 @@ const VehicleListings = ({ listings, onSelectCar }: VehicleListingsProps) => {
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       return `${hours}h ${minutes}m left`;
     }
+  };
+
+  const handleSelectCar = (car: CarListing) => {
+    setSelectedCar(car);
+    onSelectCar(car);
   };
 
   return (
@@ -127,7 +135,7 @@ const VehicleListings = ({ listings, onSelectCar }: VehicleListingsProps) => {
                 variant="outline" 
                 size="sm" 
                 className="w-1/2"
-                onClick={() => onSelectCar(car)}
+                onClick={() => handleSelectCar(car)}
               >
                 <Info size={16} className="mr-1" />
                 Details
@@ -137,7 +145,7 @@ const VehicleListings = ({ listings, onSelectCar }: VehicleListingsProps) => {
                 variant="default" 
                 size="sm" 
                 className="w-1/2 ml-2"
-                onClick={() => onSelectCar(car)}
+                onClick={() => handleSelectCar(car)}
               >
                 View Auction
               </Button>
@@ -145,6 +153,11 @@ const VehicleListings = ({ listings, onSelectCar }: VehicleListingsProps) => {
           </div>
         </motion.div>
       ))}
+      
+      <CarDetailsDialog 
+        car={selectedCar} 
+        onClose={() => setSelectedCar(null)}
+      />
     </>
   );
 };

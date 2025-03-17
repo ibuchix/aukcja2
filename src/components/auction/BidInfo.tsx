@@ -1,3 +1,4 @@
+
 import { DollarSign, TrendingUp } from "lucide-react";
 
 interface BidInfoProps {

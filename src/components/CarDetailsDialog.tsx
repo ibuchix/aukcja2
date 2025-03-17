@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -9,6 +10,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { CarListing } from "@/types/cars";
 import { formatCurrency } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
+import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
 import BasicSpecifications from "./car-details/BasicSpecifications";
 import ConditionAndFeatures from "./car-details/ConditionAndFeatures";
 import ServiceHistory from "./car-details/ServiceHistory";
@@ -22,8 +26,14 @@ interface CarDetailsDialogProps {
 }
 
 const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
+  const { isAuthenticated } = useAuth();
+  const { dealerProfile } = useCurrentDealerProfile();
+  
   if (!car) return null;
 
+  const minimumBidIncrement = car.minimum_bid_increment || 100;
+  const currentHighestBid = car.current_bid || car.price;
+  
   return (
     <Dialog open={!!car} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl">
@@ -33,7 +43,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
               {car.year} {car.make} {car.model}
             </span>
             <span className="text-2xl text-primary">
-              {formatCurrency(car.price)}
+              {formatCurrency(car.current_bid || car.price)}
             </span>
           </DialogTitle>
           <DialogDescription>
@@ -49,9 +59,23 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
             <Location car={car} />
             <AdditionalInfo car={car} />
             
-            <div className="pt-4">
-              <Button className="w-full">Place Bid</Button>
-            </div>
+            {isAuthenticated && dealerProfile ? (
+              <div className="mt-8 border-t pt-6">
+                <MaxBidInterface
+                  carId={car.id}
+                  dealerId={dealerProfile.id}
+                  currentHighestBid={currentHighestBid}
+                  minimumIncrement={minimumBidIncrement}
+                  auctionEndTime={car.auction_end_time || ""}
+                />
+              </div>
+            ) : (
+              <div className="pt-4">
+                <Button className="w-full" onClick={() => window.location.href = "/auth?tab=login"}>
+                  Sign In to Place Bid
+                </Button>
+              </div>
+            )}
           </div>
         </ScrollArea>
       </DialogContent>
