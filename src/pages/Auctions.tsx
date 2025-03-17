@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +10,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AuctionFilters, { AuctionFilters as FilterType } from "@/components/marketplace/AuctionFilters";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const calculateDistance = (lat1?: number, lon1?: number, lat2?: number, lon2?: number) => {
   if (!lat1 || !lon1 || !lat2 || !lon2) return null;

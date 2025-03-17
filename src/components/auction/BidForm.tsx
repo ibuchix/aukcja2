@@ -50,17 +50,22 @@ export const BidForm = ({
 
       if (error) throw error;
       
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to place bid');
+      // Check the response data structure properly
+      if (typeof data === 'object' && data !== null && 'success' in data) {
+        if (!data.success) {
+          throw new Error(data.error?.toString() || 'Failed to place bid');
+        }
+
+        toast({
+          title: "Bid Placed",
+          description: `Your bid of $${numericBidAmount.toLocaleString()} has been placed successfully`,
+        });
+
+        // Update the bid amount input field to be the current + minimum increment
+        setBidAmount((numericBidAmount + minimumIncrement).toString());
+      } else {
+        throw new Error('Invalid response from server');
       }
-
-      toast({
-        title: "Bid Placed",
-        description: `Your bid of $${numericBidAmount.toLocaleString()} has been placed successfully`,
-      });
-
-      // Update the bid amount input field to be the current + minimum increment
-      setBidAmount((numericBidAmount + minimumIncrement).toString());
     } catch (error) {
       toast({
         title: "Error",

@@ -1,25 +1,16 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { History, Bot, User } from "lucide-react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Database } from "@/integrations/supabase/types";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-type DatabaseBid = Database['public']['Tables']['bids']['Row'] & {
-  dealer: {
-    dealership_name: string | null;
-  } | null;
-};
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatDistanceToNow } from "date-fns";
+import { User, Bot } from "lucide-react";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface BidHistoryProps {
   carId: string;
@@ -27,87 +18,99 @@ interface BidHistoryProps {
 
 interface Bid {
   id: string;
+  car_id: string;
+  dealer_id: string;
   amount: number;
   created_at: string;
-  dealer: {
-    dealership_name: string;
-  };
-  status: string;
   is_proxy: boolean;
+  dealer_name?: string;
 }
 
 export const BidHistory = ({ carId }: BidHistoryProps) => {
-  const { data: bids, isLoading } = useQuery({
-    queryKey: ["auction-bids", carId],
-    queryFn: async () => {
+  const [bids, setBids] = useState<Bid[]>([]);
+  const [proxyBids, setProxyBids] = useState<Record<string, boolean>>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch bid history
+  useEffect(() => {
+    const fetchBidHistory = async () => {
       try {
-        // Try to get cached auction details
-        const { data, error } = await supabase.functions.invoke('auction-cache', {
-          body: { action: 'getAuctionDetails', carId }
-        });
+        const { data, error } = await supabase
+          .from('bids')
+          .select('*, dealers:dealer_id(company_name)')
+          .eq('car_id', carId)
+          .order('created_at', { ascending: false })
+          .limit(20);
 
         if (error) throw error;
-        return data.bids as Bid[];
+
+        // Transform the data to include dealer_name
+        const formattedBids = data.map(bid => ({
+          ...bid,
+          dealer_name: bid.dealers?.company_name || 'Unknown Dealer'
+        }));
+
+        setBids(formattedBids);
+        
+        // Check for proxy bid indicators from audit logs
+        fetchProxyBidIndicators(formattedBids);
       } catch (error) {
-        console.error('Cache fetch failed, falling back to direct query:', error);
-        
-        // Use explicit string literal for equality check
-        const { data: bidsData, error: bidsError } = await supabase
-          .from("bids")
-          .select(`
-            id,
-            amount,
-            created_at,
-            status,
-            dealer:dealers(dealership_name)
-          `)
-          .eq("car_id", carId as string);
-
-        if (bidsError) throw bidsError;
-        
-        if (!bidsData) return [];
-
-        // Query the audit logs to see which bids were made by proxy
-        const { data: proxyBidLogs } = await supabase
-          .from("audit_logs")
-          .select('details')
-          .eq('entity_type', 'car')
-          .eq('entity_id', carId)
-          .eq('action', 'proxy_bid');
-
-        // Create a Set of bid IDs that were made by proxy
-        const proxyBidIds = new Set(
-          proxyBidLogs
-            ?.filter(log => log.details && log.details.bid_id)
-            .map(log => log.details.bid_id) || []
-        );
-        
-        // Transform the data to match the Bid interface
-        return bidsData.map((bid: any) => ({
-          id: bid.id,
-          amount: bid.amount,
-          created_at: bid.created_at,
-          status: bid.status,
-          is_proxy: proxyBidIds.has(bid.id),
-          dealer: {
-            dealership_name: bid.dealer?.dealership_name || 'Unknown Dealer'
-          }
-        })) as Bid[];
+        console.error("Error fetching bid history:", error);
+      } finally {
+        setIsLoading(false);
       }
-    },
-    refetchInterval: 5000, // Refresh every 5 seconds
-  });
+    };
+
+    const fetchProxyBidIndicators = async (bidsList: Bid[]) => {
+      try {
+        const { data, error } = await supabase
+          .from('audit_logs')
+          .select('details, created_at')
+          .eq('entity_id', carId)
+          .in('action', ['proxy_bid', 'auto_proxy_bid'])
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Create a map of bid IDs that were placed by proxy
+        const proxyBidMap: Record<string, boolean> = {};
+        
+        if (data) {
+          data.forEach(log => {
+            if (log.details && typeof log.details === 'object') {
+              // If the details contain a bid_id, mark that bid as a proxy bid
+              const bidId = log.details.bid_id;
+              if (bidId) {
+                proxyBidMap[bidId.toString()] = true;
+              }
+            }
+          });
+        }
+        
+        setProxyBids(proxyBidMap);
+      } catch (error) {
+        console.error("Error fetching proxy bid indicators:", error);
+      }
+    };
+
+    if (carId) {
+      fetchBidHistory();
+    }
+  }, [carId]);
 
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-heading-sm font-oswald flex items-center gap-2">
-            <History className="h-5 w-5" />
-            Bid History
-          </CardTitle>
+          <CardTitle>Bid History</CardTitle>
         </CardHeader>
-        <CardContent>Loading bid history...</CardContent>
+        <CardContent>
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="w-full h-12" />
+            ))}
+          </div>
+        </CardContent>
       </Card>
     );
   }
@@ -115,64 +118,47 @@ export const BidHistory = ({ carId }: BidHistoryProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-heading-sm font-oswald flex items-center gap-2">
-          <History className="h-5 w-5" />
-          Bid History
-        </CardTitle>
+        <CardTitle>Bid History</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Dealer</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Time</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Type</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {bids?.map((bid) => (
-              <TableRow key={bid.id}>
-                <TableCell>{bid.dealer.dealership_name}</TableCell>
-                <TableCell>${bid.amount.toLocaleString()}</TableCell>
-                <TableCell>
-                  {format(new Date(bid.created_at), "MMM d, yyyy HH:mm")}
-                </TableCell>
-                <TableCell>
-                  {bid.status === "winning" ? (
-                    <span className="text-success font-medium">Winning</span>
-                  ) : (
-                    bid.status
-                  )}
-                </TableCell>
-                <TableCell>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        {bid.is_proxy ? (
-                          <span className="inline-flex items-center gap-1 text-slate-600">
-                            <Bot className="h-4 w-4" /> Auto
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-slate-600">
-                            <User className="h-4 w-4" /> Manual
-                          </span>
-                        )}
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {bid.is_proxy ? 
-                          "This bid was automatically placed by the proxy bidding system" : 
-                          "This bid was manually placed by the dealer"}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableCell>
-              </TableRow>
+        {bids.length === 0 ? (
+          <div className="text-center py-4 text-muted-foreground">
+            No bids have been placed yet.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {bids.map((bid) => (
+              <div key={bid.id} className="flex justify-between items-center border-b border-gray-100 pb-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">${bid.amount.toLocaleString()}</span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          {bid.is_proxy || proxyBids[bid.id] ? (
+                            <Bot size={16} className="text-blue-500" />
+                          ) : (
+                            <User size={16} className="text-gray-500" />
+                          )}
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {bid.is_proxy || proxyBids[bid.id] ? 
+                            'Placed by automatic proxy bidding' : 
+                            'Placed manually by user'}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="text-sm text-muted-foreground">{bid.dealer_name}</div>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(bid.created_at), { addSuffix: true })}
+                </div>
+              </div>
             ))}
-          </TableBody>
-        </Table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
-};
+}
