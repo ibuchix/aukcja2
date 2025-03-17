@@ -1,5 +1,6 @@
 
-import { MapPin, Phone } from "lucide-react";
+import { MapPin, Phone, BadgeCheck, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export interface DealerHeaderProps {
   profile: any;
@@ -18,7 +19,27 @@ export function DealerHeader({ profile, isLoading, error }: DealerHeaderProps) {
 
   return (
     <div className="mb-8">
-      <h1 className="text-3xl font-bold mb-2">{profile.dealership_name}</h1>
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="text-3xl font-bold">{profile.dealership_name}</h1>
+        
+        {/* Verification Status Badge */}
+        {profile && (
+          <div className="flex items-center">
+            {profile.is_verified ? (
+              <Badge variant="success" className="flex items-center gap-1 px-3 py-1">
+                <BadgeCheck className="h-4 w-4 mr-1" />
+                Verified Dealer
+              </Badge>
+            ) : (
+              <Badge variant="warning" className="flex items-center gap-1 px-3 py-1">
+                <Clock className="h-4 w-4 mr-1" />
+                {profile.verification_status || "Pending Verification"}
+              </Badge>
+            )}
+          </div>
+        )}
+      </div>
+      
       <div className="flex items-center space-x-2 text-subtitle-text">
         {profile.address && (
           <div className="flex items-center">

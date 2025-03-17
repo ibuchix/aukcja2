@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DealerHeader } from "@/components/dealer/DealerHeader";
+import { VerificationBanner } from "@/components/dealer/VerificationBanner";
 import { MainDashboard } from "@/components/dealer/dashboard/MainDashboard";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +45,9 @@ const Dashboard = () => {
       )}
       
       <DashboardLayout>
+        {profile && !profile.is_verified && (
+          <VerificationBanner verificationStatus={profile.verification_status || 'pending'} />
+        )}
         <DealerHeader profile={profile} isLoading={isLoading} error={error} />
         <MainDashboard profile={profile} isLoading={isLoading} error={error} />
       </DashboardLayout>

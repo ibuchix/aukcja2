@@ -43,10 +43,25 @@ export function DealerProfile() {
     return (
       <Card className="mb-6 shadow-sm">
         <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
-          <CardTitle className="flex items-center">
-            <UserIcon className="mr-2 h-5 w-5 text-primary" />
-            Dealer Profile
-          </CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center">
+              <UserIcon className="mr-2 h-5 w-5 text-primary" />
+              Dealer Profile
+            </CardTitle>
+            {displayProfile?.verificationStatus && (
+              displayProfile.isVerified ? (
+                <Badge variant="success" className="flex items-center gap-1">
+                  <BadgeCheck className="h-3.5 w-3.5 mr-1" />
+                  Verified
+                </Badge>
+              ) : (
+                <Badge variant="warning" className="flex items-center gap-1">
+                  <AlertCircle className="h-3.5 w-3.5 mr-1" />
+                  {displayProfile.verificationStatus}
+                </Badge>
+              )
+            )}
+          </div>
           <CardDescription>
             Your business profile information
           </CardDescription>
