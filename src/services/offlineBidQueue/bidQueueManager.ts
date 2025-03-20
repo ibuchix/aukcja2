@@ -1,14 +1,13 @@
-
 import { v4 as uuidv4 } from "uuid";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   QueuedBid, 
-  BidType, 
+  BidType,
   getBidQueue, 
   addBidToQueue, 
-  removeBidFromQueue, 
   updateBidInQueue 
 } from "./index";
+import { removeBidFromQueue } from "./storage"; 
 import { executeWithRetry } from "@/utils/retryUtils";
 
 // Queue a standard bid to be processed when online
@@ -71,13 +70,20 @@ const processStandardBid = async (bid: QueuedBid): Promise<boolean> => {
       })
     );
 
-    if (result && typeof result === 'object' && 'error' in result && result.error) {
+    if (typeof result === 'object' && result !== null && 'error' in result && result.error) {
       console.error(`Error processing standard bid ${bid.id}:`, result.error);
       return false;
     }
 
-    if (result && typeof result === 'object' && 'data' in result && 
-        result.data && typeof result.data === 'object' && 'success' in result.data && !result.data.success) {
+    if (
+      typeof result === 'object' && 
+      result !== null && 
+      'data' in result && 
+      typeof result.data === 'object' && 
+      result.data !== null && 
+      'success' in result.data && 
+      !result.data.success
+    ) {
       console.error(`Failed to process standard bid ${bid.id}:`, result.data);
       return false;
     }
@@ -117,7 +123,7 @@ const processProxyBid = async (bid: QueuedBid): Promise<boolean> => {
         })
     );
 
-    if (result && typeof result === 'object' && 'error' in result && result.error) {
+    if (typeof result === 'object' && result !== null && 'error' in result && result.error) {
       console.error(`Error upserting proxy bid ${bid.id}:`, result.error);
       return false;
     }

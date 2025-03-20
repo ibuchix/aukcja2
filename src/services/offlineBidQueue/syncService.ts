@@ -1,9 +1,9 @@
 
 import { 
   getQueuedBids, 
-  processBid,
-  removeBidFromQueue 
+  processBid
 } from './bidQueueManager';
+import { removeBidFromQueue } from './storage';
 
 /**
  * Process all queued bids when back online
