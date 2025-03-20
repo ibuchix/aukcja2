@@ -86,11 +86,11 @@ export function useBidMonitoring() {
 
         // Transform the data into a unified activity timeline
         const activities: BidActivity[] = [
-          // Map regular bids to activities
+          // Map regular bids to activities - fixed type to be a specific literal
           ...allBids.map(bid => ({
             id: `bid-${bid.id}`,
             timestamp: bid.created_at,
-            type: 'new_bid',
+            type: 'new_bid' as const, // Using type assertion to ensure it's the correct literal type
             carId: bid.car_id,
             carTitle: bid.car?.title || `${bid.car?.year} ${bid.car?.make} ${bid.car?.model}`,
             bidAmount: bid.amount,
@@ -101,13 +101,13 @@ export function useBidMonitoring() {
             isOwnActivity: bid.dealer_id === dealerProfile.id
           })),
           
-          // Map proxy bid logs to activities
+          // Map proxy bid logs to activities - fixed type to be a specific literal
           ...proxyLogs.map(log => {
             const details = log.details as Record<string, any> | null;
             return {
               id: `proxy-${log.id}`,
               timestamp: log.created_at,
-              type: 'proxy_executed',
+              type: 'proxy_executed' as const, // Using type assertion to ensure it's the correct literal type
               carId: log.entity_id,
               carTitle: "Car", // We'll need to fetch this separately
               bidAmount: details?.result?.amount || 0,
@@ -177,7 +177,7 @@ export function useBidMonitoring() {
               const newActivity: BidActivity = {
                 id: `bid-${newBid.id}-new`,
                 timestamp: newBid.created_at,
-                type: 'new_bid',
+                type: 'new_bid', // This is now using the correct literal type
                 carId: newBid.car_id,
                 carTitle: "New Bid", // We'll need to fetch this from the car table
                 bidAmount: newBid.amount,

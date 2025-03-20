@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Gavel, ActivitySquare } from "lucide-react";
@@ -34,6 +35,8 @@ export function QuickActions() {
 }
 
 function ActionButton({ icon, title, description, link }) {
+  const navigate = useNavigate(); // Added missing useNavigate hook
+
   return (
     <Button
       variant="outline"

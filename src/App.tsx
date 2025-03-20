@@ -1,3 +1,4 @@
+
 import {
   createBrowserRouter,
   RouterProvider,
@@ -6,7 +7,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
-import { Auth } from "./pages/Auth";
+import Auth from "./pages/Auth"; // Changed from { Auth }
 import Dashboard from "./pages/dealer/Dashboard";
 import Profile from "./pages/dealer/Profile";
 import Documents from "./pages/dealer/Documents";
