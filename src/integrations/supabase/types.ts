@@ -464,6 +464,7 @@ export type Database = {
           created_at: string
           current_bid: number | null
           features: Json | null
+          form_metadata: Json | null
           id: string
           images: string[] | null
           is_auction: boolean | null
@@ -495,6 +496,7 @@ export type Database = {
           created_at?: string
           current_bid?: number | null
           features?: Json | null
+          form_metadata?: Json | null
           id?: string
           images?: string[] | null
           is_auction?: boolean | null
@@ -526,6 +528,7 @@ export type Database = {
           created_at?: string
           current_bid?: number | null
           features?: Json | null
+          form_metadata?: Json | null
           id?: string
           images?: string[] | null
           is_auction?: boolean | null
@@ -1058,6 +1061,48 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          related_entity_id: string | null
+          related_entity_type: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1294,6 +1339,30 @@ export type Database = {
         }
         Relationships: []
       }
+      vin_valuation_cache: {
+        Row: {
+          created_at: string
+          id: string
+          mileage: number
+          valuation_data: Json
+          vin: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mileage: number
+          valuation_data: Json
+          vin: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mileage?: number
+          valuation_data?: Json
+          vin?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       auction_activity_stats: {
@@ -1362,6 +1431,10 @@ export type Database = {
         }
         Returns: Json
       }
+      cleanup_vin_valuation_cache: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       close_ended_auctions: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -1403,6 +1476,96 @@ export type Database = {
         }
         Returns: Json
       }
+      get_profile: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: {
+          avatar_url: string | null
+          full_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          suspended: boolean
+          updated_at: string
+        }[]
+      }
+      get_seller_listings: {
+        Args: {
+          p_seller_id: string
+        }
+        Returns: {
+          additional_photos: Json | null
+          auction_end_time: string | null
+          auction_status: string | null
+          created_at: string
+          current_bid: number | null
+          features: Json | null
+          form_metadata: Json | null
+          id: string
+          images: string[] | null
+          is_auction: boolean | null
+          is_damaged: boolean | null
+          is_draft: boolean
+          is_manually_controlled: boolean | null
+          make: string | null
+          mileage: number | null
+          minimum_bid_increment: number | null
+          mobile_number: string | null
+          model: string | null
+          price: number
+          registration_number: string | null
+          required_photos: Json | null
+          reserve_price: number | null
+          seller_id: string | null
+          seller_notes: string | null
+          status: string | null
+          title: string | null
+          transmission: string | null
+          updated_at: string
+          vin: string | null
+          year: number | null
+        }[]
+      }
+      get_seller_performance_metrics: {
+        Args: {
+          p_seller_id: string
+        }
+        Returns: {
+          active_listings: number
+          average_price: number | null
+          average_time_to_sell: unknown | null
+          cancelled_listings: number
+          created_at: string
+          highest_price_sold: number | null
+          id: string
+          last_listing_date: string | null
+          last_sale_date: string | null
+          listing_approval_rate: number | null
+          reserve_price_met_rate: number | null
+          seller_id: string
+          sold_listings: number
+          total_earnings: number
+          total_listings: number
+          updated_at: string
+        }[]
+      }
+      get_seller_profile: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: {
+          address: string | null
+          company_name: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          is_verified: boolean
+          tax_id: string | null
+          updated_at: string
+          user_id: string
+          verification_status: string
+        }[]
+      }
       get_user_id_by_email: {
         Args: {
           p_email: string
@@ -1410,6 +1573,10 @@ export type Database = {
         Returns: Json
       }
       is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_seller: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
