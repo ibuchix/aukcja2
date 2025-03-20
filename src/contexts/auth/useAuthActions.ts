@@ -2,6 +2,8 @@
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { signOutUser, refreshUserSession, fetchDealerProfile } from "./authUtils";
+import { clearQueryCache } from "@/utils/cachePersistence";
+import { queryClient } from "@/utils/queryClient";
 
 export function useAuthActions(
   setIsLoading: (loading: boolean) => void,
@@ -25,6 +27,9 @@ export function useAuthActions(
         });
         return;
       }
+      
+      // Clear React Query cache
+      clearQueryCache(queryClient);
       
       setUser(null);
       setSession(null);

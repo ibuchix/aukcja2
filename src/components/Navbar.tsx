@@ -7,6 +7,8 @@ import { NavbarDesktopMenu } from "./navbar/NavbarDesktopMenu";
 import { NavbarMobileMenu } from "./navbar/NavbarMobileMenu";
 import { NavbarMobileButton } from "./navbar/NavbarMobileButton";
 import { useToast } from "@/hooks/use-toast";
+import { clearQueryCache } from "@/utils/cachePersistence";
+import { queryClient } from "@/utils/queryClient";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,6 +19,9 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       await signOut();
+      
+      // Clear React Query cache on logout
+      clearQueryCache(queryClient);
       
       toast({
         title: "Logged out successfully",
