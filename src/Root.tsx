@@ -15,14 +15,20 @@ import BidMonitoring from "@/pages/dealer/BidMonitoring";
 import Dashboard from "@/pages/dealer/Dashboard";
 import Profile from "@/pages/dealer/Profile";
 import Documents from "@/pages/dealer/Documents";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Create a client
+const queryClient = new QueryClient();
 
 // Create a layout component that includes AuthProviderWithRouter
 function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProviderWithRouter>
-      {children}
-      <Toaster />
-    </AuthProviderWithRouter>
+    <QueryClientProvider client={queryClient}>
+      <AuthProviderWithRouter>
+        {children}
+        <Toaster />
+      </AuthProviderWithRouter>
+    </QueryClientProvider>
   );
 }
 
