@@ -5,8 +5,14 @@ import Root from './Root';
 import './index.css';
 import './components/tour/tour.css';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <Root />
-  </React.StrictMode>,
-);
+const rootElement = document.getElementById('root');
+
+if (!rootElement) {
+  console.error('Failed to find the root element');
+} else {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <Root />
+    </React.StrictMode>,
+  );
+}
