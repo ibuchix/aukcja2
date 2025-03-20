@@ -2,6 +2,7 @@ import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { mapDatabaseToDisplay } from "@/utils/dealerProfileMapping";
 import { Json } from "@/integrations/supabase/types";
+import { refreshAuthToken } from "@/utils/sessionRefresh";
 
 // Required fields for a complete dealer profile
 const REQUIRED_DEALER_FIELDS = [
@@ -197,43 +198,23 @@ export async function refreshUserSession() {
   try {
     console.log("Manually refreshing session");
     
-    // Get current session
-    const { data: currentSession, error: currentSessionError } = await supabase.auth.getSession();
+    // Use the centralized refresh function
+    const result = await refreshAuthToken();
     
-    if (currentSessionError) {
-      console.error("Error getting current session:", currentSessionError);
-      return { success: false, error: currentSessionError };
-    }
-    
-    // If we don't have a current session, we can't refresh
-    if (!currentSession.session) {
-      console.warn("No current session to refresh");
-      return { success: false, error: new Error("No active session") };
-    }
-    
-    // Now refresh the session
-    const { data, error } = await supabase.auth.refreshSession();
-    
-    if (error) {
-      console.error("Session refresh error:", error);
-      
-      // If refresh fails, we need to redirect to login
+    if (!result.success) {
+      console.error("Session refresh error:", result.error);
       return { 
         success: false, 
-        error,
-        needsReauth: true 
+        error: result.error,
+        needsReauth: result.needsReauth 
       };
     }
     
-    if (data.session) {
-      console.log("Session refreshed successfully, expires at:", 
-                 new Date(data.session.expires_at! * 1000).toLocaleString());
-    } else {
-      console.warn("Session refresh returned no session");
-      return { success: false, needsReauth: true };
-    }
-    
-    return { success: true, session: data.session, user: data.session?.user };
+    return { 
+      success: true, 
+      session: result.session, 
+      user: result.session?.user 
+    };
   } catch (error) {
     console.error("Session refresh error:", error);
     return { success: false, error, needsReauth: true };

@@ -5,6 +5,47 @@ import type { Database } from './types';
 
 const SUPABASE_URL = "https://sdvakfhmoaoucmhbhwvy.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M";
+const STORAGE_KEY = 'dealer_auth_token';
+
+// Improved session error detection
+function checkAndCleanStorage() {
+  try {
+    // Check for corrupted token
+    const currentSession = localStorage.getItem(STORAGE_KEY);
+    if (currentSession) {
+      try {
+        // Try to parse the JSON
+        const parsed = JSON.parse(currentSession);
+        
+        // Validate basic structure
+        if (!parsed.access_token || !parsed.expires_at) {
+          console.warn("Found incomplete auth token, removing it");
+          localStorage.removeItem(STORAGE_KEY);
+        } else {
+          // Check if token is expired
+          const expiryTime = new Date(parsed.expires_at * 1000);
+          const now = new Date();
+          
+          if (expiryTime < now) {
+            console.warn("Found expired auth token in storage");
+            // We don't remove it as the refresh token might still be valid
+          }
+        }
+      } catch (parseError) {
+        // Corrupted JSON
+        console.warn("Found corrupted auth token, removing it");
+        localStorage.removeItem(STORAGE_KEY);
+        // Also remove legacy token if it exists
+        localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
+      }
+    }
+  } catch (error) {
+    console.error("Error checking localStorage:", error);
+  }
+}
+
+// Clean storage before initializing
+checkAndCleanStorage();
 
 // Create a fetch implementation with consistent headers
 const customFetch = (url: RequestInfo | URL, options?: RequestInit): Promise<Response> => {
@@ -17,8 +58,8 @@ const customFetch = (url: RequestInfo | URL, options?: RequestInit): Promise<Res
   
   // Add authorization from localStorage if available with better error handling
   try {
-    // Now use the correct storage key (dealer_auth_token)
-    const currentSession = localStorage.getItem('dealer_auth_token');
+    // Use the correct storage key
+    const currentSession = localStorage.getItem(STORAGE_KEY);
     if (currentSession) {
       try {
         const session = JSON.parse(currentSession);
@@ -36,7 +77,7 @@ const customFetch = (url: RequestInfo | URL, options?: RequestInit): Promise<Res
         // This likely means the session is corrupted
         console.error('Failed to parse session JSON from localStorage', parseError);
         // Remove the corrupted session
-        localStorage.removeItem('dealer_auth_token');
+        localStorage.removeItem(STORAGE_KEY);
       }
     } else {
       console.debug('No auth session in localStorage for request to: ' + url.toString());
@@ -62,7 +103,7 @@ const customFetch = (url: RequestInfo | URL, options?: RequestInit): Promise<Res
   });
 };
 
-// Create and export the supabase client
+// Create and export the supabase client with improved configuration
 export const supabase = createClient<Database>(
   SUPABASE_URL, 
   SUPABASE_PUBLISHABLE_KEY,
@@ -71,7 +112,7 @@ export const supabase = createClient<Database>(
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
-      storageKey: 'dealer_auth_token',
+      storageKey: STORAGE_KEY,
       storage: localStorage
     },
     global: {
@@ -81,21 +122,21 @@ export const supabase = createClient<Database>(
       },
       fetch: customFetch
     },
-    // Use retryOptions configuration
+    // Add retry options
     db: {
       schema: 'public'
     },
-    // Increase timeouts for edge functions
+    // Increase timeouts
     realtime: {
-      timeout: 20000
+      timeout: 30000 // 30 seconds
     }
   }
 );
 
-// Initialize client immediately to avoid lazy loading issues
+// Improved initialization
 (async () => {
   try {
-    // Check for existing session and log its status
+    // Check for existing session with detailed logging
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
@@ -104,46 +145,60 @@ export const supabase = createClient<Database>(
     }
     
     if (sessionData && sessionData.session) {
-      console.log('Session exists and expires at:', new Date(sessionData.session.expires_at! * 1000).toLocaleString());
-      
-      // Check if token is close to expiry
+      // More detailed session expiry calculation
       const now = new Date();
       const expiresAt = new Date(sessionData.session.expires_at! * 1000);
       const timeUntilExpiry = expiresAt.getTime() - now.getTime();
+      const minutesUntilExpiry = Math.floor(timeUntilExpiry / (60 * 1000));
       
-      if (timeUntilExpiry < 60 * 60 * 1000) { // Less than 1 hour
+      console.log(`Session exists and expires in ${minutesUntilExpiry} minutes (${expiresAt.toLocaleString()})`);
+      
+      // More aggressive refresh threshold (5 minutes)
+      if (timeUntilExpiry < 5 * 60 * 1000) {
         console.log('Session token will expire soon, refreshing...');
         try {
-          await supabase.auth.refreshSession();
-          console.log('Session token refreshed successfully');
+          const { data, error } = await supabase.auth.refreshSession();
+          if (error) {
+            console.warn('Failed to refresh session token:', error);
+          } else if (data.session) {
+            const newExpiresAt = new Date(data.session.expires_at! * 1000);
+            console.log(`Session token refreshed successfully, new expiry: ${newExpiresAt.toLocaleString()}`);
+          }
         } catch (refreshError) {
           console.warn('Failed to refresh session token:', refreshError);
         }
       }
       
-      // Only test connection to protected tables if we have an authenticated session
+      // Connection test with better error categorization
       try {
         const { error } = await supabase.from('dealers').select('count').limit(1);
         if (error) {
-          console.warn('RLS check warning:', error.message);
-          
-          // Special handling for auth errors
           if (error.code === '401') {
-            console.warn('Authentication error during initialization - token may be expired');
+            console.warn('Authentication error: Token may be expired or invalid');
           } else if (error.code === '42501') {
-            console.warn('Permission denied error - RLS policies may need configuration');
+            console.warn('Permission denied: Check RLS policies');
+          } else {
+            console.warn('Database query error:', error.message);
           }
         } else {
-          console.log('Supabase client initialized successfully with database access');
+          console.log('Supabase client initialized with valid database access');
         }
       } catch (err) {
-        console.error('Error testing connection to dealers table:', err);
+        console.error('Database connection test error:', err);
       }
     } else {
-      console.log('No active session found - skipping protected table tests');
-      console.log('Supabase client initialized successfully for unauthenticated access');
+      console.log('No active session found - client initialized for unauthenticated access');
     }
   } catch (err) {
     console.error('Supabase client initialization error:', err);
+    
+    // Attempt to recover from critical initialization errors
+    try {
+      console.log('Attempting to clean local storage due to initialization error');
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
+    } catch (storageError) {
+      console.error('Failed to clean local storage:', storageError);
+    }
   }
 })();

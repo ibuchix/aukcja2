@@ -4,6 +4,7 @@ import { DealerSignupForm } from "@/pages/auth/DealerSignupForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DealerLoginForm } from "@/components/auth/DealerLoginForm";
+import { SessionExpiredNotice } from "@/components/auth/SessionExpiredNotice";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
@@ -12,10 +13,8 @@ const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get return URL from state if it exists
   const returnUrl = location.state?.returnUrl || "/dealer/dashboard";
   
-  // Use a try-catch to safely get the auth context
   const [authContext, authError] = (() => {
     try {
       const ctx = useAuth();
@@ -30,7 +29,6 @@ const Auth = () => {
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   
-  // Get the active tab from URL query parameter, default to "register" if not present
   const tabFromUrl = searchParams.get("tab");
   const initialTab = (tabFromUrl === "login" || tabFromUrl === "register") 
     ? tabFromUrl 
@@ -38,32 +36,28 @@ const Auth = () => {
   
   const [activeTab, setActiveTab] = useState<"register" | "login">(initialTab as "register" | "login");
 
-  // Set up a loading timeout to prevent endless loading
   useEffect(() => {
     if (isLoading) {
       const timer = setTimeout(() => {
         setLoadingTimeout(true);
-      }, 10000); // 10 seconds
+      }, 10000);
       return () => clearTimeout(timer);
     }
     return undefined;
   }, [isLoading]);
 
-  // Redirect if already authenticated - but only once
   useEffect(() => {
     if (isAuthenticated && !isLoading && !redirectAttempted) {
       console.log("User already logged in, redirecting to:", returnUrl);
-      setRedirectAttempted(true); // Prevent multiple redirects
+      setRedirectAttempted(true);
       navigate(returnUrl);
     }
   }, [isAuthenticated, isLoading, navigate, redirectAttempted, returnUrl]);
 
-  // Update URL when tab changes without causing a page reload
   const handleTabChange = (value: string) => {
     const newTab = value as "register" | "login";
     setActiveTab(newTab);
     
-    // Update the URL with new tab parameter - without forcing a reload
     const newParams = new URLSearchParams(searchParams);
     newParams.set("tab", newTab);
     setSearchParams(newParams, { replace: true });
@@ -137,6 +131,8 @@ const Auth = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <SessionExpiredNotice />
+              
               <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="grid w-full grid-cols-2 mb-4">
                   <TabsTrigger value="register">Register</TabsTrigger>
