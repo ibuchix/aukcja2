@@ -20,28 +20,28 @@ export function validateFormData<T extends Record<string, any>>(
   // Initialize return values
   const errors: string[] = [];
   // Create a deep copy to avoid mutating the original object
-  const sanitizedData = JSON.parse(JSON.stringify(values)) as T;
+  const sanitizedData = { ...values } as T;
 
   // Common validation for all forms
   Object.keys(sanitizedData).forEach(key => {
     // Sanitize strings to prevent XSS and trim whitespace
-    if (typeof sanitizedData[key] === 'string') {
-      sanitizedData[key] = safeTrim(sanitizedData[key]);
+    if (typeof sanitizedData[key as keyof T] === 'string') {
+      sanitizedData[key as keyof T] = safeTrim(sanitizedData[key as keyof T]) as any;
     }
   });
 
   // Form-specific validation
   switch (formType) {
     case 'dealer-registration':
-      return validateDealerRegistration(sanitizedData as unknown as DealerFormValues);
+      return validateDealerRegistration(values as unknown as DealerFormValues) as { isValid: boolean; errors: string[]; sanitizedData: T };
     case 'login':
-      return validateLogin(sanitizedData);
+      return validateLogin(values) as { isValid: boolean; errors: string[]; sanitizedData: T };
     case 'profile-update':
-      return validateProfileUpdate(sanitizedData);
+      return validateProfileUpdate(values) as { isValid: boolean; errors: string[]; sanitizedData: T };
     case 'vehicle-listing':
-      return validateVehicleListing(sanitizedData);
+      return validateVehicleListing(values) as { isValid: boolean; errors: string[]; sanitizedData: T };
     default:
-      return validateGenericForm(sanitizedData);
+      return validateGenericForm(values) as { isValid: boolean; errors: string[]; sanitizedData: T };
   }
 }
 
@@ -234,16 +234,16 @@ function validateGenericForm(values: Record<string, any>): {
  * Normalizes form data to ensure consistent format before saving
  */
 export function normalizeFormData<T extends Record<string, any>>(data: T): T {
-  const normalized = { ...data };
+  const normalized = { ...data } as T;
   
   Object.keys(normalized).forEach(key => {
     // Trim all string values
-    if (typeof normalized[key] === 'string') {
-      normalized[key] = normalized[key].trim();
+    if (typeof normalized[key as keyof T] === 'string') {
+      normalized[key as keyof T] = (normalized[key as keyof T] as string).trim() as any;
       
       // Lowercase email addresses
       if (key === 'email') {
-        normalized[key] = normalized[key].toLowerCase();
+        normalized[key as keyof T] = (normalized[key as keyof T] as string).toLowerCase() as any;
       }
     }
   });
