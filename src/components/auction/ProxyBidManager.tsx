@@ -24,6 +24,7 @@ export const ProxyBidManager = ({
 }: ProxyBidManagerProps) => {
   const [maxBid, setMaxBid] = useState<string>("");
   const [existingProxyBid, setExistingProxyBid] = useState<number | null>(null);
+  const [isProxyBidUsed, setIsProxyBidUsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -35,11 +36,11 @@ export const ProxyBidManager = ({
         const result = await executeWithRetry(() => 
           supabase
             .from('proxy_bids')
-            .select('max_bid_amount')
+            .select('max_bid_amount, last_processed_amount')
             .eq('car_id', carId)
             .eq('dealer_id', dealerId)
             .single()
-        ) as PostgrestSingleResponse<{ max_bid_amount: number }>;
+        ) as PostgrestSingleResponse<{ max_bid_amount: number, last_processed_amount: number | null }>;
 
         if (result.error && result.error.code !== 'PGRST116') { // PGRST116 is "no rows returned" which is fine
           throw result.error;
@@ -48,6 +49,7 @@ export const ProxyBidManager = ({
         if (result.data) {
           setExistingProxyBid(result.data.max_bid_amount);
           setMaxBid(result.data.max_bid_amount.toString());
+          setIsProxyBidUsed(result.data.last_processed_amount !== null);
         }
       } catch (error) {
         console.error("Error fetching proxy bid:", error);
@@ -96,6 +98,8 @@ export const ProxyBidManager = ({
       if (result.error) throw result.error;
 
       setExistingProxyBid(numericMaxBid);
+      // If we're modifying an existing proxy bid that was used, it stays in "used" state
+      // If not, then it's a new or unused proxy bid
       
       toast({
         title: "Maximum Bid Set",
@@ -129,6 +133,7 @@ export const ProxyBidManager = ({
 
       setExistingProxyBid(null);
       setMaxBid("");
+      setIsProxyBidUsed(false);
       
       toast({
         title: "Maximum Bid Removed",
@@ -174,7 +179,16 @@ export const ProxyBidManager = ({
                 <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-amber-800">
                   You currently have a maximum bid of <strong>${existingProxyBid.toLocaleString()}</strong> set for this auction.
-                  Setting a new value will replace your current maximum bid.
+                  {isProxyBidUsed ? (
+                    <span className="block mt-1">
+                      This proxy bid has been used to place automatic bids and cannot be removed.
+                      You can still increase your maximum bid amount.
+                    </span>
+                  ) : (
+                    <span className="block mt-1">
+                      Setting a new value will replace your current maximum bid.
+                    </span>
+                  )}
                 </div>
               </div>
             )}
@@ -197,7 +211,7 @@ export const ProxyBidManager = ({
                 {isSubmitting ? "Setting..." : "Set Max Bid"}
               </Button>
               
-              {existingProxyBid && (
+              {existingProxyBid && !isProxyBidUsed && (
                 <Button 
                   variant="outline" 
                   onClick={handleRemoveMaxBid}
