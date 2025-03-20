@@ -5,9 +5,10 @@ import {
   Route,
   createRoutesFromElements,
   Navigate,
+  Outlet,
 } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
-import Auth from "./pages/Auth"; // Changed from { Auth }
+import Auth from "./pages/Auth";
 import Dashboard from "./pages/dealer/Dashboard";
 import Profile from "./pages/dealer/Profile";
 import Documents from "./pages/dealer/Documents";
@@ -24,7 +25,8 @@ const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  return <>{children}</>;
+  // Use Outlet to render nested child routes
+  return children ? <>{children}</> : <Outlet />;
 };
 
 function App() {
@@ -37,7 +39,7 @@ function App() {
           element={<Navigate to="/dealer" replace />}
         />
         <Route path="dealer" element={<ProtectedRoute />}>
-          <Route path="" element={<Dashboard />} />
+          <Route index element={<Dashboard />} />
           <Route path="profile" element={<Profile />} />
           <Route path="documents" element={<Documents />} />
           <Route path="bid-monitoring" element={<BidMonitoring />} />
