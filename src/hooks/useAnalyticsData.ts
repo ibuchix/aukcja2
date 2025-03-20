@@ -45,7 +45,7 @@ export function useAnalyticsData(filters: BidAnalyticsFilters) {
         // Fetch total bids and successful bids
         const { data: bidsData, error: bidsError } = await supabase
           .from('bids')
-          .select('id, amount, status, created_at')
+          .select('id, amount, status, created_at, car_id')
           .eq('dealer_id', dealerProfile.id)
           .gte('created_at', startDate.toISOString());
           
@@ -117,9 +117,7 @@ export function useAnalyticsData(filters: BidAnalyticsFilters) {
           count
         }));
         
-        // Get data by car type
-        // This is a simplified version - in a real implementation,
-        // you would join with the cars table to get actual types
+        // Fetch cars data for car types
         const { data: carsData, error: carsError } = await supabase
           .from('cars')
           .select('id, make, model')
@@ -128,7 +126,7 @@ export function useAnalyticsData(filters: BidAnalyticsFilters) {
         if (carsError) throw carsError;
         
         // Create a map of car makes
-        const carMap = {};
+        const carMap: Record<string, string> = {};
         if (carsData) {
           carsData.forEach(car => {
             carMap[car.id] = car.make || 'Unknown';
@@ -136,7 +134,12 @@ export function useAnalyticsData(filters: BidAnalyticsFilters) {
         }
         
         // Group bids by car make
-        const bidsByCarType = {};
+        interface CarTypeData {
+          count: number;
+          won: number;
+        }
+        
+        const bidsByCarType: Record<string, CarTypeData> = {};
         bidsData.forEach(bid => {
           const carType = carMap[bid.car_id] || 'Unknown';
           if (!bidsByCarType[carType]) {
