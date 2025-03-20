@@ -26,22 +26,24 @@ export default function ErrorHandlingExample() {
   async function triggerError(errorType: string) {
     switch (errorType) {
       case 'not-found':
-        // Example of row not found error
+        // Example of row not found error - wrap in a function that returns a Promise
         await execute(() => 
-          supabase
+          Promise.resolve(supabase
             .from('cars')
             .select('*')
             .eq('id', 'non-existent-id')
-            .single()
+            .single())
         );
         break;
         
       case 'permission':
         // Example of permission denied error
         await execute(() => 
-          supabase
-            .from('admin_logs')
-            .select('*')
+          // Create a promise that returns the result of the query
+          Promise.resolve(supabase
+            .from('profiles')
+            .update({ role: 'admin' })
+            .eq('id', 'some-id'))
         );
         break;
         

@@ -15,3 +15,6 @@ export {
   handleDatabaseError as handleDealerDatabaseError,
   ProfileResult
 } from '@/services/dealer/dealerProfileResultHandler';
+
+// Use export type for Database type
+export type { Database } from '@/integrations/supabase/types';
