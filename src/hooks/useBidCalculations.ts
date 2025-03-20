@@ -109,7 +109,7 @@ export function useBidCalculations() {
       });
       
       if (error) throw error;
-      return data as BidStatus;
+      return (data as unknown) as BidStatus;
     } catch (error) {
       console.error("Error fetching bid status:", error);
       toast({
@@ -129,7 +129,7 @@ export function useBidCalculations() {
       });
       
       if (error) throw error;
-      return data as BidRecommendation;
+      return (data as unknown) as BidRecommendation;
     } catch (error) {
       console.error("Error fetching bid recommendations:", error);
       toast({
@@ -148,7 +148,7 @@ export function useBidCalculations() {
       });
       
       if (error) throw error;
-      return data as AuctionActivityMetrics;
+      return (data as unknown) as AuctionActivityMetrics;
     } catch (error) {
       console.error("Error fetching auction activity metrics:", error);
       toast({
@@ -173,7 +173,7 @@ export function useBidCalculations() {
       });
       
       if (error) throw error;
-      return data as OptimalProxyBid;
+      return (data as unknown) as OptimalProxyBid;
     } catch (error) {
       console.error("Error calculating optimal proxy bid:", error);
       toast({
@@ -192,7 +192,7 @@ export function useBidCalculations() {
       });
       
       if (error) throw error;
-      return data as DealerBidExposure;
+      return (data as unknown) as DealerBidExposure;
     } catch (error) {
       console.error("Error fetching dealer bid exposure:", error);
       toast({
@@ -211,7 +211,7 @@ export function useBidCalculations() {
       });
       
       if (error) throw error;
-      return data as BiddingStrategy;
+      return (data as unknown) as BiddingStrategy;
     } catch (error) {
       console.error("Error analyzing bidding strategy:", error);
       toast({
@@ -244,7 +244,7 @@ export function useBidStatus(carId: string | undefined, dealerId: string | undef
         p_dealer_id: dealerId
       });
       if (error) throw error;
-      return data as BidStatus;
+      return (data as unknown) as BidStatus;
     },
     enabled: !!carId && !!dealerId
   });
@@ -260,7 +260,7 @@ export function useBidRecommendations(carId: string | undefined, dealerId: strin
         p_dealer_id: dealerId
       });
       if (error) throw error;
-      return data as BidRecommendation;
+      return (data as unknown) as BidRecommendation;
     },
     enabled: !!carId && !!dealerId
   });
@@ -275,7 +275,7 @@ export function useAuctionActivityMetrics(carId: string | undefined) {
         p_car_id: carId
       });
       if (error) throw error;
-      return data as AuctionActivityMetrics;
+      return (data as unknown) as AuctionActivityMetrics;
     },
     enabled: !!carId
   });
@@ -290,7 +290,7 @@ export function useDealerBidExposure(dealerId: string | undefined) {
         p_dealer_id: dealerId
       });
       if (error) throw error;
-      return data as DealerBidExposure;
+      return (data as unknown) as DealerBidExposure;
     },
     enabled: !!dealerId
   });
@@ -305,7 +305,7 @@ export function useBiddingStrategy(dealerId: string | undefined) {
         p_dealer_id: dealerId
       });
       if (error) throw error;
-      return data as BiddingStrategy;
+      return (data as unknown) as BiddingStrategy;
     },
     enabled: !!dealerId
   });

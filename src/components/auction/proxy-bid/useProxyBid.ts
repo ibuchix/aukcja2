@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,13 +61,14 @@ export const useProxyBid = ({
           
           if (optimalBidError) throw optimalBidError;
           
-          // Type assertion for the JSON response
+          // Define interface to match the structure of the response
           interface OptimalBidResponse {
             success: boolean;
             optimal_proxy_amount: number;
           }
           
-          const typedResponse = optimalBidResponse as OptimalBidResponse;
+          // Cast to unknown first, then to our specific type
+          const typedResponse = (optimalBidResponse as unknown) as OptimalBidResponse;
           
           if (typedResponse && typedResponse.success) {
             setOptimalBid(typedResponse.optimal_proxy_amount);
