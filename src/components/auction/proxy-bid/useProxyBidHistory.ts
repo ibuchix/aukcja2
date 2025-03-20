@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { executeWithRetry } from "@/utils/retryUtils";
-import { PostgrestError } from "@supabase/supabase-js";
+import { PostgrestError, PostgrestResponse } from "@supabase/supabase-js";
 
 export interface ProxyBidHistoryItem {
   id: string;
@@ -37,7 +37,7 @@ export const useProxyBidHistory = ({ carId, dealerId }: UseProxyBidHistoryProps)
             .eq('car_id', carId)
             .eq('dealer_id', dealerId)
             .order('created_at', { ascending: false })
-        );
+        ) as PostgrestResponse<ProxyBidHistoryItem>;
         
         if (result.error) {
           throw result.error;
