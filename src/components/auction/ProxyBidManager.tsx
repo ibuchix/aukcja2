@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Info, DollarSign, AlertTriangle } from "lucide-react";
+import { executeWithRetry } from "@/utils/retryUtils";
 
 interface ProxyBidManagerProps {
   carId: string;
@@ -30,12 +31,14 @@ export const ProxyBidManager = ({
   useEffect(() => {
     const fetchProxyBid = async () => {
       try {
-        const { data, error } = await supabase
-          .from('proxy_bids')
-          .select('max_bid_amount')
-          .eq('car_id', carId)
-          .eq('dealer_id', dealerId)
-          .single();
+        const { data, error } = await executeWithRetry(() => 
+          supabase
+            .from('proxy_bids')
+            .select('max_bid_amount')
+            .eq('car_id', carId)
+            .eq('dealer_id', dealerId)
+            .single()
+        );
 
         if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" which is fine
           throw error;
@@ -77,15 +80,17 @@ export const ProxyBidManager = ({
       }
 
       // Use upsert with onConflict to handle concurrent submissions
-      const { error } = await supabase
-        .from('proxy_bids')
-        .upsert({
-          car_id: carId,
-          dealer_id: dealerId,
-          max_bid_amount: numericMaxBid,
-        }, {
-          onConflict: 'car_id,dealer_id'
-        });
+      const { error } = await executeWithRetry(() => 
+        supabase
+          .from('proxy_bids')
+          .upsert({
+            car_id: carId,
+            dealer_id: dealerId,
+            max_bid_amount: numericMaxBid,
+          }, {
+            onConflict: 'car_id,dealer_id'
+          })
+      );
 
       if (error) throw error;
 
@@ -111,11 +116,13 @@ export const ProxyBidManager = ({
     
     try {
       setIsSubmitting(true);
-      const { error } = await supabase
-        .from('proxy_bids')
-        .delete()
-        .eq('car_id', carId)
-        .eq('dealer_id', dealerId);
+      const { error } = await executeWithRetry(() => 
+        supabase
+          .from('proxy_bids')
+          .delete()
+          .eq('car_id', carId)
+          .eq('dealer_id', dealerId)
+      );
 
       if (error) throw error;
 

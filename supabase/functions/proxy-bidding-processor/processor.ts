@@ -26,11 +26,20 @@ export async function processAuctionWithTransaction(
   await checkpoint('fetch_proxy_bids');
   
   // 1. Get all proxy bids for this auction, ordered by max amount (highest first)
-  const { data: proxyBids, error: proxyBidsError } = await supabase
-    .from('proxy_bids')
-    .select('*')
-    .eq('car_id', carId)
-    .order('max_bid_amount', { ascending: false });
+  const { data: proxyBids, error: proxyBidsError } = await executeWithRetry(async () => {
+    return await supabase
+      .from('proxy_bids')
+      .select('*')
+      .eq('car_id', carId)
+      .order('max_bid_amount', { ascending: false });
+  }, {
+    maxRetries: 5,
+    baseDelay: 500,
+    jitter: true,
+    onRetry: (attempt, delay, error) => {
+      console.log(`Retrying fetch_proxy_bids (attempt ${attempt}) in ${delay}ms due to: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  });
   
   if (proxyBidsError) {
     console.error(`Error fetching proxy bids for auction ${carId}:`, proxyBidsError.message);
@@ -77,12 +86,21 @@ async function processProxyBidding(
   await checkpoint('fetch_current_high_bid');
   
   // Check if the current high bidder is already the top proxy bidder
-  const { data: currentHighBid, error: highBidError } = await supabase
-    .from('bids')
-    .select('dealer_id, amount')
-    .eq('car_id', carId)
-    .eq('status', 'active')
-    .single();
+  const { data: currentHighBid, error: highBidError } = await executeWithRetry(async () => {
+    return await supabase
+      .from('bids')
+      .select('dealer_id, amount')
+      .eq('car_id', carId)
+      .eq('status', 'active')
+      .single();
+  }, {
+    maxRetries: 5,
+    baseDelay: 500,
+    jitter: true,
+    onRetry: (attempt, delay, error) => {
+      console.log(`Retrying fetch_current_high_bid (attempt ${attempt}) in ${delay}ms due to: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  });
   
   if (highBidError && highBidError.code !== 'PGRST116') { // PGRST116 is "no rows returned" which is fine
     console.error(`Error fetching current high bid for auction ${carId}:`, highBidError.message);
@@ -136,17 +154,44 @@ async function processProxyBidding(
   // Begin trying to place the bid
   await checkpoint('place_bid_attempt', { amount: nextBidAmount, dealer_id: topBid.dealer_id });
   
-  // Place the bid via the place_bid function
-  const { data: placeBidResult, error: placeBidError } = await supabase.rpc(
-    'place_bid',
-    {
-      p_car_id: carId,
-      p_dealer_id: topBid.dealer_id,
-      p_amount: nextBidAmount,
-      p_is_proxy: true,
-      p_max_proxy_amount: topBid.max_bid_amount
+  // Place the bid via the place_bid function with retry logic
+  const { data: placeBidResult, error: placeBidError } = await executeWithRetry(async () => {
+    return await supabase.rpc(
+      'place_bid',
+      {
+        p_car_id: carId,
+        p_dealer_id: topBid.dealer_id,
+        p_amount: nextBidAmount,
+        p_is_proxy: true,
+        p_max_proxy_amount: topBid.max_bid_amount
+      }
+    );
+  }, {
+    // Most critical operation - use more retries and aggressive backoff
+    maxRetries: 7,
+    baseDelay: 300,
+    maxDelay: 10000,
+    jitter: true,
+    shouldRetry: (error) => {
+      // Determine if this specific error is retryable
+      // Don't retry if it's a validation error or other non-retryable error
+      const errorStr = typeof error === 'string' ? error : JSON.stringify(error);
+      
+      // Don't retry obvious validation errors
+      if (errorStr.includes('bid amount is too low') || 
+          errorStr.includes('auction is not currently active') ||
+          errorStr.includes('you cannot bid on your own vehicle')) {
+        return false;
+      }
+      
+      // Default to the standard retry classification
+      return true;
+    },
+    onRetry: (attempt, delay, error) => {
+      console.log(`Retrying place_bid (attempt ${attempt}/${7}) in ${delay}ms for auction ${carId} due to: ${error instanceof Error ? error.message : String(error)}`);
+      checkpoint('place_bid_retry', { attempt, delay, error: String(error) });
     }
-  );
+  });
   
   if (placeBidError) {
     console.error(`Error placing proxy bid for auction ${carId}:`, placeBidError.message);
@@ -163,16 +208,21 @@ async function processProxyBidding(
     amount: nextBidAmount
   });
   
-  // Log the action
-  await logProxyBid(
-    carId,
-    topBid.dealer_id,
-    nextBidAmount,
-    topBid.max_bid_amount,
-    currentBid,
-    currentHighBid?.dealer_id,
-    transactionId
-  );
+  // Log the action with retry
+  await executeWithRetry(async () => {
+    await logProxyBid(
+      carId,
+      topBid.dealer_id,
+      nextBidAmount,
+      topBid.max_bid_amount,
+      currentBid,
+      currentHighBid?.dealer_id,
+      transactionId
+    );
+  }, {
+    maxRetries: 3,
+    baseDelay: 500
+  });
   
   await checkpoint('complete', { success: true });
   
@@ -199,12 +249,18 @@ export async function processProxyBids(): Promise<ProcessSummary> {
   let errors = 0;
   
   try {
-    // 1. Get all active auctions
-    const { data: activeAuctions, error: auctionsError } = await supabase
-      .from('cars')
-      .select('id, current_bid, minimum_bid_increment, auction_status, price')
-      .eq('is_auction', true)
-      .eq('auction_status', 'active');
+    // 1. Get all active auctions with retry
+    const { data: activeAuctions, error: auctionsError } = await executeWithRetry(async () => {
+      return await supabase
+        .from('cars')
+        .select('id, current_bid, minimum_bid_increment, auction_status, price')
+        .eq('is_auction', true)
+        .eq('auction_status', 'active');
+    }, {
+      maxRetries: 5,
+      baseDelay: 500,
+      jitter: true
+    });
     
     if (auctionsError) {
       console.error('Error fetching active auctions:', auctionsError.message);
