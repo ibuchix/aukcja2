@@ -24,12 +24,18 @@ export async function executeWithRetry<T>(
     maxRetries?: number;
     baseDelay?: number;
     shouldRetry?: (error: any) => boolean;
+    onRetry?: (attempt: number, delay: number, error: any) => void;
+    maxDelay?: number;
+    jitter?: boolean;
   } = {}
 ): Promise<T> {
   const {
     maxRetries = 3,
     baseDelay = 1000,
-    shouldRetry = () => true
+    maxDelay = 30000,
+    jitter = false,
+    shouldRetry = () => true,
+    onRetry
   } = options;
   
   let retryCount = 0;
@@ -54,8 +60,23 @@ export async function executeWithRetry<T>(
       }
 
       // Calculate delay with exponential backoff
-      const delay = baseDelay * Math.pow(2, retryCount);
+      let delay = Math.min(
+        baseDelay * Math.pow(2, retryCount),
+        maxDelay
+      );
+      
+      // Apply jitter to prevent thundering herd problem
+      if (jitter) {
+        delay = delay * (0.5 + Math.random() * 0.5);
+      }
+      
+      // Log retry information
       console.log(`Retrying operation in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+      
+      // Call onRetry callback if provided
+      if (onRetry) {
+        onRetry(retryCount + 1, delay, error);
+      }
       
       // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, delay));

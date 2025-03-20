@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Info, DollarSign, AlertTriangle } from "lucide-react";
 import { executeWithRetry } from "@/utils/retryUtils";
+import { PostgrestResponse, PostgrestSingleResponse } from "@supabase/supabase-js";
 
 interface ProxyBidManagerProps {
   carId: string;
@@ -31,22 +32,22 @@ export const ProxyBidManager = ({
   useEffect(() => {
     const fetchProxyBid = async () => {
       try {
-        const { data, error } = await executeWithRetry(() => 
+        const result = await executeWithRetry(() => 
           supabase
             .from('proxy_bids')
             .select('max_bid_amount')
             .eq('car_id', carId)
             .eq('dealer_id', dealerId)
             .single()
-        );
+        ) as PostgrestSingleResponse<{ max_bid_amount: number }>;
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" which is fine
-          throw error;
+        if (result.error && result.error.code !== 'PGRST116') { // PGRST116 is "no rows returned" which is fine
+          throw result.error;
         }
 
-        if (data) {
-          setExistingProxyBid(data.max_bid_amount);
-          setMaxBid(data.max_bid_amount.toString());
+        if (result.data) {
+          setExistingProxyBid(result.data.max_bid_amount);
+          setMaxBid(result.data.max_bid_amount.toString());
         }
       } catch (error) {
         console.error("Error fetching proxy bid:", error);
@@ -80,7 +81,7 @@ export const ProxyBidManager = ({
       }
 
       // Use upsert with onConflict to handle concurrent submissions
-      const { error } = await executeWithRetry(() => 
+      const result = await executeWithRetry(() => 
         supabase
           .from('proxy_bids')
           .upsert({
@@ -90,9 +91,9 @@ export const ProxyBidManager = ({
           }, {
             onConflict: 'car_id,dealer_id'
           })
-      );
+      ) as PostgrestResponse<any>;
 
-      if (error) throw error;
+      if (result.error) throw result.error;
 
       setExistingProxyBid(numericMaxBid);
       
@@ -116,15 +117,15 @@ export const ProxyBidManager = ({
     
     try {
       setIsSubmitting(true);
-      const { error } = await executeWithRetry(() => 
+      const result = await executeWithRetry(() => 
         supabase
           .from('proxy_bids')
           .delete()
           .eq('car_id', carId)
           .eq('dealer_id', dealerId)
-      );
+      ) as PostgrestResponse<any>;
 
-      if (error) throw error;
+      if (result.error) throw result.error;
 
       setExistingProxyBid(null);
       setMaxBid("");
