@@ -37,8 +37,8 @@ export function usePermissions(props?: UsePermissionsProps) {
     // Check using RPC call
     try {
       // Get current session
-      const { data } = await supabase.auth.getSession();
-      const accessToken = data.session?.access_token;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
       
       if (!accessToken) {
         console.error("No access token available");
@@ -46,11 +46,11 @@ export function usePermissions(props?: UsePermissionsProps) {
       }
       
       // Use fetch directly to call the RPC function since TypeScript doesn't know about our custom functions
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/can_perform_action`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://sdvakfhmoaoucmhbhwvy.supabase.co'}/rest/v1/rpc/can_perform_action`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': supabase.supabaseKey,
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M',
           'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify({
@@ -65,8 +65,8 @@ export function usePermissions(props?: UsePermissionsProps) {
         return false;
       }
       
-      const data = await response.json();
-      return !!data;
+      const responseData = await response.json();
+      return !!responseData;
     } catch (err) {
       console.error("Error checking permissions:", err);
       return false;

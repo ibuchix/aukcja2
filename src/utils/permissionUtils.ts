@@ -7,11 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 export async function isAdmin(): Promise<boolean> {
   try {
     // Use fetch directly to call the RPC function
-    const response = await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/is_admin`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://sdvakfhmoaoucmhbhwvy.supabase.co'}/rest/v1/rpc/is_admin`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': supabase.supabaseKey,
+        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M',
         'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
       }
     });
@@ -35,11 +35,11 @@ export async function isAdmin(): Promise<boolean> {
 export async function isDealer(): Promise<boolean> {
   try {
     // Use fetch directly to call the RPC function
-    const response = await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/is_dealer`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://sdvakfhmoaoucmhbhwvy.supabase.co'}/rest/v1/rpc/is_dealer`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': supabase.supabaseKey,
+        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M',
         'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
       }
     });
@@ -67,11 +67,11 @@ export async function checkPermission(
 ): Promise<boolean> {
   try {
     // Use fetch directly to call the RPC function
-    const response = await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/can_perform_action`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://sdvakfhmoaoucmhbhwvy.supabase.co'}/rest/v1/rpc/can_perform_action`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': supabase.supabaseKey,
+        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M',
         'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
       },
       body: JSON.stringify({
@@ -122,11 +122,11 @@ export async function performAdminAction(
     }
     
     // Use fetch directly to call the perform_admin_action function
-    const response = await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/perform_admin_action`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://sdvakfhmoaoucmhbhwvy.supabase.co'}/rest/v1/rpc/perform_admin_action`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': supabase.supabaseKey,
+        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M',
         'Authorization': `Bearer ${session.access_token}`
       },
       body: JSON.stringify({
