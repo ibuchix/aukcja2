@@ -20,6 +20,7 @@ export const BidForm = ({
 }: BidFormProps) => {
   const [bidAmount, setBidAmount] = useState<string>((currentHighestBid + minimumIncrement).toString());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
 
   const handlePlaceBid = async () => {
@@ -48,13 +49,41 @@ export const BidForm = ({
         p_is_proxy: false
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if this is a concurrency or transaction isolation error
+        if (error.message?.includes('SERIALIZATION_FAILURE') || 
+            error.message?.includes('LOCK_TIMEOUT') ||
+            error.message?.includes('CONCURRENT_MODIFICATION') ||
+            error.message?.includes('DEADLOCK')) {
+          
+          if (retryCount < 3) {
+            // Automatic retry with exponential backoff
+            setRetryCount(prev => prev + 1);
+            toast({
+              title: "Bidding System Busy",
+              description: "The auction is experiencing high activity. Retrying your bid...",
+            });
+            
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 500));
+            setIsSubmitting(false);
+            return handlePlaceBid();
+          } else {
+            throw new Error("The auction is very active right now. Please try again in a moment.");
+          }
+        }
+        
+        throw error;
+      }
       
       // Check the response data structure properly
       if (typeof data === 'object' && data !== null && 'success' in data) {
         if (!data.success) {
           throw new Error(data.error?.toString() || 'Failed to place bid');
         }
+
+        // Reset retry count on success
+        setRetryCount(0);
 
         toast({
           title: "Bid Placed",

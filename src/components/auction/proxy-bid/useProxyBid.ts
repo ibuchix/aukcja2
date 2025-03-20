@@ -23,6 +23,7 @@ export const useProxyBid = ({
   const [isProxyBidUsed, setIsProxyBidUsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
 
   // Fetch existing proxy bid for this car
@@ -91,11 +92,35 @@ export const useProxyBid = ({
           })
       ) as PostgrestResponse<any>;
 
-      if (result.error) throw result.error;
+      if (result.error) {
+        // Check if this is a serialization or lock timeout error
+        if (result.error.message?.includes('SERIALIZATION_FAILURE') || 
+            result.error.message?.includes('LOCK_TIMEOUT') ||
+            result.error.message?.includes('CONCURRENT_MODIFICATION')) {
+          
+          if (retryCount < 3) {
+            // Automatic retry with exponential backoff
+            setRetryCount(prev => prev + 1);
+            toast({
+              title: "Bidding System Busy",
+              description: "The auction is experiencing high activity. Retrying your bid...",
+            });
+            
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 500));
+            setIsSubmitting(false);
+            return handleSetMaxBid();
+          } else {
+            throw new Error("The bidding system is very busy. Please try again in a moment.");
+          }
+        }
+        
+        throw result.error;
+      }
 
       setExistingProxyBid(numericMaxBid);
-      // If we're modifying an existing proxy bid that was used, it stays in "used" state
-      // If not, then it's a new or unused proxy bid
+      // Reset retry count on success
+      setRetryCount(0);
       
       toast({
         title: "Maximum Bid Set",
