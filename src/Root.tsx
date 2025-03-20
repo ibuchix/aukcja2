@@ -10,7 +10,11 @@ import Index from "@/pages/Index";
 import HowItWorks from "@/pages/HowItWorks";
 import { Toaster } from "@/components/ui/toaster";
 import BrowseCars from "@/pages/BrowseCars";
-import { DealerBids } from "@/components/dealer/DealerBids"; // Import the DealerBids component
+import { DealerBids } from "@/components/dealer/DealerBids";
+import BidMonitoring from "@/pages/dealer/BidMonitoring";
+import Dashboard from "@/pages/dealer/Dashboard";
+import Profile from "@/pages/dealer/Profile";
+import Documents from "@/pages/dealer/Documents";
 
 // Create a layout component that includes AuthProviderWithRouter
 function Layout({ children }: { children: React.ReactNode }) {
@@ -22,8 +26,9 @@ function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Create the router with routes
+// Create the router with routes - public routes first, then protected routes
 const router = createBrowserRouter([
+  // Public routes that don't require authentication
   {
     path: "/",
     element: <Layout><Index /></Layout>,
@@ -41,11 +46,37 @@ const router = createBrowserRouter([
     element: <Layout><BrowseCars /></Layout>,
   },
   {
-    path: "/dealer/dashboard",
+    path: "/complete-registration",
+    element: <Layout><CompleteRegistration /></Layout>,
+  },
+  
+  // Protected dealer routes
+  {
+    path: "/dealer",
     element: (
       <Layout>
         <ProtectedRoute>
           <DealerDashboard />
+        </ProtectedRoute>
+      </Layout>
+    ),
+  },
+  {
+    path: "/dealer/dashboard",
+    element: (
+      <Layout>
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      </Layout>
+    ),
+  },
+  {
+    path: "/dealer/profile",
+    element: (
+      <Layout>
+        <ProtectedRoute>
+          <Profile />
         </ProtectedRoute>
       </Layout>
     ),
@@ -60,7 +91,16 @@ const router = createBrowserRouter([
       </Layout>
     ),
   },
-  // Add the new route for dealer/bids
+  {
+    path: "/dealer/documents",
+    element: (
+      <Layout>
+        <ProtectedRoute>
+          <Documents />
+        </ProtectedRoute>
+      </Layout>
+    ),
+  },
   {
     path: "/dealer/bids",
     element: (
@@ -72,8 +112,14 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/complete-registration",
-    element: <Layout><CompleteRegistration /></Layout>,
+    path: "/dealer/bid-monitoring",
+    element: (
+      <Layout>
+        <ProtectedRoute>
+          <BidMonitoring />
+        </ProtectedRoute>
+      </Layout>
+    ),
   },
 ]);
 

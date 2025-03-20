@@ -1,19 +1,9 @@
 
-import {
-  createBrowserRouter,
-  RouterProvider,
-  Route,
-  createRoutesFromElements,
-  Navigate,
-  Outlet,
-} from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/dealer/Dashboard";
-import Profile from "./pages/dealer/Profile";
-import Documents from "./pages/dealer/Documents";
-import BidMonitoring from "./pages/dealer/BidMonitoring";
 
+// This ProtectedRoute component is no longer needed in App.tsx 
+// since we're using the one from /components/ProtectedRoute.tsx
 const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
 
@@ -25,30 +15,17 @@ const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Use Outlet to render nested child routes
   return children ? <>{children}</> : <Outlet />;
 };
 
 function App() {
-  const router = createBrowserRouter(
-    createRoutesFromElements(
-      <Route path="/">
-        <Route path="auth" element={<Auth />} />
-        <Route
-          path="/"
-          element={<Navigate to="/dealer" replace />}
-        />
-        <Route path="dealer" element={<ProtectedRoute />}>
-          <Route index element={<Dashboard />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="documents" element={<Documents />} />
-          <Route path="bid-monitoring" element={<BidMonitoring />} />
-        </Route>
-      </Route>
-    )
+  // We're now using Root.tsx as our main router
+  // This component is kept simple for backward compatibility
+  return (
+    <div className="app">
+      <Outlet />
+    </div>
   );
-
-  return <RouterProvider router={router} />;
 }
 
 export default App;
