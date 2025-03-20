@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { AuctionTable } from "./AuctionTable";
 import { DealerAuctionFilters } from "./DealerAuctionFilters";
 import { AuctionPagination } from "./AuctionPagination";
@@ -11,15 +12,22 @@ export const DealerAuctionBrowser = ({ dealerId }: DealerAuctionBrowserProps) =>
   const [filters, setFilters] = useState<AuctionFilters>({});
   const [sortOption, setSortOption] = useState<string>("ending-soon");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [direction, setDirection] = useState<'next' | 'prev'>('next');
+  const cursorHistoryRef = useRef<string[]>([]);
 
+  // Reset pagination when filters or search change
   useEffect(() => {
-    setCurrentPage(1);
+    setCursor(null);
+    setDirection('next');
+    cursorHistoryRef.current = [];
   }, [filters, searchQuery, sortOption]);
 
   const { 
     auctions, 
-    totalPages, 
+    hasMore,
+    nextCursor,
+    prevCursor,
     isLoading, 
     error 
   } = useAuctionBrowser(
@@ -27,7 +35,8 @@ export const DealerAuctionBrowser = ({ dealerId }: DealerAuctionBrowserProps) =>
     filters,
     sortOption,
     searchQuery,
-    currentPage
+    cursor,
+    direction
   );
 
   const handleFiltersChange = (newFilters: AuctionFilters) => {
@@ -42,8 +51,28 @@ export const DealerAuctionBrowser = ({ dealerId }: DealerAuctionBrowserProps) =>
     setSearchQuery(search);
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  const handleNextPage = () => {
+    if (nextCursor) {
+      // Save current cursor to history for "back" functionality
+      if (cursor) {
+        cursorHistoryRef.current.push(cursor);
+      }
+      setCursor(nextCursor);
+      setDirection('next');
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (cursorHistoryRef.current.length > 0) {
+      // Pop the last cursor from history
+      const previousCursor = cursorHistoryRef.current.pop();
+      setCursor(previousCursor || null);
+      setDirection('prev');
+    } else if (prevCursor) {
+      // If no history but we have a prevCursor
+      setCursor(prevCursor);
+      setDirection('prev');
+    }
   };
 
   if (error) {
@@ -79,13 +108,13 @@ export const DealerAuctionBrowser = ({ dealerId }: DealerAuctionBrowserProps) =>
           dealerId={dealerId} 
         />
         
-        {totalPages > 1 && (
-          <AuctionPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        )}
+        <AuctionPagination
+          hasMore={hasMore}
+          canGoBack={cursor !== null || cursorHistoryRef.current.length > 0}
+          onNext={handleNextPage}
+          onPrevious={handlePreviousPage}
+          isLoading={isLoading}
+        />
         
         {auctions.length === 0 && !isLoading && (
           <AuctionEmptyState 

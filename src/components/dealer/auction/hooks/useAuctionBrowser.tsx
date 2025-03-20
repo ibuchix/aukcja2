@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Auction, AuctionFilters } from "../types";
 import { useToast } from "@/hooks/use-toast";
+import { createCursor, decodeCursor, getCursorOperator, PaginationResult } from "@/utils/cursorPagination";
 
 const PAGE_SIZE = 10; // Number of items per page
 
@@ -12,12 +13,37 @@ export const useAuctionBrowser = (
   filters: AuctionFilters,
   sortOption: string,
   searchQuery: string,
-  currentPage: number
+  cursor: string | null = null,
+  direction: 'next' | 'prev' = 'next'
 ) => {
   const { toast } = useToast();
 
+  // Determine sort field and direction based on sortOption
+  const getSortConfig = () => {
+    switch (sortOption) {
+      case "ending-soon":
+        return { field: 'auction_end_time', direction: 'asc' as const };
+      case "newest":
+        return { field: 'auction_end_time', direction: 'desc' as const };
+      case "price-low-high":
+        return { field: 'price', direction: 'asc' as const };
+      case "price-high-low":
+        return { field: 'price', direction: 'desc' as const };
+      case "highest-bid":
+        return { field: 'current_bid', direction: 'desc' as const };
+      case "year-new-old":
+        return { field: 'year', direction: 'desc' as const };
+      case "year-old-new":
+        return { field: 'year', direction: 'asc' as const };
+      default:
+        return { field: 'auction_end_time', direction: 'asc' as const };
+    }
+  };
+
+  const { field: sortField, direction: sortDirection } = getSortConfig();
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ["dealerAuctions", filters, sortOption, searchQuery, currentPage],
+    queryKey: ["dealerAuctions", filters, sortOption, searchQuery, cursor, direction],
     queryFn: async () => {
       try {
         // Start building the query
@@ -79,19 +105,20 @@ export const useAuctionBrowser = (
           query = query.lte("mileage", filters.mileageMax);
         }
 
-        // Count total before pagination
-        const { count } = await supabase
-          .from("cars")
-          .select("id", { count: "exact", head: true })
-          .eq("is_auction", true)
-          .eq("auction_status", "active")
-          .eq("is_draft", false);
-          
-        const totalCount = count || 0;
+        // Apply cursor-based pagination if cursor is provided
+        if (cursor) {
+          const decodedCursor = decodeCursor(cursor);
+          if (decodedCursor && decodedCursor.field === sortField) {
+            const operator = getCursorOperator(direction, sortDirection);
+            query = query.filter(`${sortField}`, operator, decodedCursor.value);
+          }
+        }
 
-        // Apply pagination
-        const from = (currentPage - 1) * PAGE_SIZE;
-        query = query.range(from, from + PAGE_SIZE - 1);
+        // Apply sorting
+        query = query.order(sortField, { ascending: sortDirection === 'asc' });
+        
+        // Limit results to PAGE_SIZE + 1 (extra item to check if there are more pages)
+        query = query.limit(PAGE_SIZE + 1);
         
         // Get the data
         const { data: auctionData, error } = await query;
@@ -112,33 +139,27 @@ export const useAuctionBrowser = (
           my_bid: dealerBids?.find((bid) => bid.car_id === auction.id),
         })) as Auction[];
 
-        // Apply client-side sorting
-        const sortedAuctions = [...formattedAuctions].sort((a, b) => {
-          switch (sortOption) {
-            case "ending-soon":
-              return new Date(a.auction_end_time).getTime() - new Date(b.auction_end_time).getTime();
-            case "newest":
-              return new Date(b.auction_end_time).getTime() - new Date(a.auction_end_time).getTime();
-            case "price-low-high":
-              return (a.current_bid || a.price) - (b.current_bid || b.price);
-            case "price-high-low":
-              return (b.current_bid || b.price) - (a.current_bid || a.price);
-            case "highest-bid":
-              return (b.highest_bid?.amount || 0) - (a.highest_bid?.amount || 0);
-            case "year-new-old":
-              return (b.year || 0) - (a.year || 0);
-            case "year-old-new":
-              return (a.year || 0) - (b.year || 0);
-            default:
-              return 0;
-          }
-        });
+        // Determine if there are more pages
+        const hasMore = formattedAuctions.length > PAGE_SIZE;
+        
+        // Remove the extra item if it exists
+        const auctions = hasMore ? formattedAuctions.slice(0, PAGE_SIZE) : formattedAuctions;
+        
+        // Create next and previous cursors
+        const nextCursor = auctions.length > 0 
+          ? createCursor(auctions[auctions.length - 1], sortField as keyof Auction) 
+          : null;
+        
+        const prevCursor = auctions.length > 0 
+          ? createCursor(auctions[0], sortField as keyof Auction) 
+          : null;
 
         return {
-          auctions: sortedAuctions,
-          totalCount,
-          totalPages: Math.ceil(totalCount / PAGE_SIZE)
-        };
+          auctions,
+          hasMore,
+          nextCursor,
+          prevCursor
+        } as PaginationResult<Auction>;
       } catch (err: any) {
         console.error("Error fetching auctions:", err);
         toast({
@@ -146,15 +167,21 @@ export const useAuctionBrowser = (
           description: err.message,
           variant: "destructive"
         });
-        return { auctions: [], totalCount: 0, totalPages: 0 };
+        return { 
+          auctions: [], 
+          hasMore: false,
+          nextCursor: null, 
+          prevCursor: null 
+        };
       }
     },
   });
 
   return {
     auctions: data?.auctions || [],
-    totalCount: data?.totalCount || 0,
-    totalPages: data?.totalPages || 0,
+    hasMore: data?.hasMore || false,
+    nextCursor: data?.nextCursor,
+    prevCursor: data?.prevCursor,
     isLoading,
     error
   };
