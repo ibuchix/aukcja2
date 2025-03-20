@@ -1,216 +1,209 @@
 
-import { HttpError } from "./error-handling.ts";
-
 /**
- * Classifies error types to determine if they're retryable
+ * Utility for retrying operations with exponential backoff and enhanced logging
  */
-export function isRetryableError(error: unknown): boolean {
-  // Convert error to string for pattern matching
-  const errorString = typeof error === 'string' 
-    ? error 
-    : error instanceof Error 
-      ? error.message 
-      : JSON.stringify(error);
-  
-  const errorText = errorString.toLowerCase();
-  
-  // Network and connectivity errors are retryable
-  if (
-    errorText.includes("network") ||
-    errorText.includes("connection") ||
-    errorText.includes("timeout") ||
-    errorText.includes("econnreset") ||
-    errorText.includes("socket") ||
-    errorText.includes("unavailable") ||
-    errorText.includes("aborted")
-  ) {
-    return true;
-  }
-  
-  // Database transaction conflicts
-  if (
-    errorText.includes("deadlock") ||
-    errorText.includes("lock timeout") ||
-    errorText.includes("duplicate key") ||
-    errorText.includes("serialization") ||
-    errorText.includes("conflict") ||
-    errorText.includes("concurrent")
-  ) {
-    return true;
-  }
-  
-  // Service unavailable or server errors (5xx)
-  if (
-    errorText.includes("503") ||
-    errorText.includes("500") ||
-    errorText.includes("502") ||
-    errorText.includes("504") ||
-    errorText.includes("unexpected_failure") ||
-    errorText.includes("internal server error") ||
-    errorText.includes("rate limit") ||
-    errorText.includes("too many requests") ||
-    errorText.includes("429")
-  ) {
-    return true;
-  }
-  
-  // Check for HTTP error status codes that should be retried
-  if (error instanceof HttpError) {
-    return error.status >= 500 || error.status === 429;
-  }
-  
-  return false;
-}
 
-/**
- * Options for retry operations
- */
-export interface RetryOptions {
-  /** Maximum number of retry attempts (default: 3) */
-  maxRetries?: number;
-  
-  /** Base delay in milliseconds (default: 1000) */
-  baseDelay?: number;
-  
-  /** Maximum delay cap in milliseconds (default: 15000) */
-  maxDelay?: number;
-  
-  /** Whether to add jitter to the delay (default: true) */
-  jitter?: boolean;
-  
-  /** Function to determine if an error is retryable (default: isRetryableError) */
-  shouldRetry?: (error: unknown) => boolean;
-  
-  /** Optional callback for retry attempts */
-  onRetry?: (attempt: number, delay: number, error: unknown) => void;
-  
-  /** Optional timeout in milliseconds for each attempt */
-  timeout?: number;
-}
-
-/**
- * Result object for retry operations
- */
-export interface RetryResult<T> {
-  /** The result of the operation if successful */
+// Type definition for Supabase-like responses
+export interface SupabaseResponse<T = any> {
   data: T | null;
-  
-  /** The error if the operation failed */
-  error: unknown | null;
-  
-  /** Whether the operation was successful */
-  success: boolean;
-  
-  /** Number of retry attempts made */
-  attempts: number;
+  error: any | null;
+  [key: string]: any; // For any additional properties
+}
+
+// Type guard to check if a response is a Supabase-like response
+function isSupabaseResponse(obj: any): obj is SupabaseResponse {
+  return obj && typeof obj === 'object' && ('data' in obj || 'error' in obj);
+}
+
+// Import for the retry logger if available
+let logRetryAttempt: any;
+try {
+  // Using dynamic import to avoid circular dependencies
+  import('../proxy-bidding-processor/logging.ts')
+    .then(module => {
+      logRetryAttempt = module.logRetryAttempt;
+    })
+    .catch(() => {
+      // If the specific logger is not available, we'll use console logging only
+      logRetryAttempt = null;
+    });
+} catch {
+  logRetryAttempt = null;
+}
+
+// Define retry statistics for monitoring
+interface RetryStats {
+  totalRetries: number;
+  successfulRetries: number;
+  failedRetries: number;
+  totalOperations: number;
+  successfulOperations: number;
+  failedOperations: number;
+}
+
+// In-memory stats for the current process
+const retryStats: RetryStats = {
+  totalRetries: 0,
+  successfulRetries: 0,
+  failedRetries: 0,
+  totalOperations: 0,
+  successfulOperations: 0,
+  failedOperations: 0
+};
+
+/**
+ * Get current retry statistics
+ */
+export function getRetryStats(): RetryStats {
+  return { ...retryStats };
 }
 
 /**
- * Utility for retrying operations with exponential backoff
- * @param operation The async operation to retry
- * @param options Retry configuration options
- * @returns A promise that resolves to the operation result
+ * Execute an operation with retry logic and comprehensive logging
  */
 export async function executeWithRetry<T>(
-  operation: () => Promise<T>,
-  options: RetryOptions = {}
+  operation: () => Promise<T> | any,
+  options: {
+    maxRetries?: number;
+    baseDelay?: number;
+    shouldRetry?: (error: any) => boolean;
+    onRetry?: (attempt: number, delay: number, error: any) => void;
+    maxDelay?: number;
+    jitter?: boolean;
+    module?: string;
+    operationName?: string;
+    context?: Record<string, any>;
+  } = {}
 ): Promise<T> {
   const {
     maxRetries = 3,
     baseDelay = 1000,
-    maxDelay = 15000,
-    jitter = true,
-    shouldRetry = isRetryableError,
-    onRetry = (attempt, delay, error) => console.log(`Retry attempt ${attempt} in ${delay}ms due to: ${error instanceof Error ? error.message : String(error)}`)
+    maxDelay = 30000,
+    jitter = false,
+    shouldRetry = () => true,
+    onRetry,
+    module = 'unknown',
+    operationName = 'unknown',
+    context = {}
   } = options;
   
   let retryCount = 0;
-  let lastError: unknown;
-
-  while (retryCount <= maxRetries) {
-    try {
-      // Execute the operation
-      return await operation();
-    } catch (error) {
-      lastError = error;
-      
-      // Don't retry if we've reached max retries or this error shouldn't be retried
-      if (retryCount >= maxRetries || !shouldRetry(error)) {
-        break;
-      }
-
-      // Calculate delay with exponential backoff
-      let delay = Math.min(maxDelay, baseDelay * Math.pow(2, retryCount));
-      
-      // Add jitter (±25%) to prevent thundering herd problem
-      if (jitter) {
-        const jitterFactor = 0.75 + Math.random() * 0.5; // Between 0.75 and 1.25
-        delay = Math.floor(delay * jitterFactor);
-      }
-      
-      // Log retry attempt
-      onRetry(retryCount + 1, delay, error);
-      
-      // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, delay));
-      retryCount++;
-    }
-  }
-
-  // If we've exhausted all retries, throw the last error
-  throw lastError;
-}
-
-/**
- * Executes an operation with retry logic and returns a structured result
- * instead of throwing exceptions
- */
-export async function executeWithRetryResult<T>(
-  operation: () => Promise<T>,
-  options: RetryOptions = {}
-): Promise<RetryResult<T>> {
-  let attempts = 0;
+  const startTime = Date.now();
+  let success = false;
   
-  try {
-    const result = await executeWithRetry(
-      () => {
-        attempts++;
-        return operation();
-      },
-      options
-    );
-    
-    return {
-      data: result,
-      error: null,
-      success: true,
-      attempts
-    };
-  } catch (error) {
-    return {
-      data: null,
-      error,
-      success: false,
-      attempts
-    };
-  }
-}
+  // Update operation count
+  retryStats.totalOperations++;
 
-/**
- * Wraps a Supabase query with retry logic
- * Useful for Supabase queries that don't follow standard Promise patterns
- */
-export async function withSupabaseRetry<T>(
-  query: any, // Supabase query builder
-  options: RetryOptions = {}
-): Promise<T> {
-  return executeWithRetry(async () => {
-    const { data, error } = await query;
+  try {
+    while (true) {
+      try {
+        // Execute the operation and await the result
+        // This handles both regular promises and Supabase query builders
+        const result = await operation();
+        
+        // For Supabase responses, check if there's an error property
+        // and throw it if it exists
+        if (isSupabaseResponse(result) && result.error) {
+          throw result.error;
+        }
+        
+        // Operation succeeded
+        success = true;
+        retryStats.successfulOperations++;
+        
+        // Log performance metrics if the imported logger is available
+        const durationMs = Date.now() - startTime;
+        try {
+          // This might fail if the module is not loaded or available
+          const { logPerformanceMetrics } = await import('../proxy-bidding-processor/logging.ts');
+          await logPerformanceMetrics(module, operationName, durationMs, true, {
+            retries: retryCount,
+            ...context
+          });
+        } catch {
+          // Fallback to console logging
+          console.log(`[PERF] ${module}/${operationName} completed successfully after ${retryCount} retries in ${durationMs}ms`);
+        }
+        
+        return result;
+      } catch (error: any) {
+        // Don't retry if the error doesn't meet criteria or we've reached the limit
+        if (!shouldRetry(error) || retryCount >= maxRetries) {
+          // Log the final failure
+          try {
+            if (logRetryAttempt) {
+              await logRetryAttempt(
+                module,
+                operationName,
+                retryCount + 1,
+                maxRetries,
+                error,
+                { ...context, final: true }
+              );
+            }
+          } catch {}
+          
+          retryStats.failedOperations++;
+          throw error;
+        }
+
+        // Calculate delay with exponential backoff
+        let delay = Math.min(
+          baseDelay * Math.pow(2, retryCount),
+          maxDelay
+        );
+        
+        // Apply jitter to prevent thundering herd problem
+        if (jitter) {
+          delay = delay * (0.5 + Math.random() * 0.5);
+        }
+        
+        // Update retry stats
+        retryStats.totalRetries++;
+        
+        // Log retry information
+        console.log(`Retrying ${module}/${operationName} in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+        
+        // Call onRetry callback if provided
+        if (onRetry) {
+          onRetry(retryCount + 1, delay, error);
+        }
+        
+        // Log retry attempt in database if logger is available
+        try {
+          if (logRetryAttempt) {
+            await logRetryAttempt(
+              module,
+              operationName,
+              retryCount + 1,
+              maxRetries,
+              error,
+              context
+            );
+          }
+        } catch {}
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, delay));
+        retryCount++;
+      }
+    }
+  } catch (finalError) {
+    // Calculate total duration
+    const durationMs = Date.now() - startTime;
     
-    if (error) {
-      throw error;
+    // Log final performance metrics for the failed operation
+    try {
+      const { logPerformanceMetrics } = await import('../proxy-bidding-processor/logging.ts');
+      await logPerformanceMetrics(module, operationName, durationMs, false, {
+        retries: retryCount,
+        error: finalError instanceof Error ? finalError.message : String(finalError),
+        ...context
+      });
+    } catch {
+      console.error(`[PERF] ${module}/${operationName} failed after ${retryCount} retries in ${durationMs}ms: ${finalError instanceof Error ? finalError.message : String(finalError)}`);
     }
     
-    return data as T;
-  }, options);
+    throw finalError;
+  }
 }

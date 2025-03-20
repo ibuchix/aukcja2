@@ -30,7 +30,9 @@ export async function processProxyBids(): Promise<ProcessSummary> {
     }, {
       maxRetries: 5,
       baseDelay: 500,
-      jitter: true
+      jitter: true,
+      module: 'proxy-bid-processor',
+      operationName: 'fetch_active_auctions'
     });
     
     if (auctionsError) {
@@ -67,9 +69,35 @@ export async function processProxyBids(): Promise<ProcessSummary> {
     const duration = Date.now() - startTime;
     console.log(`Proxy bid processing completed in ${duration}ms. Processed: ${processed}, Skipped: ${skipped}, Errors: ${errors}`);
     
+    // Log performance metrics for the overall job
+    try {
+      const { logPerformanceMetrics } = await import('./logging.ts');
+      await logPerformanceMetrics('proxy-bid-processor', 'process_all', duration, errors === 0, {
+        auctions_processed: processed,
+        auctions_skipped: skipped,
+        auctions_errored: errors,
+        total_auctions: activeAuctions?.length || 0
+      });
+    } catch (e) {
+      console.error(`Failed to log overall performance metrics: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    
     return { processed, skipped, errors, results };
   } catch (err) {
     console.error('Error in processProxyBids:', err);
+    
+    // Log the failure
+    try {
+      const { logPerformanceMetrics } = await import('./logging.ts');
+      const duration = Date.now() - startTime;
+      await logPerformanceMetrics('proxy-bid-processor', 'process_all', duration, false, {
+        error: err instanceof Error ? err.message : String(err),
+        auctions_processed: processed,
+        auctions_skipped: skipped,
+        auctions_errored: errors
+      });
+    } catch {}
+    
     throw err;
   }
 }

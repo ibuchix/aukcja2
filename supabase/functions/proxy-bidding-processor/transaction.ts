@@ -69,6 +69,10 @@ export async function logTransactionStart(carId: string, transactionId: string) 
         timestamp: new Date().toISOString()
       }
     });
+  }, {
+    module: 'transaction-manager',
+    operationName: 'log_transaction_start',
+    context: { carId, transactionId }
   });
 }
 
@@ -97,6 +101,10 @@ export async function logTransactionComplete(
         timestamp: new Date().toISOString()
       }
     });
+  }, {
+    module: 'transaction-manager',
+    operationName: 'log_transaction_complete',
+    context: { carId, transactionId, success, reason }
   });
 }
 
@@ -116,8 +124,13 @@ export async function logTransactionError(carId: string, transactionId: string, 
         transaction_id: transactionId,
         stage: 'error',
         error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : null,
         timestamp: new Date().toISOString()
       }
     });
+  }, {
+    module: 'transaction-manager',
+    operationName: 'log_transaction_error',
+    context: { carId, transactionId }
   });
 }

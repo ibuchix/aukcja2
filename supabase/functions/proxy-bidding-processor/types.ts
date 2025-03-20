@@ -1,73 +1,80 @@
 
-// Types shared across the proxy bidding processor modules
+/**
+ * Car record with auction details
+ */
+export interface Car {
+  id: string;
+  current_bid?: number;
+  minimum_bid_increment?: number;
+  auction_status: string;
+  price: number;
+}
 
-// Define a type for the proxy bid object
+/**
+ * Proxy bid record
+ */
 export interface ProxyBid {
   id: string;
   car_id: string;
   dealer_id: string;
   max_bid_amount: number;
-  last_processed_amount?: number;
   created_at: string;
-  updated_at: string;
 }
 
-// Define a type for the car object
-export interface Car {
-  id: string;
-  current_bid: number;
-  minimum_bid_increment: number;
-  auction_status: string;
-  price: number;
-}
-
+/**
+ * Result of processing a single auction
+ */
 export interface ProcessResult {
   carId: string;
   processed: boolean;
+  reason?: string;
   newBid?: number;
   previousBid?: number;
-  reason?: string;
-  error?: string;
-  checkpoint?: string;
   transaction_id?: string;
+  error?: string;
 }
 
-export interface ProcessSummary { 
-  processed: number; 
-  skipped: number; 
+/**
+ * Summary of processing multiple auctions
+ */
+export interface ProcessSummary {
+  processed: number;
+  skipped: number;
   errors: number;
   results: ProcessResult[];
 }
 
-export interface CheckpointDetails extends Record<string, any> {
+/**
+ * Checkpoint details for logging
+ */
+export interface CheckpointDetails {
   transaction_id: string;
   stage: string;
   timestamp: string;
+  [key: string]: any;
 }
 
-// Add the audit log action types for better type safety
-export type AuditLogAction = 
-  | "login" 
-  | "logout" 
-  | "create" 
-  | "update" 
-  | "delete" 
-  | "suspend" 
-  | "reinstate" 
-  | "verify" 
-  | "reject" 
-  | "approve" 
-  | "process_auctions" 
-  | "auction_closed" 
-  | "auto_proxy_bid"
-  | "proxy_bid" 
-  | "proxy_bid_checkpoint"
-  | "start_auction" 
-  | "auction_close_failed" 
-  | "auction_close_system_error"
-  | "system_reset_failed" 
-  | "recovery_failed" 
-  | "manual_retry" 
-  | "auction_recovery" 
-  | "system_health_check" 
-  | "system_alert";
+/**
+ * Performance metrics for logging
+ */
+export interface PerformanceMetrics {
+  module: string;
+  operation: string;
+  duration_ms: number;
+  success: boolean;
+  details: Record<string, any>;
+}
+
+/**
+ * Retry attempt details for logging
+ */
+export interface RetryAttemptDetails {
+  module: string;
+  operation: string;
+  attempt: number;
+  max_retries: number;
+  error: string;
+  error_stack?: string | null;
+  context: Record<string, any>;
+  timestamp: string;
+}

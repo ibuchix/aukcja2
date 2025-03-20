@@ -51,6 +51,9 @@ async function processAuction(
     maxRetries: 5,
     baseDelay: 500,
     jitter: true,
+    module: 'auction-processor',
+    operationName: 'fetch_proxy_bids',
+    context: { carId, transactionId },
     onRetry: (attempt, delay, error) => {
       console.log(`Retrying fetch_proxy_bids (attempt ${attempt}) in ${delay}ms due to: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -112,6 +115,9 @@ async function processProxyBidding(
     maxRetries: 5,
     baseDelay: 500,
     jitter: true,
+    module: 'auction-processor',
+    operationName: 'fetch_current_high_bid',
+    context: { carId, transactionId },
     onRetry: (attempt, delay, error) => {
       console.log(`Retrying fetch_current_high_bid (attempt ${attempt}) in ${delay}ms due to: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -209,6 +215,15 @@ async function placeBid(
     baseDelay: 300,
     maxDelay: 10000,
     jitter: true,
+    module: 'auction-processor',
+    operationName: 'place_bid',
+    context: { 
+      carId, 
+      dealerId, 
+      bidAmount, 
+      maxProxyAmount,
+      transactionId
+    },
     shouldRetry: (error) => {
       // Determine if this specific error is retryable
       // Don't retry if it's a validation error or other non-retryable error
@@ -258,7 +273,15 @@ async function placeBid(
     );
   }, {
     maxRetries: 3,
-    baseDelay: 500
+    baseDelay: 500,
+    module: 'auction-processor',
+    operationName: 'log_proxy_bid',
+    context: { 
+      carId, 
+      dealerId, 
+      bidAmount, 
+      transactionId 
+    }
   });
   
   await checkpoint('complete', { success: true });
