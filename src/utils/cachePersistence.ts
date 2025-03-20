@@ -1,6 +1,6 @@
 
 import { QueryClient } from "@tanstack/react-query";
-import { PersistQueryClientProvider, PersistedClient, Persister } from '@tanstack/react-query-persist-client';
+import { PersistQueryClientProvider, Persister } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 
 // Create a localStorage persister
