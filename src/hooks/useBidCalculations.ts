@@ -1,8 +1,8 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { queryKeys } from "@/utils/queryClient";
 
 interface BidStatus {
   success: boolean;
@@ -236,7 +236,7 @@ export function useBidCalculations() {
 // React Query hooks for easier data fetching
 export function useBidStatus(carId: string | undefined, dealerId: string | undefined) {
   return useQuery({
-    queryKey: ['bidStatus', carId, dealerId],
+    queryKey: carId && dealerId ? queryKeys.bids.status(carId, dealerId) : ['bidStatus'],
     queryFn: async () => {
       if (!carId || !dealerId) return null;
       const { data, error } = await supabase.rpc('get_bid_status', {
@@ -252,7 +252,7 @@ export function useBidStatus(carId: string | undefined, dealerId: string | undef
 
 export function useBidRecommendations(carId: string | undefined, dealerId: string | undefined) {
   return useQuery({
-    queryKey: ['bidRecommendations', carId, dealerId],
+    queryKey: carId && dealerId ? queryKeys.bids.recommendations(carId, dealerId) : ['bidRecommendations'],
     queryFn: async () => {
       if (!carId || !dealerId) return null;
       const { data, error } = await supabase.rpc('get_bid_recommendations', {
@@ -268,7 +268,7 @@ export function useBidRecommendations(carId: string | undefined, dealerId: strin
 
 export function useAuctionActivityMetrics(carId: string | undefined) {
   return useQuery({
-    queryKey: ['auctionActivityMetrics', carId],
+    queryKey: carId ? queryKeys.bids.activity(carId) : ['auctionActivityMetrics'],
     queryFn: async () => {
       if (!carId) return null;
       const { data, error } = await supabase.rpc('get_auction_activity_metrics', {
@@ -283,7 +283,7 @@ export function useAuctionActivityMetrics(carId: string | undefined) {
 
 export function useDealerBidExposure(dealerId: string | undefined) {
   return useQuery({
-    queryKey: ['dealerBidExposure', dealerId],
+    queryKey: dealerId ? queryKeys.bids.dealerExposure(dealerId) : ['dealerBidExposure'],
     queryFn: async () => {
       if (!dealerId) return null;
       const { data, error } = await supabase.rpc('get_dealer_bid_exposure', {
@@ -298,7 +298,7 @@ export function useDealerBidExposure(dealerId: string | undefined) {
 
 export function useBiddingStrategy(dealerId: string | undefined) {
   return useQuery({
-    queryKey: ['biddingStrategy', dealerId],
+    queryKey: dealerId ? queryKeys.bids.biddingStrategy(dealerId) : ['biddingStrategy'],
     queryFn: async () => {
       if (!dealerId) return null;
       const { data, error } = await supabase.rpc('analyze_bidding_strategy', {

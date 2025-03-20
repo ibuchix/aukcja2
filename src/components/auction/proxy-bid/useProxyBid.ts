@@ -1,9 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { executeWithRetry } from "@/utils/retryUtils";
 import { PostgrestResponse, PostgrestSingleResponse } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/utils/queryClient";
 
 interface UseProxyBidProps {
   carId: string;
@@ -26,6 +27,7 @@ export const useProxyBid = ({
   const [retryCount, setRetryCount] = useState(0);
   const [optimalBid, setOptimalBid] = useState<number | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch existing proxy bid for this car
   useEffect(() => {
@@ -112,6 +114,10 @@ export const useProxyBid = ({
         throw new Error(`Bid must be divisible by the minimum increment of $${minimumIncrement}`);
       }
 
+      // Optimistically update the UI
+      const previousProxyBid = existingProxyBid;
+      setExistingProxyBid(numericMaxBid);
+
       // Use upsert with onConflict to handle concurrent submissions
       const result = await executeWithRetry(() => 
         supabase
@@ -126,6 +132,9 @@ export const useProxyBid = ({
       ) as PostgrestResponse<any>;
 
       if (result.error) {
+        // Revert optimistic update if there's an error
+        setExistingProxyBid(previousProxyBid);
+        
         // Check if this is a serialization or lock timeout error
         if (result.error.message?.includes('SERIALIZATION_FAILURE') || 
             result.error.message?.includes('LOCK_TIMEOUT') ||
@@ -151,9 +160,13 @@ export const useProxyBid = ({
         throw result.error;
       }
 
-      setExistingProxyBid(numericMaxBid);
       // Reset retry count on success
       setRetryCount(0);
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.bids.status(carId, dealerId)
+      });
       
       toast({
         title: "Maximum Bid Set",
@@ -175,6 +188,13 @@ export const useProxyBid = ({
     
     try {
       setIsSubmitting(true);
+      
+      // Optimistically update UI
+      const previousProxyBid = existingProxyBid;
+      setExistingProxyBid(null);
+      setMaxBid("");
+      setIsProxyBidUsed(false);
+      
       const result = await executeWithRetry(() => 
         supabase
           .from('proxy_bids')
@@ -183,11 +203,17 @@ export const useProxyBid = ({
           .eq('dealer_id', dealerId)
       ) as PostgrestResponse<any>;
 
-      if (result.error) throw result.error;
-
-      setExistingProxyBid(null);
-      setMaxBid("");
-      setIsProxyBidUsed(false);
+      if (result.error) {
+        // Revert optimistic updates on error
+        setExistingProxyBid(previousProxyBid);
+        setMaxBid(previousProxyBid?.toString() || "");
+        throw result.error;
+      }
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.bids.status(carId, dealerId)
+      });
       
       toast({
         title: "Maximum Bid Removed",

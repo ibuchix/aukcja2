@@ -1,19 +1,25 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MyBid } from "./types";
+import { queryKeys } from "@/utils/queryClient";
 
 export function useDealerBids(dealerProfileId: string | undefined) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [realtimeInitialized, setRealtimeInitialized] = useState(false);
+  const queryClient = useQueryClient();
+
+  const queryKey = dealerProfileId 
+    ? queryKeys.bids.dealerBids(dealerProfileId) 
+    : ['myBids'];
 
   const {
     data: myBids,
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["myBids", dealerProfileId],
+    queryKey,
     queryFn: async () => {
       if (!dealerProfileId) return [];
 
@@ -95,6 +101,8 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         }) as MyBid[];
     },
     enabled: !!dealerProfileId,
+    // Refetch every 30 seconds
+    refetchInterval: 30 * 1000,
   });
 
   // Set up realtime listeners for bid status changes
@@ -114,8 +122,10 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         },
         (payload) => {
           console.log('Bid status changed:', payload);
-          // Trigger a refetch to get updated data
-          refetch();
+          // Invalidate query to trigger a refetch
+          queryClient.invalidateQueries({
+            queryKey: queryKey,
+          });
         }
       )
       .subscribe();
@@ -134,8 +144,10 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         },
         (payload) => {
           console.log('Car status changed:', payload);
-          // Trigger a refetch to get updated data
-          refetch();
+          // Invalidate query to trigger a refetch
+          queryClient.invalidateQueries({
+            queryKey: queryKey,
+          });
         }
       )
       .subscribe();
@@ -147,7 +159,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       supabase.removeChannel(channel);
       supabase.removeChannel(carChannel);
     };
-  }, [dealerProfileId, myBids, refetch, realtimeInitialized]);
+  }, [dealerProfileId, myBids, queryClient, queryKey, realtimeInitialized]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
