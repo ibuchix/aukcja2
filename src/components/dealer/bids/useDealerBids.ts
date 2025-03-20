@@ -17,28 +17,24 @@ export function useDealerBids(dealerProfileId: string | undefined) {
     queryFn: async () => {
       if (!dealerProfileId) return [];
 
+      // Use the materialized view for better performance
       const { data, error } = await supabase
-        .from("bids")
+        .from("mv_dealer_bids")
         .select(`
-          id,
           car_id,
-          amount,
-          status,
-          created_at,
-          car:cars(
-            id,
-            title,
-            make,
-            model,
-            year,
-            auction_end_time,
-            current_bid,
-            auction_status
-          )
+          my_highest_bid,
+          outbid,
+          title,
+          make,
+          model,
+          year,
+          auction_end_time,
+          current_bid,
+          auction_status
         `)
         .eq("dealer_id", dealerProfileId)
-        .in("status", ["active", "outbid"])
-        .order("created_at", { ascending: false });
+        .in("auction_status", ["active"])
+        .order("auction_end_time", { ascending: true });
 
       if (error) throw error;
 
@@ -50,9 +46,23 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         .eq("dealer_id", dealerProfileId)
         .in("car_id", carIds);
 
-      // Merge proxy bid data
+      // Merge proxy bid data and transform to the expected format
       return data.map((bid) => ({
-        ...bid,
+        id: `${bid.car_id}-${dealerProfileId}`, // Create a unique ID
+        car_id: bid.car_id,
+        amount: bid.my_highest_bid,
+        status: bid.outbid ? 'outbid' : 'active',
+        created_at: new Date().toISOString(), // Not in materialized view
+        car: {
+          id: bid.car_id,
+          title: bid.title,
+          make: bid.make,
+          model: bid.model,
+          year: bid.year,
+          auction_end_time: bid.auction_end_time,
+          current_bid: bid.current_bid,
+          auction_status: bid.auction_status
+        },
         proxy_bid: proxyBids?.find((pb) => pb.car_id === bid.car_id),
       })) as MyBid[];
     },
