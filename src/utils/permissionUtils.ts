@@ -12,7 +12,7 @@ export async function isAdmin(): Promise<boolean> {
       headers: {
         'Content-Type': 'application/json',
         'apikey': supabase.supabaseKey,
-        'Authorization': `Bearer ${supabase.auth.session()?.access_token}`
+        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
       }
     });
     
@@ -40,7 +40,7 @@ export async function isDealer(): Promise<boolean> {
       headers: {
         'Content-Type': 'application/json',
         'apikey': supabase.supabaseKey,
-        'Authorization': `Bearer ${supabase.auth.session()?.access_token}`
+        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
       }
     });
     
@@ -72,7 +72,7 @@ export async function checkPermission(
       headers: {
         'Content-Type': 'application/json',
         'apikey': supabase.supabaseKey,
-        'Authorization': `Bearer ${supabase.auth.session()?.access_token}`
+        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
       },
       body: JSON.stringify({
         p_action: action,

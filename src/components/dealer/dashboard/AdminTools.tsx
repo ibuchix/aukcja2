@@ -56,12 +56,19 @@ export function AdminTools() {
       if (!userData?.user?.id) throw new Error('User not authenticated');
 
       // For verify_dealer we need to use direct fetch since it's a custom RPC
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      
+      if (!accessToken) {
+        throw new Error('No active session');
+      }
+      
       const response = await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/verify_dealer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'apikey': supabase.supabaseKey,
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify({
           p_dealer_id: dealerId,
@@ -106,12 +113,19 @@ export function AdminTools() {
       if (!userData?.user?.id) throw new Error('User not authenticated');
 
       // For reject_dealer we need to use direct fetch since it's a custom RPC
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      
+      if (!accessToken) {
+        throw new Error('No active session');
+      }
+      
       const response = await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/reject_dealer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'apikey': supabase.supabaseKey,
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify({
           p_dealer_id: dealerId,

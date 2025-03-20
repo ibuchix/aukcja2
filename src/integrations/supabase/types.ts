@@ -1435,6 +1435,14 @@ export type Database = {
         }
         Returns: number
       }
+      can_perform_action: {
+        Args: {
+          p_action: string
+          p_entity_type: string
+          p_entity_id: string
+        }
+        Returns: boolean
+      }
       check_auction_system_health: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -1616,6 +1624,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      is_dealer: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_seller: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1631,6 +1643,15 @@ export type Database = {
           p_user_agent?: string
         }
         Returns: string
+      }
+      perform_admin_action: {
+        Args: {
+          p_action: string
+          p_entity_type: string
+          p_entity_id: string
+          p_details?: Json
+        }
+        Returns: boolean
       }
       place_bid: {
         Args: {
