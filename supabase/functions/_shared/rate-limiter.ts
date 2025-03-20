@@ -1,10 +1,17 @@
 
 /**
  * Rate limiting functionality for Supabase Edge Functions
- * Simple in-memory implementation (for demo purposes)
+ * Simple in-memory implementation (for development purposes)
+ * 
+ * @deprecated Use the new rate-limiting/index.ts module instead
  */
 
+// Import the new rate limiting system
+import { applyRateLimit, createRateLimitedResponse } from "./rate-limiting/index.ts";
+export { applyRateLimit, createRateLimitedResponse };
+
 // Store for rate limit counters - will reset on function restarts
+// Kept for backward compatibility
 const rateLimits: Record<string, { count: number, lastReset: number }> = {};
 
 export interface RateLimitResult {
@@ -14,6 +21,8 @@ export interface RateLimitResult {
 
 /**
  * Check if a request should be rate limited
+ * @deprecated Use applyRateLimit from the new rate-limiting module instead
+ * 
  * @param key The key to use for rate limiting (e.g. IP address, user ID)
  * @param prefix A prefix to add to the key (e.g. function name)
  * @param windowSeconds The time window in seconds

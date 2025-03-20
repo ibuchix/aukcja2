@@ -2,9 +2,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { handleError, withErrorHandling } from '../_shared/error-handling.ts';
-import { checkForRateLimit } from '../_shared/rate-limiter.ts';
+import { applyRateLimit, createRateLimitedResponse } from '../_shared/rate-limiting/index.ts';
 import { processProxyBids } from './core.ts';
-import { handleProxyBidRequest, createCorsResponse, createRateLimitResponse } from './api.ts';
+import { handleProxyBidRequest, createCorsResponse } from './api.ts';
 
 serve(async (req) => {
   // Handle CORS
@@ -13,12 +13,12 @@ serve(async (req) => {
   }
 
   return withErrorHandling(async () => {
-    // Check for rate limiting using client IP
+    // Apply rate limiting using the new middleware
     const clientIP = req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for') || 'unknown';
-    const rateLimitResult = await checkForRateLimit(clientIP, 'proxy-bidding-processor', 60, 5);
+    const rateLimitResult = await applyRateLimit(req, 'proxy-bidding', clientIP);
     
-    if (rateLimitResult.isLimited) {
-      return createRateLimitResponse(rateLimitResult.retryAfter);
+    if (rateLimitResult.limited) {
+      return createRateLimitedResponse(rateLimitResult.result, corsHeaders);
     }
     
     // Process the proxy bids through the API handler

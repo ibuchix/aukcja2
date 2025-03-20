@@ -4,6 +4,7 @@ import { handleDealerRegister } from "./handlers.ts";
 import { respondSuccess, respondError } from "./response-utils.ts";
 import { logRequest, logError, logInfo } from "./logging.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { applyRateLimit, createRateLimitedResponse } from "../_shared/rate-limiting/index.ts";
 
 const MAX_RETRIES = 3;
 
@@ -19,6 +20,15 @@ serve(async (req) => {
   try {
     const startTime = Date.now();
     logRequest(req);
+
+    // Apply rate limiting to dealer auth requests
+    const clientIP = req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for') || 'unknown';
+    const rateLimitResult = await applyRateLimit(req, 'dealer-verification', clientIP);
+    
+    if (rateLimitResult.limited) {
+      logInfo(`Rate limit exceeded for IP: ${clientIP}`);
+      return createRateLimitedResponse(rateLimitResult.result, corsHeaders);
+    }
 
     // Parse the request body
     let body;
