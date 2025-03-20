@@ -62,7 +62,7 @@ const processStandardBid = async (bid: QueuedBid): Promise<boolean> => {
     updateBidInQueue(bid);
 
     // Call Supabase to place the bid
-    const { data, error } = await executeWithRetry(() => 
+    const result = await executeWithRetry(() => 
       supabase.rpc('place_bid', {
         p_car_id: bid.carId,
         p_dealer_id: bid.dealerId,
@@ -71,13 +71,14 @@ const processStandardBid = async (bid: QueuedBid): Promise<boolean> => {
       })
     );
 
-    if (error) {
-      console.error(`Error processing standard bid ${bid.id}:`, error);
+    if (result && 'error' in result && result.error) {
+      console.error(`Error processing standard bid ${bid.id}:`, result.error);
       return false;
     }
 
-    if (data && typeof data === 'object' && 'success' in data && !data.success) {
-      console.error(`Failed to process standard bid ${bid.id}:`, data);
+    if (result && 'data' in result && typeof result.data === 'object' && 
+        result.data && 'success' in result.data && !result.data.success) {
+      console.error(`Failed to process standard bid ${bid.id}:`, result.data);
       return false;
     }
 
@@ -104,7 +105,7 @@ const processProxyBid = async (bid: QueuedBid): Promise<boolean> => {
     }
 
     // Upsert the proxy bid
-    const { error: upsertError } = await executeWithRetry(() => 
+    const result = await executeWithRetry(() => 
       supabase
         .from('proxy_bids')
         .upsert({
@@ -116,8 +117,8 @@ const processProxyBid = async (bid: QueuedBid): Promise<boolean> => {
         })
     );
 
-    if (upsertError) {
-      console.error(`Error upserting proxy bid ${bid.id}:`, upsertError);
+    if (result && 'error' in result && result.error) {
+      console.error(`Error upserting proxy bid ${bid.id}:`, result.error);
       return false;
     }
 

@@ -12,7 +12,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { Loader2, QueueList, Trash2 } from "lucide-react";
+import { Loader2, ListChecks, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useOnlineStatusContext } from "@/contexts/OnlineStatusContext";
 import { getQueuedBids, clearBidQueue, QueuedBid } from "@/services/offlineBidQueue";
@@ -51,7 +51,7 @@ export function OfflineBidQueue() {
     <Drawer>
       <DrawerTrigger asChild>
         <Button variant="outline" size="sm" className="relative">
-          <QueueList className="mr-2 h-4 w-4" />
+          <ListChecks className="mr-2 h-4 w-4" />
           Queued Bids
           {queuedBids.length > 0 && (
             <Badge variant="destructive" className="absolute -top-2 -right-2">
