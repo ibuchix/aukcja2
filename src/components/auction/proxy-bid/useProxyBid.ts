@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,7 +51,7 @@ export const useProxyBid = ({
         
         // Calculate optimal proxy bid amount based on the DB function
         try {
-          const { data: optimalBidData, error: optimalBidError } = await supabase
+          const { data: optimalBidResponse, error: optimalBidError } = await supabase
             .rpc('calculate_optimal_proxy_bid', {
               p_car_id: carId,
               p_dealer_id: dealerId,
@@ -61,12 +60,20 @@ export const useProxyBid = ({
           
           if (optimalBidError) throw optimalBidError;
           
-          if (optimalBidData && optimalBidData.success) {
-            setOptimalBid(optimalBidData.optimal_proxy_amount);
+          // Type assertion for the JSON response
+          interface OptimalBidResponse {
+            success: boolean;
+            optimal_proxy_amount: number;
+          }
+          
+          const typedResponse = optimalBidResponse as OptimalBidResponse;
+          
+          if (typedResponse && typedResponse.success) {
+            setOptimalBid(typedResponse.optimal_proxy_amount);
             
             // If no existing proxy bid, suggest the optimal amount
             if (!result.data) {
-              setMaxBid(optimalBidData.optimal_proxy_amount.toString());
+              setMaxBid(typedResponse.optimal_proxy_amount.toString());
             }
           }
         } catch (err) {
