@@ -1,13 +1,21 @@
 
+/**
+ * @deprecated Use types from src/types/supabase instead
+ */
+
 import { Database } from "@/integrations/supabase/types";
+import { 
+  TableRow as TableRowType, 
+  TableInsert as TableInsertType 
+} from "@/types/supabase/common";
 
-// Helper type for inserting into tables
+// For backward compatibility
 export type TableInsertRow<T extends keyof Database['public']['Tables']> = 
-  Database['public']['Tables'][T]['Insert'];
+  TableInsertType<T>;
 
-// Helper type for rows in tables
+// For backward compatibility
 export type TableRow<T extends keyof Database['public']['Tables']> = 
-  Database['public']['Tables'][T]['Row'];
+  TableRowType<T>;
 
 // Define record types for specific tables
 export type DealerRecord = TableRow<'dealers'>;
