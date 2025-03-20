@@ -1,8 +1,51 @@
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Route,
+  createRoutesFromElements,
+  Navigate,
+} from "react-router-dom";
+import { useAuth } from "./contexts/AuthContext";
+import { Auth } from "./pages/Auth";
+import Dashboard from "./pages/dealer/Dashboard";
+import Profile from "./pages/dealer/Profile";
+import Documents from "./pages/dealer/Documents";
+import BidMonitoring from "./pages/dealer/BidMonitoring";
 
-import Root from "./Root";
+const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 function App() {
-  return <Root />;
+  const router = createBrowserRouter(
+    createRoutesFromElements(
+      <Route path="/">
+        <Route path="auth" element={<Auth />} />
+        <Route
+          path="/"
+          element={<Navigate to="/dealer" replace />}
+        />
+        <Route path="dealer" element={<ProtectedRoute />}>
+          <Route path="" element={<Dashboard />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="documents" element={<Documents />} />
+          <Route path="bid-monitoring" element={<BidMonitoring />} />
+        </Route>
+      </Route>
+    )
+  );
+
+  return <RouterProvider router={router} />;
 }
 
 export default App;
