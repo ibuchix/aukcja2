@@ -27,3 +27,22 @@ div.tour-highlight {
     box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.5);
   }
 }
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .tour-highlight {
+    box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.6);
+  }
+  
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.6);
+    }
+    50% {
+      box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.4);
+    }
+    100% {
+      box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.6);
+    }
+  }
+}

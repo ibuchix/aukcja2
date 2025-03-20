@@ -3,10 +3,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTour } from "@/contexts/tour/TourContext";
 import { TourButton } from "@/components/tour/TourButton";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 export function DealerWelcomeCard() {
   const { user, profile } = useAuth();
   const { hasCompletedTour } = useTour();
+  const isMobile = useIsMobile();
   
   // Extract dealer name from profile or fallback to email
   const dealerName = profile?.supervisor_name || user?.email?.split('@')[0] || 'Dealer';
@@ -14,7 +16,7 @@ export function DealerWelcomeCard() {
   return (
     <Card className="border-l-4 border-l-primary">
       <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
+        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'justify-between items-center'}`}>
           <CardTitle className="text-2xl">
             Welcome, {dealerName}!
           </CardTitle>

@@ -6,12 +6,13 @@ import { BidAnalyticsDateRangePicker } from "./BidAnalyticsDateRangePicker";
 import { BidAnalyticsFilters } from "./types";
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
 import { BarChart3 } from "lucide-react";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 export function DealerAnalyticsDashboard() {
   const [filters, setFilters] = useState<BidAnalyticsFilters>({
     dateRange: 'month'
   });
-
+  const isMobile = useIsMobile();
   const { analyticsData, isLoading, error } = useAnalyticsData(filters);
 
   const handleFilterChange = (newFilters: BidAnalyticsFilters) => {
