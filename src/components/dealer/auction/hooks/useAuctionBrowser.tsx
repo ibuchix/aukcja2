@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Auction, AuctionFilters } from "../types";
 import { useToast } from "@/hooks/use-toast";
-import { createCursor, decodeCursor, getCursorOperator, PaginationResult } from "@/utils/cursorPagination";
+import { createCursor, decodeCursor, getCursorOperator, AuctionPaginationResult } from "@/utils/cursorPagination";
 
 const PAGE_SIZE = 10; // Number of items per page
 
@@ -159,7 +159,7 @@ export const useAuctionBrowser = (
           hasMore,
           nextCursor,
           prevCursor
-        } as PaginationResult<Auction>;
+        } as AuctionPaginationResult<Auction>;
       } catch (err: any) {
         console.error("Error fetching auctions:", err);
         toast({
@@ -172,7 +172,7 @@ export const useAuctionBrowser = (
           hasMore: false,
           nextCursor: null, 
           prevCursor: null 
-        };
+        } as AuctionPaginationResult<Auction>;
       }
     },
   });

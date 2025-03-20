@@ -53,3 +53,14 @@ export interface PaginationResult<T> {
   prevCursor: string | null;
   hasMore: boolean;
 }
+
+/**
+ * Alternative interface that matches the current implementation
+ * This helps with backward compatibility
+ */
+export interface AuctionPaginationResult<T> {
+  auctions: T[];
+  nextCursor: string | null;
+  prevCursor: string | null;
+  hasMore: boolean;
+}
