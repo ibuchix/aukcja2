@@ -1,83 +1,164 @@
 
 import { useState, useEffect } from "react";
-import { BidAnalyticsData, BidAnalyticsFilters } from "@/components/dealer/analytics/types";
-import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
 import { supabase } from "@/integrations/supabase/client";
+import { BidAnalyticsData, BidAnalyticsFilters } from "@/components/dealer/analytics/types";
+import { useCurrentDealerProfile } from "./useCurrentDealerProfile";
+import { useToast } from "./use-toast";
 
-export function useAnalyticsData(filters: BidAnalyticsFilters = { dateRange: 'month' }) {
-  const { dealerProfile } = useCurrentDealerProfile();
+export function useAnalyticsData(filters: BidAnalyticsFilters) {
   const [analyticsData, setAnalyticsData] = useState<BidAnalyticsData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { dealerProfile } = useCurrentDealerProfile();
+  const { toast } = useToast();
 
   useEffect(() => {
-    async function fetchAnalyticsData() {
+    const fetchAnalyticsData = async () => {
       if (!dealerProfile?.id) return;
-
+      
       setIsLoading(true);
       setError(null);
-
+      
       try {
-        // Fetch dealer's bid data
-        const { data: bids, error: bidsError } = await supabase
-          .from("bids")
-          .select(`
-            id,
-            amount,
-            status,
-            created_at,
-            car_id,
-            car:cars(make, model, year)
-          `)
-          .eq("dealer_id", dealerProfile.id)
-          .order("created_at", { ascending: false });
-
+        // Calculate date range based on filter
+        const now = new Date();
+        let startDate = new Date();
+        
+        switch (filters.dateRange) {
+          case 'week':
+            startDate.setDate(now.getDate() - 7);
+            break;
+          case 'month':
+            startDate.setMonth(now.getMonth() - 1);
+            break;
+          case 'quarter':
+            startDate.setMonth(now.getMonth() - 3);
+            break;
+          case 'year':
+            startDate.setFullYear(now.getFullYear() - 1);
+            break;
+          case 'all':
+            startDate = new Date(0); // Beginning of time
+            break;
+        }
+        
+        // Fetch total bids and successful bids
+        const { data: bidsData, error: bidsError } = await supabase
+          .from('bids')
+          .select('id, amount, status, created_at')
+          .eq('dealer_id', dealerProfile.id)
+          .gte('created_at', startDate.toISOString());
+          
         if (bidsError) throw bidsError;
-
-        // Filter based on date range
-        const filteredBids = filterBidsByDateRange(bids, filters.dateRange);
-
-        // Fetch market data for comparison
-        const { data: marketBids, error: marketError } = await supabase
-          .from("bids")
-          .select(`
-            amount,
-            status
-          `)
-          .neq("dealer_id", dealerProfile.id);
-
+        
+        // Fetch market comparison data (all dealer bids) during same period
+        const { data: marketData, error: marketError } = await supabase
+          .from('bids')
+          .select('amount, status')
+          .gte('created_at', startDate.toISOString());
+          
         if (marketError) throw marketError;
-
-        // Calculate analytics
-        const totalBids = filteredBids.length;
-        const successfulBids = filteredBids.filter(bid => bid.status === 'won').length;
-        const outbidCount = filteredBids.filter(bid => bid.status === 'outbid').length;
-        const bidAmounts = filteredBids.map(bid => bid.amount || 0);
-        const averageBidAmount = bidAmounts.length > 0 
-          ? bidAmounts.reduce((sum, amount) => sum + amount, 0) / bidAmounts.length 
+        
+        // Process data
+        const totalBids = bidsData.length;
+        const successfulBids = bidsData.filter(bid => bid.status === 'won').length;
+        const outbidCount = bidsData.filter(bid => bid.status === 'outbid').length;
+        const allBidAmounts = bidsData.map(bid => bid.amount);
+        const averageBidAmount = totalBids > 0 
+          ? allBidAmounts.reduce((sum, amount) => sum + amount, 0) / totalBids 
           : 0;
-        const highestBid = bidAmounts.length > 0 ? Math.max(...bidAmounts) : 0;
-        const successRate = totalBids > 0 ? (successfulBids / totalBids) * 100 : 0;
-
-        // Market comparisons
-        const marketBidAmounts = marketBids.map(bid => bid.amount || 0);
-        const marketAvgBid = marketBidAmounts.length > 0 
+        const highestBid = totalBids > 0 
+          ? Math.max(...allBidAmounts) 
+          : 0;
+        const successRate = totalBids > 0 
+          ? (successfulBids / totalBids) * 100 
+          : 0;
+          
+        // Calculate market comparisons
+        const marketBidAmounts = marketData.map(bid => bid.amount);
+        const marketAverageBid = marketBidAmounts.length > 0 
           ? marketBidAmounts.reduce((sum, amount) => sum + amount, 0) / marketBidAmounts.length 
           : 0;
-        const marketSuccessRate = marketBids.length > 0 
-          ? (marketBids.filter(bid => bid.status === 'won').length / marketBids.length) * 100 
+        const marketSuccessfulBids = marketData.filter(bid => bid.status === 'won').length;
+        const marketSuccessRate = marketData.length > 0 
+          ? (marketSuccessfulBids / marketData.length) * 100 
           : 0;
-
-        // Prepare time series data
-        const bidOverTime = prepareBidTimeSeriesData(filteredBids);
-
-        // Status distribution
-        const statusCounts = countBidsByStatus(filteredBids);
-
-        // Car type analytics
-        const carTypeAnalytics = analyzeCarTypes(filteredBids);
-
-        setAnalyticsData({
+          
+        // Generate bid over time data (aggregate by day)
+        const bidsByDate = new Map();
+        bidsData.forEach(bid => {
+          const date = new Date(bid.created_at).toISOString().split('T')[0];
+          if (!bidsByDate.has(date)) {
+            bidsByDate.set(date, { count: 0, amount: 0 });
+          }
+          const current = bidsByDate.get(date);
+          bidsByDate.set(date, {
+            count: current.count + 1,
+            amount: current.amount + bid.amount
+          });
+        });
+        
+        const bidOverTime = Array.from(bidsByDate.entries()).map(([date, data]) => ({
+          date,
+          count: data.count,
+          amount: data.amount
+        })).sort((a, b) => a.date.localeCompare(b.date));
+        
+        // Get bids by status
+        const statusCounts = {
+          active: bidsData.filter(bid => bid.status === 'active').length,
+          outbid: outbidCount,
+          won: successfulBids,
+          lost: bidsData.filter(bid => bid.status === 'lost').length
+        };
+        
+        const bidsByStatus = Object.entries(statusCounts).map(([status, count]) => ({
+          status,
+          count
+        }));
+        
+        // Get data by car type
+        // This is a simplified version - in a real implementation,
+        // you would join with the cars table to get actual types
+        const { data: carsData, error: carsError } = await supabase
+          .from('cars')
+          .select('id, make, model')
+          .in('id', bidsData.map(bid => bid.car_id));
+          
+        if (carsError) throw carsError;
+        
+        // Create a map of car makes
+        const carMap = {};
+        if (carsData) {
+          carsData.forEach(car => {
+            carMap[car.id] = car.make || 'Unknown';
+          });
+        }
+        
+        // Group bids by car make
+        const bidsByCarType = {};
+        bidsData.forEach(bid => {
+          const carType = carMap[bid.car_id] || 'Unknown';
+          if (!bidsByCarType[carType]) {
+            bidsByCarType[carType] = {
+              count: 0,
+              won: 0
+            };
+          }
+          bidsByCarType[carType].count++;
+          if (bid.status === 'won') {
+            bidsByCarType[carType].won++;
+          }
+        });
+        
+        const bidsByCarTypeArray = Object.entries(bidsByCarType).map(([carType, data]) => ({
+          carType,
+          count: data.count,
+          successRate: data.count > 0 ? (data.won / data.count) * 100 : 0
+        }));
+        
+        // Combine all data
+        const processedData: BidAnalyticsData = {
           totalBids,
           successfulBids,
           outbidCount,
@@ -85,110 +166,30 @@ export function useAnalyticsData(filters: BidAnalyticsFilters = { dateRange: 'mo
           highestBid,
           successRate,
           marketComparison: {
-            averageBidAmount: marketAvgBid,
+            averageBidAmount: marketAverageBid,
             successRate: marketSuccessRate
           },
           bidOverTime,
-          bidsByStatus: statusCounts,
-          bidsByCarType: carTypeAnalytics
-        });
-
+          bidsByStatus,
+          bidsByCarType: bidsByCarTypeArray
+        };
+        
+        setAnalyticsData(processedData);
       } catch (err) {
         console.error("Error fetching analytics data:", err);
-        setError(err instanceof Error ? err.message : "Failed to fetch analytics data");
+        setError("Failed to load analytics data. Please try again later.");
+        toast({
+          title: "Analytics Error",
+          description: "There was an error loading your analytics data.",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
-    }
+    };
 
     fetchAnalyticsData();
-  }, [dealerProfile?.id, filters]);
+  }, [dealerProfile?.id, filters, toast]);
 
   return { analyticsData, isLoading, error };
-}
-
-// Helper functions
-function filterBidsByDateRange(bids: any[], dateRange: string) {
-  const now = new Date();
-  let compareDate = new Date();
-
-  switch (dateRange) {
-    case 'week':
-      compareDate.setDate(now.getDate() - 7);
-      break;
-    case 'month':
-      compareDate.setMonth(now.getMonth() - 1);
-      break;
-    case 'quarter':
-      compareDate.setMonth(now.getMonth() - 3);
-      break;
-    case 'year':
-      compareDate.setFullYear(now.getFullYear() - 1);
-      break;
-    case 'all':
-    default:
-      compareDate = new Date(0); // Beginning of time
-      break;
-  }
-
-  return bids.filter(bid => new Date(bid.created_at) >= compareDate);
-}
-
-function prepareBidTimeSeriesData(bids: any[]) {
-  // Group bids by date
-  const bidsByDate = bids.reduce((acc: Record<string, any>, bid) => {
-    const date = new Date(bid.created_at).toISOString().split('T')[0];
-    if (!acc[date]) {
-      acc[date] = { count: 0, amount: 0 };
-    }
-    acc[date].count += 1;
-    acc[date].amount += bid.amount || 0;
-    return acc;
-  }, {});
-
-  // Convert to array format
-  return Object.entries(bidsByDate).map(([date, data]: [string, any]) => ({
-    date,
-    count: data.count,
-    amount: data.amount / data.count // Average amount for the day
-  })).sort((a, b) => a.date.localeCompare(b.date));
-}
-
-function countBidsByStatus(bids: any[]) {
-  const statusCounts: Record<string, number> = {};
-  
-  bids.forEach(bid => {
-    const status = bid.status || 'unknown';
-    statusCounts[status] = (statusCounts[status] || 0) + 1;
-  });
-
-  return Object.entries(statusCounts).map(([status, count]) => ({
-    status,
-    count
-  }));
-}
-
-function analyzeCarTypes(bids: any[]) {
-  const carTypeMap: Record<string, { count: number, won: number, total: number }> = {};
-
-  bids.forEach(bid => {
-    const car = bid.car || {};
-    const carType = `${car.make || 'Unknown'} ${car.model || ''}`.trim();
-    
-    if (!carTypeMap[carType]) {
-      carTypeMap[carType] = { count: 0, won: 0, total: 0 };
-    }
-    
-    carTypeMap[carType].count += 1;
-    carTypeMap[carType].total += bid.amount || 0;
-    if (bid.status === 'won') {
-      carTypeMap[carType].won += 1;
-    }
-  });
-
-  return Object.entries(carTypeMap).map(([carType, data]) => ({
-    carType,
-    count: data.count,
-    successRate: data.count > 0 ? (data.won / data.count) * 100 : 0
-  }));
 }
