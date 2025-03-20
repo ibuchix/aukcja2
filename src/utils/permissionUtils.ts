@@ -6,13 +6,22 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export async function isAdmin(): Promise<boolean> {
   try {
+    // Get the session to access the token
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+    
+    if (!accessToken) {
+      console.error("No active session found");
+      return false;
+    }
+    
     // Use fetch directly to call the RPC function
     const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://sdvakfhmoaoucmhbhwvy.supabase.co'}/rest/v1/rpc/is_admin`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M',
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        'Authorization': `Bearer ${accessToken}`
       }
     });
     
@@ -34,13 +43,22 @@ export async function isAdmin(): Promise<boolean> {
  */
 export async function isDealer(): Promise<boolean> {
   try {
+    // Get the session to access the token
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+    
+    if (!accessToken) {
+      console.error("No active session found");
+      return false;
+    }
+    
     // Use fetch directly to call the RPC function
     const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://sdvakfhmoaoucmhbhwvy.supabase.co'}/rest/v1/rpc/is_dealer`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M',
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        'Authorization': `Bearer ${accessToken}`
       }
     });
     
@@ -66,13 +84,22 @@ export async function checkPermission(
   entityId: string
 ): Promise<boolean> {
   try {
+    // Get the session to access the token
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+    
+    if (!accessToken) {
+      console.error("No active session found");
+      return false;
+    }
+    
     // Use fetch directly to call the RPC function
     const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://sdvakfhmoaoucmhbhwvy.supabase.co'}/rest/v1/rpc/can_perform_action`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M',
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        'Authorization': `Bearer ${accessToken}`
       },
       body: JSON.stringify({
         p_action: action,
@@ -112,12 +139,18 @@ export async function performAdminAction(
       return false;
     }
     
-    // Get current user ID
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get current user session
+    const { data: sessionData } = await supabase.auth.getSession();
+    const session = sessionData.session;
     const userId = session?.user?.id;
     
     if (!userId) {
       console.error("No authenticated user found");
+      return false;
+    }
+    
+    if (!session?.access_token) {
+      console.error("No access token found");
       return false;
     }
     
