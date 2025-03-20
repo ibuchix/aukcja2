@@ -19,6 +19,8 @@ import ServiceHistory from "./car-details/ServiceHistory";
 import VehiclePhotos from "./car-details/VehiclePhotos";
 import Location from "./car-details/Location";
 import AdditionalInfo from "./car-details/AdditionalInfo";
+import { OfflineBidQueue } from "./auction/OfflineBidQueue";
+import { NetworkStatusIndicator } from "./NetworkStatusIndicator";
 
 interface CarDetailsDialogProps {
   car: CarListing | null;
@@ -46,8 +48,12 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
               {formatCurrency(car.current_bid || car.price)}
             </span>
           </DialogTitle>
-          <DialogDescription>
-            View detailed information about this vehicle
+          <DialogDescription className="flex justify-between items-center">
+            <span>View detailed information about this vehicle</span>
+            <div className="flex items-center gap-2">
+              <NetworkStatusIndicator />
+              {isAuthenticated && <OfflineBidQueue />}
+            </div>
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[80vh]">

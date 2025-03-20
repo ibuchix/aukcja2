@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,6 +6,8 @@ import { executeWithRetry } from "@/utils/retryUtils";
 import { PostgrestResponse, PostgrestSingleResponse } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/utils/queryClient";
+import { useOnlineStatusContext } from "@/contexts/OnlineStatusContext";
+import { queueProxyBid } from "@/services/offlineBidQueue";
 
 interface UseProxyBidProps {
   carId: string;
@@ -28,10 +31,16 @@ export const useProxyBid = ({
   const [optimalBid, setOptimalBid] = useState<number | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isOnline } = useOnlineStatusContext();
 
   // Fetch existing proxy bid for this car
   useEffect(() => {
     const fetchProxyBid = async () => {
+      if (!isOnline) {
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         const result = await executeWithRetry(() => 
           supabase
@@ -93,7 +102,7 @@ export const useProxyBid = ({
     if (carId && dealerId) {
       fetchProxyBid();
     }
-  }, [carId, dealerId, currentHighestBid]);
+  }, [carId, dealerId, currentHighestBid, isOnline]);
 
   const handleSetMaxBid = async () => {
     if (isSubmitting) return; // Prevent multiple submissions
@@ -112,6 +121,22 @@ export const useProxyBid = ({
       // Check if the bid is divisible by the minimum increment
       if (numericMaxBid % minimumIncrement !== 0) {
         throw new Error(`Bid must be divisible by the minimum increment of $${minimumIncrement}`);
+      }
+
+      // If offline, queue the proxy bid
+      if (!isOnline) {
+        const queuedBid = queueProxyBid(carId, dealerId, currentHighestBid + minimumIncrement, numericMaxBid);
+        
+        // Optimistically update the UI
+        setExistingProxyBid(numericMaxBid);
+        
+        toast({
+          title: "Proxy Bid Queued",
+          description: `Your maximum proxy bid of $${numericMaxBid.toLocaleString()} will be set when you're back online.`,
+        });
+        
+        setIsSubmitting(false);
+        return;
       }
 
       // Optimistically update the UI
@@ -189,6 +214,11 @@ export const useProxyBid = ({
     try {
       setIsSubmitting(true);
       
+      // If offline, show error message
+      if (!isOnline) {
+        throw new Error("Cannot remove proxy bid while offline. Please try again when you're online.");
+      }
+      
       // Optimistically update UI
       const previousProxyBid = existingProxyBid;
       setExistingProxyBid(null);
@@ -247,6 +277,7 @@ export const useProxyBid = ({
     optimalBid,
     useOptimalBid,
     handleSetMaxBid,
-    handleRemoveMaxBid
+    handleRemoveMaxBid,
+    isOnline
   };
 };

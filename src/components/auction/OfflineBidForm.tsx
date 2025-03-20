@@ -1,31 +1,29 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useOnlineStatusContext } from "@/contexts/OnlineStatusContext";
-import { queueStandardBid } from "@/services/offlineBidQueue";
+import { queueStandardBid, processBid } from "@/services/offlineBidQueue";
 import { Wifi, WifiOff } from "lucide-react";
 
-interface BidFormProps {
+interface OfflineBidFormProps {
   carId: string;
   dealerId: string;
   currentHighestBid: number;
   minimumIncrement: number;
 }
 
-export const BidForm = ({
+export const OfflineBidForm = ({
   carId,
   dealerId,
   currentHighestBid,
   minimumIncrement,
-}: BidFormProps) => {
+}: OfflineBidFormProps) => {
   const [bidAmount, setBidAmount] = useState<string>((currentHighestBid + minimumIncrement).toString());
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const { toast } = useToast();
   const { isOnline } = useOnlineStatusContext();
+  const { toast } = useToast();
 
   const handlePlaceBid = async () => {
     try {
@@ -40,13 +38,16 @@ export const BidForm = ({
         throw new Error(`Bid must be higher than current bid of $${currentHighestBid}`);
       }
 
-      // Check if the bid is divisible by the minimum increment
       if (numericBidAmount % minimumIncrement !== 0) {
         throw new Error(`Bid must be divisible by the minimum increment of $${minimumIncrement}`);
       }
 
-      if (!isOnline) {
-        // Add bid to offline queue
+      if (isOnline) {
+        // Process bid normally using BidForm logic
+        // This is a placeholder for the existing logic in BidForm.tsx
+        // We'll integrate this in the next step
+      } else {
+        // Add the bid to the offline queue
         const queuedBid = queueStandardBid(carId, dealerId, numericBidAmount);
         
         toast({
@@ -56,63 +57,6 @@ export const BidForm = ({
 
         // Update the bid amount input field to be the current + minimum increment
         setBidAmount((numericBidAmount + minimumIncrement).toString());
-        return;
-      }
-
-      // Online flow - proceed with normal bid placement
-      // Call the place_bid function on the server
-      const { data, error } = await supabase.rpc('place_bid', {
-        p_car_id: carId,
-        p_dealer_id: dealerId,
-        p_amount: numericBidAmount,
-        p_is_proxy: false
-      });
-
-      if (error) {
-        // Check if this is a concurrency or transaction isolation error
-        if (error.message?.includes('SERIALIZATION_FAILURE') || 
-            error.message?.includes('LOCK_TIMEOUT') ||
-            error.message?.includes('CONCURRENT_MODIFICATION') ||
-            error.message?.includes('DEADLOCK')) {
-          
-          if (retryCount < 3) {
-            // Automatic retry with exponential backoff
-            setRetryCount(prev => prev + 1);
-            toast({
-              title: "Bidding System Busy",
-              description: "The auction is experiencing high activity. Retrying your bid...",
-            });
-            
-            // Wait before retrying
-            await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 500));
-            setIsSubmitting(false);
-            return handlePlaceBid();
-          } else {
-            throw new Error("The auction is very active right now. Please try again in a moment.");
-          }
-        }
-        
-        throw error;
-      }
-      
-      // Check the response data structure properly
-      if (typeof data === 'object' && data !== null && 'success' in data) {
-        if (!data.success) {
-          throw new Error(data.error?.toString() || 'Failed to place bid');
-        }
-
-        // Reset retry count on success
-        setRetryCount(0);
-
-        toast({
-          title: "Bid Placed",
-          description: `Your bid of $${numericBidAmount.toLocaleString()} has been placed successfully`,
-        });
-
-        // Update the bid amount input field to be the current + minimum increment
-        setBidAmount((numericBidAmount + minimumIncrement).toString());
-      } else {
-        throw new Error('Invalid response from server');
       }
     } catch (error) {
       toast({
