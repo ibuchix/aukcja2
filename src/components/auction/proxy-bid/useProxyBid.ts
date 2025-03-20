@@ -24,6 +24,7 @@ export const useProxyBid = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [optimalBid, setOptimalBid] = useState<number | null>(null);
   const { toast } = useToast();
 
   // Fetch existing proxy bid for this car
@@ -48,6 +49,29 @@ export const useProxyBid = ({
           setMaxBid(result.data.max_bid_amount.toString());
           setIsProxyBidUsed(result.data.last_processed_amount !== null);
         }
+        
+        // Calculate optimal proxy bid amount based on the DB function
+        try {
+          const { data: optimalBidData, error: optimalBidError } = await supabase
+            .rpc('calculate_optimal_proxy_bid', {
+              p_car_id: carId,
+              p_dealer_id: dealerId,
+              p_max_budget: 1000000 // Set a reasonable upper limit
+            });
+          
+          if (optimalBidError) throw optimalBidError;
+          
+          if (optimalBidData && optimalBidData.success) {
+            setOptimalBid(optimalBidData.optimal_proxy_amount);
+            
+            // If no existing proxy bid, suggest the optimal amount
+            if (!result.data) {
+              setMaxBid(optimalBidData.optimal_proxy_amount.toString());
+            }
+          }
+        } catch (err) {
+          console.error("Error calculating optimal proxy bid:", err);
+        }
       } catch (error) {
         console.error("Error fetching proxy bid:", error);
       } finally {
@@ -58,7 +82,7 @@ export const useProxyBid = ({
     if (carId && dealerId) {
       fetchProxyBid();
     }
-  }, [carId, dealerId]);
+  }, [carId, dealerId, currentHighestBid]);
 
   const handleSetMaxBid = async () => {
     if (isSubmitting) return; // Prevent multiple submissions
@@ -171,6 +195,13 @@ export const useProxyBid = ({
     }
   };
 
+  // Function to use the optimal bid suggestion
+  const useOptimalBid = () => {
+    if (optimalBid) {
+      setMaxBid(optimalBid.toString());
+    }
+  };
+
   return {
     maxBid,
     setMaxBid,
@@ -178,6 +209,8 @@ export const useProxyBid = ({
     isProxyBidUsed,
     isLoading,
     isSubmitting,
+    optimalBid,
+    useOptimalBid,
     handleSetMaxBid,
     handleRemoveMaxBid
   };

@@ -6,11 +6,14 @@ import { useBidMonitoring } from "@/components/dealer/bid-monitoring/useBidMonit
 import { BidMetricsCard } from "@/components/dealer/bid-monitoring/BidMetricsCard";
 import { BidFilters } from "@/components/dealer/bid-monitoring/BidFilters";
 import { BidActivityTimeline } from "@/components/dealer/bid-monitoring/BidActivityTimeline";
+import { BidExposureCard } from "@/components/dealer/bid-monitoring/BidExposureCard";
 import { ActivitySquare } from "lucide-react";
 import { useRealtimeBidEvents } from "@/hooks/useRealtimeBidEvents";
 import { BidActivity, BidMonitoringFilters } from "@/components/dealer/bid-monitoring/types";
+import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
 
 export default function BidMonitoring() {
+  const { dealerProfile } = useCurrentDealerProfile();
   const { 
     bidActivity: initialBidActivity, 
     metrics, 
@@ -78,11 +81,12 @@ export default function BidMonitoring() {
         </CardContent>
       </Card>
       
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <BidMetricsCard metrics={metrics} isLoading={isLoading} />
-        
-        <BidActivityTimeline activities={combinedActivities} isLoading={isLoading} />
+        {dealerProfile && <BidExposureCard dealerId={dealerProfile.id} />}
       </div>
+      
+      <BidActivityTimeline activities={combinedActivities} isLoading={isLoading} />
     </DashboardLayout>
   );
 }

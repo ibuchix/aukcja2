@@ -1393,6 +1393,12 @@ export type Database = {
         }
         Returns: Json
       }
+      analyze_bidding_strategy: {
+        Args: {
+          p_dealer_id: string
+        }
+        Returns: Json
+      }
       approve_listing: {
         Args: {
           p_listing_id: string
@@ -1405,6 +1411,14 @@ export type Database = {
         Args: {
           p_email: string
           p_password: string
+        }
+        Returns: Json
+      }
+      calculate_optimal_proxy_bid: {
+        Args: {
+          p_car_id: string
+          p_dealer_id: string
+          p_max_budget: number
         }
         Returns: Json
       }
@@ -1469,6 +1483,32 @@ export type Database = {
           record_exists: boolean
           error_message: string
         }[]
+      }
+      get_auction_activity_metrics: {
+        Args: {
+          p_car_id: string
+        }
+        Returns: Json
+      }
+      get_bid_recommendations: {
+        Args: {
+          p_car_id: string
+          p_dealer_id: string
+        }
+        Returns: Json
+      }
+      get_bid_status: {
+        Args: {
+          p_car_id: string
+          p_dealer_id: string
+        }
+        Returns: Json
+      }
+      get_dealer_bid_exposure: {
+        Args: {
+          p_dealer_id: string
+        }
+        Returns: Json
       }
       get_dealer_by_user_id: {
         Args: {

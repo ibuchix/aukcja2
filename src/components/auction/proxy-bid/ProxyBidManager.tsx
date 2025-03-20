@@ -6,6 +6,7 @@ import { ProxyBidForm } from "./ProxyBidForm";
 import { ProxyBidExplanation } from "./ProxyBidExplanation";
 import { ProxyBidHistory } from "./ProxyBidHistory";
 import { useProxyBid } from "./useProxyBid";
+import { BidRecommendations } from "../BidRecommendations";
 
 interface ProxyBidManagerProps {
   carId: string;
@@ -27,6 +28,8 @@ export const ProxyBidManager = ({
     isProxyBidUsed,
     isLoading,
     isSubmitting,
+    optimalBid,
+    useOptimalBid,
     handleSetMaxBid,
     handleRemoveMaxBid
   } = useProxyBid({
@@ -63,16 +66,24 @@ export const ProxyBidManager = ({
                 onMaxBidChange={setMaxBid}
                 onSetMaxBid={handleSetMaxBid}
                 onRemoveMaxBid={handleRemoveMaxBid}
+                onUseOptimalBid={useOptimalBid}
                 existingProxyBid={existingProxyBid}
                 isProxyBidUsed={isProxyBidUsed}
                 isSubmitting={isSubmitting}
                 currentHighestBid={currentHighestBid}
                 minimumIncrement={minimumIncrement}
+                optimalBid={optimalBid}
               />
             </>
           )}
         </CardContent>
       </Card>
+
+      <BidRecommendations 
+        carId={carId} 
+        dealerId={dealerId} 
+        onSelectRecommendation={(amount) => setMaxBid(amount.toString())} 
+      />
 
       <ProxyBidHistory carId={carId} dealerId={dealerId} />
     </>
