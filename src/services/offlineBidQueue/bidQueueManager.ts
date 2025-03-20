@@ -71,13 +71,13 @@ const processStandardBid = async (bid: QueuedBid): Promise<boolean> => {
       })
     );
 
-    if (result && 'error' in result && result.error) {
+    if (result && typeof result === 'object' && 'error' in result && result.error) {
       console.error(`Error processing standard bid ${bid.id}:`, result.error);
       return false;
     }
 
-    if (result && 'data' in result && typeof result.data === 'object' && 
-        result.data && 'success' in result.data && !result.data.success) {
+    if (result && typeof result === 'object' && 'data' in result && 
+        result.data && typeof result.data === 'object' && 'success' in result.data && !result.data.success) {
       console.error(`Failed to process standard bid ${bid.id}:`, result.data);
       return false;
     }
@@ -117,7 +117,7 @@ const processProxyBid = async (bid: QueuedBid): Promise<boolean> => {
         })
     );
 
-    if (result && 'error' in result && result.error) {
+    if (result && typeof result === 'object' && 'error' in result && result.error) {
       console.error(`Error upserting proxy bid ${bid.id}:`, result.error);
       return false;
     }
