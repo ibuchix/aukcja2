@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useWelcomeDashboardData } from "@/hooks/useWelcomeDashboardData";
 import { DashboardLayout } from "@/components/dealer/dashboard/DashboardLayout";
@@ -15,11 +16,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { DealerProfileProvider } from "@/contexts/DealerProfileContext";
 import { DealerProfile } from "@/components/dealer/DealerProfile";
 import { DealerAnalyticsDashboard } from "@/components/dealer/analytics/DealerAnalyticsDashboard";
+import { AdminTools } from "@/components/dealer/dashboard/AdminTools";
+import { usePermissions } from "@/hooks/usePermissions";
+import { PermissionGate } from "@/components/PermissionGate";
 
 export default function DealerDashboard() {
   const { user, isLoading: isAuthLoading, refreshSession } = useAuth();
   const { recentActivity, directQueryResult } = useWelcomeDashboardData(user, isAuthLoading);
   const navigate = useNavigate();
+  const { isAdmin } = usePermissions();
   
   useEffect(() => {
     const debugRls = async () => {
@@ -88,7 +93,7 @@ export default function DealerDashboard() {
 
   return (
     <DealerProfileProvider>
-      <DashboardLayout title="Dealer Dashboard">
+      <DashboardLayout title={isAdmin ? "Admin Dashboard" : "Dealer Dashboard"}>
         {directQueryResult && (
           <Alert variant={directQueryResult.success ? "default" : "destructive"} className="mb-6">
             {directQueryResult.success ? 
@@ -106,6 +111,11 @@ export default function DealerDashboard() {
         
         <div className="space-y-8">
           <DealerWelcomeCard />
+          
+          {/* Admin tools visible only to admins */}
+          <PermissionGate action="manage" entityType="dealer">
+            <AdminTools />
+          </PermissionGate>
           
           <DealerProfile />
           
