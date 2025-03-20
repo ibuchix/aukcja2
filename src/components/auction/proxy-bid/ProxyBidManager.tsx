@@ -1,8 +1,7 @@
-
 import { DollarSign, HelpCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProxyBidInfo } from "./ProxyBidInfo";
-import { ProxyBidForm } from "./ProxyBidForm";
+import { ProxyBidForm } from "./forms/ProxyBidForm";
 import { ProxyBidExplanation } from "./ProxyBidExplanation";
 import { ProxyBidHistory } from "./ProxyBidHistory";
 import { useProxyBid } from "./useProxyBid";

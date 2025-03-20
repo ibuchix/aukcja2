@@ -1,9 +1,8 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BidNotificationHandler } from "./BidNotificationHandler";
 import { AuctionTimer } from "./AuctionTimer";
 import { BidInfo } from "./BidInfo";
-import { BidForm } from "./BidForm";
+import { BidForm } from "./bid-form/BidForm";
 import { BidHistory } from "./BidHistory";
 import { ProxyBidManager } from "./ProxyBidManager";
 
