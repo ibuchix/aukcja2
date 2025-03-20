@@ -4,9 +4,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useOnlineStatusContext } from "@/contexts/OnlineStatusContext";
-import { queueStandardBid } from "@/services/offlineBidQueue";
-import { Wifi, WifiOff } from "lucide-react";
 
 interface BidFormProps {
   carId: string;
@@ -25,7 +22,6 @@ export const BidForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
-  const { isOnline } = useOnlineStatusContext();
 
   const handlePlaceBid = async () => {
     try {
@@ -45,21 +41,6 @@ export const BidForm = ({
         throw new Error(`Bid must be divisible by the minimum increment of $${minimumIncrement}`);
       }
 
-      if (!isOnline) {
-        // Add bid to offline queue
-        const queuedBid = queueStandardBid(carId, dealerId, numericBidAmount);
-        
-        toast({
-          title: "Bid Queued",
-          description: `Your bid of $${numericBidAmount.toLocaleString()} will be placed when you're back online.`,
-        });
-
-        // Update the bid amount input field to be the current + minimum increment
-        setBidAmount((numericBidAmount + minimumIncrement).toString());
-        return;
-      }
-
-      // Online flow - proceed with normal bid placement
       // Call the place_bid function on the server
       const { data, error } = await supabase.rpc('place_bid', {
         p_car_id: carId,
@@ -139,16 +120,8 @@ export const BidForm = ({
       <Button 
         onClick={handlePlaceBid} 
         disabled={isSubmitting}
-        className="relative"
       >
-        <span className="flex items-center">
-          {isSubmitting ? "Placing Bid..." : "Place Bid"}
-          {isOnline ? (
-            <Wifi className="ml-2 h-4 w-4 text-green-500" />
-          ) : (
-            <WifiOff className="ml-2 h-4 w-4 text-yellow-500" />
-          )}
-        </span>
+        {isSubmitting ? "Placing Bid..." : "Place Bid"}
       </Button>
     </div>
   );

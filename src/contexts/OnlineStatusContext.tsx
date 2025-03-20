@@ -2,7 +2,6 @@
 import React, { createContext, useContext, PropsWithChildren, useState, useEffect } from "react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useToast } from "@/hooks/use-toast";
-import { processBids } from "@/services/offlineBidQueue/syncService";
 
 interface OnlineStatusContextType {
   isOnline: boolean;
@@ -28,17 +27,12 @@ export function OnlineStatusProvider({ children }: PropsWithChildren) {
       if (isOnline) {
         toast({
           title: "You're back online",
-          description: "Your connection has been restored. Syncing pending bids...",
-        });
-        
-        // Process any queued bids when coming back online
-        processBids().catch(error => {
-          console.error("Error processing queued bids:", error);
+          description: "Your connection has been restored.",
         });
       } else {
         toast({
           title: "You're offline",
-          description: "Bids will be queued and submitted when your connection returns.",
+          description: "Don't worry, proxy bids will still be processed when connectivity returns.",
           variant: "destructive",
         });
       }
