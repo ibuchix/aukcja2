@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ProxyBidInfo } from "./ProxyBidInfo";
 import { ProxyBidForm } from "./ProxyBidForm";
 import { ProxyBidExplanation } from "./ProxyBidExplanation";
+import { ProxyBidHistory } from "./ProxyBidHistory";
 import { useProxyBid } from "./useProxyBid";
 
 interface ProxyBidManagerProps {
@@ -36,40 +37,44 @@ export const ProxyBidManager = ({
   });
 
   return (
-    <Card className="w-full mb-4">
-      <CardHeader>
-        <CardTitle className="text-heading-sm font-oswald flex items-center gap-2">
-          <DollarSign className="h-5 w-5" />
-          Proxy Bidding
-        </CardTitle>
-        <CardDescription>
-          Set a maximum bid and our system will automatically bid for you up to that amount
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="animate-pulse">Loading...</div>
-        ) : (
-          <>
-            <ProxyBidExplanation />
-            <ProxyBidInfo 
-              existingProxyBid={existingProxyBid} 
-              isProxyBidUsed={isProxyBidUsed} 
-            />
-            <ProxyBidForm 
-              maxBid={maxBid}
-              onMaxBidChange={setMaxBid}
-              onSetMaxBid={handleSetMaxBid}
-              onRemoveMaxBid={handleRemoveMaxBid}
-              existingProxyBid={existingProxyBid}
-              isProxyBidUsed={isProxyBidUsed}
-              isSubmitting={isSubmitting}
-              currentHighestBid={currentHighestBid}
-              minimumIncrement={minimumIncrement}
-            />
-          </>
-        )}
-      </CardContent>
-    </Card>
+    <>
+      <Card className="w-full mb-4">
+        <CardHeader>
+          <CardTitle className="text-heading-sm font-oswald flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            Proxy Bidding
+          </CardTitle>
+          <CardDescription>
+            Set a maximum bid and our system will automatically bid for you up to that amount
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="animate-pulse">Loading...</div>
+          ) : (
+            <>
+              <ProxyBidExplanation />
+              <ProxyBidInfo 
+                existingProxyBid={existingProxyBid} 
+                isProxyBidUsed={isProxyBidUsed} 
+              />
+              <ProxyBidForm 
+                maxBid={maxBid}
+                onMaxBidChange={setMaxBid}
+                onSetMaxBid={handleSetMaxBid}
+                onRemoveMaxBid={handleRemoveMaxBid}
+                existingProxyBid={existingProxyBid}
+                isProxyBidUsed={isProxyBidUsed}
+                isSubmitting={isSubmitting}
+                currentHighestBid={currentHighestBid}
+                minimumIncrement={minimumIncrement}
+              />
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <ProxyBidHistory carId={carId} dealerId={dealerId} />
+    </>
   );
 };
