@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { executeWithRetry } from "@/utils/retryUtils";
+import { PostgrestError } from "@supabase/supabase-js";
 
 export interface ProxyBidHistoryItem {
   id: string;

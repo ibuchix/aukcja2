@@ -1,7 +1,8 @@
 
 import { Clock, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useProxyBidHistory, ProxyBidHistoryItem } from "./useProxyBidHistory";
+import { useProxyBidHistory } from "./useProxyBidHistory";
+import type { ProxyBidHistoryItem as ProxyBidHistoryItemType } from "./useProxyBidHistory";
 import { formatCurrency } from "@/lib/utils";
 
 interface ProxyBidHistoryProps {
@@ -14,7 +15,7 @@ const formatDate = (dateString: string) => {
   return date.toLocaleString();
 };
 
-const ProxyBidHistoryItem = ({ item }: { item: ProxyBidHistoryItem }) => {
+const ProxyBidHistoryItem = ({ item }: { item: ProxyBidHistoryItemType }) => {
   return (
     <div className="py-3 border-b last:border-0 flex flex-col gap-1">
       <div className="flex justify-between items-center">
