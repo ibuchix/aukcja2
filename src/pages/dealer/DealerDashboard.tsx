@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useWelcomeDashboardData } from "@/hooks/useWelcomeDashboardData";
 import { DashboardLayout } from "@/components/dealer/dashboard/DashboardLayout";
@@ -15,6 +14,7 @@ import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard
 import { supabase } from "@/integrations/supabase/client";
 import { DealerProfileProvider } from "@/contexts/DealerProfileContext";
 import { DealerProfile } from "@/components/dealer/DealerProfile";
+import { DealerAnalyticsDashboard } from "@/components/dealer/analytics/DealerAnalyticsDashboard";
 
 export default function DealerDashboard() {
   const { user, isLoading: isAuthLoading, refreshSession } = useAuth();
@@ -110,6 +110,8 @@ export default function DealerDashboard() {
           <DealerProfile />
           
           <QuickActions />
+          
+          <DealerAnalyticsDashboard />
           
           <StatsSection recentActivity={recentActivity} />
           
