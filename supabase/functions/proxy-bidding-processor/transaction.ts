@@ -1,13 +1,13 @@
 
 import { createServiceClient } from "../_shared/supabase-client.ts";
 import { executeWithRetry } from "../_shared/retry-utils.ts";
-import { Car, ProcessResult, ProxyBid } from "./types.ts";
+import { Car, ProcessResult } from "./types.ts";
 import { createCheckpointLogger } from "./logging.ts";
 
 /**
  * Process an auction in the context of a transaction with checkpoint tracking
  */
-export async function processAuctionTransaction(
+export async function processTransaction(
   auction: Car,
   processFn: (
     auction: Car,

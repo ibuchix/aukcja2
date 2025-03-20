@@ -3,7 +3,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { handleError, withErrorHandling } from '../_shared/error-handling.ts';
 import { checkForRateLimit } from '../_shared/rate-limiter.ts';
-import { processProxyBids } from './processor.ts';
+import { processProxyBids } from './core.ts';
 import { handleProxyBidRequest, createCorsResponse, createRateLimitResponse } from './api.ts';
 
 serve(async (req) => {
