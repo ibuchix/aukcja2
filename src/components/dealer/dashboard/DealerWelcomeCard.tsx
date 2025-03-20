@@ -1,186 +1,45 @@
 
-import { useEffect, useState } from "react";
-import { useDealerProfile } from "@/contexts/dealer-profile";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { AlertCircle } from "lucide-react";
-import { 
-  Tooltip, 
-  TooltipContent, 
-  TooltipProvider, 
-  TooltipTrigger 
-} from "@/components/ui/tooltip";
-import { 
-  formatNameForDisplay, 
-  getValueWithFallback, 
-  formatPhoneNumberForDisplay 
-} from "@/utils/dealer-profile-utils/formatters";
-import { verifyUserProfileIntegrity, recoverDealerProfile } from "@/utils/dealer-profile-utils/recovery";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTour } from "@/contexts/tour/TourContext";
+import { TourButton } from "@/components/tour/TourButton";
 
 export function DealerWelcomeCard() {
-  const { displayProfile, isLoading, profileIsComplete, missingFields = [], refreshProfile } = useDealerProfile();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const [isRecovering, setIsRecovering] = useState(false);
-  const [recoveryAttempted, setRecoveryAttempted] = useState(false);
+  const { user, profile } = useAuth();
+  const { hasCompletedTour } = useTour();
   
-  // Verify profile integrity on component mount, but only once
-  useEffect(() => {
-    let isMounted = true;
-    
-    async function checkProfileIntegrity() {
-      // Skip if already recovering, already attempted recovery, or no user is logged in
-      if (isRecovering || recoveryAttempted || !user || isLoading) {
-        return;
-      }
-
-      try {
-        console.log("Checking profile integrity...");
-        const { complete, needsRecovery } = await verifyUserProfileIntegrity();
-        
-        if (!complete && needsRecovery && isMounted) {
-          console.log("Profile integrity check failed, attempting recovery");
-          setIsRecovering(true);
-          
-          const { success, needsCompletion } = await recoverDealerProfile();
-          
-          if (success && isMounted) {
-            if (needsCompletion) {
-              toast({
-                title: "Profile Needs Completion",
-                description: "Your profile has been partially recovered, but requires more information.",
-              });
-              
-              // Navigate to completion form
-              navigate('/complete-registration', { 
-                state: { userId: user.id, recovery: true } 
-              });
-            } else {
-              toast({
-                title: "Profile Recovered",
-                description: "Your profile has been recovered successfully.",
-              });
-              
-              // Refresh profile data
-              await refreshProfile();
-            }
-          }
-          
-          if (isMounted) {
-            setIsRecovering(false);
-            setRecoveryAttempted(true);
-          }
-        } else if (isMounted) {
-          // Mark as attempted even if recovery wasn't needed
-          setRecoveryAttempted(true);
-        }
-      } catch (error) {
-        console.error("Error in profile integrity check:", error);
-        if (isMounted) {
-          setIsRecovering(false);
-          setRecoveryAttempted(true); // Prevent further attempts
-        }
-      }
-    }
-    
-    // Only run the check if we have a user and aren't loading
-    if (user && !isLoading && !recoveryAttempted && !isRecovering) {
-      checkProfileIntegrity();
-    }
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [user, isLoading, navigate, toast, refreshProfile, isRecovering, recoveryAttempted]);
-  
-  // Get dealer name with better fallback handling
-  const getDealerName = () => {
-    if (displayProfile?.supervisorName) {
-      return formatNameForDisplay(displayProfile.supervisorName);
-    } else if (user?.email) {
-      // Extract name from email (before @ symbol)
-      const namePart = user.email.split('@')[0];
-      // Format with proper casing
-      return formatNameForDisplay(namePart.replace(/[._-]/g, ' '));
-    }
-    return "Dealer";
-  };
-  
-  const dealerName = getDealerName();
-  const dealershipName = getValueWithFallback(displayProfile?.dealershipName, "Your Dealership");
-
-  // Format missing fields for display
-  const formatMissingFieldName = (field: string) => {
-    if (field === 'profile_not_found') return 'Profile Not Found';
-    
-    // Convert camelCase or snake_case to Title Case with spaces
-    return field
-      .replace(/_/g, ' ')
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^\w/, c => c.toUpperCase());
-  };
+  // Extract dealer name from profile or fallback to email
+  const dealerName = profile?.supervisor_name || user?.email?.split('@')[0] || 'Dealer';
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 shadow-sm">
-      <div className="mb-2 flex items-center justify-between">
-        {isLoading || isRecovering ? (
-          <Skeleton className="h-8 w-64" />
-        ) : (
-          <h1 className="text-2xl font-bold text-gray-800">
-            Welcome back, {dealerName}!
-          </h1>
-        )}
-        
-        {!isLoading && !isRecovering && (
-          <div className="flex items-center gap-2">
-            {profileIsComplete ? (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                Profile Complete
-              </Badge>
-            ) : (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1 cursor-help">
-                      <AlertCircle className="h-3.5 w-3.5" />
-                      Incomplete Profile
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent className="p-2 max-w-xs">
-                    <div>
-                      {missingFields && missingFields.length > 0 ? (
-                        <>
-                          <p className="font-semibold mb-1">Missing information:</p>
-                          <ul className="list-disc pl-4 text-sm">
-                            {missingFields.map((field, i) => (
-                              <li key={i}>{formatMissingFieldName(field)}</li>
-                            ))}
-                          </ul>
-                        </>
-                      ) : (
-                        <p>Your profile is incomplete. Please update your information.</p>
-                      )}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
-        )}
-      </div>
-      <div>
-        {isLoading || isRecovering ? (
-          <Skeleton className="h-5 w-96" />
-        ) : (
-          <p className="text-gray-600">
-            What would you like to do today at {dealershipName}?
+    <Card className="border-l-4 border-l-primary">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-2xl">
+            Welcome, {dealerName}!
+          </CardTitle>
+          
+          <TourButton>
+            {hasCompletedTour ? 'Replay Tour' : 'How to Use Proxy Bidding'}
+          </TourButton>
+        </div>
+        <CardDescription>
+          Your one-stop dashboard for managing auctions and monitoring your bidding activity
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="text-sm">
+          <p id="proxy-bidding-section" className="mb-2">
+            Use our <span className="font-medium text-primary">proxy bidding system</span> to 
+            automatically place bids up to your maximum amount - no need to manually bid!
           </p>
-        )}
-      </div>
-    </div>
+          <div className="flex items-center gap-2 mt-3 text-muted-foreground">
+            <span id="increment-info">
+              Bid in increments to stay competitive while never exceeding your budget.
+            </span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

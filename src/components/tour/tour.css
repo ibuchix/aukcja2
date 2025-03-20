@@ -1,0 +1,29 @@
+
+/* Tour highlighting */
+.tour-highlight {
+  position: relative;
+  z-index: 45;
+  box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.5);
+  border-radius: 4px;
+  transition: box-shadow 0.3s ease;
+}
+
+/* Add highlighting effect to input fields */
+input.tour-highlight,
+button.tour-highlight,
+div.tour-highlight {
+  animation: pulse 2s infinite;
+}
+
+/* Add a subtle pulse animation */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(220, 20, 60, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.5);
+  }
+}

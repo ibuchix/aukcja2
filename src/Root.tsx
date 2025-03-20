@@ -17,6 +17,7 @@ import Profile from "@/pages/dealer/Profile";
 import Documents from "@/pages/dealer/Documents";
 import { createPersistQueryClientProvider } from "@/utils/cachePersistence";
 import { queryClient } from "@/utils/queryClient";
+import { TourProvider } from "@/providers/TourProvider";
 
 // Create a persistent query client provider
 const PersistQueryClientProvider = createPersistQueryClientProvider(queryClient);
@@ -26,8 +27,10 @@ function Layout({ children }: { children: React.ReactNode }) {
   return (
     <PersistQueryClientProvider>
       <AuthProviderWithRouter>
-        {children}
-        <Toaster />
+        <TourProvider>
+          {children}
+          <Toaster />
+        </TourProvider>
       </AuthProviderWithRouter>
     </PersistQueryClientProvider>
   );
