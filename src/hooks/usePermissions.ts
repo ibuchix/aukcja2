@@ -34,19 +34,29 @@ export function usePermissions(props?: UsePermissionsProps) {
     // Admins can do anything
     if (isAdmin) return true;
     
-    // Check using our security function
+    // Check using RPC call
     try {
-      const { data, error } = await supabase.rpc('can_perform_action', {
-        p_action: action,
-        p_entity_type: entityType,
-        p_entity_id: entityId
+      // Use fetch directly to call the RPC function since TypeScript doesn't know about our custom functions
+      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/can_perform_action`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabase.supabaseKey,
+          'Authorization': `Bearer ${supabase.auth.session()?.access_token}`
+        },
+        body: JSON.stringify({
+          p_action: action,
+          p_entity_type: entityType,
+          p_entity_id: entityId
+        })
       });
       
-      if (error) {
-        console.error("Permission check error:", error);
+      if (!response.ok) {
+        console.error("Permission check error:", await response.text());
         return false;
       }
       
+      const data = await response.json();
       return !!data;
     } catch (err) {
       console.error("Error checking permissions:", err);

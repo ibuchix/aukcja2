@@ -55,17 +55,28 @@ export function AdminTools() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user?.id) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase.rpc('verify_dealer', {
-        p_dealer_id: dealerId,
-        p_admin_id: userData.user.id,
-        p_notes: 'Verified via admin dashboard'
+      // For verify_dealer we need to use direct fetch since it's a custom RPC
+      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/verify_dealer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabase.supabaseKey,
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          p_dealer_id: dealerId,
+          p_admin_id: userData.user.id,
+          p_notes: 'Verified via admin dashboard'
+        })
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
 
       // Log this action
       await performAdminAction(
-        'verify_dealer',
+        'verify',
         'dealer',
         dealerId,
         { action: 'verify', status: 'approved' }
@@ -94,18 +105,29 @@ export function AdminTools() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user?.id) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase.rpc('reject_dealer', {
-        p_dealer_id: dealerId,
-        p_admin_id: userData.user.id,
-        p_rejection_reason: 'Rejected via admin dashboard',
-        p_notes: 'Information provided was insufficient'
+      // For reject_dealer we need to use direct fetch since it's a custom RPC
+      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/reject_dealer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabase.supabaseKey,
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          p_dealer_id: dealerId,
+          p_admin_id: userData.user.id,
+          p_rejection_reason: 'Rejected via admin dashboard',
+          p_notes: 'Information provided was insufficient'
+        })
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
 
       // Log this action
       await performAdminAction(
-        'reject_dealer',
+        'reject',
         'dealer',
         dealerId,
         { action: 'reject', status: 'rejected' }

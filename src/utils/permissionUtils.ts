@@ -6,13 +6,22 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export async function isAdmin(): Promise<boolean> {
   try {
-    const { data, error } = await supabase.rpc('is_admin');
+    // Use fetch directly to call the RPC function
+    const response = await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/is_admin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabase.supabaseKey,
+        'Authorization': `Bearer ${supabase.auth.session()?.access_token}`
+      }
+    });
     
-    if (error) {
-      console.error("Error checking admin status:", error);
+    if (!response.ok) {
+      console.error("Error checking admin status:", await response.text());
       return false;
     }
     
+    const data = await response.json();
     return !!data;
   } catch (err) {
     console.error("Unexpected error checking admin status:", err);
@@ -25,13 +34,22 @@ export async function isAdmin(): Promise<boolean> {
  */
 export async function isDealer(): Promise<boolean> {
   try {
-    const { data, error } = await supabase.rpc('is_dealer');
+    // Use fetch directly to call the RPC function
+    const response = await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/is_dealer`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabase.supabaseKey,
+        'Authorization': `Bearer ${supabase.auth.session()?.access_token}`
+      }
+    });
     
-    if (error) {
-      console.error("Error checking dealer status:", error);
+    if (!response.ok) {
+      console.error("Error checking dealer status:", await response.text());
       return false;
     }
     
+    const data = await response.json();
     return !!data;
   } catch (err) {
     console.error("Unexpected error checking dealer status:", err);
@@ -48,17 +66,27 @@ export async function checkPermission(
   entityId: string
 ): Promise<boolean> {
   try {
-    const { data, error } = await supabase.rpc('can_perform_action', {
-      p_action: action,
-      p_entity_type: entityType,
-      p_entity_id: entityId
+    // Use fetch directly to call the RPC function
+    const response = await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/can_perform_action`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabase.supabaseKey,
+        'Authorization': `Bearer ${supabase.auth.session()?.access_token}`
+      },
+      body: JSON.stringify({
+        p_action: action,
+        p_entity_type: entityType,
+        p_entity_id: entityId
+      })
     });
     
-    if (error) {
-      console.error("Permission check error:", error);
+    if (!response.ok) {
+      console.error("Permission check error:", await response.text());
       return false;
     }
     
+    const data = await response.json();
     return !!data;
   } catch (err) {
     console.error("Error checking permissions:", err);
@@ -93,17 +121,24 @@ export async function performAdminAction(
       return false;
     }
     
-    // Log the admin action
-    const { data, error } = await supabase.rpc('log_admin_action', {
-      p_admin_id: userId,
-      p_action: action,
-      p_entity_type: entityType,
-      p_entity_id: entityId,
-      p_details: details
+    // Use fetch directly to call the perform_admin_action function
+    const response = await fetch(`${supabase.supabaseUrl}/rest/v1/rpc/perform_admin_action`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabase.supabaseKey,
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({
+        p_action: action,
+        p_entity_type: entityType,
+        p_entity_id: entityId,
+        p_details: details
+      })
     });
     
-    if (error) {
-      console.error("Error logging admin action:", error);
+    if (!response.ok) {
+      console.error("Error logging admin action:", await response.text());
       return false;
     }
     
