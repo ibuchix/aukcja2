@@ -1,144 +1,154 @@
 
-import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
-import { Loader2, ListChecks, Trash2 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger 
+} from "@/components/ui/sheet";
+import { ListChecks, Wifi, WifiOff } from "lucide-react";
+import { QueuedBid } from "@/services/offlineBidQueue/types";
+import { getQueuedBids, getQueuedBidsCount } from "@/services/offlineBidQueue/bidQueueManager";
+import { processBids } from "@/services/offlineBidQueue/syncService";
 import { useOnlineStatusContext } from "@/contexts/OnlineStatusContext";
-import { getQueuedBids, clearBidQueue, QueuedBid } from "@/services/offlineBidQueue";
-import { useBidSync } from "@/services/offlineBidQueue/syncService";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { formatDistanceToNow } from "date-fns";
 
-export function OfflineBidQueue() {
+export const OfflineBidQueue: React.FC = () => {
+  const [open, setOpen] = useState(false);
   const [queuedBids, setQueuedBids] = useState<QueuedBid[]>([]);
   const { isOnline } = useOnlineStatusContext();
-  const { status, syncBids } = useBidSync();
-  
-  // Load queued bids on mount and when status changes
-  useEffect(() => {
-    setQueuedBids(getQueuedBids());
-    
-    // Set up interval to refresh the queue
-    const interval = setInterval(() => {
+  const { toast } = useToast();
+  const queueCount = getQueuedBidsCount();
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) {
+      // Refresh the list when opening
       setQueuedBids(getQueuedBids());
-    }, 5000);
-    
-    return () => clearInterval(interval);
-  }, [status.isSyncing]);
-  
-  // Format timestamp to readable date
-  const formatTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleString();
+    }
+    setOpen(isOpen);
   };
-  
-  const handleClearQueue = () => {
-    if (window.confirm("Are you sure you want to clear all queued bids? This action cannot be undone.")) {
-      clearBidQueue();
-      setQueuedBids([]);
+
+  const handleProcessQueue = async () => {
+    if (!isOnline) {
+      toast({
+        title: "You're offline",
+        description: "Cannot process bids while offline",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const result = await processBids();
+      
+      if (result.success > 0) {
+        toast({
+          title: "Bids processed",
+          description: `Successfully processed ${result.success} bids. Failed: ${result.failed}`,
+        });
+      } else if (result.failed > 0) {
+        toast({
+          title: "Processing failed",
+          description: `Failed to process ${result.failed} bids`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "No bids to process",
+          description: "Your bid queue is empty",
+        });
+      }
+      
+      // Refresh the list
+      setQueuedBids(getQueuedBids());
+    } catch (error) {
+      console.error("Error processing bids:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while processing your bids",
+        variant: "destructive",
+      });
     }
   };
-  
+
   return (
-    <Drawer>
-      <DrawerTrigger asChild>
-        <Button variant="outline" size="sm" className="relative">
-          <ListChecks className="mr-2 h-4 w-4" />
-          Queued Bids
-          {queuedBids.length > 0 && (
-            <Badge variant="destructive" className="absolute -top-2 -right-2">
-              {queuedBids.length}
+    <Sheet open={open} onOpenChange={handleOpenChange}>
+      <SheetTrigger asChild>
+        <Button 
+          variant="outline" 
+          size="sm"
+          className="relative"
+          onClick={() => setQueuedBids(getQueuedBids())}
+        >
+          <ListChecks className="h-4 w-4 mr-2" />
+          Bid Queue
+          {queueCount > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            >
+              {queueCount}
             </Badge>
           )}
         </Button>
-      </DrawerTrigger>
-      <DrawerContent>
-        <div className="mx-auto w-full max-w-lg">
-          <DrawerHeader>
-            <DrawerTitle>Offline Bid Queue</DrawerTitle>
-            <DrawerDescription>
-              Bids placed while offline will be submitted when you're back online.
-            </DrawerDescription>
-          </DrawerHeader>
-          <div className="p-4">
-            {status.isSyncing && (
-              <div className="mb-4 p-2 border rounded bg-yellow-50">
-                <p className="flex items-center text-sm text-yellow-700">
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Syncing bids... ({status.progress.processed}/{status.progress.total})
-                </p>
-              </div>
-            )}
-            
-            {queuedBids.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No bids in queue</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {queuedBids.map((bid) => (
-                  <div key={bid.id} className="border rounded p-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium">
-                          {bid.type === 'standard' 
-                            ? `Standard Bid: ${formatCurrency(bid.amount)}` 
-                            : `Proxy Bid: ${formatCurrency(bid.maxProxyAmount || 0)}`}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Car ID: {bid.carId}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Queued: {formatTime(bid.timestamp)}
-                        </p>
-                        {bid.lastAttempt && (
-                          <p className="text-xs text-muted-foreground">
-                            Last attempt: {formatTime(bid.lastAttempt)} (Attempts: {bid.attempts})
-                          </p>
-                        )}
-                      </div>
-                      <Badge variant={bid.type === 'standard' ? "default" : "outline"}>
-                        {bid.type}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <DrawerFooter className="flex-row justify-between">
-            <Button 
-              variant="destructive" 
-              onClick={handleClearQueue}
-              disabled={queuedBids.length === 0}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Clear Queue
-            </Button>
-            <div className="flex gap-2">
-              <Button 
-                variant="default" 
-                onClick={syncBids}
-                disabled={!isOnline || status.isSyncing || queuedBids.length === 0}
-              >
-                {status.isSyncing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Sync Now
-              </Button>
-              <DrawerClose asChild>
-                <Button variant="outline">Close</Button>
-              </DrawerClose>
+      </SheetTrigger>
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle className="flex items-center justify-between">
+            <span>Offline Bid Queue</span>
+            <Badge variant={isOnline ? "default" : "destructive"}>
+              {isOnline ? <Wifi className="h-3 w-3 mr-1" /> : <WifiOff className="h-3 w-3 mr-1" />}
+              {isOnline ? "Online" : "Offline"}
+            </Badge>
+          </SheetTitle>
+        </SheetHeader>
+        
+        <div className="mt-6">
+          <Button 
+            onClick={handleProcessQueue} 
+            disabled={!isOnline || queuedBids.length === 0}
+            className="w-full mb-4"
+          >
+            Process All Bids
+          </Button>
+          
+          {queuedBids.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No pending bids in the queue
             </div>
-          </DrawerFooter>
+          ) : (
+            <div className="space-y-3">
+              {queuedBids.map(bid => (
+                <div key={bid.id} className="border rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <Badge variant={bid.type === 'standard' ? 'outline' : 'secondary'}>
+                      {bid.type === 'standard' ? 'Standard Bid' : 'Proxy Bid'}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {formatDistanceToNow(new Date(bid.timestamp), { addSuffix: true })}
+                    </span>
+                  </div>
+                  <p className="font-medium">${bid.amount.toLocaleString()}</p>
+                  {bid.type === 'proxy' && bid.maxProxyAmount && (
+                    <p className="text-sm text-muted-foreground">
+                      Max Proxy: ${bid.maxProxyAmount.toLocaleString()}
+                    </p>
+                  )}
+                  {bid.attempts > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Attempted: {bid.attempts} time{bid.attempts !== 1 ? 's' : ''}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      </DrawerContent>
-    </Drawer>
+      </SheetContent>
+    </Sheet>
   );
-}
+};
