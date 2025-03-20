@@ -11,5 +11,5 @@ export * from './car';
 export * from './common';
 export * from './utils';
 
-// Re-export database types
-export { Database } from '@/integrations/supabase/types';
+// Re-export database types - fixing the type export syntax
+export type { Database } from '@/integrations/supabase/types';
