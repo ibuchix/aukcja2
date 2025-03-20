@@ -1,5 +1,5 @@
 
-import { SupabaseResponse } from './types';
+import { SupabaseResponse } from './types.ts';
 
 /**
  * Type guard to check if a response is a Supabase-like response

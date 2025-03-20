@@ -1,13 +1,13 @@
 
-import { SupabaseResponse, RetryOptions } from './retry/types';
-import { isSupabaseResponse } from './retry/supabase-helpers';
-import { getRetryStats, incrementStat } from './retry/stats';
-import { logPerformance, logRetry } from './retry/logger';
-import { calculateBackoff, sleep } from './retry/backoff';
+import { SupabaseResponse, RetryOptions } from './retry/types.ts';
+import { isSupabaseResponse } from './retry/supabase-helpers.ts';
+import { getRetryStats, incrementStat } from './retry/stats.ts';
+import { logPerformance, logRetry } from './retry/logger.ts';
+import { calculateBackoff, sleep } from './retry/backoff.ts';
 
-export { SupabaseResponse, RetryOptions } from './retry/types';
-export { isSupabaseResponse } from './retry/supabase-helpers';
-export { getRetryStats } from './retry/stats';
+export { SupabaseResponse, RetryOptions } from './retry/types.ts';
+export { isSupabaseResponse } from './retry/supabase-helpers.ts';
+export { getRetryStats } from './retry/stats.ts';
 
 /**
  * Utility for retrying operations with exponential backoff

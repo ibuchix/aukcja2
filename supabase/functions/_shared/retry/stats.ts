@@ -1,5 +1,5 @@
 
-import { RetryStats } from './types';
+import { RetryStats } from './types.ts';
 
 // In-memory stats for the current process
 const retryStats: RetryStats = {
