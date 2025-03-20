@@ -1,7 +1,11 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import BidEventService from "@/services/realtime/BidEventService";
 
 export const enableRealtimeForTables = async () => {
+  // Initialize the bid event service
+  const bidEventService = BidEventService.getInstance();
+
   // Create a channel for cars table
   const carsChannel = supabase.channel('cars_changes')
     .on(
@@ -67,8 +71,63 @@ export const enableRealtimeForTables = async () => {
     )
     .subscribe();
 
+  // Create a channel for audit_logs table to track proxy bid executions
+  const auditLogsChannel = supabase.channel('audit_logs_changes')
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'audit_logs',
+        filter: `action=eq.auto_proxy_bid`
+      },
+      (payload) => {
+        console.log('Proxy bid audit log received:', payload);
+        
+        // Dispatch custom event for proxy bid execution
+        const event = new CustomEvent('proxy_bid_executed', { 
+          detail: { 
+            logId: payload.new.id,
+            entityId: payload.new.entity_id,
+            userId: payload.new.user_id,
+            details: payload.new.details
+          } 
+        });
+        window.dispatchEvent(event);
+      }
+    )
+    .subscribe();
+
   return () => {
     supabase.removeChannel(carsChannel);
     supabase.removeChannel(bidsChannel);
+    supabase.removeChannel(auditLogsChannel);
+  };
+};
+
+// Helper function to enable realtime for specific tables
+export const enableRealtimeFor = (table: string, filter?: any) => {
+  const channel = supabase.channel(`${table}_realtime`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table,
+        ...(filter && { filter })
+      },
+      (payload) => {
+        console.log(`Realtime update for ${table}:`, payload);
+        // Dispatch a custom event
+        const event = new CustomEvent(`${table}_updated`, { 
+          detail: { payload } 
+        });
+        window.dispatchEvent(event);
+      }
+    )
+    .subscribe();
+    
+  return () => {
+    supabase.removeChannel(channel);
   };
 };

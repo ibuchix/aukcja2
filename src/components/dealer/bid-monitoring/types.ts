@@ -21,6 +21,10 @@ export interface BidMonitoringFilters {
   searchQuery?: string;
   timeRange?: 'last_hour' | 'today' | 'yesterday' | 'last_week' | 'all';
   activityTypes?: string[];
+  notificationEnabled?: boolean;
+  onlyMyBids?: boolean;
+  minAmount?: number;
+  maxAmount?: number;
 }
 
 export interface BidMetrics {
@@ -31,3 +35,11 @@ export interface BidMetrics {
   totalInvested: number;
   potentialExposure: number;
 }
+
+export interface BidEventSubscription {
+  channelName: string;
+  filters: BidMonitoringFilters;
+  onBidEvent: (activity: BidActivity) => void;
+}
+
+export type BidEventType = 'new_bid' | 'outbid' | 'won' | 'lost' | 'proxy_executed' | 'auction_ended';
