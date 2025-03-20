@@ -17,13 +17,31 @@ export function useDealerBids(dealerProfileId: string | undefined) {
     queryFn: async () => {
       if (!dealerProfileId) return [];
 
-      // Use the materialized view for better performance
-      const { data, error } = await supabase
-        .from("mv_dealer_bids")
+      // Get active bids for this dealer
+      const { data: activeBids, error: bidsError } = await supabase
+        .from("bids")
         .select(`
+          id,
           car_id,
-          my_highest_bid,
-          outbid,
+          amount,
+          status,
+          created_at
+        `)
+        .eq("dealer_id", dealerProfileId)
+        .order("created_at", { ascending: false });
+
+      if (bidsError) throw bidsError;
+      
+      if (!activeBids || activeBids.length === 0) {
+        return [] as MyBid[];
+      }
+
+      // Get car details for these bids
+      const carIds = [...new Set(activeBids.map(bid => bid.car_id))];
+      const { data: cars, error: carsError } = await supabase
+        .from("cars")
+        .select(`
+          id,
           title,
           make,
           model,
@@ -32,39 +50,49 @@ export function useDealerBids(dealerProfileId: string | undefined) {
           current_bid,
           auction_status
         `)
-        .eq("dealer_id", dealerProfileId)
-        .in("auction_status", ["active"])
-        .order("auction_end_time", { ascending: true });
-
-      if (error) throw error;
+        .in("id", carIds)
+        .eq("auction_status", "active");
+      
+      if (carsError) throw carsError;
+      
+      // Create a lookup table for cars
+      const carsById = (cars || []).reduce((acc: Record<string, any>, car) => {
+        acc[car.id] = car;
+        return acc;
+      }, {});
 
       // Get proxy bids for these cars
-      const carIds = data.map((bid) => bid.car_id);
       const { data: proxyBids } = await supabase
         .from("proxy_bids")
         .select("car_id, max_bid_amount")
         .eq("dealer_id", dealerProfileId)
         .in("car_id", carIds);
 
-      // Merge proxy bid data and transform to the expected format
-      return data.map((bid) => ({
-        id: `${bid.car_id}-${dealerProfileId}`, // Create a unique ID
-        car_id: bid.car_id,
-        amount: bid.my_highest_bid,
-        status: bid.outbid ? 'outbid' : 'active',
-        created_at: new Date().toISOString(), // Not in materialized view
-        car: {
-          id: bid.car_id,
-          title: bid.title,
-          make: bid.make,
-          model: bid.model,
-          year: bid.year,
-          auction_end_time: bid.auction_end_time,
-          current_bid: bid.current_bid,
-          auction_status: bid.auction_status
-        },
-        proxy_bid: proxyBids?.find((pb) => pb.car_id === bid.car_id),
-      })) as MyBid[];
+      // Filter bids for active auctions only and merge with car data
+      return activeBids
+        .filter(bid => carsById[bid.car_id]) // Only keep bids for active auctions
+        .map(bid => {
+          const car = carsById[bid.car_id];
+          const isOutbid = car && car.current_bid > bid.amount;
+          return {
+            id: `${bid.car_id}-${dealerProfileId}`, // Create a unique ID
+            car_id: bid.car_id,
+            amount: bid.amount,
+            status: isOutbid ? 'outbid' : 'active',
+            created_at: bid.created_at,
+            car: {
+              id: car.id,
+              title: car.title,
+              make: car.make,
+              model: car.model,
+              year: car.year,
+              auction_end_time: car.auction_end_time,
+              current_bid: car.current_bid,
+              auction_status: car.auction_status
+            },
+            proxy_bid: proxyBids?.find((pb) => pb.car_id === bid.car_id),
+          };
+        }) as MyBid[];
     },
     enabled: !!dealerProfileId,
   });

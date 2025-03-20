@@ -46,9 +46,9 @@ export const useAuctionBrowser = (
     queryKey: ["dealerAuctions", filters, sortOption, searchQuery, cursor, direction],
     queryFn: async () => {
       try {
-        // Use the materialized view for better performance
+        // We'll use the cars table but with a filter for active auctions
         let query = supabase
-          .from("mv_active_auctions")
+          .from("cars")
           .select(`
             id,
             title,
@@ -60,10 +60,12 @@ export const useAuctionBrowser = (
             price,
             current_bid,
             reserve_price,
-            reserve_met,
-            bid_count,
-            unique_bidders
-          `);
+            is_auction,
+            auction_status
+          `)
+          .eq('auction_status', 'active')
+          .eq('is_auction', true)
+          .eq('is_draft', false);
 
         // Apply search
         if (searchQuery) {
@@ -122,29 +124,52 @@ export const useAuctionBrowser = (
         const { data: auctionData, error } = await query;
         if (error) throw error;
 
-        // Get dealer's bids for these auctions from the mv_dealer_bids materialized view
+        // Get dealer's bids for these auctions
         const auctionIds = auctionData.map((a) => a.id);
-        const { data: dealerBids } = await supabase
-          .from("mv_dealer_bids")
-          .select("car_id, my_highest_bid, outbid")
-          .eq("dealer_id", dealerId)
-          .in("car_id", auctionIds);
+        let dealerBids: any[] = [];
+        
+        if (auctionIds.length > 0) {
+          const { data: bidsData } = await supabase
+            .from("bids")
+            .select("car_id, amount, status")
+            .eq("dealer_id", dealerId)
+            .in("car_id", auctionIds)
+            .order('amount', { ascending: false });
+            
+          if (bidsData) {
+            // Group bids by car_id and get the highest bid for each car
+            const bidsByCarId = bidsData.reduce((acc: Record<string, any>, bid) => {
+              if (!acc[bid.car_id] || bid.amount > acc[bid.car_id].amount) {
+                acc[bid.car_id] = bid;
+              }
+              return acc;
+            }, {});
+            
+            dealerBids = Object.values(bidsByCarId);
+          }
+        }
 
         // Format the data
         const formattedAuctions = auctionData.map((auction) => {
-          const dealerBid = dealerBids?.find(bid => bid.car_id === auction.id);
+          const dealerBid = dealerBids.find(bid => bid.car_id === auction.id);
+          
+          // Check if this auction's current_bid is higher than the dealer's bid
+          const isOutbid = dealerBid && auction.current_bid > dealerBid.amount;
+          
           return {
             ...auction,
-            auction_status: 'active', // This view only contains active auctions
+            auction_status: 'active', // This is already filtered for active auctions
             my_bid: dealerBid ? {
-              amount: dealerBid.my_highest_bid,
-              status: dealerBid.outbid ? 'outbid' : 'active',
+              amount: dealerBid.amount,
+              status: isOutbid ? 'outbid' : 'active',
               car_id: auction.id
             } : undefined,
             highest_bid: auction.current_bid ? {
               amount: auction.current_bid,
-              dealer_id: ''  // We don't have this info in the materialized view
-            } : undefined
+              dealer_id: ''  // We don't have this info without a join
+            } : undefined,
+            // Additional field to determine if reserve is met
+            reserve_met: auction.current_bid >= auction.reserve_price
           };
         }) as Auction[];
 

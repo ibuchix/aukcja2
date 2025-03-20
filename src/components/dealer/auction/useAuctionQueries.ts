@@ -4,13 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Auction } from "./types";
 
 export const useAuctionQueries = (dealerId: string) => {
-  // Query for active auctions using materialized view
+  // Query for active auctions 
   const { data: activeAuctions, isLoading: loadingActive } = useQuery({
     queryKey: ["activeAuctions", dealerId],
     queryFn: async () => {
-      // Get active auctions from materialized view
+      // Get active auctions
       const { data: auctions, error } = await supabase
-        .from("mv_active_auctions")
+        .from("cars")
         .select(`
           id,
           title,
@@ -22,152 +22,216 @@ export const useAuctionQueries = (dealerId: string) => {
           price,
           current_bid,
           reserve_price,
-          reserve_met,
-          bid_count,
-          unique_bidders
+          auction_status
         `)
+        .eq("auction_status", "active")
+        .eq("is_auction", true)
+        .eq("is_draft", false)
         .order("auction_end_time", { ascending: true });
 
       if (error) throw error;
 
-      // Get dealer's bids for these auctions from the materialized view
+      // Get dealer's bids for these auctions
       const auctionIds = auctions.map((a) => a.id);
-      const { data: dealerBids } = await supabase
-        .from("mv_dealer_bids")
-        .select("car_id, my_highest_bid, outbid")
-        .eq("dealer_id", dealerId)
-        .in("car_id", auctionIds);
+      let dealerBids: any[] = [];
+      
+      if (auctionIds.length > 0) {
+        const { data: bidsData } = await supabase
+          .from("bids")
+          .select("car_id, amount, status")
+          .eq("dealer_id", dealerId)
+          .in("car_id", auctionIds)
+          .order('amount', { ascending: false });
+          
+        if (bidsData) {
+          // Group bids by car_id and get the highest bid for each car
+          const bidsByCarId = bidsData.reduce((acc: Record<string, any>, bid) => {
+            if (!acc[bid.car_id] || bid.amount > acc[bid.car_id].amount) {
+              acc[bid.car_id] = bid;
+            }
+            return acc;
+          }, {});
+          
+          dealerBids = Object.values(bidsByCarId);
+        }
+      }
 
       return auctions.map((auction) => {
-        const dealerBid = dealerBids?.find(bid => bid.car_id === auction.id);
+        const dealerBid = dealerBids.find(bid => bid.car_id === auction.id);
+        const isOutbid = dealerBid && auction.current_bid > dealerBid.amount;
         return {
           ...auction,
-          auction_status: 'active',
+          reserve_met: auction.current_bid >= auction.reserve_price,
           my_bid: dealerBid ? {
-            amount: dealerBid.my_highest_bid,
-            status: dealerBid.outbid ? 'outbid' : 'active'
+            amount: dealerBid.amount,
+            status: isOutbid ? 'outbid' : 'active'
           } : undefined,
           highest_bid: auction.current_bid ? {
             amount: auction.current_bid,
-            dealer_id: '' // We don't have this info in the materialized view
+            dealer_id: '' // We don't have this info without a join
           } : undefined
         };
       }) as Auction[];
     },
   });
 
-  // Query for won auctions using materialized view
+  // Query for won auctions
   const { data: wonAuctions, isLoading: loadingWon } = useQuery({
     queryKey: ["wonAuctions", dealerId],
     queryFn: async () => {
-      // Use the auction results materialized view to find won auctions
-      const { data: auctions, error } = await supabase
-        .from("mv_auction_results")
+      // Find cars that the dealer won (highest bid belongs to dealer and auction is sold)
+      const { data: soldCars, error } = await supabase
+        .from("cars")
         .select(`
-          car_id,
+          id,
           title,
           make,
           model,
           year,
           auction_end_time,
-          final_price,
-          auction_status,
-          total_bids,
-          unique_bidders
+          current_bid,
+          auction_status
         `)
-        .eq("winning_dealer_id", dealerId)
         .eq("auction_status", "sold")
         .order("auction_end_time", { ascending: false });
 
       if (error) throw error;
 
-      return auctions.map(auction => ({
-        id: auction.car_id,
-        title: auction.title,
-        make: auction.make,
-        model: auction.model,
-        year: auction.year,
-        auction_end_time: auction.auction_end_time,
-        auction_status: auction.auction_status,
-        reserve_price: 0, // Not available in the view
-        price: 0, // Not available in the view
-        current_bid: auction.final_price,
-        highest_bid: {
-          amount: auction.final_price,
-          dealer_id: dealerId
-        },
-        my_bid: {
-          amount: auction.final_price,
-          status: "won"
-        }
-      })) as Auction[];
-    },
-  });
-
-  // Query for lost auctions - we'll need to join data since the materialized view doesn't have dealer-specific loss info
-  const { data: lostAuctions, isLoading: loadingLost } = useQuery({
-    queryKey: ["lostAuctions", dealerId],
-    queryFn: async () => {
-      // First check dealer bids for cars that are sold but where dealer isn't the winner
-      const { data: bidsCars, error: bidsError } = await supabase
-        .from("bids")
-        .select(`
-          car_id,
-          amount
-        `)
-        .eq("dealer_id", dealerId)
-        .eq("status", "lost");
+      // Find the winning bids for these cars
+      const carIds = soldCars.map(car => car.id);
+      let winningBids: any[] = [];
       
-      if (bidsError) throw bidsError;
-      
-      if (!bidsCars || bidsCars.length === 0) {
-        return [] as Auction[];
+      if (carIds.length > 0) {
+        const { data: bidsData } = await supabase
+          .from("bids")
+          .select("car_id, dealer_id, amount, status")
+          .in("car_id", carIds)
+          .eq("status", "active"); // Active bids are the winning bids
+          
+        winningBids = bidsData || [];
       }
-      
-      // Get the auction details from the materialized view
-      const carIds = bidsCars.map(bid => bid.car_id);
-      const { data: auctionResults, error: resultsError } = await supabase
-        .from("mv_auction_results")
-        .select(`
-          car_id,
-          title,
-          make,
-          model,
-          year,
-          auction_end_time,
-          final_price,
-          auction_status
-        `)
-        .in("car_id", carIds)
-        .eq("auction_status", "sold")
-        .order("auction_end_time", { ascending: false });
-      
-      if (resultsError) throw resultsError;
-      
-      return auctionResults.map(auction => {
-        const dealerBid = bidsCars.find(bid => bid.car_id === auction.car_id);
-        return {
-          id: auction.car_id,
+
+      // Filter only auctions won by this dealer
+      return soldCars
+        .filter(car => {
+          const winningBid = winningBids.find(bid => bid.car_id === car.id);
+          return winningBid && winningBid.dealer_id === dealerId;
+        })
+        .map(auction => ({
+          id: auction.id,
           title: auction.title,
           make: auction.make,
           model: auction.model,
           year: auction.year,
           auction_end_time: auction.auction_end_time,
           auction_status: auction.auction_status,
-          reserve_price: 0, // Not available in the view
-          price: 0, // Not available in the view
-          current_bid: auction.final_price,
+          reserve_price: 0, // Not available without a join
+          price: 0, // Not available without a join
+          current_bid: auction.current_bid,
           highest_bid: {
-            amount: auction.final_price,
-            dealer_id: '' // Not the current dealer
+            amount: auction.current_bid,
+            dealer_id: dealerId
           },
           my_bid: {
-            amount: dealerBid?.amount || 0,
-            status: "lost"
-          },
-          lost_by: auction.final_price - (dealerBid?.amount || 0)
-        };
-      }) as Auction[];
+            amount: auction.current_bid,
+            status: "won"
+          }
+        })) as Auction[];
+    },
+  });
+
+  // Query for lost auctions
+  const { data: lostAuctions, isLoading: loadingLost } = useQuery({
+    queryKey: ["lostAuctions", dealerId],
+    queryFn: async () => {
+      // First get all bids from this dealer
+      const { data: dealerBids, error: bidsError } = await supabase
+        .from("bids")
+        .select(`
+          car_id,
+          amount,
+          status
+        `)
+        .eq("dealer_id", dealerId);
+      
+      if (bidsError) throw bidsError;
+      
+      if (!dealerBids || dealerBids.length === 0) {
+        return [] as Auction[];
+      }
+      
+      // Get unique car IDs that the dealer has bid on
+      const carIds = [...new Set(dealerBids.map(bid => bid.car_id))];
+      
+      // Get sold cars that the dealer has bid on
+      const { data: soldCars, error: carsError } = await supabase
+        .from("cars")
+        .select(`
+          id,
+          title,
+          make,
+          model,
+          year,
+          auction_end_time,
+          current_bid,
+          auction_status
+        `)
+        .in("id", carIds)
+        .eq("auction_status", "sold")
+        .order("auction_end_time", { ascending: false });
+      
+      if (carsError) throw carsError;
+      
+      // Find highest bid for each car from this dealer
+      const highestDealerBidsByCarId = dealerBids.reduce((acc: Record<string, any>, bid) => {
+        if (!acc[bid.car_id] || bid.amount > acc[bid.car_id].amount) {
+          acc[bid.car_id] = bid;
+        }
+        return acc;
+      }, {});
+      
+      // Find winning bids for these cars
+      const { data: winningBids } = await supabase
+        .from("bids")
+        .select("car_id, dealer_id, amount")
+        .in("car_id", soldCars.map(car => car.id))
+        .eq("status", "active"); // Active bids are the winning bids
+      
+      const winningBidsByCarId = (winningBids || []).reduce((acc: Record<string, any>, bid) => {
+        acc[bid.car_id] = bid;
+        return acc;
+      }, {});
+      
+      // Filter only auctions the dealer lost
+      return soldCars
+        .filter(car => {
+          const winningBid = winningBidsByCarId[car.id];
+          return winningBid && winningBid.dealer_id !== dealerId;
+        })
+        .map(auction => {
+          const dealerBid = highestDealerBidsByCarId[auction.id];
+          return {
+            id: auction.id,
+            title: auction.title,
+            make: auction.make,
+            model: auction.model,
+            year: auction.year,
+            auction_end_time: auction.auction_end_time,
+            auction_status: auction.auction_status,
+            reserve_price: 0, // Not available without a join
+            price: 0, // Not available without a join
+            current_bid: auction.current_bid,
+            highest_bid: {
+              amount: auction.current_bid,
+              dealer_id: '' // We don't have the winner's dealer_id
+            },
+            my_bid: {
+              amount: dealerBid?.amount || 0,
+              status: "lost"
+            },
+            lost_by: auction.current_bid - (dealerBid?.amount || 0)
+          };
+        }) as Auction[];
     },
   });
 
