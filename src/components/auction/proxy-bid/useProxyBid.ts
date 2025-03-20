@@ -7,7 +7,6 @@ import { PostgrestResponse, PostgrestSingleResponse } from "@supabase/supabase-j
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/utils/queryClient";
 import { useOnlineStatusContext } from "@/contexts/OnlineStatusContext";
-import { queueProxyBid } from "@/services/offlineBidQueue";
 
 interface UseProxyBidProps {
   carId: string;
@@ -123,16 +122,12 @@ export const useProxyBid = ({
         throw new Error(`Bid must be divisible by the minimum increment of $${minimumIncrement}`);
       }
 
-      // If offline, queue the proxy bid
+      // If offline, show message but don't proceed
       if (!isOnline) {
-        const queuedBid = queueProxyBid(carId, dealerId, currentHighestBid + minimumIncrement, numericMaxBid);
-        
-        // Optimistically update the UI
-        setExistingProxyBid(numericMaxBid);
-        
         toast({
-          title: "Proxy Bid Queued",
-          description: `Your maximum proxy bid of $${numericMaxBid.toLocaleString()} will be set when you're back online.`,
+          title: "You're offline",
+          description: "Please reconnect to the internet to set your maximum bid.",
+          variant: "destructive",
         });
         
         setIsSubmitting(false);
