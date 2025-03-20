@@ -5,7 +5,7 @@ import { BidAnalyticsCard } from "./BidAnalyticsCard";
 import { BidAnalyticsDateRangePicker } from "./BidAnalyticsDateRangePicker";
 import { BidAnalyticsFilters } from "./types";
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
-import { ChartIcon } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 
 export function DealerAnalyticsDashboard() {
   const [filters, setFilters] = useState<BidAnalyticsFilters>({
@@ -25,7 +25,7 @@ export function DealerAnalyticsDashboard() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <CardTitle className="text-heading-md font-oswald flex items-center gap-2">
-                <ChartIcon className="h-5 w-5" />
+                <BarChart3 className="h-5 w-5" />
                 Bid Analytics Dashboard
               </CardTitle>
               <CardDescription>
