@@ -1620,6 +1620,14 @@ export type Database = {
         }
         Returns: Json
       }
+      get_vin_valuation_cache: {
+        Args: {
+          p_vin: string
+          p_mileage: number
+          p_log_id?: string
+        }
+        Returns: Json
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1694,6 +1702,14 @@ export type Database = {
       start_scheduled_auctions: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      store_vin_valuation_cache: {
+        Args: {
+          p_vin: string
+          p_mileage: number
+          p_valuation_data: Json
+        }
+        Returns: undefined
       }
       update_auction_status: {
         Args: Record<PropertyKey, never>
