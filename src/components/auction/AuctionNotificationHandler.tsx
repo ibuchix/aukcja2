@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { sendEmail } from "@/services/emailService";
 import { useQuery } from "@tanstack/react-query";
+import { isValidRecord } from "@/utils/supabaseHelpers";
 
 interface AuctionNotificationHandlerProps {
   dealerId: string | null;
@@ -113,7 +114,11 @@ export const AuctionNotificationHandler = ({ dealerId }: AuctionNotificationHand
           return;
         }
 
-        const carDetails = carData as CarData | null;
+        // Type safety: make sure carData is valid
+        const carDetails: CarData | null = isValidRecord<CarData>(carData) 
+          ? carData as CarData 
+          : null;
+          
         const carTitle = carDetails?.title || 'vehicle';
 
         // Mark this bid as notified
@@ -189,7 +194,11 @@ export const AuctionNotificationHandler = ({ dealerId }: AuctionNotificationHand
         
         if (carError) throw carError;
 
-        const carDetails = carData as CarData | null;
+        // Type safety: make sure carData is valid
+        const carDetails: CarData | null = isValidRecord<CarData>(carData) 
+          ? carData as CarData 
+          : null;
+            
         const carTitle = carDetails?.title || 'vehicle';
         
         // Mark this auction as notified

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { CarListing } from "@/types/cars";
+import { isValidRecord, hasValidRelation } from "@/utils/supabaseHelpers";
 
 interface WatchlistCar extends CarListing {
   watchlist_id: string;
@@ -76,11 +77,14 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
 
       if (error) throw error;
       
-      // Transform and filter the response
-      if (!watchlistData) return [];
+      // Transform and filter the response with proper type safety
+      if (!watchlistData || !Array.isArray(watchlistData)) return [];
       
       return watchlistData
-        .filter((item): item is WatchlistItem => !!item && !!item.cars) // Type guard to ensure cars exists
+        .filter((item): item is WatchlistItem => 
+          Boolean(item && typeof item === 'object' && 'id' in item)
+        )
+        .filter(item => hasValidRelation(item, 'cars'))
         .map(item => {
           const carData = item.cars;
           if (!carData) return null;
@@ -90,7 +94,7 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
             watchlist_id: item.id
           };
         })
-        .filter((item): item is WatchlistCar => !!item); // Filter out nulls with type assertion
+        .filter((item): item is WatchlistCar => Boolean(item)); // Filter out nulls
     }
   });
 

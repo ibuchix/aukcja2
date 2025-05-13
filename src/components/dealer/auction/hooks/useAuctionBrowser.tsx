@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Auction, AuctionFilters } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { createCursor, decodeCursor, getCursorOperator, AuctionPaginationResult } from "@/utils/cursorPagination";
+import { isValidRecord } from "@/utils/supabaseHelpers";
 
 const PAGE_SIZE = 10; // Number of items per page
 
@@ -145,12 +146,12 @@ export const useAuctionBrowser = (
         const { data: auctionData, error } = await query;
         if (error) throw error;
 
-        // Cast data to proper type
-        const typedAuctionData = auctionData as CarData[] | null;
+        // Filter and cast data to proper type
+        const typedAuctionData = (auctionData || [])
+          .filter(item => isValidRecord<CarData>(item)) as CarData[];
         
         // Get dealer's bids for these auctions
-        const auctionIds = (typedAuctionData || [])
-          .filter(a => a !== null)
+        const auctionIds = typedAuctionData
           .map(a => a?.id)
           .filter(Boolean);
           
@@ -165,11 +166,12 @@ export const useAuctionBrowser = (
             .order('amount', { ascending: false });
             
           if (bidsData) {
-            // Cast to proper type
-            const typedBidsData = bidsData as BidData[] | null;
+            // Filter and cast to proper type
+            dealerBids = (bidsData || [])
+              .filter(item => item && typeof item === 'object' && 'car_id' in item) as BidData[];
             
             // Group bids by car_id and get the highest bid for each car
-            const bidsByCarId = (typedBidsData || []).reduce((acc: Record<string, BidData>, bid) => {
+            const bidsByCarId = dealerBids.reduce((acc: Record<string, BidData>, bid) => {
               if (!bid || !bid.car_id) return acc;
               if (!acc[bid.car_id] || (bid.amount || 0) > (acc[bid.car_id].amount || 0)) {
                 acc[bid.car_id] = bid;
@@ -182,8 +184,7 @@ export const useAuctionBrowser = (
         }
 
         // Format the data with proper type handling
-        const formattedAuctions = (typedAuctionData || [])
-          .filter((auction): auction is CarData => auction !== null)
+        const formattedAuctions = typedAuctionData
           .map((auction) => {
             if (!auction) return null;
             

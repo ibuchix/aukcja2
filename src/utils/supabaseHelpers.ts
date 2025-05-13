@@ -36,20 +36,37 @@ export function hasProperty<T, K extends string>(obj: T, prop: K): obj is T & Re
   return obj !== null && obj !== undefined && typeof obj === 'object' && prop in obj;
 }
 
-// Simple column name helpers that return string literals 
-// This prevents TypeScript type instantiation from becoming excessively deep
-export function filterString(column: string): string {
-  return column;
+/**
+ * Type guard for Supabase error objects
+ */
+export function isSupabaseError(obj: unknown): obj is { error: PostgrestError } {
+  return typeof obj === 'object' && 
+    obj !== null && 
+    'error' in obj && 
+    typeof (obj as any).error === 'object';
 }
 
-export function filterBoolean(column: string): string {
-  return column;
+/**
+ * Type guard to check if an item is a valid database record (not an error)
+ */
+export function isValidRecord<T extends { id: string }>(item: any): item is T {
+  return item && 
+    typeof item === 'object' && 
+    'id' in item && 
+    typeof item.id === 'string' && 
+    !('error' in item);
 }
 
-export function matchID(): string {
-  return 'id';
-}
-
-export function userIDColumn(): string {
-  return 'user_id';
+/**
+ * Type guard for nested relations in Supabase queries
+ */
+export function hasValidRelation<T, K extends keyof T>(
+  item: T | null | undefined, 
+  relationKey: K
+): item is T & Record<K, NonNullable<T[K]>> {
+  return item !== null && 
+    item !== undefined && 
+    relationKey in item && 
+    item[relationKey] !== null && 
+    item[relationKey] !== undefined;
 }

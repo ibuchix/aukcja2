@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Bid } from "./types";
+import { isValidRecord } from "@/utils/supabaseHelpers";
 
 // Data structure for chart
 export interface ChartDataPoint {
@@ -47,16 +48,16 @@ export const useBidHistory = (carId: string) => {
             created_at
           `)
           .eq("entity_id", carId)
-          .eq("action", "proxy_bid")
+          .eq("action", "auto_proxy_bid")
           .order("created_at", { ascending: true });
           
         // Combine both data sources and format
         const bidHistory: Bid[] = [];
         
-        // Add regular bids
+        // Add regular bids with type safety
         if (bidData) {
           bidData.forEach(bid => {
-            if (bid) {
+            if (bid && typeof bid === 'object' && 'id' in bid) {
               bidHistory.push({
                 id: bid.id,
                 car_id: bid.car_id,
@@ -65,28 +66,31 @@ export const useBidHistory = (carId: string) => {
                 status: bid.status || 'active',
                 created_at: bid.created_at,
                 updated_at: bid.updated_at,
-                dealer_name: `Dealer ${bid.dealer_id.substring(0, 5)}`, // Anonymized name
+                dealer_name: `Dealer ${bid.dealer_id?.substring(0, 5) || 'Unknown'}`, // Anonymized name
                 is_proxy: false
               });
             }
           });
         }
         
-        // Add proxy bids
+        // Add proxy bids with type safety
         if (proxyData) {
           proxyData.forEach(log => {
-            if (log && log.details && typeof log.details === 'object' && 'amount' in log.details) {
-              bidHistory.push({
-                id: log.id,
-                car_id: log.entity_id,
-                dealer_id: log.user_id || '',
-                amount: Number(log.details.amount) || 0,
-                status: 'active',
-                created_at: log.created_at,
-                updated_at: log.created_at,
-                dealer_name: `Dealer ${(log.user_id || '').substring(0, 5)}`, // Anonymized name
-                is_proxy: true
-              });
+            if (log && typeof log === 'object' && 'id' in log) {
+              const details = log.details as any;
+              if (details && typeof details === 'object' && 'amount' in details) {
+                bidHistory.push({
+                  id: log.id,
+                  car_id: log.entity_id,
+                  dealer_id: log.user_id || '',
+                  amount: Number(details.amount) || 0,
+                  status: 'active',
+                  created_at: log.created_at,
+                  updated_at: log.created_at,
+                  dealer_name: `Dealer ${(log.user_id || '').substring(0, 5)}`, // Anonymized name
+                  is_proxy: true
+                });
+              }
             }
           });
         }
