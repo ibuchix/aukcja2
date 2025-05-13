@@ -2,6 +2,24 @@
 import { PostgrestError, PostgrestResponse, PostgrestSingleResponse } from '@supabase/supabase-js';
 import { TableRow, TableInsert, TableUpdate } from '@/types/supabase/common';
 
+// Interface for Supabase responses with error property
+export interface SupabaseResponse {
+  data: any;
+  error?: PostgrestError;
+}
+
+// Interface for common error response from Supabase
+export interface SelectQueryError {
+  error: true;
+}
+
+/**
+ * Type guard to check if a response is a Supabase-like response
+ */
+export function isSupabaseResponse(obj: any): obj is SupabaseResponse {
+  return obj && typeof obj === 'object' && ('data' in obj || 'error' in obj);
+}
+
 /**
  * Type-safe helper for checking if response contains data
  */
@@ -47,12 +65,24 @@ export function isSupabaseError(obj: unknown): obj is { error: PostgrestError } 
 }
 
 /**
+ * Type guard to check if an object is a SelectQueryError
+ * Helpful for handling errors in nested relations
+ */
+export function isSelectQueryError(obj: any): obj is SelectQueryError {
+  return obj && typeof obj === 'object' && obj.error === true;
+}
+
+/**
  * Type guard to check if an item is a valid database record (not an error)
  */
 export function isValidRecord<T extends { id: string }>(item: any): item is T {
-  return item && 
-    typeof item === 'object' && 
-    'id' in item && 
+  if (!item || typeof item !== 'object') return false;
+  
+  // Check if this is a SelectQueryError
+  if (isSelectQueryError(item)) return false;
+  
+  // Normal validation
+  return 'id' in item && 
     typeof item.id === 'string' && 
     !('error' in item);
 }
@@ -64,9 +94,55 @@ export function hasValidRelation<T, K extends keyof T>(
   item: T | null | undefined, 
   relationKey: K
 ): item is T & Record<K, NonNullable<T[K]>> {
-  return item !== null && 
-    item !== undefined && 
-    relationKey in item && 
-    item[relationKey] !== null && 
-    item[relationKey] !== undefined;
+  if (item === null || item === undefined) return false;
+  
+  if (!(relationKey in item)) return false;
+  
+  const relation = item[relationKey];
+  
+  // Check if the relation is a SelectQueryError
+  if (relation !== null && relation !== undefined && isSelectQueryError(relation)) {
+    return false;
+  }
+  
+  return relation !== null && relation !== undefined;
+}
+
+/**
+ * Safe filter function that ensures item is not null, undefined, or a SelectQueryError
+ */
+export function safeFilter<T>(item: T | null | undefined | SelectQueryError): item is T {
+  if (item === null || item === undefined) return false;
+  return !isSelectQueryError(item);
+}
+
+/**
+ * Type guard for checking if a bid is valid and has all required properties
+ */
+export function isValidBid(bid: any): bid is { 
+  car_id: string, 
+  amount: number,
+  dealer_id?: string,
+  status?: string
+} {
+  if (!bid || typeof bid !== 'object') return false;
+  if (isSelectQueryError(bid)) return false;
+  
+  return 'car_id' in bid && 
+    'amount' in bid && 
+    typeof bid.amount === 'number';
+}
+
+/**
+ * Type guard specifically for watchlist items
+ */
+export function isValidWatchlistItem(item: any): item is {
+  id: string;
+  car_id: string;
+  cars?: any;
+} {
+  if (!item || typeof item !== 'object') return false;
+  if (isSelectQueryError(item)) return false;
+  
+  return 'id' in item && 'car_id' in item;
 }

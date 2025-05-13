@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Auction, AuctionFilters } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { createCursor, decodeCursor, getCursorOperator, AuctionPaginationResult } from "@/utils/cursorPagination";
-import { isValidRecord } from "@/utils/supabaseHelpers";
+import { isValidRecord, isSelectQueryError, isValidBid } from "@/utils/supabaseHelpers";
 
 const PAGE_SIZE = 10; // Number of items per page
 
@@ -148,7 +148,7 @@ export const useAuctionBrowser = (
 
         // Filter and cast data to proper type
         const typedAuctionData = (auctionData || [])
-          .filter(item => isValidRecord<CarData>(item)) as CarData[];
+          .filter(item => isValidRecord<CarData>(item) && !isSelectQueryError(item)) as CarData[];
         
         // Get dealer's bids for these auctions
         const auctionIds = typedAuctionData
@@ -166,9 +166,9 @@ export const useAuctionBrowser = (
             .order('amount', { ascending: false });
             
           if (bidsData) {
-            // Filter and cast to proper type
+            // Filter valid bids
             dealerBids = (bidsData || [])
-              .filter(item => item && typeof item === 'object' && 'car_id' in item && 'amount' in item) as BidData[];
+              .filter(item => isValidBid(item));
             
             // Group bids by car_id and get the highest bid for each car
             const bidsByCarId = dealerBids.reduce((acc: Record<string, BidData>, bid) => {
@@ -186,7 +186,7 @@ export const useAuctionBrowser = (
         // Format the data with proper type handling
         const formattedAuctions = typedAuctionData
           .map((auction) => {
-            if (!auction) return null;
+            if (!auction || !auction.id) return null;
             
             const dealerBid = dealerBids.find(bid => bid && bid.car_id === auction.id);
             const currentBid = auction.current_bid || 0;

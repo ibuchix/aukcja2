@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MyBid } from "./types";
 import { queryKeys } from "@/utils/queryClient";
-import { isValidRecord } from "@/utils/supabaseHelpers";
+import { isValidRecord, isSelectQueryError, safeFilter } from "@/utils/supabaseHelpers";
 
 interface CarData {
   id: string;
@@ -59,8 +59,18 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         return [] as MyBid[];
       }
 
+      // Filter to ensure we only have valid bids without errors
+      const validActiveBids = activeBids.filter(bid => 
+        bid && typeof bid === 'object' && 'car_id' in bid && !isSelectQueryError(bid)
+      );
+
       // Get car details for these bids
-      const carIds = [...new Set(activeBids.map(bid => bid.car_id))];
+      const carIds = [...new Set(validActiveBids.map(bid => bid.car_id))];
+      
+      if (carIds.length === 0) {
+        return [] as MyBid[];
+      }
+      
       const { data: cars, error: carsError } = await supabase
         .from("cars")
         .select(`
@@ -83,7 +93,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       
       // Filter valid car records and populate the lookup
       const validCars = (cars || []).filter((car): car is CarData => 
-        isValidRecord<CarData>(car)
+        car && typeof car === 'object' && 'id' in car && !isSelectQueryError(car)
       );
       
       validCars.forEach(car => {
@@ -102,7 +112,9 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       
       // Filter and process valid proxy bids
       const validProxyBids = (proxyBidsData || []).filter(pb => 
-        pb && typeof pb === 'object' && 'car_id' in pb && 'max_bid_amount' in pb
+        pb && typeof pb === 'object' && 
+        'car_id' in pb && 'max_bid_amount' in pb && 
+        !isSelectQueryError(pb)
       );
       
       validProxyBids.forEach(pb => {
@@ -113,10 +125,14 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       });
 
       // Filter bids for active auctions only and merge with car data
-      const result = activeBids
-        .filter(bid => carsById[bid.car_id]) // Only keep bids for active auctions
+      const result = validActiveBids
+        .filter(bid => bid.car_id && carsById[bid.car_id]) // Only keep bids for active auctions
         .map(bid => {
           const car = carsById[bid.car_id];
+          if (!car) {
+            return null; // Skip if car not found
+          }
+          
           const isOutbid = car && car.current_bid > bid.amount;
           
           const myBid: MyBid = {
@@ -145,7 +161,8 @@ export function useDealerBids(dealerProfileId: string | undefined) {
           }
           
           return myBid;
-        });
+        })
+        .filter((bid): bid is MyBid => bid !== null);
         
       return result;
     },

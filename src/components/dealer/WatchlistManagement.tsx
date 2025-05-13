@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { CarListing } from "@/types/cars";
-import { isValidRecord, hasValidRelation } from "@/utils/supabaseHelpers";
+import { isValidRecord, isValidWatchlistItem, safeFilter } from "@/utils/supabaseHelpers";
 
 interface WatchlistCar extends CarListing {
   watchlist_id: string;
@@ -77,17 +77,20 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
 
       if (error) throw error;
       
-      // Transform and filter the response with proper type safety
       if (!watchlistData || !Array.isArray(watchlistData)) return [];
       
-      return watchlistData
-        .filter((item): item is WatchlistItem => 
-          Boolean(item && typeof item === 'object' && 'id' in item)
-        )
-        .filter(item => hasValidRelation(item, 'cars'))
+      // Filter valid watchlist items
+      const validWatchlistItems = watchlistData.filter(isValidWatchlistItem);
+      
+      // Map to cars with safety checks
+      return validWatchlistItems
         .map(item => {
+          // Skip items with invalid cars relation
+          if (!item.cars || typeof item.cars !== 'object' || 'error' in item.cars) {
+            return null;
+          }
+          
           const carData = item.cars;
-          if (!carData) return null;
           
           return {
             ...carData,

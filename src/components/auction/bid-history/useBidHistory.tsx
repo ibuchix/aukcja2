@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Bid } from "./types";
-import { isValidRecord } from "@/utils/supabaseHelpers";
+import { isValidRecord, safeFilter } from "@/utils/supabaseHelpers";
 
 // Data structure for chart
 export interface ChartDataPoint {
@@ -56,8 +56,10 @@ export const useBidHistory = (carId: string) => {
         
         // Add regular bids with type safety
         if (bidData) {
-          bidData.forEach(bid => {
-            if (bid && typeof bid === 'object' && 'id' in bid) {
+          const validBids = bidData.filter(isValidRecord);
+          
+          validBids.forEach(bid => {
+            if (bid) {
               bidHistory.push({
                 id: bid.id,
                 car_id: bid.car_id,
@@ -75,9 +77,12 @@ export const useBidHistory = (carId: string) => {
         
         // Add proxy bids with type safety
         if (proxyData) {
-          proxyData.forEach(log => {
-            if (log && typeof log === 'object' && 'id' in log && log.details) {
+          const validLogs = proxyData.filter(safeFilter);
+          
+          validLogs.forEach(log => {
+            if (log && log.details && typeof log.details === 'object') {
               const details = log.details as any;
+              
               if (details && typeof details === 'object' && 'amount' in details) {
                 bidHistory.push({
                   id: log.id,

@@ -1,83 +1,89 @@
 
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
-import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { validateFormData } from "./validateFormData";
-import { submitRegistration } from "./submitRegistration";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { isSupabaseError } from "@/utils/supabaseHelpers";
 
-export function useCompleteRegistration(userId: string | undefined) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formErrors, setFormErrors] = useState<string[]>([]);
-  const navigate = useNavigate();
+interface UseCompleteRegistrationOptions {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+}
+
+export function useCompleteRegistration(options: UseCompleteRegistrationOptions = {}) {
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
-  const handleSubmit = async (values: DealerFormValues) => {
-    if (!userId) {
-      toast({
-        title: "Invalid Access",
-        description: "Please complete the registration process from the beginning.",
-        variant: "destructive",
-      });
-      navigate('/auth');
-      return;
-    }
-
-    // Clear previous errors
-    setFormErrors([]);
-
-    // Perform additional client-side validation
-    const errors = validateFormData(values);
-    if (errors.length > 0) {
-      setFormErrors(errors);
-      // Also show toast for the first error
-      toast({
-        title: "Validation Error",
-        description: errors[0],
-        variant: "destructive",
-      });
-      return;
-    }
-
+  
+  const completeRegistration = async (dealershipData: {
+    supervisor_name: string;
+    dealership_name: string;
+    address: string;
+    tax_id: string;
+    business_registry_number: string;
+  }) => {
+    setIsLoading(true);
+    
     try {
-      setIsSubmitting(true);
+      // Get the current user
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
-      await submitRegistration(values, userId);
-
-      toast({
-        title: "Registration Complete",
-        description: "Your dealer profile has been created successfully.",
-      });
-
-      navigate('/dealer/dashboard');
-    } catch (error) {
-      console.error("Profile completion error:", error);
-      
-      // Handle specific errors
-      if (error instanceof Error) {
-        if (error.message.includes("duplicate key") || error.message.includes("unique violation")) {
-          setFormErrors(["A dealer with this information already exists. Please check your tax ID and business registry number."]);
-        } else {
-          setFormErrors([error.message]);
-        }
-      } else {
-        setFormErrors(["An unexpected error occurred"]);
+      if (sessionError) throw sessionError;
+      if (!sessionData.session) {
+        throw new Error("No authenticated user found. Please login first.");
       }
       
+      const userId = sessionData.session.user.id;
+      
+      // Create the dealer profile
+      const { error: dealerError } = await supabase.rpc('create_dealer_with_profile', {
+        p_email: sessionData.session.user.email,
+        p_password: '', // Not used in this function as the user already exists
+        p_supervisor_name: dealershipData.supervisor_name,
+        p_company_name: dealershipData.dealership_name,
+        p_tax_id: dealershipData.tax_id,
+        p_business_registry_number: dealershipData.business_registry_number,
+        p_address: dealershipData.address
+      });
+      
+      if (dealerError) throw dealerError;
+      
+      // Show success toast
       toast({
-        title: "Registration Failed",
-        description: "Failed to complete registration. Please check the errors and try again.",
+        title: "Registration completed",
+        description: "Your dealer profile has been created successfully.",
+      });
+      
+      // Call onSuccess callback if provided
+      if (options.onSuccess) {
+        options.onSuccess();
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error completing registration:", error);
+      
+      const message = isSupabaseError(error) 
+        ? error.error.message 
+        : 'An unexpected error occurred. Please try again.';
+      
+      toast({
+        title: "Registration failed",
+        description: message,
         variant: "destructive",
       });
+      
+      // Call onError callback if provided
+      if (options.onError && error instanceof Error) {
+        options.onError(error);
+      }
+      
+      return false;
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
-
+  
   return {
-    isSubmitting,
-    formErrors,
-    handleSubmit,
-    setFormErrors
+    completeRegistration,
+    isLoading
   };
 }

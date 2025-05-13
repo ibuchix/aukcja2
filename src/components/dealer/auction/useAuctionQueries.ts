@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Auction } from "./types";
-import { isValidRecord } from "@/utils/supabaseHelpers";
+import { isValidRecord, isSelectQueryError, safeFilter, isValidBid } from "@/utils/supabaseHelpers";
 
 interface CarData {
   id: string;
@@ -53,9 +53,9 @@ export const useAuctionQueries = (dealerId: string) => {
 
       if (error) throw error;
 
-      // Filter and cast to proper type
+      // Filter and cast to proper type, ensuring no SelectQueryErrors
       const typedAuctions = (auctionsData || [])
-        .filter(item => isValidRecord<CarData>(item)) as CarData[];
+        .filter(item => isValidRecord<CarData>(item) && !isSelectQueryError(item)) as CarData[];
 
       // Get dealer's bids for these auctions
       const auctionIds = typedAuctions.map(a => a.id).filter(Boolean);
@@ -70,9 +70,9 @@ export const useAuctionQueries = (dealerId: string) => {
           .order('amount', { ascending: false });
           
         if (bidsData) {
-          // Filter and cast to proper type
+          // Filter and cast to proper type, ensuring we don't include SelectQueryErrors
           dealerBids = (bidsData || [])
-            .filter(item => item && typeof item === 'object' && 'car_id' in item && 'amount' in item) as BidData[];
+            .filter(isValidBid);
           
           // Group bids by car_id and get the highest bid for each car
           const bidsByCarId = dealerBids.reduce((acc: Record<string, BidData>, bid) => {
@@ -90,7 +90,9 @@ export const useAuctionQueries = (dealerId: string) => {
       // Format the auctions with proper type handling
       return typedAuctions
         .map((auction) => {
-          const dealerBid = dealerBids.find(bid => bid?.car_id === auction.id);
+          if (!auction || !auction.id) return null;
+          
+          const dealerBid = dealerBids.find(bid => bid && bid.car_id === auction.id);
           const currentBid = auction.current_bid || 0;
           const reservePrice = auction.reserve_price || 0;
           const isOutbid = dealerBid && currentBid > (dealerBid.amount || 0);
@@ -117,7 +119,8 @@ export const useAuctionQueries = (dealerId: string) => {
               dealer_id: '' // We don't have this info without a join
             } : undefined
           } as Auction;
-        });
+        })
+        .filter((auction): auction is Auction => auction !== null);
     },
   });
 
@@ -143,9 +146,9 @@ export const useAuctionQueries = (dealerId: string) => {
 
       if (error) throw error;
 
-      // Filter and cast to proper type
+      // Filter and cast to proper type, removing SelectQueryErrors
       const typedSoldCars = (soldCarsData || [])
-        .filter(item => isValidRecord<CarData>(item)) as CarData[];
+        .filter(item => isValidRecord<CarData>(item) && !isSelectQueryError(item)) as CarData[];
 
       // Find the winning bids for these cars
       const carIds = typedSoldCars.map(car => car.id).filter(Boolean);
@@ -160,35 +163,45 @@ export const useAuctionQueries = (dealerId: string) => {
           
         // Filter and cast to proper type
         winningBids = (bidsData || [])
-          .filter(item => item && typeof item === 'object' && 'car_id' in item && 'dealer_id' in item && 'amount' in item) as BidData[];
+          .filter(item => 
+            isValidBid(item) && 
+            item.dealer_id !== undefined && 
+            !isSelectQueryError(item)
+          ) as BidData[];
       }
 
       // Filter only auctions won by this dealer and transform data
       return typedSoldCars
         .filter(car => {
-          const winningBid = winningBids.find(bid => bid?.car_id === car.id);
+          if (!car || !car.id) return false;
+          const winningBid = winningBids.find(bid => bid && bid.car_id === car.id);
           return winningBid && winningBid.dealer_id === dealerId;
         })
-        .map(auction => ({
-          id: auction.id,
-          title: auction.title || '',
-          make: auction.make || '',
-          model: auction.model || '',
-          year: auction.year || 0,
-          auction_end_time: auction.auction_end_time,
-          auction_status: auction.auction_status || '',
-          reserve_price: 0, // Not available without a join
-          price: 0, // Not available without a join
-          current_bid: auction.current_bid || 0,
-          highest_bid: {
-            amount: auction.current_bid || 0,
-            dealer_id: dealerId
-          },
-          my_bid: {
-            amount: auction.current_bid || 0,
-            status: "won"
-          }
-        })) as Auction[];
+        .map(auction => {
+          if (!auction || !auction.id) return null;
+          
+          return {
+            id: auction.id,
+            title: auction.title || '',
+            make: auction.make || '',
+            model: auction.model || '',
+            year: auction.year || 0,
+            auction_end_time: auction.auction_end_time,
+            auction_status: auction.auction_status || '',
+            reserve_price: 0, // Not available without a join
+            price: 0, // Not available without a join
+            current_bid: auction.current_bid || 0,
+            highest_bid: {
+              amount: auction.current_bid || 0,
+              dealer_id: dealerId
+            },
+            my_bid: {
+              amount: auction.current_bid || 0,
+              status: "won"
+            }
+          } as Auction;
+        })
+        .filter((auction): auction is Auction => auction !== null);
     },
   });
 
@@ -210,7 +223,7 @@ export const useAuctionQueries = (dealerId: string) => {
       
       // Filter and cast to proper type
       const typedDealerBids = (dealerBidsData || [])
-        .filter(item => item && typeof item === 'object' && 'car_id' in item && 'amount' in item) as BidData[];
+        .filter(isValidBid);
       
       if (typedDealerBids.length === 0) {
         return [] as Auction[];
@@ -242,7 +255,7 @@ export const useAuctionQueries = (dealerId: string) => {
       
       // Filter and cast to proper type
       const typedSoldCars = (soldCarsData || [])
-        .filter(item => isValidRecord<CarData>(item)) as CarData[];
+        .filter(item => isValidRecord<CarData>(item) && !isSelectQueryError(item)) as CarData[];
       
       // Find highest bid for each car from this dealer
       const highestDealerBidsByCarId: Record<string, BidData> = {};
@@ -263,7 +276,11 @@ export const useAuctionQueries = (dealerId: string) => {
       
       // Filter and cast to proper type
       const typedWinningBids = (winningBidsData || [])
-        .filter(item => item && typeof item === 'object' && 'car_id' in item && 'dealer_id' in item && 'amount' in item) as BidData[];
+        .filter(item => 
+          isValidBid(item) && 
+          item.dealer_id !== undefined && 
+          !isSelectQueryError(item)
+        ) as BidData[];
       
       const winningBidsByCarId: Record<string, BidData> = {};
       
@@ -275,10 +292,13 @@ export const useAuctionQueries = (dealerId: string) => {
       // Filter only auctions the dealer lost and transform data
       return typedSoldCars
         .filter(car => {
+          if (!car || !car.id) return false;
           const winningBid = car.id ? winningBidsByCarId[car.id] : null;
           return winningBid && winningBid.dealer_id !== dealerId;
         })
         .map(auction => {
+          if (!auction || !auction.id) return null;
+          
           const dealerBid = auction.id ? highestDealerBidsByCarId[auction.id] : null;
           return {
             id: auction.id,
@@ -301,7 +321,8 @@ export const useAuctionQueries = (dealerId: string) => {
             },
             lost_by: (auction.current_bid || 0) - (dealerBid?.amount || 0)
           } as Auction;
-        });
+        })
+        .filter((auction): auction is Auction => auction !== null);
     },
   });
 

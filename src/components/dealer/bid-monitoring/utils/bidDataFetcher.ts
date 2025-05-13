@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { BidActivity, BidMetrics } from "../types";
-import { asArray, isValidRecord } from "@/utils/supabaseHelpers";
+import { isValidRecord, safeFilter, isSelectQueryError } from "@/utils/supabaseHelpers";
 
 export async function fetchInitialBidData(dealerId: string): Promise<{
   activities: BidActivity[];
@@ -32,14 +32,15 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
 
   if (bidsError) throw bidsError;
 
-  // Ensure we have valid bids data
+  // Ensure we have valid bids data - filter out nulls and errors
   const bids = (bidsData || []).filter(bid => 
     bid && 
     typeof bid === 'object' && 
-    'car_id' in bid
+    'car_id' in bid && 
+    !isSelectQueryError(bid)
   );
 
-  // Extract car IDs safely
+  // Extract car IDs safely, filtering out any errors or invalid values
   const carIds = bids
     .map(bid => bid?.car_id)
     .filter((id): id is string => typeof id === 'string');
@@ -85,10 +86,11 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
   const activities: BidActivity[] = [
     // Map regular bids to activities, filtering out invalid entries
     ...allBids
-      .filter(bid => bid && typeof bid === 'object' && 'id' in bid)
+      .filter(bid => bid && typeof bid === 'object' && 'id' in bid && !isSelectQueryError(bid))
       .map(bid => {
-        const car = bid.car || {};
-        const dealer = bid.dealers || {};
+        // Safe access to potentially null car and dealer objects
+        const car = bid.car && !isSelectQueryError(bid.car) ? bid.car : {};
+        const dealer = bid.dealers && !isSelectQueryError(bid.dealers) ? bid.dealers : {};
         
         return {
           id: `bid-${bid.id}`,
@@ -107,7 +109,7 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
     
     // Map proxy bid logs to activities, filtering out invalid entries
     ...proxyLogs
-      .filter(log => log && typeof log === 'object' && 'id' in log)
+      .filter(log => log && typeof log === 'object' && 'id' in log && !isSelectQueryError(log))
       .map(log => {
         const details = (log.details as Record<string, any>) || {};
         
@@ -127,24 +129,29 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
 
   // Sort activities by timestamp (newest first)
   activities.sort((a, b) => 
-    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    new Date(b.timestamp || '').getTime() - new Date(a.timestamp || '').getTime()
   );
 
-  // Calculate metrics from valid bids only
-  const validBids = bids.filter(bid => bid && typeof bid === 'object' && 'status' in bid);
+  // Calculate metrics from valid bids only - ensure we're not using SelectQueryError
+  const validBids = bids.filter(bid => 
+    bid && 
+    typeof bid === 'object' && 
+    'status' in bid && 
+    !isSelectQueryError(bid)
+  );
   
-  const activeBids = validBids.filter(bid => bid.status === 'active');
-  const outbidBids = validBids.filter(bid => bid.status === 'outbid');
-  const wonBids = validBids.filter(bid => bid.status === 'won');
-  const lostBids = validBids.filter(bid => bid.status === 'lost');
+  const activeBids = validBids.filter(bid => bid && bid.status === 'active');
+  const outbidBids = validBids.filter(bid => bid && bid.status === 'outbid');
+  const wonBids = validBids.filter(bid => bid && bid.status === 'won');
+  const lostBids = validBids.filter(bid => bid && bid.status === 'lost');
 
   const calculatedMetrics: BidMetrics = {
     activeBidsCount: activeBids.length,
     outbidCount: outbidBids.length,
     wonCount: wonBids.length,
     lostCount: lostBids.length,
-    totalInvested: activeBids.reduce((sum, bid) => sum + (Number(bid.amount) || 0), 0),
-    potentialExposure: activeBids.reduce((sum, bid) => sum + (Number(bid.amount) || 0), 0)
+    totalInvested: activeBids.reduce((sum, bid) => sum + (Number(bid?.amount) || 0), 0),
+    potentialExposure: activeBids.reduce((sum, bid) => sum + (Number(bid?.amount) || 0), 0)
   };
 
   return { activities, calculatedMetrics };
