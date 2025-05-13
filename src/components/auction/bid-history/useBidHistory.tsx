@@ -76,7 +76,7 @@ export const useBidHistory = (carId: string) => {
         // Add proxy bids with type safety
         if (proxyData) {
           proxyData.forEach(log => {
-            if (log && typeof log === 'object' && 'id' in log) {
+            if (log && typeof log === 'object' && 'id' in log && log.details) {
               const details = log.details as any;
               if (details && typeof details === 'object' && 'amount' in details) {
                 bidHistory.push({

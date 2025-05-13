@@ -131,18 +131,20 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
   );
 
   // Calculate metrics from valid bids only
-  const activeBids = bids.filter(bid => bid && bid.status === 'active');
-  const outbidBids = bids.filter(bid => bid && bid.status === 'outbid');
-  const wonBids = bids.filter(bid => bid && bid.status === 'won');
-  const lostBids = bids.filter(bid => bid && bid.status === 'lost');
+  const validBids = bids.filter(bid => bid && typeof bid === 'object' && 'status' in bid);
+  
+  const activeBids = validBids.filter(bid => bid.status === 'active');
+  const outbidBids = validBids.filter(bid => bid.status === 'outbid');
+  const wonBids = validBids.filter(bid => bid.status === 'won');
+  const lostBids = validBids.filter(bid => bid.status === 'lost');
 
   const calculatedMetrics: BidMetrics = {
     activeBidsCount: activeBids.length,
     outbidCount: outbidBids.length,
     wonCount: wonBids.length,
     lostCount: lostBids.length,
-    totalInvested: activeBids.reduce((sum, bid) => sum + (bid?.amount || 0), 0),
-    potentialExposure: activeBids.reduce((sum, bid) => sum + (bid?.amount || 0), 0)
+    totalInvested: activeBids.reduce((sum, bid) => sum + (Number(bid.amount) || 0), 0),
+    potentialExposure: activeBids.reduce((sum, bid) => sum + (Number(bid.amount) || 0), 0)
   };
 
   return { activities, calculatedMetrics };

@@ -72,7 +72,7 @@ export const useAuctionQueries = (dealerId: string) => {
         if (bidsData) {
           // Filter and cast to proper type
           dealerBids = (bidsData || [])
-            .filter(item => item && typeof item === 'object' && 'car_id' in item) as BidData[];
+            .filter(item => item && typeof item === 'object' && 'car_id' in item && 'amount' in item) as BidData[];
           
           // Group bids by car_id and get the highest bid for each car
           const bidsByCarId = dealerBids.reduce((acc: Record<string, BidData>, bid) => {
@@ -160,7 +160,7 @@ export const useAuctionQueries = (dealerId: string) => {
           
         // Filter and cast to proper type
         winningBids = (bidsData || [])
-          .filter(item => item && typeof item === 'object' && 'car_id' in item && 'dealer_id' in item) as BidData[];
+          .filter(item => item && typeof item === 'object' && 'car_id' in item && 'dealer_id' in item && 'amount' in item) as BidData[];
       }
 
       // Filter only auctions won by this dealer and transform data
@@ -210,7 +210,7 @@ export const useAuctionQueries = (dealerId: string) => {
       
       // Filter and cast to proper type
       const typedDealerBids = (dealerBidsData || [])
-        .filter(item => item && typeof item === 'object' && 'car_id' in item) as BidData[];
+        .filter(item => item && typeof item === 'object' && 'car_id' in item && 'amount' in item) as BidData[];
       
       if (typedDealerBids.length === 0) {
         return [] as Auction[];
@@ -263,7 +263,7 @@ export const useAuctionQueries = (dealerId: string) => {
       
       // Filter and cast to proper type
       const typedWinningBids = (winningBidsData || [])
-        .filter(item => item && typeof item === 'object' && 'car_id' in item && 'dealer_id' in item) as BidData[];
+        .filter(item => item && typeof item === 'object' && 'car_id' in item && 'dealer_id' in item && 'amount' in item) as BidData[];
       
       const winningBidsByCarId: Record<string, BidData> = {};
       

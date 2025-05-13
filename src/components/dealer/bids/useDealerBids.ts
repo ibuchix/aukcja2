@@ -4,6 +4,23 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MyBid } from "./types";
 import { queryKeys } from "@/utils/queryClient";
+import { isValidRecord } from "@/utils/supabaseHelpers";
+
+interface CarData {
+  id: string;
+  title: string;
+  make: string;
+  model: string;
+  year: number;
+  auction_end_time: string;
+  current_bid: number;
+  auction_status: string;
+}
+
+interface ProxyBidData {
+  car_id: string;
+  max_bid_amount: number;
+}
 
 export function useDealerBids(dealerProfileId: string | undefined) {
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -62,25 +79,47 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       if (carsError) throw carsError;
       
       // Create a lookup table for cars
-      const carsById = (cars || []).reduce((acc: Record<string, any>, car) => {
-        acc[car.id] = car;
-        return acc;
-      }, {});
+      const carsById: Record<string, CarData> = {};
+      
+      // Filter valid car records and populate the lookup
+      const validCars = (cars || []).filter((car): car is CarData => 
+        isValidRecord<CarData>(car)
+      );
+      
+      validCars.forEach(car => {
+        carsById[car.id] = car;
+      });
 
       // Get proxy bids for these cars
-      const { data: proxyBids } = await supabase
+      const { data: proxyBidsData } = await supabase
         .from("proxy_bids")
         .select("car_id, max_bid_amount")
         .eq("dealer_id", dealerProfileId)
         .in("car_id", carIds);
+        
+      // Create a lookup for proxy bids
+      const proxyBidsByCarId: Record<string, ProxyBidData> = {};
+      
+      // Filter and process valid proxy bids
+      const validProxyBids = (proxyBidsData || []).filter(pb => 
+        pb && typeof pb === 'object' && 'car_id' in pb && 'max_bid_amount' in pb
+      );
+      
+      validProxyBids.forEach(pb => {
+        proxyBidsByCarId[pb.car_id] = {
+          car_id: pb.car_id,
+          max_bid_amount: pb.max_bid_amount
+        };
+      });
 
       // Filter bids for active auctions only and merge with car data
-      return activeBids
+      const result = activeBids
         .filter(bid => carsById[bid.car_id]) // Only keep bids for active auctions
         .map(bid => {
           const car = carsById[bid.car_id];
           const isOutbid = car && car.current_bid > bid.amount;
-          return {
+          
+          const myBid: MyBid = {
             id: `${bid.car_id}-${dealerProfileId}`, // Create a unique ID
             car_id: bid.car_id,
             amount: bid.amount,
@@ -95,10 +134,20 @@ export function useDealerBids(dealerProfileId: string | undefined) {
               auction_end_time: car.auction_end_time,
               current_bid: car.current_bid,
               auction_status: car.auction_status
-            },
-            proxy_bid: proxyBids?.find((pb) => pb.car_id === bid.car_id),
+            }
           };
-        }) as MyBid[];
+          
+          // Add proxy bid information if it exists
+          if (proxyBidsByCarId[bid.car_id]) {
+            myBid.proxy_bid = {
+              max_bid_amount: proxyBidsByCarId[bid.car_id].max_bid_amount
+            };
+          }
+          
+          return myBid;
+        });
+        
+      return result;
     },
     enabled: !!dealerProfileId,
     // Refetch every 30 seconds

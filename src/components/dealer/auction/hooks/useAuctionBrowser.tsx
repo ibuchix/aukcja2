@@ -168,7 +168,7 @@ export const useAuctionBrowser = (
           if (bidsData) {
             // Filter and cast to proper type
             dealerBids = (bidsData || [])
-              .filter(item => item && typeof item === 'object' && 'car_id' in item) as BidData[];
+              .filter(item => item && typeof item === 'object' && 'car_id' in item && 'amount' in item) as BidData[];
             
             // Group bids by car_id and get the highest bid for each car
             const bidsByCarId = dealerBids.reduce((acc: Record<string, BidData>, bid) => {
