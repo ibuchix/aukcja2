@@ -16,7 +16,16 @@ export function useBidHistory(carId: string) {
         // Fetch regular bids
         const { data: bidData, error: bidError } = await supabase
           .from("bids")
-          .select("*, dealers:dealer_id(dealership_name)")
+          .select(`
+            id, 
+            car_id, 
+            dealer_id, 
+            amount, 
+            status, 
+            created_at, 
+            updated_at,
+            dealers:dealer_id (dealership_name)
+          `)
           .eq("car_id", carId)
           .order("created_at", { ascending: false });
 
@@ -33,7 +42,7 @@ export function useBidHistory(carId: string) {
         if (proxyError) throw proxyError;
 
         // Transform bid data
-        const formattedBids = bidData.map(bid => ({
+        const formattedBids = bidData ? bidData.map(bid => ({
           id: bid.id,
           car_id: bid.car_id,
           dealer_id: bid.dealer_id,
@@ -43,25 +52,25 @@ export function useBidHistory(carId: string) {
           created_at: bid.created_at,
           updated_at: bid.updated_at,
           is_proxy: false
-        }));
+        })) : [];
 
         // Add proxy bids from audit logs
-        const proxyBids = proxyLogs.map(log => {
+        const proxyBids = proxyLogs ? proxyLogs.map(log => {
           const details = log.details as Record<string, any> | null;
           const bidId = details?.bid_id || log.id;
           
           return {
             id: bidId,
-            car_id: log.entity_id,
+            car_id: log.entity_id || "",
             dealer_id: log.user_id || "",
             dealer_name: "Proxy Bid",
             amount: details?.bid_amount || 0,
             status: "proxy",
-            created_at: log.created_at,
-            updated_at: log.created_at,
+            created_at: log.created_at || "",
+            updated_at: log.created_at || "",
             is_proxy: true
           };
-        });
+        }) : [];
 
         // Combine and sort all bids
         const allBids = [...formattedBids, ...proxyBids].sort((a, b) => 

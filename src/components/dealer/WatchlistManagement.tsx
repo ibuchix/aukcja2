@@ -42,7 +42,7 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
         .select(`
           id,
           car_id,
-          cars (
+          cars:car_id (
             id,
             title,
             make,
@@ -61,10 +61,11 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
       
       if (!watchlistData) return [];
 
+      // Transform and filter the response
       return watchlistData
         .filter(item => item.cars) // Filter out any null cars
         .map(item => ({
-          ...item.cars,
+          ...(item.cars || {}),
           watchlist_id: item.id
         })) as WatchlistCar[];
     }
