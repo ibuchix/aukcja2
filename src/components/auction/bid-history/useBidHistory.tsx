@@ -1,95 +1,111 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import { Bid, BidHistoryChartData } from "./types";
+import { BidHistoryItem } from "./types";
 
-export function useBidHistory(carId: string) {
-  const [bids, setBids] = useState<Bid[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [chartData, setChartData] = useState<BidHistoryChartData[]>([]);
+// Data structure for chart
+export interface ChartDataPoint {
+  time: string;
+  amount: number;
+}
+
+export const useBidHistory = (carId: string) => {
+  const [bids, setBids] = useState<BidHistoryItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
 
   useEffect(() => {
     const fetchBidHistory = async () => {
-      setLoading(true);
       try {
-        // Fetch regular bids
+        setLoading(true);
+        
+        // First get bids from the bids table
         const { data: bidData, error: bidError } = await supabase
           .from("bids")
           .select(`
-            id, 
-            car_id, 
-            dealer_id, 
-            amount, 
-            status, 
-            created_at, 
-            updated_at,
-            dealers:dealer_id (dealership_name)
+            id,
+            car_id,
+            dealer_id,
+            amount,
+            status,
+            created_at,
+            updated_at
           `)
           .eq("car_id", carId)
-          .order("created_at", { ascending: false });
-
-        if (bidError) throw bidError;
-
-        // Fetch proxy bid audit logs
-        const { data: proxyLogs, error: proxyError } = await supabase
-          .from("audit_logs")
-          .select("*")
-          .eq("entity_id", carId)
-          .eq("action", "auto_proxy_bid")
-          .order("created_at", { ascending: false });
-
-        if (proxyError) throw proxyError;
-
-        // Transform bid data
-        const formattedBids = bidData ? bidData.map(bid => ({
-          id: bid.id,
-          car_id: bid.car_id,
-          dealer_id: bid.dealer_id,
-          dealer_name: bid.dealers?.dealership_name || "Unknown Dealer",
-          amount: bid.amount,
-          status: bid.status,
-          created_at: bid.created_at,
-          updated_at: bid.updated_at,
-          is_proxy: false
-        })) : [];
-
-        // Add proxy bids from audit logs
-        const proxyBids = proxyLogs ? proxyLogs.map(log => {
-          const details = log.details as Record<string, any> | null;
-          const bidId = details?.bid_id || log.id;
+          .order("created_at", { ascending: true });
           
-          return {
-            id: bidId,
-            car_id: log.entity_id || "",
-            dealer_id: log.user_id || "",
-            dealer_name: "Proxy Bid",
-            amount: details?.bid_amount || 0,
-            status: "proxy",
-            created_at: log.created_at || "",
-            updated_at: log.created_at || "",
-            is_proxy: true
-          };
-        }) : [];
-
-        // Combine and sort all bids
-        const allBids = [...formattedBids, ...proxyBids].sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-
-        setBids(allBids);
-
-        // Prepare chart data - use oldest to newest for proper visualization
-        const chartDataArray = [...allBids]
-          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-          .map(bid => ({
-            time: format(new Date(bid.created_at), "HH:mm"),
-            amount: bid.amount,
-            bidder: bid.dealer_name,
-            isProxy: bid.is_proxy
-          }));
+        if (bidError) throw bidError;
         
-        setChartData(chartDataArray);
+        // Also get proxy bids from audit_logs if available
+        const { data: proxyData, error: proxyError } = await supabase
+          .from("audit_logs")
+          .select(`
+            id,
+            entity_id,
+            user_id,
+            details,
+            created_at
+          `)
+          .eq("entity_id", carId)
+          .eq("action", "proxy_bid")
+          .order("created_at", { ascending: true });
+          
+        // Combine both data sources and format
+        const bidHistory: BidHistoryItem[] = [];
+        
+        // Add regular bids
+        if (bidData) {
+          bidData.forEach(bid => {
+            if (bid) {
+              bidHistory.push({
+                id: bid.id,
+                car_id: bid.car_id,
+                dealer_id: bid.dealer_id,
+                amount: bid.amount,
+                status: bid.status || 'active',
+                created_at: bid.created_at,
+                updated_at: bid.updated_at,
+                dealer_name: `Dealer ${bid.dealer_id.substring(0, 5)}`, // Anonymized name
+                is_proxy: false
+              });
+            }
+          });
+        }
+        
+        // Add proxy bids
+        if (proxyData) {
+          proxyData.forEach(log => {
+            if (log && log.details && typeof log.details === 'object' && 'amount' in log.details) {
+              bidHistory.push({
+                id: log.id,
+                car_id: log.entity_id,
+                dealer_id: log.user_id || '',
+                amount: Number(log.details.amount) || 0,
+                status: 'active',
+                created_at: log.created_at,
+                updated_at: log.created_at,
+                dealer_name: `Dealer ${(log.user_id || '').substring(0, 5)}`, // Anonymized name
+                is_proxy: true
+              });
+            }
+          });
+        }
+        
+        // Sort combined data by timestamp
+        bidHistory.sort((a, b) => {
+          if (!a.created_at || !b.created_at) return 0;
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        });
+        
+        // Create chart data
+        const chartPoints: ChartDataPoint[] = bidHistory.map(bid => ({
+          time: new Date(bid.created_at || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          amount: Number(bid.amount) || 0
+        }));
+        
+        setBids(bidHistory);
+        setChartData(chartPoints);
+        
       } catch (error) {
         console.error("Error fetching bid history:", error);
       } finally {
@@ -100,77 +116,7 @@ export function useBidHistory(carId: string) {
     if (carId) {
       fetchBidHistory();
     }
-
-    // Set up real-time listener for new bids
-    const channel = supabase
-      .channel('public:bids')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'bids',
-          filter: `car_id=eq.${carId}`,
-        },
-        (payload) => {
-          const newBid = payload.new as any;
-          // Format the new bid and add it to the list
-          const formattedBid = {
-            id: newBid.id,
-            car_id: newBid.car_id,
-            dealer_id: newBid.dealer_id,
-            dealer_name: "New Bidder", // We don't have the dealer name from the payload
-            amount: newBid.amount,
-            status: newBid.status,
-            created_at: newBid.created_at,
-            updated_at: newBid.updated_at,
-            is_proxy: false
-          };
-          setBids(prevBids => [formattedBid, ...prevBids]);
-          
-          // Update chart data
-          setChartData(prevChartData => [
-            ...prevChartData, 
-            {
-              time: format(new Date(newBid.created_at), "HH:mm"),
-              amount: newBid.amount,
-              bidder: "New Bidder",
-              isProxy: false
-            }
-          ]);
-        }
-      )
-      .subscribe();
-
-    // Also listen for bid status changes (e.g., outbid)
-    const statusChannel = supabase
-      .channel('public:bids_status')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'bids',
-          filter: `car_id=eq.${carId}`,
-        },
-        (payload) => {
-          const updatedBid = payload.new as any;
-          // Update the bid in our list
-          setBids(prevBids => prevBids.map(bid => 
-            bid.id === updatedBid.id 
-              ? { ...bid, status: updatedBid.status, updated_at: updatedBid.updated_at }
-              : bid
-          ));
-        }
-      )
-      .subscribe();
-
-    // Cleanup subscriptions
-    return () => {
-      supabase.removeChannel(channel);
-      supabase.removeChannel(statusChannel);
-    };
   }, [carId]);
 
   return { bids, loading, chartData };
-}
+};

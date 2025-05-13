@@ -59,15 +59,20 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
 
       if (error) throw error;
       
-      if (!watchlistData) return [];
-
       // Transform and filter the response
+      if (!watchlistData) return [];
+      
       return watchlistData
-        .filter(item => item.cars) // Filter out any null cars
-        .map(item => ({
-          ...(item.cars || {}),
-          watchlist_id: item.id
-        })) as WatchlistCar[];
+        .filter(item => item && item.cars) // Filter out any null or missing car data
+        .map(item => {
+          if (!item || !item.cars) return null;
+          
+          return {
+            ...(item.cars || {}),
+            watchlist_id: item.id
+          };
+        })
+        .filter(Boolean) as WatchlistCar[]; // Filter out nulls
     }
   });
 

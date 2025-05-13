@@ -125,7 +125,11 @@ export const useAuctionBrowser = (
         if (error) throw error;
 
         // Get dealer's bids for these auctions
-        const auctionIds = (auctionData || []).map(a => a?.id).filter(Boolean);
+        const auctionIds = (auctionData || [])
+          .filter(a => a !== null)
+          .map(a => a?.id)
+          .filter(Boolean);
+          
         let dealerBids: any[] = [];
         
         if (auctionIds.length > 0) {
@@ -138,8 +142,9 @@ export const useAuctionBrowser = (
             
           if (bidsData) {
             // Group bids by car_id and get the highest bid for each car
-            const bidsByCarId = bidsData.reduce((acc: Record<string, any>, bid) => {
-              if (!acc[bid.car_id] || bid.amount > acc[bid.car_id].amount) {
+            const bidsByCarId = (bidsData || []).reduce((acc: Record<string, any>, bid) => {
+              if (!bid || !bid.car_id) return acc;
+              if (!acc[bid.car_id] || (bid.amount || 0) > (acc[bid.car_id].amount || 0)) {
                 acc[bid.car_id] = bid;
               }
               return acc;
@@ -150,40 +155,43 @@ export const useAuctionBrowser = (
         }
 
         // Format the data with proper type handling
-        const formattedAuctions = (auctionData || []).map((auction) => {
-          if (!auction) return null;
-          
-          const dealerBid = dealerBids.find(bid => bid && bid.car_id === auction.id);
-          const currentBid = auction.current_bid || 0;
-          
-          // Check if this auction's current_bid is higher than the dealer's bid
-          const isOutbid = dealerBid && currentBid > dealerBid.amount;
-          
-          return {
-            id: auction.id,
-            title: auction.title,
-            make: auction.make,
-            model: auction.model,
-            year: auction.year,
-            mileage: auction.mileage,
-            price: auction.price,
-            auction_end_time: auction.auction_end_time,
-            auction_status: 'active', // This is already filtered for active auctions
-            current_bid: currentBid,
-            reserve_price: auction.reserve_price,
-            my_bid: dealerBid ? {
-              amount: dealerBid.amount,
-              status: isOutbid ? 'outbid' : 'active',
-              car_id: auction.id
-            } : undefined,
-            highest_bid: currentBid ? {
-              amount: currentBid,
-              dealer_id: ''  // We don't have this info without a join
-            } : undefined,
-            // Additional field to determine if reserve is met
-            reserve_met: currentBid >= (auction.reserve_price || 0)
-          } as Auction;
-        }).filter(Boolean) as Auction[];
+        const formattedAuctions = (auctionData || [])
+          .filter(auction => auction !== null)
+          .map((auction) => {
+            if (!auction) return null;
+            
+            const dealerBid = dealerBids.find(bid => bid && bid.car_id === auction.id);
+            const currentBid = auction.current_bid || 0;
+            
+            // Check if this auction's current_bid is higher than the dealer's bid
+            const isOutbid = dealerBid && currentBid > (dealerBid.amount || 0);
+            
+            return {
+              id: auction.id,
+              title: auction.title || '',
+              make: auction.make || '',
+              model: auction.model || '',
+              year: auction.year || 0,
+              mileage: auction.mileage || 0,
+              price: auction.price || 0,
+              auction_end_time: auction.auction_end_time,
+              auction_status: 'active', // This is already filtered for active auctions
+              current_bid: currentBid,
+              reserve_price: auction.reserve_price || 0,
+              my_bid: dealerBid ? {
+                amount: dealerBid.amount || 0,
+                status: isOutbid ? 'outbid' : 'active',
+                car_id: auction.id
+              } : undefined,
+              highest_bid: currentBid ? {
+                amount: currentBid,
+                dealer_id: ''  // We don't have this info without a join
+              } : undefined,
+              // Additional field to determine if reserve is met
+              reserve_met: currentBid >= (auction.reserve_price || 0)
+            } as Auction;
+          })
+          .filter(Boolean) as Auction[];
 
         // Determine if there are more pages
         const hasMore = formattedAuctions.length > PAGE_SIZE;
