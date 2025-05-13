@@ -459,97 +459,127 @@ export type Database = {
       cars: {
         Row: {
           additional_photos: Json | null
+          address: string | null
           auction_end_time: string | null
           auction_status: string | null
           created_at: string
           current_bid: number | null
           features: Json | null
+          finance_amount: number | null
           form_metadata: Json | null
+          has_private_plate: boolean | null
+          has_service_history: boolean | null
           id: string
           images: string[] | null
           is_auction: boolean | null
           is_damaged: boolean | null
           is_draft: boolean
           is_manually_controlled: boolean | null
+          is_registered_in_poland: boolean | null
           make: string | null
           mileage: number | null
           minimum_bid_increment: number | null
           mobile_number: string | null
           model: string | null
+          number_of_keys: number | null
           price: number
           registration_number: string | null
           required_photos: Json | null
           reserve_price: number | null
+          seat_material: string | null
           seller_id: string | null
+          seller_name: string | null
           seller_notes: string | null
+          service_history_type: string | null
           status: string | null
           title: string | null
           transmission: string | null
           updated_at: string
+          valuation_data: Json | null
           vin: string | null
           year: number | null
         }
         Insert: {
           additional_photos?: Json | null
+          address?: string | null
           auction_end_time?: string | null
           auction_status?: string | null
           created_at?: string
           current_bid?: number | null
           features?: Json | null
+          finance_amount?: number | null
           form_metadata?: Json | null
+          has_private_plate?: boolean | null
+          has_service_history?: boolean | null
           id?: string
           images?: string[] | null
           is_auction?: boolean | null
           is_damaged?: boolean | null
           is_draft?: boolean
           is_manually_controlled?: boolean | null
+          is_registered_in_poland?: boolean | null
           make?: string | null
           mileage?: number | null
           minimum_bid_increment?: number | null
           mobile_number?: string | null
           model?: string | null
+          number_of_keys?: number | null
           price?: number
           registration_number?: string | null
           required_photos?: Json | null
           reserve_price?: number | null
+          seat_material?: string | null
           seller_id?: string | null
+          seller_name?: string | null
           seller_notes?: string | null
+          service_history_type?: string | null
           status?: string | null
           title?: string | null
           transmission?: string | null
           updated_at?: string
+          valuation_data?: Json | null
           vin?: string | null
           year?: number | null
         }
         Update: {
           additional_photos?: Json | null
+          address?: string | null
           auction_end_time?: string | null
           auction_status?: string | null
           created_at?: string
           current_bid?: number | null
           features?: Json | null
+          finance_amount?: number | null
           form_metadata?: Json | null
+          has_private_plate?: boolean | null
+          has_service_history?: boolean | null
           id?: string
           images?: string[] | null
           is_auction?: boolean | null
           is_damaged?: boolean | null
           is_draft?: boolean
           is_manually_controlled?: boolean | null
+          is_registered_in_poland?: boolean | null
           make?: string | null
           mileage?: number | null
           minimum_bid_increment?: number | null
           mobile_number?: string | null
           model?: string | null
+          number_of_keys?: number | null
           price?: number
           registration_number?: string | null
           required_photos?: Json | null
           reserve_price?: number | null
+          seat_material?: string | null
           seller_id?: string | null
+          seller_name?: string | null
           seller_notes?: string | null
+          service_history_type?: string | null
           status?: string | null
           title?: string | null
           transmission?: string | null
           updated_at?: string
+          valuation_data?: Json | null
           vin?: string | null
           year?: number | null
         }
@@ -559,6 +589,50 @@ export type Database = {
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      damage_reports: {
+        Row: {
+          car_id: string | null
+          created_at: string
+          description: string
+          id: string
+          location: string | null
+          photo: string | null
+          severity: Database["public"]["Enums"]["damage_severity"] | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          car_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          location?: string | null
+          photo?: string | null
+          severity?: Database["public"]["Enums"]["damage_severity"] | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          car_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          location?: string | null
+          photo?: string | null
+          severity?: Database["public"]["Enums"]["damage_severity"] | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "damage_reports_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
             referencedColumns: ["id"]
           },
         ]
@@ -958,6 +1032,7 @@ export type Database = {
           engine_capacity: number | null
           features: Json | null
           finance_amount: number | null
+          gearbox: string | null
           has_documentation: boolean | null
           has_private_plate: boolean | null
           has_tool_pack: boolean | null
@@ -978,10 +1053,14 @@ export type Database = {
           seller_notes: string | null
           service_history_files: string[] | null
           service_history_type: string | null
+          status: string | null
           transmission:
             | Database["public"]["Enums"]["car_transmission_type"]
             | null
+          updated_at: string | null
+          uploaded_photos: Json | null
           user_id: string | null
+          valuation_result: Json | null
           vin: string | null
           year: number | null
         }
@@ -995,6 +1074,7 @@ export type Database = {
           engine_capacity?: number | null
           features?: Json | null
           finance_amount?: number | null
+          gearbox?: string | null
           has_documentation?: boolean | null
           has_private_plate?: boolean | null
           has_tool_pack?: boolean | null
@@ -1015,10 +1095,14 @@ export type Database = {
           seller_notes?: string | null
           service_history_files?: string[] | null
           service_history_type?: string | null
+          status?: string | null
           transmission?:
             | Database["public"]["Enums"]["car_transmission_type"]
             | null
+          updated_at?: string | null
+          uploaded_photos?: Json | null
           user_id?: string | null
+          valuation_result?: Json | null
           vin?: string | null
           year?: number | null
         }
@@ -1032,6 +1116,7 @@ export type Database = {
           engine_capacity?: number | null
           features?: Json | null
           finance_amount?: number | null
+          gearbox?: string | null
           has_documentation?: boolean | null
           has_private_plate?: boolean | null
           has_tool_pack?: boolean | null
@@ -1052,10 +1137,14 @@ export type Database = {
           seller_notes?: string | null
           service_history_files?: string[] | null
           service_history_type?: string | null
+          status?: string | null
           transmission?:
             | Database["public"]["Enums"]["car_transmission_type"]
             | null
+          updated_at?: string | null
+          uploaded_photos?: Json | null
           user_id?: string | null
+          valuation_result?: Json | null
           vin?: string | null
           year?: number | null
         }
@@ -1279,6 +1368,38 @@ export type Database = {
         }
         Relationships: []
       }
+      service_history: {
+        Row: {
+          car_id: string | null
+          created_at: string
+          description: string | null
+          document_url: string
+          id: string
+        }
+        Insert: {
+          car_id?: string | null
+          created_at?: string
+          description?: string | null
+          document_url: string
+          id?: string
+        }
+        Update: {
+          car_id?: string | null
+          created_at?: string
+          description?: string | null
+          document_url?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_history_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_health: {
         Row: {
           component_name: string
@@ -1306,6 +1427,36 @@ export type Database = {
           last_check_time?: string
           status?: Database["public"]["Enums"]["system_component_health"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      system_logs: {
+        Row: {
+          correlation_id: string | null
+          created_at: string
+          details: Json | null
+          error_message: string | null
+          id: string
+          log_type: string
+          message: string
+        }
+        Insert: {
+          correlation_id?: string | null
+          created_at?: string
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          log_type: string
+          message: string
+        }
+        Update: {
+          correlation_id?: string | null
+          created_at?: string
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          log_type?: string
+          message?: string
         }
         Relationships: []
       }
@@ -1385,62 +1536,134 @@ export type Database = {
       }
     }
     Functions: {
-      admin_end_auction: {
+      activate_listing: {
         Args: {
-          p_car_id: string
-          p_admin_id: string
-          p_sold?: boolean
+          p_listing_id: string
+          p_user_id: string
+          p_reserve_price?: number
         }
         Returns: Json
       }
+      admin_end_auction: {
+        Args: { p_car_id: string; p_admin_id: string; p_sold?: boolean }
+        Returns: Json
+      }
+      admin_get_active_auctions: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          additional_photos: Json | null
+          address: string | null
+          auction_end_time: string | null
+          auction_status: string | null
+          created_at: string
+          current_bid: number | null
+          features: Json | null
+          finance_amount: number | null
+          form_metadata: Json | null
+          has_private_plate: boolean | null
+          has_service_history: boolean | null
+          id: string
+          images: string[] | null
+          is_auction: boolean | null
+          is_damaged: boolean | null
+          is_draft: boolean
+          is_manually_controlled: boolean | null
+          is_registered_in_poland: boolean | null
+          make: string | null
+          mileage: number | null
+          minimum_bid_increment: number | null
+          mobile_number: string | null
+          model: string | null
+          number_of_keys: number | null
+          price: number
+          registration_number: string | null
+          required_photos: Json | null
+          reserve_price: number | null
+          seat_material: string | null
+          seller_id: string | null
+          seller_name: string | null
+          seller_notes: string | null
+          service_history_type: string | null
+          status: string | null
+          title: string | null
+          transmission: string | null
+          updated_at: string
+          valuation_data: Json | null
+          vin: string | null
+          year: number | null
+        }[]
+      }
+      admin_get_auction_listings: {
+        Args: { p_show_all?: boolean; p_status?: string }
+        Returns: {
+          additional_photos: Json | null
+          address: string | null
+          auction_end_time: string | null
+          auction_status: string | null
+          created_at: string
+          current_bid: number | null
+          features: Json | null
+          finance_amount: number | null
+          form_metadata: Json | null
+          has_private_plate: boolean | null
+          has_service_history: boolean | null
+          id: string
+          images: string[] | null
+          is_auction: boolean | null
+          is_damaged: boolean | null
+          is_draft: boolean
+          is_manually_controlled: boolean | null
+          is_registered_in_poland: boolean | null
+          make: string | null
+          mileage: number | null
+          minimum_bid_increment: number | null
+          mobile_number: string | null
+          model: string | null
+          number_of_keys: number | null
+          price: number
+          registration_number: string | null
+          required_photos: Json | null
+          reserve_price: number | null
+          seat_material: string | null
+          seller_id: string | null
+          seller_name: string | null
+          seller_notes: string | null
+          service_history_type: string | null
+          status: string | null
+          title: string | null
+          transmission: string | null
+          updated_at: string
+          valuation_data: Json | null
+          vin: string | null
+          year: number | null
+        }[]
+      }
       analyze_bidding_strategy: {
-        Args: {
-          p_dealer_id: string
-        }
+        Args: { p_dealer_id: string }
         Returns: Json
       }
       approve_listing: {
-        Args: {
-          p_listing_id: string
-          p_admin_id: string
-          p_notes?: string
-        }
+        Args: { p_listing_id: string; p_admin_id: string; p_notes?: string }
         Returns: Json
       }
       authenticate_dealer: {
-        Args: {
-          p_email: string
-          p_password: string
-        }
+        Args: { p_email: string; p_password: string }
         Returns: Json
       }
       calculate_optimal_proxy_bid: {
-        Args: {
-          p_car_id: string
-          p_dealer_id: string
-          p_max_budget: number
-        }
+        Args: { p_car_id: string; p_dealer_id: string; p_max_budget: number }
         Returns: Json
       }
       calculate_reserve_price: {
-        Args: {
-          p_base_price: number
-        }
+        Args: { p_base_price: number }
         Returns: number
       }
       calculate_reserve_price_from_min_med: {
-        Args: {
-          p_price_min: number
-          p_price_med: number
-        }
+        Args: { p_price_min: number; p_price_med: number }
         Returns: number
       }
       can_perform_action: {
-        Args: {
-          p_action: string
-          p_entity_type: string
-          p_entity_id: string
-        }
+        Args: { p_action: string; p_entity_type: string; p_entity_id: string }
         Returns: boolean
       }
       check_auction_system_health: {
@@ -1448,10 +1671,16 @@ export type Database = {
         Returns: Json
       }
       check_email_exists: {
-        Args: {
-          email_to_check: string
-        }
+        Args: { email_to_check: string }
         Returns: Json
+      }
+      check_seller_exists: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      cleanup_expired_vin_reservations: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       cleanup_vin_valuation_cache: {
         Args: Record<PropertyKey, never>
@@ -1463,6 +1692,10 @@ export type Database = {
       }
       complete_scheduled_auctions: {
         Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      create_car_listing: {
+        Args: { p_car_data: Json; p_user_id?: string }
         Returns: Json
       }
       create_dealer_with_profile: {
@@ -1478,56 +1711,65 @@ export type Database = {
         }
         Returns: Json
       }
+      create_seller_if_not_exists: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      create_vin_reservation: {
+        Args: {
+          p_vin: string
+          p_user_id: string
+          p_valuation_data?: Json
+          p_duration_minutes?: number
+        }
+        Returns: Json
+      }
       debug_auth_user_id: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
       debug_dealer_access: {
-        Args: {
-          p_user_id: string
-        }
+        Args: { p_user_id: string }
         Returns: {
           has_access: boolean
           record_exists: boolean
           error_message: string
         }[]
       }
+      ensure_seller_registration: {
+        Args: Record<PropertyKey, never> | { p_user_id?: string }
+        Returns: Json
+      }
+      fetch_car_details: {
+        Args: { p_car_id: string }
+        Returns: Json
+      }
       get_auction_activity_metrics: {
-        Args: {
-          p_car_id: string
-        }
+        Args: { p_car_id: string }
         Returns: Json
       }
       get_bid_recommendations: {
-        Args: {
-          p_car_id: string
-          p_dealer_id: string
-        }
+        Args: { p_car_id: string; p_dealer_id: string }
         Returns: Json
       }
       get_bid_status: {
-        Args: {
-          p_car_id: string
-          p_dealer_id: string
-        }
+        Args: { p_car_id: string; p_dealer_id: string }
+        Returns: Json
+      }
+      get_car_details: {
+        Args: { p_car_id: string; p_user_id: string }
         Returns: Json
       }
       get_dealer_bid_exposure: {
-        Args: {
-          p_dealer_id: string
-        }
+        Args: { p_dealer_id: string }
         Returns: Json
       }
       get_dealer_by_user_id: {
-        Args: {
-          p_user_id: string
-        }
+        Args: { p_user_id: string }
         Returns: Json
       }
       get_profile: {
-        Args: {
-          p_user_id: string
-        }
+        Args: { p_user_id: string }
         Returns: {
           avatar_url: string | null
           full_name: string | null
@@ -1537,47 +1779,98 @@ export type Database = {
           updated_at: string
         }[]
       }
-      get_seller_listings: {
-        Args: {
-          p_seller_id: string
-        }
+      get_seller_auction_cars: {
+        Args: { p_seller_id: string }
         Returns: {
           additional_photos: Json | null
+          address: string | null
           auction_end_time: string | null
           auction_status: string | null
           created_at: string
           current_bid: number | null
           features: Json | null
+          finance_amount: number | null
           form_metadata: Json | null
+          has_private_plate: boolean | null
+          has_service_history: boolean | null
           id: string
           images: string[] | null
           is_auction: boolean | null
           is_damaged: boolean | null
           is_draft: boolean
           is_manually_controlled: boolean | null
+          is_registered_in_poland: boolean | null
           make: string | null
           mileage: number | null
           minimum_bid_increment: number | null
           mobile_number: string | null
           model: string | null
+          number_of_keys: number | null
           price: number
           registration_number: string | null
           required_photos: Json | null
           reserve_price: number | null
+          seat_material: string | null
           seller_id: string | null
+          seller_name: string | null
           seller_notes: string | null
+          service_history_type: string | null
           status: string | null
           title: string | null
           transmission: string | null
           updated_at: string
+          valuation_data: Json | null
+          vin: string | null
+          year: number | null
+        }[]
+      }
+      get_seller_listings: {
+        Args: { p_seller_id: string }
+        Returns: {
+          additional_photos: Json | null
+          address: string | null
+          auction_end_time: string | null
+          auction_status: string | null
+          created_at: string
+          current_bid: number | null
+          features: Json | null
+          finance_amount: number | null
+          form_metadata: Json | null
+          has_private_plate: boolean | null
+          has_service_history: boolean | null
+          id: string
+          images: string[] | null
+          is_auction: boolean | null
+          is_damaged: boolean | null
+          is_draft: boolean
+          is_manually_controlled: boolean | null
+          is_registered_in_poland: boolean | null
+          make: string | null
+          mileage: number | null
+          minimum_bid_increment: number | null
+          mobile_number: string | null
+          model: string | null
+          number_of_keys: number | null
+          price: number
+          registration_number: string | null
+          required_photos: Json | null
+          reserve_price: number | null
+          seat_material: string | null
+          seller_id: string | null
+          seller_name: string | null
+          seller_notes: string | null
+          service_history_type: string | null
+          status: string | null
+          title: string | null
+          transmission: string | null
+          updated_at: string
+          valuation_data: Json | null
           vin: string | null
           year: number | null
         }[]
       }
       get_seller_performance_metrics: {
-        Args: {
-          p_seller_id: string
-        }
+        Args: { p_seller_id: string }
         Returns: {
           active_listings: number
           average_price: number | null
@@ -1598,9 +1891,7 @@ export type Database = {
         }[]
       }
       get_seller_profile: {
-        Args: {
-          p_user_id: string
-        }
+        Args: { p_user_id: string }
         Returns: {
           address: string | null
           company_name: string | null
@@ -1614,18 +1905,24 @@ export type Database = {
           verification_status: string
         }[]
       }
+      get_table_columns: {
+        Args: { p_table_name: string }
+        Returns: {
+          column_name: string
+          data_type: string
+          is_nullable: string
+        }[]
+      }
       get_user_id_by_email: {
-        Args: {
-          p_email: string
-        }
+        Args: { p_email: string }
+        Returns: Json
+      }
+      get_user_profile_for_listing: {
+        Args: { p_user_id: string }
         Returns: Json
       }
       get_vin_valuation_cache: {
-        Args: {
-          p_vin: string
-          p_mileage: number
-          p_log_id?: string
-        }
+        Args: { p_vin: string; p_mileage: number; p_log_id?: string }
         Returns: Json
       }
       is_admin: {
@@ -1638,6 +1935,18 @@ export type Database = {
       }
       is_seller: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_verified_seller: {
+        Args: { p_user_id?: string }
+        Returns: boolean
+      }
+      is_vin_available: {
+        Args: { p_vin: string }
+        Returns: boolean
+      }
+      is_vin_available_for_user: {
+        Args: { p_vin: string; p_user_id: string }
         Returns: boolean
       }
       log_admin_action: {
@@ -1676,9 +1985,7 @@ export type Database = {
         Returns: Json
       }
       register_seller: {
-        Args: {
-          p_user_id: string
-        }
+        Args: { p_user_id: string }
         Returns: boolean
       }
       reject_dealer: {
@@ -1704,11 +2011,7 @@ export type Database = {
         Returns: Json
       }
       store_vin_valuation_cache: {
-        Args: {
-          p_vin: string
-          p_mileage: number
-          p_valuation_data: Json
-        }
+        Args: { p_vin: string; p_mileage: number; p_valuation_data: Json }
         Returns: undefined
       }
       update_auction_status: {
@@ -1723,19 +2026,16 @@ export type Database = {
         }
         Returns: string
       }
+      upsert_car_listing: {
+        Args: { car_data: Json; is_draft?: boolean }
+        Returns: Json
+      }
       verify_dealer: {
-        Args: {
-          p_dealer_id: string
-          p_admin_id: string
-          p_notes?: string
-        }
+        Args: { p_dealer_id: string; p_admin_id: string; p_notes?: string }
         Returns: Json
       }
       verify_password: {
-        Args: {
-          uuid: string
-          plain_text: string
-        }
+        Args: { uuid: string; plain_text: string }
         Returns: boolean
       }
     }
@@ -1752,6 +2052,13 @@ export type Database = {
         | "running"
         | "completed"
         | "cancelled"
+      auction_status:
+        | "draft"
+        | "scheduled"
+        | "active"
+        | "ended"
+        | "cancelled"
+        | "sold"
       audit_log_type:
         | "login"
         | "logout"
@@ -1776,6 +2083,7 @@ export type Database = {
         | "system_health_check"
         | "system_alert"
       car_transmission_type: "automatic" | "manual"
+      damage_severity: "minor" | "moderate" | "severe"
       dispute_status: "open" | "investigating" | "resolved" | "closed"
       dispute_type:
         | "payment"
@@ -1784,6 +2092,7 @@ export type Database = {
         | "auction_process"
         | "other"
       system_component_health: "healthy" | "degraded" | "failing" | "unknown"
+      transmission_type: "manual" | "automatic"
       user_role: "dealer" | "seller" | "admin"
       verification_status: "pending" | "approved" | "rejected"
     }
@@ -1793,27 +2102,29 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+type DefaultSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -1821,20 +2132,22 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -1842,20 +2155,22 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -1863,21 +2178,23 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
     | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
+    | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof Database
@@ -1886,6 +2203,73 @@ export type CompositeTypes<
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
   ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      announcement_target: ["all", "dealers", "sellers", "admins"],
+      announcement_type: [
+        "system",
+        "maintenance",
+        "feature",
+        "promotion",
+        "policy",
+      ],
+      auction_schedule_status: [
+        "scheduled",
+        "running",
+        "completed",
+        "cancelled",
+      ],
+      auction_status: [
+        "draft",
+        "scheduled",
+        "active",
+        "ended",
+        "cancelled",
+        "sold",
+      ],
+      audit_log_type: [
+        "login",
+        "logout",
+        "create",
+        "update",
+        "delete",
+        "suspend",
+        "reinstate",
+        "verify",
+        "reject",
+        "approve",
+        "process_auctions",
+        "auction_closed",
+        "auto_proxy_bid",
+        "start_auction",
+        "auction_close_failed",
+        "auction_close_system_error",
+        "system_reset_failed",
+        "recovery_failed",
+        "manual_retry",
+        "auction_recovery",
+        "system_health_check",
+        "system_alert",
+      ],
+      car_transmission_type: ["automatic", "manual"],
+      damage_severity: ["minor", "moderate", "severe"],
+      dispute_status: ["open", "investigating", "resolved", "closed"],
+      dispute_type: [
+        "payment",
+        "vehicle_condition",
+        "listing_accuracy",
+        "auction_process",
+        "other",
+      ],
+      system_component_health: ["healthy", "degraded", "failing", "unknown"],
+      transmission_type: ["manual", "automatic"],
+      user_role: ["dealer", "seller", "admin"],
+      verification_status: ["pending", "approved", "rejected"],
+    },
+  },
+} as const

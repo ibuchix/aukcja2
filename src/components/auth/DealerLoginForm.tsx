@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { normalizeEmail } from "@/utils/dealerProfileMapping";
 
 interface LoginFormValues {
   email: string;
@@ -17,6 +18,7 @@ interface LoginFormValues {
 export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl?: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loginAttempted, setLoginAttempted] = useState(false);
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
   const navigate = useNavigate();
@@ -27,48 +29,60 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
     try {
       setIsLoading(true);
       setError(null);
+      setLoginAttempted(true);
 
-      console.log("Login form submitted for:", data.email);
+      // Normalize email consistently
+      const normalizedEmail = normalizeEmail(data.email);
       
-      // Normalize email for consistency
-      const normalizedEmail = data.email.toLowerCase().trim();
+      console.log("Login attempt for:", normalizedEmail);
       
       const { error: signInError } = await signIn({
         email: normalizedEmail,
         password: data.password,
-        redirectTo: returnUrl,
       });
 
       if (signInError) {
         console.error("Login error:", signInError);
         
-        // Handle specific errors more user-friendly
-        if (signInError.message.includes("Invalid login credentials")) {
-          setError("Invalid email or password. Please try again.");
-        } else if (signInError.message.includes("Email not found")) {
-          setError("No account found with this email. Please check your email or register.");
+        // Handle specific errors with user-friendly messages
+        let errorMessage = "Authentication failed. Please check your credentials and try again.";
+        
+        if (signInError.message?.includes("Invalid login credentials")) {
+          errorMessage = "Incorrect email or password. Please try again.";
+        } else if (signInError.message?.includes("Email not found")) {
+          errorMessage = "No account found with this email. Please check your email or register.";
+        } else if (signInError.message?.includes("Invalid email")) {
+          errorMessage = "Please enter a valid email address.";
         } else {
-          setError(signInError.message);
+          // Use the original message if available
+          errorMessage = signInError.message || errorMessage;
         }
+        
+        setError(errorMessage);
         
         toast({
           title: "Login failed",
-          description: signInError.message,
+          description: errorMessage,
           variant: "destructive",
         });
         
+        // Don't redirect on error
         return;
       }
 
+      // Success case
+      console.log("Login successful, redirecting to:", returnUrl);
+      
       toast({
         title: "Login successful",
         description: "Welcome back!",
       });
       
-      // A successful login redirects automatically to returnUrl, no need for navigate here
+      // Handle successful login with navigation
+      navigate(returnUrl);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-      console.error("Login error:", err);
+      console.error("Login exception:", err);
       
       setError(errorMessage);
       toast({
@@ -80,6 +94,14 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
       setIsLoading(false);
     }
   };
+
+  // Export loginAttempted and error for parent component to use
+  useEffect(() => {
+    // Inform parent component about login attempt result
+    return () => {
+      console.log("Login form unmounting, attempted:", loginAttempted, "error:", error);
+    };
+  }, [loginAttempted, error]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

@@ -72,6 +72,7 @@ export function useSignInHandler(
         userId: data.user?.id
       });
       
+      // Set the session and user in state
       setSession(data.session);
       setUser(data.user);
       
@@ -87,11 +88,12 @@ export function useSignInHandler(
         setProfile(profileData);
       }
       
-      if (redirectTo) {
+      // Only navigate if explicitly requested and login was successful
+      if (redirectTo && data.session) {
         navigate(redirectTo);
       }
       
-      return { error: undefined };
+      return { data, error: null };
     } catch (error) {
       console.error("Sign in error:", error);
       console.error("Error stack:", error instanceof Error ? error.stack : "No stack available");
