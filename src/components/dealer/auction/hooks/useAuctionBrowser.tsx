@@ -8,6 +8,27 @@ import { createCursor, decodeCursor, getCursorOperator, AuctionPaginationResult 
 
 const PAGE_SIZE = 10; // Number of items per page
 
+interface CarData {
+  id: string;
+  title?: string;
+  auction_end_time?: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  mileage?: number;
+  price?: number;
+  current_bid?: number;
+  reserve_price?: number;
+  is_auction?: boolean;
+  auction_status?: string;
+}
+
+interface BidData {
+  car_id: string;
+  amount: number;
+  status?: string;
+}
+
 export const useAuctionBrowser = (
   dealerId: string,
   filters: AuctionFilters,
@@ -124,13 +145,16 @@ export const useAuctionBrowser = (
         const { data: auctionData, error } = await query;
         if (error) throw error;
 
+        // Cast data to proper type
+        const typedAuctionData = auctionData as CarData[] | null;
+        
         // Get dealer's bids for these auctions
-        const auctionIds = (auctionData || [])
+        const auctionIds = (typedAuctionData || [])
           .filter(a => a !== null)
           .map(a => a?.id)
           .filter(Boolean);
           
-        let dealerBids: any[] = [];
+        let dealerBids: BidData[] = [];
         
         if (auctionIds.length > 0) {
           const { data: bidsData } = await supabase
@@ -141,8 +165,11 @@ export const useAuctionBrowser = (
             .order('amount', { ascending: false });
             
           if (bidsData) {
+            // Cast to proper type
+            const typedBidsData = bidsData as BidData[] | null;
+            
             // Group bids by car_id and get the highest bid for each car
-            const bidsByCarId = (bidsData || []).reduce((acc: Record<string, any>, bid) => {
+            const bidsByCarId = (typedBidsData || []).reduce((acc: Record<string, BidData>, bid) => {
               if (!bid || !bid.car_id) return acc;
               if (!acc[bid.car_id] || (bid.amount || 0) > (acc[bid.car_id].amount || 0)) {
                 acc[bid.car_id] = bid;
@@ -155,13 +182,14 @@ export const useAuctionBrowser = (
         }
 
         // Format the data with proper type handling
-        const formattedAuctions = (auctionData || [])
-          .filter(auction => auction !== null)
+        const formattedAuctions = (typedAuctionData || [])
+          .filter((auction): auction is CarData => auction !== null)
           .map((auction) => {
             if (!auction) return null;
             
             const dealerBid = dealerBids.find(bid => bid && bid.car_id === auction.id);
             const currentBid = auction.current_bid || 0;
+            const reservePrice = auction.reserve_price || 0;
             
             // Check if this auction's current_bid is higher than the dealer's bid
             const isOutbid = dealerBid && currentBid > (dealerBid.amount || 0);
@@ -177,7 +205,7 @@ export const useAuctionBrowser = (
               auction_end_time: auction.auction_end_time,
               auction_status: 'active', // This is already filtered for active auctions
               current_bid: currentBid,
-              reserve_price: auction.reserve_price || 0,
+              reserve_price: reservePrice,
               my_bid: dealerBid ? {
                 amount: dealerBid.amount || 0,
                 status: isOutbid ? 'outbid' : 'active',
@@ -188,10 +216,10 @@ export const useAuctionBrowser = (
                 dealer_id: ''  // We don't have this info without a join
               } : undefined,
               // Additional field to determine if reserve is met
-              reserve_met: currentBid >= (auction.reserve_price || 0)
+              reserve_met: currentBid >= reservePrice
             } as Auction;
           })
-          .filter(Boolean) as Auction[];
+          .filter((item): item is Auction => item !== null);
 
         // Determine if there are more pages
         const hasMore = formattedAuctions.length > PAGE_SIZE;

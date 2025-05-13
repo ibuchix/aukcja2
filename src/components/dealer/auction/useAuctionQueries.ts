@@ -3,6 +3,27 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Auction } from "./types";
 
+interface CarData {
+  id: string;
+  title?: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  mileage?: number;
+  price?: number;
+  auction_end_time?: string;
+  auction_status?: string;
+  current_bid?: number;
+  reserve_price?: number;
+}
+
+interface BidData {
+  car_id: string;
+  dealer_id?: string;
+  amount: number;
+  status?: string;
+}
+
 export const useAuctionQueries = (dealerId: string) => {
   // Query for active auctions 
   const { data: activeAuctions, isLoading: loadingActive } = useQuery({
@@ -31,13 +52,16 @@ export const useAuctionQueries = (dealerId: string) => {
 
       if (error) throw error;
 
+      // Type the data properly
+      const typedAuctions = auctions as CarData[] | null;
+
       // Get dealer's bids for these auctions
-      const auctionIds = (auctions || [])
+      const auctionIds = (typedAuctions || [])
         .filter(a => a !== null)
         .map(a => a?.id)
         .filter(Boolean);
         
-      let dealerBids: any[] = [];
+      let dealerBids: BidData[] = [];
       
       if (auctionIds.length > 0) {
         const { data: bidsData } = await supabase
@@ -48,8 +72,11 @@ export const useAuctionQueries = (dealerId: string) => {
           .order('amount', { ascending: false });
           
         if (bidsData) {
+          // Type the data properly
+          const typedBidsData = bidsData as BidData[] | null;
+          
           // Group bids by car_id and get the highest bid for each car
-          const bidsByCarId = (bidsData || []).reduce((acc: Record<string, any>, bid) => {
+          const bidsByCarId = (typedBidsData || []).reduce((acc: Record<string, BidData>, bid) => {
             if (!bid || !bid.car_id) return acc;
             if (!acc[bid.car_id] || (bid.amount || 0) > (acc[bid.car_id].amount || 0)) {
               acc[bid.car_id] = bid;
@@ -62,13 +89,14 @@ export const useAuctionQueries = (dealerId: string) => {
       }
 
       // Format the auctions with proper type handling
-      return (auctions || [])
-        .filter(auction => auction !== null)
+      return (typedAuctions || [])
+        .filter((auction): auction is CarData => auction !== null)
         .map((auction) => {
           if (!auction) return {} as Auction;
           
           const dealerBid = dealerBids.find(bid => bid?.car_id === auction.id);
           const currentBid = auction.current_bid || 0;
+          const reservePrice = auction.reserve_price || 0;
           const isOutbid = dealerBid && currentBid > (dealerBid.amount || 0);
           
           return {
@@ -82,8 +110,8 @@ export const useAuctionQueries = (dealerId: string) => {
             auction_end_time: auction.auction_end_time,
             auction_status: auction.auction_status || '',
             current_bid: currentBid,
-            reserve_price: auction.reserve_price || 0,
-            reserve_met: currentBid >= (auction.reserve_price || 0),
+            reserve_price: reservePrice,
+            reserve_met: currentBid >= reservePrice,
             my_bid: dealerBid ? {
               amount: dealerBid.amount || 0,
               status: isOutbid ? 'outbid' : 'active'
@@ -120,13 +148,16 @@ export const useAuctionQueries = (dealerId: string) => {
 
       if (error) throw error;
 
+      // Type the data properly
+      const typedSoldCars = soldCars as CarData[] | null;
+
       // Find the winning bids for these cars
-      const carIds = (soldCars || [])
+      const carIds = (typedSoldCars || [])
         .filter(car => car !== null)
         .map(car => car?.id)
         .filter(Boolean);
         
-      let winningBids: any[] = [];
+      let winningBids: BidData[] = [];
       
       if (carIds.length > 0) {
         const { data: bidsData } = await supabase
@@ -135,11 +166,11 @@ export const useAuctionQueries = (dealerId: string) => {
           .in("car_id", carIds)
           .eq("status", "active"); // Active bids are the winning bids
           
-        winningBids = bidsData || [];
+        winningBids = bidsData as BidData[] || [];
       }
 
       // Filter only auctions won by this dealer and transform data
-      return (soldCars || [])
+      return (typedSoldCars || [])
         .filter(car => {
           if (!car) return false;
           const winningBid = winningBids.find(bid => bid?.car_id === car.id);
@@ -189,12 +220,15 @@ export const useAuctionQueries = (dealerId: string) => {
       
       if (bidsError) throw bidsError;
       
-      if (!dealerBids || dealerBids.length === 0) {
+      // Type the data properly
+      const typedDealerBids = dealerBids as BidData[] | null;
+      
+      if (!typedDealerBids || typedDealerBids.length === 0) {
         return [] as Auction[];
       }
       
       // Get unique car IDs that the dealer has bid on
-      const carIds = [...new Set(dealerBids
+      const carIds = [...new Set(typedDealerBids
         .filter(bid => bid !== null && bid.car_id)
         .map(bid => bid?.car_id)
         .filter(Boolean))];
@@ -218,36 +252,44 @@ export const useAuctionQueries = (dealerId: string) => {
       
       if (carsError) throw carsError;
       
+      // Type the data properly
+      const typedSoldCars = soldCars as CarData[] | null;
+      
       // Find highest bid for each car from this dealer
-      const highestDealerBidsByCarId = (dealerBids || []).reduce((acc: Record<string, any>, bid) => {
-        if (!bid?.car_id) return acc;
-        if (!acc[bid.car_id] || (bid.amount || 0) > (acc[bid.car_id].amount || 0)) {
-          acc[bid.car_id] = bid;
+      const highestDealerBidsByCarId: Record<string, BidData> = {};
+      
+      typedDealerBids.forEach(bid => {
+        if (!bid?.car_id) return;
+        if (!highestDealerBidsByCarId[bid.car_id] || (bid.amount || 0) > (highestDealerBidsByCarId[bid.car_id].amount || 0)) {
+          highestDealerBidsByCarId[bid.car_id] = bid;
         }
-        return acc;
-      }, {});
+      });
       
       // Find winning bids for these cars
       const { data: winningBids } = await supabase
         .from("bids")
         .select("car_id, dealer_id, amount")
-        .in("car_id", (soldCars || [])
+        .in("car_id", (typedSoldCars || [])
           .filter(car => car !== null)
           .map(car => car?.id)
           .filter(Boolean))
         .eq("status", "active"); // Active bids are the winning bids
       
-      const winningBidsByCarId = (winningBids || []).reduce((acc: Record<string, any>, bid) => {
-        if (!bid?.car_id) return acc;
-        acc[bid.car_id] = bid;
-        return acc;
-      }, {});
+      // Type the data properly
+      const typedWinningBids = winningBids as BidData[] | null;
+      
+      const winningBidsByCarId: Record<string, BidData> = {};
+      
+      (typedWinningBids || []).forEach(bid => {
+        if (!bid?.car_id) return;
+        winningBidsByCarId[bid.car_id] = bid;
+      });
       
       // Filter only auctions the dealer lost and transform data
-      return (soldCars || [])
+      return (typedSoldCars || [])
         .filter(car => {
           if (!car) return false;
-          const winningBid = winningBidsByCarId[car.id];
+          const winningBid = car.id ? winningBidsByCarId[car.id] : null;
           return winningBid && winningBid.dealer_id !== dealerId;
         })
         .map(auction => {

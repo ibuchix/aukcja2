@@ -26,6 +26,23 @@ interface WatchlistCar extends CarListing {
   watchlist_id: string;
 }
 
+interface WatchlistItem {
+  id: string;
+  car_id: string;
+  cars?: {
+    id: string;
+    title?: string;
+    make?: string;
+    model?: string;
+    year?: number;
+    price?: number;
+    auction_end_time?: string;
+    auction_status?: string;
+    is_auction?: boolean;
+    reserve_price?: number;
+  } | null;
+}
+
 interface WatchlistManagementProps {
   dealerId: string;
 }
@@ -63,16 +80,17 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
       if (!watchlistData) return [];
       
       return watchlistData
-        .filter(item => item && item.cars) // Filter out any null or missing car data
+        .filter((item): item is WatchlistItem => !!item && !!item.cars) // Type guard to ensure cars exists
         .map(item => {
-          if (!item || !item.cars) return null;
+          const carData = item.cars;
+          if (!carData) return null;
           
           return {
-            ...(item.cars || {}),
+            ...carData,
             watchlist_id: item.id
           };
         })
-        .filter(Boolean) as WatchlistCar[]; // Filter out nulls
+        .filter((item): item is WatchlistCar => !!item); // Filter out nulls with type assertion
     }
   });
 

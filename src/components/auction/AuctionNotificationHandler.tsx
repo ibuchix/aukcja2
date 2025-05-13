@@ -9,6 +9,14 @@ interface AuctionNotificationHandlerProps {
   dealerId: string | null;
 }
 
+interface CarData {
+  id: string;
+  title?: string;
+  make?: string;
+  model?: string;
+  year?: number;
+}
+
 export const AuctionNotificationHandler = ({ dealerId }: AuctionNotificationHandlerProps) => {
   const { toast } = useToast();
   const [notifiedAuctions, setNotifiedAuctions] = useState<Set<string>>(new Set());
@@ -37,20 +45,22 @@ export const AuctionNotificationHandler = ({ dealerId }: AuctionNotificationHand
   const sendAuctionOutcomeEmail = async (
     email: string,
     isWinner: boolean,
-    carDetails: any,
+    carDetails: CarData | null,
     bidAmount: number
   ) => {
     if (!email) return;
 
+    const carTitle = carDetails?.title || 'your vehicle';
+
     const subject = isWinner 
-      ? `Congratulations! You won the auction for ${carDetails?.title || 'your vehicle'}`
-      : `Auction Result: ${carDetails?.title || 'Vehicle Auction'}`;
+      ? `Congratulations! You won the auction for ${carTitle}`
+      : `Auction Result: ${carTitle}`;
 
     const html = isWinner
       ? `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h1 style="color: #0ea5e9;">Congratulations!</h1>
-          <p>You've won the auction for: <strong>${carDetails?.title || 'your vehicle'}</strong></p>
+          <p>You've won the auction for: <strong>${carTitle}</strong></p>
           <p>Your winning bid: <strong>$${bidAmount.toLocaleString()}</strong></p>
           <p>Our team will contact you shortly with next steps to complete your purchase.</p>
           <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
@@ -61,7 +71,7 @@ export const AuctionNotificationHandler = ({ dealerId }: AuctionNotificationHand
       : `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h1 style="color: #0ea5e9;">Auction Result</h1>
-          <p>The auction for <strong>${carDetails?.title || 'your vehicle'}</strong> has ended.</p>
+          <p>The auction for <strong>${carTitle}</strong> has ended.</p>
           <p>Unfortunately, your bid of <strong>$${bidAmount.toLocaleString()}</strong> was not the winning bid.</p>
           <p>We invite you to check out our other available vehicles or upcoming auctions.</p>
           <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
@@ -103,6 +113,9 @@ export const AuctionNotificationHandler = ({ dealerId }: AuctionNotificationHand
           return;
         }
 
+        const carDetails = carData as CarData | null;
+        const carTitle = carDetails?.title || 'vehicle';
+
         // Mark this bid as notified
         setNotifiedBids(prev => new Set([...prev, bidId]));
         
@@ -110,25 +123,25 @@ export const AuctionNotificationHandler = ({ dealerId }: AuctionNotificationHand
           // Show winning notification
           toast({
             title: "🎉 Congratulations!",
-            description: `You won the auction for ${carData?.title || 'vehicle'} with a bid of $${amount.toLocaleString()}`,
+            description: `You won the auction for ${carTitle} with a bid of $${amount.toLocaleString()}`,
             variant: "default",
           });
           
           // Send winning email
           if (dealerData?.email) {
-            sendAuctionOutcomeEmail(dealerData.email, true, carData || {}, amount);
+            sendAuctionOutcomeEmail(dealerData.email, true, carDetails, amount);
           }
         } else if (status === 'lost') {
           // Show losing notification
           toast({
             title: "Auction Result",
-            description: `Your bid of $${amount.toLocaleString()} for ${carData?.title || 'vehicle'} was not the winning bid`,
+            description: `Your bid of $${amount.toLocaleString()} for ${carTitle} was not the winning bid`,
             variant: "default",
           });
           
           // Send losing email
           if (dealerData?.email) {
-            sendAuctionOutcomeEmail(dealerData.email, false, carData || {}, amount);
+            sendAuctionOutcomeEmail(dealerData.email, false, carDetails, amount);
           }
         }
       }
@@ -175,6 +188,9 @@ export const AuctionNotificationHandler = ({ dealerId }: AuctionNotificationHand
           .single();
         
         if (carError) throw carError;
+
+        const carDetails = carData as CarData | null;
+        const carTitle = carDetails?.title || 'vehicle';
         
         // Mark this auction as notified
         setNotifiedAuctions(prev => new Set([...prev, carId]));
@@ -182,7 +198,7 @@ export const AuctionNotificationHandler = ({ dealerId }: AuctionNotificationHand
         // Show auction ended notification
         toast({
           title: "Auction Ended",
-          description: `The auction for ${carData?.title || 'vehicle'} has ended. Results will be available shortly.`,
+          description: `The auction for ${carTitle} has ended. Results will be available shortly.`,
           variant: "default",
         });
       } catch (error) {

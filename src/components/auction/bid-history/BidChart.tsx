@@ -5,10 +5,10 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis } from "recharts";
-import { BidHistoryChartData } from "./types";
+import { ChartDataPoint } from "./useBidHistory";
 
 interface BidChartProps {
-  chartData: BidHistoryChartData[];
+  chartData: ChartDataPoint[];
 }
 
 export const BidChart = ({ chartData }: BidChartProps) => {

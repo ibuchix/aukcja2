@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { BidHistoryItem } from "./types";
+import { Bid } from "./types";
 
 // Data structure for chart
 export interface ChartDataPoint {
@@ -10,7 +10,7 @@ export interface ChartDataPoint {
 }
 
 export const useBidHistory = (carId: string) => {
-  const [bids, setBids] = useState<BidHistoryItem[]>([]);
+  const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
 
@@ -51,7 +51,7 @@ export const useBidHistory = (carId: string) => {
           .order("created_at", { ascending: true });
           
         // Combine both data sources and format
-        const bidHistory: BidHistoryItem[] = [];
+        const bidHistory: Bid[] = [];
         
         // Add regular bids
         if (bidData) {
