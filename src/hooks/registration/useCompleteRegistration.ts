@@ -75,6 +75,7 @@ export function useCompleteRegistration() {
               supervisor_name: data.supervisorName,
               tax_id: data.taxId,
               business_registry_number: data.businessRegistryNumber,
+              license_number: data.businessRegistryNumber, // Provide fallback for license_number
               updated_at: new Date().toISOString()
             })
             .eq("user_id", userId)
@@ -88,16 +89,17 @@ export function useCompleteRegistration() {
         const result = await wrapSupabaseOperation(() => 
           supabase
             .from("dealers")
-            .insert([{
+            .insert({
               user_id: userId,
               dealership_name: data.dealershipName,
               address: data.dealershipAddress,
               supervisor_name: data.supervisorName,
               tax_id: data.taxId,
               business_registry_number: data.businessRegistryNumber,
+              license_number: data.businessRegistryNumber, // Provide required license_number
               verification_status: 'pending',
               is_verified: false
-            }])
+            })
         );
 
         if (!result.success) {

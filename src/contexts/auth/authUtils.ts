@@ -1,3 +1,4 @@
+
 import {
   Session,
   User,
@@ -5,7 +6,7 @@ import {
 import { Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { Profile } from "@/types/profile";
-import { safelyFilterData, isValidRecord } from "@/utils/supabaseHelpers";
+import { isValidRecord } from "@/utils/supabaseHelpers";
 
 /**
  * Type for the authentication context
@@ -53,6 +54,41 @@ export interface CompleteProfile {
   license_number?: string;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Signs out the current user
+ */
+export async function signOutUser() {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      return { success: false, error };
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error signing out:", error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Refreshes the user session
+ */
+export async function refreshUserSession() {
+  try {
+    const { data, error } = await supabase.auth.refreshSession();
+    const { session, user } = data;
+    
+    if (error) {
+      return { success: false, error };
+    }
+    
+    return { success: true, session, user };
+  } catch (error) {
+    console.error("Error refreshing session:", error);
+    return { success: false, error };
+  }
 }
 
 /**

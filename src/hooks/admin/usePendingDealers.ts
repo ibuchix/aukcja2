@@ -1,6 +1,8 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { safelyFilterData } from '@/utils/supabaseHelpers';
+import { toast } from '@/components/ui/use-toast';
 
 // Define the PendingDealer interface
 export interface PendingDealer {
@@ -29,35 +31,101 @@ function isPendingDealer(item: any): item is PendingDealer {
 
 export const usePendingDealers = () => {
   const [pendingDealers, setPendingDealers] = useState<PendingDealer[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const fetchPendingDealers = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('dealers')
-          .select('*')
-          .eq('verification_status', 'pending');
+  const loadPendingDealers = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('dealers')
+        .select('*')
+        .eq('verification_status', 'pending');
 
-        if (error) throw error;
+      if (error) throw error;
 
-        if (data) {
-          // Filter the data to ensure it matches the expected structure
-          const validDealers = data.filter(isPendingDealer);
-          setPendingDealers(validDealers);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to fetch pending dealers'));
-        console.error('Error fetching pending dealers:', err);
-      } finally {
-        setLoading(false);
+      if (data) {
+        // Filter the data to ensure it matches the expected structure
+        const validDealers = safelyFilterData(data, isPendingDealer);
+        setPendingDealers(validDealers);
       }
-    };
-
-    fetchPendingDealers();
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch pending dealers'));
+      console.error('Error fetching pending dealers:', err);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  return { pendingDealers, loading, error };
+  // Load pending dealers on component mount
+  useEffect(() => {
+    loadPendingDealers();
+  }, [loadPendingDealers]);
+
+  const handleVerifyDealer = async (dealerId: string) => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase
+        .from('dealers')
+        .update({ verification_status: 'approved', is_verified: true })
+        .eq('id', dealerId);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Dealer Verified",
+        description: "Dealer has been successfully verified.",
+      });
+      
+      await loadPendingDealers();
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to verify dealer'));
+      toast({
+        title: "Verification Failed",
+        description: "There was a problem verifying the dealer.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRejectDealer = async (dealerId: string) => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase
+        .from('dealers')
+        .update({ verification_status: 'rejected', is_verified: false })
+        .eq('id', dealerId);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Dealer Rejected",
+        description: "Dealer has been rejected.",
+      });
+      
+      await loadPendingDealers();
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to reject dealer'));
+      toast({
+        title: "Rejection Failed",
+        description: "There was a problem rejecting the dealer.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { 
+    pendingDealers, 
+    isLoading, 
+    error,
+    loadPendingDealers,
+    handleVerifyDealer,
+    handleRejectDealer
+  };
 };

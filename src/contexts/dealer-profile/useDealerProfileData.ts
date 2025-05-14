@@ -7,9 +7,28 @@ import { mapDatabaseToDisplay } from "@/utils/dealer-profile-utils/mappers";
 import { supabase } from "@/integrations/supabase/client";
 import { checkProfileCompleteness } from "./profileUtils";
 import { ProfileStatus } from "./types";
+import { isValidRecord } from '@/utils/supabaseHelpers';
+
+export interface DealerProfileData {
+  id?: string;
+  user_id?: string;
+  dealership_name?: string;
+  supervisor_name?: string;
+  tax_id?: string;
+  business_registry_number?: string;
+  address?: string;
+  verification_status?: string;
+  is_verified?: boolean;
+  license_number?: string;
+  created_at?: string;
+  updated_at?: string;
+  profile_status?: string;
+  needs_recovery?: boolean;
+  [key: string]: any;
+}
 
 export function useDealerProfileData() {
-  const [rawProfile, setRawProfile] = useState<any>(null);
+  const [rawProfile, setRawProfile] = useState<DealerProfileData | null>(null);
   const [displayProfile, setDisplayProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,8 +43,17 @@ export function useDealerProfileData() {
 
   // Handler for profile recovery
   const initiateProfileRecovery = () => {
+    if (!rawProfile?.user_id) {
+      toast({
+        title: "Error",
+        description: "Cannot recover profile: missing user ID",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const userData = {
-      userId: rawProfile?.user_id,
+      userId: rawProfile.user_id,
       recovery: true,
       email: supabase.auth.getSession().then(({ data }) => data.session?.user?.email || '')
     };
@@ -70,31 +98,47 @@ export function useDealerProfileData() {
         return;
       }
       
-      // Process the profile data and determine completeness
-      setRawProfile(profileData);
-      
-      // Transform raw profile to display format if it's not a special status profile
-      if (profileData.profile_status !== "not_found" && profileData.profile_status !== "incomplete") {
-        setDisplayProfile(mapDatabaseToDisplay(profileData));
-      }
-      
-      // Check profile completeness
-      const { isComplete, missing } = checkProfileCompleteness(profileData);
-      
-      // Update state based on profile completeness
-      setMissingFields(missing);
-      setProfileIsComplete(isComplete);
-      
-      if (profileData.profile_status === "not_found") {
-        console.log("Dealer profile not found, setting status to not_found");
-        setProfileStatus("not_found");
-        setNeedsRecovery(Boolean(profileData.needs_recovery));
-      } else if (profileData.profile_status === "incomplete" || !isComplete) {
-        console.log("Dealer profile is incomplete");
-        setProfileStatus("incomplete");
-        setNeedsRecovery(Boolean(profileData.needs_recovery));
+      // Check if the profileData is a valid dealer profile
+      if (isValidRecord<DealerProfileData>(profileData)) {
+        // Process the profile data and determine completeness
+        setRawProfile(profileData);
+        
+        // Create a type-safe profile object with optional fields
+        const safeProfile: DealerProfileData = {
+          ...profileData,
+          profile_status: profileData.profile_status || undefined,
+          needs_recovery: Boolean(profileData.needs_recovery)
+        };
+        
+        // Transform raw profile to display format if it's not a special status profile
+        if (safeProfile.profile_status !== "not_found" && safeProfile.profile_status !== "incomplete") {
+          setDisplayProfile(mapDatabaseToDisplay(profileData));
+        }
+        
+        // Check profile completeness
+        const { isComplete, missing } = checkProfileCompleteness(profileData);
+        
+        // Update state based on profile completeness
+        setMissingFields(missing);
+        setProfileIsComplete(isComplete);
+        
+        if (safeProfile.profile_status === "not_found") {
+          console.log("Dealer profile not found, setting status to not_found");
+          setProfileStatus("not_found");
+          setNeedsRecovery(Boolean(safeProfile.needs_recovery));
+        } else if (safeProfile.profile_status === "incomplete" || !isComplete) {
+          console.log("Dealer profile is incomplete");
+          setProfileStatus("incomplete");
+          setNeedsRecovery(Boolean(safeProfile.needs_recovery));
+        } else {
+          setProfileStatus("complete");
+        }
       } else {
-        setProfileStatus("complete");
+        // Invalid profile data
+        setError("Invalid dealer profile data format");
+        setProfileStatus("error");
+        setMissingFields(["invalid_profile"]);
+        setProfileIsComplete(false);
       }
       
       setFetchAttempted(true);
