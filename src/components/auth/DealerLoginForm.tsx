@@ -49,8 +49,8 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
         
         if (typeof signInError === 'object' && signInError !== null) {
           // Handle Error object
-          const errMsg = signInError instanceof Error ? signInError.message : 
-                         'message' in signInError ? String(signInError.message) : String(signInError);
+          const errMsg = typeof signInError === 'string' ? signInError :
+                        (signInError as any)?.message || String(signInError);
                          
           if (errMsg.includes("Invalid login credentials")) {
             errorMessage = "Incorrect email or password. Please try again.";

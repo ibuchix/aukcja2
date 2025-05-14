@@ -1,7 +1,7 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DealerProfileData } from "./types";
-import { Profile } from "@/types/profile";
 import { isValidRecord } from "@/utils/supabaseHelpers";
 
 interface UseDealerProfileDataReturn {
@@ -39,13 +39,31 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
         .single();
 
       if (dealerError) {
+        if (dealerError.code === 'PGRST116') {
+          // No profile found - this is expected if the profile doesn't exist yet
+          setProfileData(null);
+          setProfileStatus('not_found');
+          setNeedsRecovery(true);
+          return;
+        }
         throw new Error(`Failed to fetch dealer profile: ${dealerError.message}`);
       }
 
       if (isValidRecord(dealerProfile)) {
         setProfileData(dealerProfile);
-        setProfileStatus(dealerProfile.verification_status || 'active');
-        setNeedsRecovery(dealerProfile.needs_recovery || false);
+        // Use a type guard to check if verification_status exists
+        const status = typeof dealerProfile === 'object' && dealerProfile !== null &&
+          'verification_status' in dealerProfile ? 
+          dealerProfile.verification_status as string : 'pending';
+        
+        setProfileStatus(status);
+        
+        // Use a type guard for needs_recovery as well
+        const needsRecoveryValue = typeof dealerProfile === 'object' && dealerProfile !== null &&
+          'needs_recovery' in dealerProfile ? 
+          Boolean(dealerProfile.needs_recovery) : false;
+        
+        setNeedsRecovery(needsRecoveryValue);
       } else {
         setProfileData(null);
         setProfileStatus('incomplete');

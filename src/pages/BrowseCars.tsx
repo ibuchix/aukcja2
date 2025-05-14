@@ -1,11 +1,9 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Home, SlidersHorizontal, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Database } from "@/integrations/supabase/types";
 import { CarListing } from "@/types/cars";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
 import MarketplaceHero from "@/components/marketplace/MarketplaceHero";
@@ -14,6 +12,7 @@ import TestimonialsSection from "@/components/marketplace/TestimonialsSection";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import AuctionFilters, { AuctionFilters as FilterTypes } from "@/components/marketplace/AuctionFilters";
+import { processCarData } from "@/utils/carDataHelpers";
 import {
   Select,
   SelectContent,
@@ -85,52 +84,35 @@ const BrowseCars = () => {
 
       if (error) throw error;
 
-      const transformedData: CarListing[] = (data || []).map((car: CarRow) => ({
-        id: car.id,
-        title: car.title,
-        price: car.price,
-        make: car.make,
-        model: car.model,
-        year: car.year,
-        mileage: car.mileage || 0,
-        images: car.images,
-        description: null, // Set default value for optional property
-        features: car.features as CarListing["features"],
-        transmission: car.transmission,
-        service_history_files: null, // Set default value for optional property
-        required_photos: car.required_photos as Record<string, string | null>,
-        is_auction: car.is_auction,
-        current_bid: car.current_bid || 0,
-        auction_end_time: car.auction_end_time,
-        auction_status: car.auction_status,
-        reserve_price: car.reserve_price
-      }));
+      const processedData = processCarData(data);
 
       // Apply sorting
-      const sortedData = [...transformedData].sort((a, b) => {
-        switch (sortOption) {
-          case "price-low-high":
-            return a.price - b.price;
-          case "price-high-low":
-            return b.price - a.price;
-          case "year-new-old":
-            return (b.year || 0) - (a.year || 0);
-          case "year-old-new":
-            return (a.year || 0) - (b.year || 0);
-          case "mileage-low-high":
-            return a.mileage - b.mileage;
-          case "mileage-high-low":
-            return b.mileage - a.mileage;
-          case "newest":
-          default:
-            // Sort by created_at if available, otherwise keep original order
-            return 0;
-        }
-      });
-
-      return sortedData;
+      return sortData(processedData, sortOption);
     },
   });
+
+  const sortData = (data: CarListing[], sortOption: string): CarListing[] => {
+    return [...data].sort((a, b) => {
+      switch (sortOption) {
+        case "price-low-high":
+          return a.price - b.price;
+        case "price-high-low":
+          return b.price - a.price;
+        case "year-new-old":
+          return (b.year || 0) - (a.year || 0);
+        case "year-old-new":
+          return (a.year || 0) - (b.year || 0);
+        case "mileage-low-high":
+          return a.mileage - b.mileage;
+        case "mileage-high-low":
+          return b.mileage - a.mileage;
+        case "newest":
+        default:
+          // Sort by created_at if available, otherwise keep original order
+          return 0;
+      }
+    });
+  };
 
   const handleFilterChange = (newFilters: FilterTypes) => {
     setFilters(newFilters);

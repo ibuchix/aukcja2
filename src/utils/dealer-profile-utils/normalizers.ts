@@ -1,42 +1,55 @@
+
 /**
  * Utility functions for normalizing dealer profile data
  */
 
 /**
- * Normalizes an email address to lowercase and trims whitespace
+ * Normalizes email addresses by trimming and converting to lowercase
  */
 export function normalizeEmail(email: string): string {
-  return email.toLowerCase().trim();
+  if (!email) return '';
+  return email.trim().toLowerCase();
 }
 
 /**
- * Normalizes a phone number by removing spaces and ensuring it starts with +
+ * Normalizes phone numbers by removing non-digit characters
+ * except leading plus sign
  */
-export function normalizePhoneNumber(phoneNumber: string): string {
-  // Remove all spaces, keep only digits, +, and () characters
-  const cleaned = phoneNumber.replace(/\s+/g, '');
-  // Ensure it starts with +
-  return cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
+export function normalizePhoneNumber(phone: string): string {
+  if (!phone) return '';
+  
+  // Preserve the leading plus sign if it exists
+  if (phone.startsWith('+')) {
+    return '+' + phone.substring(1).replace(/[^0-9]/g, '');
+  }
+  
+  // Remove all non-digit characters
+  return phone.replace(/[^0-9]/g, '');
 }
 
 /**
- * Normalizes identifiers like tax ID and business registry number
- * by removing all non-digit characters
+ * Normalizes tax IDs by removing any separator characters
  */
-export function normalizeIdentifier(identifier: string): string {
-  return identifier.replace(/\D/g, '');
+export function normalizeTaxId(taxId: string): string {
+  if (!taxId) return '';
+  // Remove any non-digit characters
+  return taxId.replace(/[^0-9]/g, '');
 }
 
 /**
- * Normalizes names by trimming whitespace while preserving case
+ * Normalizes business registry numbers by removing any separator characters
  */
-export function normalizeName(name: string): string {
-  return name.trim();
+export function normalizeBusinessRegistry(registry: string): string {
+  if (!registry) return '';
+  // Remove any non-digit characters
+  return registry.replace(/[^0-9]/g, '');
 }
 
 /**
- * Normalizes address by trimming whitespace
+ * Normalizes address by trimming and removing extra whitespace
  */
 export function normalizeAddress(address: string): string {
-  return address.trim();
+  if (!address) return '';
+  // Trim and replace multiple spaces with a single space
+  return address.trim().replace(/\s+/g, ' ');
 }

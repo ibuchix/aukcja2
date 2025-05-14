@@ -51,7 +51,9 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
         console.error('Session refresh error:', error);
         return { 
           success: false, 
-          error: error instanceof Error ? error.message : 'Failed to refresh session' 
+          error: typeof error === 'object' && error !== null 
+            ? (error as Error).message 
+            : 'Failed to refresh session'
         };
       }
     };
@@ -74,7 +76,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
   }, [registerRefreshFunction, memoizedRefreshSession]);
 
   // Create the auth context value
-  const value = {
+  const contextValue = {
     session,
     user,
     profile,
@@ -93,12 +95,12 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
       // Map the response to the expected structure in the context
       return { 
         success: !result.error, 
-        error: result.error ? (result.error instanceof Error ? result.error.message : String(result.error)) : undefined 
+        error: result.error ? String(result.error) : undefined 
       };
     },
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }
 
 // Basic AuthProvider that doesn't depend on Router

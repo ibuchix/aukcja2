@@ -1,11 +1,9 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Database } from "@/integrations/supabase/types";
 import { CarListing } from "@/types/cars";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
 import MarketplaceHero from "@/components/marketplace/MarketplaceHero";
@@ -13,8 +11,7 @@ import VehicleListings from "@/components/marketplace/VehicleListings";
 import TestimonialsSection from "@/components/marketplace/TestimonialsSection";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-
-type CarRow = Database["public"]["Tables"]["cars"]["Row"];
+import { processCarData } from "@/utils/carDataHelpers";
 
 const Auctions = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
@@ -31,28 +28,8 @@ const Auctions = () => {
         .eq("auction_status", "active");
 
       if (error) throw error;
-
-      const transformedData: CarListing[] = (data || []).map((car: CarRow) => ({
-        id: car.id,
-        title: car.title,
-        price: car.price,
-        make: car.make,
-        model: car.model,
-        year: car.year,
-        mileage: car.mileage || 0,
-        images: car.images,
-        description: null, // Set default value for optional property
-        features: car.features as CarListing["features"],
-        transmission: car.transmission,
-        service_history_files: null, // Set default value for optional property
-        required_photos: car.required_photos as Record<string, string | null>,
-        is_auction: car.is_auction,
-        current_bid: car.current_bid || 0,
-        auction_end_time: car.auction_end_time,
-        auction_status: car.auction_status
-      }));
-
-      return transformedData;
+      
+      return processCarData(data);
     },
   });
 

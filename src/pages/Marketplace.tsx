@@ -1,10 +1,8 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Database } from "@/integrations/supabase/types";
 import { CarListing } from "@/types/cars";
 import { useState } from "react";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
@@ -12,8 +10,7 @@ import MarketplaceHero from "@/components/marketplace/MarketplaceHero";
 import VehicleListings from "@/components/marketplace/VehicleListings";
 import TestimonialsSection from "@/components/marketplace/TestimonialsSection";
 import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
-
-type CarRow = Database["public"]["Tables"]["cars"]["Row"];
+import { processCarData } from "@/utils/carDataHelpers";
 
 const Marketplace = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
@@ -28,24 +25,8 @@ const Marketplace = () => {
         .eq("is_draft", false);
 
       if (error) throw error;
-
-      const transformedData: CarListing[] = (data || []).map((car: CarRow) => ({
-        id: car.id,
-        title: car.title,
-        price: car.price,
-        make: car.make,
-        model: car.model,
-        year: car.year,
-        mileage: car.mileage || 0,
-        images: car.images,
-        description: null, // Add missing required field
-        features: car.features as CarListing["features"],
-        transmission: car.transmission,
-        service_history_files: null, // Add missing required field
-        required_photos: car.required_photos as Record<string, string | null>,
-      }));
-
-      return transformedData;
+      
+      return processCarData(data);
     },
   });
 

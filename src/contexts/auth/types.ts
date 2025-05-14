@@ -14,7 +14,7 @@ export type AuthContextType = {
     email: string;
     password: string;
     redirectTo?: string;
-  }) => Promise<{ error?: Error }>;
+  }) => Promise<{ success: boolean; error?: string }>;
 };
 
 // Default context values
@@ -26,5 +26,5 @@ export const defaultContextValue: AuthContextType = {
   isAuthenticated: false,
   signOut: async () => {},
   refreshSession: async () => {},
-  signIn: async () => ({ error: new Error("Auth context not initialized") })
+  signIn: async () => ({ success: false, error: "Auth context not initialized" })
 };

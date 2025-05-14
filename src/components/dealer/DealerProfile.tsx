@@ -1,3 +1,4 @@
+
 import { useDealerProfile } from "@/contexts/dealer-profile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, User as UserIcon, FileText, MapPin, BadgeCheck, AlertCircle, Phone, Mail } from "lucide-react";
@@ -6,7 +7,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { formatNameForDisplay, getValueWithFallback } from "@/utils/dealer-profile-utils/formatters";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function DealerProfile() {
@@ -22,6 +22,20 @@ export function DealerProfile() {
   } = useDealerProfile();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Helper functions
+  const formatNameForDisplay = (name?: string): string => {
+    if (!name) return "Not available";
+    
+    return name
+      .split(' ')
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  const getValueWithFallback = (value?: string | null, fallback = "Not available"): string => {
+    return value || fallback;
+  };
 
   if (isLoading) {
     return <DealerProfileSkeleton />;

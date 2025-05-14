@@ -60,3 +60,31 @@ export function getProfileStatus(profileData: DealerProfileData | null): string 
   
   return profileData.verification_status || 'pending';
 }
+
+/**
+ * Gets profile completion status with percentage and missing fields
+ */
+export function getProfileCompletionStatus(profile: DealerProfileData | null): {
+  isComplete: boolean;
+  completionPercentage: number;
+  missingFields: string[];
+} {
+  if (!profile) {
+    return {
+      isComplete: false,
+      completionPercentage: 0,
+      missingFields: [...REQUIRED_PROFILE_FIELDS]
+    };
+  }
+
+  const { isComplete, missing } = checkProfileCompleteness(profile);
+  const totalFields = REQUIRED_PROFILE_FIELDS.length;
+  const completedFields = totalFields - missing.length;
+  const completionPercentage = Math.round((completedFields / totalFields) * 100);
+
+  return {
+    isComplete,
+    completionPercentage,
+    missingFields: missing
+  };
+}
