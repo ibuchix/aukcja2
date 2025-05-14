@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { BidActivity, BidMetrics } from "../types";
-import { isValidRecord, safeFilter, isSelectQueryError, isValidBid, isValidCarData } from "@/utils/supabaseHelpers";
+import { isValidRecord, safeFilter, isSelectQueryError } from "@/utils/supabaseHelpers";
 
 // Type definitions for data from database
 interface DbBid {
@@ -22,6 +22,26 @@ interface DbCar {
   auction_end_time?: string;
   current_bid?: number;
   auction_status?: string;
+}
+
+// Local type guard for bid data
+function isValidDbBid(item: any): item is DbBid {
+  return item !== null && 
+    typeof item === 'object' && 
+    !isSelectQueryError(item) &&
+    'id' in item &&
+    'car_id' in item &&
+    'amount' in item;
+}
+
+// Local type guard for car relation
+function hasValidCarRelation(bid: any): bid is { car: DbCar } {
+  return bid && 
+         'car' in bid && 
+         bid.car && 
+         typeof bid.car === 'object' && 
+         !isSelectQueryError(bid.car) &&
+         'id' in bid.car;
 }
 
 export async function fetchInitialBidData(dealerId: string): Promise<{
@@ -56,8 +76,7 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
   // Ensure we have valid bids data - filter out nulls and errors
   const bids = Array.isArray(bidsData) 
     ? bidsData.filter(bid => 
-        !isSelectQueryError(bid) && 
-        'car_id' in bid && 
+        isValidDbBid(bid) && 
         hasValidCarRelation(bid)
       )
     : [];
@@ -87,7 +106,7 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
     
     // Filter to ensure we have valid bid data
     allBids = Array.isArray(allBidsData) 
-      ? allBidsData.filter(isValidBid)
+      ? allBidsData.filter(isValidDbBid)
       : [];
   }
 
@@ -98,7 +117,7 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
     if (bid && bid.car && !isSelectQueryError(bid.car)) {
       const car = bid.car;
       
-      activities.push({
+      const activity: BidActivity = {
         id: bid.id,
         carId: bid.car_id,
         carTitle: car.title || `${car.year} ${car.make} ${car.model}`,
@@ -113,7 +132,9 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
           model: car.model,
           year: car.year
         }
-      });
+      };
+      
+      activities.push(activity);
     }
   }
 
@@ -124,16 +145,6 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
     activities,
     calculatedMetrics
   };
-}
-
-// Helper type guard for car relation
-function hasValidCarRelation(bid: any): bid is { car: DbCar } {
-  return bid && 
-         'car' in bid && 
-         bid.car && 
-         typeof bid.car === 'object' && 
-         !isSelectQueryError(bid.car) &&
-         'id' in bid.car;
 }
 
 function calculateBidMetrics(dealerId: string, dealerBids: DbBid[], allBids: DbBid[]): BidMetrics {

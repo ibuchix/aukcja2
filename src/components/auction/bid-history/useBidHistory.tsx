@@ -15,6 +15,43 @@ export interface ChartDataPoint {
   amount: number;
 }
 
+// Local type guard specific to this component
+function isValidBidLocal(bid: any): bid is {
+  id: string;
+  car_id: string;
+  dealer_id?: string;
+  amount: number;
+  status?: string;
+  created_at: string;
+  updated_at: string;
+} {
+  return bid && 
+         typeof bid === 'object' && 
+         !isSelectQueryError(bid) &&
+         'id' in bid &&
+         'car_id' in bid && 
+         'amount' in bid &&
+         'created_at' in bid;
+}
+
+// Local type guard specific to this component
+function isValidProxyLogLocal(log: any): bid is {
+  id: string;
+  entity_id: string;
+  user_id: string;
+  details: Record<string, any>;
+  created_at: string;
+} {
+  return log && 
+         typeof log === 'object' && 
+         !isSelectQueryError(log) &&
+         'id' in log &&
+         'entity_id' in log && 
+         'user_id' in log &&
+         'details' in log &&
+         'created_at' in log;
+}
+
 export const useBidHistory = (carId: string) => {
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -62,7 +99,7 @@ export const useBidHistory = (carId: string) => {
         // Add regular bids with type safety
         if (Array.isArray(bidData)) {
           // Filter to ensure we only process valid bid records
-          const validBids = bidData.filter(isValidBid);
+          const validBids = bidData.filter(isValidBidLocal);
           
           validBids.forEach(bid => {
             bidHistory.push({
@@ -82,7 +119,7 @@ export const useBidHistory = (carId: string) => {
         // Add proxy bids with type safety
         if (Array.isArray(proxyData)) {
           // Filter to ensure we only process valid log records
-          const validLogs = proxyData.filter(isValidProxyLog);
+          const validLogs = proxyData.filter(isValidProxyLogLocal);
           
           validLogs.forEach(log => {
             // Additional safe check for details property

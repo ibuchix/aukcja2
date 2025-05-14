@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Heart, HeartOff } from "lucide-react";
@@ -49,8 +50,8 @@ interface WatchlistManagementProps {
   dealerId: string;
 }
 
-// Type guard for watchlist items with cars relation
-function isValidWatchlistWithCar(item: any): item is WatchlistItem {
+// Local type guard for watchlist items with cars relation
+function isValidWatchlistWithCarLocal(item: any): item is WatchlistItem {
   return item !== null && 
       typeof item === 'object' && 
       !isSelectQueryError(item) &&
@@ -96,7 +97,7 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
       
       // Filter valid watchlist items and transform them into WatchlistCar objects
       return watchlistData
-        .filter(item => hasValidRelation(item, 'cars'))
+        .filter(isValidWatchlistWithCarLocal)
         .map(item => {
           const carData = item.cars as WatchlistCarData;
           

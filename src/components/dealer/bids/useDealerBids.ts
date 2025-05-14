@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,8 +36,8 @@ interface BidData {
   created_at: string;
 }
 
-// Type guards
-function isValidBidData(item: any): item is BidData {
+// Type guard for bid data only - renamed to avoid conflicts
+function isValidBidDataLocal(item: any): item is BidData {
   return item !== null && 
     typeof item === 'object' && 
     !isSelectQueryError(item) &&
@@ -45,21 +46,6 @@ function isValidBidData(item: any): item is BidData {
     'amount' in item &&
     'status' in item &&
     'created_at' in item;
-}
-
-function isValidCarData(item: any): item is CarData {
-  return item !== null && 
-    typeof item === 'object' && 
-    !isSelectQueryError(item) &&
-    'id' in item;
-}
-
-function isValidProxyBidData(item: any): item is ProxyBidData {
-  return item !== null && 
-    typeof item === 'object' && 
-    !isSelectQueryError(item) &&
-    'car_id' in item && 
-    'max_bid_amount' in item;
 }
 
 export function useDealerBids(dealerProfileId: string | undefined) {
@@ -101,12 +87,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
 
       // Filter to ensure we only have valid bids without errors
       const validActiveBids = Array.isArray(activeBids)
-        ? activeBids.filter((bid): bid is BidData => 
-            !isSelectQueryError(bid) && 
-            typeof bid === 'object' &&
-            'car_id' in bid &&
-            'amount' in bid &&
-            'status' in bid)
+        ? activeBids.filter(isValidBidDataLocal) // Using our renamed local function
         : [];
 
       // Get car details for these bids
