@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { mapDatabaseToDisplay } from "@/utils/dealerProfileMapping";
 import { Json } from "@/integrations/supabase/types";
 import { refreshAuthToken } from "@/utils/sessionRefresh";
-import { isSelectQueryError } from "@/utils/supabaseHelpers";
+import { isSelectQueryError, safeFilter } from "@/utils/supabaseHelpers";
 
 // Required fields for a complete dealer profile
 const REQUIRED_DEALER_FIELDS = [
