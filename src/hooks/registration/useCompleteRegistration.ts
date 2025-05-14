@@ -47,7 +47,7 @@ export const useCompleteRegistration = () => {
       if (dealerData && dealerData.length > 0) {
         // Make sure dealerData[0] is a valid record with better type safety
         const dealer = dealerData[0];
-        if (dealer && typeof dealer === 'object' && 'id' in dealer) {
+        if (dealer && isValidRecord(dealer) && 'id' in dealer) {
           const dealerId = dealer.id;
 
           const { error: verificationError } = await supabase
