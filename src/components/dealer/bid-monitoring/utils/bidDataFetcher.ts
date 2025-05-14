@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { BidActivity, BidMetrics } from "../types";
-import { isValidRecord, safeFilter, isSelectQueryError } from "@/utils/supabaseHelpers";
+import { isValidRecord, safeFilter, isSelectQueryError, isValidBid, isValidCarData } from "@/utils/supabaseHelpers";
 
 // Type definitions for data from database
 interface DbBid {
@@ -22,34 +22,6 @@ interface DbCar {
   auction_end_time?: string;
   current_bid?: number;
   auction_status?: string;
-}
-
-// Type guards
-function isValidDbBid(item: any): item is DbBid {
-  return item !== null && 
-    typeof item === 'object' && 
-    !isSelectQueryError(item) &&
-    'car_id' in item &&
-    'amount' in item &&
-    'status' in item;
-}
-
-function isValidDbCar(item: any): item is DbCar {
-  return item !== null && 
-    typeof item === 'object' && 
-    !isSelectQueryError(item) &&
-    'id' in item &&
-    'make' in item &&
-    'model' in item;
-}
-
-function isValidBidWithCar(item: any): item is DbBid & { car: DbCar } {
-  return isValidDbBid(item) && 
-    'car' in item && 
-    item.car && 
-    typeof item.car === 'object' && 
-    !isSelectQueryError(item.car) && 
-    isValidDbCar(item.car);
 }
 
 export async function fetchInitialBidData(dealerId: string): Promise<{
@@ -83,7 +55,11 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
 
   // Ensure we have valid bids data - filter out nulls and errors
   const bids = Array.isArray(bidsData) 
-    ? bidsData.filter(isValidBidWithCar)
+    ? bidsData.filter(bid => 
+        !isSelectQueryError(bid) && 
+        'car_id' in bid && 
+        hasValidCarRelation(bid)
+      )
     : [];
 
   // Extract car IDs safely, filtering out any errors or invalid values
@@ -111,7 +87,7 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
     
     // Filter to ensure we have valid bid data
     allBids = Array.isArray(allBidsData) 
-      ? allBidsData.filter(isValidDbBid)
+      ? allBidsData.filter(isValidBid)
       : [];
   }
 
@@ -119,14 +95,14 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
   const activities: BidActivity[] = [];
   
   for (const bid of bids) {
-    const car = bid.car;
-    
-    if (car) {
+    if (bid && bid.car && !isSelectQueryError(bid.car)) {
+      const car = bid.car;
+      
       activities.push({
         id: bid.id,
         carId: bid.car_id,
         carTitle: car.title || `${car.year} ${car.make} ${car.model}`,
-        amount: bid.amount,
+        bidAmount: bid.amount,
         timestamp: bid.created_at,
         type: 'new_bid',
         isOwnActivity: true,
@@ -142,7 +118,7 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
   }
 
   // Calculate metrics
-  const calculatedMetrics = calculateBidMetrics(dealerId, bids, allBids);
+  const calculatedMetrics = calculateBidMetrics(dealerId, bids as DbBid[], allBids);
 
   return {
     activities,
@@ -150,10 +126,20 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
   };
 }
 
+// Helper type guard for car relation
+function hasValidCarRelation(bid: any): bid is { car: DbCar } {
+  return bid && 
+         'car' in bid && 
+         bid.car && 
+         typeof bid.car === 'object' && 
+         !isSelectQueryError(bid.car) &&
+         'id' in bid.car;
+}
+
 function calculateBidMetrics(dealerId: string, dealerBids: DbBid[], allBids: DbBid[]): BidMetrics {
   // Filter to ensure we have valid data before calculations
-  const validDealerBids = dealerBids.filter(isValidDbBid);
-  const validAllBids = allBids.filter(isValidDbBid);
+  const validDealerBids = dealerBids.filter(bid => !isSelectQueryError(bid) && 'status' in bid);
+  const validAllBids = allBids.filter(bid => !isSelectQueryError(bid));
 
   const metrics: BidMetrics = {
     activeBidsCount: validDealerBids.filter(bid => bid.status === 'active').length,

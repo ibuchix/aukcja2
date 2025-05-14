@@ -120,16 +120,21 @@ export function safeFilter<T>(item: T | null | undefined | SelectQueryError): it
  * Type guard for checking if a bid is valid and has all required properties
  */
 export function isValidBid(bid: any): bid is { 
-  car_id: string, 
-  amount: number,
-  dealer_id?: string,
-  status?: string
+  id: string;
+  car_id: string; 
+  amount: number;
+  dealer_id?: string;
+  status?: string;
+  created_at: string;
+  updated_at: string;
 } {
   if (!bid || typeof bid !== 'object') return false;
   if (isSelectQueryError(bid)) return false;
   
-  return 'car_id' in bid && 
+  return 'id' in bid &&
+    'car_id' in bid && 
     'amount' in bid && 
+    'created_at' in bid &&
     typeof bid.amount === 'number';
 }
 
@@ -145,4 +150,56 @@ export function isValidWatchlistItem(item: any): item is {
   if (isSelectQueryError(item)) return false;
   
   return 'id' in item && 'car_id' in item;
+}
+
+/**
+ * Type guard for proxy logs
+ */
+export function isValidProxyLog(item: any): item is {
+  id: string;
+  entity_id: string;
+  user_id: string;
+  details: Record<string, any>;
+  created_at: string;
+} {
+  if (!item || typeof item !== 'object') return false;
+  if (isSelectQueryError(item)) return false;
+  
+  return 'id' in item &&
+    'entity_id' in item &&
+    'user_id' in item &&
+    'details' in item &&
+    'created_at' in item;
+}
+
+/**
+ * Type guard for car data
+ */
+export function isValidCarData(item: any): item is {
+  id: string;
+  title?: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  auction_end_time?: string;
+  current_bid?: number;
+  auction_status?: string;
+} {
+  if (!item || typeof item !== 'object') return false;
+  if (isSelectQueryError(item)) return false;
+  
+  return 'id' in item;
+}
+
+/**
+ * Type guard for proxy bid data
+ */
+export function isValidProxyBidData(item: any): item is {
+  car_id: string;
+  max_bid_amount: number;
+} {
+  if (!item || typeof item !== 'object') return false;
+  if (isSelectQueryError(item)) return false;
+  
+  return 'car_id' in item && 'max_bid_amount' in item;
 }

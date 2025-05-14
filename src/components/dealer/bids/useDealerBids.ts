@@ -1,10 +1,15 @@
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MyBid } from "./types";
 import { queryKeys } from "@/utils/queryClient";
-import { isValidRecord, isSelectQueryError, safeFilter } from "@/utils/supabaseHelpers";
+import { 
+  isValidRecord, 
+  isSelectQueryError, 
+  safeFilter, 
+  isValidCarData, 
+  isValidProxyBidData
+} from "@/utils/supabaseHelpers";
 
 interface CarData {
   id: string;
@@ -96,7 +101,12 @@ export function useDealerBids(dealerProfileId: string | undefined) {
 
       // Filter to ensure we only have valid bids without errors
       const validActiveBids = Array.isArray(activeBids)
-        ? activeBids.filter(isValidBidData)
+        ? activeBids.filter((bid): bid is BidData => 
+            !isSelectQueryError(bid) && 
+            typeof bid === 'object' &&
+            'car_id' in bid &&
+            'amount' in bid &&
+            'status' in bid)
         : [];
 
       // Get car details for these bids

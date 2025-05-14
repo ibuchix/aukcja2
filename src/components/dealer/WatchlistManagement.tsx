@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Heart, HeartOff } from "lucide-react";
@@ -21,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { CarListing } from "@/types/cars";
-import { isValidRecord, isValidWatchlistItem, isSelectQueryError, safeFilter } from "@/utils/supabaseHelpers";
+import { isValidRecord, isValidWatchlistItem, isSelectQueryError, safeFilter, hasValidRelation } from "@/utils/supabaseHelpers";
 
 interface WatchlistCar extends CarListing {
   watchlist_id: string;
@@ -97,7 +96,7 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
       
       // Filter valid watchlist items and transform them into WatchlistCar objects
       return watchlistData
-        .filter(isValidWatchlistWithCar)
+        .filter(item => hasValidRelation(item, 'cars'))
         .map(item => {
           const carData = item.cars as WatchlistCarData;
           

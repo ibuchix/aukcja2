@@ -2,50 +2,17 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Bid } from "./types";
-import { isSelectQueryError, safeFilter } from "@/utils/supabaseHelpers";
+import { 
+  isSelectQueryError, 
+  safeFilter, 
+  isValidBid, 
+  isValidProxyLog 
+} from "@/utils/supabaseHelpers";
 
 // Data structure for chart
 export interface ChartDataPoint {
   time: string;
   amount: number;
-}
-
-// Type guard for bid data
-function isValidBid(item: any): item is {
-  id: string;
-  car_id: string;
-  dealer_id: string;
-  amount: number;
-  status: string;
-  created_at: string;
-  updated_at: string;
-} {
-  return item !== null && 
-      typeof item === 'object' && 
-      !isSelectQueryError(item) &&
-      'id' in item &&
-      'car_id' in item &&
-      'dealer_id' in item &&
-      'amount' in item &&
-      'created_at' in item;
-}
-
-// Type guard for proxy log data
-function isValidProxyLog(item: any): item is {
-  id: string;
-  entity_id: string;
-  user_id: string;
-  details: Record<string, any>;
-  created_at: string;
-} {
-  return item !== null && 
-      typeof item === 'object' && 
-      !isSelectQueryError(item) &&
-      'id' in item &&
-      'entity_id' in item &&
-      'user_id' in item &&
-      'details' in item &&
-      'created_at' in item;
 }
 
 export const useBidHistory = (carId: string) => {
@@ -101,7 +68,7 @@ export const useBidHistory = (carId: string) => {
             bidHistory.push({
               id: bid.id,
               car_id: bid.car_id,
-              dealer_id: bid.dealer_id,
+              dealer_id: bid.dealer_id || '',
               amount: bid.amount,
               status: bid.status || 'active',
               created_at: bid.created_at,
@@ -119,10 +86,10 @@ export const useBidHistory = (carId: string) => {
           
           validLogs.forEach(log => {
             // Additional safe check for details property
-            if (log && log.details && typeof log.details === 'object') {
+            if (log.details && typeof log.details === 'object') {
               const details = log.details;
               
-              if (details && 'amount' in details) {
+              if ('amount' in details) {
                 bidHistory.push({
                   id: log.id,
                   car_id: log.entity_id,
