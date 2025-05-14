@@ -1,74 +1,61 @@
 
-/**
- * Utility functions for mapping dealer profile data between form and database
- */
-
-import { normalizeEmail, normalizePhoneNumber, normalizeIdentifier, normalizeName, normalizeAddress } from './normalizers';
-import { formatTaxIdForDisplay, formatBusinessRegistryForDisplay } from './formatters';
+import { DealerProfileData } from "@/types/dealer";
 
 /**
- * Form field to database column mapping
- * Maps the registration form field names to database column names
+ * Maps database-style snake_case properties to camelCase for UI consumption
  */
-export const formToDatabaseMapping = {
-  supervisorName: 'supervisor_name',
-  companyName: 'dealership_name',
-  taxId: 'tax_id',
-  businessRegistryNumber: 'business_registry_number',
-  companyAddress: 'address',
-  phoneNumber: 'phone_number', // Stored in user metadata
-  email: 'email', // Stored in auth.users
-  // Fields below are not directly entered in the form but set automatically
-  licenseNumber: 'license_number',
-  verificationStatus: 'verification_status',
-  isVerified: 'is_verified',
-};
-
-/**
- * Maps form values to database structure, applying appropriate normalizations
- */
-export function mapFormToDatabase(formValues: any) {
+export function mapProfileToCamelCase(profile: DealerProfileData | null): any {
+  if (!profile) return null;
+  
   return {
-    supervisor_name: normalizeName(formValues.supervisorName),
-    dealership_name: normalizeName(formValues.companyName),
-    tax_id: normalizeIdentifier(formValues.taxId),
-    business_registry_number: normalizeIdentifier(formValues.businessRegistryNumber),
-    address: normalizeAddress(formValues.companyAddress),
-    // These fields are set automatically during registration
-    license_number: normalizeIdentifier(formValues.businessRegistryNumber), // Currently duplicates business registry
-    verification_status: 'pending',
-    is_verified: false,
-    // User fields (not directly in dealers table)
-    email: normalizeEmail(formValues.email),
-    phone_number: normalizePhoneNumber(formValues.phoneNumber || ''),
+    id: profile.id,
+    userId: profile.user_id,
+    dealershipName: profile.dealership_name,
+    supervisorName: profile.supervisor_name,
+    taxId: profile.tax_id,
+    businessRegistryNumber: profile.business_registry_number,
+    address: profile.address,
+    verificationStatus: profile.verification_status,
+    isVerified: profile.is_verified,
+    licenseNumber: profile.license_number,
+    createdAt: profile.created_at,
+    updatedAt: profile.updated_at,
+    // Include any additional properties that might be needed
+    // Pass through any other properties
+    ...profile
   };
 }
 
 /**
- * Maps database dealer profile to displayable format
- * Can be used in components that display dealer information
+ * Maps camelCase UI properties back to snake_case for database storage
  */
-export function mapDatabaseToDisplay(dbProfile: any) {
-  if (!dbProfile) return null;
+export function mapProfileToSnakeCase(profile: any): Partial<DealerProfileData> {
+  if (!profile) return {};
   
-  // Create the basic transformed profile
-  const profile = {
-    supervisorName: dbProfile.supervisor_name || '',
-    dealershipName: dbProfile.dealership_name || '',
-    taxId: dbProfile.tax_id || '',
-    businessRegistryNumber: dbProfile.business_registry_number || '',
-    address: dbProfile.address || '',
-    licenseNumber: dbProfile.license_number || '',
-    verificationStatus: dbProfile.verification_status || 'pending',
-    isVerified: dbProfile.is_verified || false,
-    createdAt: dbProfile.created_at,
-    updatedAt: dbProfile.updated_at,
-  };
+  const result: Partial<DealerProfileData> = {};
   
-  // Add formatted display versions of key identifiers
-  return {
-    ...profile,
-    formattedTaxId: formatTaxIdForDisplay(profile.taxId),
-    formattedBusinessRegistry: formatBusinessRegistryForDisplay(profile.businessRegistryNumber)
-  };
+  // Map camelCase to snake_case
+  if (profile.dealershipName !== undefined) result.dealership_name = profile.dealershipName;
+  if (profile.supervisorName !== undefined) result.supervisor_name = profile.supervisorName;
+  if (profile.taxId !== undefined) result.tax_id = profile.taxId;
+  if (profile.businessRegistryNumber !== undefined) result.business_registry_number = profile.businessRegistryNumber;
+  if (profile.licenseNumber !== undefined) result.license_number = profile.licenseNumber;
+  if (profile.isVerified !== undefined) result.is_verified = profile.isVerified;
+  if (profile.verificationStatus !== undefined) result.verification_status = profile.verificationStatus;
+  if (profile.userId !== undefined) result.user_id = profile.userId;
+  
+  // Handle any direct snake_case properties
+  const snakeCaseProps = [
+    'id', 'user_id', 'dealership_name', 'supervisor_name', 'tax_id', 
+    'business_registry_number', 'address', 'verification_status', 
+    'is_verified', 'license_number', 'created_at', 'updated_at'
+  ];
+  
+  snakeCaseProps.forEach(prop => {
+    if (profile[prop] !== undefined) {
+      result[prop as keyof DealerProfileData] = profile[prop];
+    }
+  });
+  
+  return result;
 }

@@ -1,16 +1,7 @@
-import { supabase } from '@/integrations/supabase/client';
-import { isValidRecord, safeFilter } from '@/utils/supabaseHelpers';
 
-export interface Profile {
-  id: string;
-  role: string;
-  updated_at: string;
-  suspended: boolean;
-  full_name?: string;
-  avatar_url?: string;
-  profile_status?: string;
-  needs_recovery?: boolean;
-}
+import { supabase } from '@/integrations/supabase/client';
+import { isValidRecord, safeFilter, isSelectQueryError } from '@/utils/supabaseHelpers';
+import { Profile } from '@/types/profile';
 
 /**
  * Retrieves a user profile from the database.
@@ -30,7 +21,7 @@ export const getUserProfile = async (userId: string): Promise<Profile | null> =>
       return null;
     }
 
-    if (!isValidRecord(data)) {
+    if (!isValidRecord<Profile>(data)) {
       console.warn('Invalid user profile data:', data);
       return null;
     }
@@ -49,7 +40,7 @@ export const signOutUser = async () => {
   try {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Sign out error:', error);
     return { 
@@ -97,6 +88,11 @@ export const fetchDealerProfile = async (userId: string) => {
       console.error('Error fetching profile:', profileError);
     }
 
+    let profile: Profile | null = null;
+    if (profileData && !isSelectQueryError(profileData) && isValidRecord<Profile>(profileData)) {
+      profile = profileData as Profile;
+    }
+
     // Then get the dealer profile 
     const { data: dealerData, error: dealerError } = await supabase
       .from('dealers')
@@ -109,10 +105,15 @@ export const fetchDealerProfile = async (userId: string) => {
       console.error('Error fetching dealer profile:', dealerError);
     }
 
+    let dealer = null;
+    if (dealerData && !isSelectQueryError(dealerData) && isValidRecord(dealerData)) {
+      dealer = dealerData;
+    }
+
     // Combine the data
     return {
-      profile: profileData as Profile || null,
-      dealer: dealerData || null
+      profile,
+      dealer
     };
   } catch (err) {
     console.error('Error in fetchDealerProfile:', err);
@@ -123,18 +124,17 @@ export const fetchDealerProfile = async (userId: string) => {
 /**
  * Function to safely handle profile data response with type checking
  */
-export const safeGetProfileData = (profileData: any): Profile => {
-  // If there's an error or profileData is null, return a default profile
-  if (!profileData || profileData?.error) {
-    // Cast to unknown first, then to Profile to avoid direct type assertion
-    return {
-      id: '',
-      role: 'dealer',
-      updated_at: new Date().toISOString(),
-      suspended: false
-    };
+export const safeGetProfileData = (profileData: any): Profile | null => {
+  // If there's an error or profileData is null, return null
+  if (!profileData || isSelectQueryError(profileData) || profileData?.error) {
+    return null;
   }
 
   // If it's a valid profile, return it
-  return profileData as Profile;
+  if (isValidRecord<Profile>(profileData)) {
+    return profileData as Profile;
+  }
+
+  // Default fallback
+  return null;
 };

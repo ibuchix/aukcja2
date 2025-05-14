@@ -2,7 +2,7 @@
 import { User } from "@supabase/supabase-js";
 import { Building2, User as UserIcon, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDealerProfile } from "@/contexts/DealerProfileContext";
+import { useDealerProfile } from "@/contexts/dealer-profile";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const ProfileInfoSection = () => {

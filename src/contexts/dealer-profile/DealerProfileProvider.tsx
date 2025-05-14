@@ -1,8 +1,11 @@
+
 import React, { createContext, useContext } from 'react';
 import { useDealerProfileData } from './useDealerProfileData';
 import { DealerProfileContextType } from './types';
 import { checkProfileCompleteness } from './profileUtils';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { mapProfileToCamelCase } from '@/utils/dealer-profile-utils/mappers';
 
 const DealerProfileContext = createContext<DealerProfileContextType>({
   displayProfile: null,
@@ -21,6 +24,9 @@ const DealerProfileContext = createContext<DealerProfileContextType>({
 export const useDealerProfile = () => useContext(DealerProfileContext);
 
 export function DealerProfileProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const userId = user?.id;
+  
   const {
     profileData,
     profileStatus,
@@ -29,17 +35,20 @@ export function DealerProfileProvider({ children }: { children: React.ReactNode 
     error,
     updateProfileData,
     updateProfileStatus,
-  } = useDealerProfileData();
+  } = useDealerProfileData(userId);
 
   // Get missing fields from profile data
   const { isComplete, missing } = checkProfileCompleteness(profileData);
 
   const navigate = useNavigate();
 
+  // Create a camelCase version of the profile for UI components
+  const displayProfile = mapProfileToCamelCase(profileData);
+
   return (
     <DealerProfileContext.Provider
       value={{
-        displayProfile: profileData,
+        displayProfile,
         rawProfile: profileData,
         isLoading: loading,
         error,
@@ -59,6 +68,8 @@ export function DealerProfileProvider({ children }: { children: React.ReactNode 
         },
         refreshProfile: async () => {
           // Implement refresh logic
+          // This would typically re-fetch the profile data
+          console.log("Refresh profile requested");
         }
       }}
     >

@@ -1,8 +1,10 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { safeFilter } from '@/utils/supabaseHelpers';
-import { DealerProfileData, Profile } from '@/types/profile';
+import { safeFilter, isValidRecord } from '@/utils/supabaseHelpers';
+import { DealerProfileData } from '@/types/dealer';
+import { Profile } from '@/types/profile';
+import { getProfileStatus, checkProfileNeedsRecovery } from './profileUtils';
 
 export const useDealerProfileData = (userId: string | null | undefined) => {
   const [profileData, setProfileData] = useState<DealerProfileData | null>(null);
@@ -23,7 +25,7 @@ export const useDealerProfileData = (userId: string | null | undefined) => {
       try {
         // Fetch user profile to check status
         const { data: profileData, error: profileError } = await supabase
-          .from('user_profiles')
+          .from('profiles')
           .select('*')
           .eq('id', userId)
           .single();
@@ -33,7 +35,7 @@ export const useDealerProfileData = (userId: string | null | undefined) => {
         }
 
         // Get profile status
-        if (profileData) {
+        if (profileData && isValidRecord<Profile>(profileData)) {
           const profile = profileData as Profile;
           setProfileStatus(profile.profile_status || 'inactive');
           setNeedsRecovery(profile.needs_recovery || false);
@@ -41,7 +43,7 @@ export const useDealerProfileData = (userId: string | null | undefined) => {
 
         // Fetch dealer profile
         const { data: dealerData, error: dealerError } = await supabase
-          .from('dealer_profiles')
+          .from('dealers')
           .select('*')
           .eq('user_id', userId)
           .single();
@@ -51,8 +53,20 @@ export const useDealerProfileData = (userId: string | null | undefined) => {
           throw new Error(`Error fetching dealer profile: ${dealerError.message}`);
         }
 
-        if (dealerData) {
+        if (dealerData && isValidRecord<DealerProfileData>(dealerData)) {
           setProfileData(dealerData as DealerProfileData);
+          
+          // Set profile status based on dealer data
+          const status = getProfileStatus(dealerData as DealerProfileData);
+          setProfileStatus(status);
+          
+          // Check if profile needs recovery
+          const needsRecovery = checkProfileNeedsRecovery(dealerData as DealerProfileData);
+          setNeedsRecovery(needsRecovery);
+        } else {
+          // No dealer profile found
+          setProfileStatus('not_found');
+          setNeedsRecovery(true);
         }
 
       } catch (err) {
@@ -74,7 +88,7 @@ export const useDealerProfileData = (userId: string | null | undefined) => {
 
     try {
       const { error } = await supabase
-        .from('dealer_profiles')
+        .from('dealers')
         .update(data)
         .eq('id', profileData.id);
 
@@ -98,7 +112,7 @@ export const useDealerProfileData = (userId: string | null | undefined) => {
 
     try {
       const { error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({ profile_status: status })
         .eq('id', userId);
 

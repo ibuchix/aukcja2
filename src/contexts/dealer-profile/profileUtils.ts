@@ -1,30 +1,62 @@
 
-import { REQUIRED_PROFILE_FIELDS } from "./types";
+import { DealerProfileData } from '@/types/dealer';
+import { isValidRecord } from '@/utils/supabaseHelpers';
+
+// Required fields for a complete dealer profile
+export const REQUIRED_PROFILE_FIELDS = [
+  'user_id',
+  'dealership_name',
+  'supervisor_name',
+  'tax_id',
+  'business_registry_number',
+  'address'
+];
 
 /**
- * Check if a profile is complete based on required fields
+ * Checks if a dealer profile has all required fields
  */
-export const checkProfileCompleteness = (profileData: any): { isComplete: boolean, missing: string[] } => {
-  if (!profileData) {
-    return { isComplete: false, missing: ["profile_not_found"] };
+export function checkProfileCompleteness(profile: DealerProfileData | null): { isComplete: boolean; missing: string[] } {
+  // Default response for empty profile
+  if (!profile) {
+    return { isComplete: false, missing: [...REQUIRED_PROFILE_FIELDS] };
   }
 
-  // Special case for profile_status explicitly set by backend
-  if (profileData.profile_status === "not_found") {
-    return { isComplete: false, missing: ["profile_not_found"] };
+  // Ensure we're working with a valid record
+  if (!isValidRecord(profile)) {
+    return { isComplete: false, missing: [...REQUIRED_PROFILE_FIELDS] };
   }
   
-  if (profileData.profile_status === "incomplete") {
-    // Use missing_fields if provided by the backend
-    const missing = Array.isArray(profileData.missing_fields) ? profileData.missing_fields : [];
-    return { isComplete: false, missing };
-  }
-
-  // For normal profiles, check required fields
+  // Check for missing required fields
   const missing = REQUIRED_PROFILE_FIELDS.filter(field => {
-    const value = profileData[field];
-    return value === undefined || value === null || value === '';
+    const value = profile[field as keyof DealerProfileData];
+    return value === null || value === undefined || value === '';
   });
+  
+  return {
+    isComplete: missing.length === 0,
+    missing
+  };
+}
 
-  return { isComplete: missing.length === 0, missing };
-};
+/**
+ * Checks if a dealer profile needs recovery
+ */
+export function checkProfileNeedsRecovery(profile: DealerProfileData | null): boolean {
+  if (!profile) return true;
+  
+  // Check if the profile exists but is incomplete
+  const { isComplete } = checkProfileCompleteness(profile);
+  return !isComplete;
+}
+
+/**
+ * Gets profile status based on profile data and completeness
+ */
+export function getProfileStatus(profileData: DealerProfileData | null): string {
+  if (!profileData) return 'not_found';
+  
+  const { isComplete } = checkProfileCompleteness(profileData);
+  if (!isComplete) return 'incomplete';
+  
+  return profileData.verification_status || 'pending';
+}

@@ -25,18 +25,39 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
     setIsLoading 
   } = useAuthState();
   
-  const { signOut, refreshSession } = useAuthActions();
-  const { signIn } = useSignInHandler(setIsLoading, setSession, setUser, setProfile);
+  const { signOut } = useAuthActions();
+  const { signIn } = useSignInHandler();
   
   // Get session manager
   const { registerRefreshFunction } = useSessionManager();
 
   // Create memoized refresh function to avoid dependency issues
-  // We only re-create this if refreshSession changes
   const memoizedRefreshSession = useCallback(() => {
     console.log("Memoized refresh session called");
+    // We'll implement this refresh function directly here instead of using refreshSession from useAuthActions
+    const refreshSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.refreshSession();
+        if (error) throw error;
+        
+        if (data.session) {
+          setSession(data.session);
+          setUser(data.user);
+          return { success: true, session: data.session, user: data.user };
+        } else {
+          throw new Error("No session returned");
+        }
+      } catch (error) {
+        console.error('Session refresh error:', error);
+        return { 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Failed to refresh session' 
+        };
+      }
+    };
+    
     return refreshSession();
-  }, [refreshSession]);
+  }, [setSession, setUser]);
   
   // Use a ref to track initialization to prevent multiple initializations
   const initRef = useRef(false);
@@ -50,7 +71,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
     initRef.current = true;
     
     // Don't include dependencies that would cause this to run multiple times
-  }, [registerRefreshFunction]);
+  }, [registerRefreshFunction, memoizedRefreshSession]);
 
   // Create the auth context value
   const value = {
@@ -59,8 +80,14 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
     profile,
     isLoading,
     isAuthenticated: !!user,
-    signOut,
-    refreshSession,
+    signOut: async () => {
+      const result = await signOut();
+      return result.success ? Promise.resolve() : Promise.reject(result.error);
+    },
+    refreshSession: async () => {
+      const result = await memoizedRefreshSession();
+      return result.success ? Promise.resolve() : Promise.reject(result.error);
+    },
     signIn,
   };
 
@@ -78,3 +105,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 // Re-export useAuth from context
 export { useAuth } from './context';
+
+import { supabase } from '@/integrations/supabase/client';

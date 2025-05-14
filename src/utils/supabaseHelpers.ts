@@ -72,6 +72,14 @@ export function isSelectQueryError(obj: any): obj is SelectQueryError {
 }
 
 /**
+ * Type guard to check if an object is a SelectQueryError
+ * Helpful for handling errors in nested relations
+ */
+export function isSelectQueryError(obj: any): obj is SelectQueryError {
+  return obj && typeof obj === 'object' && obj.error === true;
+}
+
+/**
  * Type guard to check if an item is a valid database record (not an error)
  */
 export function isValidRecord<T extends { id?: string }>(item: any): item is T {
@@ -255,7 +263,7 @@ export function safelyFilterData<T>(
   typeGuard: (item: any) => item is T
 ): T[] {
   if (!data || !Array.isArray(data)) return [];
-  return data.filter(typeGuard);
+  return data.filter(item => !isSelectQueryError(item) && typeGuard(item));
 }
 
 /**

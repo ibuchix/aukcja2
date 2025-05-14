@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RegistrationData, CompleteRegistrationOptions, OperationResult } from '@/types/profile'; 
+import { isValidRecord } from '@/utils/supabaseHelpers';
 
 interface UseCompleteRegistrationReturn {
   submitRegistration: (
@@ -57,17 +58,20 @@ export const useCompleteRegistration = (): UseCompleteRegistrationReturn => {
       }
 
       // Create or update dealer profile
-      const dealerData = await supabase
+      const { data: dealerData, error: dealerError } = await supabase
         .from('dealer_profiles')
         .upsert(dealerProfile)
         .select('id');
 
-      if (dealerData.error) {
-        throw new Error(`Failed to create dealer profile: ${dealerData.error.message}`);
+      if (dealerError) {
+        throw new Error(`Failed to create dealer profile: ${dealerError.message}`);
       }
 
-      const dealerId = dealerData.data && dealerData.data.length > 0 ? 
-        dealerData.data[0]?.id : undefined;
+      // Safely get dealer ID
+      let dealerId: string | undefined = undefined;
+      if (dealerData && Array.isArray(dealerData) && dealerData.length > 0 && isValidRecord(dealerData[0])) {
+        dealerId = dealerData[0].id;
+      }
 
       // Set the user's custom claim to indicate registration is complete
       const { error: metadataError } = await supabase.auth.updateUser({
@@ -108,7 +112,7 @@ export const useCompleteRegistration = (): UseCompleteRegistrationReturn => {
         options.onSuccess();
       }
 
-      return { success: true };
+      return { success: true, data: { success: true } };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       setError(errorMessage);
