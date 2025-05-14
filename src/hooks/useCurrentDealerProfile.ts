@@ -1,86 +1,74 @@
 
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/auth/context";
-import { supabase } from "@/integrations/supabase/client";
-import { DealerRecord } from "@/utils/databaseTypes";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { isValidRecord } from '@/utils/supabaseHelpers';
 
-/**
- * Hook for fetching and managing the current dealer's profile
- */
+interface DealerProfile {
+  id: string;
+  user_id: string;
+  dealership_name: string;
+  supervisor_name: string;
+  tax_id: string; 
+  business_registry_number: string;
+  address: string;
+  verification_status: string;
+  is_verified: boolean;
+  license_number: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export function useCurrentDealerProfile() {
-  const { user, isLoading: isAuthLoading } = useAuth();
-  const [dealerProfile, setDealerProfile] = useState<DealerRecord | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [dealerProfile, setDealerProfile] = useState<DealerProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
 
   useEffect(() => {
-    let isMounted = true;
-    
-    const fetchDealerProfile = async () => {
-      if (!user || isAuthLoading) {
-        if (isMounted) setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-      
+    async function fetchDealerProfile() {
       try {
-        console.log("Fetching dealer profile for:", user.id);
+        setIsLoading(true);
+        setError(null);
         
-        const { data, error } = await supabase
-          .from('dealers')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
+        // Get current user
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error("Error fetching dealer profile:", error);
-          setError(error.message);
-          
-          // Show toast only for non-network errors
-          if (!error.message.includes('network')) {
-            toast({
-              title: "Error loading profile",
-              description: "There was a problem loading your profile information.",
-              variant: "destructive",
-            });
-          }
+        if (!session?.user) {
+          console.log('No authenticated user when fetching dealer profile');
+          setIsLoading(false);
           return;
         }
         
-        if (data) {
-          console.log("Dealer profile loaded successfully");
-          if (isMounted) setDealerProfile(data as DealerRecord);
-        } else {
-          console.warn("No dealer profile found for user:", user.id);
-          setError("No dealer profile found");
+        // Fetch dealer profile
+        const { data, error } = await supabase
+          .from('dealers')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+          
+        if (error) {
+          console.error('Error fetching dealer profile:', error);
+          setError(error.message);
+          return;
+        }
+        
+        if (data && isValidRecord<DealerProfile>(data)) {
+          setDealerProfile(data as DealerProfile);
         }
       } catch (err) {
-        console.error("Unexpected error fetching dealer profile:", err);
-        setError(err instanceof Error ? err.message : "Unknown error");
+        console.error('Unexpected error fetching dealer profile:', err);
+        setError('An unexpected error occurred');
       } finally {
-        if (isMounted) setIsLoading(false);
+        setIsLoading(false);
       }
-    };
-
-    fetchDealerProfile();
+    }
     
-    return () => {
-      isMounted = false;
-    };
-  }, [user, isAuthLoading, toast]);
-
+    fetchDealerProfile();
+  }, []);
+  
   return {
     dealerProfile,
     isLoading,
     error,
-    hasProfile: !!dealerProfile,
-    refresh: () => {
-      setIsLoading(true);
-      setError(null);
-    }
+    isVerified: dealerProfile?.is_verified || false
   };
 }

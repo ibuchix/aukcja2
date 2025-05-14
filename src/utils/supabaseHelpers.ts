@@ -75,7 +75,7 @@ export function isSelectQueryError(obj: any): obj is SelectQueryError {
 /**
  * Type guard to check if an item is a valid database record (not an error)
  */
-export function isValidRecord<T extends { id: string }>(item: any): item is T {
+export function isValidRecord<T extends { id?: string }>(item: any): item is T {
   if (!item || typeof item !== 'object') return false;
   
   // Check if this is a SelectQueryError
@@ -139,6 +139,41 @@ export function isValidBid(bid: any): bid is {
 }
 
 /**
+ * Type guard specifically for checking car data validity
+ */
+export function isValidCarData(item: any): item is {
+  id: string;
+  title?: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  auction_end_time?: string;
+  current_bid?: number;
+  auction_status?: string;
+} {
+  if (!item || typeof item !== 'object') return false;
+  if (isSelectQueryError(item)) return false;
+  
+  return 'id' in item && typeof item.id === 'string';
+}
+
+/**
+ * Type guard for proxy bid data
+ */
+export function isValidProxyBidData(item: any): item is {
+  car_id: string;
+  max_bid_amount: number;
+} {
+  if (!item || typeof item !== 'object') return false;
+  if (isSelectQueryError(item)) return false;
+  
+  return 'car_id' in item && 
+    'max_bid_amount' in item && 
+    typeof item.car_id === 'string' &&
+    typeof item.max_bid_amount === 'number';
+}
+
+/**
  * Type guard specifically for watchlist items
  */
 export function isValidWatchlistItem(item: any): item is {
@@ -173,109 +208,45 @@ export function isValidProxyLog(item: any): item is {
 }
 
 /**
- * Type guard for car data
+ * Type guard for auction data
  */
-export function isValidCarData(item: any): item is {
+export function isValidAuctionData(item: any): item is {
   id: string;
-  title?: string;
-  make?: string;
-  model?: string;
-  year?: number;
-  auction_end_time?: string;
-  current_bid?: number;
-  auction_status?: string;
+  car_id?: string;
+  start_time?: string;
+  end_time?: string;
+  status?: string;
 } {
   if (!item || typeof item !== 'object') return false;
   if (isSelectQueryError(item)) return false;
   
-  return 'id' in item;
+  return 'id' in item && typeof item.id === 'string';
 }
 
 /**
- * Type guard for proxy bid data
+ * Type guard for bid history item
  */
-export function isValidProxyBidData(item: any): item is {
-  car_id: string;
-  max_bid_amount: number;
-} {
-  if (!item || typeof item !== 'object') return false;
-  if (isSelectQueryError(item)) return false;
-  
-  return 'car_id' in item && 'max_bid_amount' in item;
-}
-
-/**
- * Enhanced type guard for bid data with all necessary properties
- */
-export function isValidBidFullData(item: any): item is {
+export function isValidBidHistoryItem(item: any): item is {
   id: string;
   car_id: string;
-  dealer_id?: string;
+  dealer_id: string;
   amount: number;
   status?: string;
   created_at: string;
-  updated_at?: string;
-} {
-  if (!isValidBid(item)) return false;
-  
-  // Check for additional required properties
-  return 'id' in item && 
-    'car_id' in item && 
-    'amount' in item && 
-    'created_at' in item;
-}
-
-/**
- * Type guard for audit log entries with details
- */
-export function isValidAuditLog(item: any): item is {
-  id: string;
-  entity_id: string;
-  user_id?: string;
-  details?: Record<string, any>;
-  created_at: string;
+  dealer_name?: string;
 } {
   if (!item || typeof item !== 'object') return false;
   if (isSelectQueryError(item)) return false;
   
-  return 'id' in item && 
-    'entity_id' in item && 
+  return 'id' in item &&
+    'car_id' in item &&
+    'dealer_id' in item &&
+    'amount' in item &&
     'created_at' in item;
 }
 
 /**
- * Type guard for checking if an object has the necessary watchlist properties with car relation
- */
-export function isValidWatchlistWithCar(item: any): item is {
-  id: string;
-  car_id: string;
-  cars: {
-    id: string;
-    title?: string;
-    make?: string;
-    model?: string;
-    year?: number;
-    price?: number;
-    auction_end_time?: string;
-    auction_status?: string;
-    is_auction?: boolean;
-    reserve_price?: number;
-  };
-} {
-  if (!item || typeof item !== 'object') return false;
-  if (isSelectQueryError(item)) return false;
-  if (!('id' in item && 'car_id' in item && 'cars' in item)) return false;
-  
-  // Check if cars property exists and is not an error
-  const cars = item.cars;
-  if (!cars || typeof cars !== 'object' || isSelectQueryError(cars)) return false;
-  
-  // Check if cars has the required id property
-  return 'id' in cars && typeof cars.id === 'string';
-}
-
-/**
- * Safe type assertion helper for dealing with potential errors
+ * Safe function to filter data using a type guard
  * @param data The data to check
  * @param typeGuard The type guard function to use
  * @returns The data filtered by the type guard, or an empty array if there was an error
@@ -286,4 +257,16 @@ export function safelyFilterData<T>(
 ): T[] {
   if (!data || !Array.isArray(data)) return [];
   return data.filter(typeGuard);
+}
+
+/**
+ * Generic helper to format data for the UI with proper type checking
+ */
+export function formatForDisplay<T, U>(
+  data: any[] | null | undefined,
+  typeGuard: (item: any) => item is T,
+  mapper: (item: T) => U
+): U[] {
+  const validItems = safelyFilterData(data, typeGuard);
+  return validItems.map(mapper);
 }

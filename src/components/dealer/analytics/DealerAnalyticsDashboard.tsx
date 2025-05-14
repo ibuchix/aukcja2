@@ -13,7 +13,7 @@ export function DealerAnalyticsDashboard() {
     dateRange: 'month'
   });
   const isMobile = useIsMobile();
-  const { analyticsData, isLoading, error } = useAnalyticsData(filters);
+  const { metrics, loading, error } = useAnalyticsData(filters);
 
   const handleFilterChange = (newFilters: BidAnalyticsFilters) => {
     setFilters(newFilters);
@@ -45,7 +45,7 @@ export function DealerAnalyticsDashboard() {
               Error loading analytics: {error}
             </div>
           ) : (
-            <BidAnalyticsCard analyticsData={analyticsData} isLoading={isLoading} />
+            <BidAnalyticsCard analyticsData={metrics} isLoading={loading} />
           )}
         </CardContent>
       </Card>

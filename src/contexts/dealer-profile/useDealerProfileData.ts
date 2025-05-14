@@ -99,7 +99,7 @@ export function useDealerProfileData() {
       }
       
       // Check if the profileData is a valid dealer profile
-      if (isValidRecord<DealerProfileData>(profileData)) {
+      if (isValidRecord(profileData)) {
         // Process the profile data and determine completeness
         setRawProfile(profileData);
         

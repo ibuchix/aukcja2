@@ -66,8 +66,8 @@ export function useCompleteRegistration() {
 
       if (existingProfile) {
         // Update existing profile
-        const result = await wrapSupabaseOperation(() => 
-          supabase
+        const result = await wrapSupabaseOperation(async () => {
+          const { data, error } = await supabase
             .from("dealers")
             .update({
               dealership_name: data.dealershipName,
@@ -78,16 +78,18 @@ export function useCompleteRegistration() {
               license_number: data.businessRegistryNumber, // Provide fallback for license_number
               updated_at: new Date().toISOString()
             })
-            .eq("user_id", userId)
-        );
+            .eq("user_id", userId);
+          
+          return { data, error };
+        });
 
         if (!result.success) {
           throw result.error;
         }
       } else {
         // Create new dealer profile
-        const result = await wrapSupabaseOperation(() => 
-          supabase
+        const result = await wrapSupabaseOperation(async () => {
+          const { data, error } = await supabase
             .from("dealers")
             .insert({
               user_id: userId,
@@ -99,8 +101,10 @@ export function useCompleteRegistration() {
               license_number: data.businessRegistryNumber, // Provide required license_number
               verification_status: 'pending',
               is_verified: false
-            })
-        );
+            });
+          
+          return { data, error };
+        });
 
         if (!result.success) {
           throw result.error;
@@ -163,6 +167,8 @@ export function useCompleteRegistration() {
   return {
     submitRegistration,
     isSubmitting,
-    error
+    error,
+    handleSubmit: (data: RegistrationData) => submitRegistration(data),
+    formErrors: null
   };
 }

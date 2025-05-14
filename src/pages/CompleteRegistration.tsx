@@ -16,10 +16,32 @@ export default function CompleteRegistration() {
   const [userData, setUserData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   
-  const { isSubmitting, formErrors, handleSubmit } = useCompleteRegistration(
-    state?.userId || userData?.id
-  );
+  const { submitRegistration, isSubmitting, error } = useCompleteRegistration();
 
+  // Handle form submission
+  const handleSubmit = async (formData: any) => {
+    const userId = state?.userId || userData?.id;
+    
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "User ID is missing. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const result = await submitRegistration(formData, {
+      onSuccess: () => {
+        navigate('/dealer/dashboard');
+      }
+    });
+
+    if (!result.success) {
+      console.error("Registration failed:", result.error);
+    }
+  };
+  
   // Fetch user data if we're in recovery mode but don't have userId in state
   useEffect(() => {
     async function fetchCurrentUser() {
@@ -104,7 +126,7 @@ export default function CompleteRegistration() {
         onSubmit={handleSubmit}
         defaultEmail={userEmail}
         isSubmitting={isSubmitting}
-        formErrors={formErrors}
+        formErrors={{}}
         showPasswordFields={false}
       />
     </RegistrationCard>

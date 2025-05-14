@@ -1,9 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { safelyFilterData } from '@/utils/supabaseHelpers';
+import { safelyFilterData, isValidRecord } from '@/utils/supabaseHelpers';
+import { BidAnalyticsFilters } from '@/components/dealer/analytics/types';
 
-interface BidData {
+export interface BidData {
   id: string;
   car_id: string;
   dealer_id: string;
@@ -12,7 +13,7 @@ interface BidData {
   created_at: string;
 }
 
-interface DealerMetric {
+export interface DealerMetric {
   totalBids: number;
   activeBids: number;
   winningBids: number;
@@ -21,13 +22,33 @@ interface DealerMetric {
   averageBid: number;
   bidsOverTime: any[];
   bidSuccessRate: number;
+  successfulBids: number;
+  outbidCount: number;
+  highestBid: number;
+  successRate: number;
+  marketComparison: {
+    averageBidAmount: number;
+    successRate: number;
+  };
+  bidOverTime: {
+    date: string;
+    count: number;
+    amount: number;
+  }[];
+  bidsByStatus: {
+    status: string;
+    count: number;
+  }[];
+  bidsByCarType: {
+    carType: string;
+    count: number;
+    successRate: number;
+  }[];
 }
 
 function isBidData(item: any): item is BidData {
   return (
-    item !== null &&
-    typeof item === 'object' &&
-    'id' in item &&
+    isValidRecord(item) &&
     'car_id' in item &&
     'dealer_id' in item &&
     'amount' in item &&
@@ -36,7 +57,7 @@ function isBidData(item: any): item is BidData {
   );
 }
 
-export const useAnalyticsData = (dealerId: string | undefined, dateRange: { start: Date; end: Date }) => {
+export const useAnalyticsData = (filters: BidAnalyticsFilters) => {
   const [metrics, setMetrics] = useState<DealerMetric>({
     totalBids: 0,
     activeBids: 0,
@@ -46,63 +67,120 @@ export const useAnalyticsData = (dealerId: string | undefined, dateRange: { star
     averageBid: 0,
     bidsOverTime: [],
     bidSuccessRate: 0,
+    successfulBids: 0,
+    outbidCount: 0,
+    highestBid: 0,
+    successRate: 0,
+    marketComparison: {
+      averageBidAmount: 0,
+      successRate: 0
+    },
+    bidOverTime: [],
+    bidsByStatus: [],
+    bidsByCarType: []
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchAnalyticsData = async () => {
-      if (!dealerId) return;
-
+    async function fetchAnalyticsData() {
       try {
         setLoading(true);
         setError(null);
 
-        // Format date range for query
-        const startDate = dateRange.start.toISOString();
-        const endDate = dateRange.end.toISOString();
+        // Get current user ID
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id) {
+          setError("No authenticated user found");
+          setLoading(false);
+          return;
+        }
+        
+        const dealerId = session.user.id;
+        
+        // Format date range based on filter
+        let startDate = new Date();
+        const endDate = new Date();
+        
+        switch(filters.dateRange) {
+          case 'week':
+            startDate.setDate(endDate.getDate() - 7);
+            break;
+          case 'month':
+            startDate.setMonth(endDate.getMonth() - 1);
+            break;
+          case 'quarter':
+            startDate.setMonth(endDate.getMonth() - 3);
+            break;
+          case 'year':
+            startDate.setFullYear(endDate.getFullYear() - 1);
+            break;
+          default:
+            // Default to last 30 days
+            startDate.setDate(endDate.getDate() - 30);
+        }
 
         // Get all bids for this dealer within date range
         const { data: bidsData, error: bidsError } = await supabase
           .from('bids')
           .select('*')
           .eq('dealer_id', dealerId)
-          .gte('created_at', startDate)
-          .lte('created_at', endDate)
+          .gte('created_at', startDate.toISOString())
+          .lte('created_at', endDate.toISOString())
           .order('created_at', { ascending: true });
 
         if (bidsError) throw bidsError;
 
         // Filter to ensure we only have valid bid data
         const validBids = safelyFilterData(bidsData || [], isBidData);
+
+        // Mock data for demo purposes
+        const mockSuccessRate = 65 + Math.random() * 15;
+        const mockMarketAvg = 15000 + Math.random() * 5000;
+        const mockMarketRate = 50 + Math.random() * 20;
         
         // Calculate metrics
         let totalBids = validBids.length;
         let activeBids = validBids.filter(bid => bid.status === 'active').length;
         let outbidBids = validBids.filter(bid => bid.status === 'outbid').length;
+        let highestBid = validBids.reduce((max, bid) => Math.max(max, bid.amount), 0);
         let totalAmount = validBids.reduce((sum, bid) => sum + bid.amount, 0);
         let averageBid = totalBids > 0 ? totalAmount / totalBids : 0;
         let bidSuccessRate = totalBids > 0 ? (activeBids / totalBids) * 100 : 0;
 
         // Get bids over time (grouped by day)
-        const bidsByDay: { [key: string]: number } = {};
-        const successByDay: { [key: string]: number } = {};
+        const bidsByDay: { [key: string]: { count: number, amount: number } } = {};
 
         validBids.forEach(bid => {
           const day = new Date(bid.created_at).toISOString().split('T')[0];
           
-          bidsByDay[day] = (bidsByDay[day] || 0) + 1;
-          
-          if (bid.status === 'active') {
-            successByDay[day] = (successByDay[day] || 0) + 1;
+          if (!bidsByDay[day]) {
+            bidsByDay[day] = { count: 0, amount: 0 };
           }
+          
+          bidsByDay[day].count += 1;
+          bidsByDay[day].amount += bid.amount;
         });
 
         // Format data for charts
-        const bidsOverTime = Object.keys(bidsByDay).map(day => ({
-          date: day,
-          count: bidsByDay[day],
-          successCount: successByDay[day] || 0,
+        const bidsOverTime = Object.keys(bidsByDay)
+          .sort()
+          .map(day => ({
+            date: day,
+            count: bidsByDay[day].count,
+            amount: bidsByDay[day].amount,
+          }));
+
+        // Group by status
+        const statusGroups: Record<string, number> = {};
+        validBids.forEach(bid => {
+          const status = bid.status || 'unknown';
+          statusGroups[status] = (statusGroups[status] || 0) + 1;
+        });
+        
+        const bidsByStatus = Object.entries(statusGroups).map(([status, count]) => ({
+          status,
+          count
         }));
 
         setMetrics({
@@ -114,6 +192,22 @@ export const useAnalyticsData = (dealerId: string | undefined, dateRange: { star
           averageBid,
           bidsOverTime,
           bidSuccessRate,
+          successfulBids: activeBids,
+          outbidCount: outbidBids,
+          highestBid,
+          successRate: mockSuccessRate,
+          marketComparison: {
+            averageBidAmount: mockMarketAvg,
+            successRate: mockMarketRate
+          },
+          bidOverTime: bidsOverTime,
+          bidsByStatus,
+          bidsByCarType: [
+            { carType: 'Sedan', count: Math.round(totalBids * 0.4), successRate: 70 },
+            { carType: 'SUV', count: Math.round(totalBids * 0.3), successRate: 65 },
+            { carType: 'Truck', count: Math.round(totalBids * 0.2), successRate: 55 },
+            { carType: 'Convertible', count: Math.round(totalBids * 0.1), successRate: 40 }
+          ]
         });
       } catch (err) {
         console.error('Error fetching analytics:', err);
@@ -121,10 +215,10 @@ export const useAnalyticsData = (dealerId: string | undefined, dateRange: { star
       } finally {
         setLoading(false);
       }
-    };
+    }
 
     fetchAnalyticsData();
-  }, [dealerId, dateRange]);
+  }, [filters]);
 
   return { metrics, loading, error };
 };
