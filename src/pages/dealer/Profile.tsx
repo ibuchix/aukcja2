@@ -1,266 +1,165 @@
-
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, FileText, User as UserIcon } from "lucide-react"; // Renamed the User import to UserIcon
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { profileFormSchema, DealerProfileFormValues } from "@/schemas/profileFormSchema";
-import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Pencil, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { isValidRecord } from "@/utils/supabaseHelpers";
 
-const Profile = () => {
-  const { user } = useAuth();
+export default function Profile() {
+  const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<any>(null);
-  const [submitting, setSubmitting] = useState(false);
 
-  const form = useForm<DealerProfileFormValues>({
-    resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      dealershipName: "",
-      supervisorName: "",
-      taxId: "",
-      businessRegistryNumber: "",
-      address: "",
-      licenseNumber: "",
+  const { data: dealer, isLoading } = useQuery({
+    queryKey: ['dealerProfile'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        navigate('/auth');
+        return null;
+      }
+
+      const { data, error } = await supabase
+        .from('dealers')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching dealer profile:", error);
+        return null;
+      }
+
+      return data;
     },
   });
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user?.id) return;
+    if (!isLoading && !dealer) {
+      toast({
+        title: "Error",
+        description: "Could not load dealer profile. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [dealer, isLoading, toast]);
 
-      try {
-        const { data, error } = await supabase
-          .from("dealers")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
 
-        if (error) throw error;
+  const handleSaveClick = () => {
+    setIsEditing(false);
+  };
 
-        // Use isValidRecord to safely check if data is a valid record
-        if (data && isValidRecord(data)) {
-          setProfile(data);
-          form.reset({
-            dealershipName: data.dealership_name || "",
-            supervisorName: data.supervisor_name || "",
-            taxId: data.tax_id || "",
-            businessRegistryNumber: data.business_registry_number || "",
-            address: data.address || "",
-            licenseNumber: data.license_number || "",
-          });
-        }
-      } catch (error: any) {
-        console.error("Error fetching profile:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load profile. Please try again.",
-          variant: "destructive",
-        });
-      }
+  const handleCancelClick = () => {
+    setIsEditing(false);
+  };
+
+  // When accessing dealer data, add a type check:
+  const formattedDealerData = useMemo(() => {
+    if (!dealer || !isValidRecord(dealer)) return null;
+
+    return {
+      dealershipName: dealer.dealership_name || '',
+      supervisorName: dealer.supervisor_name || '',
+      taxId: dealer.tax_id || '',
+      businessRegistryNumber: dealer.business_registry_number || '',
+      address: dealer.address || '',
+      licenseNumber: dealer.license_number || '',
     };
+  }, [dealer]);
 
-    fetchProfile();
-  }, [user, toast, form]);
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Loading Profile...</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center space-x-2">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <p>Fetching your profile details...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  const updateProfile = async (values: DealerProfileFormValues) => {
-    setSubmitting(true);
-    
-    try {
-      const { data, error } = await supabase
-        .from('dealers')
-        .update({
-          dealership_name: values.dealershipName,
-          supervisor_name: values.supervisorName,
-          tax_id: values.taxId,
-          business_registry_number: values.businessRegistryNumber,
-          address: values.address,
-          license_number: values.licenseNumber,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user?.id)
-        .select()
-        .single();
-        
-      if (error) throw error;
-      
-      // Safely check if data is valid before accessing properties
-      if (data && isValidRecord(data)) {
-        setProfile(data);
-        toast({
-          title: "Profile updated",
-          description: "Your profile has been successfully updated.",
-        });
-      } else {
-        throw new Error("Invalid data returned from update operation");
-      }
-    } catch (error: any) {
-      console.error("Error updating profile:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      navigate("/auth");
-    } catch (error) {
-      console.error("Logout error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to logout. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+  if (!formattedDealerData) {
+    return (
+      <div className="container mx-auto p-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Profile Not Available</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Failed to load profile data. Please try again later.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto p-4">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-2xl font-bold flex items-center">
-            <UserIcon className="mr-2 h-5 w-5" />
-            Dealer Profile
-          </CardTitle>
-          <Button variant="destructive" onClick={handleLogout}>
-            Logout
-          </Button>
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">Dealer Profile</CardTitle>
+          <CardDescription>View and manage your dealer profile information.</CardDescription>
         </CardHeader>
-        <CardDescription>
-          Manage your dealer profile information here.
-        </CardDescription>
-        <CardContent className="space-y-4">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(updateProfile)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent>
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Dealership Information</h3>
+              <div className="grid gap-2">
                 <div>
-                  <FormField
-                    control={form.control}
-                    name="dealershipName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Dealership Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter dealership name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <p className="text-gray-600">Dealership Name:</p>
+                  <p className="font-medium">{formattedDealerData.dealershipName}</p>
                 </div>
                 <div>
-                  <FormField
-                    control={form.control}
-                    name="supervisorName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Supervisor Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter supervisor name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <p className="text-gray-600">Supervisor Name:</p>
+                  <p className="font-medium">{formattedDealerData.supervisorName}</p>
                 </div>
               </div>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Business Details</h3>
+              <div className="grid gap-2">
                 <div>
-                  <FormField
-                    control={form.control}
-                    name="taxId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tax ID</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter tax ID" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <p className="text-gray-600">Tax ID:</p>
+                  <p className="font-medium">{formattedDealerData.taxId}</p>
                 </div>
                 <div>
-                  <FormField
-                    control={form.control}
-                    name="businessRegistryNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Business Registry Number</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter business registry number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <p className="text-gray-600">Business Registry Number:</p>
+                  <p className="font-medium">{formattedDealerData.businessRegistryNumber}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Address:</p>
+                  <p className="font-medium">{formattedDealerData.address}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">License Number:</p>
+                  <p className="font-medium">{formattedDealerData.licenseNumber}</p>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Address</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter address" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="licenseNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>License Number</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter license number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <Button type="submit" disabled={submitting}>
-                {submitting ? "Updating..." : "Update Profile"}
-              </Button>
-            </form>
-          </Form>
+          <div className="flex justify-end mt-4">
+            <Button variant="secondary" onClick={handleEditClick}>
+              <Pencil className="w-4 h-4 mr-2" />
+              Edit Profile
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
   );
-};
-
-export default Profile;
+}

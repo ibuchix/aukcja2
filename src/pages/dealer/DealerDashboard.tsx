@@ -1,146 +1,133 @@
-
-import { useAuth } from "@/contexts/AuthContext";
-import { useWelcomeDashboardData } from "@/hooks/useWelcomeDashboardData";
-import { DashboardLayout } from "@/components/dealer/dashboard/DashboardLayout";
-import { DealerWelcomeCard } from "@/components/dealer/dashboard/DealerWelcomeCard";
-import { QuickActions } from "@/components/dealer/dashboard/QuickActions";
-import { BusinessActionSection } from "@/components/dealer/dashboard/BusinessActionSection";
-import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
-import { useEffect } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard";
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DealerProfileProvider } from "@/contexts/DealerProfileContext";
-import { DealerProfile } from "@/components/dealer/DealerProfile";
-import { DealerAnalyticsDashboard } from "@/components/dealer/analytics/DealerAnalyticsDashboard";
-import { AdminTools } from "@/components/dealer/dashboard/AdminTools";
-import { usePermissions } from "@/hooks/usePermissions";
-import { PermissionGate } from "@/components/PermissionGate";
-import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
-import { WatchlistManagement } from "@/components/dealer/dashboard/WatchlistManagement";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Home } from "lucide-react";
+import { Link } from "react-router-dom";
 import { isValidRecord } from "@/utils/supabaseHelpers";
 
-export default function DealerDashboard() {
-  const { user, isLoading: isAuthLoading, refreshSession } = useAuth();
-  const { recentActivity, directQueryResult } = useWelcomeDashboardData(user, isAuthLoading);
+interface MainDashboardProps {
+  dealerId: string;
+}
+
+const MainDashboard: React.FC<MainDashboardProps> = ({ dealerId }) => {
+  return (
+    <div className="container mx-auto p-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Welcome to Your Dashboard</CardTitle>
+          <CardDescription>Dealer ID: {dealerId}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {/* Add your main dashboard content here */}
+          <p>This is the main dashboard content for dealer ID: {dealerId}</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+const LoadingDashboard = () => {
+  return (
+    <div className="container mx-auto p-4">
+      <Card>
+        <CardHeader>
+          <CardTitle><Skeleton className="h-6 w-40" /></CardTitle>
+          <CardDescription><Skeleton className="h-4 w-64" /></CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-32" />
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+const DealerDashboard = () => {
   const navigate = useNavigate();
-  const { isAdmin } = usePermissions();
-  const { dealerProfile } = useCurrentDealerProfile();
-  
-  // Get dealerId safely with null fallback
-  const dealerId = dealerProfile && isValidRecord(dealerProfile) ? dealerProfile.id : '';
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [dealer, setDealer] = useState<any>(null);
 
   useEffect(() => {
-    const debugRls = async () => {
-      if (user) {
-        console.log("DealerDashboard - Current auth state:", { 
-          userExists: !!user,
-          userId: user.id,
-          userEmail: user.email
-        });
-        
-        try {
-          const { data: jwtData, error: jwtError } = await supabase
-            .rpc('debug_auth_user_id');
-          
-          console.log("JWT Auth Claim Check:", {
-            success: !jwtError,
-            jwtUserId: jwtData,
-            matchesCurrentUser: user.id === jwtData,
-            error: jwtError?.message
+    const fetchDealerProfile = async () => {
+      setIsLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
+          navigate('/auth');
+          toast({
+            title: "Authentication Required",
+            description: "Please sign in to access your dashboard.",
+            variant: "destructive",
           });
-          
-          const { data: { session } } = await supabase.auth.getSession();
-          console.log("Session check:", {
-            hasSession: !!session,
-            hasAccessToken: !!session?.access_token,
-            expiresAt: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : null,
-            tokenType: session?.token_type
-          });
-        } catch (err) {
-          console.error("Error in RLS debug queries:", err);
+          return;
         }
+
+        const { data, error } = await supabase
+          .from('dealers')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching dealer profile:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load dealer profile. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data) {
+          setDealer(data);
+        } else {
+          toast({
+            title: "Profile Not Found",
+            description: "No dealer profile found. Please complete your registration.",
+            variant: "warning",
+          });
+          navigate('/auth/dealer-registration');
+        }
+      } catch (error) {
+        console.error("Unexpected error:", error);
+        toast({
+          title: "Unexpected Error",
+          description: "An unexpected error occurred. Please try again later.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
-    
-    debugRls();
-  }, [user]);
 
-  const handleManualRefresh = async () => {
-    await refreshSession();
-    window.location.reload();
-  };
-
-  if (isAuthLoading) {
-    return <LoadingDashboard />;
-  }
-
-  if (!user && !isAuthLoading) {
-    return (
-      <DashboardLayout title="Authentication Required">
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Authentication Required</AlertTitle>
-          <AlertDescription>
-            You need to be logged in to access the dealer dashboard.
-          </AlertDescription>
-        </Alert>
-        <Button 
-          onClick={() => navigate('/auth')}
-          className="w-full md:w-auto"
-        >
-          Go to Login
-        </Button>
-      </DashboardLayout>
-    );
-  }
+    fetchDealerProfile();
+  }, [navigate, toast]);
 
   return (
-    <DealerProfileProvider>
-      <DashboardLayout title={isAdmin ? "Admin Dashboard" : "Dealer Dashboard"}>
-        {directQueryResult && (
-          <Alert variant={directQueryResult.success ? "default" : "destructive"} className="mb-6">
-            {directQueryResult.success ? 
-              <CheckCircle className="h-4 w-4 text-green-500" /> : 
-              <AlertCircle className="h-4 w-4" />
-            }
-            <AlertTitle>
-              {directQueryResult.success ? "Direct Query Test Passed" : "Direct Query Test Failed"}
-            </AlertTitle>
-            <AlertDescription>
-              {directQueryResult.message}
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          <div className="col-span-2">
-            <DealerWelcomeCard />
+    <div className="min-h-screen bg-background">
+      <Link to="/" className="fixed top-6 left-6 p-2 text-gray-700 hover:text-primary transition-colors">
+        <Home size={24} />
+      </Link>
+      {isLoading ? (
+        <LoadingDashboard />
+      ) : (
+        dealer && isValidRecord(dealer) && 'id' in dealer ? (
+          <MainDashboard dealerId={dealer.id} />
+        ) : (
+          <div className="p-4 text-center">
+            Unable to load dealer profile. Please try again later.
           </div>
-          <div className="space-y-8">
-            {/* Admin tools visible only to admins */}
-            <PermissionGate action="manage" entityType="dealer">
-              <AdminTools />
-            </PermissionGate>
-            
-            <DealerProfile />
-            
-            <QuickActions />
-            
-            <DealerAnalyticsDashboard />
-            
-            <StatsSection recentActivity={recentActivity} />
-            
-            {/* Pass dealerId prop to WatchlistManagement only if available */}
-            {dealerId && <WatchlistManagement dealerId={dealerId} />}
-            
-            <BusinessActionSection />
-          </div>
-        </div>
-      </DashboardLayout>
-    </DealerProfileProvider>
+        )
+      )}
+    </div>
   );
-}
+};
+
+export default DealerDashboard;

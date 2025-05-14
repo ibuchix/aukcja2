@@ -1,8 +1,7 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { BidActivity, BidEventSubscription, BidMonitoringFilters } from "@/components/dealer/bid-monitoring/types";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { isValidRecord } from '@/utils/supabaseHelpers';
+import { isValidRecord, isValidCarData } from "@/utils/supabaseHelpers";
 
 class BidEventService {
   private static instance: BidEventService;
@@ -238,19 +237,36 @@ class BidEventService {
         if (!dealerError && dealerData) {
           // Check if dealer data is valid before accessing properties
           if (isValidRecord(dealerData)) {
-            activity.dealerName = dealerData.dealership_name || 'Unknown';
+            const dealerName = dealerData && isValidRecord(dealerData) 
+              ? dealerData.dealership_name || 'Unknown Dealer'
+              : 'Unknown Dealer';
+            
+            activity.dealerName = dealerName;
           }
         }
       }
       
       // Use isValidRecord to ensure we have valid car data before accessing properties
-      if (carData && isValidRecord(carData)) {
+      if (carData && isValidCarData(carData)) {
+        const carDetails = carData && isValidCarData(carData)
+          ? {
+              title: carData.title || 'Unknown Vehicle',
+              displayName: `${carData.year || ''} ${carData.make || ''} ${carData.model || ''}`,
+              auction_end_time: carData.auction_end_time
+            }
+          : {
+              title: 'Unknown Vehicle',
+              displayName: '',
+              auction_end_time: null
+            };
+        
         return {
           ...activity,
-          carTitle: carData.title || 
+          carTitle: carDetails.title || 
                     `${carData.year || ''} ${carData.make || ''} ${carData.model || ''}`.trim() || 
                     'Unknown Vehicle',
-          auctionEndTime: carData.auction_end_time
+          auctionEndTime: carDetails.auction_end_time,
+          dealerName: activity.dealerName
         };
       }
       
@@ -321,7 +337,7 @@ class BidEventService {
         .single();
       
       // Use proper type checking before accessing properties
-      if (car && isValidRecord(car)) {
+      if (car && isValidCarData(car)) {
         return {
           title: car.title || `${car.year || ''} ${car.make || ''} ${car.model || ''}`.trim() || 'Unknown Vehicle',
           year: car.year,

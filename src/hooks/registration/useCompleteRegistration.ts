@@ -50,6 +50,7 @@ export const useCompleteRegistration = () => {
         if (dealer && isValidRecord(dealer) && 'id' in dealer) {
           const dealerId = dealer.id;
 
+          // Create dealer verification record with type-safe dealerId
           const { error: verificationError } = await supabase
             .from('dealer_verifications')
             .insert({
