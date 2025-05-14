@@ -1,8 +1,9 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthContext } from './context';
+import { AuthContext } from './context';
 import { signOutUser, refreshUserSession } from './authUtils';
+import { useContext } from 'react';
 
 interface AuthActionResponse {
   success: boolean;
@@ -10,7 +11,7 @@ interface AuthActionResponse {
 }
 
 export const useAuthActions = () => {
-  const { setAuthState } = useAuthContext();
+  const { setAuthState } = useContext(AuthContext);
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -18,7 +19,7 @@ export const useAuthActions = () => {
     setIsLoading(true);
     try {
       const result = await signOutUser();
-      if (result === true || (typeof result === 'object' && result.success)) {
+      if (result === true || (typeof result === 'object' && result.success === true)) {
         setAuthState({
           user: null,
           session: null,
@@ -49,7 +50,7 @@ export const useAuthActions = () => {
     try {
       const result = await refreshUserSession();
       
-      if (result === true || (typeof result === 'object' && result.success)) {
+      if (result === true || (typeof result === 'object' && result.success === true)) {
         const session = typeof result === 'object' ? result.session : null;
         const user = session?.user || null;
         

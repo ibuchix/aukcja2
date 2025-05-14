@@ -20,24 +20,40 @@ const DealerProfileContext = createContext<DealerProfileContextType>({
 
 export const DealerProfileProvider = ({ children }: { children: ReactNode }) => {
   const {
-    displayProfile,
-    rawProfile,
-    isLoading,
-    error,
-    fetchAttempted,
+    profileData: rawProfile,
     profileStatus,
     needsRecovery,
-    missingFields,
-    profileIsComplete,
-    initiateProfileRecovery,
-    refreshProfile,
-    fetchDealerProfileData
+    loading: isLoading,
+    error,
+    updateProfileData,
+    updateProfileStatus
   } = useDealerProfileData();
 
-  // Fetch dealer profile on context init
+  // Derived values
+  const displayProfile = rawProfile;
+  const fetchAttempted = !isLoading;
+  const missingFields: string[] = [];
+  const profileIsComplete = !!(rawProfile && rawProfile.dealership_name);
+
+  // Initialize profile fetch
   useEffect(() => {
-    fetchDealerProfileData();
+    // This is handled by useDealerProfileData
   }, []);
+
+  // Profile recovery function
+  const initiateProfileRecovery = () => {
+    if (rawProfile) {
+      updateProfileStatus('active');
+    }
+  };
+
+  // Refresh profile function
+  const refreshProfile = async () => {
+    // We'll just reuse updateProfileData to trigger a refresh
+    if (rawProfile) {
+      await updateProfileData({});
+    }
+  };
 
   return (
     <DealerProfileContext.Provider

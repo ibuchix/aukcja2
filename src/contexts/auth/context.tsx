@@ -1,17 +1,30 @@
 
-import { createContext, useContext } from "react";
-import { AuthContextType, defaultContextValue } from "./types";
+import { createContext, useContext } from 'react';
+import { Session, User } from '@supabase/supabase-js';
 
-// Create the context with a default value
+export interface AuthContextType {
+  session: Session | null;
+  user: User | null;
+  profile: any | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  setAuthState?: (state: any) => void;
+  signOut: () => Promise<any>;
+  refreshSession: () => Promise<any>;
+  signIn: (credentials: { email: string; password: string; redirectTo?: string }) => Promise<any>;
+}
+
+export const defaultContextValue: AuthContextType = {
+  session: null,
+  user: null,
+  profile: null,
+  isLoading: true,
+  isAuthenticated: false,
+  signOut: async () => ({ success: false, error: 'Not implemented' }),
+  refreshSession: async () => ({ success: false, error: 'Not implemented' }),
+  signIn: async () => ({ success: false, error: 'Not implemented' }),
+};
+
 export const AuthContext = createContext<AuthContextType>(defaultContextValue);
 
-// Hook to use the auth context
-export function useAuth() {
-  const context = useContext(AuthContext);
-  
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  
-  return context;
-}
+export const useAuth = () => useContext(AuthContext);

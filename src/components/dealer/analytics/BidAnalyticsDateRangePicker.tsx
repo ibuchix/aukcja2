@@ -5,14 +5,47 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface BidAnalyticsDateRangePickerProps {
   filters: BidAnalyticsFilters;
   onFilterChange: (filters: BidAnalyticsFilters) => void;
+  onChange?: (range: { from: Date; to: Date } | undefined) => void;
+  currentRange?: { from: Date; to: Date } | undefined;
 }
 
-export function BidAnalyticsDateRangePicker({ filters, onFilterChange }: BidAnalyticsDateRangePickerProps) {
+export function BidAnalyticsDateRangePicker({ 
+  filters, 
+  onFilterChange,
+  onChange,
+  currentRange
+}: BidAnalyticsDateRangePickerProps) {
   const handleDateRangeChange = (value: string) => {
     onFilterChange({
       ...filters,
       dateRange: value as BidAnalyticsFilters['dateRange']
     });
+
+    if (onChange) {
+      // Convert selection to date range for components that expect this format
+      const now = new Date();
+      let from = new Date();
+      
+      switch(value) {
+        case 'week':
+          from.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          from.setMonth(now.getMonth() - 1);
+          break;
+        case 'quarter':
+          from.setMonth(now.getMonth() - 3);
+          break;
+        case 'year':
+          from.setFullYear(now.getFullYear() - 1);
+          break;
+        case 'all':
+          from = new Date(2020, 0, 1); // Some arbitrarily old date
+          break;
+      }
+      
+      onChange({ from, to: now });
+    }
   };
 
   return (

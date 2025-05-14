@@ -20,6 +20,21 @@ export interface DealerMetric {
     lost: number;
     pending: number;
   };
+  bidsByCarType: Array<{
+    carType: string;
+    count: number;
+    successRate: number;
+  }>;
+  bidOverTime: Array<{
+    date: string;
+    count: number;
+    amount: number;
+  }>;
+  outbidCount: number;
+  marketComparison: {
+    averageBidAmount: number;
+    successRate: number;
+  };
 }
 
 export interface BidAnalyticsData {
@@ -43,4 +58,23 @@ export interface BidAnalyticsData {
     lost: number;
     pending: number;
   };
+  bidsByCarType: Array<{
+    carType: string;
+    count: number;
+    successRate: number;
+  }>;
+  bidOverTime: Array<{
+    date: string;
+    count: number;
+    amount: number;
+  }>;
+  outbidCount: number;
+  marketComparison: {
+    averageBidAmount: number;
+    successRate: number;
+  };
 }
+
+export type BidAnalyticsFilters = {
+  dateRange: 'week' | 'month' | 'quarter' | 'year' | 'all';
+};

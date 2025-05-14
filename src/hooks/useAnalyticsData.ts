@@ -132,7 +132,7 @@ export const useAnalyticsData = (filters: BidAnalyticsFilters) => {
         if (bidsError) throw bidsError;
 
         // Filter to ensure we only have valid bid data
-        const validBids = safelyFilterData(bidsData || [], isBidData);
+        const validBids = safelyFilterData<BidData>(bidsData || [], isBidData);
 
         // Mock data for demo purposes
         const mockSuccessRate = 65 + Math.random() * 15;

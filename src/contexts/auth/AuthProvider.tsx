@@ -2,11 +2,11 @@
 import { useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthState } from "./useAuthState";
-import { useAuthActions } from "./useAuthActions";
-import { useSignInHandler } from "./useSignInHandler";
-import { useSessionManager } from "@/hooks/useSessionManager";
 import { AuthContext } from "./context";
 import { defaultContextValue } from "./types";
+import { useSessionManager } from "@/hooks/useSessionManager";
+import { useAuthActions } from "./useAuthActions";
+import { useSignInHandler } from "./useSignInHandler";
 
 // Provider that can be used with Router hooks
 export function AuthProviderWithRouter({ children }: { children: React.ReactNode }) {
@@ -25,19 +25,8 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
     setIsLoading 
   } = useAuthState();
   
-  const { signOut, refreshSession } = useAuthActions(
-    setIsLoading,
-    setUser,
-    setSession,
-    setProfile
-  );
-  
-  const { signIn } = useSignInHandler(
-    setIsLoading,
-    setSession,
-    setUser,
-    setProfile
-  );
+  const { signOut, refreshSession } = useAuthActions();
+  const { signIn } = useSignInHandler(setIsLoading, setSession, setUser, setProfile);
   
   // Get session manager
   const { registerRefreshFunction } = useSessionManager();

@@ -17,10 +17,11 @@ interface BidSuccessRateChartProps {
 export function BidSuccessRateChart({ analyticsData }: BidSuccessRateChartProps) {
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const data = analyticsData.bidsByStatus.map(item => ({
-    name: capitalizeFirstLetter(item.status),
-    value: item.count,
-    fill: getColorForStatus(item.status)
+  // Transform bidsByStatus from object to array for chart
+  const data = Object.entries(analyticsData.bidsByStatus).map(([status, count]) => ({
+    name: capitalizeFirstLetter(status),
+    value: count,
+    fill: getColorForStatus(status)
   }));
 
   const config = {
@@ -83,31 +84,33 @@ export function BidSuccessRateChart({ analyticsData }: BidSuccessRateChartProps)
   return (
     <div className="h-80 w-full">
       <ChartContainer config={config} className="h-full">
-        <PieChart>
-          <ChartTooltip content={<ChartTooltipContent />} />
-          <Pie
-            activeIndex={activeIndex}
-            activeShape={renderActiveShape}
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={60}
-            outerRadius={80}
-            fill="#8884d8"
-            dataKey="value"
-            onMouseEnter={onPieEnter}
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.fill} />
-            ))}
-          </Pie>
-          <ChartLegend 
-            content={<ChartLegendContent />} 
-            layout="horizontal" 
-            verticalAlign="bottom" 
-            align="center" 
-          />
-        </PieChart>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Pie
+              activeIndex={activeIndex}
+              activeShape={renderActiveShape}
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={80}
+              fill="#8884d8"
+              dataKey="value"
+              onMouseEnter={onPieEnter}
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
+              ))}
+            </Pie>
+            <ChartLegend 
+              content={<ChartLegendContent />} 
+              layout="horizontal" 
+              verticalAlign="bottom" 
+              align="center" 
+            />
+          </PieChart>
+        </ResponsiveContainer>
       </ChartContainer>
     </div>
   );

@@ -1,6 +1,17 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { isValidRecord, safeFilter } from '@/utils/supabaseHelpers';
-import { Profile } from '@/types/profile';
+
+export interface Profile {
+  id: string;
+  role: string;
+  updated_at: string;
+  suspended: boolean;
+  full_name?: string;
+  avatar_url?: string;
+  profile_status?: string;
+  needs_recovery?: boolean;
+}
 
 /**
  * Retrieves a user profile from the database.
@@ -10,7 +21,7 @@ import { Profile } from '@/types/profile';
 export const getUserProfile = async (userId: string): Promise<Profile | null> => {
   try {
     const { data, error } = await supabase
-      .from('user_profiles')
+      .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
@@ -68,5 +79,44 @@ export const refreshUserSession = async () => {
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to refresh session' 
     };
+  }
+};
+
+/**
+ * Fetches dealer profile data for a user
+ */
+export const fetchDealerProfile = async (userId: string) => {
+  try {
+    // First get the user profile
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+    }
+
+    // Then get the dealer profile 
+    const { data: dealerData, error: dealerError } = await supabase
+      .from('dealers')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (dealerError && dealerError.code !== 'PGRST116') {
+      // PGRST116 is "not found" which is expected if dealer profile doesn't exist yet
+      console.error('Error fetching dealer profile:', dealerError);
+    }
+
+    // Combine the data
+    return {
+      profile: profileData as Profile || null,
+      dealer: dealerData || null
+    };
+  } catch (err) {
+    console.error('Error in fetchDealerProfile:', err);
+    return null;
   }
 };

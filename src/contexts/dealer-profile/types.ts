@@ -1,27 +1,29 @@
 
-// Profile status types
-export type ProfileStatus = "loading" | "complete" | "not_found" | "incomplete" | "error";
+export interface DealerProfileData {
+  id?: string;
+  user_id?: string;
+  dealership_name?: string;
+  supervisor_name?: string;
+  tax_id?: string;
+  business_registry_number?: string;
+  address?: string;
+  verification_status?: string;
+  is_verified?: boolean;
+  license_number?: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
-// Context type definition
-export type DealerProfileContextType = {
-  displayProfile: any | null;
-  rawProfile: any | null;
+export interface DealerProfileContextType {
+  displayProfile: DealerProfileData | null;
+  rawProfile: DealerProfileData | null;
   isLoading: boolean;
   error: string | null;
   fetchAttempted: boolean;
-  profileStatus: ProfileStatus;
+  profileStatus: string;
   needsRecovery: boolean;
   missingFields: string[];
   profileIsComplete: boolean;
   initiateProfileRecovery: () => void;
   refreshProfile: () => Promise<void>;
-};
-
-// Required fields for a complete profile
-export const REQUIRED_PROFILE_FIELDS = [
-  'supervisor_name', 
-  'dealership_name', 
-  'tax_id', 
-  'business_registry_number', 
-  'address'
-];
+}

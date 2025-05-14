@@ -1,30 +1,52 @@
 
 import { useState } from 'react';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
-import { BidAnalyticsCard } from './BidAnalyticsCard';
 import { BidAmountChart } from './BidAmountChart';
 import { BidOverTimeChart } from './BidOverTimeChart';
 import { BidSuccessRateChart } from './BidSuccessRateChart';
 import { BidAnalyticsDateRangePicker } from './BidAnalyticsDateRangePicker';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BidAnalyticsData } from './types';
+import { BidAnalyticsData, BidAnalyticsFilters } from './types';
+import { BidAnalyticsCard } from './BidAnalyticsCard';
+import { Icon } from 'lucide-react';
 
 export const DealerAnalyticsDashboard = ({ dealerId }: { dealerId: string }) => {
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | undefined>(undefined);
+  const [filters, setFilters] = useState<BidAnalyticsFilters>({
+    dateRange: 'month'
+  });
   
-  const { metrics, loading, error } = useAnalyticsData(dealerId, dateRange);
+  const { metrics, loading, error } = useAnalyticsData(filters);
 
+  // Map the metrics from useAnalyticsData to our BidAnalyticsData type
   const analyticsData: BidAnalyticsData = {
     totalBids: metrics.totalBids ?? 0,
     successfulBids: metrics.successfulBids ?? 0,
     activeBids: metrics.activeBids ?? 0,
     totalSpent: metrics.totalSpent ?? 0,
     successRate: metrics.successRate ?? 0,
-    averageBidAmount: metrics.averageBidAmount ?? 0,
-    bidsByDay: metrics.bidsByDay ?? [],
-    bidsByAmount: metrics.bidsByAmount ?? [],
-    bidsByStatus: metrics.bidsByStatus ?? { won: 0, active: 0, lost: 0, pending: 0 }
+    averageBidAmount: metrics.averageBid ?? 0,
+    bidsByDay: metrics.bidOverTime?.map(item => ({
+      date: item.date,
+      count: item.count,
+    })) ?? [],
+    bidsByAmount: metrics.bidsByCarType?.map(item => ({
+      range: item.carType,
+      count: item.count,
+    })) ?? [],
+    bidsByStatus: {
+      won: metrics.bidsByStatus?.find(s => s.status === 'won')?.count ?? 0,
+      active: metrics.bidsByStatus?.find(s => s.status === 'active')?.count ?? 0,
+      lost: metrics.bidsByStatus?.find(s => s.status === 'lost')?.count ?? 0,
+      pending: metrics.bidsByStatus?.find(s => s.status === 'pending')?.count ?? 0
+    },
+    bidsByCarType: metrics.bidsByCarType ?? [],
+    bidOverTime: metrics.bidOverTime ?? [],
+    outbidCount: metrics.outbidCount ?? 0,
+    marketComparison: metrics.marketComparison ?? {
+      averageBidAmount: 0,
+      successRate: 0
+    }
   };
 
   return (
@@ -32,8 +54,8 @@ export const DealerAnalyticsDashboard = ({ dealerId }: { dealerId: string }) => 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-2xl font-bold tracking-tight">Bid Analytics</h2>
         <BidAnalyticsDateRangePicker
-          onChange={(range) => setDateRange(range)}
-          currentRange={dateRange}
+          filters={filters}
+          onFilterChange={setFilters}
         />
       </div>
 
@@ -52,27 +74,8 @@ export const DealerAnalyticsDashboard = ({ dealerId }: { dealerId: string }) => 
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <BidAnalyticsCard
-              title="Total Bids"
-              value={analyticsData.totalBids}
-              description="Total number of bids placed"
-              icon="activity"
-            />
-            <BidAnalyticsCard
-              title="Success Rate"
-              value={`${analyticsData.successRate.toFixed(1)}%`}
-              description="Percentage of winning bids"
-              icon="percent"
-            />
-            <BidAnalyticsCard
-              title="Average Bid"
-              value={`$${analyticsData.averageBidAmount.toLocaleString()}`}
-              description="Average amount per bid"
-              icon="trending-up"
-            />
-          </div>
-
+          <BidAnalyticsCard analyticsData={analyticsData} isLoading={loading} />
+  
           <Tabs defaultValue="overview" className="w-full">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -85,7 +88,7 @@ export const DealerAnalyticsDashboard = ({ dealerId }: { dealerId: string }) => 
                   <CardTitle>Bid Distribution</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <BidAmountChart data={analyticsData.bidsByAmount} />
+                  <BidAmountChart analyticsData={analyticsData} />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -95,17 +98,17 @@ export const DealerAnalyticsDashboard = ({ dealerId }: { dealerId: string }) => 
                   <CardTitle>Bid Activity Over Time</CardTitle>
                 </CardHeader>
                 <CardContent className="h-[300px]">
-                  <BidOverTimeChart data={analyticsData.bidsByDay} />
+                  <BidOverTimeChart analyticsData={analyticsData} />
                 </CardContent>
               </Card>
             </TabsContent>
             <TabsContent value="success" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Success Rate by Bid Amount</CardTitle>
+                  <CardTitle>Success Rate by Bid Status</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <BidSuccessRateChart data={analyticsData.bidsByStatus} />
+                  <BidSuccessRateChart analyticsData={analyticsData} />
                 </CardContent>
               </Card>
             </TabsContent>
