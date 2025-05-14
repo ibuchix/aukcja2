@@ -3,53 +3,16 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Bid } from "./types";
 import { 
-  isSelectQueryError, 
-  safeFilter, 
   isValidBid, 
-  isValidProxyLog 
+  isValidProxyLog,
+  safeFilter,
+  safelyFilterData
 } from "@/utils/supabaseHelpers";
 
 // Data structure for chart
 export interface ChartDataPoint {
   time: string;
   amount: number;
-}
-
-// Local type guard specific to this component
-function isValidBidLocal(bid: any): bid is {
-  id: string;
-  car_id: string;
-  dealer_id?: string;
-  amount: number;
-  status?: string;
-  created_at: string;
-  updated_at: string;
-} {
-  return bid && 
-         typeof bid === 'object' && 
-         !isSelectQueryError(bid) &&
-         'id' in bid &&
-         'car_id' in bid && 
-         'amount' in bid &&
-         'created_at' in bid;
-}
-
-// Local type guard specific to this component
-function isValidProxyLogLocal(log: any): bid is {
-  id: string;
-  entity_id: string;
-  user_id: string;
-  details: Record<string, any>;
-  created_at: string;
-} {
-  return log && 
-         typeof log === 'object' && 
-         !isSelectQueryError(log) &&
-         'id' in log &&
-         'entity_id' in log && 
-         'user_id' in log &&
-         'details' in log &&
-         'created_at' in log;
 }
 
 export const useBidHistory = (carId: string) => {
@@ -99,7 +62,7 @@ export const useBidHistory = (carId: string) => {
         // Add regular bids with type safety
         if (Array.isArray(bidData)) {
           // Filter to ensure we only process valid bid records
-          const validBids = bidData.filter(isValidBidLocal);
+          const validBids = safelyFilterData(bidData, isValidBid);
           
           validBids.forEach(bid => {
             bidHistory.push({
@@ -109,7 +72,7 @@ export const useBidHistory = (carId: string) => {
               amount: bid.amount,
               status: bid.status || 'active',
               created_at: bid.created_at,
-              updated_at: bid.updated_at,
+              updated_at: bid.updated_at || bid.created_at,
               dealer_name: `Dealer ${bid.dealer_id?.substring(0, 5) || 'Unknown'}`, // Anonymized name
               is_proxy: false
             });
@@ -119,7 +82,7 @@ export const useBidHistory = (carId: string) => {
         // Add proxy bids with type safety
         if (Array.isArray(proxyData)) {
           // Filter to ensure we only process valid log records
-          const validLogs = proxyData.filter(isValidProxyLogLocal);
+          const validLogs = safelyFilterData(proxyData, isValidProxyLog);
           
           validLogs.forEach(log => {
             // Additional safe check for details property

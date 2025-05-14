@@ -1,147 +1,166 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { OperationResult } from '@/utils/supabase/errorTypes';
+import { wrapSupabaseOperation } from '@/utils/supabase/errorHandler';
+import { useToast } from '@/components/ui/use-toast';
 
-export interface RegistrationData {
-  email: string;
-  password: string;
+interface RegistrationData {
+  dealershipName: string;
+  dealershipAddress: string;
   supervisorName: string;
-  companyName: string;
   taxId: string;
   businessRegistryNumber: string;
-  address: string;
-  phoneNumber?: string;
+  email: string;
+  [key: string]: string | number | boolean;
 }
 
-export interface CompletionResults {
-  success: boolean;
-  userId?: string;
-  error?: string;
+interface CompleteRegistrationOptions {
+  onSuccess?: () => void;
+  onError?: (error: any) => void;
 }
 
-export const useCompleteRegistration = () => {
-  const [isLoading, setIsLoading] = useState(false);
+export function useCompleteRegistration() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const completeRegistration = async (data: RegistrationData): Promise<CompletionResults> => {
-    setIsLoading(true);
+  const submitRegistration = async (
+    data: RegistrationData,
+    options: CompleteRegistrationOptions = {}
+  ): Promise<OperationResult<{ success: boolean }>> => {
+    setIsSubmitting(true);
     setError(null);
-    
+
     try {
-      // Check if email already exists
-      const { data: existsData, error: existsError } = await supabase.rpc('check_email_exists', {
-        email_to_check: data.email
-      });
-      
-      if (existsError) {
-        throw new Error(`Error checking email: ${existsError.message}`);
-      }
-      
-      // Safe type checking for the response
-      const emailExists = existsData && 
-                         typeof existsData === 'object' &&
-                         'exists' in existsData && 
-                         existsData.exists === true;
-      
-      if (emailExists) {
-        return {
-          success: false,
-          error: 'An account with this email already exists. Please log in instead.'
-        };
-      }
-      
-      // Create the dealer account via the RPC function
-      const { data: dealerData, error: dealerError } = await supabase.rpc(
-        'create_dealer_with_profile',
-        {
-          p_email: data.email,
-          p_password: data.password,
-          p_supervisor_name: data.supervisorName,
-          p_company_name: data.companyName,
-          p_tax_id: data.taxId,
-          p_business_registry_number: data.businessRegistryNumber,
-          p_address: data.address,
-          p_phone_number: data.phoneNumber || ''
-        }
-      );
-      
-      if (dealerError) {
-        // Handle specific error codes
-        if (dealerError.code === '23505') {
-          return {
-            success: false,
-            error: 'An account with this email already exists.'
-          };
-        }
+      // Get current user
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData?.user?.id;
+
+      if (!userId) {
+        setError("User not authenticated");
+        setIsSubmitting(false);
         
-        throw new Error(`Registration error: ${dealerError.message}`);
-      }
-      
-      // Safe type checking for the response
-      const isSuccessful = dealerData && 
-                         typeof dealerData === 'object' &&
-                         'success' in dealerData && 
-                         dealerData.success === true;
-      
-      // Check if the operation was successful
-      if (isSuccessful) {
-        // Handle user safely
-        const userId = dealerData && 
-                      typeof dealerData === 'object' && 
-                      'user' in dealerData && 
-                      typeof dealerData.user === 'object' &&
-                      dealerData.user &&
-                      'id' in dealerData.user ? 
-                      dealerData.user.id : undefined;
-        
-        // Show success toast
         toast({
-          title: "Registration Complete",
-          description: "Your dealer account has been created successfully.",
+          title: "Error",
+          description: "You must be logged in to complete registration",
+          variant: "destructive"
         });
         
         return {
-          success: true,
-          userId
-        };
-      } else {
-        // Handle unsuccessful response safely
-        const errorMessage = dealerData && 
-                          typeof dealerData === 'object' && 
-                          'error' in dealerData ? 
-                          String(dealerData.error) : 'Unknown error during registration.';
-        
-        return {
-          success: false,
-          error: errorMessage
+          error: {
+            code: "not_authenticated",
+            message: "User not authenticated",
+            type: "auth_general"
+          },
+          success: false
         };
       }
+
+      // First check if dealer profile already exists
+      const { data: existingProfile } = await supabase
+        .from("dealers")
+        .select("id")
+        .eq("user_id", userId)
+        .single();
+
+      if (existingProfile) {
+        // Update existing profile
+        const result = await wrapSupabaseOperation(() => 
+          supabase
+            .from("dealers")
+            .update({
+              dealership_name: data.dealershipName,
+              address: data.dealershipAddress,
+              supervisor_name: data.supervisorName,
+              tax_id: data.taxId,
+              business_registry_number: data.businessRegistryNumber,
+              updated_at: new Date().toISOString()
+            })
+            .eq("user_id", userId)
+        );
+
+        if (!result.success) {
+          throw result.error;
+        }
+      } else {
+        // Create new dealer profile
+        const result = await wrapSupabaseOperation(() => 
+          supabase
+            .from("dealers")
+            .insert([{
+              user_id: userId,
+              dealership_name: data.dealershipName,
+              address: data.dealershipAddress,
+              supervisor_name: data.supervisorName,
+              tax_id: data.taxId,
+              business_registry_number: data.businessRegistryNumber,
+              verification_status: 'pending',
+              is_verified: false
+            }])
+        );
+
+        if (!result.success) {
+          throw result.error;
+        }
+      }
+
+      // Ensure user has the correct role in profiles table
+      await supabase
+        .from("profiles")
+        .upsert(
+          {
+            id: userId,
+            role: "dealer",
+            full_name: data.supervisorName,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "id" }
+        );
+
+      // Show success toast
+      toast({
+        title: "Registration completed",
+        description: "Your registration has been submitted for verification."
+      });
+
+      if (options.onSuccess) {
+        options.onSuccess();
+      }
+
+      return { success: true, data: { success: true } };
+    } catch (error: any) {
+      console.error("Registration error:", error);
       
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : 'Unknown error during registration.';
+      const errorMessage = error.message || "Failed to complete registration";
       setError(errorMessage);
       
-      // Show error toast
       toast({
-        title: "Registration Failed",
+        title: "Registration failed",
         description: errorMessage,
-        variant: "destructive",
+        variant: "destructive"
       });
       
+      if (options.onError) {
+        options.onError(error);
+      }
+      
       return {
-        success: false,
-        error: errorMessage
+        error: {
+          code: "registration_failed",
+          message: errorMessage,
+          type: "auth_general"
+        },
+        success: false
       };
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return {
-    completeRegistration,
-    isLoading,
+    submitRegistration,
+    isSubmitting,
     error
   };
-};
+}

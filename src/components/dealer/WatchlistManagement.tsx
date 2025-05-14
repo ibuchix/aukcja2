@@ -21,47 +21,14 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { CarListing } from "@/types/cars";
-import { isValidRecord, isValidWatchlistItem, isSelectQueryError, safeFilter, hasValidRelation } from "@/utils/supabaseHelpers";
+import { isValidWatchlistWithCar, safelyFilterData } from "@/utils/supabaseHelpers";
 
 interface WatchlistCar extends CarListing {
   watchlist_id: string;
 }
 
-interface WatchlistCarData {
-  id: string;
-  title?: string;
-  make?: string;
-  model?: string;
-  year?: number;
-  price?: number;
-  auction_end_time?: string;
-  auction_status?: string;
-  is_auction?: boolean;
-  reserve_price?: number;
-}
-
-interface WatchlistItem {
-  id: string;
-  car_id: string;
-  cars?: WatchlistCarData | null;
-}
-
 interface WatchlistManagementProps {
   dealerId: string;
-}
-
-// Local type guard for watchlist items with cars relation
-function isValidWatchlistWithCarLocal(item: any): item is WatchlistItem {
-  return item !== null && 
-      typeof item === 'object' && 
-      !isSelectQueryError(item) &&
-      'id' in item && 
-      'car_id' in item &&
-      'cars' in item &&
-      item.cars !== null &&
-      typeof item.cars === 'object' &&
-      !isSelectQueryError(item.cars) &&
-      'id' in item.cars;
 }
 
 export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
@@ -96,17 +63,14 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
       if (!watchlistData || !Array.isArray(watchlistData)) return [];
       
       // Filter valid watchlist items and transform them into WatchlistCar objects
-      return watchlistData
-        .filter(isValidWatchlistWithCarLocal)
-        .map(item => {
-          const carData = item.cars as WatchlistCarData;
-          
-          return {
-            ...carData,
-            watchlist_id: item.id
-          };
-        })
-        .filter((car): car is WatchlistCar => !!car && !!car.id); // Final type safety check
+      const validWatchlistItems = safelyFilterData(watchlistData, isValidWatchlistWithCar);
+      
+      return validWatchlistItems.map(item => {
+        return {
+          ...item.cars,
+          watchlist_id: item.id
+        } as WatchlistCar;
+      }).filter((car): car is WatchlistCar => !!car && !!car.id); // Final type safety check
     }
   });
 

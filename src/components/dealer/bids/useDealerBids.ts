@@ -5,11 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { MyBid } from "./types";
 import { queryKeys } from "@/utils/queryClient";
 import { 
-  isValidRecord, 
-  isSelectQueryError, 
-  safeFilter, 
   isValidCarData, 
-  isValidProxyBidData
+  isValidProxyBidData,
+  safelyFilterData
 } from "@/utils/supabaseHelpers";
 
 interface CarData {
@@ -36,11 +34,10 @@ interface BidData {
   created_at: string;
 }
 
-// Type guard for bid data only - renamed to avoid conflicts
-function isValidBidDataLocal(item: any): item is BidData {
+// Type guard specifically for this file's BidData type
+function isValidBidData(item: any): item is BidData {
   return item !== null && 
     typeof item === 'object' && 
-    !isSelectQueryError(item) &&
     'id' in item &&
     'car_id' in item &&
     'amount' in item &&
@@ -86,9 +83,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       }
 
       // Filter to ensure we only have valid bids without errors
-      const validActiveBids = Array.isArray(activeBids)
-        ? activeBids.filter(isValidBidDataLocal) // Using our renamed local function
-        : [];
+      const validActiveBids = safelyFilterData(activeBids, isValidBidData);
 
       // Get car details for these bids
       const carIds = validActiveBids.map(bid => bid.car_id).filter(Boolean);
@@ -119,7 +114,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       
       // Filter valid car records and populate the lookup
       if (cars && Array.isArray(cars)) {
-        const validCars = cars.filter(isValidCarData);
+        const validCars = safelyFilterData(cars, isValidCarData);
         
         validCars.forEach(car => {
           if (car && car.id) {
@@ -140,7 +135,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       
       // Filter and process valid proxy bids
       if (proxyBidsData && Array.isArray(proxyBidsData)) {
-        const validProxyBids = proxyBidsData.filter(isValidProxyBidData);
+        const validProxyBids = safelyFilterData(proxyBidsData, isValidProxyBidData);
         
         validProxyBids.forEach(pb => {
           proxyBidsByCarId[pb.car_id] = {

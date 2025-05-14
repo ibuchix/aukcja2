@@ -1,132 +1,63 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { isSelectQueryError } from '@/utils/supabaseHelpers';
-import { verifyDealer, rejectDealer } from '@/services/admin/adminService';
-import { toast } from '@/components/ui/use-toast';
 
+// Define the PendingDealer interface
 export interface PendingDealer {
   id: string;
   dealership_name: string;
   supervisor_name: string;
   verification_status: string;
   created_at: string;
-  submitted_at?: string;
+  tax_id: string;
+  business_registry_number: string;
+  address: string;
+  user_id: string;
 }
 
-export function usePendingDealers() {
+// Type guard for PendingDealer
+function isPendingDealer(item: any): item is PendingDealer {
+  return (
+    item !== null &&
+    typeof item === 'object' &&
+    'id' in item &&
+    'dealership_name' in item &&
+    'supervisor_name' in item &&
+    'verification_status' in item
+  );
+}
+
+export const usePendingDealers = () => {
   const [pendingDealers, setPendingDealers] = useState<PendingDealer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadPendingDealers = async () => {
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('dealers')
-        .select('id, dealership_name, supervisor_name, verification_status, created_at')
-        .eq('verification_status', 'pending')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Type guard to filter valid dealer data
-      const validDealers = Array.isArray(data) 
-        ? data.filter((item): item is PendingDealer => {
-            return item !== null && 
-                  typeof item === 'object' && 
-                  !isSelectQueryError(item) &&
-                  'id' in item &&
-                  'dealership_name' in item &&
-                  'supervisor_name' in item;
-          })
-        : [];
-        
-      setPendingDealers(validDealers);
-    } catch (err) {
-      console.error('Error fetching pending dealers:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error fetching dealers');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Handle verification of dealer
-  const handleVerifyDealer = async (dealerId: string) => {
-    try {
-      setIsLoading(true);
-      const result = await verifyDealer(dealerId);
-      
-      if (result) {
-        toast({
-          title: "Dealer verified",
-          description: "The dealer has been successfully verified.",
-        });
-        
-        // Refresh the dealers list
-        await loadPendingDealers();
-      } else {
-        toast({
-          title: "Verification failed",
-          description: "There was an error verifying the dealer.",
-          variant: "destructive"
-        });
-      }
-    } catch (err) {
-      console.error('Error verifying dealer:', err);
-      toast({
-        title: "Verification failed",
-        description: err instanceof Error ? err.message : "Unknown error occurred",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Handle rejection of dealer
-  const handleRejectDealer = async (dealerId: string) => {
-    try {
-      setIsLoading(true);
-      const result = await rejectDealer(dealerId);
-      
-      if (result) {
-        toast({
-          title: "Dealer rejected",
-          description: "The dealer has been rejected.",
-        });
-        
-        // Refresh the dealers list
-        await loadPendingDealers();
-      } else {
-        toast({
-          title: "Rejection failed",
-          description: "There was an error rejecting the dealer.",
-          variant: "destructive"
-        });
-      }
-    } catch (err) {
-      console.error('Error rejecting dealer:', err);
-      toast({
-        title: "Rejection failed",
-        description: err instanceof Error ? err.message : "Unknown error occurred",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    loadPendingDealers();
+    const fetchPendingDealers = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('dealers')
+          .select('*')
+          .eq('verification_status', 'pending');
+
+        if (error) throw error;
+
+        if (data) {
+          // Filter the data to ensure it matches the expected structure
+          const validDealers = data.filter(isPendingDealer);
+          setPendingDealers(validDealers);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to fetch pending dealers'));
+        console.error('Error fetching pending dealers:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPendingDealers();
   }, []);
 
-  return { 
-    pendingDealers, 
-    isLoading, 
-    error, 
-    loadPendingDealers, 
-    handleVerifyDealer, 
-    handleRejectDealer 
-  };
-}
+  return { pendingDealers, loading, error };
+};
