@@ -1,75 +1,87 @@
 
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { signOutUser, refreshUserSession, fetchDealerProfile } from "./authUtils";
-import { clearQueryCache } from "@/utils/cachePersistence";
-import { queryClient } from "@/utils/queryClient";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthContext } from './context';
+import { signOutUser, refreshUserSession } from './authUtils';
 
-export function useAuthActions(
-  setIsLoading: (loading: boolean) => void,
-  setUser: (user: any) => void,
-  setSession: (session: any) => void,
-  setProfile: (profile: any) => void
-) {
+interface AuthActionResponse {
+  success: boolean;
+  error?: string;
+}
+
+export const useAuthActions = () => {
+  const { setAuthState } = useAuthContext();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const signOut = async () => {
+  const signOut = async (): Promise<AuthActionResponse> => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const { success, error } = await signOutUser();
-      
-      if (!success && error) {
-        toast({
-          title: "Sign out failed",
-          description: error.message,
-          variant: "destructive",
+      const result = await signOutUser();
+      if (result === true || (typeof result === 'object' && result.success)) {
+        setAuthState({
+          user: null,
+          session: null,
+          isAuthenticated: false,
+          isLoading: false,
+          initialized: true,
         });
-        return;
+        navigate('/');
+        return { success: true };
       }
       
-      // Clear React Query cache
-      clearQueryCache(queryClient);
-      
-      setUser(null);
-      setSession(null);
-      setProfile(null);
-      
-      toast({
-        title: "Signed out successfully",
-        description: "You have been signed out of your account.",
-      });
-      
-      navigate('/');
+      return { 
+        success: false, 
+        error: typeof result === 'object' && result.error ? result.error.toString() : 'Sign out failed' 
+      };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Sign out failed' 
+      };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const refreshSession = async () => {
+  const refreshSession = async (): Promise<AuthActionResponse> => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const { success, session: newSession, user: newUser, error } = await refreshUserSession();
+      const result = await refreshUserSession();
       
-      if (!success || error) {
-        console.error("Session refresh error:", error);
-        return;
-      }
-      
-      if (newSession) {
-        console.log("Session refreshed successfully");
-        setSession(newSession);
-        setUser(newUser ?? null);
+      if (result === true || (typeof result === 'object' && result.success)) {
+        const session = typeof result === 'object' ? result.session : null;
+        const user = session?.user || null;
         
-        if (newUser) {
-          const profileData = await fetchDealerProfile(newUser.id);
-          setProfile(profileData);
+        if (user) {
+          setAuthState(prevState => ({
+            ...prevState,
+            user,
+            session,
+            isAuthenticated: true,
+            isLoading: false,
+          }));
+          return { success: true };
         }
       }
+      
+      return { 
+        success: false, 
+        error: typeof result === 'object' && result.error ? result.error.toString() : 'Session refresh failed' 
+      };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Session refresh failed' 
+      };
     } finally {
       setIsLoading(false);
     }
   };
 
-  return { signOut, refreshSession };
-}
+  return {
+    signOut,
+    refreshSession,
+    isLoading,
+  };
+};

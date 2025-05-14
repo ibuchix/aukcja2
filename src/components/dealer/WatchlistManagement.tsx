@@ -70,7 +70,7 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
           ...item.cars,
           watchlist_id: item.id
         } as WatchlistCar;
-      }).filter((car): car is WatchlistCar => !!car && !!car.id); // Final type safety check
+      }).filter(Boolean); // Filter out any potential nulls
     }
   });
 

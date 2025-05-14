@@ -1,33 +1,46 @@
 
+export interface DealerMetric {
+  totalBids: number;
+  successfulBids: number;
+  activeBids: number;
+  totalSpent: number;
+  successRate: number;
+  averageBidAmount: number;
+  bidsByDay: Array<{
+    date: string;
+    count: number;
+  }>;
+  bidsByAmount: Array<{
+    range: string;
+    count: number;
+  }>;
+  bidsByStatus: {
+    won: number;
+    active: number;
+    lost: number;
+    pending: number;
+  };
+}
+
 export interface BidAnalyticsData {
   totalBids: number;
   successfulBids: number;
-  outbidCount: number;
-  averageBidAmount: number;
-  highestBid: number;
+  activeBids: number;
+  totalSpent: number;
   successRate: number;
-  marketComparison: {
-    averageBidAmount: number;
-    successRate: number;
-  };
-  bidOverTime: {
+  averageBidAmount: number;
+  bidsByDay: Array<{
     date: string;
     count: number;
-    amount: number;
-  }[];
+  }>;
+  bidsByAmount: Array<{
+    range: string;
+    count: number;
+  }>;
   bidsByStatus: {
-    status: string;
-    count: number;
-  }[];
-  bidsByCarType: {
-    carType: string;
-    count: number;
-    successRate: number;
-  }[];
-}
-
-export interface BidAnalyticsFilters {
-  dateRange: 'week' | 'month' | 'quarter' | 'year' | 'all';
-  carTypes?: string[];
-  includePending?: boolean;
+    won: number;
+    active: number;
+    lost: number;
+    pending: number;
+  };
 }

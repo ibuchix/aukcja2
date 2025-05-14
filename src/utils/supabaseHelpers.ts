@@ -1,4 +1,3 @@
-
 import { PostgrestError, PostgrestResponse, PostgrestSingleResponse } from '@supabase/supabase-js';
 import { TableRow, TableInsert, TableUpdate } from '@/types/supabase/common';
 
@@ -269,4 +268,32 @@ export function formatForDisplay<T, U>(
 ): U[] {
   const validItems = safelyFilterData(data, typeGuard);
   return validItems.map(mapper);
+}
+
+/**
+ * Type guard specifically for watchlist items with car relation
+ */
+export function isValidWatchlistWithCar(item: any): item is {
+  id: string;
+  car_id: string;
+  cars: {
+    id: string;
+    title?: string;
+    make?: string;
+    model?: string;
+    year?: number;
+    price?: number;
+    auction_end_time?: string;
+    auction_status?: string;
+    is_auction?: boolean;
+    reserve_price?: number;
+  };
+} {
+  if (!isValidWatchlistItem(item)) return false;
+  
+  // Check if cars relation exists and is valid
+  return 'cars' in item && 
+    item.cars !== null && 
+    typeof item.cars === 'object' &&
+    'id' in item.cars;
 }
