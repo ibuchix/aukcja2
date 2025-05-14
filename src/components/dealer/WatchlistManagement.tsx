@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { CarListing } from "@/types/cars";
-import { isValidRecord, isValidWatchlistItem, safeFilter } from "@/utils/supabaseHelpers";
+import { isValidRecord, isValidWatchlistItem, isSelectQueryError, safeFilter } from "@/utils/supabaseHelpers";
 
 interface WatchlistCar extends CarListing {
   watchlist_id: string;
@@ -81,9 +81,9 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
       
       // Filter valid watchlist items
       const validWatchlistItems = watchlistData.filter(item => 
-        item && 
+        item !== null && 
         typeof item === 'object' && 
-        !safeFilter(item) === false && 
+        !isSelectQueryError(item) &&
         'id' in item && 
         'car_id' in item
       );
@@ -92,11 +92,17 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
       return validWatchlistItems
         .map(item => {
           // Skip items with invalid cars relation
-          if (!item.cars || typeof item.cars !== 'object' || safeFilter(item.cars) === false) {
+          if (!item || !item.cars || typeof item.cars !== 'object' || isSelectQueryError(item.cars)) {
             return null;
           }
           
+          // Access car data safely
           const carData = item.cars;
+          
+          // Make sure we have a valid car object
+          if (!carData || typeof carData !== 'object' || isSelectQueryError(carData) || !('id' in carData)) {
+            return null;
+          }
           
           return {
             ...carData,

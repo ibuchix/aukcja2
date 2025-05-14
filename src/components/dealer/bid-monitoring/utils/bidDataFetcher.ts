@@ -56,113 +56,125 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
         dealer_id,
         amount,
         status,
-        created_at,
-        updated_at,
-        dealers:dealer_id(dealership_name),
-        car:car_id(title, make, model, year, auction_end_time)
+        created_at
       `)
       .in("car_id", carIds)
       .order("created_at", { ascending: false });
 
     if (allBidsError) throw allBidsError;
-    allBids = allBidsData || [];
-  }
-
-  // Fetch proxy bid executions from audit logs
-  let proxyLogs: any[] = [];
-  if (carIds.length > 0) {
-    const { data: proxyLogsData, error: proxyLogsError } = await supabase
-      .from("audit_logs")
-      .select("*")
-      .in("entity_id", carIds)
-      .eq("action", "auto_proxy_bid")
-      .order("created_at", { ascending: false });
-
-    if (proxyLogsError) throw proxyLogsError;
-    proxyLogs = proxyLogsData || [];
-  }
-
-  // Transform the data into a unified activity timeline
-  const activities: BidActivity[] = [
-    // Map regular bids to activities, filtering out invalid entries
-    ...allBids
-      .filter(bid => 
-        bid !== null && 
-        typeof bid === 'object' && 
-        !isSelectQueryError(bid) &&
-        'id' in bid
-      )
-      .map(bid => {
-        // Safe access to potentially null car and dealer objects
-        const car = bid.car && !isSelectQueryError(bid.car) ? bid.car : {};
-        const dealer = bid.dealers && !isSelectQueryError(bid.dealers) ? bid.dealers : {};
-        
-        return {
-          id: `bid-${bid.id}`,
-          timestamp: bid.created_at,
-          type: 'new_bid' as const,
-          carId: bid.car_id,
-          carTitle: car?.title || `${car?.year || ''} ${car?.make || ''} ${car?.model || ''}`.trim() || 'Unknown Car',
-          bidAmount: bid.amount || 0,
-          bidId: bid.id,
-          dealerId: bid.dealer_id,
-          dealerName: dealer?.dealership_name || "Unknown Dealer",
-          auctionEndTime: car?.auction_end_time,
-          isOwnActivity: bid.dealer_id === dealerId
-        };
-      }),
     
-    // Map proxy bid logs to activities, filtering out invalid entries
-    ...proxyLogs
-      .filter(log => 
-        log !== null && 
-        typeof log === 'object' && 
-        !isSelectQueryError(log) &&
-        'id' in log
-      )
-      .map(log => {
-        const details = (log.details as Record<string, any>) || {};
-        
-        return {
-          id: `proxy-${log.id}`,
-          timestamp: log.created_at,
-          type: 'proxy_executed' as const,
-          carId: log.entity_id,
-          carTitle: "Car", // We'll need to fetch this separately
-          bidAmount: details?.result?.amount || 0,
-          bidId: details?.result?.bid_id,
-          dealerId: log.user_id,
-          isOwnActivity: log.user_id === dealerId
-        };
-      })
-  ];
+    // Filter to ensure we have valid bid data
+    allBids = (allBidsData || []).filter(bid => 
+      bid !== null && 
+      typeof bid === 'object' && 
+      !isSelectQueryError(bid) &&
+      'car_id' in bid &&
+      'amount' in bid &&
+      'status' in bid
+    );
+  }
 
-  // Sort activities by timestamp (newest first)
-  activities.sort((a, b) => 
-    new Date(b.timestamp || '').getTime() - new Date(a.timestamp || '').getTime()
-  );
+  // Activities - combine bid info with car info
+  const activities: BidActivity[] = [];
+  
+  for (const bid of bids) {
+    // Skip invalid bids
+    if (!bid || !bid.car || isSelectQueryError(bid.car)) continue;
+    
+    const car = bid.car;
+    
+    // Only process if car data is valid
+    if (car && typeof car === 'object' && !isSelectQueryError(car)) {
+      activities.push({
+        id: bid.id,
+        car_id: bid.car_id,
+        car_title: car.title || `${car.year} ${car.make} ${car.model}`,
+        amount: bid.amount,
+        created_at: bid.created_at,
+        status: bid.status || 'active',
+        is_winning: car.current_bid === bid.amount,
+        auction_ends: car.auction_end_time,
+        car_details: {
+          make: car.make,
+          model: car.model,
+          year: car.year
+        }
+      });
+    }
+  }
 
-  // Calculate metrics from valid bids only - ensure we're not using SelectQueryError
-  const validBids = bids.filter(bid => 
+  // Calculate metrics
+  const calculatedMetrics = calculateBidMetrics(dealerId, bids, allBids);
+
+  return {
+    activities,
+    calculatedMetrics
+  };
+}
+
+function calculateBidMetrics(dealerId: string, dealerBids: any[], allBids: any[]): BidMetrics {
+  // Filter to ensure we have valid data before calculations
+  const validDealerBids = dealerBids.filter(bid => 
     bid !== null && 
     typeof bid === 'object' && 
     !isSelectQueryError(bid) &&
+    'amount' in bid &&
     'status' in bid
   );
   
-  const activeBids = validBids.filter(bid => bid && bid.status === 'active');
-  const outbidBids = validBids.filter(bid => bid && bid.status === 'outbid');
-  const wonBids = validBids.filter(bid => bid && bid.status === 'won');
-  const lostBids = validBids.filter(bid => bid && bid.status === 'lost');
+  const validAllBids = allBids.filter(bid => 
+    bid !== null && 
+    typeof bid === 'object' && 
+    !isSelectQueryError(bid) &&
+    'amount' in bid &&
+    'status' in bid &&
+    'dealer_id' in bid
+  );
 
-  const calculatedMetrics: BidMetrics = {
-    activeBidsCount: activeBids.length,
-    outbidCount: outbidBids.length,
-    wonCount: wonBids.length,
-    lostCount: lostBids.length,
-    totalInvested: activeBids.reduce((sum, bid) => sum + (Number(bid?.amount) || 0), 0),
-    potentialExposure: activeBids.reduce((sum, bid) => sum + (Number(bid?.amount) || 0), 0)
+  const metrics: BidMetrics = {
+    totalBids: validDealerBids.length,
+    activeBids: validDealerBids.filter(bid => bid.status === 'active').length,
+    wonBids: validDealerBids.filter(bid => bid.status === 'won').length,
+    outbidBids: validDealerBids.filter(bid => bid.status === 'outbid').length,
+    lostBids: validDealerBids.filter(bid => bid.status === 'lost').length,
+    bidSuccess: 0,
+    averageBidAmount: 0,
+    bidFrequency: 0
   };
 
-  return { activities, calculatedMetrics };
+  // Calculate additional metrics
+  if (metrics.totalBids > 0) {
+    // Calculate average bid amount
+    const totalAmount = validDealerBids.reduce((sum, bid) => sum + (bid.amount || 0), 0);
+    metrics.averageBidAmount = totalAmount / metrics.totalBids;
+
+    // Calculate bid success rate
+    if (metrics.wonBids + metrics.lostBids > 0) {
+      metrics.bidSuccess = (metrics.wonBids / (metrics.wonBids + metrics.lostBids)) * 100;
+    }
+  }
+
+  // Calculate bid frequency (bids per day)
+  if (validDealerBids.length > 1) {
+    const sortedBids = [...validDealerBids].sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    
+    const firstBid = sortedBids[0];
+    const lastBid = sortedBids[sortedBids.length - 1];
+    
+    if (firstBid && lastBid && firstBid.created_at && lastBid.created_at) {
+      const firstDate = new Date(firstBid.created_at);
+      const lastDate = new Date(lastBid.created_at);
+      const daysDiff = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
+      
+      if (daysDiff > 0) {
+        metrics.bidFrequency = validDealerBids.length / daysDiff;
+      } else {
+        metrics.bidFrequency = validDealerBids.length; // All bids in less than a day
+      }
+    }
+  }
+
+  return metrics;
 }

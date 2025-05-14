@@ -1,8 +1,10 @@
+
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { mapDatabaseToDisplay } from "@/utils/dealerProfileMapping";
 import { Json } from "@/integrations/supabase/types";
 import { refreshAuthToken } from "@/utils/sessionRefresh";
+import { isSelectQueryError } from "@/utils/supabaseHelpers";
 
 // Required fields for a complete dealer profile
 const REQUIRED_DEALER_FIELDS = [
@@ -88,8 +90,13 @@ export async function fetchDealerProfile(userId: string) {
       
       console.log("Profile successfully retrieved via RPC function");
       
-      // TYPE SAFETY IMPROVEMENT: Check if rpcData is an object, not an array
-      if (typeof rpcData === 'object' && rpcData !== null && !Array.isArray(rpcData)) {
+      // TYPE SAFETY IMPROVEMENT: Check if rpcData is an object, not an array or a SelectQueryError
+      if (
+        typeof rpcData === 'object' && 
+        rpcData !== null && 
+        !Array.isArray(rpcData) &&
+        !isSelectQueryError(rpcData)
+      ) {
         // Now we can safely cast it to an object with string keys
         const rpcDataObj = rpcData as Record<string, Json>;
         
@@ -99,15 +106,12 @@ export async function fetchDealerProfile(userId: string) {
         // Determine if profile is complete based on missing fields
         const isComplete = missingFields.length === 0;
         
-        // Add extra fields to indicate profile completeness
-        const profileStatus = isComplete ? "complete" : "incomplete";
-        
         // Return object with consistent format and safe type conversions
         return {
           ...rpcDataObj,
           id: rpcDataObj.id ? String(rpcDataObj.id) : null,
           user_id: rpcDataObj.user_id ? String(rpcDataObj.user_id) : userId,
-          profile_status: profileStatus,
+          profile_status: isComplete ? "complete" : "incomplete",
           missing_fields: missingFields,
           is_complete: isComplete
         };

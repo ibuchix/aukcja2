@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { BidAnalyticsData, BidAnalyticsFilters } from "@/components/dealer/analytics/types";
 import { useCurrentDealerProfile } from "./useCurrentDealerProfile";
 import { useToast } from "./use-toast";
+import { safeFilter, isSelectQueryError } from "@/utils/supabaseHelpers";
 
 export function useAnalyticsData(filters: BidAnalyticsFilters) {
   const [analyticsData, setAnalyticsData] = useState<BidAnalyticsData | null>(null);
@@ -59,11 +60,28 @@ export function useAnalyticsData(filters: BidAnalyticsFilters) {
           
         if (marketError) throw marketError;
         
+        // Filter out any error objects or null/undefined items
+        const validBids = (bidsData || []).filter(bid => 
+          bid !== null &&
+          typeof bid === 'object' &&
+          !isSelectQueryError(bid) &&
+          'status' in bid &&
+          'amount' in bid
+        );
+        
+        const validMarketData = (marketData || []).filter(bid => 
+          bid !== null &&
+          typeof bid === 'object' &&
+          !isSelectQueryError(bid) &&
+          'status' in bid &&
+          'amount' in bid
+        );
+        
         // Process data
-        const totalBids = bidsData.length;
-        const successfulBids = bidsData.filter(bid => bid.status === 'won').length;
-        const outbidCount = bidsData.filter(bid => bid.status === 'outbid').length;
-        const allBidAmounts = bidsData.map(bid => bid.amount);
+        const totalBids = validBids.length;
+        const successfulBids = validBids.filter(bid => bid.status === 'won').length;
+        const outbidCount = validBids.filter(bid => bid.status === 'outbid').length;
+        const allBidAmounts = validBids.map(bid => bid.amount);
         const averageBidAmount = totalBids > 0 
           ? allBidAmounts.reduce((sum, amount) => sum + amount, 0) / totalBids 
           : 0;
@@ -75,18 +93,20 @@ export function useAnalyticsData(filters: BidAnalyticsFilters) {
           : 0;
           
         // Calculate market comparisons
-        const marketBidAmounts = marketData.map(bid => bid.amount);
+        const marketBidAmounts = validMarketData.map(bid => bid.amount);
         const marketAverageBid = marketBidAmounts.length > 0 
           ? marketBidAmounts.reduce((sum, amount) => sum + amount, 0) / marketBidAmounts.length 
           : 0;
-        const marketSuccessfulBids = marketData.filter(bid => bid.status === 'won').length;
-        const marketSuccessRate = marketData.length > 0 
-          ? (marketSuccessfulBids / marketData.length) * 100 
+        const marketSuccessfulBids = validMarketData.filter(bid => bid.status === 'won').length;
+        const marketSuccessRate = validMarketData.length > 0 
+          ? (marketSuccessfulBids / validMarketData.length) * 100 
           : 0;
           
         // Generate bid over time data (aggregate by day)
         const bidsByDate = new Map();
-        bidsData.forEach(bid => {
+        validBids.forEach(bid => {
+          if (!bid.created_at) return; // Skip bids without created_at
+          
           const date = new Date(bid.created_at).toISOString().split('T')[0];
           if (!bidsByDate.has(date)) {
             bidsByDate.set(date, { count: 0, amount: 0 });
@@ -106,10 +126,10 @@ export function useAnalyticsData(filters: BidAnalyticsFilters) {
         
         // Get bids by status
         const statusCounts = {
-          active: bidsData.filter(bid => bid.status === 'active').length,
+          active: validBids.filter(bid => bid.status === 'active').length,
           outbid: outbidCount,
           won: successfulBids,
-          lost: bidsData.filter(bid => bid.status === 'lost').length
+          lost: validBids.filter(bid => bid.status === 'lost').length
         };
         
         const bidsByStatus = Object.entries(statusCounts).map(([status, count]) => ({
@@ -121,14 +141,23 @@ export function useAnalyticsData(filters: BidAnalyticsFilters) {
         const { data: carsData, error: carsError } = await supabase
           .from('cars')
           .select('id, make, model')
-          .in('id', bidsData.map(bid => bid.car_id));
+          .in('id', validBids.map(bid => bid.car_id));
           
         if (carsError) throw carsError;
         
+        // Filter valid car data
+        const validCarsData = (carsData || []).filter(car => 
+          car !== null &&
+          typeof car === 'object' &&
+          !isSelectQueryError(car) &&
+          'id' in car &&
+          'make' in car
+        );
+        
         // Create a map of car makes
         const carMap: Record<string, string> = {};
-        if (carsData) {
-          carsData.forEach(car => {
+        if (validCarsData) {
+          validCarsData.forEach(car => {
             carMap[car.id] = car.make || 'Unknown';
           });
         }
@@ -140,7 +169,7 @@ export function useAnalyticsData(filters: BidAnalyticsFilters) {
         }
         
         const bidsByCarType: Record<string, CarTypeData> = {};
-        bidsData.forEach(bid => {
+        validBids.forEach(bid => {
           const carType = carMap[bid.car_id] || 'Unknown';
           if (!bidsByCarType[carType]) {
             bidsByCarType[carType] = {

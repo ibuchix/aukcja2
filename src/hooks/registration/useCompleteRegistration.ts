@@ -39,7 +39,13 @@ export const useCompleteRegistration = () => {
         throw new Error(`Error checking email: ${existsError.message}`);
       }
       
-      if (existsData?.exists) {
+      // Safe type checking for the response
+      const emailExists = existsData && 
+                         typeof existsData === 'object' &&
+                         'exists' in existsData && 
+                         existsData.exists === true;
+      
+      if (emailExists) {
         return {
           success: false,
           error: 'An account with this email already exists. Please log in instead.'
@@ -73,8 +79,23 @@ export const useCompleteRegistration = () => {
         throw new Error(`Registration error: ${dealerError.message}`);
       }
       
+      // Safe type checking for the response
+      const isSuccessful = dealerData && 
+                         typeof dealerData === 'object' &&
+                         'success' in dealerData && 
+                         dealerData.success === true;
+      
       // Check if the operation was successful
-      if (dealerData && dealerData.success) {
+      if (isSuccessful) {
+        // Handle user safely
+        const userId = dealerData && 
+                      typeof dealerData === 'object' && 
+                      'user' in dealerData && 
+                      typeof dealerData.user === 'object' &&
+                      dealerData.user &&
+                      'id' in dealerData.user ? 
+                      dealerData.user.id : undefined;
+        
         // Show success toast
         toast({
           title: "Registration Complete",
@@ -83,13 +104,18 @@ export const useCompleteRegistration = () => {
         
         return {
           success: true,
-          userId: dealerData.user?.id
+          userId
         };
       } else {
-        // Handle unsuccessful response
+        // Handle unsuccessful response safely
+        const errorMessage = dealerData && 
+                          typeof dealerData === 'object' && 
+                          'error' in dealerData ? 
+                          String(dealerData.error) : 'Unknown error during registration.';
+        
         return {
           success: false,
-          error: dealerData?.error || 'Unknown error during registration.'
+          error: errorMessage
         };
       }
       

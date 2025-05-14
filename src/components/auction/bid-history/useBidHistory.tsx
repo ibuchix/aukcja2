@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Bid } from "./types";
-import { isValidRecord, safeFilter, isSelectQueryError } from "@/utils/supabaseHelpers";
+import { isSelectQueryError, safeFilter } from "@/utils/supabaseHelpers";
 
 // Data structure for chart
 export interface ChartDataPoint {
@@ -60,42 +60,53 @@ export const useBidHistory = (carId: string) => {
           const validBids = bidData.filter(bid => 
             bid !== null && 
             typeof bid === 'object' && 
-            !isSelectQueryError(bid)
+            !isSelectQueryError(bid) &&
+            'id' in bid &&
+            'car_id' in bid &&
+            'dealer_id' in bid &&
+            'amount' in bid &&
+            'status' in bid &&
+            'created_at' in bid &&
+            'updated_at' in bid
           );
           
           validBids.forEach(bid => {
-            if (bid) {
-              bidHistory.push({
-                id: bid.id,
-                car_id: bid.car_id,
-                dealer_id: bid.dealer_id,
-                amount: bid.amount,
-                status: bid.status || 'active',
-                created_at: bid.created_at,
-                updated_at: bid.updated_at,
-                dealer_name: `Dealer ${bid.dealer_id?.substring(0, 5) || 'Unknown'}`, // Anonymized name
-                is_proxy: false
-              });
-            }
+            bidHistory.push({
+              id: bid.id,
+              car_id: bid.car_id,
+              dealer_id: bid.dealer_id,
+              amount: bid.amount,
+              status: bid.status || 'active',
+              created_at: bid.created_at,
+              updated_at: bid.updated_at,
+              dealer_name: `Dealer ${bid.dealer_id?.substring(0, 5) || 'Unknown'}`, // Anonymized name
+              is_proxy: false
+            });
           });
         }
         
         // Add proxy bids with type safety
         if (proxyData) {
-          // Filter to ensure we only process valid log records (not null or error types)
+          // Filter to ensure we only process valid log records
           const validLogs = proxyData.filter(log => 
             log !== null && 
             typeof log === 'object' && 
             !isSelectQueryError(log) &&
+            'id' in log &&
+            'entity_id' in log &&
+            'user_id' in log &&
+            'details' in log &&
+            'created_at' in log &&
             log.details && 
             typeof log.details === 'object'
           );
           
           validLogs.forEach(log => {
+            // Additional safe check for details property
             if (log && log.details && typeof log.details === 'object') {
               const details = log.details as any;
               
-              if (details && typeof details === 'object' && 'amount' in details) {
+              if (details && 'amount' in details) {
                 bidHistory.push({
                   id: log.id,
                   car_id: log.entity_id,

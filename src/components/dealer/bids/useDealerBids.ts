@@ -64,11 +64,15 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         bid !== null && 
         typeof bid === 'object' && 
         !isSelectQueryError(bid) &&
-        'car_id' in bid
+        'id' in bid &&
+        'car_id' in bid &&
+        'amount' in bid &&
+        'status' in bid &&
+        'created_at' in bid
       );
 
       // Get car details for these bids
-      const carIds = [...new Set(validActiveBids.map(bid => bid.car_id))];
+      const carIds = validActiveBids.map(bid => bid.car_id).filter(Boolean);
       
       if (carIds.length === 0) {
         return [] as MyBid[];
