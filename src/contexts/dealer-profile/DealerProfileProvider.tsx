@@ -1,79 +1,91 @@
 
-import React, { createContext, useContext } from 'react';
-import { useDealerProfileData } from './useDealerProfileData';
-import { DealerProfileContextType } from './types';
-import { checkProfileCompleteness } from './profileUtils';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { mapProfileToCamelCase } from '@/utils/dealer-profile-utils/mappers';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { DealerProfileContextType, DealerProfileData, REQUIRED_PROFILE_FIELDS } from "./types";
+import { useDealerProfileData } from "./useDealerProfileData";
+import { getProfileCompletionStatus } from "./profileUtils";
+import { useAuth } from "@/contexts/AuthContext";
+import { mapProfileToCamelCase } from "@/utils/dealer-profile-utils/mappers";
 
-const DealerProfileContext = createContext<DealerProfileContextType>({
-  displayProfile: null,
-  rawProfile: null,
-  isLoading: true,
-  error: null,
-  fetchAttempted: false,
-  profileStatus: '',
-  needsRecovery: false,
-  missingFields: [],
-  profileIsComplete: false,
-  initiateProfileRecovery: () => {},
-  refreshProfile: async () => {}
-});
+// Create the context
+const DealerProfileContext = createContext<DealerProfileContextType | null>(null);
 
-export const useDealerProfile = () => useContext(DealerProfileContext);
-
-export function DealerProfileProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
-  const userId = user?.id;
+// Custom hook to use the context
+export const useDealerProfile = (): DealerProfileContextType => {
+  const context = useContext(DealerProfileContext);
   
-  const {
+  if (!context) {
+    throw new Error("useDealerProfile must be used within a DealerProfileProvider");
+  }
+  
+  return context;
+};
+
+export const DealerProfileProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const { 
     profileData,
     profileStatus,
     needsRecovery,
     loading,
     error,
     updateProfileData,
-    updateProfileStatus,
-  } = useDealerProfileData(userId);
+    updateProfileStatus
+  } = useDealerProfileData(user?.id);
 
-  // Get missing fields from profile data
-  const { isComplete, missing } = checkProfileCompleteness(profileData);
+  // Derived state
+  const displayProfile = profileData ? mapProfileToCamelCase(profileData) : null;
+  const rawProfile = profileData;
+  const isLoading = loading;
+  const fetchAttempted = loading === false;
+  
+  // Calculate missing fields for profile completion
+  const missingFields = profileData ? 
+    REQUIRED_PROFILE_FIELDS.filter(field => !profileData[field as keyof DealerProfileData]) : 
+    [];
+    
+  const profileIsComplete = missingFields.length === 0;
 
-  const navigate = useNavigate();
+  // Function to initiate profile recovery process
+  const initiateProfileRecovery = async () => {
+    try {
+      await updateProfileStatus("recovery_initiated");
+    } catch (err) {
+      console.error("Failed to initiate profile recovery:", err);
+    }
+  };
 
-  // Create a camelCase version of the profile for UI components
-  const displayProfile = mapProfileToCamelCase(profileData);
+  // Function to refresh profile data
+  const refreshProfile = async () => {
+    try {
+      // This logic would depend on how your refresh mechanism works
+      console.log("Refreshing profile data");
+      // For now we'll just update the timestamp to trigger a refresh 
+      await updateProfileData({
+        updated_at: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error("Failed to refresh profile data:", err);
+    }
+  };
+
+  // Value for the context provider
+  const contextValue: DealerProfileContextType = {
+    displayProfile,
+    rawProfile,
+    isLoading,
+    error,
+    fetchAttempted,
+    profileStatus,
+    needsRecovery,
+    missingFields,
+    profileIsComplete,
+    initiateProfileRecovery,
+    refreshProfile
+  };
 
   return (
-    <DealerProfileContext.Provider
-      value={{
-        displayProfile,
-        rawProfile: profileData,
-        isLoading: loading,
-        error,
-        fetchAttempted: true,
-        profileStatus,
-        needsRecovery,
-        missingFields: missing,
-        profileIsComplete: isComplete,
-        initiateProfileRecovery: () => {
-          // Navigate to recovery flow
-          navigate('/complete-registration', { 
-            state: { 
-              recovery: true,
-              userId: profileData?.user_id
-            } 
-          });
-        },
-        refreshProfile: async () => {
-          // Implement refresh logic
-          // This would typically re-fetch the profile data
-          console.log("Refresh profile requested");
-        }
-      }}
-    >
+    <DealerProfileContext.Provider value={contextValue}>
       {children}
     </DealerProfileContext.Provider>
   );
-}
+};

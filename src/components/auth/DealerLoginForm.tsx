@@ -47,15 +47,24 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
         // Handle specific errors with user-friendly messages
         let errorMessage = "Authentication failed. Please check your credentials and try again.";
         
-        if (signInError.message?.includes("Invalid login credentials")) {
-          errorMessage = "Incorrect email or password. Please try again.";
-        } else if (signInError.message?.includes("Email not found")) {
-          errorMessage = "No account found with this email. Please check your email or register.";
-        } else if (signInError.message?.includes("Invalid email")) {
-          errorMessage = "Please enter a valid email address.";
-        } else {
-          // Use the original message if available
-          errorMessage = signInError.message || errorMessage;
+        if (typeof signInError === 'object' && signInError !== null) {
+          // Handle Error object
+          const errMsg = signInError instanceof Error ? signInError.message : 
+                         'message' in signInError ? String(signInError.message) : String(signInError);
+                         
+          if (errMsg.includes("Invalid login credentials")) {
+            errorMessage = "Incorrect email or password. Please try again.";
+          } else if (errMsg.includes("Email not found")) {
+            errorMessage = "No account found with this email. Please check your email or register.";
+          } else if (errMsg.includes("Invalid email")) {
+            errorMessage = "Please enter a valid email address.";
+          } else {
+            // Use the original message if available
+            errorMessage = errMsg || errorMessage;
+          }
+        } else if (typeof signInError === 'string') {
+          // Handle string error
+          errorMessage = signInError;
         }
         
         setError(errorMessage);

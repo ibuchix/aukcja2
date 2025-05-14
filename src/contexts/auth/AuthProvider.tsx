@@ -88,7 +88,14 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
       const result = await memoizedRefreshSession();
       return result.success ? Promise.resolve() : Promise.reject(result.error);
     },
-    signIn,
+    signIn: async ({ email, password, redirectTo }) => {
+      const result = await signIn({ email, password, redirectTo });
+      // Map the response to the expected structure in the context
+      return { 
+        success: !result.error, 
+        error: result.error ? (result.error instanceof Error ? result.error.message : String(result.error)) : undefined 
+      };
+    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

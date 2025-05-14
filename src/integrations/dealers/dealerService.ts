@@ -1,6 +1,8 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { mapFormToDatabase, normalizeEmail, normalizePhoneNumber } from "@/utils/dealer-profile-utils";
+import { normalizeEmail, normalizePhoneNumber } from "@/utils/dealer-profile-utils";
+import { mapFormToDatabase } from "@/utils/dealer-profile-utils/formatters";
 
 // Type for inserting dealer records to match the database schema
 type DealerInsert = {

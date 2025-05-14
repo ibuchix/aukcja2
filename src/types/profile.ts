@@ -1,4 +1,3 @@
-
 // User profile types
 export interface Profile {
   id: string;
@@ -9,6 +8,7 @@ export interface Profile {
   suspended: boolean;
   full_name?: string;
   avatar_url?: string;
+  supervisor_name?: string;
 }
 
 export interface DealerProfileData {

@@ -1,6 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { mapFormToDatabase } from "@/utils/dealer-profile-utils/mappers";
+import { mapFormToDatabase } from "@/utils/dealer-profile-utils/formatters";
 
 export async function submitRegistration(values: DealerFormValues, userId: string) {
   if (!userId) {

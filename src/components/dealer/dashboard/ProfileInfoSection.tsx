@@ -34,9 +34,9 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Name:</span> {displayProfile?.supervisorName || rawProfile?.supervisor_name || "Not available"}</p>
+              <p><span className="font-medium text-dark">Name:</span> {displayProfile?.supervisor_name || rawProfile?.supervisor_name || "Not available"}</p>
               <p><span className="font-medium text-dark">Email:</span> {user?.email || "Not available"}</p>
-              <p><span className="font-medium text-dark">Dealership:</span> {displayProfile?.dealershipName || rawProfile?.dealership_name || "Not available"}</p>
+              <p><span className="font-medium text-dark">Dealership:</span> {displayProfile?.dealership_name || rawProfile?.dealership_name || "Not available"}</p>
             </div>
           )}
         </div>
@@ -57,8 +57,8 @@ export const ProfileInfoSection = () => {
           ) : (
             <div className="space-y-3 text-subtitle-text">
               <p><span className="font-medium text-dark">Address:</span> {displayProfile?.address || rawProfile?.address || "Not available"}</p>
-              <p><span className="font-medium text-dark">License:</span> {displayProfile?.licenseNumber || rawProfile?.license_number || "Not available"}</p>
-              <p><span className="font-medium text-dark">Tax ID:</span> {displayProfile?.taxId || rawProfile?.tax_id || "Not available"}</p>
+              <p><span className="font-medium text-dark">License:</span> {displayProfile?.license_number || rawProfile?.license_number || "Not available"}</p>
+              <p><span className="font-medium text-dark">Tax ID:</span> {displayProfile?.tax_id || rawProfile?.tax_id || "Not available"}</p>
             </div>
           )}
         </div>
@@ -77,7 +77,7 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Business Registry:</span> {displayProfile?.businessRegistryNumber || rawProfile?.business_registry_number || "Not available"}</p>
+              <p><span className="font-medium text-dark">Business Registry:</span> {displayProfile?.business_registry_number || rawProfile?.business_registry_number || "Not available"}</p>
               <p><span className="font-medium text-dark">Account Status:</span> <span className="text-success font-medium">Active</span></p>
             </div>
           )}

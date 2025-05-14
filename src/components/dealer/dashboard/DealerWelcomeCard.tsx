@@ -4,14 +4,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useTour } from "@/contexts/tour/TourContext";
 import { TourButton } from "@/components/tour/TourButton";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useDealerProfile } from "@/contexts/dealer-profile";
 
 export function DealerWelcomeCard() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const { displayProfile } = useDealerProfile();
   const { hasCompletedTour } = useTour();
   const isMobile = useIsMobile();
   
   // Extract dealer name from profile or fallback to email
-  const dealerName = profile?.supervisor_name || user?.email?.split('@')[0] || 'Dealer';
+  const dealerName = displayProfile?.supervisor_name || user?.email?.split('@')[0] || 'Dealer';
 
   return (
     <Card className="border-l-4 border-l-primary">
@@ -25,7 +27,7 @@ export function DealerWelcomeCard() {
             {hasCompletedTour ? 'Replay Tour' : 'How to Use Proxy Bidding'}
           </TourButton>
         </div>
-        <CardDescription>
+        <CardDescription className="font-kanit">
           Your one-stop dashboard for managing auctions and monitoring your bidding activity
         </CardDescription>
       </CardHeader>
