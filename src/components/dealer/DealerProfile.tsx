@@ -1,4 +1,3 @@
-
 import { useDealerProfile } from "@/contexts/dealer-profile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, User as UserIcon, FileText, MapPin, BadgeCheck, AlertCircle, Phone, Mail } from "lucide-react";
@@ -49,8 +48,8 @@ export function DealerProfile() {
               <UserIcon className="mr-2 h-5 w-5 text-primary" />
               Dealer Profile
             </CardTitle>
-            {displayProfile?.verificationStatus && (
-              displayProfile.isVerified ? (
+            {displayProfile?.verification_status && (
+              displayProfile.is_verified ? (
                 <Badge variant="success" className="flex items-center gap-1">
                   <BadgeCheck className="h-3.5 w-3.5 mr-1" />
                   Verified
@@ -58,7 +57,7 @@ export function DealerProfile() {
               ) : (
                 <Badge variant="warning" className="flex items-center gap-1">
                   <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                  {displayProfile.verificationStatus}
+                  {displayProfile.verification_status}
                 </Badge>
               )
             )}
@@ -76,12 +75,12 @@ export function DealerProfile() {
                 Dealer Information
               </h3>
               <div className="space-y-3 text-subtitle-text">
-                <p><span className="font-medium text-dark">Name:</span> {formatNameForDisplay(displayProfile?.supervisorName)}</p>
-                <p><span className="font-medium text-dark">Dealership:</span> {getValueWithFallback(displayProfile?.dealershipName)}</p>
+                <p><span className="font-medium text-dark">Name:</span> {formatNameForDisplay(displayProfile?.supervisor_name)}</p>
+                <p><span className="font-medium text-dark">Dealership:</span> {getValueWithFallback(displayProfile?.dealership_name)}</p>
                 <p>
                   <span className="font-medium text-dark">Verification:</span> 
-                  <span className={`ml-1 ${displayProfile?.isVerified ? 'text-green-600' : 'text-amber-600'}`}>
-                    {getValueWithFallback(displayProfile?.verificationStatus, 'Pending')}
+                  <span className={`ml-1 ${displayProfile?.is_verified ? 'text-green-600' : 'text-amber-600'}`}>
+                    {getValueWithFallback(displayProfile?.verification_status, 'Pending')}
                   </span>
                 </p>
                 <p><span className="font-medium text-dark">Email:</span> {getValueWithFallback(user?.email)}</p>
@@ -95,11 +94,11 @@ export function DealerProfile() {
                 Business Information
               </h3>
               <div className="space-y-3 text-subtitle-text">
-                <p><span className="font-medium text-dark">Tax ID:</span> {getValueWithFallback(displayProfile?.formattedTaxId || displayProfile?.taxId)}</p>
-                <p><span className="font-medium text-dark">License:</span> {getValueWithFallback(displayProfile?.licenseNumber)}</p>
+                <p><span className="font-medium text-dark">Tax ID:</span> {getValueWithFallback(displayProfile?.tax_id)}</p>
+                <p><span className="font-medium text-dark">License:</span> {getValueWithFallback(displayProfile?.license_number)}</p>
                 <p>
                   <span className="font-medium text-dark">Registry Number:</span> {" "}
-                  {getValueWithFallback(displayProfile?.formattedBusinessRegistry || displayProfile?.businessRegistryNumber)}
+                  {getValueWithFallback(displayProfile?.business_registry_number)}
                 </p>
               </div>
             </div>

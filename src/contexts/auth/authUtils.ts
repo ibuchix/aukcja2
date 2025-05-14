@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { isValidRecord, safeFilter } from '@/utils/supabaseHelpers';
 
@@ -119,4 +118,23 @@ export const fetchDealerProfile = async (userId: string) => {
     console.error('Error in fetchDealerProfile:', err);
     return null;
   }
+};
+
+/**
+ * Function to safely handle profile data response with type checking
+ */
+export const safeGetProfileData = (profileData: any): Profile => {
+  // If there's an error or profileData is null, return a default profile
+  if (!profileData || profileData?.error) {
+    // Cast to unknown first, then to Profile to avoid direct type assertion
+    return {
+      id: '',
+      role: 'dealer',
+      updated_at: new Date().toISOString(),
+      suspended: false
+    };
+  }
+
+  // If it's a valid profile, return it
+  return profileData as Profile;
 };

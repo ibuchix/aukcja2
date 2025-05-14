@@ -27,3 +27,12 @@ export interface DealerProfileContextType {
   initiateProfileRecovery: () => void;
   refreshProfile: () => Promise<void>;
 }
+
+// Add the missing constant
+export const REQUIRED_PROFILE_FIELDS = [
+  'dealership_name',
+  'supervisor_name',
+  'tax_id',
+  'business_registry_number',
+  'address'
+];

@@ -44,7 +44,7 @@ export const useCompleteRegistration = (): UseCompleteRegistrationReturn => {
 
       // Create or update user_profiles record
       const { error: profileError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .upsert({
           id: formData.userId,
           role: 'dealer',
@@ -66,11 +66,14 @@ export const useCompleteRegistration = (): UseCompleteRegistrationReturn => {
         throw new Error(`Failed to create dealer profile: ${dealerData.error.message}`);
       }
 
+      const dealerId = dealerData.data && dealerData.data.length > 0 ? 
+        dealerData.data[0]?.id : undefined;
+
       // Set the user's custom claim to indicate registration is complete
       const { error: metadataError } = await supabase.auth.updateUser({
         data: { 
           registration_completed: true,
-          dealer_profile_id: dealerData?.data?.[0]?.id
+          dealer_profile_id: dealerId
         }
       });
 
@@ -80,19 +83,29 @@ export const useCompleteRegistration = (): UseCompleteRegistrationReturn => {
 
       // Notify about new dealer registration
       if (options?.notifyAdmin) {
-        await supabase.functions.invoke('send-email', {
-          body: {
-            template: 'new_dealer_registration',
-            dealerProfile: {
-              id: dealerData?.data?.[0]?.id,
-              dealership_name: formData.dealershipName,
-              address: formData.address,
-              supervisor_name: formData.supervisorName,
-              tax_id: formData.taxId,
-              business_registry_number: formData.businessRegistryNumber
+        try {
+          await supabase.functions.invoke('send-email', {
+            body: {
+              template: 'new_dealer_registration',
+              dealerProfile: {
+                id: dealerId,
+                dealership_name: formData.dealershipName,
+                address: formData.address,
+                supervisor_name: formData.supervisorName,
+                tax_id: formData.taxId,
+                business_registry_number: formData.businessRegistryNumber
+              }
             }
-          }
-        });
+          });
+        } catch (notifyError) {
+          console.error("Notification failed but registration was successful:", notifyError);
+          // Don't throw here, as registration itself worked
+        }
+      }
+
+      // Call onSuccess callback if provided
+      if (options?.onSuccess) {
+        options.onSuccess();
       }
 
       return { success: true };

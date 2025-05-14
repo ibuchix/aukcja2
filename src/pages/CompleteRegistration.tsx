@@ -15,11 +15,13 @@ export default function CompleteRegistration() {
   const { toast } = useToast();
   const [userData, setUserData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [formErrors, setFormErrors] = useState<string[]>([]);
   
   const { submitRegistration, isSubmitting, error } = useCompleteRegistration();
 
   // Handle form submission
   const handleSubmit = async (formData: any) => {
+    setFormErrors([]);
     const userId = state?.userId || userData?.id;
     
     if (!userId) {
@@ -32,13 +34,16 @@ export default function CompleteRegistration() {
     }
 
     const result = await submitRegistration(formData, {
-      onSuccess: () => {
-        navigate('/dealer/dashboard');
-      }
+      notifyAdmin: true
     });
 
     if (!result.success) {
       console.error("Registration failed:", result.error);
+      if (result.error) {
+        setFormErrors(Array.isArray(result.error) ? result.error : [result.error]);
+      }
+    } else {
+      navigate('/dealer/dashboard');
     }
   };
   
@@ -126,7 +131,7 @@ export default function CompleteRegistration() {
         onSubmit={handleSubmit}
         defaultEmail={userEmail}
         isSubmitting={isSubmitting}
-        formErrors={{}}
+        formErrors={formErrors || []}
         showPasswordFields={false}
       />
     </RegistrationCard>

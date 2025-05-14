@@ -6,6 +6,9 @@ export interface Profile {
   profile_status?: string;
   needs_recovery?: boolean;
   updated_at: string;
+  suspended: boolean;
+  full_name?: string;
+  avatar_url?: string;
 }
 
 export interface DealerProfileData {
@@ -35,6 +38,7 @@ export interface RegistrationData {
 
 export interface CompleteRegistrationOptions {
   notifyAdmin?: boolean;
+  onSuccess?: () => void;
 }
 
 export interface OperationResult<T> {
