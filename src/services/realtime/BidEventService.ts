@@ -8,6 +8,7 @@ class BidEventService {
   private subscriptions: Map<string, BidEventSubscription> = new Map();
   private channels: Map<string, RealtimeChannel> = new Map();
   private dealerId: string | null = null;
+  private readonly supabase = supabase;
 
   private constructor() {}
 
@@ -217,7 +218,7 @@ class BidEventService {
     
     try {
       // Fetch car details
-      const { data: carData, error } = await supabase
+      const { data: carData, error } = await this.supabase
         .from("cars")
         .select("title, make, model, year, auction_end_time")
         .eq("id", activity.carId)
@@ -227,22 +228,27 @@ class BidEventService {
       
       // Fetch dealer name if needed
       if (activity.dealerId && !activity.dealerName) {
-        const { data: dealerData, error: dealerError } = await supabase
+        const { data: dealerData, error: dealerError } = await this.supabase
           .from("dealers")
           .select("dealership_name")
           .eq("id", activity.dealerId)
           .single();
         
-        if (!dealerError && dealerData) {
-          activity.dealerName = dealerData.dealership_name;
+        if (!dealerError && dealerData && isValidRecord(dealerData)) {
+          activity.dealerName = dealerData.dealership_name || 'Unknown';
         }
       }
       
-      return {
-        ...activity,
-        carTitle: carData.title || `${carData.year} ${carData.make} ${carData.model}`,
-        auctionEndTime: carData.auction_end_time
-      };
+      // Use isValidRecord to ensure we have valid car data before accessing properties
+      if (carData && isValidRecord(carData)) {
+        return {
+          ...activity,
+          carTitle: carData.title || `${carData.year || ''} ${carData.make || ''} ${carData.model || ''}`.trim() || 'Unknown Vehicle',
+          auctionEndTime: carData.auction_end_time
+        };
+      }
+      
+      return activity;
     } catch (error) {
       console.error("Error enriching bid activity:", error);
       return activity;

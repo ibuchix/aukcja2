@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DealerProfileData } from "./types";
@@ -48,17 +49,18 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
         throw new Error(`Failed to fetch dealer profile: ${dealerError.message}`);
       }
 
-      if (dealerProfile && isValidRecord(dealerProfile)) {
-        setProfileData(dealerProfile);
-        // Use a type guard to check if verification_status exists
-        const status = typeof dealerProfile === 'object' && dealerProfile !== null &&
+      if (dealerProfile && isValidRecord<DealerProfileData>(dealerProfile)) {
+        setProfileData(dealerProfile as DealerProfileData);
+        
+        // Safe property access with defaults
+        const status = isValidRecord(dealerProfile) && 
           'verification_status' in dealerProfile ? 
           dealerProfile.verification_status as string : 'pending';
         
         setProfileStatus(status);
         
-        // Use a type guard for needs_recovery as well
-        const needsRecoveryValue = typeof dealerProfile === 'object' && dealerProfile !== null &&
+        // Safe property access for needs_recovery flag
+        const needsRecoveryValue = isValidRecord(dealerProfile) && 
           'needs_recovery' in dealerProfile ? 
           Boolean(dealerProfile.needs_recovery) : false;
         
@@ -103,8 +105,8 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
         throw new Error(`Failed to update dealer profile: ${error.message}`);
       }
 
-      if (isValidRecord(data)) {
-        setProfileData(data);
+      if (isValidRecord<DealerProfileData>(data)) {
+        setProfileData(data as DealerProfileData);
       } else {
         console.warn("Invalid data returned after profile update.");
       }

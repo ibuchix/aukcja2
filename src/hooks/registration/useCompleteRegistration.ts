@@ -71,7 +71,7 @@ export const useCompleteRegistration = (): UseCompleteRegistrationReturn => {
       if (dealerData && Array.isArray(dealerData) && dealerData.length > 0) {
         const firstRecord = dealerData[0];
         if (isValidRecord(firstRecord) && 'id' in firstRecord) {
-          dealerId = firstRecord.id;
+          dealerId = String(firstRecord.id); // Convert to string to fix Type 'unknown' is not assignable to type 'string'
         }
       }
 

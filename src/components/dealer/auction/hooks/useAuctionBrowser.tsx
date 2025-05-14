@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Auction, AuctionFilters } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { createCursor, decodeCursor, getCursorOperator, AuctionPaginationResult } from "@/utils/cursorPagination";
-import { isValidRecord, isSelectQueryError, isValidBid } from "@/utils/supabaseHelpers";
+import { isValidRecord, isSelectQueryError, isValidBid, safelyFilterData } from "@/utils/supabaseHelpers";
 
 const PAGE_SIZE = 10; // Number of items per page
 
