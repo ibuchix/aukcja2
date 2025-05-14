@@ -44,18 +44,21 @@ export const useCompleteRegistration = () => {
       }
 
       // Create verification request - Fixed the id access using isValidRecord check
-      if (dealerData && dealerData.length > 0 && isValidRecord(dealerData[0])) {
-        const dealerId = dealerData[0].id;
+      if (dealerData && dealerData.length > 0) {
+        // Make sure dealerData[0] is a valid record using isValidRecord before accessing id
+        if (isValidRecord(dealerData[0])) {
+          const dealerId = dealerData[0].id;
 
-        const { error: verificationError } = await supabase
-          .from('dealer_verifications')
-          .insert({
-            dealer_id: dealerId,
-            verification_status: 'pending'
-          });
+          const { error: verificationError } = await supabase
+            .from('dealer_verifications')
+            .insert({
+              dealer_id: dealerId,
+              verification_status: 'pending'
+            });
 
-        if (verificationError) {
-          console.error("Error creating verification record:", verificationError);
+          if (verificationError) {
+            console.error("Error creating verification record:", verificationError);
+          }
         }
       }
 
