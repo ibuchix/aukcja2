@@ -236,9 +236,11 @@ class BidEventService {
         
         if (!dealerError && dealerData) {
           // Check if dealer data is valid before accessing properties
-          if (isValidRecord(dealerData)) {
-            const dealerName = dealerData.dealership_name || 'Unknown Dealer';
+          if (isValidRecord(dealerData) && 'dealership_name' in dealerData) {
+            const dealerName = dealerData.dealership_name as string || 'Unknown Dealer';
             activity.dealerName = dealerName;
+          } else {
+            activity.dealerName = 'Unknown Dealer';
           }
         }
       }

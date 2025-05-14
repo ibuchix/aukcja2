@@ -101,6 +101,34 @@ export function isValidWatchlistWithCar(item: any): item is {
 }
 
 /**
+ * Type guard for dealer data
+ */
+export function isValidDealerData(item: any): item is {
+  id: string;
+  dealership_name?: string;
+  supervisor_name?: string;
+  tax_id?: string;
+  business_registry_number?: string;
+  address?: string;
+  license_number?: string;
+} {
+  return item !== null && 
+         typeof item === 'object' && 
+         'id' in item;
+}
+
+/**
+ * Safe way to access a property from potentially invalid data
+ * Returns the property value if it exists or the default value if not
+ */
+export function safeGetProperty<T>(data: any, property: string, defaultValue: T): T {
+  if (data && isValidRecord(data) && property in data && data[property] !== null && data[property] !== undefined) {
+    return data[property] as T;
+  }
+  return defaultValue;
+}
+
+/**
  * Safe data transformer function to handle potential error objects
  * @param data The data returned from Supabase
  * @param transformer The transformation function to apply to valid data

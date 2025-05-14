@@ -48,13 +48,13 @@ export const useCompleteRegistration = () => {
         // Make sure dealerData[0] is a valid record with better type safety
         const dealer = dealerData[0];
         if (dealer && isValidRecord(dealer) && 'id' in dealer) {
-          const dealerId = dealer.id;
+          const dealerId: string = dealer.id as string;
 
-          // Create dealer verification record with type-safe dealerId
+          // Create dealer verification record with explicitly typed dealerId
           const { error: verificationError } = await supabase
             .from('dealer_verifications')
             .insert({
-              dealer_id: dealerId, // Now properly typed as string
+              dealer_id: dealerId, // Now explicitly typed as string
               verification_status: 'pending'
             });
 

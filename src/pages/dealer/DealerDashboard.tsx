@@ -92,7 +92,7 @@ const DealerDashboard = () => {
           toast({
             title: "Profile Not Found",
             description: "No dealer profile found. Please complete your registration.",
-            variant: "destructive", // Changed from "warning" to "destructive" as warning is not in the variant types
+            variant: "destructive", // Changed from "warning" to "destructive"
           });
           navigate('/auth/dealer-registration');
         }
@@ -120,7 +120,7 @@ const DealerDashboard = () => {
         <LoadingDashboard />
       ) : (
         dealer && isValidRecord(dealer) && 'id' in dealer ? (
-          <MainDashboard dealerId={dealer.id} />
+          <MainDashboard dealerId={dealer.id as string} />
         ) : (
           <div className="p-4 text-center">
             Unable to load dealer profile. Please try again later.
