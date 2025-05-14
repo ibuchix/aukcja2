@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RegistrationData, CompleteRegistrationOptions, OperationResult } from '@/types/profile'; 
@@ -69,8 +68,11 @@ export const useCompleteRegistration = (): UseCompleteRegistrationReturn => {
 
       // Safely get dealer ID
       let dealerId: string | undefined = undefined;
-      if (dealerData && Array.isArray(dealerData) && dealerData.length > 0 && isValidRecord(dealerData[0])) {
-        dealerId = dealerData[0].id;
+      if (dealerData && Array.isArray(dealerData) && dealerData.length > 0) {
+        const firstRecord = dealerData[0];
+        if (isValidRecord(firstRecord) && 'id' in firstRecord) {
+          dealerId = firstRecord.id;
+        }
       }
 
       // Set the user's custom claim to indicate registration is complete

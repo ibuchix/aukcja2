@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { safelyFilterData, isValidRecord } from '@/utils/supabaseHelpers';
+import { isValidRecord, safelyFilterData } from '@/utils/supabaseHelpers';
 import { BidAnalyticsFilters } from '@/components/dealer/analytics/types';
 
 export interface BidData {

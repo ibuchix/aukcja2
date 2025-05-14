@@ -1,7 +1,6 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { safelyFilterData } from '@/utils/supabaseHelpers';
+import { isValidRecord, safelyFilterData } from '@/utils/supabaseHelpers';
 import { toast } from '@/components/ui/use-toast';
 
 // Define the PendingDealer interface

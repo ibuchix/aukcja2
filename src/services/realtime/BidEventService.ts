@@ -1,7 +1,7 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { BidActivity, BidEventSubscription, BidMonitoringFilters } from "@/components/dealer/bid-monitoring/types";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import { isValidRecord } from '@/utils/supabaseHelpers';
 
 class BidEventService {
   private static instance: BidEventService;
@@ -272,6 +272,68 @@ class BidEventService {
     }
     
     return true;
+  }
+
+  async fetchDealerDetails(dealerId: string): Promise<any> {
+    try {
+      const { data: dealer } = await this.supabase
+        .from('dealers')
+        .select('dealership_name')
+        .eq('id', dealerId)
+        .single();
+      
+      if (isValidRecord(dealer)) {
+        return {
+          dealershipName: dealer.dealership_name || 'Unknown Dealership'
+        };
+      }
+      
+      return {
+        dealershipName: 'Unknown Dealership'
+      };
+    } catch (error) {
+      console.error('Error fetching dealer details:', error);
+      return {
+        dealershipName: 'Unknown Dealership'
+      };
+    }
+  }
+
+  async fetchCarDetails(carId: string): Promise<any> {
+    try {
+      const { data: car } = await this.supabase
+        .from('cars')
+        .select('title, year, make, model, auction_end_time')
+        .eq('id', carId)
+        .single();
+      
+      if (isValidRecord(car)) {
+        return {
+          title: car.title || `${car.year || ''} ${car.make || ''} ${car.model || ''}`.trim() || 'Unknown Vehicle',
+          year: car.year,
+          make: car.make,
+          model: car.model,
+          auction_end_time: car.auction_end_time
+        };
+      }
+      
+      return {
+        title: 'Unknown Vehicle',
+        year: null,
+        make: null,
+        model: null,
+        auction_end_time: null
+      };
+    } catch (error) {
+      console.error('Error fetching car details:', error);
+      return {
+        title: 'Unknown Vehicle',
+        year: null,
+        make: null,
+        model: null,
+        auction_end_time: null
+      };
+    }
   }
 }
 

@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useWelcomeDashboardData } from "@/hooks/useWelcomeDashboardData";
 import { DashboardLayout } from "@/components/dealer/dashboard/DashboardLayout";
@@ -19,13 +18,16 @@ import { DealerAnalyticsDashboard } from "@/components/dealer/analytics/DealerAn
 import { AdminTools } from "@/components/dealer/dashboard/AdminTools";
 import { usePermissions } from "@/hooks/usePermissions";
 import { PermissionGate } from "@/components/PermissionGate";
+import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
 
 export default function DealerDashboard() {
   const { user, isLoading: isAuthLoading, refreshSession } = useAuth();
   const { recentActivity, directQueryResult } = useWelcomeDashboardData(user, isAuthLoading);
   const navigate = useNavigate();
   const { isAdmin } = usePermissions();
-  
+  const { dealerProfile } = useCurrentDealerProfile();
+  const dealerId = dealerProfile?.id || '';
+
   useEffect(() => {
     const debugRls = async () => {
       if (user) {
@@ -109,23 +111,26 @@ export default function DealerDashboard() {
           </Alert>
         )}
         
-        <div className="space-y-8">
-          <DealerWelcomeCard />
-          
-          {/* Admin tools visible only to admins */}
-          <PermissionGate action="manage" entityType="dealer">
-            <AdminTools />
-          </PermissionGate>
-          
-          <DealerProfile />
-          
-          <QuickActions />
-          
-          <DealerAnalyticsDashboard />
-          
-          <StatsSection recentActivity={recentActivity} />
-          
-          <BusinessActionSection />
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <div className="col-span-2">
+            <DealerWelcomeCard />
+          </div>
+          <div className="space-y-8">
+            {/* Admin tools visible only to admins */}
+            <PermissionGate action="manage" entityType="dealer">
+              <AdminTools />
+            </PermissionGate>
+            
+            <DealerProfile />
+            
+            <QuickActions />
+            
+            <DealerAnalyticsDashboard />
+            
+            <StatsSection recentActivity={recentActivity} />
+            
+            <BusinessActionSection />
+          </div>
         </div>
       </DashboardLayout>
     </DealerProfileProvider>

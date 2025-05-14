@@ -1,282 +1,265 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { User } from "@supabase/supabase-js";
+import { Profile as UserIcon, Building2, FileText } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
-import { 
-  Car, 
-  DollarSign, 
-  FileText, 
-  Settings, 
-  User, 
-  Building2, 
-  History,
-  Bell,
-  MessageSquare
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { profileFormSchema, DealerProfileFormValues } from "@/schemas/profileFormSchema";
+import { useAuth } from "@/contexts/AuthContext";
+import { isValidRecord } from "@/utils/supabaseHelpers";
 
-interface DealerProfile {
-  dealership_name: string;
-  supervisor_name: string;
-  license_number: string;
-  verification_status: string;
-  is_verified: boolean;
-}
-
-export default function DealerProfile() {
-  const [dealerProfile, setDealerProfile] = useState<DealerProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+const Profile = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [profile, setProfile] = useState<any>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const form = useForm<DealerProfileFormValues>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      dealershipName: "",
+      supervisorName: "",
+      taxId: "",
+      businessRegistryNumber: "",
+      address: "",
+      licenseNumber: "",
+    },
+  });
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/auth');
-        return;
-      }
-      fetchDealerProfile(session.user.id);
-    };
-    checkAuth();
-  }, [navigate]);
+    const fetchProfile = async () => {
+      if (!user?.id) return;
 
-  const fetchDealerProfile = async (userId: string) => {
-    try {
-      console.log('Fetching dealer profile for user:', userId);
-      
-      const { data: dealerData, error } = await supabase
-        .from('dealers')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from("dealers")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
 
-      if (error) {
-        console.error('Error fetching dealer profile:', error);
-        throw error;
-      }
+        if (error) throw error;
 
-      if (!dealerData) {
-        console.log('No dealer profile found');
+        if (data) {
+          setProfile(data);
+          form.reset({
+            dealershipName: data.dealership_name || "",
+            supervisorName: data.supervisor_name || "",
+            taxId: data.tax_id || "",
+            businessRegistryNumber: data.business_registry_number || "",
+            address: data.address || "",
+            licenseNumber: data.license_number || "",
+          });
+        }
+      } catch (error: any) {
+        console.error("Error fetching profile:", error);
         toast({
+          title: "Error",
+          description: "Failed to load profile. Please try again.",
           variant: "destructive",
-          title: "Profile Not Found",
-          description: "Please complete your dealer registration first"
         });
-        navigate('/auth');
-        return;
       }
+    };
 
-      console.log('Dealer profile found:', dealerData);
-      setDealerProfile(dealerData);
-    } catch (error) {
-      console.error('Error in fetchDealerProfile:', error);
+    fetchProfile();
+  }, [user, toast, form]);
+
+  const updateProfile = async (values: DealerProfileFormValues) => {
+    setSubmitting(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('dealers')
+        .update({
+          dealership_name: values.dealershipName,
+          supervisor_name: values.supervisorName,
+          tax_id: values.taxId,
+          business_registry_number: values.businessRegistryNumber,
+          address: values.address,
+          license_number: values.licenseNumber,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user?.id)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      if (isValidRecord(data)) {
+        setProfile(data);
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been successfully updated.",
+        });
+      } else {
+        throw new Error("Invalid data returned from update operation");
+      }
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
       toast({
-        variant: "destructive",
         title: "Error",
-        description: "Failed to load dealer profile"
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-          Loading...
-        </div>
-      </div>
-    );
-  }
-
-  if (!dealerProfile) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] space-y-4">
-          <h2 className="text-2xl font-bold">No Dealer Profile Found</h2>
-          <p className="text-subtitle-text">Please complete your registration first</p>
-          <Button onClick={() => navigate('/auth')}>
-            Go to Registration
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate("/auth");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to logout. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8">
-        {/* Dealer Info Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">{dealerProfile.dealership_name}</h1>
-          <div className="flex items-center space-x-2 text-subtitle-text">
-            <User className="w-4 h-4" />
-            <span>{dealerProfile.supervisor_name}</span>
-            {dealerProfile.is_verified && (
-              <span className="bg-success/20 text-success px-2 py-1 rounded-full text-sm">
-                Verified Dealer
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Button 
-            className="flex items-center justify-center space-x-2 h-16"
-            onClick={() => navigate('/marketplace')}
-          >
-            <Car className="w-5 h-5" />
-            <span>Browse Vehicles</span>
+    <div className="container mx-auto py-10">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-2xl font-bold flex items-center">
+            <UserIcon className="mr-2 h-5 w-5" />
+            Dealer Profile
+          </CardTitle>
+          <Button variant="destructive" onClick={handleLogout}>
+            Logout
           </Button>
-          <Button 
-            className="flex items-center justify-center space-x-2 h-16"
-            onClick={() => navigate('/dealer/bids')}
-            variant="secondary"
-          >
-            <DollarSign className="w-5 h-5" />
-            <span>View My Bids</span>
-          </Button>
-          <Button 
-            className="flex items-center justify-center space-x-2 h-16"
-            onClick={() => navigate('/dealer/documents')}
-            variant="outline"
-          >
-            <FileText className="w-5 h-5" />
-            <span>Manage Documents</span>
-          </Button>
-        </div>
+        </CardHeader>
+        <CardDescription>
+          Manage your dealer profile information here.
+        </CardDescription>
+        <CardContent className="space-y-4">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(updateProfile)} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <FormField
+                    control={form.control}
+                    name="dealershipName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dealership Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter dealership name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div>
+                  <FormField
+                    control={form.control}
+                    name="supervisorName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Supervisor Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter supervisor name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
-        {/* Management Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Active Bids */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <DollarSign className="w-5 h-5 text-primary" />
-                <span>Active Bids</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-subtitle-text mb-4">Track and manage your current vehicle bids</p>
-              <Button 
-                variant="link" 
-                className="p-0"
-                onClick={() => navigate('/dealer/active-bids')}
-              >
-                View Active Bids →
-              </Button>
-            </CardContent>
-          </Card>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <FormField
+                    control={form.control}
+                    name="taxId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tax ID</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter tax ID" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div>
+                  <FormField
+                    control={form.control}
+                    name="businessRegistryNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Business Registry Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter business registry number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
-          {/* Transaction History */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <History className="w-5 h-5 text-primary" />
-                <span>Transaction History</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-subtitle-text mb-4">View your past transactions and purchases</p>
-              <Button 
-                variant="link" 
-                className="p-0"
-                onClick={() => navigate('/dealer/transactions')}
-              >
-                View History →
-              </Button>
-            </CardContent>
-          </Card>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter address" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div>
+                  <FormField
+                    control={form.control}
+                    name="licenseNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>License Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter license number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
-          {/* Notifications */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Bell className="w-5 h-5 text-primary" />
-                <span>Notifications</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-subtitle-text mb-4">Stay updated with important alerts</p>
-              <Button 
-                variant="link" 
-                className="p-0"
-                onClick={() => navigate('/dealer/notifications')}
-              >
-                View Notifications →
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Updating..." : "Update Profile"}
               </Button>
-            </CardContent>
-          </Card>
-
-          {/* Business Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Building2 className="w-5 h-5 text-primary" />
-                <span>Business Information</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-subtitle-text mb-4">Manage your dealership details</p>
-              <Button 
-                variant="link" 
-                className="p-0"
-                onClick={() => navigate('/dealer/business-info')}
-              >
-                View Details →
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Messages */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <MessageSquare className="w-5 h-5 text-primary" />
-                <span>Messages</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-subtitle-text mb-4">Communicate with sellers and buyers</p>
-              <Button 
-                variant="link" 
-                className="p-0"
-                onClick={() => navigate('/dealer/messages')}
-              >
-                View Messages →
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Settings className="w-5 h-5 text-primary" />
-                <span>Settings</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-subtitle-text mb-4">Configure your account preferences</p>
-              <Button 
-                variant="link" 
-                className="p-0"
-                onClick={() => navigate('/dealer/settings')}
-              >
-                Manage Settings →
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
-}
+};
+
+export default Profile;

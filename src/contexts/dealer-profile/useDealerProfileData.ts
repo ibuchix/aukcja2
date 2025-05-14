@@ -1,8 +1,7 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DealerProfileData } from "./types";
-import { isValidRecord } from "@/utils/supabaseHelpers";
+import { isValidRecord, isSelectQueryError } from "@/utils/supabaseHelpers";
 
 interface UseDealerProfileDataReturn {
   profileData: DealerProfileData | null;

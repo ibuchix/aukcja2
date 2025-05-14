@@ -1,122 +1,48 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Home, SlidersHorizontal, Search } from "lucide-react";
+import { Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CarListing } from "@/types/cars";
-import CarDetailsDialog from "@/components/CarDetailsDialog";
-import MarketplaceHero from "@/components/marketplace/MarketplaceHero";
-import VehicleListings from "@/components/marketplace/VehicleListings";
-import TestimonialsSection from "@/components/marketplace/TestimonialsSection";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import AuctionFilters, { AuctionFilters as FilterTypes } from "@/components/marketplace/AuctionFilters";
+import { isValidRecord } from "@/utils/supabaseHelpers";
 import { processCarData } from "@/utils/carDataHelpers";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-
-type CarRow = Database["public"]["Tables"]["cars"]["Row"];
+import type { Database } from "@/integrations/supabase/types";
 
 const BrowseCars = () => {
-  const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
-  const [filters, setFilters] = useState<FilterTypes>({});
-  const [sortOption, setSortOption] = useState<string>("newest");
-  const [showFilters, setShowFilters] = useState<boolean>(false);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const { toast } = useToast();
+  const [listings, setListings] = useState<CarListing[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: listings, isLoading } = useQuery({
-    queryKey: ["auctionListings", filters, sortOption, searchQuery],
+  useQuery({
+    queryKey: ["carListings"],
     queryFn: async () => {
-      let query = supabase
-        .from("cars")
-        .select("*")
-        .eq("is_auction", true)
-        .eq("is_draft", false)
-        .eq("auction_status", "active");
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("cars")
+          .select("*")
+          .eq("status", "available")
+          .eq("is_draft", false);
 
-      // Apply search query
-      if (searchQuery) {
-        query = query.or(`make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%`);
-      }
+        if (error) throw error;
 
-      // Apply filters
-      if (filters.make) {
-        query = query.ilike("make", `%${filters.make}%`);
+        if (data && Array.isArray(data)) {
+          const processedData = processCarData(data);
+          setListings(processedData);
+          return processedData;
+        } else {
+          setListings([]);
+          return [];
+        }
+      } catch (error) {
+        console.error("Error fetching cars:", error);
+        setListings([]);
+        return [];
+      } finally {
+        setIsLoading(false);
       }
-      
-      if (filters.model) {
-        query = query.ilike("model", `%${filters.model}%`);
-      }
-      
-      if (filters.yearMin) {
-        query = query.gte("year", filters.yearMin);
-      }
-      
-      if (filters.yearMax) {
-        query = query.lte("year", filters.yearMax);
-      }
-      
-      if (filters.priceMin) {
-        query = query.gte("price", filters.priceMin);
-      }
-      
-      if (filters.priceMax) {
-        query = query.lte("price", filters.priceMax);
-      }
-      
-      if (filters.mileageMin) {
-        query = query.gte("mileage", filters.mileageMin);
-      }
-      
-      if (filters.mileageMax) {
-        query = query.lte("mileage", filters.mileageMax);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      const processedData = processCarData(data);
-
-      // Apply sorting
-      return sortData(processedData, sortOption);
     },
   });
-
-  const sortData = (data: CarListing[], sortOption: string): CarListing[] => {
-    return [...data].sort((a, b) => {
-      switch (sortOption) {
-        case "price-low-high":
-          return a.price - b.price;
-        case "price-high-low":
-          return b.price - a.price;
-        case "year-new-old":
-          return (b.year || 0) - (a.year || 0);
-        case "year-old-new":
-          return (a.year || 0) - (b.year || 0);
-        case "mileage-low-high":
-          return a.mileage - b.mileage;
-        case "mileage-high-low":
-          return b.mileage - a.mileage;
-        case "newest":
-        default:
-          // Sort by created_at if available, otherwise keep original order
-          return 0;
-      }
-    });
-  };
-
-  const handleFilterChange = (newFilters: FilterTypes) => {
-    setFilters(newFilters);
-  };
 
   if (isLoading) {
     return (
@@ -124,17 +50,12 @@ const BrowseCars = () => {
         <Link to="/" className="fixed top-6 left-6 p-2 text-gray-700 hover:text-primary transition-colors">
           <Home size={24} />
         </Link>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="space-y-4">
               <Skeleton className="h-48 w-full" />
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-4 w-2/3" />
-              <div className="flex gap-2">
-                <Skeleton className="h-10 w-1/2" />
-                <Skeleton className="h-10 w-1/2" />
-              </div>
             </div>
           ))}
         </div>
@@ -143,78 +64,26 @@ const BrowseCars = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Link to="/" className="fixed top-6 left-6 p-2 text-gray-700 hover:text-primary transition-colors z-50">
+    <div className="container mx-auto px-4 py-8">
+      <Link to="/" className="fixed top-6 left-6 p-2 text-gray-700 hover:text-primary transition-colors">
         <Home size={24} />
       </Link>
-      <MarketplaceHero />
-      <div className="container mx-auto px-4 py-12">
-        <h2 className="text-3xl font-bold mb-6">Available Cars for Auction</h2>
-        
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <Input
-              placeholder="Search by make, model or title..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          
-          <Button 
-            variant="outline" 
-            className="flex items-center gap-2"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <SlidersHorizontal size={16} />
-            {showFilters ? "Hide Filters" : "Show Filters"}
-          </Button>
-          
-          <div className="w-full md:w-[200px]">
-            <Select
-              value={sortOption}
-              onValueChange={(value) => setSortOption(value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="price-low-high">Price: Low to High</SelectItem>
-                <SelectItem value="price-high-low">Price: High to Low</SelectItem>
-                <SelectItem value="year-new-old">Year: New to Old</SelectItem>
-                <SelectItem value="year-old-new">Year: Old to New</SelectItem>
-                <SelectItem value="mileage-low-high">Mileage: Low to High</SelectItem>
-                <SelectItem value="mileage-high-low">Mileage: High to Low</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      <h1 className="text-3xl font-bold mb-4">Browse Cars</h1>
+      {listings.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {listings.map((car) => (
+            <div key={car.id} className="bg-white rounded-lg shadow-md p-4">
+              <h2 className="text-xl font-semibold">{car.title}</h2>
+              <p>Make: {car.make}</p>
+              <p>Model: {car.model}</p>
+              <p>Year: {car.year}</p>
+              <p>Price: {car.price}</p>
+            </div>
+          ))}
         </div>
-
-        {showFilters && (
-          <div className="mb-8">
-            <AuctionFilters onFiltersChange={handleFilterChange} />
-          </div>
-        )}
-
-        {listings && listings.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <VehicleListings 
-              listings={listings} 
-              onSelectCar={setSelectedCar} 
-            />
-          </div>
-        ) : (
-          <p className="text-center text-muted-foreground py-12">
-            {Object.keys(filters).length > 0 || searchQuery
-              ? "No auctions match your filters. Try adjusting your criteria."
-              : "No active auctions at this time."}
-          </p>
-        )}
-      </div>
-      <TestimonialsSection />
-      <CarDetailsDialog car={selectedCar} onClose={() => setSelectedCar(null)} />
+      ) : (
+        <p>No cars available.</p>
+      )}
     </div>
   );
 };

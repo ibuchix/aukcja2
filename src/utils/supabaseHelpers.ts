@@ -19,6 +19,58 @@ export function isValidRecord<T extends Record<string, any>>(data: any): data is
 }
 
 /**
+ * Type guard for valid bid data
+ */
+export function isValidBid(item: any): boolean {
+  return item !== null && 
+         typeof item === 'object' && 
+         'car_id' in item &&
+         'amount' in item;
+}
+
+/**
+ * Type guard for valid car data
+ */
+export function isValidCarData(item: any): boolean {
+  return item !== null && 
+         typeof item === 'object' && 
+         'id' in item;
+}
+
+/**
+ * Type guard for valid proxy log entries
+ */
+export function isValidProxyLog(item: any): boolean {
+  return item !== null && 
+         typeof item === 'object' && 
+         'entity_id' in item && 
+         'details' in item;
+}
+
+/**
+ * Type guard for valid proxy bid data
+ */
+export function isValidProxyBidData(item: any): boolean {
+  return item !== null && 
+         typeof item === 'object' && 
+         'car_id' in item && 
+         'max_bid_amount' in item;
+}
+
+/**
+ * Type guard for watchlist items with cars
+ */
+export function isValidWatchlistWithCar(item: any): boolean {
+  return item !== null && 
+         typeof item === 'object' && 
+         'id' in item && 
+         'car_id' in item && 
+         'cars' in item && 
+         item.cars !== null &&
+         typeof item.cars === 'object';
+}
+
+/**
  * Safe data transformer function to handle potential error objects
  * @param data The data returned from Supabase
  * @param transformer The transformation function to apply to valid data
@@ -52,6 +104,14 @@ export function safeFilter<T>(items: any[], predicate?: (item: T) => boolean): T
   
   // Apply additional predicate if provided
   return predicate ? validItems.filter(predicate) : validItems;
+}
+
+/**
+ * Safely filters data using a type guard
+ */
+export function safelyFilterData<T>(data: any[], typeGuard: (item: any) => item is T): T[] {
+  if (!Array.isArray(data)) return [];
+  return data.filter(item => !isSelectQueryError(item) && typeGuard(item)) as T[];
 }
 
 /**
@@ -92,3 +152,17 @@ export function safeGet<T, K extends keyof T>(obj: T | null | undefined, key: K)
   if (!obj) return undefined;
   return obj[key];
 }
+
+/**
+ * Filter and sanitize a string for safe usage
+ */
+export function filterString(value: string | null | undefined): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  // Basic sanitization - remove HTML tags and trim
+  return String(value)
+    .replace(/<[^>]*>/g, '')
+    .trim();
+}
+

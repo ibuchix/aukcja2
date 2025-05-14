@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Home } from "lucide-react";
@@ -11,6 +12,7 @@ import VehicleListings from "@/components/marketplace/VehicleListings";
 import TestimonialsSection from "@/components/marketplace/TestimonialsSection";
 import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
 import { processCarData } from "@/utils/carDataHelpers";
+import { isValidRecord } from "@/utils/supabaseHelpers";
 
 const Marketplace = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
@@ -44,6 +46,8 @@ const Marketplace = () => {
         .single();
 
       if (error) throw error;
+      
+      if (!isValidRecord(data)) return null;
       return data;
     },
   });
