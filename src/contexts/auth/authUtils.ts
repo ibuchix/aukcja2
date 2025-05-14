@@ -90,7 +90,7 @@ export async function fetchDealerProfile(userId: string) {
       
       console.log("Profile successfully retrieved via RPC function");
       
-      // TYPE SAFETY IMPROVEMENT: Check if rpcData is an object, not an array or a SelectQueryError
+      // TYPE SAFETY IMPROVEMENT: Check if rpcData is a valid object
       if (
         typeof rpcData === 'object' && 
         rpcData !== null && 

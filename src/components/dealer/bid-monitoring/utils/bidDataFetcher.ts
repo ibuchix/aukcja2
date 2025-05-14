@@ -3,6 +3,55 @@ import { supabase } from "@/integrations/supabase/client";
 import { BidActivity, BidMetrics } from "../types";
 import { isValidRecord, safeFilter, isSelectQueryError } from "@/utils/supabaseHelpers";
 
+// Type definitions for data from database
+interface DbBid {
+  id: string;
+  car_id: string;
+  amount: number;
+  status: string;
+  created_at: string;
+  car?: DbCar;
+}
+
+interface DbCar {
+  id: string;
+  title?: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  auction_end_time?: string;
+  current_bid?: number;
+  auction_status?: string;
+}
+
+// Type guards
+function isValidDbBid(item: any): item is DbBid {
+  return item !== null && 
+    typeof item === 'object' && 
+    !isSelectQueryError(item) &&
+    'car_id' in item &&
+    'amount' in item &&
+    'status' in item;
+}
+
+function isValidDbCar(item: any): item is DbCar {
+  return item !== null && 
+    typeof item === 'object' && 
+    !isSelectQueryError(item) &&
+    'id' in item &&
+    'make' in item &&
+    'model' in item;
+}
+
+function isValidBidWithCar(item: any): item is DbBid & { car: DbCar } {
+  return isValidDbBid(item) && 
+    'car' in item && 
+    item.car && 
+    typeof item.car === 'object' && 
+    !isSelectQueryError(item.car) && 
+    isValidDbCar(item.car);
+}
+
 export async function fetchInitialBidData(dealerId: string): Promise<{
   activities: BidActivity[];
   calculatedMetrics: BidMetrics;
@@ -33,20 +82,17 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
   if (bidsError) throw bidsError;
 
   // Ensure we have valid bids data - filter out nulls and errors
-  const bids = (bidsData || []).filter(bid => 
-    bid !== null && 
-    typeof bid === 'object' && 
-    !isSelectQueryError(bid) &&
-    'car_id' in bid
-  );
+  const bids = Array.isArray(bidsData) 
+    ? bidsData.filter(isValidBidWithCar)
+    : [];
 
   // Extract car IDs safely, filtering out any errors or invalid values
   const carIds = bids
-    .map(bid => bid?.car_id)
+    .map(bid => bid.car_id)
     .filter((id): id is string => typeof id === 'string');
 
   // Fetch bid history for cars the dealer has bid on
-  let allBids: any[] = [];
+  let allBids: DbBid[] = [];
   if (carIds.length > 0) {
     const { data: allBidsData, error: allBidsError } = await supabase
       .from("bids")
@@ -64,36 +110,28 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
     if (allBidsError) throw allBidsError;
     
     // Filter to ensure we have valid bid data
-    allBids = (allBidsData || []).filter(bid => 
-      bid !== null && 
-      typeof bid === 'object' && 
-      !isSelectQueryError(bid) &&
-      'car_id' in bid &&
-      'amount' in bid &&
-      'status' in bid
-    );
+    allBids = Array.isArray(allBidsData) 
+      ? allBidsData.filter(isValidDbBid)
+      : [];
   }
 
   // Activities - combine bid info with car info
   const activities: BidActivity[] = [];
   
   for (const bid of bids) {
-    // Skip invalid bids
-    if (!bid || !bid.car || isSelectQueryError(bid.car)) continue;
-    
     const car = bid.car;
     
-    // Only process if car data is valid
-    if (car && typeof car === 'object' && !isSelectQueryError(car)) {
+    if (car) {
       activities.push({
         id: bid.id,
-        car_id: bid.car_id,
-        car_title: car.title || `${car.year} ${car.make} ${car.model}`,
+        carId: bid.car_id,
+        carTitle: car.title || `${car.year} ${car.make} ${car.model}`,
         amount: bid.amount,
-        created_at: bid.created_at,
-        status: bid.status || 'active',
-        is_winning: car.current_bid === bid.amount,
-        auction_ends: car.auction_end_time,
+        timestamp: bid.created_at,
+        type: 'new_bid',
+        isOwnActivity: true,
+        bidId: bid.id,
+        dealerId: dealerId,
         car_details: {
           make: car.make,
           model: car.model,
@@ -112,69 +150,23 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
   };
 }
 
-function calculateBidMetrics(dealerId: string, dealerBids: any[], allBids: any[]): BidMetrics {
+function calculateBidMetrics(dealerId: string, dealerBids: DbBid[], allBids: DbBid[]): BidMetrics {
   // Filter to ensure we have valid data before calculations
-  const validDealerBids = dealerBids.filter(bid => 
-    bid !== null && 
-    typeof bid === 'object' && 
-    !isSelectQueryError(bid) &&
-    'amount' in bid &&
-    'status' in bid
-  );
-  
-  const validAllBids = allBids.filter(bid => 
-    bid !== null && 
-    typeof bid === 'object' && 
-    !isSelectQueryError(bid) &&
-    'amount' in bid &&
-    'status' in bid &&
-    'dealer_id' in bid
-  );
+  const validDealerBids = dealerBids.filter(isValidDbBid);
+  const validAllBids = allBids.filter(isValidDbBid);
 
   const metrics: BidMetrics = {
-    totalBids: validDealerBids.length,
-    activeBids: validDealerBids.filter(bid => bid.status === 'active').length,
-    wonBids: validDealerBids.filter(bid => bid.status === 'won').length,
-    outbidBids: validDealerBids.filter(bid => bid.status === 'outbid').length,
-    lostBids: validDealerBids.filter(bid => bid.status === 'lost').length,
-    bidSuccess: 0,
-    averageBidAmount: 0,
-    bidFrequency: 0
+    activeBidsCount: validDealerBids.filter(bid => bid.status === 'active').length,
+    outbidCount: validDealerBids.filter(bid => bid.status === 'outbid').length,
+    wonCount: validDealerBids.filter(bid => bid.status === 'won').length,
+    lostCount: validDealerBids.filter(bid => bid.status === 'lost').length,
+    totalInvested: validDealerBids
+      .filter(bid => bid.status === 'active')
+      .reduce((sum, bid) => sum + (bid.amount || 0), 0),
+    potentialExposure: validDealerBids
+      .filter(bid => bid.status === 'active')
+      .reduce((sum, bid) => sum + (bid.amount || 0), 0)
   };
-
-  // Calculate additional metrics
-  if (metrics.totalBids > 0) {
-    // Calculate average bid amount
-    const totalAmount = validDealerBids.reduce((sum, bid) => sum + (bid.amount || 0), 0);
-    metrics.averageBidAmount = totalAmount / metrics.totalBids;
-
-    // Calculate bid success rate
-    if (metrics.wonBids + metrics.lostBids > 0) {
-      metrics.bidSuccess = (metrics.wonBids / (metrics.wonBids + metrics.lostBids)) * 100;
-    }
-  }
-
-  // Calculate bid frequency (bids per day)
-  if (validDealerBids.length > 1) {
-    const sortedBids = [...validDealerBids].sort((a, b) => 
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
-    
-    const firstBid = sortedBids[0];
-    const lastBid = sortedBids[sortedBids.length - 1];
-    
-    if (firstBid && lastBid && firstBid.created_at && lastBid.created_at) {
-      const firstDate = new Date(firstBid.created_at);
-      const lastDate = new Date(lastBid.created_at);
-      const daysDiff = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
-      
-      if (daysDiff > 0) {
-        metrics.bidFrequency = validDealerBids.length / daysDiff;
-      } else {
-        metrics.bidFrequency = validDealerBids.length; // All bids in less than a day
-      }
-    }
-  }
 
   return metrics;
 }

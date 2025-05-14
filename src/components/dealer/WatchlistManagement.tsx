@@ -27,25 +27,41 @@ interface WatchlistCar extends CarListing {
   watchlist_id: string;
 }
 
+interface WatchlistCarData {
+  id: string;
+  title?: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  price?: number;
+  auction_end_time?: string;
+  auction_status?: string;
+  is_auction?: boolean;
+  reserve_price?: number;
+}
+
 interface WatchlistItem {
   id: string;
   car_id: string;
-  cars?: {
-    id: string;
-    title?: string;
-    make?: string;
-    model?: string;
-    year?: number;
-    price?: number;
-    auction_end_time?: string;
-    auction_status?: string;
-    is_auction?: boolean;
-    reserve_price?: number;
-  } | null;
+  cars?: WatchlistCarData | null;
 }
 
 interface WatchlistManagementProps {
   dealerId: string;
+}
+
+// Type guard for watchlist items with cars relation
+function isValidWatchlistWithCar(item: any): item is WatchlistItem {
+  return item !== null && 
+      typeof item === 'object' && 
+      !isSelectQueryError(item) &&
+      'id' in item && 
+      'car_id' in item &&
+      'cars' in item &&
+      item.cars !== null &&
+      typeof item.cars === 'object' &&
+      !isSelectQueryError(item.cars) &&
+      'id' in item.cars;
 }
 
 export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
@@ -79,37 +95,18 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
       
       if (!watchlistData || !Array.isArray(watchlistData)) return [];
       
-      // Filter valid watchlist items
-      const validWatchlistItems = watchlistData.filter(item => 
-        item !== null && 
-        typeof item === 'object' && 
-        !isSelectQueryError(item) &&
-        'id' in item && 
-        'car_id' in item
-      );
-      
-      // Map to cars with safety checks
-      return validWatchlistItems
+      // Filter valid watchlist items and transform them into WatchlistCar objects
+      return watchlistData
+        .filter(isValidWatchlistWithCar)
         .map(item => {
-          // Skip items with invalid cars relation
-          if (!item || !item.cars || typeof item.cars !== 'object' || isSelectQueryError(item.cars)) {
-            return null;
-          }
-          
-          // Access car data safely
-          const carData = item.cars;
-          
-          // Make sure we have a valid car object
-          if (!carData || typeof carData !== 'object' || isSelectQueryError(carData) || !('id' in carData)) {
-            return null;
-          }
+          const carData = item.cars as WatchlistCarData;
           
           return {
             ...carData,
             watchlist_id: item.id
           };
         })
-        .filter((item): item is WatchlistCar => Boolean(item)); // Filter out nulls
+        .filter((car): car is WatchlistCar => !!car && !!car.id); // Final type safety check
     }
   });
 

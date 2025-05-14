@@ -15,13 +15,13 @@ export interface PendingDealer {
 }
 
 export function usePendingDealers() {
-  const [dealers, setDealers] = useState<PendingDealer[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [pendingDealers, setPendingDealers] = useState<PendingDealer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadPendingDealers = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const { data, error } = await supabase
         .from('dealers')
         .select('id, dealership_name, supervisor_name, verification_status, created_at')
@@ -30,33 +30,31 @@ export function usePendingDealers() {
 
       if (error) throw error;
 
-      // Filter valid dealer data and handle type safety
-      if (data) {
-        const validDealers = data.filter((dealer): dealer is PendingDealer => 
-          dealer !== null &&
-          typeof dealer === 'object' &&
-          !isSelectQueryError(dealer) &&
-          'id' in dealer &&
-          'dealership_name' in dealer &&
-          'supervisor_name' in dealer
-        );
+      // Type guard to filter valid dealer data
+      const validDealers = Array.isArray(data) 
+        ? data.filter((item): item is PendingDealer => {
+            return item !== null && 
+                  typeof item === 'object' && 
+                  !isSelectQueryError(item) &&
+                  'id' in item &&
+                  'dealership_name' in item &&
+                  'supervisor_name' in item;
+          })
+        : [];
         
-        setDealers(validDealers);
-      } else {
-        setDealers([]);
-      }
+      setPendingDealers(validDealers);
     } catch (err) {
       console.error('Error fetching pending dealers:', err);
       setError(err instanceof Error ? err.message : 'Unknown error fetching dealers');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   // Handle verification of dealer
   const handleVerifyDealer = async (dealerId: string) => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const result = await verifyDealer(dealerId);
       
       if (result) {
@@ -82,14 +80,14 @@ export function usePendingDealers() {
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   // Handle rejection of dealer
   const handleRejectDealer = async (dealerId: string) => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const result = await rejectDealer(dealerId);
       
       if (result) {
@@ -115,7 +113,7 @@ export function usePendingDealers() {
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -124,8 +122,8 @@ export function usePendingDealers() {
   }, []);
 
   return { 
-    pendingDealers: dealers, 
-    isLoading: loading, 
+    pendingDealers, 
+    isLoading, 
     error, 
     loadPendingDealers, 
     handleVerifyDealer, 

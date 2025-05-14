@@ -10,6 +10,44 @@ export interface ChartDataPoint {
   amount: number;
 }
 
+// Type guard for bid data
+function isValidBid(item: any): item is {
+  id: string;
+  car_id: string;
+  dealer_id: string;
+  amount: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+} {
+  return item !== null && 
+      typeof item === 'object' && 
+      !isSelectQueryError(item) &&
+      'id' in item &&
+      'car_id' in item &&
+      'dealer_id' in item &&
+      'amount' in item &&
+      'created_at' in item;
+}
+
+// Type guard for proxy log data
+function isValidProxyLog(item: any): item is {
+  id: string;
+  entity_id: string;
+  user_id: string;
+  details: Record<string, any>;
+  created_at: string;
+} {
+  return item !== null && 
+      typeof item === 'object' && 
+      !isSelectQueryError(item) &&
+      'id' in item &&
+      'entity_id' in item &&
+      'user_id' in item &&
+      'details' in item &&
+      'created_at' in item;
+}
+
 export const useBidHistory = (carId: string) => {
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -55,20 +93,9 @@ export const useBidHistory = (carId: string) => {
         const bidHistory: Bid[] = [];
         
         // Add regular bids with type safety
-        if (bidData) {
-          // Filter to ensure we only process valid bid records (not null or error types)
-          const validBids = bidData.filter(bid => 
-            bid !== null && 
-            typeof bid === 'object' && 
-            !isSelectQueryError(bid) &&
-            'id' in bid &&
-            'car_id' in bid &&
-            'dealer_id' in bid &&
-            'amount' in bid &&
-            'status' in bid &&
-            'created_at' in bid &&
-            'updated_at' in bid
-          );
+        if (Array.isArray(bidData)) {
+          // Filter to ensure we only process valid bid records
+          const validBids = bidData.filter(isValidBid);
           
           validBids.forEach(bid => {
             bidHistory.push({
@@ -86,25 +113,14 @@ export const useBidHistory = (carId: string) => {
         }
         
         // Add proxy bids with type safety
-        if (proxyData) {
+        if (Array.isArray(proxyData)) {
           // Filter to ensure we only process valid log records
-          const validLogs = proxyData.filter(log => 
-            log !== null && 
-            typeof log === 'object' && 
-            !isSelectQueryError(log) &&
-            'id' in log &&
-            'entity_id' in log &&
-            'user_id' in log &&
-            'details' in log &&
-            'created_at' in log &&
-            log.details && 
-            typeof log.details === 'object'
-          );
+          const validLogs = proxyData.filter(isValidProxyLog);
           
           validLogs.forEach(log => {
             // Additional safe check for details property
             if (log && log.details && typeof log.details === 'object') {
-              const details = log.details as any;
+              const details = log.details;
               
               if (details && 'amount' in details) {
                 bidHistory.push({

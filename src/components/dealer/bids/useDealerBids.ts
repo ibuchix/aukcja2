@@ -22,6 +22,41 @@ interface ProxyBidData {
   max_bid_amount: number;
 }
 
+interface BidData {
+  id: string;
+  car_id: string;
+  amount: number;
+  status: string;
+  created_at: string;
+}
+
+// Type guards
+function isValidBidData(item: any): item is BidData {
+  return item !== null && 
+    typeof item === 'object' && 
+    !isSelectQueryError(item) &&
+    'id' in item &&
+    'car_id' in item &&
+    'amount' in item &&
+    'status' in item &&
+    'created_at' in item;
+}
+
+function isValidCarData(item: any): item is CarData {
+  return item !== null && 
+    typeof item === 'object' && 
+    !isSelectQueryError(item) &&
+    'id' in item;
+}
+
+function isValidProxyBidData(item: any): item is ProxyBidData {
+  return item !== null && 
+    typeof item === 'object' && 
+    !isSelectQueryError(item) &&
+    'car_id' in item && 
+    'max_bid_amount' in item;
+}
+
 export function useDealerBids(dealerProfileId: string | undefined) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [realtimeInitialized, setRealtimeInitialized] = useState(false);
@@ -60,16 +95,9 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       }
 
       // Filter to ensure we only have valid bids without errors
-      const validActiveBids = activeBids.filter(bid => 
-        bid !== null && 
-        typeof bid === 'object' && 
-        !isSelectQueryError(bid) &&
-        'id' in bid &&
-        'car_id' in bid &&
-        'amount' in bid &&
-        'status' in bid &&
-        'created_at' in bid
-      );
+      const validActiveBids = Array.isArray(activeBids)
+        ? activeBids.filter(isValidBidData)
+        : [];
 
       // Get car details for these bids
       const carIds = validActiveBids.map(bid => bid.car_id).filter(Boolean);
@@ -100,12 +128,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       
       // Filter valid car records and populate the lookup
       if (cars && Array.isArray(cars)) {
-        const validCars = cars.filter(car => 
-          car !== null && 
-          typeof car === 'object' &&
-          !isSelectQueryError(car) &&
-          'id' in car
-        );
+        const validCars = cars.filter(isValidCarData);
         
         validCars.forEach(car => {
           if (car && car.id) {
@@ -126,28 +149,20 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       
       // Filter and process valid proxy bids
       if (proxyBidsData && Array.isArray(proxyBidsData)) {
-        const validProxyBids = proxyBidsData.filter(pb => 
-          pb !== null && 
-          typeof pb === 'object' &&
-          !isSelectQueryError(pb) &&
-          'car_id' in pb && 
-          'max_bid_amount' in pb
-        );
+        const validProxyBids = proxyBidsData.filter(isValidProxyBidData);
         
         validProxyBids.forEach(pb => {
-          if (pb && pb.car_id) {
-            proxyBidsByCarId[pb.car_id] = {
-              car_id: pb.car_id,
-              max_bid_amount: pb.max_bid_amount
-            };
-          }
+          proxyBidsByCarId[pb.car_id] = {
+            car_id: pb.car_id,
+            max_bid_amount: pb.max_bid_amount
+          };
         });
       }
 
       // Filter bids for active auctions only and merge with car data
       const result = validActiveBids
         .map(bid => {
-          if (!bid || !bid.car_id || !carsById[bid.car_id]) {
+          if (!bid.car_id || !carsById[bid.car_id]) {
             return null; // Skip if bid is invalid or car not found
           }
           
@@ -179,11 +194,9 @@ export function useDealerBids(dealerProfileId: string | undefined) {
           // Add proxy bid information if it exists
           if (bid.car_id && proxyBidsByCarId[bid.car_id]) {
             const proxyBid = proxyBidsByCarId[bid.car_id];
-            if (proxyBid) {
-              myBid.proxy_bid = {
-                max_bid_amount: proxyBid.max_bid_amount
-              };
-            }
+            myBid.proxy_bid = {
+              max_bid_amount: proxyBid.max_bid_amount
+            };
           }
           
           return myBid;
