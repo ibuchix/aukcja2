@@ -130,7 +130,7 @@ export default function DealerDashboard() {
             
             <StatsSection recentActivity={recentActivity} />
             
-            <WatchlistManagement dealerId={dealerProfile?.id || ''} />
+            <WatchlistManagement dealerId={dealerId} />
             
             <BusinessActionSection />
           </div>

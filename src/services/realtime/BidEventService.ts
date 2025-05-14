@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { BidActivity, BidEventSubscription, BidMonitoringFilters } from "@/components/dealer/bid-monitoring/types";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -234,8 +235,11 @@ class BidEventService {
           .eq("id", activity.dealerId)
           .single();
         
-        if (!dealerError && dealerData && isValidRecord(dealerData)) {
-          activity.dealerName = dealerData.dealership_name || 'Unknown';
+        if (!dealerError && dealerData) {
+          // Check if dealer data is valid before accessing properties
+          if (isValidRecord(dealerData)) {
+            activity.dealerName = dealerData.dealership_name || 'Unknown';
+          }
         }
       }
       
@@ -243,7 +247,9 @@ class BidEventService {
       if (carData && isValidRecord(carData)) {
         return {
           ...activity,
-          carTitle: carData.title || `${carData.year || ''} ${carData.make || ''} ${carData.model || ''}`.trim() || 'Unknown Vehicle',
+          carTitle: carData.title || 
+                    `${carData.year || ''} ${carData.make || ''} ${carData.model || ''}`.trim() || 
+                    'Unknown Vehicle',
           auctionEndTime: carData.auction_end_time
         };
       }
@@ -288,7 +294,7 @@ class BidEventService {
         .eq('id', dealerId)
         .single();
       
-      if (isValidRecord(dealer)) {
+      if (dealer && isValidRecord(dealer)) {
         return {
           dealershipName: dealer.dealership_name || 'Unknown Dealership'
         };
@@ -313,7 +319,7 @@ class BidEventService {
         .eq('id', carId)
         .single();
       
-      if (isValidRecord(car)) {
+      if (car && isValidRecord(car)) {
         return {
           title: car.title || `${car.year || ''} ${car.make || ''} ${car.model || ''}`.trim() || 'Unknown Vehicle',
           year: car.year,

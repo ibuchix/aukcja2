@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { User } from "@supabase/supabase-js";
-import { UserIcon, Building2, FileText } from "lucide-react";
+import { Building2, FileText } from "lucide-react";
+import { UserIcon } from "lucide-react"; // Renamed import to avoid conflicts
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -99,7 +100,7 @@ const Profile = () => {
         
       if (error) throw error;
       
-      if (isValidRecord(data)) {
+      if (data && isValidRecord(data)) {
         setProfile(data);
         toast({
           title: "Profile updated",

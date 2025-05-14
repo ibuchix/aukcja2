@@ -1,132 +1,98 @@
-import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { RegistrationData, CompleteRegistrationOptions, OperationResult } from '@/types/profile'; 
-import { isValidRecord } from '@/utils/supabaseHelpers';
 
-interface UseCompleteRegistrationReturn {
-  submitRegistration: (
-    data: RegistrationData, 
-    options?: CompleteRegistrationOptions
-  ) => Promise<OperationResult<{ success: boolean }>>;
-  isSubmitting: boolean;
-  error: string;
-}
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { DealerProfileFormValues } from "@/schemas/profileFormSchema";
 
-export const useCompleteRegistration = (): UseCompleteRegistrationReturn => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string>('');
+export const useCompleteRegistration = () => {
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [errors, setErrors] = useState<string[]>([]);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const submitRegistration = async (
-    formData: RegistrationData,
-    options?: CompleteRegistrationOptions
-  ): Promise<OperationResult<{ success: boolean }>> => {
+  const completeRegistration = async (formData: DealerProfileFormValues) => {
     setIsSubmitting(true);
-    setError('');
+    setErrors([]);
 
     try {
-      // Validate user exists
-      if (!formData.userId) {
-        throw new Error('User ID is required to complete registration');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !session.user) {
+        throw new Error("No authenticated user found. Please log in first.");
       }
 
-      // Create dealer profile
-      const dealerProfile = {
-        user_id: formData.userId,
-        dealership_name: formData.dealershipName,
-        address: formData.address,
-        supervisor_name: formData.supervisorName,
-        license_number: formData.licenseNumber || '',
-        tax_id: formData.taxId,
-        business_registry_number: formData.businessRegistryNumber,
-        verification_status: 'pending',
-        is_verified: false,
-      };
-
-      // Create or update user_profiles record
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: formData.userId,
-          role: 'dealer',
-          profile_status: 'active',
-          updated_at: new Date().toISOString()
-        });
-
-      if (profileError) {
-        throw new Error(`Failed to create user profile: ${profileError.message}`);
-      }
-
-      // Create or update dealer profile
+      // Create or update the dealer profile
       const { data: dealerData, error: dealerError } = await supabase
-        .from('dealer_profiles')
-        .upsert(dealerProfile)
-        .select('id');
+        .from('dealers')
+        .upsert({
+          user_id: session.user.id,
+          dealership_name: formData.dealershipName,
+          supervisor_name: formData.supervisorName,
+          tax_id: formData.taxId,
+          business_registry_number: formData.businessRegistryNumber,
+          address: formData.address,
+          license_number: formData.licenseNumber,
+          verification_status: "pending",
+          is_verified: false,
+          updated_at: new Date().toISOString()
+        })
+        .select();
 
       if (dealerError) {
-        throw new Error(`Failed to create dealer profile: ${dealerError.message}`);
+        throw dealerError;
       }
 
-      // Safely get dealer ID
-      let dealerId: string | undefined = undefined;
-      if (dealerData && Array.isArray(dealerData) && dealerData.length > 0) {
-        const firstRecord = dealerData[0];
-        if (isValidRecord(firstRecord) && 'id' in firstRecord) {
-          dealerId = String(firstRecord.id); // Convert to string to fix Type 'unknown' is not assignable to type 'string'
+      // Create verification request
+      if (dealerData && dealerData.length > 0) {
+        const dealerId = dealerData[0].id;
+
+        const { error: verificationError } = await supabase
+          .from('dealer_verifications')
+          .insert({
+            dealer_id: dealerId,
+            verification_status: 'pending'
+          });
+
+        if (verificationError) {
+          console.error("Error creating verification record:", verificationError);
         }
       }
 
-      // Set the user's custom claim to indicate registration is complete
-      const { error: metadataError } = await supabase.auth.updateUser({
-        data: { 
-          registration_completed: true,
-          dealer_profile_id: dealerId
-        }
+      // Show success message
+      toast({
+        title: "Registration completed",
+        description: "Your dealer profile has been submitted for verification.",
       });
 
-      if (metadataError) {
-        throw new Error(`Failed to update user metadata: ${metadataError.message}`);
-      }
-
-      // Notify about new dealer registration
-      if (options?.notifyAdmin) {
-        try {
-          await supabase.functions.invoke('send-email', {
-            body: {
-              template: 'new_dealer_registration',
-              dealerProfile: {
-                id: dealerId,
-                dealership_name: formData.dealershipName,
-                address: formData.address,
-                supervisor_name: formData.supervisorName,
-                tax_id: formData.taxId,
-                business_registry_number: formData.businessRegistryNumber
-              }
-            }
-          });
-        } catch (notifyError) {
-          console.error("Notification failed but registration was successful:", notifyError);
-          // Don't throw here, as registration itself worked
-        }
-      }
-
-      // Call onSuccess callback if provided
-      if (options?.onSuccess) {
-        options.onSuccess();
-      }
-
-      return { success: true, data: { success: true } };
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
+      // Redirect to the dashboard
+      navigate('/dealer/dashboard');
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      
+      // Format error message
+      const errorMessage: string = error.message || "Failed to complete registration";
+      setErrors([errorMessage]);
+      
+      toast({
+        title: "Registration failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
+      return { 
+        success: false, 
+        error: errorMessage 
+      };
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return {
-    submitRegistration,
+    completeRegistration,
     isSubmitting,
-    error
+    errors
   };
 };
