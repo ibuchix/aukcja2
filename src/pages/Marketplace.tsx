@@ -47,8 +47,8 @@ const Marketplace = () => {
 
       if (error) throw error;
       
-      if (!isValidRecord(data)) return null;
-      return data;
+      // Add proper validation before returning
+      return isValidRecord(data) ? data : null;
     },
   });
 
@@ -71,6 +71,9 @@ const Marketplace = () => {
     );
   }
 
+  // Check if dealer data is valid and has an id property
+  const dealerId = dealerData && isValidRecord(dealerData) ? dealerData.id : null;
+
   return (
     <div className="min-h-screen bg-background">
       <Link to="/" className="fixed top-6 left-6 p-2 text-gray-700 hover:text-primary transition-colors z-50">
@@ -79,10 +82,10 @@ const Marketplace = () => {
       <MarketplaceHero />
       <VehicleListings listings={listings} onSelectCar={setSelectedCar} />
       <TestimonialsSection />
-      {selectedCar?.is_auction && dealerData && isValidRecord(dealerData) && dealerData.id && (
+      {selectedCar?.is_auction && dealerId && (
         <MaxBidInterface
           carId={selectedCar.id}
-          dealerId={dealerData.id}
+          dealerId={dealerId}
           currentHighestBid={selectedCar.price}
           minimumIncrement={100}
           auctionEndTime={selectedCar.auction_end_time}

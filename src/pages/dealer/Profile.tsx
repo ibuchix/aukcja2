@@ -3,13 +3,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, FileText } from "lucide-react";
-import { UserIcon } from "lucide-react"; // Renamed import to avoid conflicts
+import { Building2, FileText, User as UserIcon } from "lucide-react"; // Renamed the User import to UserIcon
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -55,6 +53,7 @@ const Profile = () => {
 
         if (error) throw error;
 
+        // Use isValidRecord to safely check if data is a valid record
         if (data && isValidRecord(data)) {
           setProfile(data);
           form.reset({
@@ -100,6 +99,7 @@ const Profile = () => {
         
       if (error) throw error;
       
+      // Safely check if data is valid before accessing properties
       if (data && isValidRecord(data)) {
         setProfile(data);
         toast({

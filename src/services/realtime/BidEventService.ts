@@ -9,7 +9,7 @@ class BidEventService {
   private subscriptions: Map<string, BidEventSubscription> = new Map();
   private channels: Map<string, RealtimeChannel> = new Map();
   private dealerId: string | null = null;
-  private readonly supabase = supabase;
+  private readonly supabaseClient = supabase; // Use a consistent name
 
   private constructor() {}
 
@@ -32,7 +32,7 @@ class BidEventService {
     
     // Create a channel if it doesn't exist
     if (!this.channels.has(channelName)) {
-      const channel = supabase.channel(channelName);
+      const channel = this.supabaseClient.channel(channelName);
       
       // Listen for bid changes
       channel
@@ -84,7 +84,7 @@ class BidEventService {
   public unsubscribe(channelName: string): void {
     const channel = this.channels.get(channelName);
     if (channel) {
-      supabase.removeChannel(channel);
+      this.supabaseClient.removeChannel(channel);
       this.channels.delete(channelName);
     }
     this.subscriptions.delete(channelName);
@@ -219,7 +219,7 @@ class BidEventService {
     
     try {
       // Fetch car details
-      const { data: carData, error } = await this.supabase
+      const { data: carData, error } = await this.supabaseClient
         .from("cars")
         .select("title, make, model, year, auction_end_time")
         .eq("id", activity.carId)
@@ -229,7 +229,7 @@ class BidEventService {
       
       // Fetch dealer name if needed
       if (activity.dealerId && !activity.dealerName) {
-        const { data: dealerData, error: dealerError } = await this.supabase
+        const { data: dealerData, error: dealerError } = await this.supabaseClient
           .from("dealers")
           .select("dealership_name")
           .eq("id", activity.dealerId)
@@ -288,12 +288,13 @@ class BidEventService {
 
   async fetchDealerDetails(dealerId: string): Promise<any> {
     try {
-      const { data: dealer } = await this.supabase
+      const { data: dealer } = await this.supabaseClient
         .from('dealers')
         .select('dealership_name')
         .eq('id', dealerId)
         .single();
       
+      // Use proper type checking before accessing properties
       if (dealer && isValidRecord(dealer)) {
         return {
           dealershipName: dealer.dealership_name || 'Unknown Dealership'
@@ -313,12 +314,13 @@ class BidEventService {
 
   async fetchCarDetails(carId: string): Promise<any> {
     try {
-      const { data: car } = await this.supabase
+      const { data: car } = await this.supabaseClient
         .from('cars')
         .select('title, year, make, model, auction_end_time')
         .eq('id', carId)
         .single();
       
+      // Use proper type checking before accessing properties
       if (car && isValidRecord(car)) {
         return {
           title: car.title || `${car.year || ''} ${car.make || ''} ${car.model || ''}`.trim() || 'Unknown Vehicle',

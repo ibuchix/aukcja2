@@ -17,7 +17,7 @@ export default function CompleteRegistration() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [formErrors, setFormErrors] = useState<string[]>([]);
   
-  const { submitRegistration, isSubmitting, error } = useCompleteRegistration();
+  const { completeRegistration, isSubmitting, errors } = useCompleteRegistration();
 
   // Handle form submission
   const handleSubmit = async (formData: any) => {
@@ -33,9 +33,7 @@ export default function CompleteRegistration() {
       return;
     }
 
-    const result = await submitRegistration(formData, {
-      notifyAdmin: true
-    });
+    const result = await completeRegistration(formData);
 
     if (!result.success) {
       console.error("Registration failed:", result.error);
@@ -131,7 +129,7 @@ export default function CompleteRegistration() {
         onSubmit={handleSubmit}
         defaultEmail={userEmail}
         isSubmitting={isSubmitting}
-        formErrors={formErrors || []}
+        formErrors={errors || []}
         showPasswordFields={false}
       />
     </RegistrationCard>

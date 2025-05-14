@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useWelcomeDashboardData } from "@/hooks/useWelcomeDashboardData";
 import { DashboardLayout } from "@/components/dealer/dashboard/DashboardLayout";
@@ -7,7 +8,7 @@ import { BusinessActionSection } from "@/components/dealer/dashboard/BusinessAct
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
 import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { LoadingDashboard } from "@/components/dealer/dashboard/LoadingDashboard";
@@ -20,6 +21,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { PermissionGate } from "@/components/PermissionGate";
 import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
 import { WatchlistManagement } from "@/components/dealer/dashboard/WatchlistManagement";
+import { isValidRecord } from "@/utils/supabaseHelpers";
 
 export default function DealerDashboard() {
   const { user, isLoading: isAuthLoading, refreshSession } = useAuth();
@@ -27,7 +29,9 @@ export default function DealerDashboard() {
   const navigate = useNavigate();
   const { isAdmin } = usePermissions();
   const { dealerProfile } = useCurrentDealerProfile();
-  const dealerId = dealerProfile?.id || '';
+  
+  // Get dealerId safely with null fallback
+  const dealerId = dealerProfile && isValidRecord(dealerProfile) ? dealerProfile.id : '';
 
   useEffect(() => {
     const debugRls = async () => {
@@ -130,7 +134,8 @@ export default function DealerDashboard() {
             
             <StatsSection recentActivity={recentActivity} />
             
-            <WatchlistManagement dealerId={dealerId} />
+            {/* Pass dealerId prop to WatchlistManagement only if available */}
+            {dealerId && <WatchlistManagement dealerId={dealerId} />}
             
             <BusinessActionSection />
           </div>

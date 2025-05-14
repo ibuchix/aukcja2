@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { DealerProfileFormValues } from "@/schemas/profileFormSchema";
+import { isValidRecord } from "@/utils/supabaseHelpers";
 
 export const useCompleteRegistration = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -42,8 +43,8 @@ export const useCompleteRegistration = () => {
         throw dealerError;
       }
 
-      // Create verification request
-      if (dealerData && dealerData.length > 0) {
+      // Create verification request - Fixed the id access using isValidRecord check
+      if (dealerData && dealerData.length > 0 && isValidRecord(dealerData[0])) {
         const dealerId = dealerData[0].id;
 
         const { error: verificationError } = await supabase
