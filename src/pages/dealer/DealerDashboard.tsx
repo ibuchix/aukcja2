@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
@@ -91,7 +92,7 @@ const DealerDashboard = () => {
           toast({
             title: "Profile Not Found",
             description: "No dealer profile found. Please complete your registration.",
-            variant: "warning",
+            variant: "destructive", // Changed from "warning" to "destructive" as warning is not in the variant types
           });
           navigate('/auth/dealer-registration');
         }

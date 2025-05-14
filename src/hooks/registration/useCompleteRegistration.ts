@@ -54,7 +54,7 @@ export const useCompleteRegistration = () => {
           const { error: verificationError } = await supabase
             .from('dealer_verifications')
             .insert({
-              dealer_id: dealerId,
+              dealer_id: dealerId, // Now properly typed as string
               verification_status: 'pending'
             });
 

@@ -237,28 +237,19 @@ class BidEventService {
         if (!dealerError && dealerData) {
           // Check if dealer data is valid before accessing properties
           if (isValidRecord(dealerData)) {
-            const dealerName = dealerData && isValidRecord(dealerData) 
-              ? dealerData.dealership_name || 'Unknown Dealer'
-              : 'Unknown Dealer';
-            
+            const dealerName = dealerData.dealership_name || 'Unknown Dealer';
             activity.dealerName = dealerName;
           }
         }
       }
       
-      // Use isValidRecord to ensure we have valid car data before accessing properties
+      // Use isValidCarData to ensure we have valid car data before accessing properties
       if (carData && isValidCarData(carData)) {
-        const carDetails = carData && isValidCarData(carData)
-          ? {
-              title: carData.title || 'Unknown Vehicle',
-              displayName: `${carData.year || ''} ${carData.make || ''} ${carData.model || ''}`,
-              auction_end_time: carData.auction_end_time
-            }
-          : {
-              title: 'Unknown Vehicle',
-              displayName: '',
-              auction_end_time: null
-            };
+        const carDetails = {
+          title: carData.title || 'Unknown Vehicle',
+          displayName: `${carData.year || ''} ${carData.make || ''} ${carData.model || ''}`,
+          auction_end_time: carData.auction_end_time
+        };
         
         return {
           ...activity,
