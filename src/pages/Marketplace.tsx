@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Home } from "lucide-react";
@@ -79,7 +78,7 @@ const Marketplace = () => {
       <MarketplaceHero />
       <VehicleListings listings={listings} onSelectCar={setSelectedCar} />
       <TestimonialsSection />
-      {selectedCar?.is_auction && dealerData?.id && (
+      {selectedCar?.is_auction && dealerData && isValidRecord(dealerData) && dealerData.id && (
         <MaxBidInterface
           carId={selectedCar.id}
           dealerId={dealerData.id}

@@ -19,6 +19,7 @@ import { AdminTools } from "@/components/dealer/dashboard/AdminTools";
 import { usePermissions } from "@/hooks/usePermissions";
 import { PermissionGate } from "@/components/PermissionGate";
 import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
+import { WatchlistManagement } from "@/components/dealer/dashboard/WatchlistManagement";
 
 export default function DealerDashboard() {
   const { user, isLoading: isAuthLoading, refreshSession } = useAuth();
@@ -128,6 +129,8 @@ export default function DealerDashboard() {
             <DealerAnalyticsDashboard />
             
             <StatsSection recentActivity={recentActivity} />
+            
+            <WatchlistManagement dealerId={dealerProfile?.id || ''} />
             
             <BusinessActionSection />
           </div>

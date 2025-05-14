@@ -166,8 +166,7 @@ export const useAuctionBrowser = (
             
           if (bidsData) {
             // Filter valid bids
-            dealerBids = (bidsData || [])
-              .filter(item => isValidBid(item));
+            dealerBids = safelyFilterData(bidsData, isValidBid);
             
             // Group bids by car_id and get the highest bid for each car
             const bidsByCarId = dealerBids.reduce((acc: Record<string, BidData>, bid) => {

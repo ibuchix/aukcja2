@@ -48,7 +48,7 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
         throw new Error(`Failed to fetch dealer profile: ${dealerError.message}`);
       }
 
-      if (isValidRecord(dealerProfile)) {
+      if (dealerProfile && isValidRecord(dealerProfile)) {
         setProfileData(dealerProfile);
         // Use a type guard to check if verification_status exists
         const status = typeof dealerProfile === 'object' && dealerProfile !== null &&

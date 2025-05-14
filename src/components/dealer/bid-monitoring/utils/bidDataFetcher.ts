@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { BidActivity, BidMetrics } from "../types";
 import { isValidBid, safelyFilterData, isValidCarData } from "@/utils/supabaseHelpers";
@@ -55,7 +54,7 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
   if (bidsError) throw bidsError;
 
   // Ensure we have valid bids data - filter out nulls and errors
-  const bids = safelyFilterData(bidsData, (bid): bid is DbBid => {
+  const bids = safelyFilterData<DbBid>(bidsData || [], (bid): bid is DbBid => {
     return isValidBid(bid) && 
       'car' in bid && 
       bid.car !== null && 

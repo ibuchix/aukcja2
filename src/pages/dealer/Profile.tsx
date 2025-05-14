@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { User } from "@supabase/supabase-js";
-import { Profile as UserIcon, Building2, FileText } from "lucide-react";
+import { UserIcon, Building2, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,7 @@ const Profile = () => {
 
         if (error) throw error;
 
-        if (data) {
+        if (data && isValidRecord(data)) {
           setProfile(data);
           form.reset({
             dealershipName: data.dealership_name || "",

@@ -1,4 +1,3 @@
-
 import { PostgrestError } from "@supabase/supabase-js";
 
 /**
@@ -21,7 +20,15 @@ export function isValidRecord<T extends Record<string, any>>(data: any): data is
 /**
  * Type guard for valid bid data
  */
-export function isValidBid(item: any): boolean {
+export function isValidBid(item: any): item is {
+  id: string;
+  car_id: string;
+  dealer_id?: string;
+  amount: number;
+  status?: string;
+  created_at: string;
+  updated_at?: string;
+} {
   return item !== null && 
          typeof item === 'object' && 
          'car_id' in item &&
@@ -31,7 +38,16 @@ export function isValidBid(item: any): boolean {
 /**
  * Type guard for valid car data
  */
-export function isValidCarData(item: any): boolean {
+export function isValidCarData(item: any): item is {
+  id: string;
+  title?: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  auction_end_time?: string;
+  current_bid?: number;
+  auction_status?: string;
+} {
   return item !== null && 
          typeof item === 'object' && 
          'id' in item;
@@ -40,7 +56,13 @@ export function isValidCarData(item: any): boolean {
 /**
  * Type guard for valid proxy log entries
  */
-export function isValidProxyLog(item: any): boolean {
+export function isValidProxyLog(item: any): item is {
+  id: string;
+  entity_id: string;
+  user_id?: string;
+  details: Record<string, any>;
+  created_at: string;
+} {
   return item !== null && 
          typeof item === 'object' && 
          'entity_id' in item && 
@@ -50,7 +72,10 @@ export function isValidProxyLog(item: any): boolean {
 /**
  * Type guard for valid proxy bid data
  */
-export function isValidProxyBidData(item: any): boolean {
+export function isValidProxyBidData(item: any): item is {
+  car_id: string;
+  max_bid_amount: number;
+} {
   return item !== null && 
          typeof item === 'object' && 
          'car_id' in item && 
@@ -60,7 +85,11 @@ export function isValidProxyBidData(item: any): boolean {
 /**
  * Type guard for watchlist items with cars
  */
-export function isValidWatchlistWithCar(item: any): boolean {
+export function isValidWatchlistWithCar(item: any): item is {
+  id: string;
+  car_id: string;
+  cars: Record<string, any>;
+} {
   return item !== null && 
          typeof item === 'object' && 
          'id' in item && 
@@ -165,4 +194,3 @@ export function filterString(value: string | null | undefined): string {
     .replace(/<[^>]*>/g, '')
     .trim();
 }
-
