@@ -34,10 +34,10 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
 
   // Ensure we have valid bids data - filter out nulls and errors
   const bids = (bidsData || []).filter(bid => 
-    bid && 
+    bid !== null && 
     typeof bid === 'object' && 
-    'car_id' in bid && 
-    !isSelectQueryError(bid)
+    !isSelectQueryError(bid) &&
+    'car_id' in bid
   );
 
   // Extract car IDs safely, filtering out any errors or invalid values
@@ -86,7 +86,12 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
   const activities: BidActivity[] = [
     // Map regular bids to activities, filtering out invalid entries
     ...allBids
-      .filter(bid => bid && typeof bid === 'object' && 'id' in bid && !isSelectQueryError(bid))
+      .filter(bid => 
+        bid !== null && 
+        typeof bid === 'object' && 
+        !isSelectQueryError(bid) &&
+        'id' in bid
+      )
       .map(bid => {
         // Safe access to potentially null car and dealer objects
         const car = bid.car && !isSelectQueryError(bid.car) ? bid.car : {};
@@ -109,7 +114,12 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
     
     // Map proxy bid logs to activities, filtering out invalid entries
     ...proxyLogs
-      .filter(log => log && typeof log === 'object' && 'id' in log && !isSelectQueryError(log))
+      .filter(log => 
+        log !== null && 
+        typeof log === 'object' && 
+        !isSelectQueryError(log) &&
+        'id' in log
+      )
       .map(log => {
         const details = (log.details as Record<string, any>) || {};
         
@@ -134,10 +144,10 @@ export async function fetchInitialBidData(dealerId: string): Promise<{
 
   // Calculate metrics from valid bids only - ensure we're not using SelectQueryError
   const validBids = bids.filter(bid => 
-    bid && 
+    bid !== null && 
     typeof bid === 'object' && 
-    'status' in bid && 
-    !isSelectQueryError(bid)
+    !isSelectQueryError(bid) &&
+    'status' in bid
   );
   
   const activeBids = validBids.filter(bid => bid && bid.status === 'active');

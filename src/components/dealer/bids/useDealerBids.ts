@@ -61,7 +61,10 @@ export function useDealerBids(dealerProfileId: string | undefined) {
 
       // Filter to ensure we only have valid bids without errors
       const validActiveBids = activeBids.filter(bid => 
-        bid && typeof bid === 'object' && 'car_id' in bid && !isSelectQueryError(bid)
+        bid !== null && 
+        typeof bid === 'object' && 
+        !isSelectQueryError(bid) &&
+        'car_id' in bid
       );
 
       // Get car details for these bids
@@ -92,13 +95,20 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       const carsById: Record<string, CarData> = {};
       
       // Filter valid car records and populate the lookup
-      const validCars = (cars || []).filter((car): car is CarData => 
-        car && typeof car === 'object' && 'id' in car && !isSelectQueryError(car)
-      );
-      
-      validCars.forEach(car => {
-        carsById[car.id] = car;
-      });
+      if (cars && Array.isArray(cars)) {
+        const validCars = cars.filter(car => 
+          car !== null && 
+          typeof car === 'object' &&
+          !isSelectQueryError(car) &&
+          'id' in car
+        );
+        
+        validCars.forEach(car => {
+          if (car && car.id) {
+            carsById[car.id] = car as CarData;
+          }
+        });
+      }
 
       // Get proxy bids for these cars
       const { data: proxyBidsData } = await supabase
@@ -111,23 +121,32 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       const proxyBidsByCarId: Record<string, ProxyBidData> = {};
       
       // Filter and process valid proxy bids
-      const validProxyBids = (proxyBidsData || []).filter(pb => 
-        pb && typeof pb === 'object' && 
-        'car_id' in pb && 'max_bid_amount' in pb && 
-        !isSelectQueryError(pb)
-      );
-      
-      validProxyBids.forEach(pb => {
-        proxyBidsByCarId[pb.car_id] = {
-          car_id: pb.car_id,
-          max_bid_amount: pb.max_bid_amount
-        };
-      });
+      if (proxyBidsData && Array.isArray(proxyBidsData)) {
+        const validProxyBids = proxyBidsData.filter(pb => 
+          pb !== null && 
+          typeof pb === 'object' &&
+          !isSelectQueryError(pb) &&
+          'car_id' in pb && 
+          'max_bid_amount' in pb
+        );
+        
+        validProxyBids.forEach(pb => {
+          if (pb && pb.car_id) {
+            proxyBidsByCarId[pb.car_id] = {
+              car_id: pb.car_id,
+              max_bid_amount: pb.max_bid_amount
+            };
+          }
+        });
+      }
 
       // Filter bids for active auctions only and merge with car data
       const result = validActiveBids
-        .filter(bid => bid.car_id && carsById[bid.car_id]) // Only keep bids for active auctions
         .map(bid => {
+          if (!bid || !bid.car_id || !carsById[bid.car_id]) {
+            return null; // Skip if bid is invalid or car not found
+          }
+          
           const car = carsById[bid.car_id];
           if (!car) {
             return null; // Skip if car not found
@@ -154,10 +173,13 @@ export function useDealerBids(dealerProfileId: string | undefined) {
           };
           
           // Add proxy bid information if it exists
-          if (proxyBidsByCarId[bid.car_id]) {
-            myBid.proxy_bid = {
-              max_bid_amount: proxyBidsByCarId[bid.car_id].max_bid_amount
-            };
+          if (bid.car_id && proxyBidsByCarId[bid.car_id]) {
+            const proxyBid = proxyBidsByCarId[bid.car_id];
+            if (proxyBid) {
+              myBid.proxy_bid = {
+                max_bid_amount: proxyBid.max_bid_amount
+              };
+            }
           }
           
           return myBid;

@@ -1,89 +1,121 @@
 
-import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { isSupabaseError } from "@/utils/supabaseHelpers";
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-interface UseCompleteRegistrationOptions {
-  onSuccess?: () => void;
-  onError?: (error: Error) => void;
+export interface RegistrationData {
+  email: string;
+  password: string;
+  supervisorName: string;
+  companyName: string;
+  taxId: string;
+  businessRegistryNumber: string;
+  address: string;
+  phoneNumber?: string;
 }
 
-export function useCompleteRegistration(options: UseCompleteRegistrationOptions = {}) {
+export interface CompletionResults {
+  success: boolean;
+  userId?: string;
+  error?: string;
+}
+
+export const useCompleteRegistration = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  
-  const completeRegistration = async (dealershipData: {
-    supervisor_name: string;
-    dealership_name: string;
-    address: string;
-    tax_id: string;
-    business_registry_number: string;
-  }) => {
+
+  const completeRegistration = async (data: RegistrationData): Promise<CompletionResults> => {
     setIsLoading(true);
+    setError(null);
     
     try {
-      // Get the current user
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) throw sessionError;
-      if (!sessionData.session) {
-        throw new Error("No authenticated user found. Please login first.");
-      }
-      
-      const userId = sessionData.session.user.id;
-      
-      // Create the dealer profile
-      const { error: dealerError } = await supabase.rpc('create_dealer_with_profile', {
-        p_email: sessionData.session.user.email,
-        p_password: '', // Not used in this function as the user already exists
-        p_supervisor_name: dealershipData.supervisor_name,
-        p_company_name: dealershipData.dealership_name,
-        p_tax_id: dealershipData.tax_id,
-        p_business_registry_number: dealershipData.business_registry_number,
-        p_address: dealershipData.address
+      // Check if email already exists
+      const { data: existsData, error: existsError } = await supabase.rpc('check_email_exists', {
+        email_to_check: data.email
       });
       
-      if (dealerError) throw dealerError;
-      
-      // Show success toast
-      toast({
-        title: "Registration completed",
-        description: "Your dealer profile has been created successfully.",
-      });
-      
-      // Call onSuccess callback if provided
-      if (options.onSuccess) {
-        options.onSuccess();
+      if (existsError) {
+        throw new Error(`Error checking email: ${existsError.message}`);
       }
       
-      return true;
-    } catch (error) {
-      console.error("Error completing registration:", error);
+      if (existsData?.exists) {
+        return {
+          success: false,
+          error: 'An account with this email already exists. Please log in instead.'
+        };
+      }
       
-      const message = isSupabaseError(error) 
-        ? error.error.message 
-        : 'An unexpected error occurred. Please try again.';
+      // Create the dealer account via the RPC function
+      const { data: dealerData, error: dealerError } = await supabase.rpc(
+        'create_dealer_with_profile',
+        {
+          p_email: data.email,
+          p_password: data.password,
+          p_supervisor_name: data.supervisorName,
+          p_company_name: data.companyName,
+          p_tax_id: data.taxId,
+          p_business_registry_number: data.businessRegistryNumber,
+          p_address: data.address,
+          p_phone_number: data.phoneNumber || ''
+        }
+      );
       
+      if (dealerError) {
+        // Handle specific error codes
+        if (dealerError.code === '23505') {
+          return {
+            success: false,
+            error: 'An account with this email already exists.'
+          };
+        }
+        
+        throw new Error(`Registration error: ${dealerError.message}`);
+      }
+      
+      // Check if the operation was successful
+      if (dealerData && dealerData.success) {
+        // Show success toast
+        toast({
+          title: "Registration Complete",
+          description: "Your dealer account has been created successfully.",
+        });
+        
+        return {
+          success: true,
+          userId: dealerData.user?.id
+        };
+      } else {
+        // Handle unsuccessful response
+        return {
+          success: false,
+          error: dealerData?.error || 'Unknown error during registration.'
+        };
+      }
+      
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : 'Unknown error during registration.';
+      setError(errorMessage);
+      
+      // Show error toast
       toast({
-        title: "Registration failed",
-        description: message,
+        title: "Registration Failed",
+        description: errorMessage,
         variant: "destructive",
       });
       
-      // Call onError callback if provided
-      if (options.onError && error instanceof Error) {
-        options.onError(error);
-      }
-      
-      return false;
+      return {
+        success: false,
+        error: errorMessage
+      };
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   return {
     completeRegistration,
-    isLoading
+    isLoading,
+    error
   };
-}
+};

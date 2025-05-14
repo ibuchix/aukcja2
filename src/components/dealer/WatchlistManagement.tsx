@@ -80,13 +80,19 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
       if (!watchlistData || !Array.isArray(watchlistData)) return [];
       
       // Filter valid watchlist items
-      const validWatchlistItems = watchlistData.filter(isValidWatchlistItem);
+      const validWatchlistItems = watchlistData.filter(item => 
+        item && 
+        typeof item === 'object' && 
+        !safeFilter(item) === false && 
+        'id' in item && 
+        'car_id' in item
+      );
       
       // Map to cars with safety checks
       return validWatchlistItems
         .map(item => {
           // Skip items with invalid cars relation
-          if (!item.cars || typeof item.cars !== 'object' || 'error' in item.cars) {
+          if (!item.cars || typeof item.cars !== 'object' || safeFilter(item.cars) === false) {
             return null;
           }
           
