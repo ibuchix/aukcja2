@@ -18,7 +18,7 @@ export function useCompleteRegistration() {
     try {
       console.log("Creating dealer account with direct auth API");
       
-      // Create user with direct auth API first - without email verification
+      // Create user with direct auth API - explicitly disable email verification
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email.trim().toLowerCase(),
         password: values.password,
@@ -27,8 +27,9 @@ export function useCompleteRegistration() {
             name: values.supervisorName.trim(),
             role: 'dealer'
           },
-          // Disable email verification
+          // Explicitly disable email verification
           emailRedirectTo: undefined,
+          emailConfirm: false
         }
       });
       

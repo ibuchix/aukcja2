@@ -11,6 +11,7 @@ import { RegistrationStatus } from "@/components/auth/dealer-form/RegistrationSt
 import { useRegistrationSteps } from "@/components/auth/dealer-form/useRegistrationSteps";
 import { useAuthStateMonitor } from "@/components/auth/dealer-form/useAuthStateMonitor";
 import { useFormSubmission } from "@/components/auth/dealer-form/useFormSubmission";
+import { useState } from "react";
 
 export function DealerSignupForm({ onRegistrationComplete }: { onRegistrationComplete?: () => void }) {
   const {
@@ -22,6 +23,8 @@ export function DealerSignupForm({ onRegistrationComplete }: { onRegistrationCom
     resetError,
     setError
   } = useRegistrationSteps();
+  
+  const [registrationSubmitted, setRegistrationSubmitted] = useState(false);
 
   // Monitor auth state changes
   useAuthStateMonitor(setEmailVerified);
@@ -33,7 +36,12 @@ export function DealerSignupForm({ onRegistrationComplete }: { onRegistrationCom
     moveToStep,
     resetError,
     setError,
-    onComplete: onRegistrationComplete
+    onComplete: () => {
+      setRegistrationSubmitted(true);
+      if (onRegistrationComplete) {
+        onRegistrationComplete();
+      }
+    }
   });
 
   const form = useForm<DealerFormValues>({
@@ -68,23 +76,32 @@ export function DealerSignupForm({ onRegistrationComplete }: { onRegistrationCom
         registrationStep={registrationStep}
       />
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <DealerFormFields form={form} />
-          <Button 
-            type="submit" 
-            className="w-full"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing up...
-              </>
-            ) : "Sign Up"}
-          </Button>
-        </form>
-      </Form>
+      {registrationSubmitted ? (
+        <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
+          <h3 className="text-green-800 font-medium">Registration Complete!</h3>
+          <p className="text-green-700 text-sm mt-1">
+            Your account has been created successfully. You can now log in with your credentials.
+          </p>
+        </div>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <DealerFormFields form={form} />
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing up...
+                </>
+              ) : "Sign Up"}
+            </Button>
+          </form>
+        </Form>
+      )}
     </>
   );
 }

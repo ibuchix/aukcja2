@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { getUserProfile, safeGetProfileData } from './authUtils';
 import { preparePassword, getAuthDiagnostics } from '@/utils/auth-utils';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { signInWithEmail } from '@/services/auth/signin';
 
 export function useSignInHandler() {
@@ -35,13 +35,10 @@ export function useSignInHandler() {
           name: error.name
         });
         
-        toast({
-          title: "Login failed",
-          description: error.message || "Invalid login credentials",
-          variant: "destructive",
-        });
-        
-        return { success: false, error: error.message };
+        return { 
+          success: false, 
+          error: error.message || "Invalid login credentials" 
+        };
       }
 
       if (data?.user) {
@@ -72,7 +69,9 @@ export function useSignInHandler() {
         };
       }
       
-      return { success: true };
+      return { 
+        success: true 
+      };
     } catch (error) {
       console.error('Sign in error:', error);
       
@@ -81,13 +80,6 @@ export function useSignInHandler() {
         console.error('Error name:', error.name);
         console.error('Error stack:', error.stack);
       }
-      
-      // Show a toast notification for the error
-      toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : 'Failed to sign in',
-        variant: "destructive",
-      });
       
       return {
         success: false,

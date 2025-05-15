@@ -44,10 +44,28 @@ export function getAuthDiagnostics(): Record<string, unknown> {
     const hasLocalDealerToken = !!localStorage.getItem('dealer_auth_token');
     const hasSessionToken = !!sessionStorage.getItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
     
+    // Try to parse local token for additional diagnostics
+    let tokenInfo = "No token data";
+    try {
+      const tokenStr = localStorage.getItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
+      if (tokenStr) {
+        const tokenData = JSON.parse(tokenStr);
+        tokenInfo = {
+          expiresAt: tokenData.expiresAt,
+          tokenType: tokenData.data?.token_type || "none",
+          hasAccessToken: !!tokenData.data?.access_token,
+          hasRefreshToken: !!tokenData.data?.refresh_token
+        };
+      }
+    } catch(e) {
+      tokenInfo = "Error parsing token: " + String(e);
+    }
+    
     return {
       hasLocalToken,
       hasLocalDealerToken,
       hasSessionToken,
+      tokenInfo,
       timestamp: new Date().toISOString()
     };
   } catch (error) {

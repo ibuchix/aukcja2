@@ -6,7 +6,7 @@ import { DealerSignupForm } from "@/pages/auth/DealerSignupForm";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
 export function AuthTabs({ returnUrl = "/dealer/dashboard" }: { returnUrl?: string }) {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get("tab") || "login";
   const [activeTab, setActiveTab] = useState(initialTab);
   const navigate = useNavigate();
@@ -26,7 +26,10 @@ export function AuthTabs({ returnUrl = "/dealer/dashboard" }: { returnUrl?: stri
   }, [searchParams]);
 
   return (
-    <Tabs value={activeTab} className="w-full max-w-md" onValueChange={setActiveTab}>
+    <Tabs value={activeTab} className="w-full max-w-md" onValueChange={(value) => {
+      setActiveTab(value);
+      setSearchParams({ tab: value });
+    }}>
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="login">Login</TabsTrigger>
         <TabsTrigger value="register">Register</TabsTrigger>
