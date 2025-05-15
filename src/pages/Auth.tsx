@@ -9,6 +9,8 @@ import { SessionExpiredNotice } from "@/components/auth/SessionExpiredNotice";
 import { ClearAuthStateButton } from "@/components/auth/ClearAuthStateButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+import { TestAccountUtil } from "@/components/auth/TestAccountUtil";
+import { Button } from "@/components/ui/button";
 
 const Auth = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -38,6 +40,7 @@ const Auth = () => {
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [loginFailed, setLoginFailed] = useState(false);
+  const [showTestUtility, setShowTestUtility] = useState(false);
   
   const tabFromUrl = searchParams.get("tab");
   // Keep the current tab as is when login fails
@@ -227,52 +230,78 @@ const Auth = () => {
             <CardContent>
               <SessionExpiredNotice />
               
-              <Tabs value={activeTab} onValueChange={handleTabChange}>
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="register">Register</TabsTrigger>
-                  <TabsTrigger value="login">Login</TabsTrigger>
-                </TabsList>
-                <TabsContent value="register">
-                  <DealerSignupForm />
-                </TabsContent>
-                <TabsContent value="login">
-                  <DealerLoginForm returnUrl={returnUrl} />
-                </TabsContent>
-              </Tabs>
-              
-              {/* Enhanced authentication troubleshooting section */}
-              <div className="mt-6 border-t pt-4 border-gray-100">
-                <p className="text-xs text-muted-foreground mb-2 text-center">
-                  Having trouble logging in?
-                </p>
-                <div className="flex flex-col items-center gap-2">
-                  <ClearAuthStateButton />
-                  <button 
-                    onClick={() => window.location.reload()}
-                    className="text-xs text-muted-foreground hover:text-primary underline"
+              {showTestUtility ? (
+                <>
+                  <TestAccountUtil />
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowTestUtility(false)} 
+                    className="w-full mt-4"
                   >
-                    Refresh page
-                  </button>
-                  <button
-                    onClick={() => {
-                      // Force sign out and clear auth state
-                      const clearBtn = document.querySelector('button[class*="ClearAuthStateButton"]') as HTMLButtonElement;
-                      if (clearBtn) {
-                        clearBtn.click();
-                      } else {
-                        // Fallback - add force_login and reload
-                        const newParams = new URLSearchParams(searchParams);
-                        newParams.set("force_login", "true");
-                        newParams.set("tab", "login");
-                        window.location.href = `/auth?${newParams.toString()}`;
-                      }
-                    }}
-                    className="text-xs text-muted-foreground hover:text-primary underline"
-                  >
-                    Force login form
-                  </button>
-                </div>
-              </div>
+                    Back to Login/Register
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Tabs value={activeTab} onValueChange={handleTabChange}>
+                    <TabsList className="grid w-full grid-cols-2 mb-4">
+                      <TabsTrigger value="register">Register</TabsTrigger>
+                      <TabsTrigger value="login">Login</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="register">
+                      <DealerSignupForm />
+                    </TabsContent>
+                    <TabsContent value="login">
+                      <DealerLoginForm returnUrl={returnUrl} />
+                    </TabsContent>
+                  </Tabs>
+                  
+                  {/* Add test account utility button */}
+                  <div className="mt-6 text-center">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowTestUtility(true)} 
+                      className="text-sm"
+                    >
+                      Create Test Account
+                    </Button>
+                  </div>
+                  
+                  {/* Enhanced authentication troubleshooting section */}
+                  <div className="mt-6 border-t pt-4 border-gray-100">
+                    <p className="text-xs text-muted-foreground mb-2 text-center">
+                      Having trouble logging in?
+                    </p>
+                    <div className="flex flex-col items-center gap-2">
+                      <ClearAuthStateButton />
+                      <button 
+                        onClick={() => window.location.reload()}
+                        className="text-xs text-muted-foreground hover:text-primary underline"
+                      >
+                        Refresh page
+                      </button>
+                      <button
+                        onClick={() => {
+                          // Force sign out and clear auth state
+                          const clearBtn = document.querySelector('button[class*="ClearAuthStateButton"]') as HTMLButtonElement;
+                          if (clearBtn) {
+                            clearBtn.click();
+                          } else {
+                            // Fallback - add force_login and reload
+                            const newParams = new URLSearchParams(searchParams);
+                            newParams.set("force_login", "true");
+                            newParams.set("tab", "login");
+                            window.location.href = `/auth?${newParams.toString()}`;
+                          }
+                        }}
+                        className="text-xs text-muted-foreground hover:text-primary underline"
+                      >
+                        Force login form
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
