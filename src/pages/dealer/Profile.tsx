@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Pencil, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { isValidRecord } from "@/utils/supabaseHelpers";
+import { isValidRecord, safeGetProperty } from "@/utils/supabaseHelpers";
 
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
@@ -65,12 +65,12 @@ export default function Profile() {
     if (!dealer || !isValidRecord(dealer)) return null;
 
     return {
-      dealershipName: dealer.dealership_name || '',
-      supervisorName: dealer.supervisor_name || '',
-      taxId: dealer.tax_id || '',
-      businessRegistryNumber: dealer.business_registry_number || '',
-      address: dealer.address || '',
-      licenseNumber: dealer.license_number || '',
+      dealershipName: safeGetProperty(dealer, 'dealership_name', ''),
+      supervisorName: safeGetProperty(dealer, 'supervisor_name', ''),
+      taxId: safeGetProperty(dealer, 'tax_id', ''),
+      businessRegistryNumber: safeGetProperty(dealer, 'business_registry_number', ''),
+      address: safeGetProperty(dealer, 'address', ''),
+      licenseNumber: safeGetProperty(dealer, 'license_number', ''),
     };
   }, [dealer]);
 

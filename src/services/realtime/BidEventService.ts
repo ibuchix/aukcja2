@@ -306,7 +306,7 @@ class BidEventService {
       // Use proper type checking before accessing properties
       if (dealer && isValidRecord(dealer)) {
         return {
-          dealershipName: dealer.dealership_name || 'Unknown Dealership'
+          dealershipName: safeGetProperty(dealer, 'dealership_name', 'Unknown Dealership')
         };
       }
       
