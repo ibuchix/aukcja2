@@ -17,6 +17,7 @@ export type DatabaseErrorType =
   | 'permission_denied'
   | 'query_invalid'
   | 'transaction_failed'
+  | 'database_connection'
   | 'database_general';
 
 export type StorageErrorType =
