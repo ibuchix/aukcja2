@@ -1,3 +1,4 @@
+
 import { validateEmail, safeTrim, checkAccountExists } from "./validation";
 import { 
   SignUpResult, 
@@ -10,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export const signUpDealerWithEmail = async (
   email: string,
-  password: string, // Add password parameter
+  password: string,
   metadata: UserMetadata
 ): Promise<SignUpResult> => {
   try {
@@ -20,6 +21,16 @@ export const signUpDealerWithEmail = async (
     const emailValidation = validateEmail(email);
     if (!emailValidation.isValid) {
       return { success: false, error: emailValidation.error };
+    }
+
+    // Check if email already exists before proceeding
+    const emailExists = await checkAccountExists(email, true);
+    if (emailExists) {
+      console.warn(`Email ${email} already exists, stopping signup process`);
+      return {
+        success: false,
+        error: "An account with this email already exists. Please use a different email or login to your existing account."
+      };
     }
 
     // Validate required metadata with better handling
@@ -35,7 +46,7 @@ export const signUpDealerWithEmail = async (
         body: {
           action: 'register',
           email: safeTrim(email).toLowerCase(),
-          password: password, // Use the provided password instead of a random one
+          password: password,
           metadata: {
             name: safeTrim(metadata.name),
             companyName: safeTrim(metadata.companyName || ''),
@@ -44,8 +55,8 @@ export const signUpDealerWithEmail = async (
             companyAddress: safeTrim(metadata.companyAddress || ''),
             phoneNumber: safeTrim(metadata.phoneNumber || '')
           },
-          passwordless: false, // Change to false to indicate this is a password-based registration
-          requestId: crypto.randomUUID(), // Add a unique request ID for tracking retries
+          passwordless: false,
+          requestId: crypto.randomUUID(),
           timestamp: new Date().toISOString()
         }
       });

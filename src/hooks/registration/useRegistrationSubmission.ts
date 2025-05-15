@@ -40,8 +40,8 @@ export function useRegistrationSubmission() {
         return false;
       }
       
-      // Check if email already exists
-      const emailExists = await checkAccountExists(sanitizedData.email);
+      // Check if email already exists - passing true to indicate this is a registration flow
+      const emailExists = await checkAccountExists(sanitizedData.email, true);
       if (emailExists) {
         toast({
           title: "Email Already In Use",

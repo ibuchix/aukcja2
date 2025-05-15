@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
 import { User } from "@supabase/supabase-js";
@@ -65,15 +66,17 @@ export function validatePassword(password: string | null | undefined): Validatio
 /**
  * Improved method to check if an account exists with the given email
  * Uses multiple methods with proper error handling and fallbacks
+ * @param email Email to check
+ * @param isRegistration Whether this is for registration (strict) or login (lenient)
  */
-export async function checkAccountExists(email: string): Promise<boolean> {
+export async function checkAccountExists(email: string, isRegistration: boolean = false): Promise<boolean> {
   if (!email || !email.trim()) {
     console.warn("Empty email provided to checkAccountExists");
     return false;
   }
 
   const normalizedEmail = email.trim().toLowerCase();
-  console.log("Checking if account exists with email:", normalizedEmail);
+  console.log(`Checking if account exists with email: ${normalizedEmail}, isRegistration: ${isRegistration}`);
   
   // Method 1: Use check_email_exists database function (most reliable)
   try {
@@ -136,8 +139,7 @@ export async function checkAccountExists(email: string): Promise<boolean> {
     // Continue to next method
   }
   
-  // Method 3: Last resort - try a direct query to see if OTP can be sent
-  // This checks if we can at least initiate the OTP process
+  // Method 3: Direct call to dealer-otp API (if all else fails)
   try {
     const { data: otpData, error: otpError } = await supabase.functions.invoke('dealer-otp', {
       body: {
@@ -158,21 +160,23 @@ export async function checkAccountExists(email: string): Promise<boolean> {
     console.warn("Exception in dealer-otp check_email:", error);
   }
   
-  // At this point, if none of our checks confirmed the email exists
-  // Rather than returning false immediately, we'll return true for common domains
-  // to prevent turning away legitimate users who may be experiencing API issues
+  // If we're in registration mode, be strict - return false if we haven't conclusively determined the email exists
+  if (isRegistration) {
+    console.log("No conclusive result from email checks for registration, assuming it doesn't exist");
+    return false;
+  }
   
-  // This is a safety check to prevent locking out users with common email domains
+  // For login flows, we can be more lenient with common domains
   const commonDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com'];
   const emailDomain = normalizedEmail.split('@')[1];
   const isCommonDomain = emailDomain && commonDomains.includes(emailDomain.toLowerCase());
   
   if (isCommonDomain) {
-    console.log("Email check inconclusive, but domain is common. Allowing login attempt:", normalizedEmail);
+    console.log("Email check inconclusive for login, but domain is common. Allowing login attempt:", normalizedEmail);
     return true;
   }
   
-  console.warn("All email existence checks failed for:", normalizedEmail);
+  console.log("All email existence checks failed for:", normalizedEmail);
   return false;
 }
 

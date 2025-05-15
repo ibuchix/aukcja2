@@ -1,3 +1,4 @@
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
 import { respondSuccess, respondError } from "./response-utils.ts";
 import { logInfo, logError, logWarning } from "./logging.ts";
@@ -33,7 +34,6 @@ export async function handleDealerRegister(
       return respondError("Email is required", 400);
     }
 
-    // Always require password - remove passwordless option
     if (!password) {
       return respondError("Password is required for dealer registration", 400);
     }
@@ -46,7 +46,7 @@ export async function handleDealerRegister(
     // Sanitize and prepare metadata
     const cleanedMetadata = sanitizeMetadata(metadata);
 
-    // Check if email already exists
+    // Double-check if email already exists to prevent race conditions
     const { data: existsData, error: existsError } = await supabaseAdmin.rpc(
       "check_email_exists",
       { email_to_check: sanitizeString(email).toLowerCase() }
@@ -56,6 +56,7 @@ export async function handleDealerRegister(
       logError("Error checking if email exists", existsError);
       // Continue despite this error - the procedure will check again
     } else if (existsData?.exists) {
+      logWarning(`Email ${email} already exists. Rejecting registration attempt.`);
       return respondError("Email already exists", 409);
     }
 
@@ -69,7 +70,7 @@ export async function handleDealerRegister(
       "create_dealer_with_profile",
       {
         p_email: sanitizeString(email).toLowerCase(),
-        p_password: password, // Always use the provided password
+        p_password: password,
         p_supervisor_name: cleanedMetadata.name,
         p_company_name: cleanedMetadata.companyName || cleanedMetadata.name,
         p_tax_id: (cleanedMetadata.taxId || "").replace(/\D/g, ''), // Remove non-digits
