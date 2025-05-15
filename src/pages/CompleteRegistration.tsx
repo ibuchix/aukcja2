@@ -34,7 +34,7 @@ export default function CompleteRegistration() {
       return;
     }
 
-    const result = await completeRegistration(formData, userId);
+    const result = await completeRegistration(userId, formData);
 
     if (!result.success) {
       console.error("Registration failed:", result.error);

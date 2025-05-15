@@ -7,20 +7,24 @@ import { DealerFormValues } from "@/schemas/dealerFormSchema";
 export const useCompleteRegistration = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
   const { toast } = useToast();
 
   const completeRegistration = async (userId: string, values: DealerFormValues) => {
     if (!userId) {
+      const error = "User ID not found. Please try logging in again.";
+      setErrors([error]);
       toast({
         title: "Authentication Error",
-        description: "User ID not found. Please try logging in again.",
+        description: error,
         variant: "destructive",
       });
-      return { success: false };
+      return { success: false, error };
     }
 
     setIsSubmitting(true);
     setSuccess(false);
+    setErrors([]);
 
     try {
       console.log("Creating dealer profile with user ID:", userId);
@@ -39,12 +43,14 @@ export const useCompleteRegistration = () => {
 
       if (error) {
         console.error("Profile creation error:", error);
+        const errorMessage = error.message || "Failed to create profile";
+        setErrors([errorMessage]);
         toast({
           title: "Profile Creation Failed",
-          description: error.message,
+          description: errorMessage,
           variant: "destructive",
         });
-        return { success: false };
+        return { success: false, error: errorMessage };
       }
 
       // Update the user's role in their metadata
@@ -66,12 +72,15 @@ export const useCompleteRegistration = () => {
     } catch (error) {
       console.error("Profile completion error:", error);
       
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      setErrors([errorMessage]);
+      
       toast({
         title: "Profile Creation Failed",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
+        description: errorMessage,
         variant: "destructive",
       });
-      return { success: false };
+      return { success: false, error: errorMessage };
     } finally {
       setIsSubmitting(false);
     }
@@ -80,6 +89,7 @@ export const useCompleteRegistration = () => {
   return {
     completeRegistration,
     isSubmitting,
-    success
+    success,
+    errors
   };
 };
