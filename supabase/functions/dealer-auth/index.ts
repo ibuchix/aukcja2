@@ -37,11 +37,20 @@ serve(async (req) => {
     let body;
     try {
       body = await req.json();
+      logInfo(`Parsed request body successfully: ${JSON.stringify(body, (key, value) => 
+        key === 'password' ? '[REDACTED]' : value)}`);
     } catch (e) {
+      logError("Invalid JSON in request body", e);
       return respondError("Invalid JSON in request body", 400);
     }
 
+    // Validate required fields
     const { action, requestId, email } = body;
+    
+    if (!action) {
+      logError("Missing 'action' field in request", null);
+      return respondError("Missing required field: action", 400);
+    }
     
     // Generate a request ID if none was provided
     const trackingId = requestId || crypto.randomUUID();
@@ -61,7 +70,21 @@ serve(async (req) => {
           trackingId,
           startTime
         );
+      case "debug":
+        // Add a debug endpoint to help troubleshoot request issues
+        return respondSuccess({
+          success: true,
+          debug: {
+            method: req.method,
+            headers: Object.fromEntries(req.headers.entries()),
+            body: { ...body, password: body.password ? "[REDACTED]" : undefined },
+            url: req.url,
+            timestamp: new Date().toISOString(),
+            trackingId
+          }
+        });
       default:
+        logError(`Unknown action: ${action}`, null);
         return respondError(`Unknown action: ${action}`, 400);
     }
   } catch (error) {

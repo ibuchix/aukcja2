@@ -1,4 +1,3 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { respondSuccess, respondError } from "./response-utils.ts";
 import { logInfo, logError, logWarning, logDebug } from "./logging.ts";
@@ -257,19 +256,8 @@ export async function handleDealerLogin(
     });
 
     try {
-      // Use admin API for authentication instead of signInWithPassword
-      // First - get the user by email
-      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(
-        normalizedEmail
-      );
-
-      if (userError || !userData?.user) {
-        logError(`User lookup error: ${userError?.message || "User not found"}`, userError);
-        return respondError("Invalid login credentials", 401);
-      }
-
-      // Verify the password - we need to use signInWithPassword for this
-      // since there's no direct admin API for password verification
+      // Simplified authentication flow
+      // Use signInWithPassword which handles both verification and session creation
       const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
         email: normalizedEmail,
         password: normalizedPassword
@@ -283,16 +271,6 @@ export async function handleDealerLogin(
       if (!signInData || !signInData.user) {
         logWarning(`Login failed - no user returned for email: ${normalizedEmail}`);
         return respondError("Authentication failed", 401);
-      }
-
-      // Authentication succeeded, now create a session
-      const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
-        userId: signInData.user.id
-      });
-
-      if (sessionError) {
-        logError(`Session creation error (request ID: ${requestId})`, sessionError);
-        return respondError("Failed to create session", 500);
       }
 
       // Get dealer profile info to return
@@ -325,7 +303,7 @@ export async function handleDealerLogin(
       // Return success with session and user data
       return respondSuccess({
         success: true,
-        session: sessionData.session,
+        session: signInData.session,
         user: {
           id: signInData.user.id,
           email: normalizedEmail,
@@ -352,7 +330,7 @@ export async function handleDealerLogin(
 /**
  * Sanitize and validate registration metadata
  */
-function sanitizeMetadata(metadata: any): RegistrationMetadata {
+function sanitizeMetadata(metadata: any): any {
   return {
     name: sanitizeString(metadata.name),
     companyName: sanitizeString(metadata.companyName),
