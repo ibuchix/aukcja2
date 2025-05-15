@@ -1,3 +1,4 @@
+
 /**
  * Consistently prepare passwords for authentication
  * to ensure exact same transformation is used for registration and login
@@ -8,9 +9,6 @@ export function preparePassword(password: string): string {
   // Simply trim leading and trailing whitespace
   // This matches the behavior in src/utils/auth-utils.ts
   return password.trim();
-  
-  // Note: We intentionally keep this simple to match existing client-side behavior
-  // Any changes here MUST be synchronized with src/utils/auth-utils.ts
 }
 
 /**

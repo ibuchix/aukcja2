@@ -20,6 +20,11 @@ export async function signInWithEmail({ email, password }: { email: string; pass
       return { error: new Error("Password cannot be empty") };
     }
     
+    // Add diagnostic logging for password length
+    console.log("Password length after preparation:", cleanedPassword.length, 
+                "First char code:", cleanedPassword.charCodeAt(0),
+                "Last char code:", cleanedPassword.charCodeAt(cleanedPassword.length - 1));
+    
     // Normalize email
     const normalizedEmail = email.trim().toLowerCase();
     
@@ -72,8 +77,12 @@ export async function signInWithEmail({ email, password }: { email: string; pass
         throw new Error("No session in edge function response");
       }
     } catch (edgeFunctionError) {
-      // Log edge function error
+      // Log edge function error with more details
       console.error("Edge function sign in error:", edgeFunctionError);
+      console.error("Error type:", typeof edgeFunctionError);
+      if (edgeFunctionError instanceof Error) {
+        console.error("Error details:", edgeFunctionError.message);
+      }
       
       console.log("Edge function failed, falling back to standard auth for:", normalizedEmail);
     }

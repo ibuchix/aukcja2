@@ -3,6 +3,7 @@ import { useState } from "react";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { supabase } from "@/integrations/supabase/client";
 import { signInWithEmail } from "@/services/auth/signin";
+import { preparePassword } from "@/utils/auth-utils";
 
 interface CompleteRegistrationResult {
   success: boolean;
@@ -20,10 +21,18 @@ export function useCompleteRegistration() {
     try {
       console.log("Creating dealer account with direct auth API");
       
+      // Consistently prepare the password the same way across all code
+      const cleanedPassword = preparePassword(values.password);
+      
+      // Add diagnostic logging for password length
+      console.log("Registration password length after preparation:", cleanedPassword.length, 
+                "First char code:", cleanedPassword.charCodeAt(0),
+                "Last char code:", cleanedPassword.charCodeAt(cleanedPassword.length - 1));
+      
       // Create user with direct auth API - explicitly disable email verification
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email.trim().toLowerCase(),
-        password: values.password,
+        password: cleanedPassword, // Use the consistently prepared password
         options: {
           data: {
             name: values.supervisorName.trim(),
