@@ -22,16 +22,29 @@ export async function createTestAccount() {
     console.log("Creating test account with email:", testEmail);
     console.log("Using password:", testPassword);
     
-    // Create user with direct Supabase auth call with proper metadata
-    const { data, error } = await supabase.auth.signUp({
+    // Prepare dealer profile data
+    const dealerData = {
       email: testEmail,
       password: testPassword,
-      options: {
-        data: {
-          role: 'dealer',
-          name: 'Test User'
-        }
-      }
+      supervisorName: "Test Supervisor",
+      companyName: "Test Company Ltd",
+      taxId: "1234567890",
+      businessRegistryNumber: "123456789", // 9-digit REGON number
+      companyAddress: "123 Test Street, Test City, 00-001",
+      phoneNumber: "+48123456789",
+      acceptTerms: true
+    };
+    
+    // Use the create_dealer_with_profile RPC function to ensure both user and profile are created
+    const { data: result, error } = await supabase.rpc('create_dealer_with_profile', {
+      p_email: dealerData.email,
+      p_password: dealerData.password,
+      p_supervisor_name: dealerData.supervisorName,
+      p_company_name: dealerData.companyName,
+      p_tax_id: dealerData.taxId,
+      p_business_registry_number: dealerData.businessRegistryNumber,
+      p_address: dealerData.companyAddress,
+      p_phone_number: dealerData.phoneNumber
     });
     
     if (error) {
@@ -41,35 +54,33 @@ export async function createTestAccount() {
         error: error.message
       };
     }
-
-    // Ensure we have a user ID
-    if (!data.user || !data.user.id) {
+    
+    // Parse the response if needed
+    const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
+    
+    if (!parsedResult?.success) {
+      console.error("Failed to create test account:", parsedResult?.error || "Unknown error");
+      return {
+        success: false,
+        error: parsedResult?.error || "Failed to create test user account"
+      };
+    }
+    
+    // Success - get the user ID from the result
+    const userId = parsedResult.user?.id;
+    if (!userId) {
       console.error("No user ID returned when creating test account");
       return {
         success: false,
         error: "Failed to get user ID"
       };
     }
-
-    // Automatically create a profile record for this user
-    try {
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        role: 'dealer'
-      });
-
-      if (profileError) {
-        console.warn("Failed to create profile for test user:", profileError);
-      }
-    } catch (profileErr) {
-      console.error("Exception creating profile:", profileErr);
-    }
     
     return {
       success: true,
       email: testEmail,
       password: testPassword,
-      user: data.user
+      user: parsedResult.user
     };
   } catch (error) {
     console.error("Exception creating test account:", error);
