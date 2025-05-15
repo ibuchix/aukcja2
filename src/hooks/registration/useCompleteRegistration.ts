@@ -112,12 +112,40 @@ export function useCompleteRegistration() {
     setErrors([]);
   };
 
+  // Add this utility function to clear auth tokens
+  const clearAuthTokens = () => {
+    try {
+      // Clear all auth related tokens
+      localStorage.removeItem('dealer_auth_token');
+      localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
+      
+      // Also try to clear any session
+      supabase.auth.signOut({ scope: 'local' });
+      
+      toast({
+        title: "Auth Storage Cleared",
+        description: "Authentication tokens have been cleared. Please try logging in again.",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error clearing auth storage:", error);
+      toast({
+        title: "Error Clearing Storage",
+        description: "Failed to clear authentication storage. Try refreshing the page.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   return {
     isSubmitting,
     isSuccess,
     error,
     errors,
     completeRegistration,
-    resetState
+    resetState,
+    clearAuthTokens // Export the new function
   };
 }

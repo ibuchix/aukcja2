@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { DealerSignupForm } from "@/pages/auth/DealerSignupForm";
@@ -5,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DealerLoginForm } from "@/components/auth/DealerLoginForm";
 import { SessionExpiredNotice } from "@/components/auth/SessionExpiredNotice";
+import { ClearAuthStateButton } from "@/components/auth/ClearAuthStateButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
@@ -167,6 +169,14 @@ const Auth = () => {
                   <DealerLoginForm returnUrl={returnUrl} />
                 </TabsContent>
               </Tabs>
+              
+              {/* Add the clear auth state button */}
+              <div className="mt-4 text-center">
+                <p className="text-xs text-muted-foreground mb-1">
+                  Having trouble logging in?
+                </p>
+                <ClearAuthStateButton />
+              </div>
             </CardContent>
           </Card>
         </div>
