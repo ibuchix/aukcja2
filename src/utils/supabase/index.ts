@@ -9,12 +9,15 @@ export * from './authErrorHandler';
 export * from './databaseErrorHandler';
 export * from './errorReporting';
 
-// Re-export the existing dealerProfileResultHandler for backward compatibility
+// Re-export the functions from dealerProfileResultHandler
 export { 
   createSuccessResult as createDealerSuccessResult,
   createValidationErrorResult,
   createDatabaseErrorResult as createDealerDatabaseErrorResult,
   createNetworkErrorResult as createDealerNetworkErrorResult,
   handleDatabaseError as handleDealerDatabaseError,
-  ProfileResult
 } from '@/services/dealer/dealerProfileResultHandler';
+
+// Re-export the ProfileResult type using 'export type' syntax
+export type { ProfileResult } from '@/services/dealer/dealerProfileResultHandler';
+
