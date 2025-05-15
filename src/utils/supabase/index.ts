@@ -1,4 +1,7 @@
 
+// Export type definitions first to avoid potential ordering issues
+export type { Database } from '@/integrations/supabase/types';
+
 // Export all the error handling utilities for easy imports
 export * from './errorTypes';
 export * from './errorHandler';
@@ -15,6 +18,3 @@ export {
   handleDatabaseError as handleDealerDatabaseError,
   ProfileResult
 } from '@/services/dealer/dealerProfileResultHandler';
-
-// Use 'export type' for Database type (fixing TS1205 error with isolatedModules)
-export type { Database } from '@/integrations/supabase/types';
