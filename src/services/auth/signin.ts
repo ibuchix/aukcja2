@@ -34,9 +34,9 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
       password: "[REDACTED]"
     });
     
-    // Call the dealer-auth edge function for authentication
+    // Call the dealer-auth edge function with explicit content type and stringified body
     const { data, error } = await supabase.functions.invoke('dealer-auth', {
-      body: requestBody,
+      body: JSON.stringify(requestBody),
       headers: {
         "Content-Type": "application/json",
         "Cache-Control": "no-cache"

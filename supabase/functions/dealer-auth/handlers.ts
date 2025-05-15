@@ -1,3 +1,4 @@
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { respondSuccess, respondError } from "./response-utils.ts";
 import { logInfo, logError, logWarning, logDebug } from "./logging.ts";
@@ -256,6 +257,13 @@ export async function handleDealerLogin(
     });
 
     try {
+      // Log admin client configuration
+      logDebug("Supabase admin client config", {
+        url_exists: !!Deno.env.get("SUPABASE_URL"),
+        key_length: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.length || 0,
+        auth_header_exists: !!supabaseAdmin.auth,
+      });
+
       // Simplified authentication flow
       // Use signInWithPassword which handles both verification and session creation
       const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({

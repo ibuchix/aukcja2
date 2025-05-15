@@ -57,20 +57,34 @@ serve(async (req) => {
         return respondError("Request body cannot be empty", 400);
       }
       
-      logInfo(`Raw request body: ${text.length > 1000 ? text.substring(0, 1000) + '...(truncated)' : text}`);
+      logInfo(`Raw request body length: ${text.length}`);
+      if (text.length > 1000) {
+        // Log a truncated version for very large bodies
+        logInfo(`Request body preview: ${text.substring(0, 200)}...(truncated)`);
+      } else {
+        // Safe to log the full body for smaller payloads
+        logInfo(`Raw request body: ${text}`);
+      }
       
       try {
         body = JSON.parse(text);
+        logInfo(`Parsed body successfully with keys: ${Object.keys(body).join(', ')}`);
       } catch (parseError) {
         logError(`JSON parse error: ${parseError.message}`, parseError);
         return respondError(`Invalid JSON format: ${parseError.message}`, 400);
       }
       
+      // Validate the body has required fields
+      if (!body) {
+        logError("Parsed body is null or undefined", null);
+        return respondError("Invalid request body structure", 400);
+      }
+      
       logInfo(`Parsed request body successfully: ${JSON.stringify(body, (key, value) => 
         key === 'password' ? '[REDACTED]' : value)}`);
     } catch (e) {
-      logError("Invalid JSON in request body", e);
-      return respondError("Invalid JSON in request body", 400);
+      logError("Error processing request body", e);
+      return respondError(`Error processing request body: ${e.message}`, 400);
     }
 
     // Validate required fields

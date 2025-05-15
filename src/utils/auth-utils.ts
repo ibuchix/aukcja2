@@ -1,3 +1,4 @@
+
 /**
  * Utility functions related to authentication
  */
@@ -7,6 +8,7 @@ import { normalizeEmail } from "@/utils/dealerProfileMapping";
 /**
  * Prepare password for consistent handling between client and server
  * This function ensures passwords are trimmed and validated 
+ * IMPORTANT: This MUST match the logic in the edge function's password-utils.ts
  */
 export function preparePassword(password: string): string {
   // Safety check
