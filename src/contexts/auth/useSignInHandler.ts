@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { getUserProfile, safeGetProfileData } from './authUtils';
 import { preparePassword, getAuthDiagnostics } from '@/utils/auth-utils';
+import { toast } from '@/components/ui/use-toast';
 
 export function useSignInHandler() {
   const signIn = async ({ email, password, redirectTo }: { 
@@ -31,6 +32,13 @@ export function useSignInHandler() {
           status: error.status,
           name: error.name
         });
+        
+        toast({
+          title: "Login failed",
+          description: error.message || "Invalid login credentials",
+          variant: "destructive",
+        });
+        
         return { success: false, error: error.message };
       }
 
@@ -60,6 +68,13 @@ export function useSignInHandler() {
         console.error('Error name:', error.name);
         console.error('Error stack:', error.stack);
       }
+      
+      // Show a toast notification for the error
+      toast({
+        title: "Login failed",
+        description: error instanceof Error ? error.message : 'Failed to sign in',
+        variant: "destructive",
+      });
       
       return {
         success: false,

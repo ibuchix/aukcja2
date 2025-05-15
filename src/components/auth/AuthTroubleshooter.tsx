@@ -1,83 +1,55 @@
 
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, RefreshCw } from "lucide-react";
-import { clearAuthStorage, getAuthDiagnostics } from "@/utils/auth-utils";
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { clearAuthStorage } from '@/utils/auth-utils';
+import { useToast } from '@/hooks/use-toast';
+import { ChevronDown, ChevronUp, Shield } from 'lucide-react';
 
 export function AuthTroubleshooter() {
-  const [diagnosticInfo, setDiagnosticInfo] = useState<Record<string, unknown> | null>(null);
-  const [showDetails, setShowDetails] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const { toast } = useToast();
-  
-  useEffect(() => {
-    updateDiagnostics();
-  }, []);
-  
-  const updateDiagnostics = () => {
-    setDiagnosticInfo(getAuthDiagnostics());
-  };
-  
-  const handleClearAuth = () => {
+
+  const handleClearAuthStorage = () => {
     clearAuthStorage();
-    updateDiagnostics();
-    
     toast({
-      title: "Auth data cleared",
-      description: "All authentication data has been cleared from your browser.",
-      duration: 3000
+      title: "Authentication data cleared",
+      description: "All local authentication data has been reset. Please try logging in again.",
     });
   };
-  
-  const handleRefreshPage = () => {
-    window.location.reload();
-  };
-  
-  // Check if there are any auth tokens that might be causing issues
-  const hasAnyAuthTokens = 
-    diagnosticInfo?.hasLocalToken === true || 
-    diagnosticInfo?.hasLocalDealerToken === true || 
-    diagnosticInfo?.hasSessionToken === true;
-  
-  if (!hasAnyAuthTokens) {
-    return null; // Don't show troubleshooter if no auth tokens are present
-  }
-  
+
   return (
-    <Alert variant="warning" className="mt-4">
-      <AlertCircle className="h-4 w-4" />
-      <AlertTitle>Authentication Troubleshooting</AlertTitle>
-      <AlertDescription className="space-y-4">
-        <p className="text-sm">
-          Having trouble logging in? Your browser might have cached authentication data that's causing issues.
-        </p>
-        
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button size="sm" variant="outline" onClick={handleClearAuth}>
-            Clear Auth Data
-          </Button>
-          
-          <Button size="sm" variant="outline" onClick={handleRefreshPage}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh Page
-          </Button>
+    <div className="mt-4 border-t pt-4 text-xs text-muted-foreground">
+      <div 
+        className="flex items-center justify-between cursor-pointer pb-2" 
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex items-center">
+          <Shield className="h-3 w-3 mr-1" />
+          <span>Having trouble logging in?</span>
+        </div>
+        {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+      </div>
+      
+      {expanded && (
+        <div className="space-y-2 pt-2 text-xs">
+          <p>If you're having trouble logging in, try these steps:</p>
+          <ol className="list-decimal pl-5 space-y-1">
+            <li>Check that you're using the correct email address</li>
+            <li>Ensure your password is correct (case sensitive)</li>
+            <li>Try clearing your browser cache</li>
+            <li>Clear local authentication data</li>
+          </ol>
           
           <Button 
-            size="sm" 
-            variant="ghost" 
-            onClick={() => setShowDetails(!showDetails)}
+            variant="outline" 
+            size="sm"
+            onClick={handleClearAuthStorage}
+            className="mt-2 text-xs h-8"
           >
-            {showDetails ? "Hide Details" : "Show Details"}
+            Clear authentication data
           </Button>
         </div>
-        
-        {showDetails && diagnosticInfo && (
-          <pre className="text-xs bg-muted p-2 rounded overflow-x-auto">
-            {JSON.stringify(diagnosticInfo, null, 2)}
-          </pre>
-        )}
-      </AlertDescription>
-    </Alert>
+      )}
+    </div>
   );
 }

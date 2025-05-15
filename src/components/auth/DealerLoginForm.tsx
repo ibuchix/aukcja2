@@ -53,47 +53,28 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
       const beforeAuthInfo = getAuthDiagnostics();
       console.log("Auth state before login attempt:", beforeAuthInfo);
       
-      const { error: signInError } = await signIn({
+      const result = await signIn({
         email: normalizedEmail,
-        password: data.password.trim(), // Add trim to ensure no leading/trailing spaces
+        password: data.password.trim(),
       });
 
-      if (signInError) {
-        console.error("Login error:", signInError);
+      if (!result.success) {
+        console.error("Login error:", result.error);
         
         // Handle specific errors with user-friendly messages
-        let errorMessage = "Authentication failed. Please check your credentials and try again.";
+        let errorMessage = result.error || "Authentication failed. Please check your credentials and try again.";
         
-        if (typeof signInError === 'object' && signInError !== null) {
-          // Handle Error object
-          const errMsg = typeof signInError === 'string' ? signInError :
-                        (signInError as any)?.message || String(signInError);
-                         
-          if (errMsg.includes("Invalid login credentials")) {
+        if (typeof errorMessage === 'string') {
+          if (errorMessage.includes("Invalid login credentials")) {
             errorMessage = "Incorrect email or password. Please try again.";
-          } else if (errMsg.includes("Email not found")) {
+          } else if (errorMessage.includes("Email not found")) {
             errorMessage = "No account found with this email. Please check your email or register.";
-          } else if (errMsg.includes("Invalid email")) {
+          } else if (errorMessage.includes("Invalid email")) {
             errorMessage = "Please enter a valid email address.";
-          } else {
-            // Use the original message if available
-            errorMessage = errMsg || errorMessage;
           }
-        } else if (typeof signInError === 'string') {
-          // Handle string error
-          errorMessage = signInError;
         }
         
         setError(errorMessage);
-        
-        toast({
-          title: "Login failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-        
-        // Update diagnostic info after failed attempt
-        setDiagnosticInfo(getAuthDiagnostics());
         
         // Don't redirect on error
         return;

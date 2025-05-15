@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthState } from "./useAuthState";
@@ -95,10 +94,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
     signIn: async ({ email, password, redirectTo }) => {
       const result = await signIn({ email, password, redirectTo });
       // Map the response to the expected structure in the context
-      return { 
-        success: !result.error, 
-        error: result.error ? String(result.error) : undefined 
-      };
+      return result;
     },
   };
 
