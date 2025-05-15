@@ -36,7 +36,36 @@ serve(async (req) => {
     // Parse the request body
     let body;
     try {
-      body = await req.json();
+      // Check if request has a body
+      if (req.bodyUsed) {
+        logError("Request body already consumed", null);
+        return respondError("Request body already consumed", 400);
+      }
+
+      const contentType = req.headers.get('content-type');
+      logInfo(`Request content type: ${contentType}`);
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        logError(`Invalid content type: ${contentType}`, null);
+        return respondError("Content-Type must be application/json", 400);
+      }
+      
+      const text = await req.text();
+      
+      if (!text || text.trim() === '') {
+        logError("Empty request body", null);
+        return respondError("Request body cannot be empty", 400);
+      }
+      
+      logInfo(`Raw request body: ${text.length > 1000 ? text.substring(0, 1000) + '...(truncated)' : text}`);
+      
+      try {
+        body = JSON.parse(text);
+      } catch (parseError) {
+        logError(`JSON parse error: ${parseError.message}`, parseError);
+        return respondError(`Invalid JSON format: ${parseError.message}`, 400);
+      }
+      
       logInfo(`Parsed request body successfully: ${JSON.stringify(body, (key, value) => 
         key === 'password' ? '[REDACTED]' : value)}`);
     } catch (e) {

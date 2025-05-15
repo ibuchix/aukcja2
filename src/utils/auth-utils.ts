@@ -1,68 +1,82 @@
-
 /**
- * Utilities for consistent authentication handling
+ * Utility functions related to authentication
  */
 
+import { normalizeEmail } from "@/utils/dealerProfileMapping";
+
 /**
- * Consistently clean and prepare passwords for authentication
- * Prevents issues with whitespace and other common problems
- * IMPORTANT: This MUST match the logic in the edge function's password-utils.ts
+ * Prepare password for consistent handling between client and server
+ * This function ensures passwords are trimmed and validated 
  */
 export function preparePassword(password: string): string {
-  if (!password) return '';
-  // Trim whitespace but preserve internal spaces
+  // Safety check
+  if (typeof password !== 'string') {
+    console.error('Non-string password provided to preparePassword');
+    return '';
+  }
+  
+  // Trim whitespace
   return password.trim();
 }
 
 /**
- * Clears all authentication-related storage
- * Used for troubleshooting login issues
+ * Get diagnostics about current auth state
  */
-export function clearAuthStorage(): void {
-  console.log('Clearing all auth storage keys');
+export function getAuthDiagnostics(): Record<string, unknown> {
+  const localStorageKeys = Object.keys(localStorage);
   
-  // Clear Supabase specific keys
-  localStorage.removeItem('dealer_auth_token');
+  // Find all relevant auth-related keys 
+  const authRelatedKeys = localStorageKeys.filter(key => 
+    key.includes('auth') || 
+    key.includes('supabase') || 
+    key.includes('session') || 
+    key.includes('token')
+  );
   
-  // Additional cleanup for potential session issues
-  localStorage.removeItem('user');
-  localStorage.removeItem('profile');
+  // Check if specific token exists (without revealing values)
+  const hasLocalToken = !!localStorage.getItem('sb-auth-token');
+  const hasLocalDealerToken = !!localStorage.getItem('dealer_auth_token');
+  
+  return {
+    timestamp: new Date().toISOString(),
+    authRelatedKeys,
+    authKeyCount: authRelatedKeys.length,
+    hasLocalToken,
+    hasLocalDealerToken,
+    browserInfo: navigator.userAgent,
+    // Don't include actual tokens for security reasons
+  };
 }
 
 /**
- * Returns diagnostic information about auth state
- * Useful for troubleshooting login issues
+ * Clear all auth-related storage
  */
-export function getAuthDiagnostics(): Record<string, unknown> {
-  try {
-    const hasLocalToken = !!localStorage.getItem('dealer_auth_token');
-    
-    // Try to parse local token for additional diagnostics
-    let tokenInfo: string | Record<string, unknown> = "No token data";
-    try {
-      const tokenStr = localStorage.getItem('dealer_auth_token');
-      if (tokenStr) {
-        const tokenData = JSON.parse(tokenStr);
-        tokenInfo = {
-          expiresAt: tokenData.expiresAt,
-          tokenType: tokenData.data?.token_type || "none",
-          hasAccessToken: !!tokenData.data?.access_token,
-          hasRefreshToken: !!tokenData.data?.refresh_token
-        };
-      }
-    } catch(e) {
-      tokenInfo = "Error parsing token: " + String(e);
-    }
-    
-    return {
-      hasLocalToken,
-      tokenInfo,
-      timestamp: new Date().toISOString()
-    };
-  } catch (error) {
-    return {
-      error: String(error),
-      timestamp: new Date().toISOString()
-    };
-  }
+export function clearAuthStorage() {
+  // Clear specific auth keys
+  localStorage.removeItem('sb-auth-token');
+  localStorage.removeItem('dealer_auth_token');
+  localStorage.removeItem('sb-refresh-token');
+  localStorage.removeItem('supabase.auth.token');
+  
+  // Find and clear any other auth-related keys
+  const authKeys = Object.keys(localStorage).filter(key => 
+    key.includes('auth') || 
+    key.includes('supabase') || 
+    key.includes('session') || 
+    key.includes('token')
+  );
+  
+  authKeys.forEach(key => {
+    console.log(`Clearing auth storage key: ${key}`);
+    localStorage.removeItem(key);
+  });
+  
+  console.log("Auth storage cleared");
+}
+
+/**
+ * Normalize email for consistent handling
+ */
+export function normalizeEmailForAuth(email: string): string {
+  return normalizeEmail(email);
 }

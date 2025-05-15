@@ -19,15 +19,24 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
              "First char code:", cleanedPassword.charCodeAt(0),
              "Last char code:", cleanedPassword.charCodeAt(cleanedPassword.length - 1));
     
+    // Create request body with explicit formatting
+    const requestBody = {
+      action: 'login',
+      email: email.trim().toLowerCase(),
+      password: cleanedPassword,
+      requestId: crypto.randomUUID(),
+      timestamp: new Date().toISOString()
+    };
+    
+    // Log the request we're about to send (sanitized)
+    console.log("Sending login request:", {
+      ...requestBody,
+      password: "[REDACTED]"
+    });
+    
     // Call the dealer-auth edge function for authentication
     const { data, error } = await supabase.functions.invoke('dealer-auth', {
-      body: {
-        action: 'login',
-        email: email.trim().toLowerCase(),
-        password: cleanedPassword,
-        requestId: crypto.randomUUID(),
-        timestamp: new Date().toISOString()
-      },
+      body: requestBody,
       headers: {
         "Content-Type": "application/json",
         "Cache-Control": "no-cache"
