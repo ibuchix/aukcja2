@@ -13,6 +13,7 @@ export function useAuthInitializer() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [initializationComplete, setInitializationComplete] = useState<boolean>(false);
   const isInitializedRef = useRef(false);
   const { toast } = useToast();
 
@@ -21,6 +22,7 @@ export function useAuthInitializer() {
       if (isInitializedRef.current) return;
       
       try {
+        console.log("Starting auth initialization sequence");
         setIsLoading(true);
         isInitializedRef.current = true;
         
@@ -48,6 +50,7 @@ export function useAuthInitializer() {
         if (error) {
           console.error("Error getting session:", error);
           setIsLoading(false);
+          setInitializationComplete(true);
           return;
         }
         
@@ -67,6 +70,7 @@ export function useAuthInitializer() {
               if (refreshError) {
                 console.error("Error refreshing token:", refreshError);
                 setIsLoading(false);
+                setInitializationComplete(true);
                 return;
               }
               
@@ -89,8 +93,9 @@ export function useAuthInitializer() {
             } catch (refreshErr) {
               console.error("Exception during token refresh:", refreshErr);
             } finally {
-              // Always set loading to false, even on error
+              // Always set loading to false and mark initialization as complete
               setIsLoading(false);
+              setInitializationComplete(true);
             }
           } else {
             // Session is valid and not about to expire
@@ -107,32 +112,43 @@ export function useAuthInitializer() {
                 // Continue even if profile fetch fails - don't block auth
               } finally {
                 setIsLoading(false);
+                setInitializationComplete(true);
               }
             } else {
               setIsLoading(false);
+              setInitializationComplete(true);
             }
           }
         } else {
           console.log("No existing session found");
           setIsLoading(false);
+          setInitializationComplete(true);
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
         setIsLoading(false);
+        setInitializationComplete(true);
       }
     };
 
-    initializeAuth();
+    // Add a forced delay before initializing to prevent race conditions
+    const delay = setTimeout(() => {
+      initializeAuth();
+    }, 500); // 500ms delay before even starting auth initialization
     
     // Set a safety timeout to prevent endless loading
     const safetyTimeout = setTimeout(() => {
       if (isLoading) {
         console.warn("Auth initialization safety timeout triggered");
         setIsLoading(false);
+        setInitializationComplete(true);
       }
     }, 5000); // 5 second maximum loading time
     
-    return () => clearTimeout(safetyTimeout);
+    return () => {
+      clearTimeout(delay);
+      clearTimeout(safetyTimeout);
+    };
   }, [isLoading, toast]);
 
   return {
@@ -140,6 +156,7 @@ export function useAuthInitializer() {
     user,
     profile,
     isLoading,
+    initializationComplete,
     setSession,
     setUser,
     setProfile,

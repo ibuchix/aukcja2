@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "@/components/ui/use-toast";
@@ -111,7 +112,7 @@ export function useCompleteRegistration() {
     setErrors([]);
   };
 
-  // Add this utility function to clear auth tokens
+  // Enhanced token clearing function with forced browser storage reset
   const clearAuthTokens = () => {
     try {
       console.log("Clearing all authentication tokens and state");
@@ -135,13 +136,25 @@ export function useCompleteRegistration() {
         console.warn("Error while clearing additional tokens:", e);
       }
       
-      // Force sign out from Supabase
+      // Force sign out from Supabase with global scope
       try {
         supabase.auth.signOut({ 
           scope: 'global' // Use global scope to clear all devices
+        }).then(() => {
+          console.log("Successfully signed out all sessions");
+        }).catch(e => {
+          console.warn("Error during sign out:", e);
         });
       } catch (signOutError) {
         console.warn("Error during sign out:", signOutError);
+      }
+      
+      // Clear browser session storage as well
+      try {
+        sessionStorage.clear();
+        console.log("Session storage cleared");
+      } catch (e) {
+        console.warn("Error clearing session storage:", e);
       }
       
       toast({
@@ -168,6 +181,6 @@ export function useCompleteRegistration() {
     errors,
     completeRegistration,
     resetState,
-    clearAuthTokens // Export the new function
+    clearAuthTokens
   };
 }

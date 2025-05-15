@@ -19,6 +19,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
     user, 
     profile, 
     isLoading, 
+    isInitialized, // Include initialization state
     setProfile,
     setSession,
     setUser,
@@ -81,6 +82,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
     user,
     profile,
     isLoading,
+    isInitialized, // Expose initialization state to consumers
     isAuthenticated: !!user,
     signOut: async () => {
       const result = await signOut();

@@ -1,32 +1,40 @@
 
-import { createContext, useContext } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { Profile } from '@/types/profile';
+import { createContext, useContext } from "react";
+import { Session, User } from "@supabase/supabase-js";
 
 export interface AuthContextType {
   session: Session | null;
   user: User | null;
-  profile: Profile | null;
+  profile: any | null;
   isLoading: boolean;
+  isInitialized: boolean; // Add initialization state
   isAuthenticated: boolean;
+  signIn: (credentials: { email: string; password: string; redirectTo?: string }) => 
+    Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
-  signIn: (params: { 
-    email: string; 
-    password: string; 
-    redirectTo?: string;
-  }) => Promise<{ success: boolean; error?: string }>;
 }
 
-export const AuthContext = createContext<AuthContextType>({
+// Default values
+export const defaultContextValue: AuthContextType = {
   session: null,
   user: null,
   profile: null,
   isLoading: true,
+  isInitialized: false, // Default to not initialized
   isAuthenticated: false,
-  signOut: async () => {},
-  refreshSession: async () => {},
-  signIn: async () => ({ success: false, error: 'Not implemented' }),
-});
+  signIn: async () => ({ success: false, error: "Auth context not initialized" }),
+  signOut: async () => { throw new Error("Auth context not initialized") },
+  refreshSession: async () => { throw new Error("Auth context not initialized") }
+};
 
-export const useAuth = () => useContext(AuthContext);
+export const AuthContext = createContext<AuthContextType>(defaultContextValue);
+
+// Hook for easy context access
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
