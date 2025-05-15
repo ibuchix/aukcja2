@@ -1,3 +1,4 @@
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { respondSuccess, respondError } from "./response-utils.ts";
 import { logInfo, logError, logWarning, logDebug } from "./logging.ts";
@@ -256,7 +257,19 @@ export async function handleDealerLogin(
     });
 
     try {
-      // Use built-in Supabase authentication
+      // Use admin API for authentication instead of signInWithPassword
+      // First - get the user by email
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(
+        normalizedEmail
+      );
+
+      if (userError || !userData?.user) {
+        logError(`User lookup error: ${userError?.message || "User not found"}`, userError);
+        return respondError("Invalid login credentials", 401);
+      }
+
+      // Verify the password - we need to use signInWithPassword for this
+      // since there's no direct admin API for password verification
       const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
         email: normalizedEmail,
         password: normalizedPassword

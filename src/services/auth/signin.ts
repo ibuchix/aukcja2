@@ -27,12 +27,30 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
         password: cleanedPassword,
         requestId: crypto.randomUUID(),
         timestamp: new Date().toISOString()
+      },
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache"
       }
     });
     
     if (error) {
       console.error("Edge function login error:", error);
       console.error("Sign in error details:", error);
+      
+      // Check if error contains a more specific error message from the edge function
+      let errorMessage = error.message;
+      try {
+        // Try to extract the error message from the response
+        if (typeof error.message === 'string' && error.message.includes('{')) {
+          const errorJson = JSON.parse(error.message.substring(error.message.indexOf('{')));
+          if (errorJson.error) {
+            errorMessage = errorJson.error;
+          }
+        }
+      } catch (e) {
+        // If parsing fails, use the original error message
+      }
       
       if (error.message?.includes('Failed to fetch') || 
           error.message?.includes('NetworkError') ||
@@ -59,7 +77,7 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
       
       return {
         error: { 
-          message: error.message || "Login failed", 
+          message: errorMessage || "Login failed", 
           status: error.status || 500,
           name: error.name || 'AuthError'
         }

@@ -21,6 +21,9 @@ serve(async (req) => {
     const startTime = Date.now();
     logRequest(req);
 
+    // Debug environment vars (without revealing actual values)
+    logInfo(`Environment check: SUPABASE_URL exists: ${!!Deno.env.get("SUPABASE_URL")}, SERVICE_ROLE_KEY exists: ${!!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`);
+
     // Apply rate limiting to dealer auth requests
     const clientIP = req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for') || 'unknown';
     const rateLimitResult = await applyRateLimit(req, 'dealer-authentication', clientIP);
@@ -43,9 +46,6 @@ serve(async (req) => {
     // Generate a request ID if none was provided
     const trackingId = requestId || crypto.randomUUID();
     logInfo(`Processing request ${trackingId} for action: ${action}, email: ${email ? email.substring(0, 2) + "..." : "none"}`);
-
-    // Debug environment vars (without revealing actual values)
-    logInfo(`Environment check: SUPABASE_URL exists: ${!!Deno.env.get("SUPABASE_URL")}, SERVICE_ROLE_KEY exists: ${!!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`);
     
     // Handle the different actions
     switch (action) {
