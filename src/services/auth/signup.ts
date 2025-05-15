@@ -5,6 +5,7 @@ import {
   UserMetadata
 } from "./models";
 import { supabase } from "@/integrations/supabase/client";
+import { preparePassword } from "@/utils/auth-utils";
 
 /**
  * Handles the signup process for dealers with consistent password authentication
@@ -33,6 +34,19 @@ export const signUpDealerWithEmail = async (
       };
     }
 
+    // Use consistent password preparation
+    const cleanedPassword = preparePassword(password);
+    
+    // Validate password
+    if (!cleanedPassword) {
+      return { success: false, error: "Password cannot be empty" };
+    }
+    
+    // Log password length and first/last character for debugging
+    console.log("Password length:", cleanedPassword.length, 
+                "First char code:", cleanedPassword.charCodeAt(0),
+                "Last char code:", cleanedPassword.charCodeAt(cleanedPassword.length - 1));
+
     // Validate required metadata with better handling
     if (!safeTrim(metadata.name)) {
       return { success: false, error: "Name is required" };
@@ -41,12 +55,12 @@ export const signUpDealerWithEmail = async (
     try {
       console.log("Calling dealer-auth function with register action");
       
-      // Call the dealer-auth edge function to handle registration with the user-provided password
+      // Call the dealer-auth edge function to handle registration with the cleaned password
       const { data, error } = await supabase.functions.invoke('dealer-auth', {
         body: {
           action: 'register',
           email: safeTrim(email).toLowerCase(),
-          password: password,
+          password: cleanedPassword,
           metadata: {
             name: safeTrim(metadata.name),
             companyName: safeTrim(metadata.companyName || ''),

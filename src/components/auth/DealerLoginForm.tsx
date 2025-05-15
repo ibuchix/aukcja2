@@ -1,14 +1,16 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { normalizeEmail } from "@/utils/dealerProfileMapping";
+import { clearAuthStorage, getAuthDiagnostics } from "@/utils/auth-utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AuthTroubleshooter } from "./AuthTroubleshooter";
 
 interface LoginFormValues {
   email: string;
@@ -19,11 +21,22 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loginAttempted, setLoginAttempted] = useState(false);
+  const [diagnosticInfo, setDiagnosticInfo] = useState<Record<string, unknown> | null>(null);
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
   const navigate = useNavigate();
   const { signIn } = useAuth();
   const { toast } = useToast();
+
+  // Check for auth storage issues on component mount
+  useEffect(() => {
+    const authInfo = getAuthDiagnostics();
+    setDiagnosticInfo(authInfo);
+    
+    if (authInfo.hasLocalToken || authInfo.hasLocalDealerToken) {
+      console.log("Found existing auth tokens, might cause conflicts");
+    }
+  }, []);
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
@@ -36,9 +49,13 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
       
       console.log("Login attempt for:", normalizedEmail);
       
+      // Get auth diagnostic info before attempt
+      const beforeAuthInfo = getAuthDiagnostics();
+      console.log("Auth state before login attempt:", beforeAuthInfo);
+      
       const { error: signInError } = await signIn({
         email: normalizedEmail,
-        password: data.password,
+        password: data.password.trim(), // Add trim to ensure no leading/trailing spaces
       });
 
       if (signInError) {
@@ -75,6 +92,9 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
           variant: "destructive",
         });
         
+        // Update diagnostic info after failed attempt
+        setDiagnosticInfo(getAuthDiagnostics());
+        
         // Don't redirect on error
         return;
       }
@@ -99,9 +119,22 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
         description: errorMessage,
         variant: "destructive",
       });
+      
+      // Update diagnostic info after exception
+      setDiagnosticInfo(getAuthDiagnostics());
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  // Function to handle clearing auth storage
+  const handleClearAuthStorage = () => {
+    clearAuthStorage();
+    setDiagnosticInfo(getAuthDiagnostics());
+    toast({
+      title: "Auth storage cleared",
+      description: "All authentication data has been cleared from your browser.",
+    });
   };
 
   // Export loginAttempted and error for parent component to use
@@ -172,6 +205,20 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
           Register here
         </Link>
       </div>
+      
+      {/* Add the AuthTroubleshooter component */}
+      <AuthTroubleshooter />
+      
+      {/* Show additional help if login failed */}
+      {loginAttempted && error && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Authentication Error</AlertTitle>
+          <AlertDescription>
+            Your password may have been saved with extra whitespace. Try typing your password manually instead of using autofill.
+          </AlertDescription>
+        </Alert>
+      )}
     </form>
   );
 }
