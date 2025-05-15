@@ -22,7 +22,7 @@ export function useSignInHandler() {
       
       console.log("Attempting sign in with normalized credentials");
       
-      // Use the service that tries edge function first, then falls back to standard auth
+      // Use the edge function service for authentication
       const { data, error } = await signInWithEmail({
         email: normalizedEmail,
         password: cleanedPassword,

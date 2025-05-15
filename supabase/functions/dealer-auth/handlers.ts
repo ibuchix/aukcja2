@@ -1,3 +1,4 @@
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
 import { respondSuccess, respondError } from "./response-utils.ts";
 import { logInfo, logError, logWarning, logDebug } from "./logging.ts";
@@ -197,7 +198,7 @@ export async function handleDealerLogin(
       lastCharCode: normalizedPassword.charCodeAt(normalizedPassword.length - 1)
     });
 
-    // Fix: Use auth.admin.getUserByEmail instead of incorrect query syntax
+    // Use the proper admin API method to get user by email
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserByEmail(normalizedEmail);
 
     if (authError || !authUser) {
