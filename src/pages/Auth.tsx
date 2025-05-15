@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { DealerSignupForm } from "@/pages/auth/DealerSignupForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,10 @@ const Auth = () => {
   const location = useLocation();
   
   const returnUrl = location.state?.returnUrl || "/dealer/dashboard";
+  
+  // Use ref to prevent immediate redirect checks
+  const initialLoadCompleted = useRef(false);
+  const [authCheckDelay, setAuthCheckDelay] = useState(true);
   
   const [authContext, authError] = (() => {
     try {
@@ -39,6 +43,16 @@ const Auth = () => {
   
   const [activeTab, setActiveTab] = useState<"register" | "login">(initialTab as "register" | "login");
 
+  // Add delay before checking auth to allow form interaction
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAuthCheckDelay(false);
+      initialLoadCompleted.current = true;
+    }, 1500); // Give 1.5 second before checking auth
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     if (isLoading) {
       const timer = setTimeout(() => {
@@ -49,13 +63,14 @@ const Auth = () => {
     return undefined;
   }, [isLoading]);
 
+  // Modified to prevent immediate redirect
   useEffect(() => {
-    if (isAuthenticated && !isLoading && !redirectAttempted) {
+    if (isAuthenticated && !isLoading && !redirectAttempted && !authCheckDelay && initialLoadCompleted.current) {
       console.log("User already logged in, redirecting to:", returnUrl);
       setRedirectAttempted(true);
       navigate(returnUrl);
     }
-  }, [isAuthenticated, isLoading, navigate, redirectAttempted, returnUrl]);
+  }, [isAuthenticated, isLoading, navigate, redirectAttempted, returnUrl, authCheckDelay]);
 
   // This function handles tab changes while preventing automatic switching on login failure
   const handleTabChange = (value: string) => {
@@ -87,7 +102,17 @@ const Auth = () => {
     }
   };
 
-  if (isLoading) {
+  // Show loading indicator during the initial authentication check
+  if (isLoading && authCheckDelay) {
+    return (
+      <div className="container flex flex-col items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+        <div className="text-muted-foreground">Preparing login form...</div>
+      </div>
+    );
+  }
+
+  if (isLoading && !authCheckDelay) {
     return (
       <div className="container flex flex-col items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
@@ -170,12 +195,20 @@ const Auth = () => {
                 </TabsContent>
               </Tabs>
               
-              {/* Add the clear auth state button */}
-              <div className="mt-4 text-center">
-                <p className="text-xs text-muted-foreground mb-1">
+              {/* Enhanced authentication troubleshooting section */}
+              <div className="mt-6 border-t pt-4 border-gray-100">
+                <p className="text-xs text-muted-foreground mb-2 text-center">
                   Having trouble logging in?
                 </p>
-                <ClearAuthStateButton />
+                <div className="flex flex-col items-center gap-2">
+                  <ClearAuthStateButton />
+                  <button 
+                    onClick={() => window.location.reload()}
+                    className="text-xs text-muted-foreground hover:text-primary underline"
+                  >
+                    Refresh page
+                  </button>
+                </div>
               </div>
             </CardContent>
           </Card>

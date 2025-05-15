@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "@/components/ui/use-toast";
@@ -115,12 +114,35 @@ export function useCompleteRegistration() {
   // Add this utility function to clear auth tokens
   const clearAuthTokens = () => {
     try {
-      // Clear all auth related tokens
+      console.log("Clearing all authentication tokens and state");
+      
+      // Clear all auth related tokens with more thorough approach
       localStorage.removeItem('dealer_auth_token');
       localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
       
-      // Also try to clear any session
-      supabase.auth.signOut({ scope: 'local' });
+      // Clear any other potential auth tokens
+      try {
+        // Try to find and remove any supabase or auth related items
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.includes('supabase') || key.includes('auth') || 
+              key.includes('token') || key.includes('session'))) {
+            console.log("Removing storage item:", key);
+            localStorage.removeItem(key);
+          }
+        }
+      } catch (e) {
+        console.warn("Error while clearing additional tokens:", e);
+      }
+      
+      // Force sign out from Supabase
+      try {
+        supabase.auth.signOut({ 
+          scope: 'global' // Use global scope to clear all devices
+        });
+      } catch (signOutError) {
+        console.warn("Error during sign out:", signOutError);
+      }
       
       toast({
         title: "Auth Storage Cleared",
