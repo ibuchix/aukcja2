@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getUserProfile, safeGetProfileData } from './authUtils';
 import { preparePassword, getAuthDiagnostics } from '@/utils/auth-utils';
 import { toast } from '@/components/ui/use-toast';
+import { signInWithEmail } from '@/services/auth/signin';
 
 export function useSignInHandler() {
   const signIn = async ({ email, password, redirectTo }: { 
@@ -21,7 +22,8 @@ export function useSignInHandler() {
       
       console.log("Attempting sign in with normalized credentials");
       
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Use the service that tries edge function first, then falls back to standard auth
+      const { data, error } = await signInWithEmail({
         email: normalizedEmail,
         password: cleanedPassword,
       });
@@ -42,7 +44,7 @@ export function useSignInHandler() {
         return { success: false, error: error.message };
       }
 
-      if (data.user) {
+      if (data?.user) {
         // Get user profile
         const userProfile = await getUserProfile(data.user.id);
         
@@ -56,6 +58,17 @@ export function useSignInHandler() {
           user: data.user, 
           session: data.session, 
           profile: userProfile 
+        };
+      } else if (data) {
+        // Handle case where data exists but no user (unusual but possible)
+        console.log("Sign in successful but no user data returned");
+        const afterState = getAuthDiagnostics();
+        console.log("Auth state after successful signin:", afterState);
+        
+        return { 
+          success: true,
+          // The session might still exist even if user data isn't explicitly returned
+          session: data.session
         };
       }
       
