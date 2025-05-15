@@ -7,6 +7,7 @@ export type AuthContextType = {
   user: User | null;
   profile: any | null;
   isLoading: boolean;
+  isInitialized: boolean; // Add the isInitialized property
   isAuthenticated: boolean;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
@@ -23,6 +24,7 @@ export const defaultContextValue: AuthContextType = {
   user: null,
   profile: null,
   isLoading: false,
+  isInitialized: false, // Add the isInitialized property with a default value
   isAuthenticated: false,
   signOut: async () => {},
   refreshSession: async () => {},
