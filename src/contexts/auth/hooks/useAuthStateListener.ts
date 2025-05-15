@@ -38,14 +38,22 @@ export function useAuthStateListener(
             // Give a small delay to allow auth state to fully establish
             setTimeout(async () => {
               try {
+                // Try to fetch the dealer profile, but handle errors gracefully
                 const profileData = await fetchDealerProfile(currentSession.user.id);
-                setProfile(profileData);
-                toast({
-                  title: "Signed in successfully",
-                  description: "Welcome back to your dealer dashboard",
-                });
+                
+                if (profileData) {
+                  setProfile(profileData);
+                  toast({
+                    title: "Signed in successfully",
+                    description: "Welcome back to your dealer dashboard",
+                  });
+                } else {
+                  console.log("No profile data found after sign in");
+                  // Don't show an error toast here, just log it
+                }
               } catch (profileError) {
                 console.error("Error fetching profile after sign in:", profileError);
+                // Don't fail the sign in if profile fetch fails
               } finally {
                 setIsLoading(false);
               }

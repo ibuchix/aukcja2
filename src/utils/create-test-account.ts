@@ -22,7 +22,7 @@ export async function createTestAccount() {
     console.log("Creating test account with email:", testEmail);
     console.log("Using password:", testPassword);
     
-    // Create user with direct Supabase auth call
+    // Create user with direct Supabase auth call with proper metadata
     const { data, error } = await supabase.auth.signUp({
       email: testEmail,
       password: testPassword,
@@ -41,9 +41,29 @@ export async function createTestAccount() {
         error: error.message
       };
     }
-    
-    // DO NOT sign out after account creation - removed this line:
-    // await supabase.auth.signOut();
+
+    // Ensure we have a user ID
+    if (!data.user || !data.user.id) {
+      console.error("No user ID returned when creating test account");
+      return {
+        success: false,
+        error: "Failed to get user ID"
+      };
+    }
+
+    // Automatically create a profile record for this user
+    try {
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: data.user.id,
+        role: 'dealer'
+      });
+
+      if (profileError) {
+        console.warn("Failed to create profile for test user:", profileError);
+      }
+    } catch (profileErr) {
+      console.error("Exception creating profile:", profileErr);
+    }
     
     return {
       success: true,

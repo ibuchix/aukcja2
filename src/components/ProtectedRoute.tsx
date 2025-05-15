@@ -21,9 +21,18 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
+  // If user is not authenticated, redirect to auth page
   if (!isAuthenticated || !session) {
     // Redirect to auth page with return URL
     return <Navigate to="/auth?tab=login" replace state={{ returnUrl: location.pathname }} />;
+  }
+
+  // If the route is /dealer/dashboard, check if we need profile completion
+  if (location.pathname === '/dealer/dashboard') {
+    // If we need to complete the profile, redirect
+    if (session.user?.user_metadata?.needs_profile_completion === true) {
+      return <Navigate to="/complete-registration" replace />;
+    }
   }
 
   return <>{children}</>;
