@@ -4,22 +4,44 @@ import { useToast } from "@/hooks/use-toast";
 import { toast } from "@/components/ui/use-toast";
 import { handleAuthError } from "@/utils/supabase/authErrorHandler";
 import { handleDatabaseError } from "@/utils/supabase/databaseErrorHandler";
-import { OperationResult } from "@/utils/supabase/errorTypes";
+import { OperationResult, SupabaseErrorUnion } from "@/utils/supabase/errorTypes";
 import { supabase } from "@/integrations/supabase/client";
+import { DealerFormValues } from "@/schemas/dealerFormSchema";
 
 export function useCompleteRegistration() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
 
-  const completeRegistration = async (
-    email: string,
-    password: string,
-    token: string
-  ): Promise<OperationResult<boolean>> => {
+  const completeRegistration = async (formData: DealerFormValues): Promise<OperationResult<boolean>> => {
     try {
-      setIsLoading(true);
+      setIsSubmitting(true);
       setError(null);
+      setErrors([]);
+      
+      // Extract email from form data
+      const { email } = formData;
+      
+      // Get token from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      
+      if (!token) {
+        const errorMsg = "Verification token is missing. Please check your email link.";
+        setError(errorMsg);
+        setErrors([errorMsg]);
+        toast({
+          title: "Verification Failed",
+          description: errorMsg,
+          variant: "destructive",
+        });
+        return { success: false, error: { 
+          type: 'auth_general', 
+          code: 'auth/missing-token',
+          message: errorMsg
+        }};
+      }
       
       // Validate the token and complete registration
       const { data, error } = await supabase.auth.verifyOtp({
@@ -31,6 +53,7 @@ export function useCompleteRegistration() {
       if (error) {
         const authError = handleAuthError(error);
         setError(authError.message);
+        setErrors([authError.message]);
         toast({
           title: "Verification Failed",
           description: authError.message,
@@ -48,7 +71,9 @@ export function useCompleteRegistration() {
         });
         return { success: true, data: true };
       } else {
-        setError("Verification succeeded but user data was not returned");
+        const errorMsg = "Verification succeeded but user data was not returned";
+        setError(errorMsg);
+        setErrors([errorMsg]);
         toast({
           title: "Registration Error",
           description: "Verification succeeded but something went wrong. Please try logging in.",
@@ -59,35 +84,39 @@ export function useCompleteRegistration() {
           error: { 
             type: 'auth_general',
             code: 'auth/incomplete_verification',
-            message: "Verification succeeded but user data was not returned"
+            message: errorMsg
           } 
         };
       }
     } catch (error) {
       console.error("Registration completion error:", error);
       const dbError = handleDatabaseError(error);
-      setError(dbError.message);
+      const errorMsg = dbError.message;
+      setError(errorMsg);
+      setErrors([errorMsg]);
       toast({
         title: "Registration Error",
-        description: dbError.message,
+        description: errorMsg,
         variant: "destructive",
       });
       return { success: false, error: dbError };
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
   
   const resetState = () => {
-    setIsLoading(false);
+    setIsSubmitting(false);
     setIsSuccess(false);
     setError(null);
+    setErrors([]);
   };
 
   return {
-    isLoading,
+    isSubmitting,
     isSuccess,
     error,
+    errors,
     completeRegistration,
     resetState
   };

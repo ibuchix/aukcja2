@@ -8,6 +8,7 @@ import { useCompleteRegistration } from "@/hooks/registration";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { DealerFormValues } from "@/schemas/dealerFormSchema";
 
 export default function CompleteRegistration() {
   const { state } = useLocation();
@@ -20,7 +21,7 @@ export default function CompleteRegistration() {
   const { completeRegistration, isSubmitting, errors } = useCompleteRegistration();
 
   // Handle form submission
-  const handleSubmit = async (formData: any) => {
+  const handleSubmit = async (formData: DealerFormValues) => {
     setFormErrors([]);
     const userId = state?.userId || userData?.id;
     
@@ -38,7 +39,14 @@ export default function CompleteRegistration() {
     if (!result.success) {
       console.error("Registration failed:", result.error);
       if (result.error) {
-        setFormErrors(Array.isArray(result.error) ? result.error : [result.error]);
+        // Convert error to string array for display
+        const errorMessages = typeof result.error === 'string' 
+          ? [result.error] 
+          : Array.isArray(result.error) 
+            ? result.error.map(e => e.message || String(e)) 
+            : [result.error.message || 'Unknown error'];
+            
+        setFormErrors(errorMessages);
       }
     } else {
       navigate('/dealer/dashboard');
