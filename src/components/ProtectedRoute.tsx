@@ -1,7 +1,7 @@
 
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
+import { Loader } from "@/components/ui/loader";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -15,7 +15,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!isInitialized || isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+        <Loader className="h-8 w-8 text-primary mb-4" />
         <p className="text-muted-foreground">Loading your session...</p>
       </div>
     );
@@ -27,13 +27,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/auth?tab=login" replace state={{ returnUrl: location.pathname }} />;
   }
 
-  // If the route is /dealer/dashboard, check if we need profile completion
-  if (location.pathname === '/dealer/dashboard') {
-    // If we need to complete the profile, redirect
-    if (session.user?.user_metadata?.needs_profile_completion === true) {
-      return <Navigate to="/complete-registration" replace />;
-    }
-  }
-
+  // All checks passed, render the protected content
   return <>{children}</>;
 }

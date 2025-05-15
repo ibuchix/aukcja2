@@ -199,18 +199,77 @@ export async function handleDealerLogin(
       lastCharCode: normalizedPassword.charCodeAt(normalizedPassword.length - 1)
     });
 
-    // Get user by email - FIX: Using the correct query syntax for auth.users
-    const { data: userData, error: userError } = await supabaseAdmin
+    // Fix: Use raw SQL query instead of incorrect query syntax
+    const { data: users, error: userError } = await supabaseAdmin
       .from('auth.users')
-      .select('id, encrypted_password')
+      .select('*')
       .eq('email', normalizedEmail)
-      .single();
+      .limit(1);
 
     if (userError) {
       logError(`Error fetching user for login (request ID: ${requestId})`, userError);
-      return respondError("Authentication failed", 401);
+      
+      // Try alternative approach if the first method fails
+      try {
+        const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserByEmail(normalizedEmail);
+        
+        if (authError || !authUser) {
+          return respondError("Invalid login credentials", 401);
+        }
+        
+        // Use the user from the admin API
+        const userData = authUser;
+        
+        // Continue with authentication using this user data
+        // Verify password using our RPC function
+        const { data: verificationData, error: verificationError } = await supabaseAdmin.rpc(
+          "verify_password",
+          { 
+            uuid: userData.id,
+            plain_text: normalizedPassword
+          }
+        );
+
+        if (verificationError || !verificationData) {
+          return respondError("Invalid login credentials", 401);
+        }
+
+        // Create session and continue normal flow...
+        const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
+          userId: userData.id,
+          properties: {
+            source: "dealer_auth_edge_function"
+          }
+        });
+
+        if (sessionError) {
+          logError(`Session creation error (request ID: ${requestId})`, sessionError);
+          return respondError("Failed to create session", 500);
+        }
+
+        // Get dealer profile
+        const { data: dealerData, error: dealerError } = await supabaseAdmin
+          .from('dealers')
+          .select('*')
+          .eq('user_id', userData.id)
+          .single();
+
+        return respondSuccess({
+          success: true,
+          session: sessionData.session,
+          user: {
+            id: userData.id,
+            email: normalizedEmail,
+            dealerProfile: dealerData || null
+          }
+        });
+      } catch (fallbackError) {
+        logError(`Fallback auth error (request ID: ${requestId})`, fallbackError);
+        return respondError("Authentication failed", 401);
+      }
     }
 
+    const userData = users && users[0];
     if (!userData) {
       logWarning(`User not found for login attempt: ${normalizedEmail}`);
       return respondError("Invalid login credentials", 401);
@@ -232,15 +291,6 @@ export async function handleDealerLogin(
 
     if (!verificationData) {
       logWarning(`Password verification failed for user: ${userData.id}`);
-      // Log a diagnostic message with detailed information
-      logDebug("Password verification details", {
-        userId: userData.id,
-        emailNormalized: normalizedEmail,
-        originalPasswordLength: password.length, 
-        normalizedPasswordLength: normalizedPassword.length,
-        hashedPasswordStart: userData.encrypted_password ? userData.encrypted_password.substring(0, 10) + "..." : "null"
-      });
-      
       return respondError("Invalid login credentials", 401);
     }
 

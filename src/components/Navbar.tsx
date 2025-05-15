@@ -1,72 +1,177 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { NavbarLogo } from "./navbar/NavbarLogo";
-import { NavbarDesktopMenu } from "./navbar/NavbarDesktopMenu";
-import { NavbarMobileMenu } from "./navbar/NavbarMobileMenu";
-import { NavbarMobileButton } from "./navbar/NavbarMobileButton";
-import { useToast } from "@/hooks/use-toast";
-import { clearQueryCache } from "@/utils/cachePersistence";
-import { queryClient } from "@/utils/queryClient";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { UserCircle, LogOut, Menu } from "lucide-react";
 
-const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const { user, session, isLoading, signOut } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
+export default function Navbar() {
+  const location = useLocation();
+  const { isAuthenticated, user, signOut } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
+  // Handle scroll events to change navbar appearance
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  // Handle user logout
   const handleLogout = async () => {
-    try {
-      await signOut();
-      
-      // Clear React Query cache on logout
-      clearQueryCache(queryClient);
-      
-      toast({
-        title: "Logged out successfully",
-        description: "You have been signed out of your account",
-        duration: 3000,
-      });
-      
-      navigate('/');
-    } catch (error) {
-      console.error("Logout error:", error);
-      
-      toast({
-        title: "Logout failed",
-        description: "There was a problem signing you out. Please try again.",
-        variant: "destructive",
-        duration: 5000,
-      });
-    }
+    await signOut();
   };
 
   return (
-    <>
-      <nav className="fixed w-full bg-white shadow-sm z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <NavbarLogo />
-            <NavbarDesktopMenu 
-              session={session} 
-              handleLogout={handleLogout} 
-              isLoading={isLoading}
-            />
-            <NavbarMobileButton isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
-          </div>
-          <NavbarMobileMenu 
-            isOpen={isOpen} 
-            session={session} 
-            handleLogout={handleLogout}
-            isLoading={isLoading}
-          />
-        </div>
-      </nav>
-      {/* Add a spacer div to prevent content from being hidden under the navbar */}
-      <div className="h-16" />
-    </>
-  );
-};
+    <nav
+      className={`fixed w-full z-50 transition-all duration-300 ${
+        scrolled || location.pathname !== "/"
+          ? "bg-white shadow-md py-2"
+          : "bg-transparent py-4"
+      }`}
+    >
+      <div className="container mx-auto flex justify-between items-center">
+        {/* Logo/Home link - Using Link component to prevent page reload */}
+        <Link to="/" className="text-xl font-bold text-primary flex items-center gap-2">
+          <img src="/car-auction-logo.svg" alt="Logo" className="h-8 w-auto" />
+          <span>Car Auctions</span>
+        </Link>
 
-export default Navbar;
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center space-x-6">
+          <Link to="/auctions" className="text-gray-700 hover:text-primary transition-colors">
+            Browse Auctions
+          </Link>
+          <Link to="/how-it-works" className="text-gray-700 hover:text-primary transition-colors">
+            How It Works
+          </Link>
+          <Link to="/help" className="text-gray-700 hover:text-primary transition-colors">
+            Help
+          </Link>
+          
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <UserCircle size={18} />
+                  {user?.email?.split('@')[0] || 'Account'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/dealer/dashboard" className="cursor-pointer w-full">Dashboard</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/dealer/profile" className="cursor-pointer w-full">My Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link to="/auth">
+              <Button>Sign In</Button>
+            </Link>
+          )}
+        </div>
+
+        {/* Mobile Navigation Toggle */}
+        <Button
+          variant="ghost"
+          className="md:hidden"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          <Menu />
+        </Button>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="absolute top-full left-0 w-full bg-white shadow-md py-4 md:hidden">
+            <div className="flex flex-col space-y-3 px-4">
+              <Link 
+                to="/auctions" 
+                className="text-gray-700 hover:text-primary transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Browse Auctions
+              </Link>
+              <Link 
+                to="/how-it-works" 
+                className="text-gray-700 hover:text-primary transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                How It Works
+              </Link>
+              <Link 
+                to="/help" 
+                className="text-gray-700 hover:text-primary transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Help
+              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link 
+                    to="/dealer/dashboard" 
+                    className="text-gray-700 hover:text-primary transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link 
+                    to="/dealer/profile" 
+                    className="text-gray-700 hover:text-primary transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    My Profile
+                  </Link>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => {
+                      handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="justify-start text-red-500 hover:text-red-600 hover:bg-red-50 px-0"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
+                  </Button>
+                </>
+              ) : (
+                <Link 
+                  to="/auth" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Button>Sign In</Button>
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+}
