@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { BidActivity, BidEventSubscription, BidMonitoringFilters } from "@/components/dealer/bid-monitoring/types";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { isValidRecord, isValidCarData } from "@/utils/supabaseHelpers";
+import { isValidRecord, isValidCarData, safeGetProperty } from "@/utils/supabaseHelpers";
 
 class BidEventService {
   private static instance: BidEventService;
