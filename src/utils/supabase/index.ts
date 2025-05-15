@@ -16,5 +16,5 @@ export {
   ProfileResult
 } from '@/services/dealer/dealerProfileResultHandler';
 
-// Use export type for Database type (fixed TS1205 error)
+// Use 'export type' for Database type (fixing TS1205 error with isolatedModules)
 export type { Database } from '@/integrations/supabase/types';
