@@ -199,7 +199,7 @@ export async function handleDealerLogin(
       lastCharCode: normalizedPassword.charCodeAt(normalizedPassword.length - 1)
     });
 
-    // Get user by email
+    // Get user by email - FIX: Using the correct query syntax for auth.users
     const { data: userData, error: userError } = await supabaseAdmin
       .from('auth.users')
       .select('id, encrypted_password')
