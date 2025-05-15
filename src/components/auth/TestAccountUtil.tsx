@@ -55,6 +55,9 @@ export function TestAccountUtil() {
     
     setIsTesting(true);
     try {
+      // Add a delay before attempting login to allow auth state to stabilize
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
       const result = await testLogin(testAccount.email, testAccount.password);
       
       if (result.success) {
@@ -66,6 +69,12 @@ export function TestAccountUtil() {
           title: "Test login successful",
           description: "The authentication flow is working correctly.",
         });
+        
+        // Add a small delay before navigating to dashboard
+        setTimeout(() => {
+          window.location.href = '/dealer/dashboard';
+        }, 1000);
+        
       } else {
         setTestResult({
           success: false,

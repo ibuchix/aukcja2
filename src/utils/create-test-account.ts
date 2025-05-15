@@ -8,7 +8,7 @@ import { clearAuthStorage } from "./auth-utils";
  */
 export async function createTestAccount() {
   try {
-    // Clear any existing auth data
+    // Clear any existing auth data to start fresh
     clearAuthStorage();
     
     // Create a timestamp-based email for uniqueness
@@ -42,8 +42,8 @@ export async function createTestAccount() {
       };
     }
     
-    // Sign out to clear any session
-    await supabase.auth.signOut();
+    // DO NOT sign out after account creation - removed this line:
+    // await supabase.auth.signOut();
     
     return {
       success: true,
@@ -65,9 +65,6 @@ export async function createTestAccount() {
  */
 export async function testLogin(email: string, password: string) {
   try {
-    // Clear any existing auth data
-    clearAuthStorage();
-    
     console.log("Testing login with email:", email);
     
     const { data, error } = await supabase.auth.signInWithPassword({

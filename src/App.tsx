@@ -7,16 +7,14 @@ import {
 import Auth from "./pages/Auth";
 import DealerDashboard from "./pages/dealer/Dashboard"; 
 import CompleteRegistration from "./pages/CompleteRegistration";
-import { AuthProviderWithRouter } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { Toaster } from "@/components/ui/toaster";
 
 // Add the import for the test auth page
 import TestAuth from "./pages/TestAuth";
 
 function App() {
   return (
-    <AuthProviderWithRouter>
+    <>
       <Routes>
         {/* Default route redirects to /auth */}
         <Route path="/" element={<Navigate to="/auth" />} />
@@ -76,8 +74,7 @@ function App() {
         {/* Fallback route - redirect to auth */}
         <Route path="*" element={<Navigate to="/auth" />} />
       </Routes>
-      <Toaster />
-    </AuthProviderWithRouter>
+    </>
   );
 }
 
