@@ -1,5 +1,6 @@
 
-import { createClient } from '@supabase/supabase-js';
+// Import from the correct URL path to avoid bundler errors
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 // Supabase client with service role for admin operations
 export function createServiceClient() {

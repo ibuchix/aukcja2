@@ -34,19 +34,13 @@ export default function CompleteRegistration() {
       return;
     }
 
-    const result = await completeRegistration(formData);
+    const result = await completeRegistration(formData, userId);
 
     if (!result.success) {
       console.error("Registration failed:", result.error);
       if (result.error) {
-        // Convert error to string array for display
-        const errorMessages = typeof result.error === 'string' 
-          ? [result.error] 
-          : Array.isArray(result.error) 
-            ? result.error.map(e => e.message || String(e)) 
-            : [result.error.message || 'Unknown error'];
-            
-        setFormErrors(errorMessages);
+        // Add error to form errors
+        setFormErrors([result.error]);
       }
     } else {
       navigate('/dealer/dashboard');

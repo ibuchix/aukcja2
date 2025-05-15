@@ -12,7 +12,7 @@ export function useCompleteRegistration() {
   const { toast } = useToast();
 
   const completeRegistration = async (values: DealerFormValues, userId: string) => {
-    if (isSubmitting) return;
+    if (isSubmitting) return { success: false, error: "Submission already in progress" };
 
     setIsSubmitting(true);
     setErrors([]);
@@ -46,7 +46,7 @@ export function useCompleteRegistration() {
           variant: "destructive",
         });
         
-        return false;
+        return { success: false, error: error.message };
       }
 
       toast({
@@ -55,7 +55,7 @@ export function useCompleteRegistration() {
       });
 
       navigate('/auth?tab=login');
-      return true;
+      return { success: true };
     } catch (error) {
       console.error("Registration error:", error);
       
@@ -68,14 +68,35 @@ export function useCompleteRegistration() {
         variant: "destructive",
       });
       
-      return false;
+      return { success: false, error: errorMessage };
     } finally {
       setIsSubmitting(false);
+    }
+  };
+  
+  // Add clearAuthTokens function to fix the ClearAuthStateButton error
+  const clearAuthTokens = async () => {
+    try {
+      await supabase.auth.signOut();
+      
+      // Clear any local storage items related to authentication
+      localStorage.removeItem('dealer_auth_token');
+      localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
+      
+      // Optional: Clear any user-related data from local storage
+      localStorage.removeItem('user');
+      localStorage.removeItem('profile');
+      
+      return true;
+    } catch (error) {
+      console.error("Error clearing auth tokens:", error);
+      throw error;
     }
   };
 
   return {
     completeRegistration,
+    clearAuthTokens, // Export the new function
     isSubmitting,
     errors
   };
