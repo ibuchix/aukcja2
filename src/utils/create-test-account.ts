@@ -14,9 +14,13 @@ export async function createTestAccount() {
     // Create a timestamp-based email for uniqueness
     const timestamp = new Date().getTime();
     const testEmail = `test.${timestamp}@example.com`;
-    const testPassword = "TestPassword123!"; // Simple, consistent password
+    
+    // Create a stronger password that meets all validation requirements
+    // It includes uppercase, lowercase, numbers, and is at least 8 chars
+    const testPassword = `Test${timestamp.toString().slice(-4)}Pa$$w0rd!`;
     
     console.log("Creating test account with email:", testEmail);
+    console.log("Using password:", testPassword);
     
     // Create user with direct Supabase auth call
     const { data, error } = await supabase.auth.signUp({
@@ -78,9 +82,6 @@ export async function testLogin(email: string, password: string) {
         error: error.message
       };
     }
-    
-    // Sign out after successful test
-    await supabase.auth.signOut();
     
     return {
       success: true,

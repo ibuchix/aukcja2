@@ -18,8 +18,22 @@ function App() {
   return (
     <AuthProviderWithRouter>
       <Routes>
+        {/* Default route redirects to /auth */}
         <Route path="/" element={<Navigate to="/auth" />} />
+        
+        {/* Authentication routes */}
         <Route path="/auth" element={<Auth />} />
+        <Route path="/test-auth" element={<TestAuth />} />
+        <Route
+          path="/complete-registration"
+          element={
+            <ProtectedRoute>
+              <CompleteRegistration />
+            </ProtectedRoute>
+          }
+        />
+        
+        {/* Dealer dashboard routes */}
         <Route
           path="/dealer/dashboard"
           element={
@@ -29,18 +43,38 @@ function App() {
           }
         />
         <Route
-          path="/complete-registration"
+          path="/dealer/profile"
           element={
             <ProtectedRoute>
-              <CompleteRegistration />
+              <Navigate to="/dealer/dashboard" />
             </ProtectedRoute>
           }
         />
-        {/* Add the test auth route */}
         <Route
-          path="/test-auth"
-          element={<TestAuth />}
+          path="/dealer/bids"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/dealer/dashboard" />
+            </ProtectedRoute>
+          }
         />
+        <Route
+          path="/dealer/documents"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/dealer/dashboard" />
+            </ProtectedRoute>
+          }
+        />
+        
+        {/* Market pages */}
+        <Route path="/marketplace" element={<Navigate to="/auth" />} />
+        <Route path="/auctions" element={<Navigate to="/auth" />} />
+        <Route path="/browse" element={<Navigate to="/auth" />} />
+        <Route path="/how-it-works" element={<Navigate to="/auth" />} />
+        
+        {/* Fallback route - redirect to auth */}
+        <Route path="*" element={<Navigate to="/auth" />} />
       </Routes>
       <Toaster />
     </AuthProviderWithRouter>

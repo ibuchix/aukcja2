@@ -3,20 +3,27 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { DealerFormValues } from "@/schemas/dealerFormSchema";
 
 export function useCompleteRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = async (formData: any) => {
+  const completeRegistration = async (formData: DealerFormValues, userId?: string) => {
     setIsSubmitting(true);
-    setError(null);
+    setErrors([]);
     
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
+      // Get current user if userId not provided
+      let user;
+      if (userId) {
+        user = { id: userId };
+      } else {
+        const { data } = await supabase.auth.getUser();
+        user = data.user;
+      }
       
       if (!user) {
         throw new Error("You must be logged in to complete registration");
@@ -29,7 +36,7 @@ export function useCompleteRegistration() {
           company_name: formData.companyName,
           business_registry_number: formData.businessRegistryNumber,
           tax_id: formData.taxId,
-          phone: formData.phone,
+          phone: formData.phoneNumber,
           is_profile_complete: true,
           updated_at: new Date().toISOString()
         })
@@ -50,7 +57,7 @@ export function useCompleteRegistration() {
       return { success: true };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to complete registration";
-      setError(errorMessage);
+      setErrors([errorMessage]);
       
       toast({
         title: "Registration failed",
@@ -64,9 +71,39 @@ export function useCompleteRegistration() {
     }
   };
 
+  // Original handleSubmit function for backward compatibility
+  const handleSubmit = async (formData: any) => {
+    return completeRegistration(formData);
+  };
+
+  // Function to clear auth tokens
+  const clearAuthTokens = () => {
+    try {
+      // Clear Supabase auth data
+      supabase.auth.signOut();
+      
+      // Clear local storage items
+      localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
+      localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem('dealer_auth_token');
+      
+      // Clear session storage
+      sessionStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
+      sessionStorage.removeItem('supabase.auth.token');
+      
+      return true;
+    } catch (error) {
+      console.error("Error clearing auth tokens:", error);
+      return false;
+    }
+  };
+
   return {
     handleSubmit,
+    completeRegistration,
     isSubmitting,
-    error
+    error: errors.length > 0 ? errors[0] : "", // For backward compatibility
+    errors,
+    clearAuthTokens
   };
 }
