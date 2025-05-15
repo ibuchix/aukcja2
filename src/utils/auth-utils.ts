@@ -45,7 +45,7 @@ export function getAuthDiagnostics(): Record<string, unknown> {
     const hasSessionToken = !!sessionStorage.getItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
     
     // Try to parse local token for additional diagnostics
-    let tokenInfo = "No token data";
+    let tokenInfo: string | Record<string, unknown> = "No token data";
     try {
       const tokenStr = localStorage.getItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
       if (tokenStr) {

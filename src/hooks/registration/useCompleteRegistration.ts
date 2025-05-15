@@ -27,9 +27,8 @@ export function useCompleteRegistration() {
             name: values.supervisorName.trim(),
             role: 'dealer'
           },
-          // Explicitly disable email verification
-          emailRedirectTo: undefined,
-          emailConfirm: false
+          // Explicitly disable email verification by setting redirect to undefined
+          emailRedirectTo: undefined
         }
       });
       
