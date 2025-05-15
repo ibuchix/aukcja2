@@ -58,7 +58,7 @@ export async function signupDealer(values: DealerFormValues) {
       'create_dealer_with_profile',
       {
         p_email: mappedData.email,
-        p_password: values.password,
+        p_password: values.password, // Use the user-provided password
         p_supervisor_name: mappedData.supervisor_name,
         p_company_name: mappedData.dealership_name,
         p_tax_id: mappedData.tax_id,

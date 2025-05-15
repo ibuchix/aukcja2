@@ -1,4 +1,3 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
 import { respondSuccess, respondError } from "./response-utils.ts";
 import { logInfo, logError, logWarning } from "./logging.ts";
@@ -34,9 +33,9 @@ export async function handleDealerRegister(
       return respondError("Email is required", 400);
     }
 
-    // Only require password for non-passwordless registration
-    if (!passwordless && !password) {
-      return respondError("Password is required for non-passwordless registration", 400);
+    // Always require password - remove passwordless option
+    if (!password) {
+      return respondError("Password is required for dealer registration", 400);
     }
 
     // Validate required metadata
@@ -70,7 +69,7 @@ export async function handleDealerRegister(
       "create_dealer_with_profile",
       {
         p_email: sanitizeString(email).toLowerCase(),
-        p_password: password || crypto.randomUUID() + crypto.randomUUID(), // Use random UUID as password for passwordless
+        p_password: password, // Always use the provided password
         p_supervisor_name: cleanedMetadata.name,
         p_company_name: cleanedMetadata.companyName || cleanedMetadata.name,
         p_tax_id: (cleanedMetadata.taxId || "").replace(/\D/g, ''), // Remove non-digits

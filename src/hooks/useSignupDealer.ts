@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { signUpDealerWithEmail } from "@/services/auth/signup";
@@ -41,13 +40,14 @@ export function useSignupDealer() {
       networkRetry.resetRetry();
       authRetry.resetRetry();
       
-      // Create user account with required metadata (no password)
+      // Create user account with password and required metadata
       let signUpResult;
       
       try {
         signUpResult = await authRetry.executeWithRetry(
           () => signUpDealerWithEmail(
             values.email.trim().toLowerCase(),
+            values.password.trim(), // Pass the user-provided password
             {
               name: values.supervisorName.trim(),
               companyName: values.companyName.trim(),

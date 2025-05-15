@@ -1,4 +1,3 @@
-
 import { validateEmail, safeTrim, checkAccountExists } from "./validation";
 import { 
   SignUpResult, 
@@ -7,10 +6,11 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Handles the signup process for dealers with passwordless authentication
+ * Handles the signup process for dealers with consistent password authentication
  */
 export const signUpDealerWithEmail = async (
   email: string,
+  password: string, // Add password parameter
   metadata: UserMetadata
 ): Promise<SignUpResult> => {
   try {
@@ -30,16 +30,12 @@ export const signUpDealerWithEmail = async (
     try {
       console.log("Calling dealer-auth function with register action");
       
-      // Generate a secure random password for the initial account creation
-      // This is needed for Supabase account creation but won't be used by the user
-      const securePassword = crypto.randomUUID() + crypto.randomUUID();
-      
-      // Call the dealer-auth edge function to handle registration
+      // Call the dealer-auth edge function to handle registration with the user-provided password
       const { data, error } = await supabase.functions.invoke('dealer-auth', {
         body: {
           action: 'register',
           email: safeTrim(email).toLowerCase(),
-          password: securePassword, // Using secure random password
+          password: password, // Use the provided password instead of a random one
           metadata: {
             name: safeTrim(metadata.name),
             companyName: safeTrim(metadata.companyName || ''),
@@ -48,7 +44,7 @@ export const signUpDealerWithEmail = async (
             companyAddress: safeTrim(metadata.companyAddress || ''),
             phoneNumber: safeTrim(metadata.phoneNumber || '')
           },
-          passwordless: true, // Indicate this is a passwordless registration
+          passwordless: false, // Change to false to indicate this is a password-based registration
           requestId: crypto.randomUUID(), // Add a unique request ID for tracking retries
           timestamp: new Date().toISOString()
         }

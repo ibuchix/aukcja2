@@ -1,186 +1,82 @@
 
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { toast } from "@/components/ui/use-toast";
-import { handleAuthError } from "@/utils/supabase/authErrorHandler";
-import { handleDatabaseError } from "@/utils/supabase/databaseErrorHandler";
-import { OperationResult, SupabaseErrorUnion } from "@/utils/supabase/errorTypes";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export function useCompleteRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const completeRegistration = async (formData: DealerFormValues): Promise<OperationResult<boolean>> => {
+  const completeRegistration = async (values: DealerFormValues, userId: string) => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setErrors([]);
+
     try {
-      setIsSubmitting(true);
-      setError(null);
-      setErrors([]);
-      
-      // Extract email from form data
-      const { email } = formData;
-      
-      // Get token from URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-      
-      if (!token) {
-        const errorMsg = "Verification token is missing. Please check your email link.";
-        setError(errorMsg);
-        setErrors([errorMsg]);
-        toast({
-          title: "Verification Failed",
-          description: errorMsg,
-          variant: "destructive",
-        });
-        return { success: false, error: { 
-          type: 'auth_general', 
-          code: 'auth/missing-token',
-          message: errorMsg
-        }};
-      }
-      
-      // Validate the token and complete registration
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token,
-        type: 'signup',
-      });
-      
+      // Format and normalize data for submission
+      const formattedData = {
+        p_email: values.email.trim().toLowerCase(),
+        p_password: values.password, // Use the user-provided password
+        p_supervisor_name: values.supervisorName.trim(),
+        p_company_name: values.companyName.trim(),
+        p_tax_id: values.taxId.trim(),
+        p_business_registry_number: values.businessRegistryNumber.trim(),
+        p_address: values.companyAddress.trim(),
+        p_phone_number: values.phoneNumber.trim().replace(/\s+/g, '')
+      };
+
+      // Call RPC function to create dealer profile
+      const { data, error } = await supabase.rpc(
+        'create_dealer_with_profile', 
+        formattedData
+      );
+
       if (error) {
-        const authError = handleAuthError(error);
-        setError(authError.message);
-        setErrors([authError.message]);
+        console.error("Profile creation error:", error);
+        setErrors([error.message]);
+        
         toast({
-          title: "Verification Failed",
-          description: authError.message,
+          title: "Profile Creation Failed",
+          description: error.message,
           variant: "destructive",
         });
-        return { success: false, error: authError };
+        
+        return false;
       }
-      
-      if (data?.user) {
-        setIsSuccess(true);
-        toast({
-          title: "Registration Complete",
-          description: "Your account has been successfully verified. You can now log in.",
-          variant: "default",
-        });
-        return { success: true, data: true };
-      } else {
-        const errorMsg = "Verification succeeded but user data was not returned";
-        setError(errorMsg);
-        setErrors([errorMsg]);
-        toast({
-          title: "Registration Error",
-          description: "Verification succeeded but something went wrong. Please try logging in.",
-          variant: "destructive",
-        });
-        return { 
-          success: false, 
-          error: { 
-            type: 'auth_general',
-            code: 'auth/incomplete_verification',
-            message: errorMsg
-          } 
-        };
-      }
-    } catch (error) {
-      console.error("Registration completion error:", error);
-      const dbError = handleDatabaseError(error);
-      const errorMsg = dbError.message;
-      setError(errorMsg);
-      setErrors([errorMsg]);
+
       toast({
-        title: "Registration Error",
-        description: errorMsg,
+        title: "Profile Completed",
+        description: "Your dealer profile has been successfully created. You can now sign in to access the dealer dashboard.",
+      });
+
+      navigate('/auth?tab=login');
+      return true;
+    } catch (error) {
+      console.error("Registration error:", error);
+      
+      const errorMessage = error instanceof Error ? error.message : "Registration failed";
+      setErrors([errorMessage]);
+      
+      toast({
+        title: "Registration Failed",
+        description: errorMessage,
         variant: "destructive",
       });
-      return { success: false, error: dbError };
+      
+      return false;
     } finally {
       setIsSubmitting(false);
     }
   };
-  
-  const resetState = () => {
-    setIsSubmitting(false);
-    setIsSuccess(false);
-    setError(null);
-    setErrors([]);
-  };
-
-  // Enhanced token clearing function with forced browser storage reset
-  const clearAuthTokens = () => {
-    try {
-      console.log("Clearing all authentication tokens and state");
-      
-      // Clear all auth related tokens with more thorough approach
-      localStorage.removeItem('dealer_auth_token');
-      localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
-      
-      // Clear any other potential auth tokens
-      try {
-        // Try to find and remove any supabase or auth related items
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && (key.includes('supabase') || key.includes('auth') || 
-              key.includes('token') || key.includes('session'))) {
-            console.log("Removing storage item:", key);
-            localStorage.removeItem(key);
-          }
-        }
-      } catch (e) {
-        console.warn("Error while clearing additional tokens:", e);
-      }
-      
-      // Force sign out from Supabase with global scope
-      try {
-        supabase.auth.signOut({ 
-          scope: 'global' // Use global scope to clear all devices
-        }).then(() => {
-          console.log("Successfully signed out all sessions");
-        }).catch(e => {
-          console.warn("Error during sign out:", e);
-        });
-      } catch (signOutError) {
-        console.warn("Error during sign out:", signOutError);
-      }
-      
-      // Clear browser session storage as well
-      try {
-        sessionStorage.clear();
-        console.log("Session storage cleared");
-      } catch (e) {
-        console.warn("Error clearing session storage:", e);
-      }
-      
-      toast({
-        title: "Auth Storage Cleared",
-        description: "Authentication tokens have been cleared. Please try logging in again.",
-      });
-      
-      return true;
-    } catch (error) {
-      console.error("Error clearing auth storage:", error);
-      toast({
-        title: "Error Clearing Storage",
-        description: "Failed to clear authentication storage. Try refreshing the page.",
-        variant: "destructive",
-      });
-      return false;
-    }
-  };
 
   return {
-    isSubmitting,
-    isSuccess,
-    error,
-    errors,
     completeRegistration,
-    resetState,
-    clearAuthTokens
+    isSubmitting,
+    errors
   };
 }
