@@ -32,12 +32,20 @@ export async function signInWithEmail({ email, password }: { email: string; pass
 
     // Try using the edge function first
     try {
+      console.log("Calling dealer-auth edge function");
+      
       const { data, error } = await supabase.functions.invoke('dealer-auth', {
         body: {
           action: 'login',
           email: normalizedEmail,
           password: cleanedPassword,
-          requestId: crypto.randomUUID()
+          requestId: crypto.randomUUID(),
+          headers: {
+            'cache-control': 'no-cache' // Explicitly include problematic header
+          }
+        },
+        headers: {
+          'cache-control': 'no-cache' // Also send as a request header
         }
       });
       
@@ -58,6 +66,11 @@ export async function signInWithEmail({ email, password }: { email: string; pass
       }
     } catch (edgeError) {
       console.error("Edge function call failed:", edgeError);
+      console.error("Edge function error details:", {
+        name: edgeError.name,
+        message: edgeError.message,
+        stack: edgeError.stack
+      });
       // Fall back to standard auth below
     }
     
