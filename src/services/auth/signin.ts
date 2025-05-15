@@ -1,83 +1,107 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { preparePassword } from "@/utils/auth-utils";
-import { toast } from "@/hooks/use-toast";
 
-/**
- * Sign in with email and password using the edge function
- * No fallback to standard auth - we're fixing the edge function approach
- */
-export async function signInWithEmail({ email, password }: { email: string; password: string }) {
+interface SignInParams {
+  email: string;
+  password: string;
+}
+
+export const signInWithEmail = async ({ email, password }: SignInParams) => {
+  console.log("Starting edge function sign in process");
+  
   try {
-    console.log("Attempting sign in for:", email);
-    
     // Use consistent password preparation
     const cleanedPassword = preparePassword(password);
     
-    // Check for empty password after cleaning
-    if (!cleanedPassword) {
-      console.error("Sign in error: Empty password after preparation");
-      return { error: new Error("Password cannot be empty") };
-    }
-    
     // Add diagnostic logging for password length
-    console.log("Password length after preparation:", cleanedPassword.length, 
-                "First char code:", cleanedPassword.charCodeAt(0),
-                "Last char code:", cleanedPassword.charCodeAt(cleanedPassword.length - 1));
+    console.log("Login password length after preparation:", cleanedPassword.length, 
+             "First char code:", cleanedPassword.charCodeAt(0),
+             "Last char code:", cleanedPassword.charCodeAt(cleanedPassword.length - 1));
     
-    // Normalize email
-    const normalizedEmail = email.trim().toLowerCase();
-    
-    // Call edge function for custom login logic and device tracking
-    console.log("Calling edge function for:", normalizedEmail);
-    
-    const { data: edgeData, error: edgeError } = await supabase.functions.invoke('dealer-auth', {
+    // Call the dealer-auth edge function for authentication
+    const { data, error } = await supabase.functions.invoke('dealer-auth', {
       body: {
         action: 'login',
-        email: normalizedEmail,
+        email: email.trim().toLowerCase(),
         password: cleanedPassword,
         requestId: crypto.randomUUID(),
         timestamp: new Date().toISOString()
       }
     });
     
-    if (edgeError) {
-      console.error("Edge function error:", edgeError);
-      return { error: edgeError };
-    }
-    
-    if (!edgeData || !edgeData.success) {
-      console.error("Edge function returned error:", edgeData?.error || "Unknown error");
-      return { error: new Error(edgeData?.error || "Authentication failed") };
-    }
-    
-    console.log("Edge function login successful for:", email);
-    
-    // Set session in supabase client
-    if (edgeData.session) {
-      const { error: setSessionError } = await supabase.auth.setSession({
-        access_token: edgeData.session.access_token,
-        refresh_token: edgeData.session.refresh_token
-      });
+    if (error) {
+      console.error("Edge function login error:", error);
       
-      if (setSessionError) {
-        console.error("Error setting session:", setSessionError);
-        return { error: setSessionError };
+      if (error.message?.includes('Failed to fetch') || 
+          error.message?.includes('NetworkError') ||
+          error.message?.includes('network')) {
+        return {
+          error: { 
+            message: "Network error connecting to authentication service. Please try again.", 
+            status: 503,
+            name: 'NetworkError'
+          }
+        };
       }
       
-      // Return successful response with session and user data
-      return { 
-        data: { 
-          session: edgeData.session, 
-          user: edgeData.user 
-        }, 
-        error: null 
+      return {
+        error: { 
+          message: error.message || "Login failed", 
+          status: error.status || 500,
+          name: error.name || 'AuthError'
+        }
       };
-    } else {
-      return { error: new Error("No session in edge function response") };
     }
-  } catch (error) {
-    console.error("Sign in exception:", error);
-    return { error: error instanceof Error ? error : new Error(String(error)) };
+    
+    if (!data) {
+      console.error("Empty response from edge function");
+      return {
+        error: { 
+          message: "No response from authentication service", 
+          status: 500,
+          name: 'EmptyResponseError'
+        }
+      };
+    }
+    
+    // Parse the response
+    const response = data as any;
+    
+    if (!response.success) {
+      console.error("Login failed with edge function error:", response.error);
+      return {
+        error: { 
+          message: response.error || "Authentication failed", 
+          status: 401,
+          name: 'AuthError'
+        }
+      };
+    }
+    
+    // Store the session in localStorage under the correct key
+    if (response.session) {
+      // The session is automatically stored by the client library,
+      // but we log some diagnostic information
+      console.log("Edge function login successful:", response.user?.id);
+    } else {
+      console.warn("Edge function login returned success but no session");
+    }
+    
+    return {
+      data: {
+        user: response.user,
+        session: response.session
+      }
+    };
+  } catch (err) {
+    console.error("Exception during edge function login:", err);
+    return {
+      error: { 
+        message: err instanceof Error ? err.message : "Unknown login error", 
+        status: 500,
+        name: 'UnknownError'
+      }
+    };
   }
-}
+};

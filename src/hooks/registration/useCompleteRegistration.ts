@@ -19,7 +19,7 @@ export function useCompleteRegistration() {
     setIsSubmitting(true);
     
     try {
-      console.log("Creating dealer account with direct auth API");
+      console.log("Creating dealer account with dealer-auth edge function");
       
       // Consistently prepare the password the same way across all code
       const cleanedPassword = preparePassword(values.password);
@@ -29,110 +29,99 @@ export function useCompleteRegistration() {
                 "First char code:", cleanedPassword.charCodeAt(0),
                 "Last char code:", cleanedPassword.charCodeAt(cleanedPassword.length - 1));
       
-      // Create user with direct auth API - explicitly disable email verification
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: values.email.trim().toLowerCase(),
-        password: cleanedPassword, // Use the consistently prepared password
-        options: {
-          data: {
+      // Call the dealer-auth edge function with register action
+      const { data, error } = await supabase.functions.invoke('dealer-auth', {
+        body: {
+          action: 'register',
+          email: values.email.trim().toLowerCase(),
+          password: cleanedPassword,
+          metadata: {
             name: values.supervisorName.trim(),
-            role: 'dealer'
+            companyName: values.companyName.trim(),
+            taxId: values.taxId.trim(),
+            businessRegistryNumber: values.businessRegistryNumber.trim(),
+            companyAddress: values.companyAddress.trim(),
+            phoneNumber: values.phoneNumber.trim()
           },
-          // Explicitly disable email verification by setting redirect to undefined
-          emailRedirectTo: undefined
+          requestId: crypto.randomUUID(),
+          timestamp: new Date().toISOString()
         }
       });
       
-      if (authError) {
-        console.error("Error creating user account:", authError);
+      if (error) {
+        console.error("Edge function registration error:", error);
         
+        // Enhanced error handling for network issues
+        if (error.message?.includes('Failed to fetch') || 
+            error.message?.includes('NetworkError') ||
+            error.message?.includes('network')) {
+          return {
+            success: false,
+            error: "Network error connecting to registration service. Please try again.",
+          };
+        }
+      
         return {
           success: false,
-          error: `Registration failed: ${authError.message}`
+          error: error.message || "Registration failed with server error"
         };
       }
       
-      // Now create the dealer profile
-      if (authData?.user) {
-        console.log("User created, now creating dealer profile");
-        
-        const { data: dealerData, error: dealerError } = await supabase
-          .from('dealers')
-          .insert({
-            user_id: authData.user.id,
-            supervisor_name: values.supervisorName.trim(),
-            dealership_name: values.companyName.trim(),
-            tax_id: values.taxId.trim(),
-            business_registry_number: values.businessRegistryNumber.trim(),
-            address: values.companyAddress.trim(),
-            verification_status: 'pending',
-            is_verified: false,
-            license_number: values.businessRegistryNumber.trim(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-          
-        if (dealerError) {
-          console.error("Error creating dealer profile:", dealerError);
-          
-          return {
-            success: true, // Still return success since user account was created
-            error: `Your account was created but there was an issue with your dealer profile: ${dealerError.message}`,
-            userId: authData.user.id
-          };
-        }
-        
-        // Update user metadata and profile
-        try {
-          // Create profile with dealer role
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: authData.user.id,
-              role: 'dealer',
-              full_name: values.supervisorName.trim(),
-              updated_at: new Date().toISOString()
-            });
-            
-          if (profileError) {
-            console.warn("Error creating profile:", profileError);
-          }
-        } catch (metaError) {
-          console.warn("Error updating profile:", metaError);
-        }
-        
-        // Immediately sign in the user after successful registration
-        try {
-          console.log("Attempting to sign in user immediately after registration");
-          const signInResult = await signInWithEmail({
-            email: values.email.trim().toLowerCase(),
-            password: values.password
-          });
-          
-          const loginSuccessful = !signInResult.error && !!signInResult.data;
-          console.log("Immediate login after registration:", loginSuccessful ? "successful" : "failed");
-          
-          return {
-            success: true,
-            userId: authData.user.id,
-            loginSuccessful
-          };
-        } catch (loginError) {
-          console.warn("Could not automatically log in after registration:", loginError);
-          
-          return {
-            success: true,
-            userId: authData.user.id,
-            loginSuccessful: false
-          };
-        }
+      if (!data) {
+        console.error("Empty response from registration service");
+        return {
+          success: false,
+          error: "No response from registration service"
+        };
       }
       
-      return {
-        success: false,
-        error: "Registration failed: No user data returned"
-      };
+      // Parse the response
+      const response = data as any;
       
+      if (!response.success) {
+        console.error("Registration failed with error:", response.error);
+        return {
+          success: false,
+          error: response.error || "Registration failed with an unknown error"
+        };
+      }
+
+      // Check for auto-generated session
+      if (response.session) {
+        console.log("Registration successful with automatic session, user is now logged in");
+        return {
+          success: true,
+          userId: response.userId || response.user?.id,
+          loginSuccessful: true
+        };
+      }
+      
+      // If no session was returned but registration was successful,
+      // attempt to login immediately 
+      try {
+        console.log("Registration successful, attempting immediate login");
+        const signInResult = await signInWithEmail({
+          email: values.email.trim().toLowerCase(),
+          password: values.password
+        });
+        
+        const loginSuccessful = !signInResult.error && !!signInResult.data;
+        console.log("Immediate login after registration:", loginSuccessful ? "successful" : "failed");
+        
+        return {
+          success: true,
+          userId: response.userId || response.user?.id,
+          loginSuccessful
+        };
+      } catch (loginError) {
+        console.warn("Could not automatically log in after registration:", loginError);
+        
+        return {
+          success: true,
+          userId: response.userId || response.user?.id,
+          loginSuccessful: false
+        };
+      }
     } catch (error) {
       console.error("Unexpected error during registration:", error);
       return {

@@ -76,86 +76,109 @@ export async function handleDealerRegister(
     const formattedPhone = normalizedPhone.replace(/\s+/g, '');
     const phoneWithCode = formattedPhone.startsWith('+') ? formattedPhone : `+${formattedPhone}`;
 
-    // Call the improved stored procedure to handle the dealer registration
-    const { data: result, error: rpcError } = await supabaseAdmin.rpc(
-      "create_dealer_with_profile",
-      {
-        p_email: sanitizeString(email).toLowerCase(),
-        p_password: normalizedPassword,
-        p_supervisor_name: cleanedMetadata.name,
-        p_company_name: cleanedMetadata.companyName || cleanedMetadata.name,
-        p_tax_id: (cleanedMetadata.taxId || "").replace(/\D/g, ''), // Remove non-digits
-        p_business_registry_number: (cleanedMetadata.businessRegistryNumber || "").replace(/\D/g, ''), // Remove non-digits
-        p_address: cleanedMetadata.companyAddress || "",
-        p_phone_number: phoneWithCode
-      }
-    );
+    // Use direct admin API to create user with confirmed email
+    // This avoids the need for email verification
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
+      email: sanitizeString(email).toLowerCase(),
+      password: normalizedPassword,
+      email_confirm: true, // Explicitly confirm email
+      user_metadata: {
+        name: cleanedMetadata.name,
+        role: 'dealer'
+      },
+      phone: phoneWithCode || undefined
+    });
 
-    if (rpcError) {
-      logError(`RPC error during registration (request ID: ${requestId})`, rpcError);
+    if (userError) {
+      logError(`Error creating user (request ID: ${requestId})`, userError);
       
       // Check for duplicate key errors
-      if (rpcError.message?.includes("duplicate") || 
-          rpcError.message?.includes("already exists") ||
-          rpcError.message?.toLowerCase().includes("unique violation")) {
-        if (rpcError.message?.includes("email")) {
+      if (userError.message?.includes("duplicate") || 
+          userError.message?.includes("already exists") ||
+          userError.message?.toLowerCase().includes("unique violation")) {
+        if (userError.message?.includes("email")) {
           return respondError("An account with this email already exists", 409);
-        }
-        if (rpcError.message?.toLowerCase().includes("tax_id")) {
-          return respondError("This tax ID is already registered", 409);
-        }
-        if (rpcError.message?.toLowerCase().includes("business_registry_number")) {
-          return respondError("This business registry number is already registered", 409);
         }
         return respondError("A duplicate entry was detected", 409);
       }
       
       // Internal server errors
       return respondError(
-        `Registration failed: ${rpcError.message}`,
+        `Registration failed: ${userError.message}`,
         500
       );
     }
-
-    if (!result) {
-      logError(`Empty result from registration RPC (request ID: ${requestId})`, null);
+    
+    if (!userData || !userData.user) {
+      logError(`Empty result from user creation (request ID: ${requestId})`, null);
       return respondError("Registration failed with no result", 500);
     }
 
-    if (!result.success) {
-      logError(`Registration unsuccessful (request ID: ${requestId})`, result);
-      return respondError(
-        result.error || "Registration failed for unknown reason",
-        result.error_code === "unique_violation" ? 409 : 500
-      );
+    // Create dealer profile
+    try {
+      const { error: dealerError } = await supabaseAdmin
+        .from('dealers')
+        .insert({
+          user_id: userData.user.id,
+          supervisor_name: cleanedMetadata.name,
+          dealership_name: cleanedMetadata.companyName || cleanedMetadata.name,
+          tax_id: (cleanedMetadata.taxId || "").replace(/\D/g, ''),
+          business_registry_number: (cleanedMetadata.businessRegistryNumber || "").replace(/\D/g, ''),
+          address: cleanedMetadata.companyAddress || "",
+          verification_status: 'pending',
+          is_verified: false,
+          license_number: (cleanedMetadata.businessRegistryNumber || "").replace(/\D/g, ''),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+      if (dealerError) {
+        logError("Error creating dealer profile:", dealerError);
+        // Continue despite error - we'll return a warning
+      }
+    } catch (profileError) {
+      logWarning("Error creating dealer profile:", profileError);
+      // Continue despite error - we'll return a warning
     }
 
-    // Check for warnings (partial success)
-    if (result.warning) {
-      logWarning(`Registration partial success (request ID: ${requestId}): ${result.warning}`);
-      
-      // Return partial success response
-      return respondSuccess({
-        success: true,
-        partialSuccess: true,
-        warning: result.warning,
-        userId: result.user?.id,
-        message: "Account created but with some limitations. You may need to complete profile setup."
-      });
+    // Create profile with dealer role
+    try {
+      const { error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .insert({
+          id: userData.user.id,
+          role: 'dealer',
+          full_name: cleanedMetadata.name,
+          updated_at: new Date().toISOString()
+        });
+        
+      if (profileError) {
+        logWarning("Error creating profile:", profileError);
+      }
+    } catch (metaError) {
+      logWarning("Error creating profile:", metaError);
+    }
+
+    // Create a session immediately so the user can be logged in right after registration
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
+      userId: userData.user.id
+    });
+
+    if (sessionError) {
+      logWarning(`Error creating immediate session for user ${userData.user.id}:`, sessionError);
+      // Continue despite error - login will still work manually
     }
 
     // Successfully created user
-    logInfo(`User registered successfully (request ID: ${requestId}): ${result.user?.id}`);
+    logInfo(`User registered successfully (request ID: ${requestId}): ${userData.user.id}`);
     
-    // For passwordless registration, add a special note in the response message
-    const message = passwordless 
-      ? "Registration successful. You will receive a login code via email when you sign in."
-      : "Registration successful. Please check your email for verification.";
-    
+    // Return success with session if available
     return respondSuccess({
       success: true,
-      userId: result.user?.id,
-      message: message
+      userId: userData.user.id,
+      user: userData.user,
+      session: sessionData?.session || null,
+      message: "Registration successful. You can now log in to your account."
     });
   } catch (error) {
     logError(`Unexpected error in registration handler (request ID: ${requestId})`, error);

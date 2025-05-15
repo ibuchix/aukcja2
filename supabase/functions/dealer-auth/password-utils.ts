@@ -1,23 +1,11 @@
 
 /**
- * Consistently prepare passwords for authentication
- * to ensure exact same transformation is used for registration and login
+ * Consistently clean and prepare passwords for authentication
+ * Prevents issues with whitespace and other common problems
+ * IMPORTANT: This MUST match the logic in the client's auth-utils.ts
  */
 export function preparePassword(password: string): string {
   if (!password) return '';
-  
-  // Simply trim leading and trailing whitespace
-  // This matches the behavior in src/utils/auth-utils.ts
+  // Trim whitespace but preserve internal spaces
   return password.trim();
-}
-
-/**
- * Verify if a password meets minimum requirements
- */
-export function validatePassword(password: string): { isValid: boolean; message?: string } {
-  if (!password || password.length < 8) {
-    return { isValid: false, message: "Password must be at least 8 characters long" };
-  }
-  
-  return { isValid: true };
 }
