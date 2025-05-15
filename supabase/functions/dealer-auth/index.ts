@@ -38,12 +38,15 @@ serve(async (req) => {
       return respondError("Invalid JSON in request body", 400);
     }
 
-    const { action, requestId, email, password } = body;
+    const { action, requestId, email } = body;
     
     // Generate a request ID if none was provided
     const trackingId = requestId || crypto.randomUUID();
     logInfo(`Processing request ${trackingId} for action: ${action}, email: ${email ? email.substring(0, 2) + "..." : "none"}`);
 
+    // Debug environment vars (without revealing actual values)
+    logInfo(`Environment check: SUPABASE_URL exists: ${!!Deno.env.get("SUPABASE_URL")}, SERVICE_ROLE_KEY exists: ${!!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`);
+    
     // Handle the different actions
     switch (action) {
       case "register":

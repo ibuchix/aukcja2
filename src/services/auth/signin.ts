@@ -32,6 +32,7 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
     
     if (error) {
       console.error("Edge function login error:", error);
+      console.error("Sign in error details:", error);
       
       if (error.message?.includes('Failed to fetch') || 
           error.message?.includes('NetworkError') ||
@@ -41,6 +42,17 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
             message: "Network error connecting to authentication service. Please try again.", 
             status: 503,
             name: 'NetworkError'
+          }
+        };
+      }
+      
+      // For 401 errors, provide more user-friendly message
+      if (error.status === 401) {
+        return {
+          error: { 
+            message: "Invalid email or password. Please check your credentials and try again.", 
+            status: 401,
+            name: 'InvalidCredentials'
           }
         };
       }
