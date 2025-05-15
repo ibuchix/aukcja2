@@ -12,7 +12,7 @@ import { useRegistrationSteps } from "@/components/auth/dealer-form/useRegistrat
 import { useAuthStateMonitor } from "@/components/auth/dealer-form/useAuthStateMonitor";
 import { useFormSubmission } from "@/components/auth/dealer-form/useFormSubmission";
 
-export function DealerSignupForm() {
+export function DealerSignupForm({ onRegistrationComplete }: { onRegistrationComplete?: () => void }) {
   const {
     registrationStep,
     emailVerified,
@@ -32,7 +32,8 @@ export function DealerSignupForm() {
   } = useFormSubmission({
     moveToStep,
     resetError,
-    setError
+    setError,
+    onComplete: onRegistrationComplete
   });
 
   const form = useForm<DealerFormValues>({

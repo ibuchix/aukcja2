@@ -8,11 +8,13 @@ import { useCompleteRegistration } from "@/hooks/registration/useCompleteRegistr
 export function useFormSubmission({
   moveToStep,
   resetError,
-  setError
+  setError,
+  onComplete
 }: {
   moveToStep: (step: number) => void;
   resetError: () => void;
   setError: (message: string) => void;
+  onComplete?: () => void;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -34,11 +36,15 @@ export function useFormSubmission({
         
         toast({
           title: "Registration successful",
-          description: "Your account has been created. Please check your email for verification.",
+          description: "Your account has been created. You can now log in with your credentials.",
           duration: 6000,
         });
         
-        moveToStep(2);
+        // Call the completion callback if provided
+        if (onComplete) {
+          onComplete();
+        }
+        
         return true;
       } else {
         console.error("Registration failed:", result.error);
