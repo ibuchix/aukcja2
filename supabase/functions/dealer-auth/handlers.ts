@@ -1,7 +1,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
 import { respondSuccess, respondError } from "./response-utils.ts";
-import { logInfo, logError, logWarning } from "./logging.ts";
+import { logInfo, logError, logWarning, logDebug } from "./logging.ts";
+import { preparePassword } from "./password-utils.ts";
 
 // Initialize the Supabase client with service role for admin operations
 const supabaseAdmin = createClient(
@@ -60,6 +61,16 @@ export async function handleDealerRegister(
       return respondError("Email already exists", 409);
     }
 
+    // Normalize password with our standardized function
+    const normalizedPassword = preparePassword(password);
+    logDebug("Password normalization complete", { 
+      originalLength: password.length, 
+      normalizedLength: normalizedPassword.length,
+      // Log first and last character code for debugging (without revealing the actual password)
+      firstCharCode: normalizedPassword.charCodeAt(0),
+      lastCharCode: normalizedPassword.charCodeAt(normalizedPassword.length - 1)
+    });
+
     // Normalize phone number by removing spaces and ensuring it starts with +
     const normalizedPhone = cleanedMetadata.phoneNumber || "";
     const formattedPhone = normalizedPhone.replace(/\s+/g, '');
@@ -70,7 +81,7 @@ export async function handleDealerRegister(
       "create_dealer_with_profile",
       {
         p_email: sanitizeString(email).toLowerCase(),
-        p_password: password,
+        p_password: normalizedPassword,
         p_supervisor_name: cleanedMetadata.name,
         p_company_name: cleanedMetadata.companyName || cleanedMetadata.name,
         p_tax_id: (cleanedMetadata.taxId || "").replace(/\D/g, ''), // Remove non-digits
@@ -150,6 +161,144 @@ export async function handleDealerRegister(
     logError(`Unexpected error in registration handler (request ID: ${requestId})`, error);
     return respondError(
       `Registration failed unexpectedly: ${error.message}`,
+      500
+    );
+  }
+}
+
+/**
+ * Handle dealer login
+ */
+export async function handleDealerLogin(
+  body: any,
+  requestId: string
+): Promise<Response> {
+  try {
+    const { email, password } = body;
+    
+    logInfo(`Processing login for email: ${email}, request ID: ${requestId}`);
+
+    if (!email) {
+      return respondError("Email is required", 400);
+    }
+
+    if (!password) {
+      return respondError("Password is required", 400);
+    }
+
+    // Normalize email
+    const normalizedEmail = sanitizeString(email).toLowerCase();
+    
+    // Normalize password with our standardized function
+    const normalizedPassword = preparePassword(password);
+    logDebug("Login password normalization complete", { 
+      originalLength: password.length, 
+      normalizedLength: normalizedPassword.length,
+      // Log first and last character code for debugging (without revealing the actual password)
+      firstCharCode: normalizedPassword.charCodeAt(0),
+      lastCharCode: normalizedPassword.charCodeAt(normalizedPassword.length - 1)
+    });
+
+    // Get user by email
+    const { data: userData, error: userError } = await supabaseAdmin
+      .from('auth.users')
+      .select('id, encrypted_password')
+      .eq('email', normalizedEmail)
+      .single();
+
+    if (userError) {
+      logError(`Error fetching user for login (request ID: ${requestId})`, userError);
+      return respondError("Authentication failed", 401);
+    }
+
+    if (!userData) {
+      logWarning(`User not found for login attempt: ${normalizedEmail}`);
+      return respondError("Invalid login credentials", 401);
+    }
+
+    // Verify password using our RPC function
+    const { data: verificationData, error: verificationError } = await supabaseAdmin.rpc(
+      "verify_password",
+      { 
+        uuid: userData.id,
+        plain_text: normalizedPassword
+      }
+    );
+
+    if (verificationError) {
+      logError(`Password verification error (request ID: ${requestId})`, verificationError);
+      return respondError("Authentication service error", 500);
+    }
+
+    if (!verificationData) {
+      logWarning(`Password verification failed for user: ${userData.id}`);
+      // Log a diagnostic message with detailed information
+      logDebug("Password verification details", {
+        userId: userData.id,
+        emailNormalized: normalizedEmail,
+        originalPasswordLength: password.length, 
+        normalizedPasswordLength: normalizedPassword.length,
+        hashedPasswordStart: userData.encrypted_password ? userData.encrypted_password.substring(0, 10) + "..." : "null"
+      });
+      
+      return respondError("Invalid login credentials", 401);
+    }
+
+    // If verification successful, create a session
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
+      userId: userData.id,
+      properties: {
+        source: "dealer_auth_edge_function"
+      }
+    });
+
+    if (sessionError) {
+      logError(`Session creation error (request ID: ${requestId})`, sessionError);
+      return respondError("Failed to create session", 500);
+    }
+
+    // Get dealer profile info to return
+    const { data: dealerData, error: dealerError } = await supabaseAdmin
+      .from('dealers')
+      .select('*')
+      .eq('user_id', userData.id)
+      .single();
+
+    if (dealerError) {
+      logWarning(`Error fetching dealer profile (request ID: ${requestId})`, dealerError);
+      // Continue despite this error - we'll return minimal info
+    }
+
+    // Get user profile info
+    const { data: profileData, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('*')
+      .eq('id', userData.id)
+      .single();
+
+    if (profileError) {
+      logWarning(`Error fetching user profile (request ID: ${requestId})`, profileError);
+      // Continue despite this error - we'll return minimal info
+    }
+
+    // Log successful login
+    logInfo(`Login successful for user: ${userData.id}, email: ${normalizedEmail}`);
+
+    // Return success with session and user data
+    return respondSuccess({
+      success: true,
+      session: sessionData.session,
+      user: {
+        id: userData.id,
+        email: normalizedEmail,
+        dealerProfile: dealerData || null,
+        profile: profileData || null
+      }
+    });
+  } catch (error) {
+    logError(`Unexpected error in login handler (request ID: ${requestId})`, error);
+    return respondError(
+      `Login failed unexpectedly: ${error.message}`,
       500
     );
   }

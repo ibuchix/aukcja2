@@ -1,43 +1,34 @@
 
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders } from "../_shared/cors.ts";
 
 /**
- * Creates a successful response with proper headers
+ * Create a successful response with CORS headers
  */
-export function respondSuccess(data: any, status = 200): Response {
-  return new Response(
-    JSON.stringify(data),
-    {
-      status,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json'
-      }
-    }
-  );
+export function respondSuccess(body: any, status: number = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+    },
+  });
 }
 
 /**
- * Creates an error response with proper headers
+ * Create an error response with CORS headers
  */
-export function respondError(
-  message: string,
-  status = 400,
-  details?: Record<string, any>
-): Response {
-  const errorBody = {
-    error: message,
-    ...(details ? { details } : {})
-  };
-
+export function respondError(message: string, status: number = 400): Response {
   return new Response(
-    JSON.stringify(errorBody),
+    JSON.stringify({
+      success: false,
+      error: message,
+    }),
     {
       status,
       headers: {
         ...corsHeaders,
-        'Content-Type': 'application/json'
-      }
+        "Content-Type": "application/json",
+      },
     }
   );
 }

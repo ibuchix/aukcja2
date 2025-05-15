@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
-import { handleDealerRegister } from "./handlers.ts";
+import { handleDealerRegister, handleDealerLogin } from "./handlers.ts";
 import { respondSuccess, respondError } from "./response-utils.ts";
 import { logRequest, logError, logInfo } from "./logging.ts";
 import { corsHeaders } from "../_shared/cors.ts";
@@ -23,7 +23,7 @@ serve(async (req) => {
 
     // Apply rate limiting to dealer auth requests
     const clientIP = req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for') || 'unknown';
-    const rateLimitResult = await applyRateLimit(req, 'dealer-verification', clientIP);
+    const rateLimitResult = await applyRateLimit(req, 'dealer-authentication', clientIP);
     
     if (rateLimitResult.limited) {
       logInfo(`Rate limit exceeded for IP: ${clientIP}`);
@@ -38,11 +38,11 @@ serve(async (req) => {
       return respondError("Invalid JSON in request body", 400);
     }
 
-    const { action, requestId } = body;
+    const { action, requestId, email, password } = body;
     
     // Generate a request ID if none was provided
     const trackingId = requestId || crypto.randomUUID();
-    logInfo(`Processing request ${trackingId} for action: ${action}`);
+    logInfo(`Processing request ${trackingId} for action: ${action}, email: ${email ? email.substring(0, 2) + "..." : "none"}`);
 
     // Handle the different actions
     switch (action) {
@@ -52,7 +52,12 @@ serve(async (req) => {
           trackingId,
           startTime
         );
-      // Add other action handlers as needed
+      case "login":
+        return await processWithRetry(
+          () => handleDealerLogin(body, trackingId),
+          trackingId,
+          startTime
+        );
       default:
         return respondError(`Unknown action: ${action}`, 400);
     }
