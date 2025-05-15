@@ -1,4 +1,3 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
 import { respondSuccess, respondError } from "./response-utils.ts";
 import { logInfo, logError, logWarning, logDebug } from "./logging.ts";
@@ -221,34 +220,20 @@ export async function handleDealerLogin(
       lastCharCode: normalizedPassword.charCodeAt(normalizedPassword.length - 1)
     });
 
-    // Use the proper admin API method to get user by email
-    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserByEmail(normalizedEmail);
+    // Use built-in Supabase authentication instead of custom RPC
+    const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
+      email: normalizedEmail,
+      password: normalizedPassword
+    });
 
-    if (authError || !authUser) {
-      logError(`Error fetching user for login (request ID: ${requestId})`, authError || "No user found");
-      return respondError("Invalid login credentials", 401);
-    }
-    
-    // Use the user from the admin API
-    const userData = authUser;
-    
-    // Verify password using our RPC function
-    const { data: verificationData, error: verificationError } = await supabaseAdmin.rpc(
-      "verify_password",
-      { 
-        uuid: userData.id,
-        plain_text: normalizedPassword
-      }
-    );
-
-    if (verificationError || !verificationData) {
-      logWarning(`Password verification failed for user: ${userData.id}`);
+    if (signInError || !signInData.user) {
+      logWarning(`Login failed for email: ${normalizedEmail}, request ID: ${requestId}, error: ${signInError?.message}`);
       return respondError("Invalid login credentials", 401);
     }
 
-    // If verification successful, create a session
+    // Authentication succeeded, now create a session
     const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
-      userId: userData.id,
+      userId: signInData.user.id,
       properties: {
         source: "dealer_auth_edge_function"
       }
@@ -263,7 +248,7 @@ export async function handleDealerLogin(
     const { data: dealerData, error: dealerError } = await supabaseAdmin
       .from('dealers')
       .select('*')
-      .eq('user_id', userData.id)
+      .eq('user_id', signInData.user.id)
       .single();
 
     if (dealerError) {
@@ -275,7 +260,7 @@ export async function handleDealerLogin(
     const { data: profileData, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('*')
-      .eq('id', userData.id)
+      .eq('id', signInData.user.id)
       .single();
 
     if (profileError) {
@@ -284,14 +269,14 @@ export async function handleDealerLogin(
     }
 
     // Log successful login
-    logInfo(`Login successful for user: ${userData.id}, email: ${normalizedEmail}`);
+    logInfo(`Login successful for user: ${signInData.user.id}, email: ${normalizedEmail}`);
 
     // Return success with session and user data
     return respondSuccess({
       success: true,
       session: sessionData.session,
       user: {
-        id: userData.id,
+        id: signInData.user.id,
         email: normalizedEmail,
         dealerProfile: dealerData || null,
         profile: profileData || null
