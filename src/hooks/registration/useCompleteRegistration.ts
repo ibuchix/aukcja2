@@ -2,11 +2,13 @@
 import { useState } from "react";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { supabase } from "@/integrations/supabase/client";
+import { signInWithEmail } from "@/services/auth/signin";
 
 interface CompleteRegistrationResult {
   success: boolean;
   error?: string;
   userId?: string;
+  loginSuccessful?: boolean;
 }
 
 export function useCompleteRegistration() {
@@ -90,10 +92,31 @@ export function useCompleteRegistration() {
           console.warn("Error updating profile:", metaError);
         }
         
-        return {
-          success: true,
-          userId: authData.user.id
-        };
+        // Immediately sign in the user after successful registration
+        try {
+          console.log("Attempting to sign in user immediately after registration");
+          const signInResult = await signInWithEmail({
+            email: values.email.trim().toLowerCase(),
+            password: values.password
+          });
+          
+          const loginSuccessful = !signInResult.error && !!signInResult.data;
+          console.log("Immediate login after registration:", loginSuccessful ? "successful" : "failed");
+          
+          return {
+            success: true,
+            userId: authData.user.id,
+            loginSuccessful
+          };
+        } catch (loginError) {
+          console.warn("Could not automatically log in after registration:", loginError);
+          
+          return {
+            success: true,
+            userId: authData.user.id,
+            loginSuccessful: false
+          };
+        }
       }
       
       return {

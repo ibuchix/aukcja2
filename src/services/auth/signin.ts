@@ -48,9 +48,8 @@ export async function signInWithEmail({ email, password }: { email: string; pass
       
       console.log("Edge function login successful for:", email);
       
-      // Extract session from edge function response
+      // Set session in supabase client
       if (edgeData.session) {
-        // Set session in supabase client
         const { error: setSessionError } = await supabase.auth.setSession({
           access_token: edgeData.session.access_token,
           refresh_token: edgeData.session.refresh_token
@@ -76,8 +75,7 @@ export async function signInWithEmail({ email, password }: { email: string; pass
       // Log edge function error
       console.error("Edge function sign in error:", edgeFunctionError);
       
-      // Fall back to standard auth
-      console.log("Falling back to standard auth for:", normalizedEmail);
+      console.log("Edge function failed, falling back to standard auth for:", normalizedEmail);
     }
     
     // Standard Supabase auth as fallback

@@ -32,17 +32,27 @@ export function useFormSubmission({
       const result = await completeRegistration(values);
       
       if (result.success) {
-        console.log("Registration successful");
+        console.log("Registration successful", result.loginSuccessful ? "and user automatically logged in" : "but automatic login failed");
         
         toast({
           title: "Registration successful",
-          description: "Your account has been created. You can now log in with your credentials.",
+          description: result.loginSuccessful 
+            ? "Your account has been created and you've been logged in. Welcome!"
+            : "Your account has been created. You can now log in with your credentials.",
           duration: 6000,
         });
         
         // Call the completion callback if provided
         if (onComplete) {
           onComplete();
+        }
+        
+        // If automatic login was successful, redirect to dashboard
+        if (result.loginSuccessful) {
+          console.log("Redirecting to dashboard after successful automatic login");
+          setTimeout(() => {
+            navigate("/dealer/dashboard");
+          }, 500);
         }
         
         return true;
