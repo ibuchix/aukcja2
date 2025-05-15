@@ -22,13 +22,7 @@ export function clearAuthStorage(): void {
   console.log('Clearing all auth storage keys');
   
   // Clear Supabase specific keys
-  localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
-  localStorage.removeItem('supabase.auth.token');
   localStorage.removeItem('dealer_auth_token');
-  
-  // Clear any session storage
-  sessionStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
-  sessionStorage.removeItem('supabase.auth.token');
   
   // Additional cleanup for potential session issues
   localStorage.removeItem('user');
@@ -41,14 +35,12 @@ export function clearAuthStorage(): void {
  */
 export function getAuthDiagnostics(): Record<string, unknown> {
   try {
-    const hasLocalToken = !!localStorage.getItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
-    const hasLocalDealerToken = !!localStorage.getItem('dealer_auth_token');
-    const hasSessionToken = !!sessionStorage.getItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
+    const hasLocalToken = !!localStorage.getItem('dealer_auth_token');
     
     // Try to parse local token for additional diagnostics
     let tokenInfo: string | Record<string, unknown> = "No token data";
     try {
-      const tokenStr = localStorage.getItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
+      const tokenStr = localStorage.getItem('dealer_auth_token');
       if (tokenStr) {
         const tokenData = JSON.parse(tokenStr);
         tokenInfo = {
@@ -64,8 +56,6 @@ export function getAuthDiagnostics(): Record<string, unknown> {
     
     return {
       hasLocalToken,
-      hasLocalDealerToken,
-      hasSessionToken,
       tokenInfo,
       timestamp: new Date().toISOString()
     };

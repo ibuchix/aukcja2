@@ -11,52 +11,31 @@ const STORAGE_KEY = 'dealer_auth_token';
 function checkAndCleanStorage() {
   try {
     // Check for possible corrupted tokens
-    const storageKeys = [STORAGE_KEY, 'sb-sdvakfhmoaoucmhbhwvy-auth-token'];
-    
-    for (const key of storageKeys) {
-      const currentSession = localStorage.getItem(key);
-      if (currentSession) {
-        try {
-          // Try to parse the JSON
-          const parsed = JSON.parse(currentSession);
-          
-          // Validate basic structure
-          if (!parsed.access_token || !parsed.expires_at) {
-            console.warn(`Found incomplete auth token in ${key}, removing it`);
-            localStorage.removeItem(key);
-          } else {
-            // Check if token is expired
-            const expiryTime = new Date(parsed.expires_at * 1000);
-            const now = new Date();
-            
-            if (expiryTime < now) {
-              console.warn(`Found expired auth token in ${key}`);
-              // For extra safety, remove expired tokens
-              localStorage.removeItem(key);
-            }
-          }
-        } catch (parseError) {
-          // Corrupted JSON
-          console.warn(`Found corrupted auth token in ${key}, removing it`);
-          localStorage.removeItem(key);
-        }
-      }
-    }
-    
-    // Also check session storage
-    for (const key of storageKeys) {
+    const currentSession = localStorage.getItem(STORAGE_KEY);
+    if (currentSession) {
       try {
-        const sessionValue = sessionStorage.getItem(key);
-        if (sessionValue && typeof sessionValue === 'string') {
-          try {
-            JSON.parse(sessionValue); // Just to validate JSON
-          } catch (e) {
-            console.warn(`Found corrupted session storage value in ${key}, removing it`);
-            sessionStorage.removeItem(key);
+        // Try to parse the JSON
+        const parsed = JSON.parse(currentSession);
+        
+        // Validate basic structure
+        if (!parsed.access_token || !parsed.expires_at) {
+          console.warn(`Found incomplete auth token, removing it`);
+          localStorage.removeItem(STORAGE_KEY);
+        } else {
+          // Check if token is expired
+          const expiryTime = new Date(parsed.expires_at * 1000);
+          const now = new Date();
+          
+          if (expiryTime < now) {
+            console.warn(`Found expired auth token`);
+            // For extra safety, remove expired tokens
+            localStorage.removeItem(STORAGE_KEY);
           }
         }
-      } catch (e) {
-        console.warn(`Error checking session storage for ${key}`, e);
+      } catch (parseError) {
+        // Corrupted JSON
+        console.warn(`Found corrupted auth token, removing it`);
+        localStorage.removeItem(STORAGE_KEY);
       }
     }
   } catch (error) {
@@ -219,7 +198,6 @@ export const supabase = createClient<Database>(
     try {
       console.log('Attempting to clean local storage due to initialization error');
       localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
     } catch (storageError) {
       console.error('Failed to clean local storage:', storageError);
     }

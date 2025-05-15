@@ -7,6 +7,7 @@ let refreshPromise: Promise<RefreshResult> | null = null;
 let isRefreshing = false;
 let lastRefreshTime = 0;
 const MIN_REFRESH_INTERVAL = 10000; // Minimum 10 seconds between refreshes
+const AUTH_STORAGE_KEY = 'dealer_auth_token';
 
 export type RefreshResult = {
   success: boolean;
@@ -110,7 +111,7 @@ export async function attemptSessionRecovery(): Promise<RefreshResult> {
   
   try {
     // First check if we have a session in localStorage
-    const storedSession = localStorage.getItem('dealer_auth_token');
+    const storedSession = localStorage.getItem(AUTH_STORAGE_KEY);
     if (!storedSession) {
       console.log("No stored session found for recovery");
       return { success: false, session: null, needsReauth: true };
@@ -121,12 +122,12 @@ export async function attemptSessionRecovery(): Promise<RefreshResult> {
       const parsedSession = JSON.parse(storedSession);
       if (!parsedSession.access_token) {
         console.log("Stored session is invalid, no access token");
-        localStorage.removeItem('dealer_auth_token');
+        localStorage.removeItem(AUTH_STORAGE_KEY);
         return { success: false, session: null, needsReauth: true };
       }
     } catch (e) {
       console.log("Stored session is corrupted, removing");
-      localStorage.removeItem('dealer_auth_token');
+      localStorage.removeItem(AUTH_STORAGE_KEY);
       return { success: false, session: null, needsReauth: true };
     }
     

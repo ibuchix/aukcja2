@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { fetchDealerProfile } from "../authUtils";
 
+const STORAGE_KEY = 'dealer_auth_token';
+
 /**
  * Hook to initialize authentication state and check for existing sessions
  */
@@ -28,7 +30,7 @@ export function useAuthInitializer() {
         
         // Clear any stale tokens
         try {
-          const storedToken = localStorage.getItem('dealer_auth_token');
+          const storedToken = localStorage.getItem(STORAGE_KEY);
           if (storedToken) {
             // Try to parse the token to check if it's valid JSON
             try {
@@ -36,8 +38,7 @@ export function useAuthInitializer() {
             } catch (parseError) {
               // If we can't parse it, it's probably corrupted
               console.warn("Found corrupted auth token, removing it");
-              localStorage.removeItem('dealer_auth_token');
-              localStorage.removeItem('sb-sdvakfhmoaoucmhbhwvy-auth-token');
+              localStorage.removeItem(STORAGE_KEY);
             }
           }
         } catch (storageError) {
