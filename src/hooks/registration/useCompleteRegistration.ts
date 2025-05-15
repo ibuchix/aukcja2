@@ -1,122 +1,93 @@
 
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
-interface RegistrationResult {
+interface CompleteRegistrationResult {
   success: boolean;
-  message?: string;
   error?: string;
   userId?: string;
 }
 
 export function useCompleteRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<string[]>([]);
-  const { toast } = useToast();
-  const navigate = useNavigate();
 
-  const handleSubmit = async (values: DealerFormValues): Promise<RegistrationResult> => {
+  const handleSubmit = async (values: DealerFormValues): Promise<CompleteRegistrationResult> => {
     setIsSubmitting(true);
-    setErrors([]);
     
     try {
-      console.log("Starting dealer registration with complete profile...");
+      console.log("Creating dealer account through RPC function");
       
-      // Validate all required fields
-      const missingFields = validateRequiredFields(values);
-      if (missingFields.length > 0) {
-        const errorMessage = `Please complete the following required fields: ${missingFields.join(", ")}`;
-        setErrors([errorMessage]);
-        toast({
-          title: "Missing information",
-          description: errorMessage,
-          variant: "destructive",
-        });
-        return { success: false, error: errorMessage };
-      }
-      
-      // Call the registration function via the dealer-auth edge function
-      const { data, error } = await supabase.functions.invoke("dealer-auth", {
-        body: {
-          action: "register",
-          email: values.email.trim().toLowerCase(),
-          password: values.password,
-          metadata: {
-            name: values.supervisorName.trim(),
-            companyName: values.companyName.trim(),
-            taxId: values.taxId.trim(),
-            businessRegistryNumber: values.businessRegistryNumber.trim(),
-            companyAddress: values.companyAddress.trim(),
-            phoneNumber: values.phoneNumber.trim()
-          },
-          requestId: crypto.randomUUID()
+      // Use the RPC function to create the user and dealer profile in one transaction
+      const { data: result, error } = await supabase.rpc(
+        'create_dealer_with_profile',
+        {
+          p_email: values.email.trim().toLowerCase(),
+          p_password: values.password,
+          p_supervisor_name: values.supervisorName.trim(),
+          p_company_name: values.companyName.trim(),
+          p_tax_id: values.taxId.trim(),
+          p_business_registry_number: values.businessRegistryNumber.trim(),
+          p_address: values.companyAddress.trim(),
+          p_phone_number: values.phoneNumber.trim()
         }
-      });
-
+      );
+      
       if (error) {
-        console.error("Registration failed:", error);
-        const errorMessage = handleRegistrationError(error);
-        setErrors([errorMessage]);
+        console.error("Error creating dealer with RPC:", error);
         
-        toast({
-          title: "Registration failed",
-          description: errorMessage,
-          variant: "destructive",
-          duration: 8000,
-        });
+        // Check for duplicate email
+        if (error.message.toLowerCase().includes("email already exists")) {
+          return {
+            success: false,
+            error: "An account with this email already exists. Please sign in or use a different email."
+          };
+        }
         
-        return { success: false, error: errorMessage };
+        // Check for other constraints
+        if (error.code === '23505') { // Unique violation
+          if (error.message.toLowerCase().includes("tax_id")) {
+            return {
+              success: false,
+              error: "This tax ID is already registered in our system."
+            };
+          }
+          if (error.message.toLowerCase().includes("business_registry_number")) {
+            return {
+              success: false,
+              error: "This business registry number is already registered in our system."
+            };
+          }
+        }
+        
+        return {
+          success: false,
+          error: `Registration failed: ${error.message}`
+        };
       }
       
-      if (!data?.success) {
-        const errorMessage = data?.error || "Registration failed with unknown error";
-        console.error("Registration unsuccessful:", errorMessage);
-        setErrors([errorMessage]);
-        
-        toast({
-          title: "Registration failed",
-          description: errorMessage,
-          variant: "destructive",
-          duration: 8000,
-        });
-        
-        return { success: false, error: errorMessage };
+      // Check if the result is successful
+      const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
+      
+      if (!parsedResult.success) {
+        return {
+          success: false,
+          error: parsedResult.error || "Failed to complete registration"
+        };
       }
-
-      // Registration successful
-      console.log("Registration successful:", data);
       
-      // Show success toast
-      toast({
-        title: "Registration successful",
-        description: "Your account has been created. Please check your email for verification.",
-        duration: 6000,
-      });
-      
-      // Return success data
-      return { 
-        success: true, 
-        userId: data.userId,
-        message: data.message || "Registration successful"
+      // Return success with user ID
+      return {
+        success: true,
+        userId: parsedResult.user?.id
       };
       
     } catch (error) {
-      console.error("Unexpected registration error:", error);
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
-      
-      setErrors([errorMessage]);
-      toast({
-        title: "Registration failed",
-        description: "An unexpected error occurred during registration. Please try again later.",
-        variant: "destructive",
-        duration: 8000,
-      });
-      
-      return { success: false, error: errorMessage };
-      
+      console.error("Unexpected error during registration:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "An unexpected error occurred during registration"
+      };
     } finally {
       setIsSubmitting(false);
     }
@@ -124,67 +95,6 @@ export function useCompleteRegistration() {
 
   return {
     handleSubmit,
-    isSubmitting,
-    errors
+    isSubmitting
   };
-}
-
-// Helper function to validate all required fields
-function validateRequiredFields(values: DealerFormValues): string[] {
-  const requiredFields: (keyof DealerFormValues)[] = [
-    'supervisorName',
-    'email',
-    'password',
-    'confirmPassword',
-    'phoneNumber',
-    'companyName',
-    'taxId',
-    'businessRegistryNumber',
-    'companyAddress',
-    'acceptTerms'
-  ];
-  
-  return requiredFields.filter(field => {
-    const value = values[field];
-    if (field === 'acceptTerms') return !value; // Boolean field
-    return !value || (typeof value === 'string' && value.trim() === '');
-  }).map(field => {
-    // Convert camelCase to human readable
-    return field.replace(/([A-Z])/g, ' $1').toLowerCase();
-  });
-}
-
-// Helper function to handle registration errors
-function handleRegistrationError(error: any): string {
-  if (!error) return "Unknown error occurred during registration";
-  
-  if (typeof error === 'string') {
-    if (error.includes('User already registered') || error.includes('already exists')) {
-      return "This email is already registered. Please use a different email or login with your existing account.";
-    }
-    
-    if (error.includes('Password')) {
-      return "Password issue: " + error;
-    }
-    
-    return error;
-  }
-  
-  if (error.message) {
-    if (error.message.includes('email already exists') || error.message.includes('unique_violation')) {
-      return "This email is already registered. Please use a different email or login with your existing account.";
-    }
-    
-    if (error.message.includes('Password should be')) {
-      return "Password must be at least 8 characters long and meet security requirements.";
-    }
-    
-    if (error.message.includes('invalid email')) {
-      return "Please enter a valid email address.";
-    }
-    
-    return error.message;
-  }
-  
-  return "An error occurred during registration. Please try again or contact support.";
 }

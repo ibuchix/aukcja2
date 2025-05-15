@@ -1,4 +1,3 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
 import { respondSuccess, respondError } from "./response-utils.ts";
 import { logInfo, logError, logWarning, logDebug } from "./logging.ts";
@@ -194,7 +193,6 @@ export async function handleDealerLogin(
     logDebug("Login password normalization complete", { 
       originalLength: password.length, 
       normalizedLength: normalizedPassword.length,
-      // Log first and last character code for debugging (without revealing the actual password)
       firstCharCode: normalizedPassword.charCodeAt(0),
       lastCharCode: normalizedPassword.charCodeAt(normalizedPassword.length - 1)
     });
