@@ -1,4 +1,3 @@
-
 import { useDealerProfile } from "@/contexts/dealer-profile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, User as UserIcon, FileText, MapPin, BadgeCheck, AlertCircle, Phone, Mail } from "lucide-react";
@@ -46,7 +45,18 @@ export function DealerProfile() {
       <Alert variant="destructive" className="mb-6">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Error loading profile</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
+        <AlertDescription>
+          {error} 
+          <br />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2"
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </Button>
+        </AlertDescription>
       </Alert>
     );
   }

@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useLoginForm } from "@/hooks/auth/useLoginForm";
@@ -30,6 +29,8 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
     
     if (authInfo.hasLocalToken || authInfo.hasLocalDealerToken) {
       console.log("Found existing auth tokens, might cause conflicts");
+      // Clear any problematic tokens that might cause authentication issues
+      clearAuthStorage();
     }
   }, []);
 

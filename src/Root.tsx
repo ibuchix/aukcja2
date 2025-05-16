@@ -9,6 +9,7 @@ import { Suspense } from "react";
 import { TourProvider } from "./providers/TourProvider";
 import { OnlineStatusProvider } from "./contexts/OnlineStatusContext";
 import { AuthProviderWithRouter } from "./contexts/auth/AuthProvider";
+import { DealerProfileProvider } from "./contexts/dealer-profile";
 
 // Create a query client
 const queryClient = new QueryClient({
@@ -31,12 +32,14 @@ export default function Root() {
         <PersistQueryClientProvider>
           <OnlineStatusProvider>
             <AuthProviderWithRouter>
-              <TourProvider>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <App />
-                  <Toaster />
-                </Suspense>
-              </TourProvider>
+              <DealerProfileProvider>
+                <TourProvider>
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <App />
+                    <Toaster />
+                  </Suspense>
+                </TourProvider>
+              </DealerProfileProvider>
             </AuthProviderWithRouter>
           </OnlineStatusProvider>
         </PersistQueryClientProvider>

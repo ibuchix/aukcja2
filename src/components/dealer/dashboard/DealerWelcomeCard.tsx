@@ -1,49 +1,46 @@
 
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useTour } from "@/contexts/tour/TourContext";
-import { TourButton } from "@/components/tour/TourButton";
-import { useIsMobile } from "@/hooks/useIsMobile";
-import { useDealerProfile } from "@/contexts/dealer-profile";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export function DealerWelcomeCard() {
-  const { user } = useAuth();
-  const { displayProfile } = useDealerProfile();
-  const { hasCompletedTour } = useTour();
-  const isMobile = useIsMobile();
+interface DealerWelcomeCardProps {
+  dealerName: string;
+  isLoading: boolean;
+}
+
+export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardProps) => {
+  const currentHour = new Date().getHours();
   
-  // Extract dealer name from profile or fallback to email
-  const dealerName = displayProfile?.supervisor_name || user?.email?.split('@')[0] || 'Dealer';
+  let greeting = "Welcome";
+  if (currentHour < 12) greeting = "Good morning";
+  else if (currentHour < 18) greeting = "Good afternoon";
+  else greeting = "Good evening";
 
   return (
-    <Card className="border-l-4 border-l-primary">
+    <Card className="bg-white shadow-sm border-none">
       <CardHeader className="pb-2">
-        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'justify-between items-center'}`}>
-          <CardTitle className="text-2xl">
-            Welcome, {dealerName}!
-          </CardTitle>
-          
-          <TourButton>
-            {hasCompletedTour ? 'Replay Tour' : 'How to Use Proxy Bidding'}
-          </TourButton>
-        </div>
-        <CardDescription className="font-kanit">
-          Your one-stop dashboard for managing auctions and monitoring your bidding activity
-        </CardDescription>
+        <CardTitle className="text-xl font-semibold">
+          {isLoading ? (
+            <Skeleton className="h-7 w-48" />
+          ) : (
+            <>
+              {greeting}, {dealerName}!
+            </>
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-sm">
-          <p id="proxy-bidding-section" className="mb-2">
-            Use our <span className="font-medium text-primary">proxy bidding system</span> to 
-            automatically place bids up to your maximum amount - no need to manually bid!
-          </p>
-          <div className="flex items-center gap-2 mt-3 text-muted-foreground">
-            <span id="increment-info">
-              Bid in increments to stay competitive while never exceeding your budget.
-            </span>
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
           </div>
-        </div>
+        ) : (
+          <p className="text-gray-600">
+            Welcome to your dashboard. Here you can manage your auctions, 
+            bids, and view important information about your account.
+          </p>
+        )}
       </CardContent>
     </Card>
   );
-}
+};

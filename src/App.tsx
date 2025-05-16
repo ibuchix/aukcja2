@@ -1,4 +1,3 @@
-
 import {
   Routes,
   Route,
@@ -40,7 +39,7 @@ function App() {
           path="/dealer/profile"
           element={
             <ProtectedRoute>
-              <Navigate to="/dealer/dashboard" />
+              <DealerDashboard />
             </ProtectedRoute>
           }
         />
@@ -48,7 +47,7 @@ function App() {
           path="/dealer/bids"
           element={
             <ProtectedRoute>
-              <Navigate to="/dealer/dashboard" />
+              <DealerDashboard />
             </ProtectedRoute>
           }
         />
@@ -56,7 +55,7 @@ function App() {
           path="/dealer/documents"
           element={
             <ProtectedRoute>
-              <Navigate to="/dealer/dashboard" />
+              <DealerDashboard />
             </ProtectedRoute>
           }
         />
