@@ -1,5 +1,6 @@
 
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { useIsMobile } from "@/hooks/useIsMobile";
 
 interface DashboardLayoutProps {
@@ -11,13 +12,15 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
   const isMobile = useIsMobile();
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
       <Navbar />
       
-      <div className={`container mx-auto ${isMobile ? 'px-3 py-4' : 'px-4 py-8'}`}>
+      <div className={`container mx-auto ${isMobile ? 'px-3 py-4' : 'px-4 py-8'} mt-20 flex-grow`}>
         <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold mb-6 text-dark`}>{title}</h1>
         {children}
       </div>
+      
+      <Footer />
     </div>
   );
 };
