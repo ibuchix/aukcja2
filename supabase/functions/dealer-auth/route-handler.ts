@@ -1,7 +1,7 @@
 
 import { handleDealerRegister, handleDealerLogin } from "./handlers.ts";
-import { respondSuccess } from "./response-utils.ts";
-import { logError } from "./logging.ts";
+import { respondSuccess, respondError } from "./response-utils.ts";
+import { logError, logInfo, logWarning } from "./logging.ts";
 import { processWithRetry } from "./retry-handler.ts";
 import { parseRequestBody } from "./request-parser.ts";
 
@@ -10,6 +10,9 @@ import { parseRequestBody } from "./request-parser.ts";
  */
 export async function handleDealerAuthRequest(req: Request, startTime: number): Promise<Response> {
   try {
+    // Log request headers for debugging
+    logInfo(`Request headers: ${JSON.stringify(Object.fromEntries(req.headers.entries()))}`);
+    
     // Parse request body
     const parseResult = await parseRequestBody(req);
     
@@ -19,6 +22,14 @@ export async function handleDealerAuthRequest(req: Request, startTime: number): 
     }
 
     const { body, trackingId } = parseResult;
+
+    // Log the successfully parsed body
+    logInfo(`Successfully parsed request body for action: ${body.action}`, { 
+      action: body.action,
+      trackingId,
+      requestId: body.requestId,
+      email: body.email ? `${body.email.substring(0, 3)}...` : undefined
+    });
 
     // Handle the different actions
     switch (body.action) {
@@ -36,6 +47,7 @@ export async function handleDealerAuthRequest(req: Request, startTime: number): 
         );
       case "debug":
         // Add a debug endpoint to help troubleshoot request issues
+        logInfo(`Debug request received, trackingId: ${trackingId}`);
         return respondSuccess({
           success: true,
           debug: {
@@ -44,22 +56,20 @@ export async function handleDealerAuthRequest(req: Request, startTime: number): 
             body: { ...body, password: body.password ? "[REDACTED]" : undefined },
             url: req.url,
             timestamp: new Date().toISOString(),
-            trackingId
+            trackingId,
+            parseResult: "successful"
           }
         });
       default:
         logError(`Unknown action: ${body.action}`, null);
-        return respondSuccess({
-          success: false,
-          error: `Unknown action: ${body.action}`
-        }, 400);
+        return respondError(`Unknown action: ${body.action}`, 400);
     }
   } catch (error) {
     // Handle unexpected errors
     logError("Unhandled exception in route handler", error);
-    return respondSuccess({
-      success: false,
-      error: `Internal server error: ${error.message}`
-    }, 500);
+    return respondError(
+      `Internal server error: ${error.message}`,
+      500
+    );
   }
 }

@@ -1,5 +1,5 @@
 
-import { logError, logInfo } from "./logging.ts";
+import { logError, logInfo, logWarning, logDebug } from "./logging.ts";
 import { respondError } from "./response-utils.ts";
 
 interface ParsedRequest {
@@ -26,8 +26,26 @@ export async function parseRequestBody(req: Request): Promise<Response | ParsedR
       logError(`Invalid content type: ${contentType}`, null);
       return respondError("Content-Type must be application/json", 400);
     }
-    
-    const text = await req.text();
+
+    // First try to get the raw text
+    let text;
+    try {
+      text = await req.text();
+      
+      // Log detailed diagnostic info about the body
+      logDebug(`Raw request body details:`, { 
+        length: text?.length || 0,
+        isEmpty: !text || text.trim() === '',
+        firstChar: text?.charCodeAt(0) || null,
+        lastChar: text ? text.charCodeAt(text.length - 1) : null,
+        isJsonBracket: text && (text.trim().startsWith('{') || text.trim().startsWith('[')),
+        containsEscapes: text?.includes('\\'),
+      });
+      
+    } catch (textError) {
+      logError(`Error reading request text: ${textError.message}`, textError);
+      return respondError(`Error reading request body: ${textError.message}`, 400);
+    }
     
     if (!text || text.trim() === '') {
       logError("Empty request body", null);
@@ -49,6 +67,14 @@ export async function parseRequestBody(req: Request): Promise<Response | ParsedR
       logInfo(`Parsed body successfully with keys: ${Object.keys(body).join(', ')}`);
     } catch (parseError) {
       logError(`JSON parse error: ${parseError.message}`, parseError);
+      
+      // Try to diagnose JSON parsing issues
+      logWarning("JSON parse diagnostic info:", { 
+        first10Chars: text.substring(0, 10),
+        last10Chars: text.substring(text.length - 10),
+        containsSuspiciousChars: text.match(/[^\x20-\x7E]/g) ? "yes" : "no",
+      });
+      
       return respondError(`Invalid JSON format: ${parseError.message}`, 400);
     }
     

@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { normalizeEmail } from "@/utils/dealerProfileMapping";
 import { getAuthDiagnostics } from "@/utils/auth-utils";
+import { signInWithEmailDirect } from "@/services/auth/signin";
 
 interface LoginFormValues {
   email: string;
@@ -17,6 +18,7 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
   const [error, setError] = useState<string | null>(null);
   const [loginAttempted, setLoginAttempted] = useState(false);
   const [diagnosticInfo, setDiagnosticInfo] = useState<Record<string, unknown> | null>(null);
+  const [useDirectFetch, setUseDirectFetch] = useState(false);
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
   const navigate = useNavigate();
@@ -29,6 +31,15 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
     setDiagnosticInfo(authInfo);
     return authInfo;
   };
+  
+  // Toggle between direct fetch and supabase client
+  const toggleFetchMethod = () => {
+    setUseDirectFetch(prev => !prev);
+    toast({
+      title: `Using ${!useDirectFetch ? "direct fetch" : "Supabase client"}`,
+      description: `Switched to ${!useDirectFetch ? "direct fetch" : "Supabase client"} for authentication testing`,
+    });
+  };
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
@@ -39,16 +50,34 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
       // Normalize email consistently
       const normalizedEmail = normalizeEmail(data.email);
       
-      console.log("Login attempt for:", normalizedEmail);
+      console.log("Login attempt for:", normalizedEmail, "using", useDirectFetch ? "direct fetch" : "Supabase client");
       
       // Get auth diagnostic info before attempt
       const beforeAuthInfo = getAuthDiagnostics();
       console.log("Auth state before login attempt:", beforeAuthInfo);
       
-      const result = await signIn({
-        email: normalizedEmail,
-        password: data.password.trim(),
-      });
+      let result;
+      
+      if (useDirectFetch) {
+        // Use direct fetch method for testing
+        result = await signInWithEmailDirect({
+          email: normalizedEmail,
+          password: data.password.trim(),
+        });
+        
+        // Convert to format expected by the rest of the code
+        result = {
+          success: !result.error,
+          ...result.data,
+          error: result.error?.message
+        };
+      } else {
+        // Use normal auth context method
+        result = await signIn({
+          email: normalizedEmail,
+          password: data.password.trim(),
+        });
+      }
 
       if (!result.success) {
         console.error("Login error:", result.error);
@@ -111,5 +140,7 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
     diagnosticInfo,
     checkAuthDiagnostics,
     setError,
+    useDirectFetch,
+    toggleFetchMethod
   };
 }
