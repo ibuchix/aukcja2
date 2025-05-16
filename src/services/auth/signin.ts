@@ -19,7 +19,7 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
              "First char code:", cleanedPassword.charCodeAt(0),
              "Last char code:", cleanedPassword.charCodeAt(cleanedPassword.length - 1));
     
-    // Create request body with explicit formatting
+    // Create request body without JSON.stringify
     const requestBody = {
       action: 'login',
       email: email.trim().toLowerCase(),
@@ -34,9 +34,9 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
       password: "[REDACTED]"
     });
     
-    // Call the dealer-auth edge function with explicit content type and stringified body
+    // Call the dealer-auth edge function WITHOUT stringifying the body
     const { data, error } = await supabase.functions.invoke('dealer-auth', {
-      body: JSON.stringify(requestBody),
+      body: requestBody, // Pass the object directly
       headers: {
         "Content-Type": "application/json",
         "Cache-Control": "no-cache"

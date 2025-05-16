@@ -30,8 +30,9 @@ export function useCompleteRegistration() {
                 "Last char code:", cleanedPassword.charCodeAt(cleanedPassword.length - 1));
       
       // Call the dealer-auth edge function with register action
+      // Pass the body as a direct object without JSON.stringify
       const { data, error } = await supabase.functions.invoke('dealer-auth', {
-        body: JSON.stringify({
+        body: {
           action: 'register',
           email: values.email.trim().toLowerCase(),
           password: cleanedPassword,
@@ -45,7 +46,7 @@ export function useCompleteRegistration() {
           },
           requestId: crypto.randomUUID(),
           timestamp: new Date().toISOString()
-        }),
+        },
         headers: {
           "Content-Type": "application/json",
           "Cache-Control": "no-cache"

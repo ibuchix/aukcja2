@@ -55,7 +55,7 @@ export const signUpDealerWithEmail = async (
     try {
       console.log("Calling dealer-auth function with register action");
       
-      // Call the dealer-auth edge function to handle registration with the cleaned password
+      // Pass the body as a direct object without JSON.stringify
       const { data, error } = await supabase.functions.invoke('dealer-auth', {
         body: {
           action: 'register',

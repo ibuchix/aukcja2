@@ -32,6 +32,10 @@ export async function parseRequestBody(req: Request): Promise<Response | ParsedR
     try {
       text = await req.text();
       
+      // Add detailed header diagnostics
+      const headers = Object.fromEntries(req.headers.entries());
+      logDebug("Full request headers:", headers);
+      
       // Log detailed diagnostic info about the body
       logDebug(`Raw request body details:`, { 
         length: text?.length || 0,
@@ -40,6 +44,8 @@ export async function parseRequestBody(req: Request): Promise<Response | ParsedR
         lastChar: text ? text.charCodeAt(text.length - 1) : null,
         isJsonBracket: text && (text.trim().startsWith('{') || text.trim().startsWith('[')),
         containsEscapes: text?.includes('\\'),
+        method: req.method,
+        url: req.url
       });
       
     } catch (textError) {
@@ -49,6 +55,21 @@ export async function parseRequestBody(req: Request): Promise<Response | ParsedR
     
     if (!text || text.trim() === '') {
       logError("Empty request body", null);
+      
+      // Enhanced diagnostics for empty body
+      const method = req.method;
+      const url = req.url;
+      const hasContentLength = req.headers.has('content-length');
+      const contentLength = req.headers.get('content-length');
+      
+      logError("Empty body diagnostics", { 
+        method, 
+        url, 
+        hasContentLength, 
+        contentLength,
+        headers: Object.fromEntries(req.headers.entries())
+      });
+      
       return respondError("Request body cannot be empty", 400);
     }
     
