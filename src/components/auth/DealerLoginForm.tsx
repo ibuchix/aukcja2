@@ -5,11 +5,8 @@ import { useLoginForm } from "@/hooks/auth/useLoginForm";
 import { LoginError } from "@/components/auth/login/LoginError";
 import { LoginFormFields } from "@/components/auth/login/LoginFormFields";
 import { LoginSubmitButton } from "@/components/auth/login/LoginSubmitButton";
-import { AuthTroubleshooter } from "./AuthTroubleshooter";
 import { clearAuthStorage } from "@/utils/auth-utils";
 import { useToast } from "@/hooks/use-toast";
-import { Switch } from "../ui/switch";
-import { Label } from "../ui/label";
 
 export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl?: string }) {
   const { 
@@ -22,10 +19,7 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
     loginAttempted,
     loginSuccess,
     diagnosticInfo,
-    checkAuthDiagnostics,
-    useDirectFetch,
-    toggleFetchMethod,
-    clearStorage
+    checkAuthDiagnostics
   } = useLoginForm(returnUrl);
   
   const { toast } = useToast();
@@ -52,17 +46,6 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
       
       <LoginFormFields register={register} errors={errors} />
       
-      <div className="flex items-center space-x-2 justify-end">
-        <Switch
-          id="fetch-method" 
-          checked={true}
-          disabled={true}
-        />
-        <Label htmlFor="fetch-method" className="text-xs text-muted-foreground">
-          Using direct fetch (required)
-        </Label>
-      </div>
-      
       <LoginSubmitButton isLoading={isLoading} />
       
       <div className="text-center text-sm mt-4">
@@ -71,8 +54,6 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
           Register here
         </Link>
       </div>
-      
-      <AuthTroubleshooter />
     </form>
   );
 }

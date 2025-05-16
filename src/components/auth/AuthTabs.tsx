@@ -37,8 +37,7 @@ export function AuthTabs({ returnUrl = "/dealer/dashboard" }: { returnUrl?: stri
       <TabsContent value="login">
         <div className="space-y-4 p-6 bg-card rounded-md shadow">
           <div className="space-y-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">Dealer Login</h1>
-            <p className="text-sm text-muted-foreground">Enter your credentials to access your dealer account</p>
+            <h1 className="text-2xl font-semibold tracking-tight">Login</h1>
           </div>
           <DealerLoginForm returnUrl={returnUrl} />
         </div>
@@ -46,8 +45,7 @@ export function AuthTabs({ returnUrl = "/dealer/dashboard" }: { returnUrl?: stri
       <TabsContent value="register">
         <div className="space-y-4 p-6 bg-card rounded-md shadow">
           <div className="space-y-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">Dealer Registration</h1>
-            <p className="text-sm text-muted-foreground">Create your dealer account to access the platform</p>
+            <h1 className="text-2xl font-semibold tracking-tight">Registration</h1>
           </div>
           <DealerSignupForm onRegistrationComplete={handleRegistrationComplete} />
         </div>
