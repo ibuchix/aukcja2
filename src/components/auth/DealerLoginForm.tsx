@@ -99,11 +99,11 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
       <div className="flex items-center space-x-2 justify-end">
         <Switch
           id="fetch-method" 
-          checked={useDirectFetch}
-          onCheckedChange={toggleFetchMethod}
+          checked={true}
+          disabled={true}
         />
         <Label htmlFor="fetch-method" className="text-xs text-muted-foreground">
-          Use direct fetch {useDirectFetch ? "(enabled)" : "(disabled)"}
+          Using direct fetch (required)
         </Label>
       </div>
       
@@ -139,7 +139,6 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
         </div>
       </div>
       
-      {/* Add the AuthTroubleshooter component */}
       <AuthTroubleshooter />
     </form>
   );

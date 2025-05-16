@@ -20,9 +20,9 @@ export function useSignInHandler() {
       const cleanedPassword = preparePassword(password);
       const normalizedEmail = email.trim().toLowerCase();
       
-      console.log("Attempting sign in with normalized credentials");
+      console.log("Attempting sign in with normalized credentials using direct fetch method");
       
-      // Use the edge function service for authentication
+      // Use the edge function service for authentication via direct fetch
       const { data, error } = await signInWithEmail({
         email: normalizedEmail,
         password: cleanedPassword,

@@ -55,44 +55,92 @@ export const signUpDealerWithEmail = async (
     try {
       console.log("Calling dealer-auth function with register action");
       
-      // Pass the body as a direct object without JSON.stringify
-      const { data, error } = await supabase.functions.invoke('dealer-auth', {
-        body: {
-          action: 'register',
-          email: safeTrim(email).toLowerCase(),
-          password: cleanedPassword,
-          metadata: {
-            name: safeTrim(metadata.name),
-            companyName: safeTrim(metadata.companyName || ''),
-            taxId: safeTrim(metadata.taxId || ''),
-            businessRegistryNumber: safeTrim(metadata.businessRegistryNumber || ''),
-            companyAddress: safeTrim(metadata.companyAddress || ''),
-            phoneNumber: safeTrim(metadata.phoneNumber || '')
-          },
-          passwordless: false,
-          requestId: crypto.randomUUID(),
-          timestamp: new Date().toISOString()
-        }
+      // Create request body
+      const requestBody = {
+        action: 'register',
+        email: safeTrim(email).toLowerCase(),
+        password: cleanedPassword,
+        metadata: {
+          name: safeTrim(metadata.name),
+          companyName: safeTrim(metadata.companyName || ''),
+          taxId: safeTrim(metadata.taxId || ''),
+          businessRegistryNumber: safeTrim(metadata.businessRegistryNumber || ''),
+          companyAddress: safeTrim(metadata.companyAddress || ''),
+          phoneNumber: safeTrim(metadata.phoneNumber || '')
+        },
+        passwordless: false,
+        requestId: crypto.randomUUID(),
+        timestamp: new Date().toISOString()
+      };
+      
+      // Get Supabase URL and anon key for the fetch request
+      const supabaseUrl = "https://sdvakfhmoaoucmhbhwvy.supabase.co";
+      const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M";
+      
+      // Create sanitized body for logging
+      const sanitizedBody = {
+        ...requestBody,
+        password: '[REDACTED]'
+      };
+      console.log("Registration request body:", sanitizedBody);
+      
+      // Send the direct fetch request
+      const response = await fetch(`${supabaseUrl}/functions/v1/dealer-auth`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseAnonKey}`,
+          "apikey": supabaseAnonKey,
+          "Cache-Control": "no-cache"
+        },
+        body: JSON.stringify(requestBody)
       });
       
-      console.log("Edge function response:", data, "Error:", error);
-
-      if (error) {
+      console.log("Signup response status:", response.status);
+      
+      // Try to get text response first for debugging
+      const responseText = await response.text();
+      console.log("Signup raw response:", responseText);
+      
+      // If response isn't successful, handle error
+      if (!response.ok) {
+        console.error("Signup failed with status:", response.status);
+        
         // Enhanced error handling for network issues
-        if (error.message?.includes('Failed to fetch') || 
-            error.message?.includes('NetworkError') ||
-            error.message?.includes('network')) {
-          console.error("Network error communicating with registration service:", error);
+        if (response.status === 0 || response.status >= 500) {
           return {
             success: false,
             error: "Network error connecting to registration service. Please try again.",
             errorType: 'network'
           };
         }
-      
+        
+        // Try to extract more specific error from response text
+        let errorMsg = "Registration failed with server error";
+        try {
+          if (responseText) {
+            const errorData = JSON.parse(responseText);
+            errorMsg = errorData.error || errorMsg;
+          }
+        } catch (e) {
+          console.error("Could not parse error response:", e);
+        }
+        
         return {
           success: false,
-          error: error.message || "Registration failed with server error"
+          error: errorMsg
+        };
+      }
+      
+      // Parse the JSON response if possible
+      let data;
+      try {
+        data = responseText ? JSON.parse(responseText) : null;
+      } catch (e) {
+        console.error("Error parsing signup response:", e);
+        return {
+          success: false,
+          error: "Invalid response format from registration service"
         };
       }
       
@@ -105,35 +153,35 @@ export const signUpDealerWithEmail = async (
       }
       
       // Parse the response
-      const response = data as any;
+      const response_data = data;
       
-      if (!response.success) {
-        console.error("Registration failed with error:", response.error);
+      if (!response_data.success) {
+        console.error("Registration failed with error:", response_data.error);
         return {
           success: false,
-          error: response.error || "Registration failed with an unknown error"
+          error: response_data.error || "Registration failed with an unknown error"
         };
       }
 
       // Check for warnings (partial success)
-      if (response.warning) {
-        console.warn("Partial success detected:", response.warning);
+      if (response_data.warning) {
+        console.warn("Partial success detected:", response_data.warning);
         return {
           success: true,
           partialSuccess: true,
-          warning: response.warning,
-          userId: response.user?.id || response.userId,
+          warning: response_data.warning,
+          userId: response_data.user?.id || response_data.userId,
           needsProfileCreation: true,
           message: "Account created with some limitations"
         };
       }
 
       // Robust user ID extraction with detailed logging
-      const userId = response.user?.id || response.userId;
+      const userId = response_data.user?.id || response_data.userId;
       console.log("Registration successful, extracted userId:", userId);
       
       if (!userId) {
-        console.warn("User ID is missing from the registration response:", response);
+        console.warn("User ID is missing from the registration response:", response_data);
       }
 
       // Registration successful

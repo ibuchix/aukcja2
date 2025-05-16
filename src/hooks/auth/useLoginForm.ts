@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { normalizeEmail } from "@/utils/dealerProfileMapping";
 import { getAuthDiagnostics } from "@/utils/auth-utils";
-import { signInWithEmailDirect } from "@/services/auth/signin";
+import { signInWithEmail } from "@/services/auth/signin";
 
 interface LoginFormValues {
   email: string;
@@ -18,7 +18,6 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
   const [error, setError] = useState<string | null>(null);
   const [loginAttempted, setLoginAttempted] = useState(false);
   const [diagnosticInfo, setDiagnosticInfo] = useState<Record<string, unknown> | null>(null);
-  const [useDirectFetch, setUseDirectFetch] = useState(false);
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
   const navigate = useNavigate();
@@ -32,12 +31,13 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
     return authInfo;
   };
   
-  // Toggle between direct fetch and supabase client
+  // Always use direct fetch now
+  const useDirectFetch = true;
   const toggleFetchMethod = () => {
-    setUseDirectFetch(prev => !prev);
+    // This is now a no-op since we always use direct fetch
     toast({
-      title: `Using ${!useDirectFetch ? "direct fetch" : "Supabase client"}`,
-      description: `Switched to ${!useDirectFetch ? "direct fetch" : "Supabase client"} for authentication testing`,
+      title: `Using direct fetch`,
+      description: `For reliable operation, we always use direct fetch for authentication`,
     });
   };
 
@@ -50,40 +50,25 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
       // Normalize email consistently
       const normalizedEmail = normalizeEmail(data.email);
       
-      console.log("Login attempt for:", normalizedEmail, "using", useDirectFetch ? "direct fetch" : "Supabase client");
+      console.log("Login attempt for:", normalizedEmail, "using direct fetch");
       
       // Get auth diagnostic info before attempt
       const beforeAuthInfo = getAuthDiagnostics();
       console.log("Auth state before login attempt:", beforeAuthInfo);
       
-      let result;
+      // Always use direct method 
+      const result = await signInWithEmail({
+        email: normalizedEmail,
+        password: data.password.trim(),
+      });
       
-      if (useDirectFetch) {
-        // Use direct fetch method for testing
-        result = await signInWithEmailDirect({
-          email: normalizedEmail,
-          password: data.password.trim(),
-        });
-        
-        // Convert to format expected by the rest of the code
-        result = {
-          success: !result.error,
-          ...result.data,
-          error: result.error?.message
-        };
-      } else {
-        // Use normal auth context method
-        result = await signIn({
-          email: normalizedEmail,
-          password: data.password.trim(),
-        });
-      }
+      const success = !result.error;
 
-      if (!result.success) {
+      if (!success) {
         console.error("Login error:", result.error);
         
         // Handle specific errors with user-friendly messages
-        let errorMessage = result.error || "Authentication failed. Please check your credentials and try again.";
+        let errorMessage = result.error?.message || "Authentication failed. Please check your credentials and try again.";
         
         if (typeof errorMessage === 'string') {
           if (errorMessage.includes("Invalid login credentials")) {

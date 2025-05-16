@@ -29,46 +29,88 @@ export function useCompleteRegistration() {
                 "First char code:", cleanedPassword.charCodeAt(0),
                 "Last char code:", cleanedPassword.charCodeAt(cleanedPassword.length - 1));
       
-      // Call the dealer-auth edge function with register action
-      // Pass the body as a direct object without JSON.stringify
-      const { data, error } = await supabase.functions.invoke('dealer-auth', {
-        body: {
-          action: 'register',
-          email: values.email.trim().toLowerCase(),
-          password: cleanedPassword,
-          metadata: {
-            name: values.supervisorName.trim(),
-            companyName: values.companyName.trim(),
-            taxId: values.taxId.trim(),
-            businessRegistryNumber: values.businessRegistryNumber.trim(),
-            companyAddress: values.companyAddress.trim(),
-            phoneNumber: values.phoneNumber.trim()
-          },
-          requestId: crypto.randomUUID(),
-          timestamp: new Date().toISOString()
+      // Create request body 
+      const requestBody = {
+        action: 'register',
+        email: values.email.trim().toLowerCase(),
+        password: cleanedPassword,
+        metadata: {
+          name: values.supervisorName.trim(),
+          companyName: values.companyName.trim(),
+          taxId: values.taxId.trim(),
+          businessRegistryNumber: values.businessRegistryNumber.trim(),
+          companyAddress: values.companyAddress.trim(),
+          phoneNumber: values.phoneNumber.trim()
         },
+        requestId: crypto.randomUUID(),
+        timestamp: new Date().toISOString()
+      };
+      
+      // Get Supabase URL and anon key for the fetch request
+      const supabaseUrl = "https://sdvakfhmoaoucmhbhwvy.supabase.co";
+      const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M";
+      
+      // Build the full URL
+      const url = `${supabaseUrl}/functions/v1/dealer-auth`;
+      
+      console.log("Direct fetch URL:", url);
+      
+      // Create sanitized body for logging
+      const sanitizedBody = {
+        ...requestBody,
+        password: '[REDACTED]'
+      };
+      console.log("Registration request body:", sanitizedBody);
+      
+      // Send the direct fetch request
+      const response = await fetch(url, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseAnonKey}`,
+          "apikey": supabaseAnonKey,
           "Cache-Control": "no-cache"
-        }
+        },
+        body: JSON.stringify(requestBody)
       });
       
-      if (error) {
-        console.error("Edge function registration error:", error);
-        
-        // Enhanced error handling for network issues
-        if (error.message?.includes('Failed to fetch') || 
-            error.message?.includes('NetworkError') ||
-            error.message?.includes('network')) {
-          return {
-            success: false,
-            error: "Network error connecting to registration service. Please try again.",
-          };
-        }
+      // Log response status and headers
+      console.log("Registration response status:", response.status);
       
+      // Try to get text response first for debugging
+      const responseText = await response.text();
+      console.log("Registration raw response:", responseText);
+      
+      // If response isn't successful, handle error
+      if (!response.ok) {
+        console.error("Registration failed with status:", response.status);
+        
+        // Try to extract more specific error from response text
+        let errorMsg = "Registration failed with server error";
+        try {
+          if (responseText) {
+            const errorData = JSON.parse(responseText);
+            errorMsg = errorData.error || errorMsg;
+          }
+        } catch (e) {
+          console.error("Could not parse error response:", e);
+        }
+        
         return {
           success: false,
-          error: error.message || "Registration failed with server error"
+          error: errorMsg
+        };
+      }
+      
+      // Parse the JSON response if possible
+      let data;
+      try {
+        data = responseText ? JSON.parse(responseText) : null;
+      } catch (e) {
+        console.error("Error parsing registration response:", e);
+        return {
+          success: false,
+          error: "Invalid response format from registration service"
         };
       }
       
@@ -81,22 +123,22 @@ export function useCompleteRegistration() {
       }
       
       // Parse the response
-      const response = data as any;
+      const response_data = data;
       
-      if (!response.success) {
-        console.error("Registration failed with error:", response.error);
+      if (!response_data.success) {
+        console.error("Registration failed with error:", response_data.error);
         return {
           success: false,
-          error: response.error || "Registration failed with an unknown error"
+          error: response_data.error || "Registration failed with an unknown error"
         };
       }
 
       // Check for auto-generated session
-      if (response.session) {
+      if (response_data.session) {
         console.log("Registration successful with automatic session, user is now logged in");
         return {
           success: true,
-          userId: response.userId || response.user?.id,
+          userId: response_data.userId || response_data.user?.id,
           loginSuccessful: true
         };
       }
@@ -115,7 +157,7 @@ export function useCompleteRegistration() {
         
         return {
           success: true,
-          userId: response.userId || response.user?.id,
+          userId: response_data.userId || response_data.user?.id,
           loginSuccessful
         };
       } catch (loginError) {
@@ -123,7 +165,7 @@ export function useCompleteRegistration() {
         
         return {
           success: true,
-          userId: response.userId || response.user?.id,
+          userId: response_data.userId || response_data.user?.id,
           loginSuccessful: false
         };
       }

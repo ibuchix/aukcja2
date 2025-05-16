@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { preparePassword } from "@/utils/auth-utils";
 
@@ -8,7 +7,7 @@ interface SignInParams {
 }
 
 export const signInWithEmail = async ({ email, password }: SignInParams) => {
-  console.log("Starting edge function sign in process");
+  console.log("Starting direct fetch sign in process");
   
   try {
     // Use consistent password preparation
@@ -28,67 +27,85 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
       timestamp: new Date().toISOString()
     };
     
+    // Get Supabase URL and anon key for the fetch request
+    const supabaseUrl = "https://sdvakfhmoaoucmhbhwvy.supabase.co";
+    const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M";
+    
     // Log the request we're about to send (sanitized)
     console.log("Sending login request:", {
       ...requestBody,
       password: "[REDACTED]"
     });
     
-    // Call the dealer-auth edge function WITHOUT stringifying the body
-    const { data, error } = await supabase.functions.invoke('dealer-auth', {
-      body: requestBody, // Pass the object directly
+    // Build the full URL
+    const url = `${supabaseUrl}/functions/v1/dealer-auth`;
+    
+    console.log("Direct fetch URL:", url);
+    
+    // Send the direct fetch request
+    const response = await fetch(url, {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${supabaseAnonKey}`,
+        "apikey": supabaseAnonKey,
         "Cache-Control": "no-cache"
-      }
+      },
+      body: JSON.stringify(requestBody)
     });
     
-    if (error) {
-      console.error("Edge function login error:", error);
-      console.error("Sign in error details:", error);
+    // Log response status and headers
+    console.log("Login response status:", response.status);
+    console.log("Login response headers:", Object.fromEntries([...response.headers.entries()]));
+    
+    // Try to get text response first for debugging
+    const responseText = await response.text();
+    console.log("Login raw response:", responseText);
+    
+    // If response isn't successful, handle error
+    if (!response.ok) {
+      console.error("Login failed with status:", response.status);
       
-      // Check if error contains a more specific error message from the edge function
-      let errorMessage = error.message;
+      // Try to extract more specific error from response text
+      let errorMsg = "Authentication failed";
+      let errorStatus = response.status;
+      let errorName = 'AuthError';
+      
       try {
-        // Try to extract the error message from the response
-        if (typeof error.message === 'string' && error.message.includes('{')) {
-          const errorJson = JSON.parse(error.message.substring(error.message.indexOf('{')));
-          if (errorJson.error) {
-            errorMessage = errorJson.error;
-          }
+        if (responseText) {
+          const errorData = JSON.parse(responseText);
+          errorMsg = errorData.error || errorMsg;
         }
       } catch (e) {
-        // If parsing fails, use the original error message
-      }
-      
-      if (error.message?.includes('Failed to fetch') || 
-          error.message?.includes('NetworkError') ||
-          error.message?.includes('network')) {
-        return {
-          error: { 
-            message: "Network error connecting to authentication service. Please try again.", 
-            status: 503,
-            name: 'NetworkError'
-          }
-        };
+        console.error("Could not parse error response:", e);
       }
       
       // For 401 errors, provide more user-friendly message
-      if (error.status === 401) {
-        return {
-          error: { 
-            message: "Invalid email or password. Please check your credentials and try again.", 
-            status: 401,
-            name: 'InvalidCredentials'
-          }
-        };
+      if (errorStatus === 401) {
+        errorMsg = "Invalid email or password. Please check your credentials and try again.";
+        errorName = 'InvalidCredentials';
       }
       
       return {
         error: { 
-          message: errorMessage || "Login failed", 
-          status: error.status || 500,
-          name: error.name || 'AuthError'
+          message: errorMsg,
+          status: errorStatus,
+          name: errorName
+        }
+      };
+    }
+    
+    // Parse the JSON response if possible
+    let data;
+    try {
+      data = responseText ? JSON.parse(responseText) : null;
+    } catch (e) {
+      console.error("Error parsing login response:", e);
+      return {
+        error: { 
+          message: "Invalid response format", 
+          status: response.status,
+          name: 'ParseError'
         }
       };
     }
@@ -104,37 +121,40 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
       };
     }
     
-    // Parse the response
-    const response = data as any;
-    
-    if (!response.success) {
-      console.error("Login failed with edge function error:", response.error);
+    // Check for success flag in the response
+    if (data && !data.success) {
       return {
         error: { 
-          message: response.error || "Authentication failed", 
+          message: data.error || "Authentication failed", 
           status: 401,
           name: 'AuthError'
         }
       };
     }
     
-    // Store the session in localStorage under the correct key
-    if (response.session) {
-      // The session is automatically stored by the client library,
-      // but we log some diagnostic information
-      console.log("Edge function login successful:", response.user?.id);
+    // Store the session in localStorage under the correct key if needed
+    if (data.session) {
+      console.log("Login successful with session:", data.user?.id);
+      
+      // Set the auth session in Supabase client
+      // This helps keep the rest of the app working with the session
+      await supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token
+      });
     } else {
-      console.warn("Edge function login returned success but no session");
+      console.warn("Login returned success but no session");
     }
     
+    // Return success data in same format as supabase client would
     return {
       data: {
-        user: response.user,
-        session: response.session
+        user: data.user,
+        session: data.session
       }
     };
   } catch (err) {
-    console.error("Exception during edge function login:", err);
+    console.error("Exception during login:", err);
     return {
       error: { 
         message: err instanceof Error ? err.message : "Unknown login error", 
@@ -145,7 +165,7 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
   }
 };
 
-// New direct fetch implementation for comparison testing
+// Keep the direct fetch implementation for testing
 export const signInWithEmailDirect = async ({ email, password }: SignInParams) => {
   console.log("Starting direct fetch login process");
   
