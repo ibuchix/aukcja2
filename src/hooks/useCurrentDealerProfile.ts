@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { isValidRecord } from '@/utils/supabaseHelpers';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DealerProfile {
   id: string;
@@ -22,7 +23,8 @@ export function useCurrentDealerProfile() {
   const [dealerProfile, setDealerProfile] = useState<DealerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const { refreshSession } = useAuth();
+  
   useEffect(() => {
     async function fetchDealerProfile() {
       try {
@@ -38,7 +40,27 @@ export function useCurrentDealerProfile() {
           return;
         }
         
-        // Fetch dealer profile
+        // First try using the security definer function (bypasses RLS)
+        try {
+          const { data: rpcData, error: rpcError } = await supabase
+            .rpc('get_dealer_by_user_id', { p_user_id: session.user.id });
+          
+          if (!rpcError && rpcData) {
+            setDealerProfile(rpcData as DealerProfile);
+            setIsLoading(false);
+            return;
+          } else {
+            console.warn('Could not fetch dealer profile using RPC, falling back to direct query', rpcError);
+            
+            // If RPC failed, try refreshing the session
+            await refreshSession();
+          }
+        } catch (rpcErr) {
+          console.error('Error with RPC method:', rpcErr);
+          // Continue to fallback
+        }
+        
+        // Fallback to direct query
         const { data, error } = await supabase
           .from('dealers')
           .select('*')
@@ -63,7 +85,7 @@ export function useCurrentDealerProfile() {
     }
     
     fetchDealerProfile();
-  }, []);
+  }, [refreshSession]);
   
   return {
     dealerProfile,

@@ -49,6 +49,21 @@ export function useSignInHandler() {
         const afterState = getAuthDiagnostics();
         console.log("Auth state after successful signin:", afterState);
         
+        // After successful login, refresh the session to ensure RLS policies work correctly
+        try {
+          console.log("Refreshing session after login");
+          const { data: refreshData } = await supabase.auth.refreshSession();
+          
+          if (refreshData?.session) {
+            console.log("Session successfully refreshed after login");
+          } else {
+            console.log("Session refresh did not return new session data");
+          }
+        } catch (refreshError) {
+          console.warn("Error refreshing session after login:", refreshError);
+          // Continue anyway as the initial login worked
+        }
+        
         // Return successful result
         return { 
           success: true, 

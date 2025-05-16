@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { normalizeEmail } from "@/utils/dealerProfileMapping";
-import { getAuthDiagnostics } from "@/utils/auth-utils";
+import { getAuthDiagnostics, clearAuthStorage } from "@/utils/auth-utils";
 import { signInWithEmail } from "@/services/auth/signin";
 
 interface LoginFormValues {
@@ -17,11 +17,12 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loginAttempted, setLoginAttempted] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
   const [diagnosticInfo, setDiagnosticInfo] = useState<Record<string, unknown> | null>(null);
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, refreshSession } = useAuth();
   const { toast } = useToast();
 
   // Check auth diagnostics
@@ -46,6 +47,7 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
       setIsLoading(true);
       setError(null);
       setLoginAttempted(true);
+      setLoginSuccess(false);
 
       // Normalize email consistently
       const normalizedEmail = normalizeEmail(data.email);
@@ -86,16 +88,28 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
         return;
       }
 
-      // Success case
-      console.log("Login successful, redirecting to:", returnUrl);
+      // Login success! Set flag and show toast
+      setLoginSuccess(true);
+      console.log("Login successful, will redirect to:", returnUrl);
       
       toast({
         title: "Login successful",
         description: "Welcome back!",
       });
       
-      // Handle successful login with navigation
-      navigate(returnUrl);
+      // Before redirecting, force a session refresh to ensure fresh JWT
+      try {
+        await refreshSession();
+        console.log("Session refreshed after login before redirect");
+      } catch (refreshErr) {
+        console.warn("Could not refresh session before redirect:", refreshErr);
+      }
+      
+      // Small delay to ensure the session is properly established
+      setTimeout(() => {
+        // Handle successful login with navigation
+        navigate(returnUrl);
+      }, 300);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
       console.error("Login exception:", err);
@@ -122,10 +136,12 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
     error,
     errors,
     loginAttempted,
+    loginSuccess,
     diagnosticInfo,
     checkAuthDiagnostics,
     setError,
     useDirectFetch,
-    toggleFetchMethod
+    toggleFetchMethod,
+    clearStorage: clearAuthStorage
   };
 }

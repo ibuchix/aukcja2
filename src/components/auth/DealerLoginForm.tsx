@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "../ui/button";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
+import { RefreshCcw } from "lucide-react";
 
 export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl?: string }) {
   const { 
@@ -21,10 +22,12 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
     error, 
     errors,
     loginAttempted,
+    loginSuccess,
     diagnosticInfo,
     checkAuthDiagnostics,
     useDirectFetch,
-    toggleFetchMethod
+    toggleFetchMethod,
+    clearStorage
   } = useLoginForm(returnUrl);
   
   const { toast } = useToast();
@@ -38,17 +41,16 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
     }
   }, []);
 
-  // Export loginAttempted and error for parent component to use
+  // Watch for successful login to ensure we redirect
   useEffect(() => {
-    // Inform parent component about login attempt result
-    return () => {
-      console.log("Login form unmounting, attempted:", loginAttempted, "error:", error);
-    };
-  }, [loginAttempted, error]);
+    if (loginSuccess) {
+      console.log("Login successful, should redirect to:", returnUrl);
+    }
+  }, [loginSuccess, returnUrl]);
   
   // Function to handle clearing auth storage
   const handleClearAuthStorage = () => {
-    clearAuthStorage();
+    clearStorage();
     checkAuthDiagnostics();
     toast({
       title: "Auth storage cleared",
@@ -56,34 +58,28 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
     });
   };
   
-  // Handle debug action button click
-  const handleDebugAction = async () => {
+  // Handle refresh token action
+  const handleRefreshToken = async () => {
     try {
-      const response = await fetch('https://sdvakfhmoaoucmhbhwvy.supabase.co/functions/v1/dealer-auth', {
+      // This will trigger a refresh in the useAuth context
+      const response = await fetch('https://sdvakfhmoaoucmhbhwvy.supabase.co/auth/v1/token?grant_type=refresh_token', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M`,
-          "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M",
-        },
-        body: JSON.stringify({
-          action: "debug",
-          requestId: crypto.randomUUID(),
-          timestamp: new Date().toISOString()
-        })
+          "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M"
+        }
       });
       
-      const data = await response.json();
-      console.log("Debug endpoint response:", data);
+      checkAuthDiagnostics(); // Re-check auth state
       
       toast({
-        title: "Debug info",
-        description: "See console for details",
+        title: "Token refresh attempted",
+        description: "Check console for details",
       });
     } catch (error) {
-      console.error("Debug action failed:", error);
+      console.error("Token refresh failed:", error);
       toast({
-        title: "Debug failed",
+        title: "Token refresh failed",
         description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive"
       });
@@ -131,10 +127,10 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
             type="button" 
             variant="outline" 
             size="sm" 
-            onClick={handleDebugAction}
+            onClick={handleRefreshToken}
             className="text-xs"
           >
-            Test Debug Endpoint
+            <RefreshCcw className="w-3 h-3 mr-1" /> Refresh Token
           </Button>
         </div>
       </div>

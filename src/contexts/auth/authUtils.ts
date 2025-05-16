@@ -93,16 +93,31 @@ export const fetchDealerProfile = async (userId: string) => {
       profile = profileData as Profile;
     }
 
-    // Then get the dealer profile 
+    // Use the security definer function to get dealer profile instead of direct table access
+    // This bypasses RLS policies and ensures access even if JWT claims aren't fully propagated
     const { data: dealerData, error: dealerError } = await supabase
-      .from('dealers')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
+      .rpc('get_dealer_by_user_id', { p_user_id: userId });
 
-    if (dealerError && dealerError.code !== 'PGRST116') {
-      // PGRST116 is "not found" which is expected if dealer profile doesn't exist yet
-      console.error('Error fetching dealer profile:', dealerError);
+    if (dealerError) {
+      console.error('Error fetching dealer profile using RPC:', dealerError);
+      
+      // Log more diagnostic information
+      console.log('[Auth Debug] Current session:', await supabase.auth.getSession());
+      console.log('[Auth Debug] User ID being queried:', userId);
+      
+      // Fall back to direct query as a last resort
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('dealers')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+        
+      if (fallbackError && fallbackError.code !== 'PGRST116') {
+        console.error('Fallback dealer query also failed:', fallbackError);
+      } else if (fallbackData) {
+        console.log('Fallback dealer query succeeded when RPC failed');
+        return { profile, dealer: fallbackData };
+      }
     }
 
     let dealer = null;
