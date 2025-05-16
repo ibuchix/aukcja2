@@ -1,7 +1,6 @@
 
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { getAuthDiagnostics, clearAuthStorage } from "@/utils/auth-utils";
 
@@ -42,9 +41,6 @@ export function AuthTroubleshooter() {
             </Button>
             <Button size="sm" variant="outline" onClick={handleClearAuth}>
               Clear Auth Storage
-            </Button>
-            <Button size="sm" variant="outline" asChild>
-              <Link to="/test-auth">Test Auth Utility</Link>
             </Button>
           </div>
 

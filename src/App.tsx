@@ -9,9 +9,6 @@ import DealerDashboard from "./pages/dealer/Dashboard";
 import CompleteRegistration from "./pages/CompleteRegistration";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Add the import for the test auth page
-import TestAuth from "./pages/TestAuth";
-
 function App() {
   return (
     <>
@@ -21,7 +18,6 @@ function App() {
         
         {/* Authentication routes */}
         <Route path="/auth" element={<Auth />} />
-        <Route path="/test-auth" element={<TestAuth />} />
         <Route
           path="/complete-registration"
           element={
