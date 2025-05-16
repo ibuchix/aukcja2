@@ -19,6 +19,20 @@ interface DealerProfile {
   updated_at: string;
 }
 
+// Type guard to check if a JSON response matches our DealerProfile structure
+function isDealerProfile(data: any): data is DealerProfile {
+  return (
+    data !== null &&
+    typeof data === 'object' &&
+    'id' in data &&
+    'user_id' in data &&
+    'dealership_name' in data &&
+    'supervisor_name' in data &&
+    typeof data.id === 'string' &&
+    typeof data.user_id === 'string'
+  );
+}
+
 export function useCurrentDealerProfile() {
   const [dealerProfile, setDealerProfile] = useState<DealerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,9 +60,14 @@ export function useCurrentDealerProfile() {
             .rpc('get_dealer_by_user_id', { p_user_id: session.user.id });
           
           if (!rpcError && rpcData) {
-            setDealerProfile(rpcData as DealerProfile);
-            setIsLoading(false);
-            return;
+            // Use our type guard to ensure the response has the correct structure
+            if (isDealerProfile(rpcData)) {
+              setDealerProfile(rpcData);
+              setIsLoading(false);
+              return;
+            } else {
+              console.warn('RPC data structure does not match DealerProfile type', rpcData);
+            }
           } else {
             console.warn('Could not fetch dealer profile using RPC, falling back to direct query', rpcError);
             
