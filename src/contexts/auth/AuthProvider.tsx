@@ -169,7 +169,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
       }
       
       const result = await memoizedRefreshSession();
-      // Fixed: Use proper type checking with the discriminated union
+      // Fix: Use if/else instead of ternary to allow TypeScript to properly narrow the type
       if (result.success) {
         return Promise.resolve();
       } else {
