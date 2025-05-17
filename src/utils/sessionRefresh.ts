@@ -6,7 +6,9 @@ import { Session } from "@supabase/supabase-js";
 let refreshPromise: Promise<RefreshResult> | null = null;
 let isRefreshing = false;
 let lastRefreshTime = 0;
+let refreshFailureCount = 0;
 const MIN_REFRESH_INTERVAL = 10000; // Minimum 10 seconds between refreshes
+const MAX_FAILURES = 3; // Maximum consecutive failures before requiring manual intervention
 const AUTH_STORAGE_KEY = 'dealer_auth_token';
 
 export type RefreshResult = {
@@ -21,6 +23,17 @@ export type RefreshResult = {
  * Implements a queueing mechanism to prevent multiple concurrent refreshes
  */
 export async function refreshAuthToken(): Promise<RefreshResult> {
+  // Circuit breaker pattern - stop retry if we've had too many consecutive failures
+  if (refreshFailureCount >= MAX_FAILURES) {
+    console.log("Too many refresh failures, manual intervention required");
+    return { 
+      success: false, 
+      session: null, 
+      error: new Error("Maximum refresh failures exceeded"),
+      needsReauth: true
+    };
+  }
+  
   // Implement refresh queue to prevent multiple simultaneous refreshes
   if (isRefreshing) {
     console.log("Token refresh already in progress, queueing this request");
@@ -46,6 +59,7 @@ export async function refreshAuthToken(): Promise<RefreshResult> {
         
         if (error) {
           console.error("Error refreshing token:", error);
+          refreshFailureCount++; // Increment failure counter
           return { 
             success: false, 
             session: null, 
@@ -56,15 +70,18 @@ export async function refreshAuthToken(): Promise<RefreshResult> {
         
         if (!data.session) {
           console.warn("No session returned after refresh");
+          refreshFailureCount++; // Increment failure counter
           return { success: false, session: null, needsReauth: true };
         }
         
         console.log("Token refreshed successfully, expires:", 
                   new Date(data.session.expires_at! * 1000).toLocaleString());
         
+        refreshFailureCount = 0; // Reset failure counter on success
         return { success: true, session: data.session };
       } catch (err) {
         console.error("Exception during token refresh:", err);
+        refreshFailureCount++; // Increment failure counter
         return { 
           success: false, 
           session: null, 

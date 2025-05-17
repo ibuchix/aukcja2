@@ -44,6 +44,31 @@ export const DealerProfileProvider: React.FC<{ children: React.ReactNode }> = ({
     [];
     
   const profileIsComplete = missingFields.length === 0;
+  
+  // Function to classify error type for better handling
+  const getErrorType = (errorMessage: string | null): 'permission' | 'network' | 'data' | 'auth' | 'unknown' => {
+    if (!errorMessage) return 'unknown';
+    
+    const lowerError = errorMessage.toLowerCase();
+    
+    if (lowerError.includes('permission') || lowerError.includes('403') || lowerError.includes('rls')) {
+      return 'permission';
+    }
+    
+    if (lowerError.includes('network') || lowerError.includes('fetch') || lowerError.includes('timeout')) {
+      return 'network';
+    }
+    
+    if (lowerError.includes('token') || lowerError.includes('auth') || lowerError.includes('jwt')) {
+      return 'auth';
+    }
+    
+    if (lowerError.includes('invalid') || lowerError.includes('missing') || lowerError.includes('format')) {
+      return 'data';
+    }
+    
+    return 'unknown';
+  };
 
   // Function to initiate profile recovery process
   const initiateProfileRecovery = async () => {
@@ -57,7 +82,6 @@ export const DealerProfileProvider: React.FC<{ children: React.ReactNode }> = ({
   // Function to refresh profile data
   const refreshProfile = async () => {
     try {
-      // This logic would depend on how your refresh mechanism works
       console.log("Refreshing profile data");
       // For now we'll just update the timestamp to trigger a refresh 
       await updateProfileData({
@@ -74,6 +98,7 @@ export const DealerProfileProvider: React.FC<{ children: React.ReactNode }> = ({
     rawProfile,
     isLoading,
     error,
+    errorType: error ? getErrorType(error) : 'unknown',
     fetchAttempted,
     profileStatus,
     needsRecovery,

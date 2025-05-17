@@ -2,10 +2,11 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function DealerProfileSkeleton() {
+  // Fixed height container to prevent layout shifts
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 min-h-[200px]">
       {[1, 2, 3].map((i) => (
-        <div key={i}>
+        <div key={i} className="animate-pulse">
           <Skeleton className="h-6 w-36 mb-4" />
           <div className="space-y-3">
             <Skeleton className="h-4 w-full" />

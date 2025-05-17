@@ -10,15 +10,15 @@ import { DealerProfile } from "@/components/dealer/DealerProfile";
 
 const DealerDashboard = () => {
   const { user } = useAuth();
-  const { displayProfile, isLoading, error, profileStatus } = useDealerProfile();
+  const { displayProfile, isLoading } = useDealerProfile();
 
   return (
     <DashboardLayout title="Dealer Dashboard">
       <div className="space-y-6">
-        {/* Dealer Profile Information */}
+        {/* Dealer Profile Information - handles its own loading/error states */}
         <DealerProfile />
         
-        {/* Welcome Card */}
+        {/* Welcome Card - uses data from centralized profile provider */}
         <DealerWelcomeCard 
           dealerName={displayProfile?.dealership_name || "Dealer"}
           isLoading={isLoading}
@@ -27,7 +27,7 @@ const DealerDashboard = () => {
         {/* Stats Overview Section */}
         <StatsSection />
         
-        {/* Profile Information Section */}
+        {/* Profile Information Section - uses data from centralized profile provider */}
         <ProfileInfoSection />
       </div>
     </DashboardLayout>
