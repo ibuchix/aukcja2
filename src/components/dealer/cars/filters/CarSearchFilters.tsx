@@ -1,8 +1,7 @@
-
 import React, { useState } from "react";
 import { FilterBar, FilterSearch } from "../../ui/FilterBar";
 import { Button } from "@/components/ui/button";
-import { Car, SlidersHorizontal, Filter } from "lucide-react";
+import { Car } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { AuctionFilters } from "../../auction/types";
 import { Badge } from "@/components/ui/badge";
@@ -101,7 +100,6 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
   searchQuery
 }) => {
   const [filters, setFilters] = useState<AuctionFilters>({});
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedMake, setSelectedMake] = useState<string | null>(null);
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [yearRange, setYearRange] = useState<[number, number] | null>(null);
@@ -212,84 +210,65 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
             <SelectItem value="price-low">Price: Low to High</SelectItem>
           </SelectContent>
         </Select>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              >
-                <Filter className="h-4 w-4 mr-1" />
-                {showAdvancedFilters ? "Hide Filters" : "Show Filters"}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Toggle advanced filtering options</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
       </FilterBar>
 
-      {showAdvancedFilters && (
-        <div className="bg-muted/30 rounded-lg p-4 space-y-6">
-          {/* Popular Makes Section */}
-          <div>
-            <h3 className="font-medium mb-3 flex items-center">
-              <Car className="w-4 h-4 mr-2" /> Popular Makes
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {POPULAR_MAKES.map(make => (
-                <Badge
-                  key={make.id}
-                  variant={selectedMake === make.id ? "default" : "outline"}
-                  className="cursor-pointer hover:bg-muted/80"
-                  onClick={() => handleMakeClick(make.id)}
-                >
-                  {make.name}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          {/* Popular Models Section (only show if a make is selected) */}
-          {selectedMake && POPULAR_MODELS[selectedMake] && (
-            <div>
-              <h3 className="font-medium mb-3">Popular {POPULAR_MAKES.find(m => m.id === selectedMake)?.name} Models</h3>
-              <div className="flex flex-wrap gap-2">
-                {POPULAR_MODELS[selectedMake].map(model => (
-                  <Badge
-                    key={model.id}
-                    variant={selectedModels.includes(model.id) ? "default" : "outline"}
-                    className="cursor-pointer hover:bg-muted/80"
-                    onClick={() => handleModelClick(model.id)}
-                  >
-                    {model.name}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Year Range Section */}
-          <div>
-            <h3 className="font-medium mb-3">Year Range</h3>
-            <div className="flex flex-wrap gap-2">
-              {YEAR_RANGES.map(range => (
-                <Badge
-                  key={range.id}
-                  variant={yearRange && yearRange[0] === range.min && yearRange[1] === range.max ? "default" : "outline"}
-                  className="cursor-pointer hover:bg-muted/80"
-                  onClick={() => handleYearRangeClick(range.min, range.max)}
-                >
-                  {range.name}
-                </Badge>
-              ))}
-            </div>
+      {/* Always show filters - removed toggle */}
+      <div className="bg-muted/30 rounded-lg p-4 space-y-6">
+        {/* Popular Makes Section */}
+        <div>
+          <h3 className="font-medium mb-3 flex items-center">
+            <Car className="w-4 h-4 mr-2" /> Popular Makes
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {POPULAR_MAKES.map(make => (
+              <Badge
+                key={make.id}
+                variant={selectedMake === make.id ? "default" : "outline"}
+                className="cursor-pointer hover:bg-muted/80"
+                onClick={() => handleMakeClick(make.id)}
+              >
+                {make.name}
+              </Badge>
+            ))}
           </div>
         </div>
-      )}
+
+        {/* Popular Models Section (only show if a make is selected) */}
+        {selectedMake && POPULAR_MODELS[selectedMake] && (
+          <div>
+            <h3 className="font-medium mb-3">Popular {POPULAR_MAKES.find(m => m.id === selectedMake)?.name} Models</h3>
+            <div className="flex flex-wrap gap-2">
+              {POPULAR_MODELS[selectedMake].map(model => (
+                <Badge
+                  key={model.id}
+                  variant={selectedModels.includes(model.id) ? "default" : "outline"}
+                  className="cursor-pointer hover:bg-muted/80"
+                  onClick={() => handleModelClick(model.id)}
+                >
+                  {model.name}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Year Range Section */}
+        <div>
+          <h3 className="font-medium mb-3">Year Range</h3>
+          <div className="flex flex-wrap gap-2">
+            {YEAR_RANGES.map(range => (
+              <Badge
+                key={range.id}
+                variant={yearRange && yearRange[0] === range.min && yearRange[1] === range.max ? "default" : "outline"}
+                className="cursor-pointer hover:bg-muted/80"
+                onClick={() => handleYearRangeClick(range.min, range.max)}
+              >
+                {range.name}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -10,6 +10,10 @@ import { DealerProfileIncomplete } from "./profile/DealerProfileIncomplete";
 import { DealerProfileNotAvailable } from "./profile/DealerProfileNotAvailable";
 import { DealerProfileSkeleton } from "./profile/DealerProfileSkeleton";
 import { sessionCircuitBreaker } from "@/utils/sessionCircuitBreaker";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, UserCircle2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export function DealerProfile() {
   const { 
@@ -21,10 +25,11 @@ export function DealerProfile() {
     needsRecovery,
     initiateProfileRecovery,
     profileIsComplete,
+    missingFields,
     refreshProfile
   } = useDealerProfile();
   
-  const { refreshSession } = useAuth();
+  const { refreshSession, user } = useAuth();
   const { toast } = useToast();
   
   // Track refresh state using useState to trigger re-renders
@@ -40,6 +45,21 @@ export function DealerProfile() {
   const maxRefreshAttempts = 1; // Limit to only one retry
   const hasShownToast = useRef(false);
   const minRefreshInterval = 10000; // 10 seconds between refresh attempts
+
+  // Debug logging
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log("DealerProfile component state:", {
+        user: user?.id,
+        profileStatus,
+        error,
+        displayProfile: displayProfile ? 'exists' : 'null',
+        fetchAttempted,
+        profileIsComplete,
+        missingFields
+      });
+    }
+  }, [user, profileStatus, error, displayProfile, fetchAttempted, profileIsComplete, missingFields]);
 
   // Attempt to refresh profile data if there's an error, with debouncing
   useEffect(() => {
@@ -141,6 +161,40 @@ export function DealerProfile() {
     }
   }, [error, fetchAttempted, isLoading, refreshSession, refreshProfile, toast, refreshState]);
 
+  // Show a more visible message when no profile exists
+  if (!displayProfile && fetchAttempted && !isLoading && profileStatus === 'not_found') {
+    return (
+      <Card className="mb-6 border-amber-200 bg-amber-50">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center text-xl">
+            <UserCircle2 className="h-6 w-6 mr-2 text-amber-600" /> 
+            Profile Setup Required
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4">Your dealer profile needs to be set up before you can access all features.</p>
+          
+          <div className="flex items-center gap-3 mt-4">
+            <Button 
+              onClick={initiateProfileRecovery}
+              className="bg-primary hover:bg-primary/90"
+            >
+              Complete Your Profile
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              onClick={() => refreshProfile()}
+              className="border-amber-300"
+            >
+              Retry Loading Profile
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   // Show loading state during initial load or refresh
   if (isLoading || refreshState.isRefreshing) {
     return <DealerProfileLoading />;
@@ -171,7 +225,8 @@ export function DealerProfile() {
     return <DealerProfileInfo displayProfile={displayProfile} />;
   }
 
-  if (profileStatus === "not_found" && fetchAttempted) {
+  // Show profile incomplete with appropriate message based on status
+  if ((profileStatus === "not_found" || profileStatus === "incomplete") && fetchAttempted) {
     return (
       <DealerProfileIncomplete 
         profileStatus={profileStatus}
@@ -181,16 +236,7 @@ export function DealerProfile() {
     );
   }
 
-  if (profileStatus === "incomplete" && fetchAttempted) {
-    return (
-      <DealerProfileIncomplete 
-        profileStatus={profileStatus}
-        needsRecovery={needsRecovery}
-        initiateProfileRecovery={initiateProfileRecovery}
-      />
-    );
-  }
-
+  // Fallback case - profile data is missing but we tried to fetch
   if (!displayProfile && fetchAttempted) {
     return (
       <DealerProfileNotAvailable

@@ -1,8 +1,9 @@
 
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ArrowRight, UserCircle2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DealerProfileIncompleteProps {
   profileStatus: string;
@@ -20,36 +21,70 @@ export function DealerProfileIncomplete({
   // Not found profile case
   if (profileStatus === "not_found") {
     return (
-      <Alert className="mb-6 border-amber-200 bg-amber-50">
-        <AlertCircle className="h-4 w-4 text-amber-600" />
-        <AlertTitle className="text-amber-800">Profile not found</AlertTitle>
-        <AlertDescription className="space-y-4">
-          <p>We couldn't find your dealer profile. You need to complete your registration.</p>
+      <Card className="mb-6 border-amber-200 bg-amber-50 shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center text-lg font-semibold text-amber-800">
+            <UserCircle2 className="h-5 w-5 mr-2 text-amber-600" />
+            Profile Setup Required
+          </CardTitle>
+          <CardDescription className="text-amber-700">
+            Your dealer profile needs to be created to unlock all features.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pb-2">
+          <p className="text-sm text-amber-700">
+            We couldn't find your dealer profile. Please complete your registration to access all platform features.
+          </p>
+        </CardContent>
+        <CardFooter>
           {needsRecovery ? (
-            <Button onClick={initiateProfileRecovery} variant="default">
-              Complete Your Profile
+            <Button 
+              onClick={initiateProfileRecovery} 
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+              size="sm"
+            >
+              Complete Your Profile <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={() => navigate('/complete-registration')} variant="default">
-              Complete Registration
+            <Button 
+              onClick={() => navigate('/complete-registration')} 
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+              size="sm"
+            >
+              Complete Registration <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           )}
-        </AlertDescription>
-      </Alert>
+        </CardFooter>
+      </Card>
     );
   }
   
   // Incomplete profile case
   return (
-    <Alert className="mb-6 border-amber-200 bg-amber-50">
-      <AlertCircle className="h-4 w-4 text-amber-600" />
-      <AlertTitle className="text-amber-800">Incomplete Profile</AlertTitle>
-      <AlertDescription className="space-y-4">
-        <p>Your dealer profile is missing important information. Please complete your profile.</p>
-        <Button onClick={initiateProfileRecovery} variant="default">
-          Update Your Profile
+    <Card className="mb-6 border-amber-200 bg-amber-50 shadow-sm">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center text-lg font-semibold text-amber-800">
+          <UserCircle2 className="h-5 w-5 mr-2 text-amber-600" />
+          Incomplete Profile
+        </CardTitle>
+        <CardDescription className="text-amber-700">
+          Your dealer profile is missing important information.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pb-2">
+        <p className="text-sm text-amber-700">
+          Please update your profile with the required information to ensure full access to all features.
+        </p>
+      </CardContent>
+      <CardFooter>
+        <Button 
+          onClick={initiateProfileRecovery} 
+          className="bg-amber-600 hover:bg-amber-700 text-white"
+          size="sm"
+        >
+          Update Your Profile <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
-      </AlertDescription>
-    </Alert>
+      </CardFooter>
+    </Card>
   );
 }

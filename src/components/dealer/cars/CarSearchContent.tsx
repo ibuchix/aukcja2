@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { CarSearchInfoPanel } from "./info/CarSearchInfoPanel";
 import { CarListingsGrid } from "./listing/CarListingsGrid";
 import { RefreshListingsButton } from "./actions/RefreshListingsButton";
@@ -8,6 +8,8 @@ import { NoResultsFound } from "./status/NoResultsFound";
 import { useCarSearch } from "./hooks/useCarSearch";
 import { CarSearchFilters } from "./filters/CarSearchFilters";
 import { AuctionPagination } from "../auction/AuctionPagination";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, Info } from "lucide-react";
 
 interface CarSearchContentProps {
   dealerId: string;
@@ -34,11 +36,19 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
 
   // Show debug information in development environment
   const isDev = process.env.NODE_ENV === 'development';
+  
+  // Log dealer ID for debugging
+  useEffect(() => {
+    if (isDev) {
+      console.log("CarSearch component mounted with dealer ID:", dealerId);
+    }
+  }, [dealerId, isDev]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <CarSearchInfoPanel />
 
+      {/* Always show search filters */}
       <CarSearchFilters
         onFiltersChange={handleFiltersChange}
         onSortChange={handleSortChange}
@@ -57,8 +67,23 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
         )}
       </div>
 
+      {/* Debugging Info */}
+      {isDev && (
+        <Alert variant="default" className="bg-blue-50 border-blue-200">
+          <Info className="h-4 w-4" />
+          <AlertDescription className="text-xs">
+            Car Search Debug: Using dealer ID: {dealerId} | 
+            Active filters: {Object.keys(filters).length} | 
+            Results: {listings.length}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {error ? (
-        <CarSearchErrorDisplay />
+        <CarSearchErrorDisplay 
+          onRefresh={refetch}
+          errorMessage={error instanceof Error ? error.message : String(error)}
+        />
       ) : (
         <>
           {listings.length === 0 && !isLoading ? (
