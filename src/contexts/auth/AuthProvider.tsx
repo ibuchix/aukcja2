@@ -165,8 +165,12 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
       }
       
       const result = await memoizedRefreshSession();
-      // Fix here: Use a type guard to check if error exists on the result
-      return result.success ? Promise.resolve() : Promise.reject(result.error);
+      // Fixed: Use proper type checking with the discriminated union
+      if (result.success) {
+        return Promise.resolve();
+      } else {
+        return Promise.reject(result.error);
+      }
     },
     signIn: async ({ email, password, redirectTo }) => {
       // Reset the circuit breaker on sign in attempt
