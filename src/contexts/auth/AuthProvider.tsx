@@ -148,7 +148,11 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
       const result = await signOut();
       // Reset the circuit breaker on sign out
       sessionCircuitBreaker.reset();
-      return result.success ? Promise.resolve() : Promise.reject(result.error);
+      if (result.success) {
+        return Promise.resolve();
+      } else {
+        return Promise.reject(result.error);
+      }
     },
     refreshSession: async () => {
       // Check if we're actively refreshing to prevent duplicate calls
