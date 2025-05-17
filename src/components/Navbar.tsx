@@ -50,7 +50,7 @@ export default function Navbar() {
       }`}
     >
       <div className="container mx-auto flex justify-between items-center">
-        {/* Logo/Home link - Using NavbarLogo component */}
+        {/* Logo/Home link */}
         <NavbarLogo />
 
         {/* Desktop Navigation */}
@@ -61,8 +61,8 @@ export default function Navbar() {
           <Link to="/how-it-works" className="text-gray-700 hover:text-primary transition-colors">
             How It Works
           </Link>
-          <Link to="/help" className="text-gray-700 hover:text-primary transition-colors">
-            Help
+          <Link to="/browse" className="text-gray-700 hover:text-primary transition-colors">
+            Browse Cars
           </Link>
           
           {isAuthenticated ? (
@@ -124,11 +124,11 @@ export default function Navbar() {
                 How It Works
               </Link>
               <Link 
-                to="/help" 
+                to="/browse" 
                 className="text-gray-700 hover:text-primary transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Help
+                Browse Cars
               </Link>
               {isAuthenticated ? (
                 <>

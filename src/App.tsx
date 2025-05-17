@@ -13,13 +13,14 @@ import HowItWorks from "./pages/HowItWorks";
 import Marketplace from "./pages/Marketplace";
 import BrowseCars from "./pages/BrowseCars";
 import Auctions from "./pages/Auctions";
+import Index from "./pages/Index"; // Import Index page
 
 function App() {
   return (
     <>
       <Routes>
-        {/* Default route redirects to /auth */}
-        <Route path="/" element={<Navigate to="/auth" />} />
+        {/* Default route now points to the Index page */}
+        <Route path="/" element={<Index />} />
         
         {/* Authentication routes */}
         <Route path="/auth" element={<Auth />} />
@@ -72,8 +73,8 @@ function App() {
         <Route path="/browse" element={<BrowseCars />} />
         <Route path="/how-it-works" element={<HowItWorks />} />
         
-        {/* Fallback route - redirect to auth */}
-        <Route path="*" element={<Navigate to="/auth" />} />
+        {/* Fallback route - redirect to home page */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>
   );
