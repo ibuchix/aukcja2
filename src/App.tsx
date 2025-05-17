@@ -1,3 +1,4 @@
+
 import {
   Routes,
   Route,
@@ -7,6 +8,11 @@ import Auth from "./pages/Auth";
 import DealerDashboard from "./pages/dealer/Dashboard"; 
 import CompleteRegistration from "./pages/CompleteRegistration";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Profile from "./pages/dealer/Profile";
+import HowItWorks from "./pages/HowItWorks";
+import Marketplace from "./pages/Marketplace";
+import BrowseCars from "./pages/BrowseCars";
+import Auctions from "./pages/Auctions";
 
 function App() {
   return (
@@ -39,7 +45,7 @@ function App() {
           path="/dealer/profile"
           element={
             <ProtectedRoute>
-              <DealerDashboard />
+              <Profile />
             </ProtectedRoute>
           }
         />
@@ -61,10 +67,10 @@ function App() {
         />
         
         {/* Market pages */}
-        <Route path="/marketplace" element={<Navigate to="/auth" />} />
-        <Route path="/auctions" element={<Navigate to="/auth" />} />
-        <Route path="/browse" element={<Navigate to="/auth" />} />
-        <Route path="/how-it-works" element={<Navigate to="/auth" />} />
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/auctions" element={<Auctions />} />
+        <Route path="/browse" element={<BrowseCars />} />
+        <Route path="/how-it-works" element={<HowItWorks />} />
         
         {/* Fallback route - redirect to auth */}
         <Route path="*" element={<Navigate to="/auth" />} />

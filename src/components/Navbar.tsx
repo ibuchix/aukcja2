@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserCircle, LogOut, Menu } from "lucide-react";
+import { NavbarLogo } from "./navbar/NavbarLogo";
 
 export default function Navbar() {
   const location = useLocation();
@@ -49,11 +50,8 @@ export default function Navbar() {
       }`}
     >
       <div className="container mx-auto flex justify-between items-center">
-        {/* Logo/Home link - Using Link component to prevent page reload */}
-        <Link to="/" className="text-xl font-bold text-primary flex items-center gap-2">
-          <img src="/car-auction-logo.svg" alt="Logo" className="h-8 w-auto" />
-          <span>Car Auctions</span>
-        </Link>
+        {/* Logo/Home link - Using NavbarLogo component */}
+        <NavbarLogo />
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-6">

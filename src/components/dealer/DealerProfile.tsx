@@ -1,12 +1,15 @@
+
 import { useDealerProfile } from "@/contexts/dealer-profile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, User as UserIcon, FileText, MapPin, BadgeCheck, AlertCircle, Phone, Mail } from "lucide-react";
+import { Building2, User as UserIcon, FileText, MapPin, BadgeCheck, AlertCircle, Phone, Mail, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export function DealerProfile() {
   const { 
@@ -17,10 +20,38 @@ export function DealerProfile() {
     profileStatus, 
     needsRecovery,
     initiateProfileRecovery,
-    profileIsComplete
+    profileIsComplete,
+    refreshProfile
   } = useDealerProfile();
-  const { user } = useAuth();
+  
+  const { user, refreshSession } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Attempt to refresh profile data if there's an error
+  useEffect(() => {
+    if (error && fetchAttempted && !isLoading) {
+      const tryRefresh = async () => {
+        console.log("Attempting to refresh session due to profile error");
+        try {
+          await refreshSession();
+          toast({
+            title: "Refreshed session",
+            description: "Attempting to reload your profile data",
+          });
+          
+          // Give the session refresh a moment to propagate
+          setTimeout(() => {
+            refreshProfile();
+          }, 1000);
+        } catch (err) {
+          console.error("Failed to refresh session:", err);
+        }
+      };
+      
+      tryRefresh();
+    }
+  }, [error, fetchAttempted, isLoading, refreshSession, refreshProfile, toast]);
 
   // Helper functions
   const formatNameForDisplay = (name?: string): string => {
@@ -37,7 +68,21 @@ export function DealerProfile() {
   };
 
   if (isLoading) {
-    return <DealerProfileSkeleton />;
+    return (
+      <Card className="mb-6 shadow-sm">
+        <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Loader2 className="mr-2 h-5 w-5 text-primary animate-spin" />
+              <span>Loading dealer profile...</span>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6">
+          <DealerProfileSkeleton />
+        </CardContent>
+      </Card>
+    );
   }
 
   if (error) {
@@ -45,17 +90,27 @@ export function DealerProfile() {
       <Alert variant="destructive" className="mb-6">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Error loading profile</AlertTitle>
-        <AlertDescription>
-          {error} 
-          <br />
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-2"
-            onClick={() => window.location.reload()}
-          >
-            Try Again
-          </Button>
+        <AlertDescription className="space-y-4">
+          <p>
+            {error} 
+            {error.includes("403") && " (This may be a permissions issue with Supabase RLS policies)"}
+          </p>
+          <div className="flex gap-2 mt-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={refreshProfile}
+            >
+              Try Again
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/auth')}
+            >
+              Return to Login
+            </Button>
+          </div>
         </AlertDescription>
       </Alert>
     );
@@ -219,25 +274,17 @@ export function DealerProfile() {
 
 function DealerProfileSkeleton() {
   return (
-    <Card className="mb-6 shadow-sm">
-      <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-4 w-64 mt-2" />
-      </CardHeader>
-      <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[1, 2, 3].map((i) => (
-            <div key={i}>
-              <Skeleton className="h-6 w-36 mb-4" />
-              <div className="space-y-3">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-5/6" />
-              </div>
-            </div>
-          ))}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {[1, 2, 3].map((i) => (
+        <div key={i}>
+          <Skeleton className="h-6 w-36 mb-4" />
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-5/6" />
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      ))}
+    </div>
   );
 }
