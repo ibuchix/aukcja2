@@ -119,9 +119,8 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
           
           return { 
             success: false as const, 
-            error: typeof error === 'object' && error !== null 
-              ? (error as Error).message 
-              : 'Failed to refresh session'
+            session: null, // Add missing required property
+            error: error instanceof Error ? error : new Error(typeof error === 'string' ? error : 'Failed to refresh session')
           };
         } finally {
           refreshStateRef.current.isRefreshing = false;
@@ -143,7 +142,8 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
       console.error("Unexpected error in refreshSession wrapper:", error);
       return {
         success: false as const,
-        error: "Unexpected error in refresh session"
+        session: null, // Add missing required property
+        error: new Error(typeof error === 'string' ? error : 'Unexpected error in refresh session')
       };
     }
   }, [setSession, setUser, session, toast, signOut, navigate]);
