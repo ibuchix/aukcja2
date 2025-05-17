@@ -10,11 +10,7 @@ import { useSignInHandler } from "./useSignInHandler";
 import { sessionCircuitBreaker, isRetryableError } from "@/utils/sessionCircuitBreaker";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
-
-// Define a type for the refresh result to properly handle both success and error cases
-type RefreshResult = 
-  | { success: true; session: any; user: any }
-  | { success: false; error: string };
+import { RefreshResult } from "@/utils/sessionRefresh";
 
 // Provider that can be used with Router hooks
 export function AuthProviderWithRouter({ children }: { children: React.ReactNode }) {
@@ -91,7 +87,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
               console.log("Session refreshed successfully");
               setSession(data.session);
               setUser(data.user);
-              return { success: true, session: data.session, user: data.user };
+              return { success: true as const, session: data.session, user: data.user };
             } else {
               console.warn("No session returned from refresh");
               throw new Error("No session returned");
@@ -122,7 +118,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
           }
           
           return { 
-            success: false, 
+            success: false as const, 
             error: typeof error === 'object' && error !== null 
               ? (error as Error).message 
               : 'Failed to refresh session'
@@ -146,7 +142,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
     } catch (error) {
       console.error("Unexpected error in refreshSession wrapper:", error);
       return {
-        success: false,
+        success: false as const,
         error: "Unexpected error in refresh session"
       };
     }
@@ -199,7 +195,6 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
       }
       
       const result = await memoizedRefreshSession();
-      // Use if/else instead of ternary to allow TypeScript to properly narrow the type
       if (result.success) {
         return Promise.resolve();
       } else {

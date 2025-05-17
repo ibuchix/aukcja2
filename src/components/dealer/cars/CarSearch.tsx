@@ -41,20 +41,20 @@ export const CarSearch = ({ dealerId }: CarSearchProps) => {
         query = query.ilike('model', `%${filters.model}%`);
       }
       
-      if (filters.minYear && typeof filters.minYear === 'number') {
-        query = query.gte('year', filters.minYear);
+      if (filters.yearMin && typeof filters.yearMin === 'number') {
+        query = query.gte('year', filters.yearMin);
       }
       
-      if (filters.maxYear && typeof filters.maxYear === 'number') {
-        query = query.lte('year', filters.maxYear);
+      if (filters.yearMax && typeof filters.yearMax === 'number') {
+        query = query.lte('year', filters.yearMax);
       }
       
-      if (filters.minPrice && typeof filters.minPrice === 'number') {
-        query = query.gte('price', filters.minPrice);
+      if (filters.priceMin && typeof filters.priceMin === 'number') {
+        query = query.gte('price', filters.priceMin);
       }
       
-      if (filters.maxPrice && typeof filters.maxPrice === 'number') {
-        query = query.lte('price', filters.maxPrice);
+      if (filters.priceMax && typeof filters.priceMax === 'number') {
+        query = query.lte('price', filters.priceMax);
       }
       
       // Apply search query
