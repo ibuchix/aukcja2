@@ -28,7 +28,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
     user, 
     profile, 
     isLoading, 
-    isInitialized, // Include initialization state
+    isInitialized, 
     setProfile,
     setSession,
     setUser,
@@ -44,81 +44,111 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
   // Track refresh state with ref to avoid triggering effects
   const refreshStateRef = useRef({
     isRefreshing: false,
-    lastRefreshTime: 0
+    lastRefreshTime: 0,
+    currentPromise: null as Promise<RefreshResult> | null
   });
 
   // Create memoized refresh function to avoid dependency issues
   const memoizedRefreshSession = useCallback(async (): Promise<RefreshResult> => {
     console.log("Session refresh requested");
     
+    // If we already have a refresh in progress, return the existing promise
+    if (refreshStateRef.current.isRefreshing && refreshStateRef.current.currentPromise) {
+      console.log("Session refresh already in progress, returning existing promise");
+      return refreshStateRef.current.currentPromise;
+    }
+    
     try {
-      // Use circuit breaker to protect against cascading failures
-      const refreshResult = await sessionCircuitBreaker.executeRefresh(async () => {
-        console.log("Executing session refresh");
-        
-        // Mark refresh in progress (for our local ref tracking)
-        refreshStateRef.current.isRefreshing = true;
-        refreshStateRef.current.lastRefreshTime = Date.now();
-        
-        const { data, error } = await supabase.auth.refreshSession();
-        
-        if (error) {
-          console.error('Session refresh error:', error.message);
+      // Mark refresh in progress before executing circuit breaker
+      refreshStateRef.current.isRefreshing = true;
+      refreshStateRef.current.lastRefreshTime = Date.now();
+      
+      // Create new promise for this refresh attempt
+      const refreshPromise = (async () => {
+        try {
+          // Use circuit breaker to protect against cascading failures
+          const refreshResult = await sessionCircuitBreaker.executeRefresh(async () => {
+            console.log("Executing session refresh");
+            
+            const { data, error } = await supabase.auth.refreshSession();
+            
+            if (error) {
+              console.error('Session refresh error:', error.message);
+              
+              // Show a toast for auth errors only when they might affect the user
+              if (session && !isRetryableError(error)) {
+                toast({
+                  title: "Authentication Issue",
+                  description: "Your session couldn't be refreshed. You may need to sign in again.",
+                  variant: "destructive",
+                });
+              }
+              
+              throw error;
+            }
+            
+            if (data.session) {
+              console.log("Session refreshed successfully");
+              setSession(data.session);
+              setUser(data.user);
+              return { success: true, session: data.session, user: data.user };
+            } else {
+              console.warn("No session returned from refresh");
+              throw new Error("No session returned");
+            }
+          });
           
-          // Show a toast for auth errors only when they might affect the user
-          if (session && !isRetryableError(error)) {
+          return refreshResult as RefreshResult;
+        } catch (error) {
+          console.error('Session refresh failed:', error);
+          
+          // Check if we've hit maximum retries - send user to auth
+          const circuitStatus = sessionCircuitBreaker.getStatus();
+          
+          if (circuitStatus.state === 'open' && session) {
+            // Only redirect to auth if we were previously authenticated
+            console.warn('Circuit breaker tripped, redirecting to auth');
             toast({
-              title: "Authentication Issue",
-              description: "Your session couldn't be refreshed. You may need to sign in again.",
+              title: "Session Expired",
+              description: "You've been signed out due to authentication issues. Please sign in again.",
               variant: "destructive",
             });
+            
+            // Perform clean sign out
+            await signOut();
+            
+            // Redirect to login
+            navigate('/auth?tab=login');
           }
           
-          throw error;
+          return { 
+            success: false, 
+            error: typeof error === 'object' && error !== null 
+              ? (error as Error).message 
+              : 'Failed to refresh session'
+          };
+        } finally {
+          refreshStateRef.current.isRefreshing = false;
         }
-        
-        if (data.session) {
-          console.log("Session refreshed successfully");
-          setSession(data.session);
-          setUser(data.user);
-          return { success: true, session: data.session, user: data.user };
-        } else {
-          console.warn("No session returned from refresh");
-          throw new Error("No session returned");
+      })();
+      
+      // Store the promise so other callers can reuse it
+      refreshStateRef.current.currentPromise = refreshPromise;
+      
+      // Reset the stored promise after it resolves/rejects
+      refreshPromise.finally(() => {
+        if (refreshStateRef.current.currentPromise === refreshPromise) {
+          refreshStateRef.current.currentPromise = null;
         }
       });
       
-      return refreshResult as RefreshResult;
+      return refreshPromise;
     } catch (error) {
-      console.error('Session refresh failed:', error);
-      
-      // Check if we've hit maximum retries - send user to auth
-      const circuitStatus = sessionCircuitBreaker.getStatus();
-      
-      if (circuitStatus.state === 'open' && session) {
-        // Only redirect to auth if we were previously authenticated
-        console.warn('Circuit breaker tripped, redirecting to auth');
-        toast({
-          title: "Session Expired",
-          description: "You've been signed out due to authentication issues. Please sign in again.",
-          variant: "destructive",
-        });
-        
-        // Perform clean sign out
-        await signOut();
-        
-        // Redirect to login
-        navigate('/auth?tab=login');
-      }
-      
-      return { 
-        success: false, 
-        error: typeof error === 'object' && error !== null 
-          ? (error as Error).message 
-          : 'Failed to refresh session'
+      console.error("Unexpected error in refreshSession wrapper:", error);
+      return {
+        success: false,
+        error: "Unexpected error in refresh session"
       };
-    } finally {
-      refreshStateRef.current.isRefreshing = false;
     }
   }, [setSession, setUser, session, toast, signOut, navigate]);
   
@@ -142,7 +172,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
     user,
     profile,
     isLoading,
-    isInitialized, // Expose initialization state to consumers
+    isInitialized, 
     isAuthenticated: !!user,
     signOut: async () => {
       const result = await signOut();
@@ -169,7 +199,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
       }
       
       const result = await memoizedRefreshSession();
-      // Fix: Use if/else instead of ternary to allow TypeScript to properly narrow the type
+      // Use if/else instead of ternary to allow TypeScript to properly narrow the type
       if (result.success) {
         return Promise.resolve();
       } else {

@@ -6,6 +6,13 @@ import { sessionCircuitBreaker } from '@/utils/sessionCircuitBreaker';
 
 type RefreshFunction = () => Promise<any>;
 
+// Global coordination mechanism to prevent multiple concurrent refreshes
+const globalRefreshState = {
+  isRefreshing: false,
+  lastRefreshTime: 0,
+  currentPromise: null as Promise<any> | null,
+};
+
 /**
  * Custom hook to manage session refresh operations with circuit breaker protection
  */
@@ -25,6 +32,19 @@ export function useSessionManager() {
     // Function to check and refresh session if needed
     const checkSession = async () => {
       try {
+        // If there's already a refresh happening globally, don't start another
+        if (globalRefreshState.isRefreshing) {
+          console.log("Global refresh already in progress, skipping check");
+          return;
+        }
+        
+        // Enforce minimum time between refreshes
+        const now = Date.now();
+        if (now - globalRefreshState.lastRefreshTime < 30000) { // 30 seconds
+          console.log("Too soon since last refresh, skipping check");
+          return;
+        }
+
         const { data } = await supabase.auth.getSession();
         const session = data?.session;
 
@@ -49,16 +69,29 @@ export function useSessionManager() {
           
           console.log("Circuit breaker allows refresh, proceeding...");
           
-          if (refreshFunctionRef.current) {
-            await refreshFunctionRef.current();
-          } else {
-            console.warn("No refresh function registered");
-            // Fallback to direct refresh
-            await refreshAuthToken();
+          // Set global refresh state
+          globalRefreshState.isRefreshing = true;
+          globalRefreshState.lastRefreshTime = now;
+          
+          try {
+            if (refreshFunctionRef.current) {
+              globalRefreshState.currentPromise = refreshFunctionRef.current();
+              await globalRefreshState.currentPromise;
+            } else {
+              console.warn("No refresh function registered");
+              // Fallback to direct refresh
+              await refreshAuthToken();
+            }
+          } finally {
+            // Reset global refresh state
+            globalRefreshState.isRefreshing = false;
+            globalRefreshState.currentPromise = null;
           }
         }
       } catch (error) {
         console.error("Session check error:", error);
+        globalRefreshState.isRefreshing = false;
+        globalRefreshState.currentPromise = null;
       }
     };
 
@@ -87,6 +120,8 @@ export function useSessionManager() {
 
   return {
     registerRefreshFunction,
-    hadSession: () => hadSession.current
+    hadSession: () => hadSession.current,
+    isRefreshing: () => globalRefreshState.isRefreshing,
+    getLastRefreshTime: () => globalRefreshState.lastRefreshTime
   };
 }

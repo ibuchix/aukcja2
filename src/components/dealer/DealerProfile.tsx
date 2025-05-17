@@ -31,22 +31,35 @@ export function DealerProfile() {
   const [refreshState, setRefreshState] = useState({
     hasTriedRefresh: false,
     isRefreshing: false,
-    didErrorPersist: false
+    didErrorPersist: false,
+    lastRefreshAttempt: 0
   });
   
   // Circuit breaker to prevent infinite refresh attempts
   const refreshAttempts = useRef(0);
   const maxRefreshAttempts = 1; // Limit to only one retry
   const hasShownToast = useRef(false);
+  const minRefreshInterval = 10000; // 10 seconds between refresh attempts
 
-  // Attempt to refresh profile data if there's an error
+  // Attempt to refresh profile data if there's an error, with debouncing
   useEffect(() => {
     // Only try to recover if:
     // 1. There's an error
     // 2. We've actually tried to fetch at least once
     // 3. We haven't already attempted a refresh
     // 4. We're not currently loading data
-    if (error && fetchAttempted && !isLoading && !refreshState.hasTriedRefresh && !refreshState.isRefreshing) {
+    // 5. We haven't refreshed recently (debounce)
+    const now = Date.now();
+    const timeSinceLastRefresh = now - refreshState.lastRefreshAttempt;
+    
+    if (
+      error && 
+      fetchAttempted && 
+      !isLoading && 
+      !refreshState.hasTriedRefresh && 
+      !refreshState.isRefreshing &&
+      timeSinceLastRefresh > minRefreshInterval
+    ) {
       const tryRefresh = async () => {
         // Check if we've exceeded max attempts or if circuit breaker prevents refresh
         if (refreshAttempts.current >= maxRefreshAttempts) {
@@ -78,11 +91,12 @@ export function DealerProfile() {
         }
         
         refreshAttempts.current += 1;
-        setRefreshState({
+        setRefreshState(prev => ({
+          ...prev,
           hasTriedRefresh: true,
           isRefreshing: true,
-          didErrorPersist: false
-        });
+          lastRefreshAttempt: now
+        }));
         
         console.log("Attempting to refresh session due to profile error");
         try {
@@ -103,11 +117,12 @@ export function DealerProfile() {
           }, 1500);
         } catch (err) {
           console.error("Failed to refresh session:", err);
-          setRefreshState({
+          setRefreshState(prev => ({
+            ...prev,
             hasTriedRefresh: true,
             isRefreshing: false,
             didErrorPersist: true
-          });
+          }));
         }
       };
       
@@ -119,11 +134,12 @@ export function DealerProfile() {
       setRefreshState({
         hasTriedRefresh: false,
         isRefreshing: false,
-        didErrorPersist: false
+        didErrorPersist: false,
+        lastRefreshAttempt: refreshState.lastRefreshAttempt
       });
       refreshAttempts.current = 0;
     }
-  }, [error, fetchAttempted, isLoading, refreshSession, refreshProfile, toast, refreshState.hasTriedRefresh, refreshState.isRefreshing]);
+  }, [error, fetchAttempted, isLoading, refreshSession, refreshProfile, toast, refreshState]);
 
   // Show loading state during initial load or refresh
   if (isLoading || refreshState.isRefreshing) {
@@ -139,7 +155,8 @@ export function DealerProfile() {
         setRefreshState({
           hasTriedRefresh: false,
           isRefreshing: false,
-          didErrorPersist: false
+          didErrorPersist: false,
+          lastRefreshAttempt: Date.now()
         });
         refreshAttempts.current = 0;
         
