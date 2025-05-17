@@ -7,6 +7,7 @@ export interface SignupResult {
   userId?: string;
   partialSuccess?: boolean;
   warning?: string;
+  needs_recovery?: boolean;
 }
 
 export interface SignupOptions {

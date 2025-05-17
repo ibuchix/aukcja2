@@ -12,6 +12,7 @@ export interface DealerProfileData {
   is_verified?: boolean;
   created_at?: string;
   updated_at?: string;
+  needs_recovery?: boolean;
 }
 
 export interface DealerProfileContextType {

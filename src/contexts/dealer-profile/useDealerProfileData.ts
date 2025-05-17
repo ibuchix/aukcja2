@@ -41,7 +41,11 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
           if (isValidRecord<DealerProfileData>(rpcData)) {
             setProfileData(rpcData as DealerProfileData);
             setProfileStatus(rpcData.verification_status as string || 'pending');
-            setNeedsRecovery(Boolean(rpcData.needs_recovery));
+            // Safely check for needs_recovery property with type safety
+            const recoveryNeeded = typeof rpcData === 'object' && 
+              'needs_recovery' in rpcData ? 
+              Boolean(rpcData.needs_recovery) : false;
+            setNeedsRecovery(recoveryNeeded);
             setLoading(false);
             return;
           } else {
@@ -83,12 +87,12 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
         
         setProfileStatus(status);
         
-        // Safe property access for needs_recovery flag
-        const needsRecoveryValue = isValidRecord(data) && 
+        // Safe property access for needs_recovery flag with better type handling
+        const recoveryNeeded = isValidRecord(data) && 
           'needs_recovery' in data ? 
           Boolean(data.needs_recovery) : false;
         
-        setNeedsRecovery(needsRecoveryValue);
+        setNeedsRecovery(recoveryNeeded);
       } else {
         setProfileData(null);
         setProfileStatus('incomplete');
