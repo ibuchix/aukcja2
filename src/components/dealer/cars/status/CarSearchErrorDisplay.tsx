@@ -1,53 +1,68 @@
 
 import React from "react";
-import { AlertTriangle, RefreshCcw } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle, RefreshCw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CarSearchErrorDisplayProps {
-  onRefresh?: () => void;
-  errorMessage?: string;
+  errorMessage: string;
+  onRefresh: () => void;
 }
 
 export const CarSearchErrorDisplay = ({ 
-  onRefresh,
-  errorMessage 
+  errorMessage, 
+  onRefresh 
 }: CarSearchErrorDisplayProps) => {
+  const isPossiblePermissionError = 
+    errorMessage.includes('permission denied') || 
+    errorMessage.includes('42501') ||
+    errorMessage.includes('PGRST301');
+
+  const handleRefreshWithAuth = async () => {
+    if (isPossiblePermissionError) {
+      try {
+        console.log("Attempting to refresh authentication session...");
+        const { error } = await supabase.auth.refreshSession();
+        if (error) {
+          console.error("Session refresh error:", error);
+        } else {
+          console.log("Session refreshed successfully");
+        }
+      } catch (err) {
+        console.error("Failed to refresh session:", err);
+      }
+    }
+    
+    // Call the parent onRefresh regardless of session refresh outcome
+    onRefresh();
+  };
+
   return (
-    <Card className="border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center text-lg font-semibold text-red-700 dark:text-red-400">
-          <AlertTriangle className="h-5 w-5 mr-2 text-red-500" />
-          Error loading car listings
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pb-2">
-        <p className="text-muted-foreground text-sm">
-          {errorMessage || "We couldn't retrieve the available cars. Please try again."}
-        </p>
-        
-        <div className="mt-4 text-sm space-y-1 text-gray-600">
-          <p>This might be caused by:</p>
-          <ul className="list-disc list-inside pl-2 space-y-1">
-            <li>A temporary connection issue</li>
-            <li>The server might be temporarily unavailable</li>
-            <li>Your profile may need additional verification</li>
-          </ul>
-        </div>
-      </CardContent>
-      
-      {onRefresh && (
-        <CardFooter>
-          <Button 
-            variant="outline" 
-            onClick={onRefresh}
-            className="flex items-center gap-2"
-          >
-            <RefreshCcw className="h-4 w-4" />
-            Try Again
-          </Button>
-        </CardFooter>
-      )}
-    </Card>
+    <Alert variant="destructive" className="mb-6">
+      <AlertTriangle className="h-4 w-4 mr-2" />
+      <AlertTitle>Error Loading Vehicles</AlertTitle>
+      <AlertDescription className="mt-2 mb-4">
+        {isPossiblePermissionError ? (
+          <>
+            We encountered a permissions issue while loading the available vehicles.
+            <div className="mt-2 text-sm opacity-80">
+              Technical details: {errorMessage}
+            </div>
+          </>
+        ) : (
+          errorMessage
+        )}
+      </AlertDescription>
+      <Button 
+        onClick={handleRefreshWithAuth} 
+        variant="outline" 
+        size="sm" 
+        className="bg-white hover:bg-gray-100 border-destructive text-destructive"
+      >
+        <RefreshCw className="h-4 w-4 mr-2" />
+        {isPossiblePermissionError ? "Refresh Session & Try Again" : "Try Again"}
+      </Button>
+    </Alert>
   );
 };

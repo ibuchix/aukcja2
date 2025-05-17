@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,89 +29,102 @@ export const useCarSearch = (dealerId: string) => {
         dealerId
       });
       
-      let query = supabase
-        .from("cars")
-        .select("*")
-        .eq("status", "available")
-        .eq("is_draft", false);
-      
-      // Apply filters
-      if (filters.make && typeof filters.make === 'string') {
-        query = query.ilike('make', `%${filters.make}%`);
+      try {
+        let query = supabase
+          .from("cars")
+          .select("*")
+          .eq("status", "available")
+          .eq("is_draft", false);
+        
+        // Apply filters
+        if (filters.make && typeof filters.make === 'string') {
+          query = query.ilike('make', `%${filters.make}%`);
+        }
+        
+        if (filters.model && typeof filters.model === 'string') {
+          query = query.ilike('model', `%${filters.model}%`);
+        }
+        
+        if (filters.yearMin && typeof filters.yearMin === 'number') {
+          query = query.gte('year', filters.yearMin);
+        }
+        
+        if (filters.yearMax && typeof filters.yearMax === 'number') {
+          query = query.lte('year', filters.yearMax);
+        }
+        
+        if (filters.priceMin && typeof filters.priceMin === 'number') {
+          query = query.gte('price', filters.priceMin);
+        }
+        
+        if (filters.priceMax && typeof filters.priceMax === 'number') {
+          query = query.lte('price', filters.priceMax);
+        }
+        
+        if (filters.mileageMin && typeof filters.mileageMin === 'number') {
+          query = query.gte('mileage', filters.mileageMin);
+        }
+        
+        if (filters.mileageMax && typeof filters.mileageMax === 'number') {
+          query = query.lte('mileage', filters.mileageMax);
+        }
+        
+        // Apply search query
+        if (searchQuery) {
+          query = query.or(`make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%`);
+        }
+        
+        // Apply sorting
+        switch (sortOption) {
+          case "newest":
+            query = query.order('created_at', { ascending: false });
+            break;
+          case "oldest":
+            query = query.order('created_at', { ascending: true });
+            break;
+          case "price-high":
+            query = query.order('price', { ascending: false });
+            break;
+          case "price-low":
+            query = query.order('price', { ascending: true });
+            break;
+          default:
+            query = query.order('created_at', { ascending: false });
+        }
+        
+        // Apply pagination
+        const from = (currentPage - 1) * pageSize;
+        const to = from + pageSize - 1;
+        query = query.range(from, to);
+        
+        const { data, error, count } = await query;
+        
+        // Log the results for debugging
+        console.log('Car Search Results:', {
+          count: data?.length || 0,
+          totalCount: count || 0,
+          error: error?.message || null
+        });
+        
+        if (error) throw error;
+        
+        return {
+          cars: processCarData(data || []),
+          total: count || 0
+        };
+      } catch (err) {
+        console.error("Error fetching cars:", err);
+        // Attempt to refresh session if we get a permission error
+        if (err && typeof err === 'object' && 'code' in err && 
+            (err.code === '42501' || err.code === 'PGRST301')) {
+          console.log("Permission error detected, refreshing session...");
+          await supabase.auth.refreshSession();
+        }
+        throw err;
       }
-      
-      if (filters.model && typeof filters.model === 'string') {
-        query = query.ilike('model', `%${filters.model}%`);
-      }
-      
-      if (filters.yearMin && typeof filters.yearMin === 'number') {
-        query = query.gte('year', filters.yearMin);
-      }
-      
-      if (filters.yearMax && typeof filters.yearMax === 'number') {
-        query = query.lte('year', filters.yearMax);
-      }
-      
-      if (filters.priceMin && typeof filters.priceMin === 'number') {
-        query = query.gte('price', filters.priceMin);
-      }
-      
-      if (filters.priceMax && typeof filters.priceMax === 'number') {
-        query = query.lte('price', filters.priceMax);
-      }
-      
-      if (filters.mileageMin && typeof filters.mileageMin === 'number') {
-        query = query.gte('mileage', filters.mileageMin);
-      }
-      
-      if (filters.mileageMax && typeof filters.mileageMax === 'number') {
-        query = query.lte('mileage', filters.mileageMax);
-      }
-      
-      // Apply search query
-      if (searchQuery) {
-        query = query.or(`make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%`);
-      }
-      
-      // Apply sorting
-      switch (sortOption) {
-        case "newest":
-          query = query.order('created_at', { ascending: false });
-          break;
-        case "oldest":
-          query = query.order('created_at', { ascending: true });
-          break;
-        case "price-high":
-          query = query.order('price', { ascending: false });
-          break;
-        case "price-low":
-          query = query.order('price', { ascending: true });
-          break;
-        default:
-          query = query.order('created_at', { ascending: false });
-      }
-      
-      // Apply pagination
-      const from = (currentPage - 1) * pageSize;
-      const to = from + pageSize - 1;
-      query = query.range(from, to);
-      
-      const { data, error, count } = await query;
-      
-      // Log the results for debugging
-      console.log('Car Search Results:', {
-        count: data?.length || 0,
-        totalCount: count || 0,
-        error: error?.message || null
-      });
-      
-      if (error) throw error;
-      
-      return {
-        cars: processCarData(data || []),
-        total: count || 0
-      };
     },
+    retry: 2, // Increase retry to handle potential auth token refresh
+    retryDelay: attempt => Math.min(attempt > 1 ? 2000 : 1000, 30000),
   });
 
   useEffect(() => {
