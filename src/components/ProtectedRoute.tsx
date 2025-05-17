@@ -2,6 +2,8 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader } from "@/components/ui/loader";
+import { useEffect, useState } from "react";
+import { sessionCircuitBreaker } from "@/utils/sessionCircuitBreaker";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,9 +12,46 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, isInitialized, session } = useAuth();
   const location = useLocation();
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Wait for initialization to complete
-  if (!isInitialized || isLoading) {
+  // Add a delayed safety check to prevent endless loading
+  useEffect(() => {
+    // If we're still loading after 3 seconds, we might be stuck
+    const safetyTimeout = setTimeout(() => {
+      if (isLoading && !authCheckComplete) {
+        console.warn("Auth check taking too long, forcing completion");
+        setAuthCheckComplete(true);
+        
+        // Reset circuit breaker
+        sessionCircuitBreaker.reset();
+      }
+    }, 3000);
+    
+    return () => clearTimeout(safetyTimeout);
+  }, [isLoading, authCheckComplete]);
+
+  // Mark auth check complete when initialization is done
+  useEffect(() => {
+    if (isInitialized && !authCheckComplete) {
+      setAuthCheckComplete(true);
+    }
+  }, [isInitialized, authCheckComplete]);
+
+  // Handle redirection with a slight delay to avoid flashing
+  useEffect(() => {
+    if (authCheckComplete && !isAuthenticated && !isLoading) {
+      // Prevent immediate redirect to avoid UI flashing
+      const redirectTimer = setTimeout(() => {
+        setIsRedirecting(true);
+      }, 100);
+      
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [authCheckComplete, isAuthenticated, isLoading]);
+
+  // Show loading state during initialization
+  if ((!authCheckComplete && isLoading) || (!authCheckComplete && !isInitialized)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <Loader className="h-8 w-8 text-primary mb-4" />
@@ -22,9 +61,19 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   // If user is not authenticated, redirect to auth page
-  if (!isAuthenticated || !session) {
-    // Redirect to auth page with return URL
-    return <Navigate to="/auth?tab=login" replace state={{ returnUrl: location.pathname }} />;
+  if ((!isAuthenticated || !session) && authCheckComplete) {
+    if (isRedirecting) {
+      // Redirect to auth page with return URL
+      return <Navigate to="/auth?tab=login" replace state={{ returnUrl: location.pathname }} />;
+    }
+    
+    // Show brief loading state before redirect
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <Loader className="h-8 w-8 text-primary mb-4" />
+        <p className="text-muted-foreground">Redirecting to login...</p>
+      </div>
+    );
   }
 
   // All checks passed, render the protected content

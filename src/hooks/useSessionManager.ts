@@ -2,11 +2,12 @@
 import { useEffect, useRef } from 'react';
 import { refreshAuthToken, shouldRefreshSession } from '@/utils/sessionRefresh';
 import { supabase } from '@/integrations/supabase/client';
+import { sessionCircuitBreaker } from '@/utils/sessionCircuitBreaker';
 
 type RefreshFunction = () => Promise<any>;
 
 /**
- * Custom hook to manage session refresh
+ * Custom hook to manage session refresh operations with circuit breaker protection
  */
 export function useSessionManager() {
   const refreshFunctionRef = useRef<RefreshFunction | null>(null);
@@ -37,7 +38,16 @@ export function useSessionManager() {
         
         // Check if session needs refresh (within 5 minutes of expiry)
         if (shouldRefreshSession(session, 5)) {
-          console.log("Session needs refresh, refreshing...");
+          console.log("Session needs refresh, checking circuit breaker...");
+          
+          // Check if circuit breaker allows refresh
+          const refreshStatus = sessionCircuitBreaker.getStatus();
+          if (!refreshStatus.canRefresh) {
+            console.log(`Circuit breaker preventing refresh (state: ${refreshStatus.state})`);
+            return;
+          }
+          
+          console.log("Circuit breaker allows refresh, proceeding...");
           
           if (refreshFunctionRef.current) {
             await refreshFunctionRef.current();
