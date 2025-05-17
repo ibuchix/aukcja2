@@ -31,38 +31,62 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
     setError(null);
 
     try {
-      // Fetch dealer profile
-      const { data: dealerProfile, error: dealerError } = await supabase
+      // First try using the security definer function (bypasses RLS)
+      try {
+        const { data: rpcData, error: rpcError } = await supabase
+          .rpc('get_dealer_by_user_id', { p_user_id: userId });
+        
+        if (!rpcError && rpcData) {
+          // Use our type guard to ensure the response has the correct structure
+          if (isValidRecord<DealerProfileData>(rpcData)) {
+            setProfileData(rpcData as DealerProfileData);
+            setProfileStatus(rpcData.verification_status as string || 'pending');
+            setNeedsRecovery(Boolean(rpcData.needs_recovery));
+            setLoading(false);
+            return;
+          } else {
+            console.warn('RPC data structure does not match DealerProfile type', rpcData);
+          }
+        } else if (rpcError) {
+          console.warn('Could not fetch dealer profile using RPC, falling back to direct query', rpcError);
+        }
+      } catch (rpcErr) {
+        console.error('Error with RPC method:', rpcErr);
+        // Continue to fallback
+      }
+
+      // If RPC failed or returned invalid data, fallback to direct query
+      const { data, error: queryError } = await supabase
         .from('dealers')
         .select('*')
         .eq('user_id', userId)
         .single();
-
-      if (dealerError) {
-        if (dealerError.code === 'PGRST116') {
+        
+      if (queryError) {
+        if (queryError.code === 'PGRST116') {
           // No profile found - this is expected if the profile doesn't exist yet
           setProfileData(null);
           setProfileStatus('not_found');
           setNeedsRecovery(true);
           return;
         }
-        throw new Error(`Failed to fetch dealer profile: ${dealerError.message}`);
+        throw new Error(`Failed to fetch dealer profile: ${queryError.message}`);
       }
 
-      if (dealerProfile && isValidRecord<DealerProfileData>(dealerProfile)) {
-        setProfileData(dealerProfile as DealerProfileData);
+      if (data && isValidRecord<DealerProfileData>(data)) {
+        setProfileData(data as DealerProfileData);
         
         // Safe property access with defaults
-        const status = isValidRecord(dealerProfile) && 
-          'verification_status' in dealerProfile ? 
-          dealerProfile.verification_status as string : 'pending';
+        const status = isValidRecord(data) && 
+          'verification_status' in data ? 
+          data.verification_status as string : 'pending';
         
         setProfileStatus(status);
         
         // Safe property access for needs_recovery flag
-        const needsRecoveryValue = isValidRecord(dealerProfile) && 
-          'needs_recovery' in dealerProfile ? 
-          Boolean(dealerProfile.needs_recovery) : false;
+        const needsRecoveryValue = isValidRecord(data) && 
+          'needs_recovery' in data ? 
+          Boolean(data.needs_recovery) : false;
         
         setNeedsRecovery(needsRecoveryValue);
       } else {

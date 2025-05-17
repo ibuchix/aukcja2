@@ -12,10 +12,12 @@ import { CarSearch } from '@/components/dealer/cars/CarSearch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDashboardTabs } from '@/hooks/useDashboardTabs';
 import { QuickActions } from '@/components/dealer/dashboard/QuickActions';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const DealerDashboard = () => {
   const { user } = useAuth();
-  const { displayProfile, isLoading } = useDealerProfile();
+  const { displayProfile, isLoading, error, profileStatus } = useDealerProfile();
   // Set car search as default active tab
   const [activeTabRaw, setActiveTabRaw] = useState("cars");
   const location = useLocation();
@@ -31,8 +33,10 @@ const DealerDashboard = () => {
         dealership: displayProfile.dealership_name,
         userId: user?.id
       });
+    } else {
+      console.log("No dealer profile available. Profile status:", profileStatus);
     }
-  }, [displayProfile, user]);
+  }, [displayProfile, user, profileStatus]);
 
   return (
     <DashboardLayout title="Dealer Dashboard">
@@ -58,12 +62,10 @@ const DealerDashboard = () => {
           </TabsList>
           
           <TabsContent value="cars">
-            {/* Car Search Component */}
-            {displayProfile && (
-              <div className="mt-4">
-                <CarSearch dealerId={displayProfile.id} />
-              </div>
-            )}
+            {/* Car Search Component - always render it but let it handle missing dealer ID */}
+            <div className="mt-4">
+              <CarSearch dealerId={displayProfile?.id} />
+            </div>
           </TabsContent>
           
           <TabsContent value="overview" className="space-y-6">

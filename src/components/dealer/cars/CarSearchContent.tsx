@@ -62,7 +62,7 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
         
         {isDev && (
           <div className="text-xs text-muted-foreground">
-            Dealer ID: {dealerId}
+            Dealer ID: {dealerId || "Not available"}
           </div>
         )}
       </div>
@@ -72,11 +72,19 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
         <Alert variant="default" className="bg-blue-50 border-blue-200">
           <Info className="h-4 w-4" />
           <AlertDescription className="text-xs">
-            Car Search Debug: Using dealer ID: {dealerId} | 
+            Car Search Debug: Using dealer ID: {dealerId || "None"} | 
             Active filters: {Object.keys(filters).length} | 
             Results: {listings.length}
           </AlertDescription>
         </Alert>
+      )}
+
+      {/* Missing Profile Warning */}
+      {!dealerId && (
+        <CarSearchErrorDisplay 
+          onRefresh={() => window.location.reload()}
+          errorMessage="Your dealer profile needs to be completed before you can search for cars. Please complete your profile setup."
+        />
       )}
 
       {error ? (
