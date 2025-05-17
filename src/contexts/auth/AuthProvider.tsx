@@ -11,6 +11,11 @@ import { sessionCircuitBreaker, isRetryableError } from "@/utils/sessionCircuitB
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 
+// Define a type for the refresh result to properly handle both success and error cases
+type RefreshResult = 
+  | { success: true; session: any; user: any }
+  | { success: false; error: string };
+
 // Provider that can be used with Router hooks
 export function AuthProviderWithRouter({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
@@ -43,7 +48,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
   });
 
   // Create memoized refresh function to avoid dependency issues
-  const memoizedRefreshSession = useCallback(async () => {
+  const memoizedRefreshSession = useCallback(async (): Promise<RefreshResult> => {
     console.log("Session refresh requested");
     
     try {
@@ -83,7 +88,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
         }
       });
       
-      return refreshResult;
+      return refreshResult as RefreshResult;
     } catch (error) {
       console.error('Session refresh failed:', error);
       

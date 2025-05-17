@@ -1,4 +1,3 @@
-
 /**
  * Circuit breaker implementation for session refresh operations
  * Prevents cascading failures by limiting refresh attempts
@@ -18,6 +17,13 @@ interface RefreshStats {
   lastErrorMessage?: string;
 }
 
+// Update the return type to include remainingMs
+interface CanRefreshResult {
+  allowed: boolean;
+  reason?: string;
+  remainingMs?: number; // Added this property to the interface
+}
+
 class SessionCircuitBreaker {
   private state: CircuitBreakerState = 'closed';
   private stats: RefreshStats = {
@@ -32,7 +38,7 @@ class SessionCircuitBreaker {
   /**
    * Check if a refresh operation is allowed based on circuit breaker state
    */
-  canRefresh(): { allowed: boolean; reason?: string } {
+  canRefresh(): CanRefreshResult {
     const now = Date.now();
     
     // Check if refresh is in progress
