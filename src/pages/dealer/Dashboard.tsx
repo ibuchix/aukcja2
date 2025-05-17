@@ -22,6 +22,17 @@ const DealerDashboard = () => {
   
   // Use our custom hook to sync tab state between components
   const { activeTab, setActiveTab } = useDashboardTabs(activeTabRaw, setActiveTabRaw);
+  
+  // For debugging purposes
+  useEffect(() => {
+    if (displayProfile) {
+      console.log("Dealer Profile loaded:", {
+        id: displayProfile.id,
+        dealership: displayProfile.dealership_name,
+        userId: user?.id
+      });
+    }
+  }, [displayProfile, user]);
 
   return (
     <DashboardLayout title="Dealer Dashboard">

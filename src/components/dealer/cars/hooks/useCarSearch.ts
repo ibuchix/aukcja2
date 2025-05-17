@@ -1,12 +1,13 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { processCarData } from "@/utils/carDataHelpers";
 import { CarListing } from "@/types/cars";
 import { AuctionFilters } from "../../auction/types";
+import { useToast } from "@/hooks/use-toast";
 
 export const useCarSearch = (dealerId: string) => {
+  const { toast } = useToast();
   const [filters, setFilters] = useState<AuctionFilters>({});
   const [sortOption, setSortOption] = useState<string>("newest");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -18,6 +19,15 @@ export const useCarSearch = (dealerId: string) => {
   const { isLoading, error, data, refetch } = useQuery({
     queryKey: ["carListings", filters, sortOption, searchQuery, currentPage],
     queryFn: async () => {
+      // Log the query parameters for debugging
+      console.log('Car Search Query:', {
+        filters,
+        sortOption,
+        searchQuery,
+        currentPage,
+        dealerId
+      });
+      
       let query = supabase
         .from("cars")
         .select("*")
@@ -47,6 +57,14 @@ export const useCarSearch = (dealerId: string) => {
       
       if (filters.priceMax && typeof filters.priceMax === 'number') {
         query = query.lte('price', filters.priceMax);
+      }
+      
+      if (filters.mileageMin && typeof filters.mileageMin === 'number') {
+        query = query.gte('mileage', filters.mileageMin);
+      }
+      
+      if (filters.mileageMax && typeof filters.mileageMax === 'number') {
+        query = query.lte('mileage', filters.mileageMax);
       }
       
       // Apply search query
@@ -79,6 +97,13 @@ export const useCarSearch = (dealerId: string) => {
       
       const { data, error, count } = await query;
       
+      // Log the results for debugging
+      console.log('Car Search Results:', {
+        count: data?.length || 0,
+        totalCount: count || 0,
+        error: error?.message || null
+      });
+      
       if (error) throw error;
       
       return {
@@ -91,25 +116,51 @@ export const useCarSearch = (dealerId: string) => {
   useEffect(() => {
     if (data?.cars) {
       setListings(data.cars);
+      
+      // Show a toast notification if there are no results
+      if (data.cars.length === 0 && !isLoading) {
+        toast({
+          title: "No matching vehicles found",
+          description: "Try adjusting your filters to see more results",
+          variant: "default"
+        });
+      }
     }
-  }, [data]);
+  }, [data, isLoading, toast]);
 
   // Handle filter changes
   const handleFiltersChange = (newFilters: AuctionFilters) => {
+    console.log('Filter changed:', newFilters);
     setFilters(newFilters);
     setCurrentPage(1); // Reset to first page on filter change
   };
 
   // Handle sort changes
   const handleSortChange = (sort: string) => {
+    console.log('Sort changed:', sort);
     setSortOption(sort);
     setCurrentPage(1); // Reset to first page on sort change
   };
 
   // Handle search changes
   const handleSearchChange = (search: string) => {
+    console.log('Search changed:', search);
     setSearchQuery(search);
     setCurrentPage(1); // Reset to first page on search change
+  };
+  
+  // Clear all filters
+  const clearFilters = () => {
+    setFilters({});
+    setSearchQuery("");
+    // Keep the sort option as is
+    setCurrentPage(1);
+    
+    toast({
+      title: "Filters cleared",
+      description: "Showing all available vehicles",
+      variant: "default"
+    });
   };
 
   // Pagination controls
@@ -141,6 +192,7 @@ export const useCarSearch = (dealerId: string) => {
     handleSearchChange,
     handleNextPage,
     handlePreviousPage,
-    refetch
+    refetch,
+    clearFilters
   };
 };

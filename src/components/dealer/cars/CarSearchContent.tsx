@@ -1,14 +1,13 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Search } from "lucide-react";
-import { DealerAuctionFilters } from "../auction/DealerAuctionFilters";
-import { AuctionPagination } from "../auction/AuctionPagination";
 import { CarSearchInfoPanel } from "./info/CarSearchInfoPanel";
 import { CarListingsGrid } from "./listing/CarListingsGrid";
 import { RefreshListingsButton } from "./actions/RefreshListingsButton";
 import { CarSearchErrorDisplay } from "./status/CarSearchErrorDisplay";
+import { NoResultsFound } from "./status/NoResultsFound";
 import { useCarSearch } from "./hooks/useCarSearch";
+import { CarSearchFilters } from "./filters/CarSearchFilters";
+import { AuctionPagination } from "../auction/AuctionPagination";
 
 interface CarSearchContentProps {
   dealerId: string;
@@ -19,6 +18,7 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
     listings,
     isLoading,
     error,
+    filters,
     sortOption,
     searchQuery,
     canGoNext,
@@ -28,14 +28,18 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
     handleSearchChange,
     handleNextPage,
     handlePreviousPage,
-    refetch
+    refetch,
+    clearFilters
   } = useCarSearch(dealerId);
+
+  // Show debug information in development environment
+  const isDev = process.env.NODE_ENV === 'development';
 
   return (
     <div className="space-y-6">
       <CarSearchInfoPanel />
 
-      <DealerAuctionFilters
+      <CarSearchFilters
         onFiltersChange={handleFiltersChange}
         onSortChange={handleSortChange}
         onSearchChange={handleSearchChange}
@@ -43,16 +47,31 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
         searchQuery={searchQuery}
       />
 
-      <RefreshListingsButton onRefresh={refetch} />
+      <div className="flex justify-between items-center">
+        <RefreshListingsButton onRefresh={refetch} />
+        
+        {isDev && (
+          <div className="text-xs text-muted-foreground">
+            Dealer ID: {dealerId}
+          </div>
+        )}
+      </div>
 
       {error ? (
         <CarSearchErrorDisplay />
       ) : (
         <>
-          <CarListingsGrid 
-            listings={listings} 
-            isLoading={isLoading} 
-          />
+          {listings.length === 0 && !isLoading ? (
+            <NoResultsFound 
+              searchQuery={searchQuery} 
+              onClearFilters={clearFilters} 
+            />
+          ) : (
+            <CarListingsGrid 
+              listings={listings} 
+              isLoading={isLoading} 
+            />
+          )}
 
           <AuctionPagination
             hasMore={canGoNext}
