@@ -2,13 +2,15 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { processCarData } from "@/utils/carDataHelpers";
 import { DealerAuctionFilters } from "../auction/DealerAuctionFilters";
 import { CarListing } from "@/types/cars";
 import { AuctionFilters } from "../auction/types";
 import { AuctionPagination } from "../auction/AuctionPagination";
+import { Search, Car, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface CarSearchProps {
   dealerId: string;
@@ -135,12 +137,34 @@ export const CarSearch = ({ dealerId }: CarSearchProps) => {
     }
   };
 
+  // When the refetch button is clicked
+  const handleRefresh = () => {
+    refetch();
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Car Search</CardTitle>
+        <div className="flex items-center space-x-2">
+          <Search className="h-6 w-6 text-primary" />
+          <CardTitle>Car Search</CardTitle>
+        </div>
+        <CardDescription>
+          Find available vehicles and upcoming auctions directly from your dashboard
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="bg-blue-50 p-4 rounded-lg flex items-start space-x-3 border border-blue-100">
+          <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-medium text-blue-800">Car Browsing Made Easy</h4>
+            <p className="text-sm text-blue-600">
+              Search, filter, and find the perfect vehicles directly from your dashboard.
+              No need to navigate away - all vehicles are available here!
+            </p>
+          </div>
+        </div>
+
         <DealerAuctionFilters
           onFiltersChange={handleFiltersChange}
           onSortChange={handleSortChange}
@@ -148,6 +172,17 @@ export const CarSearch = ({ dealerId }: CarSearchProps) => {
           sortOption={sortOption}
           searchQuery={searchQuery}
         />
+
+        <div className="flex justify-end">
+          <Button 
+            variant="outline" 
+            onClick={handleRefresh} 
+            className="flex items-center gap-2"
+          >
+            <Car className="h-4 w-4" />
+            Refresh Listings
+          </Button>
+        </div>
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -203,6 +238,11 @@ export const CarSearch = ({ dealerId }: CarSearchProps) => {
                           Available
                         </span>
                       )}
+                      <div className="pt-2">
+                        <Button variant="outline" size="sm" className="w-full">
+                          View Details
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}

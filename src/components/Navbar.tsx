@@ -61,9 +61,6 @@ export default function Navbar() {
           <Link to="/how-it-works" className="text-gray-700 hover:text-primary transition-colors">
             How It Works
           </Link>
-          <Link to="/browse" className="text-gray-700 hover:text-primary transition-colors">
-            Browse Cars
-          </Link>
           
           {isAuthenticated ? (
             <DropdownMenu>
@@ -122,13 +119,6 @@ export default function Navbar() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 How It Works
-              </Link>
-              <Link 
-                to="/browse" 
-                className="text-gray-700 hover:text-primary transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Browse Cars
               </Link>
               {isAuthenticated ? (
                 <>

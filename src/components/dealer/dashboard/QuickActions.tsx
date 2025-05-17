@@ -26,7 +26,7 @@ export const QuickActions = () => {
         </div>
         
         <div 
-          className="bg-gradient-to-br from-purple-50 to-purple-100 p-5 rounded-lg cursor-pointer hover:shadow-md transition-all group"
+          className="bg-gradient-to-br from-purple-50 to-purple-100 p-5 rounded-lg cursor-pointer hover:shadow-md transition-all group border-2 border-purple-200"
           onClick={() => {
             navigate('/dealer/dashboard');
             // Set cars tab as active using URL parameters or state
@@ -42,7 +42,7 @@ export const QuickActions = () => {
             </div>
             <h3 className="font-medium text-lg">Car Search</h3>
           </div>
-          <p className="text-subtitle-text mb-3">Search available vehicles and upcoming auctions</p>
+          <p className="text-subtitle-text mb-3">Browse all available vehicles directly from your dashboard</p>
           <span className="text-purple-500 font-medium group-hover:underline">Search Cars →</span>
         </div>
         
