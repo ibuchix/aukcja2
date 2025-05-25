@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CarListing } from "@/types/cars";
 import { AuctionFilters } from "../../auction/types";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { enhancedSupabase } from "@/utils/enhancedSupabaseClient";
 
 export const useCarSearch = (dealerId: string) => {
   const { toast } = useToast();
@@ -25,7 +24,7 @@ export const useCarSearch = (dealerId: string) => {
            typeof item.price === 'number';
   };
 
-  // Query for car listings using regular supabase client
+  // Query for car listings using enhanced supabase client
   const { isLoading, error, data, refetch } = useQuery({
     queryKey: ["carListings", filters, sortOption, searchQuery, currentPage],
     queryFn: async () => {
@@ -42,7 +41,7 @@ export const useCarSearch = (dealerId: string) => {
       }
       
       try {
-        let query = supabase
+        let query = enhancedSupabase
           .from("cars")
           .select("*")
           .eq("status", "available");
@@ -88,10 +87,10 @@ export const useCarSearch = (dealerId: string) => {
         // Apply sorting
         switch (sortOption) {
           case "newest":
-            query = query.order('created_at', { ascending: false });
+            query = query.order('createdAt', { ascending: false });
             break;
           case "oldest":
-            query = query.order('created_at', { ascending: true });
+            query = query.order('createdAt', { ascending: true });
             break;
           case "price-high":
             query = query.order('price', { ascending: false });
@@ -100,7 +99,7 @@ export const useCarSearch = (dealerId: string) => {
             query = query.order('price', { ascending: true });
             break;
           default:
-            query = query.order('created_at', { ascending: false });
+            query = query.order('createdAt', { ascending: false });
         }
         
         // Apply pagination
@@ -119,7 +118,7 @@ export const useCarSearch = (dealerId: string) => {
         }
         
         if (result.error) {
-          console.error("Supabase query error:", result.error);
+          console.error("Enhanced Supabase query error:", result.error);
           throw new Error(result.error.message);
         }
         

@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Home } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { enhancedSupabase } from "@/utils/enhancedSupabaseClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CarListing } from "@/types/cars";
 import { useState } from "react";
@@ -19,7 +19,7 @@ const Marketplace = () => {
   const { data: listings, isLoading } = useQuery({
     queryKey: ["carListings"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await enhancedSupabase
         .from("cars")
         .select("*")
         .eq("status", "available");
@@ -30,17 +30,17 @@ const Marketplace = () => {
     },
   });
 
-  // Fetch dealer ID for the current user using regular supabase client
+  // Fetch dealer ID for the current user using enhanced supabase client
   const { data: dealerData } = useQuery({
     queryKey: ["dealerProfile"],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await enhancedSupabase.auth.getSession();
       if (!session) return null;
 
-      const { data, error } = await supabase
+      const { data, error } = await enhancedSupabase
         .from("dealers")
         .select("id")
-        .eq("user_id", session.user.id)
+        .eq("userId", session.user.id)
         .maybeSingle();
 
       if (error) {
@@ -72,7 +72,7 @@ const Marketplace = () => {
   }
 
   // Safely extract dealer ID - handle null case and type guard
-  const dealerId = (dealerData && typeof dealerData === 'object' && 'id' in dealerData) ? dealerData.id : null;
+  const dealerId = dealerData?.id || null;
 
   return (
     <div className="min-h-screen bg-background">
