@@ -39,27 +39,26 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
         if (!rpcError && rpcData) {
           console.log("[Dealer Profile] RPC returned data:", rpcData);
           
-          // The RPC function returns snake_case data, so we need to transform it
-          const transformedData = {
+          // Convert the RPC data to match DealerProfileData interface (snake_case)
+          const transformedData: DealerProfileData = {
             id: rpcData.id,
-            userId: rpcData.user_id,
-            supervisorName: rpcData.supervisor_name,
-            dealershipName: rpcData.dealership_name,
+            user_id: rpcData.user_id || rpcData.userId,
+            supervisor_name: rpcData.supervisor_name || rpcData.supervisorName,
+            dealership_name: rpcData.dealership_name || rpcData.dealershipName,
             address: rpcData.address,
-            licenseNumber: rpcData.license_number,
-            taxId: rpcData.tax_id,
-            businessRegistryNumber: rpcData.business_registry_number,
-            verificationStatus: rpcData.verification_status,
-            isVerified: rpcData.is_verified,
-            createdAt: rpcData.created_at,
-            updatedAt: rpcData.updated_at,
-            // Handle potential additional fields
-            needsRecovery: rpcData.needs_recovery || false
+            license_number: rpcData.license_number || rpcData.licenseNumber,
+            tax_id: rpcData.tax_id || rpcData.taxId,
+            business_registry_number: rpcData.business_registry_number || rpcData.businessRegistryNumber,
+            verification_status: rpcData.verification_status || rpcData.verificationStatus,
+            is_verified: rpcData.is_verified || rpcData.isVerified,
+            created_at: rpcData.created_at || rpcData.createdAt,
+            updated_at: rpcData.updated_at || rpcData.updatedAt,
+            needs_recovery: rpcData.needs_recovery || rpcData.needsRecovery || false
           };
           
-          setProfileData(transformedData as DealerProfileData);
-          setProfileStatus(transformedData.verificationStatus || 'pending');
-          setNeedsRecovery(transformedData.needsRecovery);
+          setProfileData(transformedData);
+          setProfileStatus(transformedData.verification_status || 'pending');
+          setNeedsRecovery(transformedData.needs_recovery || false);
           setLoading(false);
           return;
         } else if (rpcError) {
@@ -93,14 +92,14 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
         setProfileData(data as DealerProfileData);
         
         const status = isValidRecord(data) && 
-          'verificationStatus' in data ? 
-          data.verificationStatus as string : 'pending';
+          'verification_status' in data ? 
+          data.verification_status as string : 'pending';
         
         setProfileStatus(status);
         
         const recoveryNeeded = isValidRecord(data) && 
-          'needsRecovery' in data ? 
-          Boolean(data.needsRecovery) : false;
+          'needs_recovery' in data ? 
+          Boolean(data.needs_recovery) : false;
         
         setNeedsRecovery(recoveryNeeded);
       } else {
@@ -184,7 +183,7 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
       setError(errorMessage);
       console.error("Error updating profile status:", errorMessage);
       // Revert to previous status on error
-      setProfileStatus(profileData?.verificationStatus || 'unknown');
+      setProfileStatus(profileData?.verification_status || 'unknown');
     } finally {
       setLoading(false);
     }
