@@ -41,7 +41,7 @@ const Marketplace = () => {
         .from("dealers")
         .select("id")
         .eq("user_id", session.user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching dealer profile:", error);
