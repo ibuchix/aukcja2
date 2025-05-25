@@ -14,6 +14,11 @@ import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
 import { processCarData } from "@/utils/carDataHelpers";
 import { isValidRecord } from "@/utils/supabaseHelpers";
 
+interface DealerData {
+  id: string;
+  [key: string]: any;
+}
+
 const Marketplace = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
 
@@ -23,8 +28,7 @@ const Marketplace = () => {
       const { data, error } = await supabase
         .from("cars")
         .select("*")
-        .eq("status", "available")
-        .eq("is_draft", false);
+        .eq("status", "available");
 
       if (error) throw error;
       
@@ -35,7 +39,7 @@ const Marketplace = () => {
   // Fetch dealer ID for the current user
   const { data: dealerData } = useQuery({
     queryKey: ["dealerProfile"],
-    queryFn: async () => {
+    queryFn: async (): Promise<DealerData | null> => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return null;
 
@@ -48,7 +52,7 @@ const Marketplace = () => {
       if (error) throw error;
       
       // Add proper validation before returning
-      return isValidRecord(data) ? data : null;
+      return isValidRecord(data) ? data as DealerData : null;
     },
   });
 
@@ -72,9 +76,7 @@ const Marketplace = () => {
   }
 
   // Check if dealer data is valid and has an id property
-  const dealerId = dealerData && isValidRecord(dealerData) && 'id' in dealerData 
-    ? (dealerData.id as string) 
-    : null;
+  const dealerId = dealerData?.id || null;
 
   return (
     <div className="min-h-screen bg-background">

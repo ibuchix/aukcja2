@@ -16,10 +16,10 @@ export interface CarListing {
   year: number | null;
   mileage: number;
   images: string[] | null;
-  description?: string | null; // Made optional
+  description?: string | null;
   features: CarFeatures;
   transmission: string | null;
-  service_history_files?: string[] | null; // Made optional
+  service_history_files?: string[] | null;
   required_photos: Record<string, string | null> | null;
   is_auction?: boolean;
   auction_end_time?: string | null;
@@ -34,6 +34,5 @@ export interface CarListing {
   created_at?: string;
   updated_at?: string;
   status?: string | null;
-  is_draft?: boolean;
-  current_bid?: number; // Added this property to fix the error
+  current_bid?: number;
 }

@@ -35,7 +35,7 @@ export const useCarSearch = (dealerId: string) => {
       try {
         let query = from("cars")
           .select("*")
-          .eq("status", "available"); // No longer need to filter by is_draft
+          .eq("status", "available");
         
         // Apply filters using camelCase (will be automatically converted to snake_case)
         if (filters.make && typeof filters.make === 'string') {
@@ -138,11 +138,15 @@ export const useCarSearch = (dealerId: string) => {
   });
 
   useEffect(() => {
-    if (data?.cars) {
-      // Ensure we only set valid car listings
-      const validCars = data.cars.filter((car: any) => 
-        car && typeof car === 'object' && car.id && !car.error
-      ) as CarListing[];
+    if (data?.cars && Array.isArray(data.cars)) {
+      // Properly filter and type-check the car data
+      const validCars = data.cars.filter((car: unknown): car is CarListing => {
+        return car !== null && 
+               typeof car === 'object' && 
+               'id' in car && 
+               typeof (car as any).id === 'string' &&
+               !('error' in car);
+      });
       
       setListings(validCars);
       
