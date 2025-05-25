@@ -15,7 +15,7 @@ export const carFeaturesSchema = z.object({
 });
 
 /**
- * Schema for car records
+ * Schema for car records - removed is_draft as all cars are immediately available
  */
 export const carSchema = baseRecordSchema.extend({
   title: z.string().nullish(),
@@ -25,12 +25,11 @@ export const carSchema = baseRecordSchema.extend({
   price: z.number().nonnegative(),
   mileage: z.number().nullish(),
   transmission: z.string().nullish(),
-  status: z.string().default('available'),
+  status: z.string().default('available'), // Always available when created
   seller_id: z.string().uuid().nullish(),
   features: carFeaturesSchema.nullish(),
   images: z.array(z.string()).nullish(),
   is_auction: z.boolean().default(false),
-  is_draft: z.boolean().default(true),
   auction_status: z.string().nullish(),
   auction_end_time: z.string().nullish(),
   current_bid: z.number().default(0),
@@ -39,7 +38,7 @@ export const carSchema = baseRecordSchema.extend({
 });
 
 /**
- * Schema for creating a new car
+ * Schema for creating a new car - no is_draft field
  */
 export const createCarSchema = carSchema.omit({ 
   id: true, 

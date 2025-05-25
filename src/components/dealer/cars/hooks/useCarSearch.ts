@@ -1,32 +1,15 @@
 
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { processCarData } from "@/utils/carDataHelpers";
 import { CarListing } from "@/types/cars";
 import { AuctionFilters } from "../../auction/types";
 import { useToast } from "@/hooks/use-toast";
-
-// Helper function to safely extract error message from any error type
-const getErrorMessage = (error: any): string => {
-  if (!error) return "Unknown error occurred";
-  
-  if (typeof error === 'string') return error;
-  
-  if (error instanceof Error) return error.message;
-  
-  if (typeof error === 'object') {
-    if (error.message) return error.message;
-    if (error.error) return error.error;
-    if (error.details) return error.details;
-    return JSON.stringify(error);
-  }
-  
-  return String(error);
-};
+import { useTransformedSupabase } from "@/hooks/useTransformedSupabase";
+import { dataTransformer } from "@/utils/dataTransformer";
 
 export const useCarSearch = (dealerId: string) => {
   const { toast } = useToast();
+  const { from } = useTransformedSupabase();
   const [filters, setFilters] = useState<AuctionFilters>({});
   const [sortOption, setSortOption] = useState<string>("newest");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -34,7 +17,7 @@ export const useCarSearch = (dealerId: string) => {
   const [listings, setListings] = useState<CarListing[]>([]);
   const pageSize = 10;
 
-  // Query for car listings
+  // Query for car listings with automatic transformation
   const { isLoading, error, data, refetch } = useQuery({
     queryKey: ["carListings", filters, sortOption, searchQuery, currentPage],
     queryFn: async () => {
@@ -51,13 +34,11 @@ export const useCarSearch = (dealerId: string) => {
       }
       
       try {
-        let query = supabase
-          .from("cars")
+        let query = from("cars")
           .select("*")
-          .eq("status", "available")
-          .eq("is_draft", false);
+          .eq("status", "available"); // No longer need to filter by is_draft
         
-        // Apply filters
+        // Apply filters using camelCase (will be automatically converted to snake_case)
         if (filters.make && typeof filters.make === 'string') {
           query = query.ilike('make', `%${filters.make}%`);
         }
@@ -95,13 +76,13 @@ export const useCarSearch = (dealerId: string) => {
           query = query.or(`make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%`);
         }
         
-        // Apply sorting
+        // Apply sorting using camelCase (will be automatically converted)
         switch (sortOption) {
           case "newest":
-            query = query.order('created_at', { ascending: false });
+            query = query.order('createdAt', { ascending: false });
             break;
           case "oldest":
-            query = query.order('created_at', { ascending: true });
+            query = query.order('createdAt', { ascending: true });
             break;
           case "price-high":
             query = query.order('price', { ascending: false });
@@ -110,7 +91,7 @@ export const useCarSearch = (dealerId: string) => {
             query = query.order('price', { ascending: true });
             break;
           default:
-            query = query.order('created_at', { ascending: false });
+            query = query.order('createdAt', { ascending: false });
         }
         
         // Apply pagination
@@ -118,27 +99,26 @@ export const useCarSearch = (dealerId: string) => {
         const to = from + pageSize - 1;
         query = query.range(from, to);
         
-        const { data, error, count } = await query;
+        const result = await query;
         
         if (isDev) {
           console.log('Car Search Raw Results:', {
-            dataLength: data?.length || 0,
-            totalCount: count || 0,
-            hasError: !!error,
-            errorMessage: error ? getErrorMessage(error) : null
+            dataLength: result.data?.length || 0,
+            hasError: !!result.error,
+            errorMessage: result.error?.message || null
           });
         }
         
-        if (error) {
-          console.error("Supabase query error:", error);
-          throw new Error(getErrorMessage(error));
+        if (result.error) {
+          console.error("Supabase query error:", result.error);
+          throw new Error(result.error.message);
         }
         
-        const processedCars = processCarData(data || []);
+        // Data is already transformed by the enhanced client
+        const processedCars = result.data || [];
         
         if (isDev) {
           console.log('Processed Cars Result:', {
-            originalCount: data?.length || 0,
             processedCount: processedCars.length,
             sampleCar: processedCars[0] || null
           });
@@ -146,19 +126,11 @@ export const useCarSearch = (dealerId: string) => {
         
         return {
           cars: processedCars,
-          total: count || 0
+          total: processedCars.length // Note: we'd need count() for accurate pagination
         };
-      } catch (err) {
-        const errorMessage = getErrorMessage(err);
+      } catch (err: any) {
+        const errorMessage = err.message || 'Unknown error occurred';
         console.error("Error fetching cars:", errorMessage, err);
-        
-        // Attempt to refresh session if we get a permission error
-        if (err && typeof err === 'object' && 'code' in err && 
-            (err.code === '42501' || err.code === 'PGRST301')) {
-          console.log("Permission error detected, refreshing session...");
-          await supabase.auth.refreshSession();
-        }
-        
         throw new Error(errorMessage);
       }
     },
@@ -233,7 +205,7 @@ export const useCarSearch = (dealerId: string) => {
   return {
     listings,
     isLoading,
-    error: error ? getErrorMessage(error) : null, // Convert error to string
+    error: error ? (error as Error).message : null,
     filters,
     sortOption,
     searchQuery,
