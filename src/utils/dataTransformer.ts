@@ -133,8 +133,8 @@ export class DataTransformer {
       return this.toCamelCaseObject(response);
     }
     
-    // Handle array of objects
-    return response.map((item: any) => this.toCamelCaseObject(item));
+    // Handle array of objects - use explicit type assertion
+    return response.map((item: any) => this.toCamelCaseObject(item)) as T;
   }
 
   /**

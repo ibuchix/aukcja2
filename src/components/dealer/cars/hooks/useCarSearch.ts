@@ -5,7 +5,6 @@ import { CarListing } from "@/types/cars";
 import { AuctionFilters } from "../../auction/types";
 import { useToast } from "@/hooks/use-toast";
 import { useTransformedSupabase } from "@/hooks/useTransformedSupabase";
-import { dataTransformer } from "@/utils/dataTransformer";
 
 export const useCarSearch = (dealerId: string) => {
   const { toast } = useToast();
@@ -95,9 +94,9 @@ export const useCarSearch = (dealerId: string) => {
         }
         
         // Apply pagination
-        const from = (currentPage - 1) * pageSize;
-        const to = from + pageSize - 1;
-        query = query.range(from, to);
+        const fromIndex = (currentPage - 1) * pageSize;
+        const to = fromIndex + pageSize - 1;
+        query = query.range(fromIndex, to);
         
         const result = await query;
         
