@@ -16,6 +16,15 @@ export const useCarSearch = (dealerId: string) => {
   const [listings, setListings] = useState<CarListing[]>([]);
   const pageSize = 10;
 
+  // Type guard to ensure we only process valid CarListing objects
+  const isValidCarListing = (item: any): item is CarListing => {
+    return item && 
+           typeof item === 'object' && 
+           'id' in item && 
+           typeof item.id === 'string' &&
+           !('error' in item);
+  };
+
   // Query for car listings with automatic transformation
   const { isLoading, error, data, refetch } = useQuery({
     queryKey: ["carListings", filters, sortOption, searchQuery, currentPage],
@@ -139,14 +148,8 @@ export const useCarSearch = (dealerId: string) => {
 
   useEffect(() => {
     if (data?.cars && Array.isArray(data.cars)) {
-      // Properly filter and type-check the car data
-      const validCars = data.cars.filter((car: unknown): car is CarListing => {
-        return car !== null && 
-               typeof car === 'object' && 
-               'id' in car && 
-               typeof (car as any).id === 'string' &&
-               !('error' in car);
-      });
+      // Filter out any error objects and ensure we only have valid CarListing objects
+      const validCars = data.cars.filter(isValidCarListing);
       
       setListings(validCars);
       
