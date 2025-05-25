@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -24,7 +25,6 @@ const Auctions = () => {
         .from("cars")
         .select("*")
         .eq("is_auction", true)
-        .eq("is_draft", false)
         .eq("auction_status", "active");
 
       if (error) throw error;
@@ -46,7 +46,11 @@ const Auctions = () => {
         .eq("user_id", session.user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching dealer profile:", error);
+        return null;
+      }
+      
       return data;
     },
   });

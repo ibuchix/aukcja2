@@ -12,12 +12,6 @@ import VehicleListings from "@/components/marketplace/VehicleListings";
 import TestimonialsSection from "@/components/marketplace/TestimonialsSection";
 import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
 import { processCarData } from "@/utils/carDataHelpers";
-import { isValidRecord } from "@/utils/supabaseHelpers";
-
-interface DealerData {
-  id: string;
-  [key: string]: any;
-}
 
 const Marketplace = () => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
@@ -39,7 +33,7 @@ const Marketplace = () => {
   // Fetch dealer ID for the current user
   const { data: dealerData } = useQuery({
     queryKey: ["dealerProfile"],
-    queryFn: async (): Promise<DealerData | null> => {
+    queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return null;
 
@@ -49,10 +43,12 @@ const Marketplace = () => {
         .eq("user_id", session.user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching dealer profile:", error);
+        return null;
+      }
       
-      // Add proper validation before returning
-      return isValidRecord(data) ? data as DealerData : null;
+      return data;
     },
   });
 
