@@ -154,7 +154,6 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         created_at: car.created_at,
         updated_at: (car as any).updated_at || car.created_at,
         status: car.status || null,
-        is_draft: Boolean(car.is_draft),
         current_bid: car.current_bid || 0
       };
     }

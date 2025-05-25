@@ -476,7 +476,6 @@ export type Database = {
           images: string[] | null
           is_auction: boolean | null
           is_damaged: boolean | null
-          is_draft: boolean
           is_manually_controlled: boolean | null
           is_registered_in_poland: boolean | null
           last_saved: string | null
@@ -519,7 +518,6 @@ export type Database = {
           images?: string[] | null
           is_auction?: boolean | null
           is_damaged?: boolean | null
-          is_draft?: boolean
           is_manually_controlled?: boolean | null
           is_registered_in_poland?: boolean | null
           last_saved?: string | null
@@ -562,7 +560,6 @@ export type Database = {
           images?: string[] | null
           is_auction?: boolean | null
           is_damaged?: boolean | null
-          is_draft?: boolean
           is_manually_controlled?: boolean | null
           is_registered_in_poland?: boolean | null
           last_saved?: string | null
@@ -1619,7 +1616,6 @@ export type Database = {
           images: string[] | null
           is_auction: boolean | null
           is_damaged: boolean | null
-          is_draft: boolean
           is_manually_controlled: boolean | null
           is_registered_in_poland: boolean | null
           last_saved: string | null
@@ -1665,7 +1661,6 @@ export type Database = {
           images: string[] | null
           is_auction: boolean | null
           is_damaged: boolean | null
-          is_draft: boolean
           is_manually_controlled: boolean | null
           is_registered_in_poland: boolean | null
           last_saved: string | null
@@ -1931,7 +1926,6 @@ export type Database = {
           images: string[] | null
           is_auction: boolean | null
           is_damaged: boolean | null
-          is_draft: boolean
           is_manually_controlled: boolean | null
           is_registered_in_poland: boolean | null
           last_saved: string | null
@@ -1977,7 +1971,6 @@ export type Database = {
           images: string[] | null
           is_auction: boolean | null
           is_damaged: boolean | null
-          is_draft: boolean
           is_manually_controlled: boolean | null
           is_registered_in_poland: boolean | null
           last_saved: string | null

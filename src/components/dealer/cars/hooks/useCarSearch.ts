@@ -139,10 +139,15 @@ export const useCarSearch = (dealerId: string) => {
 
   useEffect(() => {
     if (data?.cars) {
-      setListings(data.cars);
+      // Ensure we only set valid car listings
+      const validCars = data.cars.filter((car: any) => 
+        car && typeof car === 'object' && car.id && !car.error
+      ) as CarListing[];
+      
+      setListings(validCars);
       
       // Show a toast notification if there are no results
-      if (data.cars.length === 0 && !isLoading && !error) {
+      if (validCars.length === 0 && !isLoading && !error) {
         toast({
           title: "No matching vehicles found",
           description: "Try adjusting your filters to see more results",
