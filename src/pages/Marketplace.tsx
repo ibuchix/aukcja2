@@ -71,8 +71,8 @@ const Marketplace = () => {
     );
   }
 
-  // Safely extract dealer ID - check if dealerData exists and has id property
-  const dealerId = (dealerData && typeof dealerData === 'object' && 'id' in dealerData) ? dealerData.id : null;
+  // Safely extract dealer ID - handle null case
+  const dealerId = dealerData?.id || null;
 
   return (
     <div className="min-h-screen bg-background">
