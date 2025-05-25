@@ -1,5 +1,7 @@
+
 import { Info } from "lucide-react";
 import { CarListing } from "@/types/cars";
+import { formatCurrency } from "@/lib/utils";
 
 interface BasicSpecificationsProps {
   car: CarListing;
@@ -32,6 +34,12 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => (
         <p className="text-subtitle-text">Transmission</p>
         <p className="font-medium">{car.transmission || "N/A"}</p>
       </div>
+      {car.reserve_price && (
+        <div>
+          <p className="text-subtitle-text">Reserve Price</p>
+          <p className="font-medium text-primary">{formatCurrency(car.reserve_price)}</p>
+        </div>
+      )}
     </div>
   </div>
 );

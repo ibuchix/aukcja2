@@ -20,14 +20,18 @@ export const useCarSearch = (dealerId: string) => {
   const { isLoading, error, data, refetch } = useQuery({
     queryKey: ["carListings", filters, sortOption, searchQuery, currentPage],
     queryFn: async () => {
-      // Log the query parameters for debugging
-      console.log('Car Search Query:', {
-        filters,
-        sortOption,
-        searchQuery,
-        currentPage,
-        dealerId
-      });
+      // Reduce console logging to prevent spam
+      const isDev = process.env.NODE_ENV === 'development';
+      
+      if (isDev) {
+        console.log('Car Search Query:', {
+          filters,
+          sortOption,
+          searchQuery,
+          currentPage,
+          dealerId
+        });
+      }
       
       try {
         let query = supabase
@@ -99,12 +103,14 @@ export const useCarSearch = (dealerId: string) => {
         
         const { data, error, count } = await query;
         
-        // Log the results for debugging
-        console.log('Car Search Results:', {
-          count: data?.length || 0,
-          totalCount: count || 0,
-          error: error?.message || null
-        });
+        // Only log results if there are errors or in development mode
+        if (isDev || error) {
+          console.log('Car Search Results:', {
+            count: data?.length || 0,
+            totalCount: count || 0,
+            error: error?.message || null
+          });
+        }
         
         if (error) throw error;
         
@@ -123,7 +129,7 @@ export const useCarSearch = (dealerId: string) => {
         throw err;
       }
     },
-    retry: 2, // Increase retry to handle potential auth token refresh
+    retry: 2,
     retryDelay: attempt => Math.min(attempt > 1 ? 2000 : 1000, 30000),
   });
 
@@ -144,30 +150,26 @@ export const useCarSearch = (dealerId: string) => {
 
   // Handle filter changes
   const handleFiltersChange = (newFilters: AuctionFilters) => {
-    console.log('Filter changed:', newFilters);
     setFilters(newFilters);
-    setCurrentPage(1); // Reset to first page on filter change
+    setCurrentPage(1);
   };
 
   // Handle sort changes
   const handleSortChange = (sort: string) => {
-    console.log('Sort changed:', sort);
     setSortOption(sort);
-    setCurrentPage(1); // Reset to first page on sort change
+    setCurrentPage(1);
   };
 
   // Handle search changes
   const handleSearchChange = (search: string) => {
-    console.log('Search changed:', search);
     setSearchQuery(search);
-    setCurrentPage(1); // Reset to first page on search change
+    setCurrentPage(1);
   };
   
   // Clear all filters
   const clearFilters = () => {
     setFilters({});
     setSearchQuery("");
-    // Keep the sort option as is
     setCurrentPage(1);
     
     toast({

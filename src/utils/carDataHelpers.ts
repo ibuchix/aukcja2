@@ -6,6 +6,52 @@ import { isSelectQueryError, safeProcessCarData } from "./supabaseHelpers";
 type CarRow = Database["public"]["Tables"]["cars"]["Row"];
 
 /**
+ * Extract reserve price from valuation data
+ */
+function extractReservePriceFromValuation(valuation_data: any): number | null {
+  if (!valuation_data) return null;
+  
+  // Try different possible paths for reserve price
+  if (valuation_data.reservePrice) return Number(valuation_data.reservePrice);
+  if (valuation_data.reserve_price) return Number(valuation_data.reserve_price);
+  if (valuation_data.basePrice) {
+    // Calculate reserve price as 80% of base price if no explicit reserve price
+    return Math.round(Number(valuation_data.basePrice) * 0.8);
+  }
+  
+  return null;
+}
+
+/**
+ * Extract price from valuation data
+ */
+function extractPriceFromValuation(valuation_data: any, fallbackPrice: number): number {
+  if (!valuation_data) return fallbackPrice;
+  
+  // Try different possible paths for price
+  if (valuation_data.basePrice) return Number(valuation_data.basePrice);
+  if (valuation_data.price) return Number(valuation_data.price);
+  if (valuation_data.estimatedValue) return Number(valuation_data.estimatedValue);
+  
+  return fallbackPrice;
+}
+
+/**
+ * Process image URLs to handle blob URLs and make them accessible
+ */
+function processImageUrl(url: string | null): string | null {
+  if (!url) return null;
+  
+  // If it's already a blob URL or valid URL, return as is for now
+  // TODO: Implement proper image storage and URL conversion
+  if (url.startsWith('blob:') || url.startsWith('http')) {
+    return url;
+  }
+  
+  return url;
+}
+
+/**
  * Safely transforms database car rows to CarListing objects
  * with proper error handling
  */
@@ -48,22 +94,46 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         // Default features already set at initialization
       }
       
-      // Extract required_photos safely
+      // Extract required_photos safely and process image URLs
       let requiredPhotos: Record<string, string | null> | null = null;
       if (car.required_photos && typeof car.required_photos === 'object') {
-        requiredPhotos = car.required_photos as Record<string, string | null>;
+        const rawPhotos = car.required_photos as Record<string, any>;
+        requiredPhotos = {};
+        Object.keys(rawPhotos).forEach(key => {
+          requiredPhotos![key] = processImageUrl(rawPhotos[key]);
+        });
+      }
+
+      // Process images array
+      let processedImages: string[] | null = null;
+      if (car.images && Array.isArray(car.images)) {
+        processedImages = car.images
+          .map(img => processImageUrl(img))
+          .filter((img): img is string => img !== null);
+      }
+
+      // Extract price from valuation data if car price is 0
+      let finalPrice = car.price || 0;
+      if (finalPrice === 0 && car.valuation_data) {
+        finalPrice = extractPriceFromValuation(car.valuation_data, 0);
+      }
+
+      // Extract reserve price from valuation data if not set
+      let finalReservePrice = car.reserve_price;
+      if (!finalReservePrice && car.valuation_data) {
+        finalReservePrice = extractReservePriceFromValuation(car.valuation_data);
       }
       
       // Create the car listing with all properties explicitly declared
       return {
         id: car.id,
-        title: car.title || null,
-        price: car.price || 0,
+        title: car.title || `${car.year} ${car.make} ${car.model}`,
+        price: finalPrice,
         make: car.make || null,
         model: car.model || null,
         year: car.year || null,
         mileage: car.mileage || 0,
-        images: car.images || null,
+        images: processedImages,
         features: parsedFeatures,
         transmission: car.transmission || null,
         required_photos: requiredPhotos,
@@ -74,7 +144,7 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         is_auction: Boolean((car as any).is_auction),
         auction_end_time: (car as any).auction_end_time || null,
         auction_start_time: (car as any).auction_start_time || null,
-        reserve_price: (car as any).reserve_price || null,
+        reserve_price: finalReservePrice,
         minimum_bid_increment: (car as any).minimum_bid_increment || null,
         auction_status: (car as any).auction_status || null,
         is_damaged: Boolean((car as any).is_damaged),
