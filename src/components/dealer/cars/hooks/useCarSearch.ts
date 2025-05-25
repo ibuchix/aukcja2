@@ -162,7 +162,7 @@ export const useCarSearch = (dealerId: string) => {
         });
       }
     } else if (!isLoading && !error) {
-      // Clear listings if no data and no error - only set empty array for valid data
+      // Clear listings if no data and no error - set empty array for valid case
       setListings([]);
     }
   }, [data, isLoading, error, toast]);
