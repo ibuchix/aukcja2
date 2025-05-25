@@ -72,7 +72,7 @@ const Marketplace = () => {
   }
 
   // Check if dealer data is valid and has an id property
-  const dealerId = dealerData?.id || null;
+  const dealerId = dealerData && typeof dealerData === 'object' && 'id' in dealerData ? dealerData.id : null;
 
   return (
     <div className="min-h-screen bg-background">
