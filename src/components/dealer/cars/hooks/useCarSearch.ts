@@ -4,11 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { CarListing } from "@/types/cars";
 import { AuctionFilters } from "../../auction/types";
 import { useToast } from "@/hooks/use-toast";
-import { useTransformedSupabase } from "@/hooks/useTransformedSupabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useCarSearch = (dealerId: string) => {
   const { toast } = useToast();
-  const { from } = useTransformedSupabase();
   const [filters, setFilters] = useState<AuctionFilters>({});
   const [sortOption, setSortOption] = useState<string>("newest");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -16,16 +15,17 @@ export const useCarSearch = (dealerId: string) => {
   const [listings, setListings] = useState<CarListing[]>([]);
   const pageSize = 10;
 
-  // Type guard to ensure we only process valid CarListing objects
+  // Improved type guard to ensure we only process valid CarListing objects
   const isValidCarListing = (item: any): item is CarListing => {
     return item && 
            typeof item === 'object' && 
            'id' in item && 
            typeof item.id === 'string' &&
-           !('error' in item);
+           !('error' in item) &&
+           typeof item.price === 'number';
   };
 
-  // Query for car listings with automatic transformation
+  // Query for car listings using regular supabase client
   const { isLoading, error, data, refetch } = useQuery({
     queryKey: ["carListings", filters, sortOption, searchQuery, currentPage],
     queryFn: async () => {
@@ -42,11 +42,12 @@ export const useCarSearch = (dealerId: string) => {
       }
       
       try {
-        let query = from("cars")
+        let query = supabase
+          .from("cars")
           .select("*")
           .eq("status", "available");
         
-        // Apply filters using camelCase (will be automatically converted to snake_case)
+        // Apply filters
         if (filters.make && typeof filters.make === 'string') {
           query = query.ilike('make', `%${filters.make}%`);
         }
@@ -84,13 +85,13 @@ export const useCarSearch = (dealerId: string) => {
           query = query.or(`make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%`);
         }
         
-        // Apply sorting using camelCase (will be automatically converted)
+        // Apply sorting
         switch (sortOption) {
           case "newest":
-            query = query.order('createdAt', { ascending: false });
+            query = query.order('created_at', { ascending: false });
             break;
           case "oldest":
-            query = query.order('createdAt', { ascending: true });
+            query = query.order('created_at', { ascending: true });
             break;
           case "price-high":
             query = query.order('price', { ascending: false });
@@ -99,7 +100,7 @@ export const useCarSearch = (dealerId: string) => {
             query = query.order('price', { ascending: true });
             break;
           default:
-            query = query.order('createdAt', { ascending: false });
+            query = query.order('created_at', { ascending: false });
         }
         
         // Apply pagination
@@ -122,19 +123,21 @@ export const useCarSearch = (dealerId: string) => {
           throw new Error(result.error.message);
         }
         
-        // Data is already transformed by the enhanced client
-        const processedCars = result.data || [];
+        // Process and filter the results to ensure only valid CarListing objects
+        const rawData = result.data || [];
+        const validCars = rawData.filter(isValidCarListing);
         
         if (isDev) {
           console.log('Processed Cars Result:', {
-            processedCount: processedCars.length,
-            sampleCar: processedCars[0] || null
+            rawCount: rawData.length,
+            validCount: validCars.length,
+            sampleCar: validCars[0] || null
           });
         }
         
         return {
-          cars: processedCars,
-          total: processedCars.length // Note: we'd need count() for accurate pagination
+          cars: validCars,
+          total: validCars.length
         };
       } catch (err: any) {
         const errorMessage = err.message || 'Unknown error occurred';
@@ -148,13 +151,13 @@ export const useCarSearch = (dealerId: string) => {
 
   useEffect(() => {
     if (data?.cars && Array.isArray(data.cars)) {
-      // Filter out any error objects and ensure we only have valid CarListing objects
-      const validCars = data.cars.filter(isValidCarListing);
+      // Additional filtering to ensure type safety
+      const validListings = data.cars.filter(isValidCarListing);
       
-      setListings(validCars);
+      setListings(validListings);
       
       // Show a toast notification if there are no results
-      if (validCars.length === 0 && !isLoading && !error) {
+      if (validListings.length === 0 && !isLoading && !error) {
         toast({
           title: "No matching vehicles found",
           description: "Try adjusting your filters to see more results",
@@ -162,7 +165,7 @@ export const useCarSearch = (dealerId: string) => {
         });
       }
     } else if (!isLoading && !error) {
-      // Clear listings if no data and no error - set empty array for valid case
+      // Clear listings if no data and no error
       setListings([]);
     }
   }, [data, isLoading, error, toast]);

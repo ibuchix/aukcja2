@@ -30,7 +30,7 @@ const Marketplace = () => {
     },
   });
 
-  // Fetch dealer ID for the current user
+  // Fetch dealer ID for the current user using regular supabase client
   const { data: dealerData } = useQuery({
     queryKey: ["dealerProfile"],
     queryFn: async () => {
@@ -71,8 +71,8 @@ const Marketplace = () => {
     );
   }
 
-  // Safely extract dealer ID - handle null case
-  const dealerId = dealerData?.id || null;
+  // Safely extract dealer ID - handle null case and type guard
+  const dealerId = (dealerData && typeof dealerData === 'object' && 'id' in dealerData) ? dealerData.id : null;
 
   return (
     <div className="min-h-screen bg-background">
