@@ -34,15 +34,20 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
     clearFilters
   } = useCarSearch(dealerId);
 
-  // Show debug information in development environment
   const isDev = process.env.NODE_ENV === 'development';
   
   // Log dealer ID for debugging
   useEffect(() => {
     if (isDev) {
       console.log("CarSearch component mounted with dealer ID:", dealerId);
+      console.log("Current search state:", {
+        listings: listings.length,
+        isLoading,
+        hasError: !!error,
+        errorMessage: error
+      });
     }
-  }, [dealerId, isDev]);
+  }, [dealerId, listings.length, isLoading, error, isDev]);
 
   return (
     <div className="space-y-6 pb-20">
@@ -62,19 +67,21 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
         
         {isDev && (
           <div className="text-xs text-muted-foreground">
-            Dealer ID: {dealerId || "Not available"}
+            Dealer ID: {dealerId || "Not available"} | Results: {listings.length}
           </div>
         )}
       </div>
 
-      {/* Debugging Info */}
+      {/* Debugging Info in Development */}
       {isDev && (
         <Alert variant="default" className="bg-blue-50 border-blue-200">
           <Info className="h-4 w-4" />
           <AlertDescription className="text-xs">
-            Car Search Debug: Using dealer ID: {dealerId || "None"} | 
+            Car Search Debug: Dealer ID: {dealerId || "None"} | 
             Active filters: {Object.keys(filters).length} | 
-            Results: {listings.length}
+            Results: {listings.length} | 
+            Loading: {isLoading ? "Yes" : "No"} |
+            Error: {error ? "Yes" : "No"}
           </AlertDescription>
         </Alert>
       )}
@@ -90,7 +97,7 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
       {error ? (
         <CarSearchErrorDisplay 
           onRefresh={refetch}
-          errorMessage={error instanceof Error ? error.message : String(error)}
+          errorMessage={error}
         />
       ) : (
         <>

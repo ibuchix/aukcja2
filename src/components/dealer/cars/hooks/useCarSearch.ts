@@ -7,6 +7,24 @@ import { CarListing } from "@/types/cars";
 import { AuctionFilters } from "../../auction/types";
 import { useToast } from "@/hooks/use-toast";
 
+// Helper function to safely extract error message from any error type
+const getErrorMessage = (error: any): string => {
+  if (!error) return "Unknown error occurred";
+  
+  if (typeof error === 'string') return error;
+  
+  if (error instanceof Error) return error.message;
+  
+  if (typeof error === 'object') {
+    if (error.message) return error.message;
+    if (error.error) return error.error;
+    if (error.details) return error.details;
+    return JSON.stringify(error);
+  }
+  
+  return String(error);
+};
+
 export const useCarSearch = (dealerId: string) => {
   const { toast } = useToast();
   const [filters, setFilters] = useState<AuctionFilters>({});
@@ -20,7 +38,6 @@ export const useCarSearch = (dealerId: string) => {
   const { isLoading, error, data, refetch } = useQuery({
     queryKey: ["carListings", filters, sortOption, searchQuery, currentPage],
     queryFn: async () => {
-      // Reduce console logging to prevent spam
       const isDev = process.env.NODE_ENV === 'development';
       
       if (isDev) {
@@ -103,30 +120,46 @@ export const useCarSearch = (dealerId: string) => {
         
         const { data, error, count } = await query;
         
-        // Only log results if there are errors or in development mode
-        if (isDev || error) {
-          console.log('Car Search Results:', {
-            count: data?.length || 0,
+        if (isDev) {
+          console.log('Car Search Raw Results:', {
+            dataLength: data?.length || 0,
             totalCount: count || 0,
-            error: error?.message || null
+            hasError: !!error,
+            errorMessage: error ? getErrorMessage(error) : null
           });
         }
         
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase query error:", error);
+          throw new Error(getErrorMessage(error));
+        }
+        
+        const processedCars = processCarData(data || []);
+        
+        if (isDev) {
+          console.log('Processed Cars Result:', {
+            originalCount: data?.length || 0,
+            processedCount: processedCars.length,
+            sampleCar: processedCars[0] || null
+          });
+        }
         
         return {
-          cars: processCarData(data || []),
+          cars: processedCars,
           total: count || 0
         };
       } catch (err) {
-        console.error("Error fetching cars:", err);
+        const errorMessage = getErrorMessage(err);
+        console.error("Error fetching cars:", errorMessage, err);
+        
         // Attempt to refresh session if we get a permission error
         if (err && typeof err === 'object' && 'code' in err && 
             (err.code === '42501' || err.code === 'PGRST301')) {
           console.log("Permission error detected, refreshing session...");
           await supabase.auth.refreshSession();
         }
-        throw err;
+        
+        throw new Error(errorMessage);
       }
     },
     retry: 2,
@@ -138,15 +171,18 @@ export const useCarSearch = (dealerId: string) => {
       setListings(data.cars);
       
       // Show a toast notification if there are no results
-      if (data.cars.length === 0 && !isLoading) {
+      if (data.cars.length === 0 && !isLoading && !error) {
         toast({
           title: "No matching vehicles found",
           description: "Try adjusting your filters to see more results",
           variant: "default"
         });
       }
+    } else if (!isLoading && !error) {
+      // Clear listings if no data and no error
+      setListings([]);
     }
-  }, [data, isLoading, toast]);
+  }, [data, isLoading, error, toast]);
 
   // Handle filter changes
   const handleFiltersChange = (newFilters: AuctionFilters) => {
@@ -197,7 +233,7 @@ export const useCarSearch = (dealerId: string) => {
   return {
     listings,
     isLoading,
-    error,
+    error: error ? getErrorMessage(error) : null, // Convert error to string
     filters,
     sortOption,
     searchQuery,
