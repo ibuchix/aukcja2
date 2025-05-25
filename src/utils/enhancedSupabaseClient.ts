@@ -4,16 +4,16 @@
  * Handles camelCase <-> snake_case conversion automatically
  */
 
-import { createClient, SupabaseClient, PostgrestQueryBuilder, PostgrestFilterBuilder } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { dataTransformer } from './dataTransformer';
 import type { Database } from '@/integrations/supabase/types';
 
 // Enhanced query builder that adds transformation
 class EnhancedPostgrestFilterBuilder<T> {
-  private originalBuilder: PostgrestFilterBuilder<any, any, any, any, T>;
+  private originalBuilder: any;
   private transformer = dataTransformer;
 
-  constructor(builder: PostgrestFilterBuilder<any, any, any, any, T>) {
+  constructor(builder: any) {
     this.originalBuilder = builder;
   }
 
@@ -104,6 +104,18 @@ class EnhancedPostgrestFilterBuilder<T> {
 
   range(from: number, to: number) {
     return new EnhancedPostgrestFilterBuilder(this.originalBuilder.range(from, to));
+  }
+
+  // Add the missing filter method
+  filter(column: string, operator: string, value: any) {
+    const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: value });
+    const snakeKey = Object.keys(snakeColumn)[0];
+    return new EnhancedPostgrestFilterBuilder(this.originalBuilder.filter(snakeKey, operator, value));
+  }
+
+  // Add the missing select method
+  select(columns?: string) {
+    return new EnhancedPostgrestFilterBuilder(this.originalBuilder.select(columns));
   }
 
   // Result methods that handle transformation
@@ -215,12 +227,21 @@ export class EnhancedSupabaseClient {
     return this.client.realtime;
   }
 
+  // Add missing channel and removeChannel methods
+  channel(name: string, opts?: any) {
+    return this.client.channel(name, opts);
+  }
+
+  removeChannel(channel: any) {
+    return this.client.removeChannel(channel);
+  }
+
   /**
    * Direct RPC calls with transformation
    */
   async rpc(functionName: string, params?: any) {
     const transformedParams = params ? this.transformer.toSnakeCaseObject(params) : params;
-    const result = await this.client.rpc(functionName, transformedParams);
+    const result = await this.client.rpc(functionName as any, transformedParams);
     
     if (result.error) {
       return result; // Return errors unchanged
