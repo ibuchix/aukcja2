@@ -1,8 +1,9 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { CarListing } from "@/types/cars";
 import { CarListingCard } from "./CarListingCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import CarDetailsDialog from "@/components/CarDetailsDialog";
 
 interface CarListingsGridProps {
   listings: CarListing[];
@@ -10,6 +11,16 @@ interface CarListingsGridProps {
 }
 
 export const CarListingsGrid = ({ listings, isLoading }: CarListingsGridProps) => {
+  const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
+
+  const handleViewDetails = (car: CarListing) => {
+    setSelectedCar(car);
+  };
+
+  const handleCloseDetails = () => {
+    setSelectedCar(null);
+  };
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -36,10 +47,21 @@ export const CarListingsGrid = ({ listings, isLoading }: CarListingsGridProps) =
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {listings.map((car) => (
-        <CarListingCard key={car.id} car={car} />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {listings.map((car) => (
+          <CarListingCard 
+            key={car.id} 
+            car={car} 
+            onViewDetails={handleViewDetails}
+          />
+        ))}
+      </div>
+      
+      <CarDetailsDialog 
+        car={selectedCar} 
+        onClose={handleCloseDetails}
+      />
+    </>
   );
 };

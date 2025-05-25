@@ -2,27 +2,52 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { CarListing } from "@/types/cars";
+import { formatCurrency } from "@/lib/utils";
 
 interface CarListingCardProps {
   car: CarListing;
+  onViewDetails: (car: CarListing) => void;
 }
 
-export const CarListingCard = ({ car }: CarListingCardProps) => {
+const getPrimaryImage = (car: CarListing): string => {
+  // First check required_photos for exterior front
+  if (car.required_photos?.exterior_front) {
+    return car.required_photos.exterior_front;
+  }
+  
+  // Then check other exterior photos in required_photos
+  if (car.required_photos) {
+    const exteriorPhotos = [
+      car.required_photos.exterior_rear,
+      car.required_photos.exterior_left,
+      car.required_photos.exterior_right
+    ].filter(Boolean);
+    
+    if (exteriorPhotos.length > 0) {
+      return exteriorPhotos[0]!;
+    }
+  }
+  
+  // Fall back to images array
+  if (car.images && car.images.length > 0) {
+    return car.images[0];
+  }
+  
+  return "/placeholder.svg";
+};
+
+export const CarListingCard = ({ car, onViewDetails }: CarListingCardProps) => {
+  const primaryImage = getPrimaryImage(car);
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-      {car.images && car.images[0] ? (
-        <div className="aspect-video w-full overflow-hidden bg-gray-100 dark:bg-gray-900">
-          <img 
-            src={car.images[0]} 
-            alt={car.title || `${car.year} ${car.make} ${car.model}`} 
-            className="w-full h-full object-cover"
-          />
-        </div>
-      ) : (
-        <div className="aspect-video w-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-          <span className="text-gray-500 dark:text-gray-400">No image</span>
-        </div>
-      )}
+      <div className="aspect-video w-full overflow-hidden bg-gray-100 dark:bg-gray-900">
+        <img 
+          src={primaryImage} 
+          alt={car.title || `${car.year} ${car.make} ${car.model}`} 
+          className="w-full h-full object-cover"
+        />
+      </div>
       <div className="p-4 space-y-2">
         <h3 className="text-lg font-semibold line-clamp-1">
           {car.title || `${car.year} ${car.make} ${car.model}`}
@@ -32,7 +57,7 @@ export const CarListingCard = ({ car }: CarListingCardProps) => {
             {car.year} · {car.make}
           </span>
           <span className="font-medium">
-            ${car.price?.toLocaleString()}
+            {formatCurrency(car.price)}
           </span>
         </div>
         {car.is_auction ? (
@@ -45,7 +70,12 @@ export const CarListingCard = ({ car }: CarListingCardProps) => {
           </span>
         )}
         <div className="pt-2">
-          <Button variant="outline" size="sm" className="w-full">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full"
+            onClick={() => onViewDetails(car)}
+          >
             View Details
           </Button>
         </div>
