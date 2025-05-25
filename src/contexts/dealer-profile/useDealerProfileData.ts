@@ -37,20 +37,31 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
           .rpc('get_dealer_by_user_id', { p_user_id: userId });
         
         if (!rpcError && rpcData) {
-          // Use our type guard to ensure the response has the correct structure
-          if (isValidRecord<DealerProfileData>(rpcData)) {
-            setProfileData(rpcData as DealerProfileData);
-            setProfileStatus(rpcData.verification_status as string || 'pending');
-            // Safely check for needs_recovery property with type safety
-            const recoveryNeeded = typeof rpcData === 'object' && 
-              'needs_recovery' in rpcData ? 
-              Boolean(rpcData.needs_recovery) : false;
-            setNeedsRecovery(recoveryNeeded);
-            setLoading(false);
-            return;
-          } else {
-            console.warn('RPC data structure does not match DealerProfile type', rpcData);
-          }
+          console.log("[Dealer Profile] RPC returned data:", rpcData);
+          
+          // The RPC function returns snake_case data, so we need to transform it
+          const transformedData = {
+            id: rpcData.id,
+            userId: rpcData.user_id,
+            supervisorName: rpcData.supervisor_name,
+            dealershipName: rpcData.dealership_name,
+            address: rpcData.address,
+            licenseNumber: rpcData.license_number,
+            taxId: rpcData.tax_id,
+            businessRegistryNumber: rpcData.business_registry_number,
+            verificationStatus: rpcData.verification_status,
+            isVerified: rpcData.is_verified,
+            createdAt: rpcData.created_at,
+            updatedAt: rpcData.updated_at,
+            // Handle potential additional fields
+            needsRecovery: rpcData.needs_recovery || false
+          };
+          
+          setProfileData(transformedData as DealerProfileData);
+          setProfileStatus(transformedData.verificationStatus || 'pending');
+          setNeedsRecovery(transformedData.needsRecovery);
+          setLoading(false);
+          return;
         } else if (rpcError) {
           console.warn('Could not fetch dealer profile using RPC, falling back to direct query', rpcError);
         }
@@ -78,19 +89,18 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
       }
 
       if (data && isValidRecord<DealerProfileData>(data)) {
+        // Enhanced client should have already transformed this data
         setProfileData(data as DealerProfileData);
         
-        // Safe property access with defaults
         const status = isValidRecord(data) && 
-          'verification_status' in data ? 
-          data.verification_status as string : 'pending';
+          'verificationStatus' in data ? 
+          data.verificationStatus as string : 'pending';
         
         setProfileStatus(status);
         
-        // Safe property access for needs_recovery flag with better type handling
         const recoveryNeeded = isValidRecord(data) && 
-          'needs_recovery' in data ? 
-          Boolean(data.needs_recovery) : false;
+          'needsRecovery' in data ? 
+          Boolean(data.needsRecovery) : false;
         
         setNeedsRecovery(recoveryNeeded);
       } else {
@@ -174,7 +184,7 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
       setError(errorMessage);
       console.error("Error updating profile status:", errorMessage);
       // Revert to previous status on error
-      setProfileStatus(profileData?.verification_status || 'unknown');
+      setProfileStatus(profileData?.verificationStatus || 'unknown');
     } finally {
       setLoading(false);
     }

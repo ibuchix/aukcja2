@@ -106,15 +106,17 @@ class EnhancedPostgrestFilterBuilder<T> {
     return new EnhancedPostgrestFilterBuilder(this.originalBuilder.range(from, to));
   }
 
-  // Add the missing filter method
   filter(column: string, operator: string, value: any) {
     const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: value });
     const snakeKey = Object.keys(snakeColumn)[0];
     return new EnhancedPostgrestFilterBuilder(this.originalBuilder.filter(snakeKey, operator, value));
   }
 
-  // Add the missing select method
-  select(columns?: string) {
+  // Updated select method to handle options properly
+  select(columns?: string, options?: { count?: 'exact' | 'planned' | 'estimated'; head?: boolean }) {
+    if (options) {
+      return new EnhancedPostgrestFilterBuilder(this.originalBuilder.select(columns, options));
+    }
     return new EnhancedPostgrestFilterBuilder(this.originalBuilder.select(columns));
   }
 
@@ -178,7 +180,11 @@ export class EnhancedSupabaseClient {
     const originalFrom = this.client.from(table);
     
     return {
-      select: (columns?: string) => {
+      select: (columns?: string, options?: { count?: 'exact' | 'planned' | 'estimated'; head?: boolean }) => {
+        if (options) {
+          const query = originalFrom.select(columns, options);
+          return new EnhancedPostgrestFilterBuilder(query);
+        }
         const query = originalFrom.select(columns);
         return new EnhancedPostgrestFilterBuilder(query);
       },
@@ -237,7 +243,8 @@ export class EnhancedSupabaseClient {
   }
 
   /**
-   * Direct RPC calls with transformation
+   * Direct RPC calls - DON'T transform the response for RPC calls
+   * as they often return data already in the expected format
    */
   async rpc(functionName: string, params?: any) {
     const transformedParams = params ? this.transformer.toSnakeCaseObject(params) : params;
@@ -247,10 +254,9 @@ export class EnhancedSupabaseClient {
       return result; // Return errors unchanged
     }
     
-    return {
-      ...result,
-      data: result.data ? this.transformer.transformResponse(result.data) : result.data
-    };
+    // For RPC calls, return data as-is since many database functions
+    // already return data in the expected format
+    return result;
   }
 }
 
