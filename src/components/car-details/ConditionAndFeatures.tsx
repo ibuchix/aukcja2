@@ -66,36 +66,7 @@ const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
                 {car.is_damaged ? "Damage Reported" : "No Damage Reported"}
               </span>
             </div>
-            
-            {car.accident_history !== undefined && (
-              <div className="flex items-center gap-2">
-                {car.accident_history ? (
-                  <XCircle className="w-5 h-5 text-red-500" />
-                ) : (
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                )}
-                <span className="font-medium">
-                  {car.accident_history ? "Accident History" : "No Accident History"}
-                </span>
-              </div>
-            )}
           </div>
-
-          {/* Damage Description */}
-          {car.damage_description && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <h5 className="font-medium text-red-800 mb-2">Damage Description:</h5>
-              <p className="text-red-700">{car.damage_description}</p>
-            </div>
-          )}
-
-          {/* Condition Notes */}
-          {car.condition_notes && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <h5 className="font-medium text-blue-800 mb-2">Condition Notes:</h5>
-              <p className="text-blue-700">{car.condition_notes}</p>
-            </div>
-          )}
 
           {/* Seller Notes */}
           {car.seller_notes && (
@@ -113,23 +84,11 @@ const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
             <Badge variant="outline" className="capitalize">
               {car.service_history_type.replace(/_/g, ' ')}
             </Badge>
-            {car.repair_history && (
-              <p className="text-sm text-gray-600 mt-2">{car.repair_history}</p>
-            )}
-          </div>
-        )}
-
-        {/* Inspection Information */}
-        {(car.inspection_date || car.inspection_notes) && (
-          <div className="space-y-2">
-            <h4 className="font-semibold">Inspection Information</h4>
-            {car.inspection_date && (
-              <p className="text-sm text-gray-600">
-                Last Inspection: {new Date(car.inspection_date).toLocaleDateString()}
+            {car.has_service_history && (
+              <p className="text-sm text-green-600 mt-2">
+                <CheckCircle className="w-4 h-4 inline mr-1" />
+                Service history available
               </p>
-            )}
-            {car.inspection_notes && (
-              <p className="text-sm text-gray-600">{car.inspection_notes}</p>
             )}
           </div>
         )}
@@ -157,8 +116,6 @@ const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
         {/* Show message if no condition information available */}
         {!car.is_damaged && 
          !car.condition_rating && 
-         !car.damage_description && 
-         !car.condition_notes && 
          !car.seller_notes && 
          !car.service_history_type && (
           <div className="p-4 bg-gray-50 rounded-lg flex items-center gap-2">

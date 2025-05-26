@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CarListing } from "@/types/cars";
@@ -45,16 +46,7 @@ export const useCarSearch = (dealerId: string) => {
           .from("cars")
           .select(`
             *,
-            required_photos,
-            damage_description,
-            damage_photos,
-            accident_history,
-            service_history_type,
-            seller_notes,
-            condition_notes,
-            repair_history,
-            inspection_date,
-            inspection_notes
+            required_photos
           `)
           .eq("status", "available");
         
@@ -99,10 +91,10 @@ export const useCarSearch = (dealerId: string) => {
         // Apply sorting
         switch (sortOption) {
           case "newest":
-            query = query.order('createdAt', { ascending: false });
+            query = query.order('created_at', { ascending: false });
             break;
           case "oldest":
-            query = query.order('createdAt', { ascending: true });
+            query = query.order('created_at', { ascending: true });
             break;
           case "price-high":
             query = query.order('price', { ascending: false });
@@ -111,7 +103,7 @@ export const useCarSearch = (dealerId: string) => {
             query = query.order('price', { ascending: true });
             break;
           default:
-            query = query.order('createdAt', { ascending: false });
+            query = query.order('created_at', { ascending: false });
         }
         
         // Apply pagination

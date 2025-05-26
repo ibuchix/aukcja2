@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -85,8 +86,7 @@ export const useAuctionBrowser = (
             auction_status
           `)
           .eq('auction_status', 'active')
-          .eq('is_auction', true)
-          .eq('is_draft', false);
+          .eq('is_auction', true);
 
         // Apply search
         if (searchQuery) {
