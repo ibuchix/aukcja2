@@ -3,38 +3,12 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { CarListing } from "@/types/cars";
 import { formatCurrency } from "@/lib/utils";
+import { getPrimaryImage } from "@/utils/imageUtils";
 
 interface CarListingCardProps {
   car: CarListing;
   onViewDetails: (car: CarListing) => void;
 }
-
-const getPrimaryImage = (car: CarListing): string => {
-  // First check required_photos for exterior front
-  if (car.required_photos?.exterior_front) {
-    return car.required_photos.exterior_front;
-  }
-  
-  // Then check other exterior photos in required_photos
-  if (car.required_photos) {
-    const exteriorPhotos = [
-      car.required_photos.exterior_rear,
-      car.required_photos.exterior_left,
-      car.required_photos.exterior_right
-    ].filter(Boolean);
-    
-    if (exteriorPhotos.length > 0) {
-      return exteriorPhotos[0]!;
-    }
-  }
-  
-  // Fall back to images array
-  if (car.images && car.images.length > 0) {
-    return car.images[0];
-  }
-  
-  return "/placeholder.svg";
-};
 
 export const CarListingCard = ({ car, onViewDetails }: CarListingCardProps) => {
   const primaryImage = getPrimaryImage(car);

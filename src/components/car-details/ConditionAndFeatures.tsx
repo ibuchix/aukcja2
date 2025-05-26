@@ -1,30 +1,149 @@
-import { AlertTriangle } from "lucide-react";
+
+import { AlertTriangle, CheckCircle, XCircle, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CarListing } from "@/types/cars";
 
 interface ConditionAndFeaturesProps {
   car: CarListing;
 }
 
-const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => (
-  <div className="space-y-4 p-4 bg-accent/50 rounded-lg">
-    <h3 className="text-lg font-semibold font-oswald flex items-center gap-2">
-      <AlertTriangle className="w-5 h-5" />
-      Condition & Damages
-    </h3>
-    <div className="space-y-2">
-      {car.is_damaged && (
-        <Badge variant="destructive">Reported Damage</Badge>
-      )}
-      <div className="grid grid-cols-1 gap-4">
+const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
+  const renderConditionRating = () => {
+    if (!car.condition_rating) return null;
+    
+    const rating = car.condition_rating;
+    const getConditionColor = (rating: number) => {
+      if (rating >= 8) return "text-green-600";
+      if (rating >= 6) return "text-yellow-600";
+      return "text-red-600";
+    };
+    
+    const getConditionText = (rating: number) => {
+      if (rating >= 8) return "Excellent";
+      if (rating >= 6) return "Good";
+      if (rating >= 4) return "Fair";
+      return "Poor";
+    };
+
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-medium">Condition Rating:</span>
+        <span className={`text-lg font-bold ${getConditionColor(rating)}`}>
+          {rating}/10 ({getConditionText(rating)})
+        </span>
+      </div>
+    );
+  };
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5" />
+          Vehicle Condition & Features
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Condition Rating */}
+        {car.condition_rating && (
+          <div className="p-4 bg-gray-50 rounded-lg">
+            {renderConditionRating()}
+          </div>
+        )}
+
+        {/* Damage Information */}
+        <div className="space-y-3">
+          <h4 className="font-semibold text-lg">Damage & Condition Status</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center gap-2">
+              {car.is_damaged ? (
+                <XCircle className="w-5 h-5 text-red-500" />
+              ) : (
+                <CheckCircle className="w-5 h-5 text-green-500" />
+              )}
+              <span className="font-medium">
+                {car.is_damaged ? "Damage Reported" : "No Damage Reported"}
+              </span>
+            </div>
+            
+            {car.accident_history !== undefined && (
+              <div className="flex items-center gap-2">
+                {car.accident_history ? (
+                  <XCircle className="w-5 h-5 text-red-500" />
+                ) : (
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                )}
+                <span className="font-medium">
+                  {car.accident_history ? "Accident History" : "No Accident History"}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Damage Description */}
+          {car.damage_description && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <h5 className="font-medium text-red-800 mb-2">Damage Description:</h5>
+              <p className="text-red-700">{car.damage_description}</p>
+            </div>
+          )}
+
+          {/* Condition Notes */}
+          {car.condition_notes && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <h5 className="font-medium text-blue-800 mb-2">Condition Notes:</h5>
+              <p className="text-blue-700">{car.condition_notes}</p>
+            </div>
+          )}
+
+          {/* Seller Notes */}
+          {car.seller_notes && (
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <h5 className="font-medium text-gray-800 mb-2">Seller Notes:</h5>
+              <p className="text-gray-700">{car.seller_notes}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Service History */}
+        {car.service_history_type && (
+          <div className="space-y-2">
+            <h4 className="font-semibold">Service History</h4>
+            <Badge variant="outline" className="capitalize">
+              {car.service_history_type.replace(/_/g, ' ')}
+            </Badge>
+            {car.repair_history && (
+              <p className="text-sm text-gray-600 mt-2">{car.repair_history}</p>
+            )}
+          </div>
+        )}
+
+        {/* Inspection Information */}
+        {(car.inspection_date || car.inspection_notes) && (
+          <div className="space-y-2">
+            <h4 className="font-semibold">Inspection Information</h4>
+            {car.inspection_date && (
+              <p className="text-sm text-gray-600">
+                Last Inspection: {new Date(car.inspection_date).toLocaleDateString()}
+              </p>
+            )}
+            {car.inspection_notes && (
+              <p className="text-sm text-gray-600">{car.inspection_notes}</p>
+            )}
+          </div>
+        )}
+
+        {/* Features */}
         {car.features && (
-          <div>
-            <p className="text-subtitle-text mb-2">Features</p>
-            <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-3">
+            <h4 className="font-semibold">Vehicle Features</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {Object.entries(car.features).map(
                 ([key, value]) =>
                   value && (
-                    <Badge key={key} variant="secondary">
+                    <Badge key={key} variant="secondary" className="justify-start">
+                      <CheckCircle className="w-3 h-3 mr-1" />
                       {key
                         .replace(/([A-Z])/g, " $1")
                         .replace(/^./, (str) => str.toUpperCase())}
@@ -34,9 +153,22 @@ const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => (
             </div>
           </div>
         )}
-      </div>
-    </div>
-  </div>
-);
+
+        {/* Show message if no condition information available */}
+        {!car.is_damaged && 
+         !car.condition_rating && 
+         !car.damage_description && 
+         !car.condition_notes && 
+         !car.seller_notes && 
+         !car.service_history_type && (
+          <div className="p-4 bg-gray-50 rounded-lg flex items-center gap-2">
+            <Info className="w-5 h-5 text-gray-500" />
+            <span className="text-gray-600">No specific condition information available for this vehicle.</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 export default ConditionAndFeatures;

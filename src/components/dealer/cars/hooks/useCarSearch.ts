@@ -43,7 +43,19 @@ export const useCarSearch = (dealerId: string) => {
       try {
         let query = enhancedSupabase
           .from("cars")
-          .select("*")
+          .select(`
+            *,
+            required_photos,
+            damage_description,
+            damage_photos,
+            accident_history,
+            service_history_type,
+            seller_notes,
+            condition_notes,
+            repair_history,
+            inspection_date,
+            inspection_notes
+          `)
           .eq("status", "available");
         
         // Apply filters

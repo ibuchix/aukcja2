@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Coins, Clock, Info, ShieldAlert } from "lucide-react";
 import { CarListing } from "@/types/cars";
@@ -7,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useState } from "react";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
+import { getPrimaryImage } from "@/utils/imageUtils";
 
 interface VehicleListingsProps {
   listings: CarListing[] | undefined;
@@ -15,16 +17,6 @@ interface VehicleListingsProps {
 
 const VehicleListings = ({ listings, onSelectCar }: VehicleListingsProps) => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
-  
-  const getPrimaryImage = (car: CarListing): string => {
-    if (car.required_photos?.front) {
-      return car.required_photos.front;
-    }
-    if (car.images && car.images.length > 0) {
-      return car.images[0];
-    }
-    return "/placeholder.svg";
-  };
 
   const formatAuctionEndTime = (endTime: string | null | undefined) => {
     if (!endTime) return "N/A";

@@ -2,6 +2,9 @@
 import { Camera, ImageOff, AlertCircle } from "lucide-react";
 import { CarListing } from "@/types/cars";
 import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PermissionGate } from "@/components/PermissionGate";
+import { getAllCarImages } from "@/utils/imageUtils";
 
 interface VehiclePhotosProps {
   car: CarListing;
@@ -11,30 +14,8 @@ const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const [imageLoading, setImageLoading] = useState<Set<string>>(new Set());
 
-  // Collect all available images from both required_photos and images array
-  const allImages: { src: string; label: string }[] = [];
-
-  // Add images from required_photos
-  if (car.required_photos) {
-    Object.entries(car.required_photos).forEach(([key, value]) => {
-      if (value) {
-        allImages.push({
-          src: value,
-          label: key.replace(/_/g, " ").toUpperCase()
-        });
-      }
-    });
-  }
-
-  // Add images from images array
-  if (car.images && car.images.length > 0) {
-    car.images.forEach((image, index) => {
-      allImages.push({
-        src: image,
-        label: `ADDITIONAL IMAGE ${index + 1}`
-      });
-    });
-  }
+  // Use the unified image utility
+  const allImages = getAllCarImages(car);
 
   const handleImageError = (src: string) => {
     console.warn(`Failed to load image: ${src}`);
@@ -59,53 +40,61 @@ const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold font-oswald flex items-center gap-2">
-        <Camera className="w-5 h-5" />
-        Vehicle Photos ({allImages.length})
-      </h3>
-      
-      {allImages.length > 0 ? (
-        <div className="grid grid-cols-2 gap-4">
-          {allImages.map((image, index) => (
-            <div key={index} className="space-y-2">
-              <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
-                {imageErrors.has(image.src) ? (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                    <AlertCircle className="w-8 h-8 mb-2" />
-                    <p className="text-xs text-center">Failed to load image</p>
-                  </div>
-                ) : (
-                  <>
-                    {imageLoading.has(image.src) && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    <PermissionGate action="view" entityType="car" entityId={car.id}>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Camera className="w-5 h-5" />
+            Vehicle Photos ({allImages.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {allImages.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {allImages.map((image, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden border">
+                    {imageErrors.has(image.src) ? (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                        <AlertCircle className="w-8 h-8 mb-2" />
+                        <p className="text-xs text-center px-2">Failed to load image</p>
                       </div>
+                    ) : (
+                      <>
+                        {imageLoading.has(image.src) && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-200 z-10">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                          </div>
+                        )}
+                        <img
+                          src={image.src}
+                          alt={image.label}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                          onError={() => handleImageError(image.src)}
+                          onLoad={() => handleImageLoad(image.src)}
+                          onLoadStart={() => handleImageLoadStart(image.src)}
+                        />
+                      </>
                     )}
-                    <img
-                      src={image.src}
-                      alt={image.label}
-                      className="w-full h-full object-cover"
-                      onError={() => handleImageError(image.src)}
-                      onLoad={() => handleImageLoad(image.src)}
-                      onLoadStart={() => handleImageLoadStart(image.src)}
-                    />
-                  </>
-                )}
-              </div>
-              <p className="text-sm text-subtitle-text text-center">
-                {image.label}
+                  </div>
+                  <p className="text-sm text-gray-600 text-center font-medium">
+                    {image.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+              <ImageOff className="w-16 h-16 mb-4" />
+              <p className="text-lg font-medium mb-2">No images available</p>
+              <p className="text-sm text-center">
+                Images for this vehicle have not been uploaded yet or are not accessible.
               </p>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-          <ImageOff className="w-12 h-12 mb-2" />
-          <p className="text-sm">No images available for this vehicle</p>
-        </div>
-      )}
-    </div>
+          )}
+        </CardContent>
+      </Card>
+    </PermissionGate>
   );
 };
 

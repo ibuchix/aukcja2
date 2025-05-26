@@ -1643,6 +1643,23 @@ export type Database = {
           year: number | null
         }[]
       }
+      admin_get_all_dealers: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          user_id: string
+          supervisor_name: string
+          dealership_name: string
+          tax_id: string
+          business_registry_number: string
+          address: string
+          license_number: string
+          verification_status: string
+          is_verified: boolean
+          created_at: string
+          updated_at: string
+        }[]
+      }
       admin_get_auction_listings: {
         Args: { p_show_all?: boolean; p_status?: string }
         Returns: {
@@ -1755,6 +1772,10 @@ export type Database = {
       complete_scheduled_auctions: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      create_admin_user: {
+        Args: { p_user_id: string; p_full_name?: string }
+        Returns: boolean
       }
       create_car_listing: {
         Args: { p_car_data: Json; p_user_id?: string }
@@ -2038,6 +2059,10 @@ export type Database = {
         Returns: Json
       }
       is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_current_user_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }

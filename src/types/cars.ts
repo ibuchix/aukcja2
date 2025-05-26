@@ -35,4 +35,14 @@ export interface CarListing {
   updated_at?: string;
   status?: string | null;
   current_bid?: number;
+  // Add missing condition and damage related fields
+  damage_description?: string | null;
+  damage_photos?: string[] | null;
+  accident_history?: boolean;
+  service_history_type?: string | null;
+  seller_notes?: string | null;
+  condition_notes?: string | null;
+  repair_history?: string | null;
+  inspection_date?: string | null;
+  inspection_notes?: string | null;
 }
