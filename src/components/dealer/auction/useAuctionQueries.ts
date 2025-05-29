@@ -3,43 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AuctionFilters } from "./types";
 
-export const useAuctionQueries = (filters: AuctionFilters) => {
-  return useQuery({
-    queryKey: ["auctionListings", filters],
+export const useAuctionQueries = (dealerId: string) => {
+  const { data: cars, isLoading, error } = useQuery({
+    queryKey: ["auctionListings", dealerId],
     queryFn: async () => {
-      console.log("Fetching auction listings with filters:", filters);
+      console.log("Fetching auction listings for dealer:", dealerId);
       
-      let query = supabase
+      const { data, error } = await supabase
         .from("cars")
         .select("*")
-        .eq("status", "available");
-
-      // Apply filters
-      if (filters.make) {
-        query = query.ilike("make", `%${filters.make}%`);
-      }
-      
-      if (filters.model) {
-        query = query.ilike("model", `%${filters.model}%`);
-      }
-      
-      if (filters.yearMin) {
-        query = query.gte("year", filters.yearMin);
-      }
-      
-      if (filters.yearMax) {
-        query = query.lte("year", filters.yearMax);
-      }
-      
-      if (filters.priceMin) {
-        query = query.gte("price", filters.priceMin);
-      }
-      
-      if (filters.priceMax) {
-        query = query.lte("price", filters.priceMax);
-      }
-
-      const { data, error } = await query.order("created_at", { ascending: false });
+        .eq("status", "available")
+        .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Error fetching auction listings:", error);
@@ -52,4 +26,18 @@ export const useAuctionQueries = (filters: AuctionFilters) => {
     staleTime: 30000, // 30 seconds
     gcTime: 300000, // 5 minutes
   });
+
+  // Process the data to separate into different categories
+  const activeAuctions = cars?.filter(car => car.is_auction && car.auction_status === 'active') || [];
+  const wonAuctions = cars?.filter(car => car.is_auction && car.auction_status === 'sold') || [];
+  const lostAuctions = cars?.filter(car => car.is_auction && car.auction_status === 'ended') || [];
+
+  return {
+    activeAuctions,
+    loadingActive: isLoading,
+    wonAuctions,
+    loadingWon: isLoading,
+    lostAuctions,
+    loadingLost: isLoading,
+  };
 };

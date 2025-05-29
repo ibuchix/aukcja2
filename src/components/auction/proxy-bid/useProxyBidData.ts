@@ -36,6 +36,18 @@ export const useProxyBidData = ({
       }
       
       try {
+        // Check if user has permission to access proxy_bids
+        const { data: testAccess, error: accessError } = await supabase
+          .from('proxy_bids')
+          .select('id')
+          .limit(1);
+          
+        if (accessError && accessError.code === '42501') {
+          console.warn('No permission to access proxy_bids table, skipping proxy bid features');
+          setIsLoading(false);
+          return;
+        }
+
         const result = await executeWithRetry(() => 
           supabase
             .from('proxy_bids')
