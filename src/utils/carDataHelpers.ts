@@ -42,9 +42,8 @@ function extractPriceFromValuation(valuation_data: any, fallbackPrice: number): 
 function processImageUrl(url: string | null): string | null {
   if (!url) return null;
   
-  // If it's already a blob URL or valid URL, return as is for now
-  // TODO: Implement proper image storage and URL conversion
-  if (url.startsWith('blob:') || url.startsWith('http')) {
+  // If it's already a regular URL (not blob), return as is
+  if (!url.startsWith('blob:')) {
     return url;
   }
   
@@ -53,12 +52,26 @@ function processImageUrl(url: string | null): string | null {
 
 /**
  * Safely transforms database car rows to CarListing objects
- * with proper error handling
+ * with proper error handling and reserve price preservation
  */
 export function processCarData(data: any[] | { error: any } | null): CarListing[] {
   return safeProcessCarData<CarRow, CarListing>(
     data,
     (car: CarRow) => {
+      const isDev = process.env.NODE_ENV === 'development';
+      
+      if (isDev) {
+        console.log('=== PROCESSING CAR DATA ===');
+        console.log('Car raw data:', {
+          id: car.id,
+          make: car.make,
+          model: car.model,
+          reserve_price: car.reserve_price,
+          reserve_price_type: typeof car.reserve_price,
+          valuation_data: car.valuation_data
+        });
+      }
+      
       // Create default features object
       let parsedFeatures: CarFeatures = {
         satNav: false,
@@ -91,7 +104,6 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         }
       } catch (e) {
         console.error("Error parsing features:", e);
-        // Default features already set at initialization
       }
       
       // Extract required_photos safely and process image URLs
@@ -118,14 +130,27 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         finalPrice = extractPriceFromValuation(car.valuation_data, 0);
       }
 
-      // Extract reserve price from valuation data if not set
+      // CRITICAL: Preserve reserve price from database
       let finalReservePrice = car.reserve_price;
-      if (!finalReservePrice && car.valuation_data) {
-        finalReservePrice = extractReservePriceFromValuation(car.valuation_data);
+      
+      // Only extract from valuation data if reserve_price is null/undefined
+      if (finalReservePrice === null || finalReservePrice === undefined) {
+        if (car.valuation_data) {
+          finalReservePrice = extractReservePriceFromValuation(car.valuation_data);
+        }
+      }
+      
+      if (isDev) {
+        console.log('Reserve price processing:', {
+          original: car.reserve_price,
+          final: finalReservePrice,
+          type: typeof finalReservePrice,
+          fromValuation: finalReservePrice !== car.reserve_price
+        });
       }
       
       // Create the car listing with all properties explicitly declared
-      return {
+      const carListing: CarListing = {
         id: car.id,
         title: car.title || `${car.year} ${car.make} ${car.model}`,
         price: finalPrice,
@@ -144,7 +169,7 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         is_auction: Boolean((car as any).is_auction),
         auction_end_time: (car as any).auction_end_time || null,
         auction_start_time: (car as any).auction_start_time || null,
-        reserve_price: finalReservePrice,
+        reserve_price: finalReservePrice, // Ensure this is preserved
         minimum_bid_increment: (car as any).minimum_bid_increment || null,
         auction_status: (car as any).auction_status || null,
         is_damaged: Boolean((car as any).is_damaged),
@@ -156,6 +181,16 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         status: car.status || null,
         current_bid: car.current_bid || 0
       };
+      
+      if (isDev) {
+        console.log('Final car listing:', {
+          id: carListing.id,
+          reserve_price: carListing.reserve_price,
+          reserve_price_type: typeof carListing.reserve_price
+        });
+      }
+      
+      return carListing;
     }
   );
 }

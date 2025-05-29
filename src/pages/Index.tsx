@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
@@ -21,14 +22,12 @@ const Index = () => {
     queryFn: async () => {
       try {
         const statusColumn = "status";
-        const isDraftColumn = "is_draft";
         
         console.log("Fetching featured vehicles...");
         const { data, error } = await supabase
           .from('cars')
           .select("*")
           .eq(statusColumn, "available")
-          .eq(isDraftColumn, false)
           .limit(4)
           .order("created_at", { ascending: false });
 

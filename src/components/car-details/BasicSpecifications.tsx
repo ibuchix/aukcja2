@@ -22,8 +22,7 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
       reservePriceIsNull: car.reserve_price === null,
       reservePriceIsUndefined: car.reserve_price === undefined,
       reservePriceIsNumber: typeof car.reserve_price === 'number',
-      reservePriceValue: car.reserve_price,
-      allCarData: car
+      reservePriceValue: car.reserve_price
     });
   }
 
@@ -40,7 +39,8 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
       });
     }
     
-    if (typeof car.reserve_price === 'number' && car.reserve_price > 0) {
+    // Check for valid numeric reserve price
+    if (typeof car.reserve_price === 'number' && !isNaN(car.reserve_price) && car.reserve_price > 0) {
       const formatted = formatCurrency(car.reserve_price);
       if (isDev) {
         console.log('Formatting reserve price:', car.reserve_price, '→', formatted);
@@ -51,7 +51,7 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
   };
 
   const reservePriceDisplay = getReservePriceDisplay();
-  const hasReservePrice = typeof car.reserve_price === 'number' && car.reserve_price > 0;
+  const hasReservePrice = typeof car.reserve_price === 'number' && !isNaN(car.reserve_price) && car.reserve_price > 0;
 
   if (isDev) {
     console.log('Final reserve price display:', {
@@ -95,16 +95,6 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
           </p>
         </div>
       </div>
-      
-      {isDev && (
-        <div className="mt-4 p-2 bg-yellow-100 rounded text-xs">
-          <p><strong>Debug Info:</strong></p>
-          <p>Reserve Price Raw: {JSON.stringify(car.reserve_price)}</p>
-          <p>Reserve Price Type: {typeof car.reserve_price}</p>
-          <p>Has Reserve Price: {hasReservePrice.toString()}</p>
-          <p>Display: {reservePriceDisplay}</p>
-        </div>
-      )}
     </div>
   );
 };

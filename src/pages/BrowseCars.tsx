@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -5,9 +6,7 @@ import { Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CarListing } from "@/types/cars";
-import { isValidRecord } from "@/utils/supabaseHelpers";
 import { processCarData } from "@/utils/carDataHelpers";
-import type { Database } from "@/integrations/supabase/types";
 
 const BrowseCars = () => {
   const [listings, setListings] = useState<CarListing[]>([]);
@@ -21,8 +20,7 @@ const BrowseCars = () => {
         const { data, error } = await supabase
           .from("cars")
           .select("*")
-          .eq("status", "available")
-          .eq("is_draft", false);
+          .eq("status", "available");
 
         if (error) throw error;
 
