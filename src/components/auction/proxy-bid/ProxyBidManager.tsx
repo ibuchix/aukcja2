@@ -1,3 +1,4 @@
+
 import { DollarSign, HelpCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProxyBidInfo } from "./ProxyBidInfo";
@@ -13,6 +14,7 @@ interface ProxyBidManagerProps {
   dealerId: string;
   currentHighestBid: number;
   minimumIncrement: number;
+  reservePrice?: number;
 }
 
 export const ProxyBidManager = ({
@@ -20,6 +22,7 @@ export const ProxyBidManager = ({
   dealerId,
   currentHighestBid,
   minimumIncrement,
+  reservePrice,
 }: ProxyBidManagerProps) => {
   const {
     maxBid,
@@ -88,6 +91,7 @@ export const ProxyBidManager = ({
       <BidRecommendations 
         carId={carId} 
         dealerId={dealerId} 
+        reservePrice={reservePrice}
         onSelectRecommendation={(amount) => setMaxBid(amount.toString())} 
       />
 

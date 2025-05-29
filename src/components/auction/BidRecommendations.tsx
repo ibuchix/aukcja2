@@ -10,16 +10,35 @@ import { formatCurrency } from "@/lib/utils";
 interface BidRecommendationsProps {
   carId: string;
   dealerId: string;
+  reservePrice?: number;
   onSelectRecommendation?: (amount: number) => void;
 }
 
 export const BidRecommendations = ({ 
   carId, 
   dealerId,
+  reservePrice,
   onSelectRecommendation 
 }: BidRecommendationsProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { data: recommendations, isLoading, error } = useBidRecommendations(carId, dealerId);
+
+  // Calculate dynamic recommendations based on reserve price
+  const getDynamicRecommendations = () => {
+    if (!reservePrice) {
+      // Fallback to API recommendations if no reserve price
+      return recommendations?.recommendations;
+    }
+
+    const currentBid = recommendations?.current_bid || 0;
+    const baseAmount = Math.max(currentBid, reservePrice);
+
+    return {
+      conservative: Math.ceil(baseAmount * 1.05), // 5% above reserve/current bid
+      moderate: Math.ceil(baseAmount * 1.20), // 20% above reserve/current bid
+      aggressive: Math.ceil(baseAmount * 1.40), // 40% above reserve/current bid
+    };
+  };
 
   if (isLoading) {
     return (
@@ -44,6 +63,8 @@ export const BidRecommendations = ({
     return null;
   }
 
+  const dynamicRecommendations = getDynamicRecommendations();
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -60,7 +81,7 @@ export const BidRecommendations = ({
           </Button>
         </CardTitle>
         <CardDescription>
-          Smart suggestions to help you bid effectively
+          {reservePrice ? "Recommendations based on reserve price" : "Smart suggestions to help you bid effectively"}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -70,29 +91,29 @@ export const BidRecommendations = ({
               variant="outline" 
               size="sm" 
               className="flex flex-col items-center justify-center h-auto py-3"
-              onClick={() => onSelectRecommendation?.(recommendations.recommendations.conservative)}
+              onClick={() => onSelectRecommendation?.(dynamicRecommendations?.conservative || 0)}
             >
               <span className="text-xs text-muted-foreground mb-1">Conservative</span>
-              <span className="text-lg font-bold">{formatCurrency(recommendations.recommendations.conservative)}</span>
+              <span className="text-lg font-bold">{formatCurrency(dynamicRecommendations?.conservative || 0)}</span>
             </Button>
             <Button 
               variant="outline" 
               size="sm" 
               className="flex flex-col items-center justify-center h-auto py-3 border-primary"
-              onClick={() => onSelectRecommendation?.(recommendations.recommendations.moderate)}
+              onClick={() => onSelectRecommendation?.(dynamicRecommendations?.moderate || 0)}
             >
               <span className="text-xs text-muted-foreground mb-1">Recommended</span>
-              <span className="text-lg font-bold text-primary">{formatCurrency(recommendations.recommendations.moderate)}</span>
+              <span className="text-lg font-bold text-primary">{formatCurrency(dynamicRecommendations?.moderate || 0)}</span>
               <Sparkles className="h-3 w-3 text-primary mt-1" />
             </Button>
             <Button 
               variant="outline" 
               size="sm" 
               className="flex flex-col items-center justify-center h-auto py-3"
-              onClick={() => onSelectRecommendation?.(recommendations.recommendations.aggressive)}
+              onClick={() => onSelectRecommendation?.(dynamicRecommendations?.aggressive || 0)}
             >
               <span className="text-xs text-muted-foreground mb-1">Aggressive</span>
-              <span className="text-lg font-bold">{formatCurrency(recommendations.recommendations.aggressive)}</span>
+              <span className="text-lg font-bold">{formatCurrency(dynamicRecommendations?.aggressive || 0)}</span>
             </Button>
           </div>
           
@@ -102,6 +123,13 @@ export const BidRecommendations = ({
                 <span>Current Bid</span>
                 <span className="font-semibold">{formatCurrency(recommendations.current_bid)}</span>
               </div>
+              
+              {reservePrice && (
+                <div className="flex justify-between items-center text-muted-foreground">
+                  <span>Reserve Price</span>
+                  <span className="font-semibold text-primary">{formatCurrency(reservePrice)}</span>
+                </div>
+              )}
               
               <div className="flex justify-between items-center text-muted-foreground">
                 <span>Average Bid Increase</span>
@@ -123,7 +151,7 @@ export const BidRecommendations = ({
               </div>
               
               <div className="mt-4 text-xs text-muted-foreground">
-                <p>Our AI analyzes similar vehicles, bidding patterns, and market trends to recommend optimal bid amounts.</p>
+                <p>{reservePrice ? 'Recommendations calculated based on the disclosed reserve price to help you bid strategically.' : 'Our AI analyzes similar vehicles, bidding patterns, and market trends to recommend optimal bid amounts.'}</p>
               </div>
             </div>
           )}

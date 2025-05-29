@@ -1,8 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { BidNotificationHandler } from "./BidNotificationHandler";
-import { AuctionTimer } from "./AuctionTimer";
-import { BidInfo } from "./BidInfo";
-import { BidForm } from "./bid-form/BidForm";
 import { BidHistory } from "./BidHistory";
 import { ProxyBidManager } from "./ProxyBidManager";
 
@@ -12,6 +9,7 @@ interface MaxBidInterfaceProps {
   currentHighestBid: number;
   minimumIncrement: number;
   auctionEndTime: string;
+  reservePrice?: number;
 }
 
 export const MaxBidInterface = ({
@@ -20,6 +18,7 @@ export const MaxBidInterface = ({
   currentHighestBid,
   minimumIncrement,
   auctionEndTime,
+  reservePrice,
 }: MaxBidInterfaceProps) => {
   return (
     <div className="space-y-4">
@@ -34,26 +33,8 @@ export const MaxBidInterface = ({
         dealerId={dealerId}
         currentHighestBid={currentHighestBid}
         minimumIncrement={minimumIncrement}
+        reservePrice={reservePrice}
       />
-      
-      <Card className="w-full max-w-md mx-auto">
-        <CardHeader>
-          <CardTitle className="text-heading-sm font-oswald">Place Immediate Bid</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <AuctionTimer auctionEndTime={auctionEndTime} />
-          <BidInfo 
-            currentHighestBid={currentHighestBid}
-            minimumIncrement={minimumIncrement}
-          />
-          <BidForm
-            carId={carId}
-            dealerId={dealerId}
-            currentHighestBid={currentHighestBid}
-            minimumIncrement={minimumIncrement}
-          />
-        </CardContent>
-      </Card>
       
       <BidHistory carId={carId} />
     </div>

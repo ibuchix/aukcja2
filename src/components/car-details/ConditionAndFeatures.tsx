@@ -101,7 +101,7 @@ const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
               {Object.entries(car.features).map(
                 ([key, value]) =>
                   value && (
-                    <Badge key={key} variant="secondary" className="justify-start">
+                    <Badge key={key} variant="success" className="justify-start">
                       <CheckCircle className="w-3 h-3 mr-1" />
                       {key
                         .replace(/([A-Z])/g, " $1")

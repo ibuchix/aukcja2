@@ -67,6 +67,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
                   currentHighestBid={currentHighestBid}
                   minimumIncrement={minimumBidIncrement}
                   auctionEndTime={car.auction_end_time || ""}
+                  reservePrice={car.reserve_price}
                 />
               </div>
             ) : (
