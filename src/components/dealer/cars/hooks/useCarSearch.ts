@@ -15,14 +15,21 @@ export const useCarSearch = (dealerId: string) => {
   const [listings, setListings] = useState<CarListing[]>([]);
   const pageSize = 10;
 
-  // Improved type guard to ensure we only process valid CarListing objects
+  // Simplified type guard to ensure we only process valid CarListing objects
   const isValidCarListing = (item: any): item is CarListing => {
-    return item && 
+    const isValid = item && 
            typeof item === 'object' && 
            'id' in item && 
            typeof item.id === 'string' &&
            !('error' in item) &&
            typeof item.price === 'number';
+    
+    const isDev = process.env.NODE_ENV === 'development';
+    if (isDev && !isValid) {
+      console.log('Invalid car listing found:', item);
+    }
+    
+    return isValid;
   };
 
   // Query for car listings using enhanced supabase client - DEALER FOCUSED
@@ -165,20 +172,29 @@ export const useCarSearch = (dealerId: string) => {
           throw new Error(result.error.message);
         }
         
-        // Process and filter the results to ensure only valid CarListing objects
+        // Process and filter the results - PRESERVE RAW VALUES
         const rawData = result.data || [];
         const validCars = rawData.filter(isValidCarListing);
         
         if (isDev) {
-          console.log('Processed Cars Result:', {
+          console.log('Raw vs Processed Data Analysis:', {
             rawCount: rawData.length,
             validCount: validCars.length,
-            sampleCar: validCars[0] || null,
-            reservePriceCheck: validCars.map(car => ({ 
+            reservePriceData: validCars.map(car => ({ 
               id: car.id, 
               make: car.make, 
               model: car.model, 
-              reserve_price: car.reserve_price 
+              reserve_price: car.reserve_price,
+              reserve_price_type: typeof car.reserve_price
+            })),
+            imageData: validCars.map(car => ({
+              id: car.id,
+              make: car.make,
+              model: car.model,
+              required_photos: car.required_photos,
+              required_photos_type: typeof car.required_photos,
+              images: car.images,
+              images_type: typeof car.images
             }))
           });
         }
@@ -199,13 +215,25 @@ export const useCarSearch = (dealerId: string) => {
 
   useEffect(() => {
     if (data?.cars && Array.isArray(data.cars)) {
-      // Additional filtering to ensure type safety
-      const validListings = data.cars.filter(isValidCarListing);
+      // DO NOT filter again - preserve the exact data from the database
+      const carsFromDb = data.cars;
       
-      setListings(validListings);
+      setListings(carsFromDb);
+      
+      const isDev = process.env.NODE_ENV === 'development';
+      if (isDev) {
+        console.log('Setting listings with preserved data:', {
+          count: carsFromDb.length,
+          carsWithReservePrice: carsFromDb.filter(car => car.reserve_price !== null && car.reserve_price !== undefined).length,
+          carsWithImages: carsFromDb.filter(car => 
+            (car.required_photos && Object.keys(car.required_photos).length > 0) ||
+            (car.images && car.images.length > 0)
+          ).length
+        });
+      }
       
       // Show a toast notification if there are no results
-      if (validListings.length === 0 && !isLoading && !error) {
+      if (carsFromDb.length === 0 && !isLoading && !error) {
         toast({
           title: "No matching vehicles found",
           description: "Try adjusting your filters to see more results",

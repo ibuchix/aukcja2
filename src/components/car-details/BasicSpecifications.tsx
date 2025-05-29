@@ -11,13 +11,25 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
   const isDev = process.env.NODE_ENV === 'development';
   
   if (isDev) {
-    console.log('BasicSpecifications - Reserve price data:', {
+    console.log('BasicSpecifications - Reserve price analysis:', {
       carId: car.id,
+      make: car.make,
+      model: car.model,
       reservePrice: car.reserve_price,
       reservePriceType: typeof car.reserve_price,
+      reservePriceIsNumber: typeof car.reserve_price === 'number',
+      reservePriceValue: car.reserve_price,
       fullCarData: car
     });
   }
+
+  // Determine reserve price display
+  const getReservePriceDisplay = () => {
+    if (car.reserve_price !== null && car.reserve_price !== undefined && typeof car.reserve_price === 'number') {
+      return formatCurrency(car.reserve_price);
+    }
+    return "Reserve price not set";
+  };
 
   return (
     <div className="space-y-4 p-4 bg-accent/50 rounded-lg">
@@ -48,10 +60,8 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
         </div>
         <div>
           <p className="text-subtitle-text">Reserve Price</p>
-          <p className="font-medium text-primary">
-            {car.reserve_price && typeof car.reserve_price === 'number' 
-              ? formatCurrency(car.reserve_price) 
-              : "Reserve price not disclosed"}
+          <p className={`font-medium ${car.reserve_price !== null && car.reserve_price !== undefined ? 'text-primary' : 'text-gray-500'}`}>
+            {getReservePriceDisplay()}
           </p>
         </div>
       </div>

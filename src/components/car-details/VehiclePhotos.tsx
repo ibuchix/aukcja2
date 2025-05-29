@@ -13,12 +13,25 @@ interface VehiclePhotosProps {
 const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const [imageLoading, setImageLoading] = useState<Set<string>>(new Set());
+  const isDev = process.env.NODE_ENV === 'development';
 
   // Use the unified image utility
   const allImages = getAllCarImages(car);
 
+  if (isDev) {
+    console.log('VehiclePhotos component:', {
+      carId: car.id,
+      make: car.make,
+      model: car.model,
+      totalImages: allImages.length,
+      imageUrls: allImages.map(img => img.src)
+    });
+  }
+
   const handleImageError = (src: string) => {
-    console.warn(`Failed to load image: ${src}`);
+    if (isDev) {
+      console.warn(`Failed to load image for ${car.make} ${car.model}:`, src);
+    }
     setImageErrors(prev => new Set([...prev, src]));
     setImageLoading(prev => {
       const newSet = new Set(prev);
@@ -28,6 +41,9 @@ const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
   };
 
   const handleImageLoad = (src: string) => {
+    if (isDev) {
+      console.log(`Successfully loaded image for ${car.make} ${car.model}:`, src);
+    }
     setImageLoading(prev => {
       const newSet = new Set(prev);
       newSet.delete(src);
@@ -58,6 +74,11 @@ const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
                       <div className="flex flex-col items-center justify-center h-full text-gray-500">
                         <AlertCircle className="w-8 h-8 mb-2" />
                         <p className="text-xs text-center px-2">Failed to load image</p>
+                        {isDev && (
+                          <p className="text-xs text-center px-2 mt-1 text-red-500">
+                            URL: {image.src}
+                          </p>
+                        )}
                       </div>
                     ) : (
                       <>
@@ -73,6 +94,7 @@ const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
                           onError={() => handleImageError(image.src)}
                           onLoad={() => handleImageLoad(image.src)}
                           onLoadStart={() => handleImageLoadStart(image.src)}
+                          crossOrigin="anonymous"
                         />
                       </>
                     )}
@@ -90,6 +112,13 @@ const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
               <p className="text-sm text-center">
                 Images for this vehicle have not been uploaded yet or are not accessible.
               </p>
+              {isDev && (
+                <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
+                  <p>Debug info for {car.make} {car.model}:</p>
+                  <p>required_photos: {JSON.stringify(car.required_photos)}</p>
+                  <p>images: {JSON.stringify(car.images)}</p>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
