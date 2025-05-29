@@ -1,3 +1,4 @@
+
 export type CarFeatures = {
   satNav: boolean;
   heatedSeats: boolean;
@@ -15,10 +16,8 @@ export interface CarListing {
   year: number | null;
   mileage: number;
   images: string[] | null;
-  description?: string | null;
   features: CarFeatures;
   transmission: string | null;
-  service_history_files?: string[] | null;
   required_photos: Record<string, string | null> | null;
   is_auction?: boolean;
   auction_end_time?: string | null;
@@ -28,8 +27,6 @@ export interface CarListing {
   auction_status?: string | null;
   is_damaged?: boolean;
   address?: string | null;
-  condition_rating?: number;
-  distance?: number | null;
   created_at?: string;
   updated_at?: string;
   status?: string | null;
@@ -50,4 +47,6 @@ export interface CarListing {
   form_metadata?: any;
   valuation_data?: any;
   last_saved?: string | null;
+  registration_number?: string | null;
+  is_manually_controlled?: boolean;
 }

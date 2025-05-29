@@ -52,10 +52,8 @@ export const useCarSearch = (dealerId: string) => {
             year,
             mileage,
             images,
-            description,
             features,
             transmission,
-            service_history_files,
             required_photos,
             is_auction,
             auction_end_time,
@@ -65,8 +63,6 @@ export const useCarSearch = (dealerId: string) => {
             auction_status,
             is_damaged,
             address,
-            condition_rating,
-            distance,
             created_at,
             updated_at,
             status,
@@ -86,7 +82,9 @@ export const useCarSearch = (dealerId: string) => {
             finance_amount,
             form_metadata,
             valuation_data,
-            last_saved
+            last_saved,
+            registration_number,
+            is_manually_controlled
           `)
           .eq("status", "available");
         
