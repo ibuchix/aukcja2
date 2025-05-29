@@ -1,3 +1,4 @@
+
 import { Info } from "lucide-react";
 import { CarListing } from "@/types/cars";
 
@@ -6,7 +7,8 @@ interface AdditionalInfoProps {
 }
 
 const AdditionalInfo = ({ car }: AdditionalInfoProps) => {
-  if (!car.description) return null;
+  // Since description doesn't exist in the database, we can use seller_notes instead
+  if (!car.seller_notes) return null;
 
   return (
     <div className="space-y-2">
@@ -14,7 +16,7 @@ const AdditionalInfo = ({ car }: AdditionalInfoProps) => {
         <Info className="w-5 h-5" />
         Additional Information
       </h3>
-      <p className="text-subtitle-text">{car.description}</p>
+      <p className="text-subtitle-text">{car.seller_notes}</p>
     </div>
   );
 };

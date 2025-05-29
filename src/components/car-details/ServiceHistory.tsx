@@ -1,3 +1,4 @@
+
 import { Wrench } from "lucide-react";
 import { CarListing } from "@/types/cars";
 
@@ -11,25 +12,22 @@ const ServiceHistory = ({ car }: ServiceHistoryProps) => (
       <Wrench className="w-5 h-5" />
       Service History
     </h3>
-    {car.service_history_files && car.service_history_files.length > 0 ? (
+    {car.service_history_type ? (
       <div className="space-y-2">
-        <p className="text-subtitle-text">Documentation Available</p>
+        <p className="text-subtitle-text">Service History Type</p>
         <div className="grid grid-cols-1 gap-2">
-          {car.service_history_files.map((file, index) => (
-            <a
-              key={index}
-              href={file}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-iris hover:underline flex items-center gap-2"
-            >
-              <span>Service Document {index + 1}</span>
-            </a>
-          ))}
+          <div className="text-iris capitalize">
+            {car.service_history_type.replace(/_/g, ' ')}
+          </div>
+          {car.has_service_history && (
+            <div className="text-green-600 text-sm">
+              ✓ Service history documentation available
+            </div>
+          )}
         </div>
       </div>
     ) : (
-      <p className="text-subtitle-text">No service history documents available</p>
+      <p className="text-subtitle-text">No service history information available</p>
     )}
   </div>
 );

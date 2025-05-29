@@ -9,32 +9,8 @@ interface ConditionAndFeaturesProps {
 }
 
 const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
-  const renderConditionRating = () => {
-    if (!car.condition_rating) return null;
-    
-    const rating = car.condition_rating;
-    const getConditionColor = (rating: number) => {
-      if (rating >= 8) return "text-green-600";
-      if (rating >= 6) return "text-yellow-600";
-      return "text-red-600";
-    };
-    
-    const getConditionText = (rating: number) => {
-      if (rating >= 8) return "Excellent";
-      if (rating >= 6) return "Good";
-      if (rating >= 4) return "Fair";
-      return "Poor";
-    };
-
-    return (
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium">Condition Rating:</span>
-        <span className={`text-lg font-bold ${getConditionColor(rating)}`}>
-          {rating}/10 ({getConditionText(rating)})
-        </span>
-      </div>
-    );
-  };
+  // Since condition_rating doesn't exist in the database, we'll remove this functionality
+  // and focus on the other condition information that is available
 
   return (
     <Card className="w-full">
@@ -45,13 +21,6 @@ const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Condition Rating */}
-        {car.condition_rating && (
-          <div className="p-4 bg-gray-50 rounded-lg">
-            {renderConditionRating()}
-          </div>
-        )}
-
         {/* Damage Information */}
         <div className="space-y-3">
           <h4 className="font-semibold text-lg">Damage & Condition Status</h4>
@@ -115,7 +84,6 @@ const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
 
         {/* Show message if no condition information available */}
         {!car.is_damaged && 
-         !car.condition_rating && 
          !car.seller_notes && 
          !car.service_history_type && (
           <div className="p-4 bg-gray-50 rounded-lg flex items-center gap-2">
