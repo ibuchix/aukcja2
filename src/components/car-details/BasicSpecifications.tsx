@@ -11,25 +11,55 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
   const isDev = process.env.NODE_ENV === 'development';
   
   if (isDev) {
-    console.log('BasicSpecifications - Reserve price analysis:', {
+    console.log('=== BASIC SPECIFICATIONS COMPONENT ===');
+    console.log('Car data received:', {
       carId: car.id,
       make: car.make,
       model: car.model,
+      year: car.year,
       reservePrice: car.reserve_price,
       reservePriceType: typeof car.reserve_price,
+      reservePriceIsNull: car.reserve_price === null,
+      reservePriceIsUndefined: car.reserve_price === undefined,
       reservePriceIsNumber: typeof car.reserve_price === 'number',
       reservePriceValue: car.reserve_price,
-      fullCarData: car
+      allCarData: car
     });
   }
 
-  // Determine reserve price display
+  // Determine reserve price display with explicit checks
   const getReservePriceDisplay = () => {
-    if (car.reserve_price !== null && car.reserve_price !== undefined && typeof car.reserve_price === 'number') {
-      return formatCurrency(car.reserve_price);
+    if (isDev) {
+      console.log('Reserve price evaluation:', {
+        value: car.reserve_price,
+        type: typeof car.reserve_price,
+        isNull: car.reserve_price === null,
+        isUndefined: car.reserve_price === undefined,
+        isNumber: typeof car.reserve_price === 'number',
+        isGreaterThanZero: typeof car.reserve_price === 'number' && car.reserve_price > 0
+      });
+    }
+    
+    if (typeof car.reserve_price === 'number' && car.reserve_price > 0) {
+      const formatted = formatCurrency(car.reserve_price);
+      if (isDev) {
+        console.log('Formatting reserve price:', car.reserve_price, '→', formatted);
+      }
+      return formatted;
     }
     return "Reserve price not set";
   };
+
+  const reservePriceDisplay = getReservePriceDisplay();
+  const hasReservePrice = typeof car.reserve_price === 'number' && car.reserve_price > 0;
+
+  if (isDev) {
+    console.log('Final reserve price display:', {
+      display: reservePriceDisplay,
+      hasReservePrice,
+      originalValue: car.reserve_price
+    });
+  }
 
   return (
     <div className="space-y-4 p-4 bg-accent/50 rounded-lg">
@@ -60,11 +90,21 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
         </div>
         <div>
           <p className="text-subtitle-text">Reserve Price</p>
-          <p className={`font-medium ${car.reserve_price !== null && car.reserve_price !== undefined ? 'text-primary' : 'text-gray-500'}`}>
-            {getReservePriceDisplay()}
+          <p className={`font-medium ${hasReservePrice ? 'text-primary' : 'text-gray-500'}`}>
+            {reservePriceDisplay}
           </p>
         </div>
       </div>
+      
+      {isDev && (
+        <div className="mt-4 p-2 bg-yellow-100 rounded text-xs">
+          <p><strong>Debug Info:</strong></p>
+          <p>Reserve Price Raw: {JSON.stringify(car.reserve_price)}</p>
+          <p>Reserve Price Type: {typeof car.reserve_price}</p>
+          <p>Has Reserve Price: {hasReservePrice.toString()}</p>
+          <p>Display: {reservePriceDisplay}</p>
+        </div>
+      )}
     </div>
   );
 };

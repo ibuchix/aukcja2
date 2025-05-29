@@ -2,14 +2,58 @@
 import { CarListing } from "@/types/cars";
 
 /**
+ * Transform blob URLs to make them accessible from the current domain
+ */
+const transformImageUrl = (url: string): string => {
+  const isDev = process.env.NODE_ENV === 'development';
+  
+  if (!url) return "/placeholder.svg";
+  
+  // If it's already a regular URL (not blob), return as is
+  if (!url.startsWith('blob:')) {
+    return url;
+  }
+  
+  try {
+    // Extract the blob ID from the URL
+    const blobMatch = url.match(/blob:https?:\/\/[^\/]+\/(.+)/);
+    if (blobMatch && blobMatch[1]) {
+      const blobId = blobMatch[1];
+      
+      // Try to construct a working URL using the current origin
+      const currentOrigin = window.location.origin;
+      const transformedUrl = `${currentOrigin}/api/blob/${blobId}`;
+      
+      if (isDev) {
+        console.log('Transforming blob URL:', {
+          original: url,
+          blobId,
+          transformed: transformedUrl
+        });
+      }
+      
+      return transformedUrl;
+    }
+  } catch (error) {
+    if (isDev) {
+      console.warn('Error transforming blob URL:', error);
+    }
+  }
+  
+  // If transformation fails, try to use the original URL
+  return url;
+};
+
+/**
  * Gets the primary image for a car listing with proper blob URL handling
  */
 export const getPrimaryImage = (car: CarListing): string => {
   const isDev = process.env.NODE_ENV === 'development';
   
   if (isDev) {
-    console.log('Getting primary image for car:', {
-      carId: car.id,
+    console.log('=== PRIMARY IMAGE SEARCH ===');
+    console.log('Car:', {
+      id: car.id,
       make: car.make,
       model: car.model,
       requiredPhotos: car.required_photos,
@@ -23,16 +67,23 @@ export const getPrimaryImage = (car: CarListing): string => {
   if (car.required_photos && typeof car.required_photos === 'object') {
     const photos = car.required_photos as Record<string, string | null>;
     
+    if (isDev) {
+      console.log('Required photos object:', photos);
+      console.log('Available photo keys:', Object.keys(photos));
+    }
+    
     // Check for exterior_front first (most important)
     if (photos.exterior_front && typeof photos.exterior_front === 'string') {
-      if (isDev) console.log('Found exterior_front:', photos.exterior_front);
-      return photos.exterior_front;
+      const transformedUrl = transformImageUrl(photos.exterior_front);
+      if (isDev) console.log('Found exterior_front:', photos.exterior_front, '→', transformedUrl);
+      return transformedUrl;
     }
     
     // Check for front property (alternative naming)
     if (photos.front && typeof photos.front === 'string') {
-      if (isDev) console.log('Found front:', photos.front);
-      return photos.front;
+      const transformedUrl = transformImageUrl(photos.front);
+      if (isDev) console.log('Found front:', photos.front, '→', transformedUrl);
+      return transformedUrl;
     }
     
     // Then check other exterior photos in priority order
@@ -47,16 +98,18 @@ export const getPrimaryImage = (car: CarListing): string => {
     
     for (const photoKey of exteriorPhotoPriority) {
       if (photos[photoKey] && typeof photos[photoKey] === 'string') {
-        if (isDev) console.log(`Found ${photoKey}:`, photos[photoKey]);
-        return photos[photoKey]!;
+        const transformedUrl = transformImageUrl(photos[photoKey]!);
+        if (isDev) console.log(`Found ${photoKey}:`, photos[photoKey], '→', transformedUrl);
+        return transformedUrl;
       }
     }
 
     // Check any available photo in required_photos
     const anyPhoto = Object.values(photos).find(photo => photo && typeof photo === 'string');
     if (anyPhoto) {
-      if (isDev) console.log('Found any required photo:', anyPhoto);
-      return anyPhoto;
+      const transformedUrl = transformImageUrl(anyPhoto);
+      if (isDev) console.log('Found any required photo:', anyPhoto, '→', transformedUrl);
+      return transformedUrl;
     }
   }
   
@@ -64,8 +117,9 @@ export const getPrimaryImage = (car: CarListing): string => {
   if (car.images && Array.isArray(car.images) && car.images.length > 0) {
     const firstImage = car.images[0];
     if (firstImage && typeof firstImage === 'string') {
-      if (isDev) console.log('Found image from images array:', firstImage);
-      return firstImage;
+      const transformedUrl = transformImageUrl(firstImage);
+      if (isDev) console.log('Found image from images array:', firstImage, '→', transformedUrl);
+      return transformedUrl;
     }
   }
   
@@ -81,8 +135,9 @@ export const getAllCarImages = (car: CarListing): { src: string; label: string }
   const isDev = process.env.NODE_ENV === 'development';
 
   if (isDev) {
-    console.log('Getting all images for car:', {
-      carId: car.id,
+    console.log('=== ALL IMAGES SEARCH ===');
+    console.log('Car:', {
+      id: car.id,
       make: car.make,
       model: car.model,
       requiredPhotos: car.required_photos,
@@ -96,10 +151,15 @@ export const getAllCarImages = (car: CarListing): { src: string; label: string }
     
     Object.entries(photos).forEach(([key, value]) => {
       if (value && typeof value === 'string') {
+        const transformedUrl = transformImageUrl(value);
         allImages.push({
-          src: value,
+          src: transformedUrl,
           label: key.replace(/_/g, " ").toUpperCase()
         });
+        
+        if (isDev) {
+          console.log(`Added required photo ${key}:`, value, '→', transformedUrl);
+        }
       }
     });
   }
@@ -108,16 +168,22 @@ export const getAllCarImages = (car: CarListing): { src: string; label: string }
   if (car.images && Array.isArray(car.images) && car.images.length > 0) {
     car.images.forEach((image, index) => {
       if (image && typeof image === 'string') {
+        const transformedUrl = transformImageUrl(image);
         allImages.push({
-          src: image,
+          src: transformedUrl,
           label: `ADDITIONAL IMAGE ${index + 1}`
         });
+        
+        if (isDev) {
+          console.log(`Added image ${index + 1}:`, image, '→', transformedUrl);
+        }
       }
     });
   }
 
   if (isDev) {
-    console.log('All images found:', allImages);
+    console.log('Total images found:', allImages.length);
+    console.log('Final images list:', allImages);
   }
 
   return allImages;

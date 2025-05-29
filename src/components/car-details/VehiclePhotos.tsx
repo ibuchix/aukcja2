@@ -19,18 +19,24 @@ const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
   const allImages = getAllCarImages(car);
 
   if (isDev) {
-    console.log('VehiclePhotos component:', {
-      carId: car.id,
+    console.log('=== VEHICLE PHOTOS COMPONENT ===');
+    console.log('Car:', {
+      id: car.id,
       make: car.make,
       model: car.model,
       totalImages: allImages.length,
-      imageUrls: allImages.map(img => img.src)
+      imageDetails: allImages
     });
   }
 
-  const handleImageError = (src: string) => {
+  const handleImageError = (src: string, event: any) => {
     if (isDev) {
-      console.warn(`Failed to load image for ${car.make} ${car.model}:`, src);
+      console.error(`Image failed to load for ${car.make} ${car.model}:`, {
+        src,
+        error: event,
+        networkState: event.target?.networkState,
+        readyState: event.target?.readyState
+      });
     }
     setImageErrors(prev => new Set([...prev, src]));
     setImageLoading(prev => {
@@ -45,6 +51,12 @@ const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
       console.log(`Successfully loaded image for ${car.make} ${car.model}:`, src);
     }
     setImageLoading(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(src);
+      return newSet;
+    });
+    // Remove from error set in case it was there before
+    setImageErrors(prev => {
       const newSet = new Set(prev);
       newSet.delete(src);
       return newSet;
@@ -75,9 +87,10 @@ const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
                         <AlertCircle className="w-8 h-8 mb-2" />
                         <p className="text-xs text-center px-2">Failed to load image</p>
                         {isDev && (
-                          <p className="text-xs text-center px-2 mt-1 text-red-500">
-                            URL: {image.src}
-                          </p>
+                          <div className="text-xs text-center px-2 mt-1 text-red-500">
+                            <p>URL: {image.src}</p>
+                            <p>Index: {index}</p>
+                          </div>
                         )}
                       </div>
                     ) : (
@@ -91,7 +104,7 @@ const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
                           src={image.src}
                           alt={image.label}
                           className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
-                          onError={() => handleImageError(image.src)}
+                          onError={(e) => handleImageError(image.src, e)}
                           onLoad={() => handleImageLoad(image.src)}
                           onLoadStart={() => handleImageLoadStart(image.src)}
                           crossOrigin="anonymous"
@@ -114,9 +127,10 @@ const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
               </p>
               {isDev && (
                 <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
-                  <p>Debug info for {car.make} {car.model}:</p>
+                  <p><strong>Debug info for {car.make} {car.model}:</strong></p>
                   <p>required_photos: {JSON.stringify(car.required_photos)}</p>
                   <p>images: {JSON.stringify(car.images)}</p>
+                  <p>processed images: {allImages.length}</p>
                 </div>
               )}
             </div>
