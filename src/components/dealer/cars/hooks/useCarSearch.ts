@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CarListing } from "@/types/cars";
@@ -24,7 +25,7 @@ export const useCarSearch = (dealerId: string) => {
            typeof item.price === 'number';
   };
 
-  // Query for car listings using enhanced supabase client
+  // Query for car listings using enhanced supabase client - DEALER FOCUSED
   const { isLoading, error, data, refetch } = useQuery({
     queryKey: ["carListings", filters, sortOption, searchQuery, currentPage],
     queryFn: async () => {
@@ -55,9 +56,9 @@ export const useCarSearch = (dealerId: string) => {
             features,
             transmission,
             required_photos,
+            additional_photos,
             is_auction,
             auction_end_time,
-            auction_start_time,
             reserve_price,
             minimum_bid_increment,
             auction_status,
@@ -73,7 +74,6 @@ export const useCarSearch = (dealerId: string) => {
             seller_id,
             seller_name,
             mobile_number,
-            additional_photos,
             vin,
             seat_material,
             number_of_keys,

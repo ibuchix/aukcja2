@@ -21,7 +21,6 @@ export interface CarListing {
   required_photos: Record<string, string | null> | null;
   is_auction?: boolean;
   auction_end_time?: string | null;
-  auction_start_time?: string | null;
   reserve_price?: number | null;
   minimum_bid_increment?: number | null;
   auction_status?: string | null;
