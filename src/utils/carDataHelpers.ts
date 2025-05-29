@@ -183,7 +183,6 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         auction_status: car.auction_status || null,
         is_damaged: Boolean(car.is_damaged),
         address: (car as any).address || null,
-        distance: (car as any).distance || null,
         created_at: car.created_at,
         updated_at: car.updated_at || car.created_at,
         status: car.status || null,
