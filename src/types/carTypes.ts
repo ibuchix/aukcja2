@@ -1,7 +1,6 @@
 
 /**
- * Updated Car types without is_draft property
- * All cars are now immediately available once created
+ * Updated Car types - all cars are immediately available once created
  */
 
 export interface CarListing {

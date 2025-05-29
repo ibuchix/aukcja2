@@ -15,7 +15,7 @@ export const carFeaturesSchema = z.object({
 });
 
 /**
- * Schema for car records - removed is_draft as all cars are immediately available
+ * Schema for car records - all cars are immediately available
  */
 export const carSchema = baseRecordSchema.extend({
   title: z.string().nullish(),
@@ -38,7 +38,7 @@ export const carSchema = baseRecordSchema.extend({
 });
 
 /**
- * Schema for creating a new car - no is_draft field
+ * Schema for creating a new car
  */
 export const createCarSchema = carSchema.omit({ 
   id: true, 
