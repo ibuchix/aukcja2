@@ -15,7 +15,7 @@ export interface CarListing {
   status: string; // 'available', 'sold', 'withdrawn', etc.
   sellerId?: string;
   features?: Record<string, any>;
-  images?: string[]; // This is an array of strings, not JSONB
+  images?: string[]; // Array of strings (text[])
   isAuction?: boolean;
   auctionStatus?: string;
   auctionEndTime?: string;
@@ -38,7 +38,7 @@ export interface CarListing {
   additionalPhotos?: any;
   formMetadata?: any;
   valuationData?: any;
-  requiredPhotos?: any;
+  requiredPhotos?: Record<string, string>; // JSONB object with string values
   lastSaved?: string;
 }
 
@@ -79,5 +79,5 @@ export interface CarFormData {
   additionalPhotos?: any;
   formMetadata?: any;
   valuationData?: any;
-  requiredPhotos?: any;
+  requiredPhotos?: Record<string, string>;
 }

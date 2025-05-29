@@ -28,13 +28,14 @@ export const carSchema = baseRecordSchema.extend({
   status: z.string().default('available'), // Always available when created
   seller_id: z.string().uuid().nullish(),
   features: carFeaturesSchema.nullish(),
-  images: z.array(z.string()).nullish(),
+  images: z.array(z.string()).nullish(), // Array of strings, not JSONB
   is_auction: z.boolean().default(false),
   auction_status: z.string().nullish(),
   auction_end_time: z.string().nullish(),
   current_bid: z.number().default(0),
   reserve_price: z.number().nullish(),
   minimum_bid_increment: z.number().default(100),
+  required_photos: z.record(z.string()).nullish(), // JSONB object with string values
 });
 
 /**

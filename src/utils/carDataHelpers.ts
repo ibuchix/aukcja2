@@ -69,7 +69,9 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
           reserve_price: car.reserve_price,
           reserve_price_type: typeof car.reserve_price,
           valuation_data: car.valuation_data,
-          required_photos: car.required_photos
+          required_photos: car.required_photos,
+          images: car.images,
+          images_type: typeof car.images
         });
       }
       
@@ -107,17 +109,20 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         console.error("Error parsing features:", e);
       }
       
-      // Extract required_photos safely and process image URLs
-      let requiredPhotos: Record<string, string | null> | null = null;
+      // Extract required_photos safely - it's already a JSONB object
+      let requiredPhotos: Record<string, string> | null = null;
       if (car.required_photos && typeof car.required_photos === 'object') {
         const rawPhotos = car.required_photos as Record<string, any>;
         requiredPhotos = {};
         Object.keys(rawPhotos).forEach(key => {
-          requiredPhotos![key] = processImageUrl(rawPhotos[key]);
+          const processedUrl = processImageUrl(rawPhotos[key]);
+          if (processedUrl) {
+            requiredPhotos![key] = processedUrl;
+          }
         });
       }
 
-      // Process images array - handle both string array and potential null values
+      // Process images array - it's a text[] array from the database
       let processedImages: string[] | null = null;
       if (car.images && Array.isArray(car.images)) {
         processedImages = car.images
@@ -173,20 +178,20 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         images: processedImages,
         features: parsedFeatures,
         transmission: car.transmission || null,
-        required_photos: requiredPhotos,
+        requiredPhotos: requiredPhotos,
         
         // Add required properties for CarListing type
-        is_auction: Boolean(car.is_auction),
-        auction_end_time: car.auction_end_time || null,
-        reserve_price: finalReservePrice, // This should now properly preserve numeric values
-        minimum_bid_increment: (car as any).minimum_bid_increment || null,
-        auction_status: car.auction_status || null,
-        is_damaged: Boolean(car.is_damaged),
+        isAuction: Boolean(car.is_auction),
+        auctionEndTime: car.auction_end_time || null,
+        reservePrice: finalReservePrice,
+        minimumBidIncrement: (car as any).minimum_bid_increment || null,
+        auctionStatus: car.auction_status || null,
+        isDamaged: Boolean(car.is_damaged),
         address: (car as any).address || null,
-        created_at: car.created_at,
-        updated_at: car.updated_at || car.created_at,
+        createdAt: car.created_at,
+        updatedAt: car.updated_at || car.created_at,
         status: car.status || null,
-        current_bid: car.current_bid || 0
+        currentBid: car.current_bid || 0
       };
       
       if (isDev) {
@@ -194,9 +199,9 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
           id: carListing.id,
           make: carListing.make,
           model: carListing.model,
-          reserve_price: carListing.reserve_price,
-          reserve_price_type: typeof carListing.reserve_price,
-          isValidReservePrice: typeof carListing.reserve_price === 'number' && !isNaN(carListing.reserve_price) && carListing.reserve_price > 0
+          reserve_price: carListing.reservePrice,
+          reserve_price_type: typeof carListing.reservePrice,
+          isValidReservePrice: typeof carListing.reservePrice === 'number' && !isNaN(carListing.reservePrice) && carListing.reservePrice > 0
         });
       }
       

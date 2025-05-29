@@ -603,7 +603,6 @@ export type Database = {
           changed_at: string
           changed_by: string | null
           id: string
-          is_draft: boolean | null
           metadata: Json | null
           previous_status: string | null
           seller_id: string
@@ -615,7 +614,6 @@ export type Database = {
           changed_at?: string
           changed_by?: string | null
           id?: string
-          is_draft?: boolean | null
           metadata?: Json | null
           previous_status?: string | null
           seller_id: string
@@ -627,7 +625,6 @@ export type Database = {
           changed_at?: string
           changed_by?: string | null
           id?: string
-          is_draft?: boolean | null
           metadata?: Json | null
           previous_status?: string | null
           seller_id?: string
