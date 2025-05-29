@@ -15,7 +15,7 @@ export interface CarListing {
   status: string; // 'available', 'sold', 'withdrawn', etc.
   sellerId?: string;
   features?: Record<string, any>;
-  images?: string[];
+  images?: string[]; // This is an array of strings, not JSONB
   isAuction?: boolean;
   auctionStatus?: string;
   auctionEndTime?: string;

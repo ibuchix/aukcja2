@@ -117,7 +117,7 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         });
       }
 
-      // Process images array
+      // Process images array - handle both string array and potential null values
       let processedImages: string[] | null = null;
       if (car.images && Array.isArray(car.images)) {
         processedImages = car.images
