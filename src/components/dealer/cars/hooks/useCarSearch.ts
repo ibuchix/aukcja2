@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CarListing } from "@/types/cars";
@@ -45,8 +44,49 @@ export const useCarSearch = (dealerId: string) => {
         let query = enhancedSupabase
           .from("cars")
           .select(`
-            *,
-            required_photos
+            id,
+            title,
+            price,
+            make,
+            model,
+            year,
+            mileage,
+            images,
+            description,
+            features,
+            transmission,
+            service_history_files,
+            required_photos,
+            is_auction,
+            auction_end_time,
+            auction_start_time,
+            reserve_price,
+            minimum_bid_increment,
+            auction_status,
+            is_damaged,
+            address,
+            condition_rating,
+            distance,
+            created_at,
+            updated_at,
+            status,
+            current_bid,
+            seller_notes,
+            service_history_type,
+            has_service_history,
+            seller_id,
+            seller_name,
+            mobile_number,
+            additional_photos,
+            vin,
+            seat_material,
+            number_of_keys,
+            is_registered_in_poland,
+            has_private_plate,
+            finance_amount,
+            form_metadata,
+            valuation_data,
+            last_saved
           `)
           .eq("status", "available");
         
@@ -117,7 +157,8 @@ export const useCarSearch = (dealerId: string) => {
           console.log('Car Search Raw Results:', {
             dataLength: result.data?.length || 0,
             hasError: !!result.error,
-            errorMessage: result.error?.message || null
+            errorMessage: result.error?.message || null,
+            sampleData: result.data?.[0] || null
           });
         }
         
@@ -134,7 +175,13 @@ export const useCarSearch = (dealerId: string) => {
           console.log('Processed Cars Result:', {
             rawCount: rawData.length,
             validCount: validCars.length,
-            sampleCar: validCars[0] || null
+            sampleCar: validCars[0] || null,
+            reservePriceCheck: validCars.map(car => ({ 
+              id: car.id, 
+              make: car.make, 
+              model: car.model, 
+              reserve_price: car.reserve_price 
+            }))
           });
         }
         
