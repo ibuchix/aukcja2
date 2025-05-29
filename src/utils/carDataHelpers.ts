@@ -134,22 +134,30 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
       // CRITICAL: Preserve reserve price from database - ensure it's a number
       let finalReservePrice: number | null = null;
       
-      if (typeof car.reserve_price === 'number' && !isNaN(car.reserve_price)) {
+      // First, check if we have a direct numeric reserve price
+      if (typeof car.reserve_price === 'number' && !isNaN(car.reserve_price) && car.reserve_price > 0) {
         finalReservePrice = car.reserve_price;
+        if (isDev) {
+          console.log('Using direct reserve price:', finalReservePrice);
+        }
       } else if (car.valuation_data) {
+        // Try to extract from valuation data
         const extractedPrice = extractReservePriceFromValuation(car.valuation_data);
-        if (typeof extractedPrice === 'number' && !isNaN(extractedPrice)) {
+        if (typeof extractedPrice === 'number' && !isNaN(extractedPrice) && extractedPrice > 0) {
           finalReservePrice = extractedPrice;
+          if (isDev) {
+            console.log('Using extracted reserve price from valuation:', finalReservePrice);
+          }
         }
       }
       
       if (isDev) {
-        console.log('Reserve price processing:', {
+        console.log('Reserve price processing result:', {
           original: car.reserve_price,
           original_type: typeof car.reserve_price,
           final: finalReservePrice,
           final_type: typeof finalReservePrice,
-          fromValuation: finalReservePrice !== car.reserve_price
+          isValidNumber: typeof finalReservePrice === 'number' && !isNaN(finalReservePrice) && finalReservePrice > 0
         });
       }
       
@@ -170,8 +178,7 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         // Add required properties for CarListing type
         is_auction: Boolean(car.is_auction),
         auction_end_time: car.auction_end_time || null,
-        auction_start_time: (car as any).auction_start_time || null,
-        reserve_price: finalReservePrice, // Ensure this is properly typed
+        reserve_price: finalReservePrice, // This should now properly preserve numeric values
         minimum_bid_increment: (car as any).minimum_bid_increment || null,
         auction_status: car.auction_status || null,
         is_damaged: Boolean(car.is_damaged),
@@ -185,12 +192,13 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
       };
       
       if (isDev) {
-        console.log('Final car listing:', {
+        console.log('Final car listing reserve price check:', {
           id: carListing.id,
+          make: carListing.make,
+          model: carListing.model,
           reserve_price: carListing.reserve_price,
           reserve_price_type: typeof carListing.reserve_price,
-          required_photos: carListing.required_photos,
-          images: carListing.images
+          isValidReservePrice: typeof carListing.reserve_price === 'number' && !isNaN(carListing.reserve_price) && carListing.reserve_price > 0
         });
       }
       

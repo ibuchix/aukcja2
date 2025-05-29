@@ -19,10 +19,7 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
       year: car.year,
       reservePrice: car.reserve_price,
       reservePriceType: typeof car.reserve_price,
-      reservePriceIsNull: car.reserve_price === null,
-      reservePriceIsUndefined: car.reserve_price === undefined,
-      reservePriceIsNumber: typeof car.reserve_price === 'number',
-      reservePriceValue: car.reserve_price
+      isValidReservePrice: typeof car.reserve_price === 'number' && !isNaN(car.reserve_price) && car.reserve_price > 0
     });
   }
 
@@ -32,10 +29,9 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
       console.log('Reserve price evaluation:', {
         value: car.reserve_price,
         type: typeof car.reserve_price,
-        isNull: car.reserve_price === null,
-        isUndefined: car.reserve_price === undefined,
         isNumber: typeof car.reserve_price === 'number',
-        isGreaterThanZero: typeof car.reserve_price === 'number' && car.reserve_price > 0
+        isGreaterThanZero: typeof car.reserve_price === 'number' && car.reserve_price > 0,
+        isNaN: typeof car.reserve_price === 'number' && isNaN(car.reserve_price)
       });
     }
     
@@ -90,9 +86,14 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
         </div>
         <div>
           <p className="text-subtitle-text">Reserve Price</p>
-          <p className={`font-medium ${hasReservePrice ? 'text-primary' : 'text-gray-500'}`}>
+          <p className={`font-medium ${hasReservePrice ? 'text-primary font-bold' : 'text-gray-500'}`}>
             {reservePriceDisplay}
           </p>
+          {isDev && (
+            <p className="text-xs text-blue-600 mt-1">
+              Debug: {car.reserve_price} ({typeof car.reserve_price})
+            </p>
+          )}
         </div>
       </div>
     </div>
