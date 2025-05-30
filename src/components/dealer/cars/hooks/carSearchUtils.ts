@@ -1,7 +1,7 @@
 
 import { CarListing } from "@/types/cars";
 
-// Type guard to ensure we only process valid CarListing objects with reserve prices
+// Type guard to ensure we only process valid CarListing objects
 export const isValidCarListing = (item: any): item is CarListing => {
   const isDev = process.env.NODE_ENV === 'development';
   
@@ -11,7 +11,7 @@ export const isValidCarListing = (item: any): item is CarListing => {
          typeof item.id === 'string' &&
          !('error' in item) &&
          typeof item.reserve_price === 'number' &&
-         item.reserve_price > 0; // Only accept cars with reserve_price > 0
+         item.reserve_price >= 0; // Accept cars with reserve_price >= 0 (including 0)
   
   if (isDev && !isValid) {
     console.log('Invalid car listing found:', {
@@ -21,7 +21,7 @@ export const isValidCarListing = (item: any): item is CarListing => {
       hasReservePrice: 'reserve_price' in item,
       reservePriceType: typeof item?.reserve_price,
       reservePriceValue: item?.reserve_price,
-      reservePriceValid: typeof item?.reserve_price === 'number' && item?.reserve_price > 0,
+      reservePriceValid: typeof item?.reserve_price === 'number' && item?.reserve_price >= 0,
       hasError: 'error' in item
     });
   }
@@ -29,7 +29,7 @@ export const isValidCarListing = (item: any): item is CarListing => {
   return isValid;
 };
 
-// Process car listings from database - only include cars with valid reserve prices
+// Process car listings from database - include all cars with valid reserve prices
 export const processCarListings = (rawData: any[]): CarListing[] => {
   const isDev = process.env.NODE_ENV === 'development';
   
@@ -49,15 +49,15 @@ export const processCarListings = (rawData: any[]): CarListing[] => {
           id: car.id,
           reserve_price: car.reserve_price,
           reserve_price_type: typeof car.reserve_price,
-          reserve_price_valid: typeof car.reserve_price === 'number' && car.reserve_price > 0,
-          will_be_included: typeof car.reserve_price === 'number' && car.reserve_price > 0
+          reserve_price_valid: typeof car.reserve_price === 'number' && car.reserve_price >= 0,
+          will_be_included: typeof car.reserve_price === 'number' && car.reserve_price >= 0
         });
       }
     });
     
     console.log('=== FILTERING RESULTS ===');
     console.log('Total raw cars:', rawData.length);
-    console.log('Valid cars with reserve_price > 0:', validCars.length);
+    console.log('Valid cars with reserve_price >= 0:', validCars.length);
     console.log('Cars filtered out:', rawData.length - validCars.length);
   }
   
