@@ -10,15 +10,15 @@ export const isValidCarListing = (item: any): item is CarListing => {
          'id' in item && 
          typeof item.id === 'string' &&
          !('error' in item) &&
-         typeof item.price === 'number';
+         typeof item.reserve_price === 'number'; // Changed from price to reserve_price
   
   if (isDev && !isValid) {
     console.log('Invalid car listing found:', {
       item,
       hasId: 'id' in item,
       idType: typeof item?.id,
-      hasPrice: 'price' in item,
-      priceType: typeof item?.price,
+      hasReservePrice: 'reserve_price' in item,
+      reservePriceType: typeof item?.reserve_price,
       hasError: 'error' in item
     });
   }

@@ -10,7 +10,7 @@ export type CarFeatures = {
 export interface CarListing {
   id: string;
   title: string | null;
-  price: number;
+  reserve_price: number; // Changed from price to reserve_price
   make: string | null;
   model: string | null;
   year: number | null;
@@ -21,7 +21,6 @@ export interface CarListing {
   required_photos: Record<string, string | null> | null;
   is_auction?: boolean;
   auction_end_time?: string | null;
-  reserve_price?: number | null;
   minimum_bid_increment?: number | null;
   auction_status?: string | null;
   is_damaged?: boolean;
