@@ -78,7 +78,8 @@ export const useCarListingsQuery = ({
             registration_number,
             is_manually_controlled
           `)
-          .eq("status", "available");
+          .eq("status", "available")
+          .gt("reserve_price", 0); // Only fetch cars with reserve_price > 0
         
         // Apply filters
         if (filters.make && typeof filters.make === 'string') {

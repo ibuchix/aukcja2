@@ -1,7 +1,7 @@
 
 import { CarListing } from "@/types/cars";
 
-// Type guard to ensure we only process valid CarListing objects
+// Type guard to ensure we only process valid CarListing objects with reserve prices
 export const isValidCarListing = (item: any): item is CarListing => {
   const isDev = process.env.NODE_ENV === 'development';
   
@@ -10,7 +10,8 @@ export const isValidCarListing = (item: any): item is CarListing => {
          'id' in item && 
          typeof item.id === 'string' &&
          !('error' in item) &&
-         typeof item.reserve_price === 'number'; // Changed from price to reserve_price
+         typeof item.reserve_price === 'number' &&
+         item.reserve_price > 0; // Only accept cars with reserve_price > 0
   
   if (isDev && !isValid) {
     console.log('Invalid car listing found:', {
@@ -19,6 +20,8 @@ export const isValidCarListing = (item: any): item is CarListing => {
       idType: typeof item?.id,
       hasReservePrice: 'reserve_price' in item,
       reservePriceType: typeof item?.reserve_price,
+      reservePriceValue: item?.reserve_price,
+      reservePriceValid: typeof item?.reserve_price === 'number' && item?.reserve_price > 0,
       hasError: 'error' in item
     });
   }
@@ -26,7 +29,7 @@ export const isValidCarListing = (item: any): item is CarListing => {
   return isValid;
 };
 
-// Process car listings from database - preserve ALL data
+// Process car listings from database - only include cars with valid reserve prices
 export const processCarListings = (rawData: any[]): CarListing[] => {
   const isDev = process.env.NODE_ENV === 'development';
   
@@ -39,47 +42,23 @@ export const processCarListings = (rawData: any[]): CarListing[] => {
   const validCars = rawData.filter(isValidCarListing);
   
   if (isDev) {
-    console.log('=== RESERVE PRICE ANALYSIS ===');
+    console.log('=== RESERVE PRICE FILTERING ===');
     rawData.forEach((car, index) => {
       if (car && typeof car === 'object') {
         console.log(`Car ${index + 1} (${car.make} ${car.model}):`, {
           id: car.id,
           reserve_price: car.reserve_price,
           reserve_price_type: typeof car.reserve_price,
-          reserve_price_null: car.reserve_price === null,
-          reserve_price_undefined: car.reserve_price === undefined,
-          all_price_fields: {
-            price: car.price,
-            reserve_price: car.reserve_price,
-            current_bid: car.current_bid
-          }
-        });
-      }
-    });
-    
-    console.log('=== IMAGE ANALYSIS ===');
-    rawData.forEach((car, index) => {
-      if (car && typeof car === 'object') {
-        console.log(`Car ${index + 1} (${car.make} ${car.model}) images:`, {
-          id: car.id,
-          required_photos: car.required_photos,
-          required_photos_type: typeof car.required_photos,
-          images: car.images,
-          images_type: typeof car.images,
-          images_length: Array.isArray(car.images) ? car.images.length : 'not array'
+          reserve_price_valid: typeof car.reserve_price === 'number' && car.reserve_price > 0,
+          will_be_included: typeof car.reserve_price === 'number' && car.reserve_price > 0
         });
       }
     });
     
     console.log('=== FILTERING RESULTS ===');
-    console.log('Valid cars after filtering:', validCars.length);
-    console.log('Cars with reserve price:', validCars.filter(car => 
-      car.reserve_price !== null && car.reserve_price !== undefined && typeof car.reserve_price === 'number'
-    ).length);
-    console.log('Cars with images:', validCars.filter(car => 
-      (car.images && Array.isArray(car.images) && car.images.length > 0) ||
-      (car.required_photos && typeof car.required_photos === 'object' && car.required_photos !== null)
-    ).length);
+    console.log('Total raw cars:', rawData.length);
+    console.log('Valid cars with reserve_price > 0:', validCars.length);
+    console.log('Cars filtered out:', rawData.length - validCars.length);
   }
   
   return validCars;
