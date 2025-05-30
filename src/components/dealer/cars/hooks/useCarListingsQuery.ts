@@ -36,6 +36,61 @@ export const useCarListingsQuery = ({
       }
       
       try {
+        // First, let's check what cars exist in the database without any filters
+        if (isDev) {
+          const { data: allCars, error: allCarsError } = await enhancedSupabase
+            .from("cars")
+            .select("id, title, make, model, status, reserve_price")
+            .limit(5);
+            
+          console.log('=== ALL CARS IN DATABASE (first 5) ===');
+          console.log('All cars query error:', allCarsError);
+          console.log('All cars found:', allCars?.length || 0);
+          if (allCars && allCars.length > 0) {
+            console.log('Sample cars:', allCars.map(car => ({
+              id: car.id,
+              title: car.title,
+              make: car.make,
+              model: car.model,
+              status: car.status,
+              reserve_price: car.reserve_price
+            })));
+          }
+        }
+
+        // Now let's try with just the status filter
+        if (isDev) {
+          const { data: availableCars, error: availableError } = await enhancedSupabase
+            .from("cars")
+            .select("id, title, make, model, status, reserve_price")
+            .eq("status", "available")
+            .limit(5);
+            
+          console.log('=== CARS WITH STATUS = "available" ===');
+          console.log('Available cars query error:', availableError);
+          console.log('Available cars found:', availableCars?.length || 0);
+          if (availableCars && availableCars.length > 0) {
+            console.log('Available cars:', availableCars);
+          }
+        }
+
+        // Now let's try with both filters
+        if (isDev) {
+          const { data: filteredCars, error: filteredError } = await enhancedSupabase
+            .from("cars")
+            .select("id, title, make, model, status, reserve_price")
+            .eq("status", "available")
+            .gt("reserve_price", 0)
+            .limit(5);
+            
+          console.log('=== CARS WITH STATUS = "available" AND RESERVE_PRICE > 0 ===');
+          console.log('Filtered cars query error:', filteredError);
+          console.log('Filtered cars found:', filteredCars?.length || 0);
+          if (filteredCars && filteredCars.length > 0) {
+            console.log('Filtered cars:', filteredCars);
+          }
+        }
+
         let query = enhancedSupabase
           .from("cars")
           .select(`
