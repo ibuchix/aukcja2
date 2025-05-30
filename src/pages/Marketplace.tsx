@@ -86,7 +86,7 @@ const Marketplace = () => {
         <MaxBidInterface
           carId={selectedCar.id}
           dealerId={dealerId}
-          currentHighestBid={selectedCar.price}
+          currentHighestBid={selectedCar.reserve_price}
           minimumIncrement={100}
           auctionEndTime={selectedCar.auction_end_time}
         />

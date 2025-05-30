@@ -93,7 +93,7 @@ const Index = () => {
                   <VehicleCard
                     image={vehicle.required_photos?.front || vehicle.images?.[0] || "/placeholder.svg"}
                     name={`${vehicle.year || 'N/A'} ${vehicle.make || 'Unknown'} ${vehicle.model || 'Model'}`}
-                    price={vehicle.price}
+                    price={vehicle.reserve_price}
                     mileage={vehicle.mileage}
                     transmission={vehicle.transmission}
                     year={vehicle.year}

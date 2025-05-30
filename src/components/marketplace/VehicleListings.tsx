@@ -66,18 +66,16 @@ const VehicleListings = ({ listings, onSelectCar }: VehicleListingsProps) => {
             />
             <div className="absolute top-2 right-2">
               <Badge variant="secondary" className="bg-white text-primary font-bold">
-                {car.current_bid ? formatCurrency(car.current_bid) : formatCurrency(car.price)}
+                {car.current_bid ? formatCurrency(car.current_bid) : formatCurrency(car.reserve_price)}
               </Badge>
             </div>
             
-            {car.reserve_price && (
-              <div className="absolute bottom-2 right-2">
-                <Badge variant="outline" className="bg-white/80 border-primary text-primary text-xs">
-                  <ShieldAlert size={12} className="mr-1" />
-                  Reserve: {formatCurrency(car.reserve_price)}
-                </Badge>
-              </div>
-            )}
+            <div className="absolute bottom-2 right-2">
+              <Badge variant="outline" className="bg-white/80 border-primary text-primary text-xs">
+                <ShieldAlert size={12} className="mr-1" />
+                Reserve: {formatCurrency(car.reserve_price)}
+              </Badge>
+            </div>
             
             {car.auction_end_time && (
               <div className="absolute bottom-2 left-2">

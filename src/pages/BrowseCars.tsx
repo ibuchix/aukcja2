@@ -75,7 +75,7 @@ const BrowseCars = () => {
               <p>Make: {car.make}</p>
               <p>Model: {car.model}</p>
               <p>Year: {car.year}</p>
-              <p>Price: {car.price}</p>
+              <p>Reserve Price: {car.reserve_price}</p>
             </div>
           ))}
         </div>
