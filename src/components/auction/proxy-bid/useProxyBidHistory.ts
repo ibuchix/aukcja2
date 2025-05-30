@@ -53,6 +53,13 @@ export const useProxyBidHistory = ({ carId, dealerId }: UseProxyBidHistoryProps)
         ) as PostgrestResponse<ProxyBidHistoryItem>;
         
         if (result.error) {
+          // Handle permission errors gracefully
+          if (result.error.code === '42501' || result.error.message?.includes('permission')) {
+            console.warn('Insufficient permissions for proxy bid history');
+            setError('Proxy bid history requires proper authentication');
+            setHistory([]);
+            return;
+          }
           throw result.error;
         }
 
@@ -60,6 +67,7 @@ export const useProxyBidHistory = ({ carId, dealerId }: UseProxyBidHistoryProps)
       } catch (err) {
         console.error("Error fetching proxy bid history:", err);
         setError(err instanceof Error ? err.message : "Failed to fetch proxy bid history");
+        setHistory([]);
       } finally {
         setIsLoading(false);
       }

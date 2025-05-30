@@ -1,162 +1,151 @@
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ChevronLeft, ChevronRight, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CarListing } from "@/types/cars";
+import { getAllCarImages, getImageCount } from "@/utils/imageUtils";
 
 interface VehiclePhotosProps {
   car: CarListing;
 }
 
-const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState<string>("gallery");
+export const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  
+  const allImages = getAllCarImages(car);
+  const imageCount = getImageCount(car);
 
-  // Get all available images
-  const galleryImages = car.images || [];
-  const requiredPhotos = car.requiredPhotos || {};
+  const nextImage = () => {
+    setSelectedImageIndex((prev) => (prev + 1) % allImages.length);
+  };
 
-  // Create categories based on available data
-  const categories = [
-    { id: "gallery", label: "Gallery", images: galleryImages },
-    ...(Object.keys(requiredPhotos).length > 0 
-      ? [{ id: "required", label: "Required Photos", images: Object.values(requiredPhotos).filter(Boolean) }]
-      : []
-    )
-  ].filter(category => category.images.length > 0);
+  const prevImage = () => {
+    setSelectedImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
+  };
 
-  const currentCategory = categories.find(cat => cat.id === selectedCategory);
-  const currentImages = currentCategory?.images || [];
-
-  if (categories.length === 0) {
+  if (allImages.length === 0) {
     return (
-      <div className="space-y-4 p-4 bg-accent/50 rounded-lg">
-        <h3 className="text-lg font-semibold font-oswald flex items-center gap-2">
-          <ImageIcon className="w-5 h-5" />
-          Vehicle Photos
-        </h3>
-        <div className="flex items-center justify-center h-48 bg-gray-100 rounded-lg">
-          <div className="text-center text-gray-500">
-            <ImageIcon className="w-12 h-12 mx-auto mb-2" />
-            <p>No photos available for this vehicle</p>
-          </div>
-        </div>
+      <div className="bg-gray-100 rounded-lg p-8 text-center">
+        <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <p className="text-gray-500">No photos available for this vehicle</p>
       </div>
     );
   }
 
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % currentImages.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + currentImages.length) % currentImages.length);
-  };
-
   return (
-    <div className="space-y-4 p-4 bg-accent/50 rounded-lg">
-      <h3 className="text-lg font-semibold font-oswald flex items-center gap-2">
-        <ImageIcon className="w-5 h-5" />
-        Vehicle Photos
-      </h3>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Vehicle Photos</h3>
+        <span className="text-sm text-gray-600 flex items-center gap-1">
+          <Camera className="h-4 w-4" />
+          {imageCount} photo{imageCount !== 1 ? 's' : ''}
+        </span>
+      </div>
+      
+      {/* Main image */}
+      <div className="relative">
+        <img
+          src={allImages[0]?.src}
+          alt={allImages[0]?.label || "Vehicle photo"}
+          className="w-full h-64 object-cover rounded-lg cursor-pointer"
+          onClick={() => setIsGalleryOpen(true)}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "/placeholder.svg";
+          }}
+        />
+        {allImages.length > 1 && (
+          <Button
+            variant="secondary"
+            size="sm"
+            className="absolute bottom-2 right-2"
+            onClick={() => setIsGalleryOpen(true)}
+          >
+            View All {imageCount}
+          </Button>
+        )}
+      </div>
 
-      {/* Category selector */}
-      {categories.length > 1 && (
-        <div className="flex gap-2 mb-4">
-          {categories.map((category) => (
-            <Button
-              key={category.id}
-              variant={selectedCategory === category.id ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                setSelectedCategory(category.id);
-                setCurrentImageIndex(0);
-              }}
-            >
-              {category.label} ({category.images.length})
-            </Button>
-          ))}
-        </div>
-      )}
-
-      {/* Main image display */}
-      {currentImages.length > 0 && (
-        <div className="relative">
-          <div className="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg">
+      {/* Thumbnail grid */}
+      {allImages.length > 1 && (
+        <div className="grid grid-cols-4 gap-2">
+          {allImages.slice(1, 5).map((image, index) => (
             <img
-              src={currentImages[currentImageIndex]}
-              alt={`${car.year} ${car.make} ${car.model} - Photo ${currentImageIndex + 1}`}
-              className="w-full h-full object-cover"
+              key={index}
+              src={image.src}
+              alt={image.label}
+              className="w-full h-16 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => {
+                setSelectedImageIndex(index + 1);
+                setIsGalleryOpen(true);
+              }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = "/placeholder.svg";
               }}
             />
-          </div>
-
-          {/* Navigation arrows */}
-          {currentImages.length > 1 && (
-            <>
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
-                onClick={prevImage}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
-                onClick={nextImage}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </>
-          )}
-
-          {/* Image counter */}
-          <div className="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-sm">
-            {currentImageIndex + 1} / {currentImages.length}
-          </div>
-        </div>
-      )}
-
-      {/* Thumbnail strip */}
-      {currentImages.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {currentImages.map((image, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentImageIndex(index)}
-              className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
-                index === currentImageIndex
-                  ? "border-primary"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <img
-                src={image}
-                alt={`Thumbnail ${index + 1}`}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/placeholder.svg";
-                }}
-              />
-            </button>
           ))}
+          {allImages.length > 5 && (
+            <div 
+              className="w-full h-16 bg-gray-100 rounded flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
+              onClick={() => setIsGalleryOpen(true)}
+            >
+              <span className="text-sm text-gray-600">+{allImages.length - 4}</span>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Photo count info */}
-      <div className="text-sm text-gray-600">
-        Showing {currentImages.length} photo{currentImages.length !== 1 ? 's' : ''} 
-        {currentCategory && ` in ${currentCategory.label}`}
-      </div>
+      {/* Gallery Dialog */}
+      <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
+        <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
+          <div className="relative w-full h-full flex items-center justify-center bg-black">
+            <img
+              src={allImages[selectedImageIndex]?.src}
+              alt={allImages[selectedImageIndex]?.label || "Vehicle photo"}
+              className="max-w-full max-h-full object-contain"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "/placeholder.svg";
+              }}
+            />
+            
+            {/* Navigation buttons */}
+            {allImages.length > 1 && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute left-4 text-white hover:bg-white/20"
+                  onClick={prevImage}
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-4 text-white hover:bg-white/20"
+                  onClick={nextImage}
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </Button>
+              </>
+            )}
+            
+            {/* Image counter */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded">
+              {selectedImageIndex + 1} of {allImages.length}
+            </div>
+            
+            {/* Image label */}
+            <div className="absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded">
+              {allImages[selectedImageIndex]?.label}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
-
-export default VehiclePhotos;

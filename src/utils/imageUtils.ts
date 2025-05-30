@@ -4,9 +4,29 @@ import { CarListing } from "@/types/cars";
  * Generate Supabase Storage URL for car images
  */
 const generateSupabaseImageUrl = (carId: string, imageName: string): string => {
-  // Get the Supabase project URL from the environment or current location
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
   return `${supabaseUrl}/storage/v1/object/public/car-images/${carId}/${imageName}`;
+};
+
+/**
+ * Check if a URL is a valid image (including blob URLs)
+ */
+const isValidImageUrl = (url: string): boolean => {
+  if (!url || typeof url !== 'string') return false;
+  
+  // Blob URLs are valid
+  if (url.startsWith('blob:')) return true;
+  
+  // Data URLs are valid
+  if (url.startsWith('data:image/')) return true;
+  
+  // HTTP/HTTPS URLs are valid
+  if (url.startsWith('http://') || url.startsWith('https://')) return true;
+  
+  // Relative paths are valid
+  if (url.startsWith('/')) return true;
+  
+  return false;
 };
 
 /**
@@ -17,14 +37,16 @@ const transformImageUrl = (url: string, carId?: string): string => {
   
   if (!url) return "/placeholder.svg";
   
-  // If it's already a Supabase Storage URL, return as is
-  if (url.includes('/storage/v1/object/public/car-images/')) {
+  // If it's already a valid image URL (including blob URLs), return as is
+  if (isValidImageUrl(url)) {
+    if (isDev && url.startsWith('blob:')) {
+      console.log('Keeping blob URL as-is:', url);
+    }
     return url;
   }
   
   // If it's a blob URL and we have carId, try to construct a Supabase Storage URL
   if (url.startsWith('blob:') && carId) {
-    // Extract the image type from the blob URL if possible
     const imageName = url.includes('exterior_front') ? 'exterior_front.jpg' : 'image.jpg';
     const supabaseUrl = generateSupabaseImageUrl(carId, imageName);
     
@@ -39,17 +61,39 @@ const transformImageUrl = (url: string, carId?: string): string => {
     return supabaseUrl;
   }
   
-  // If it's a regular URL (not blob), return as is
-  if (!url.startsWith('blob:')) {
-    return url;
-  }
-  
   if (isDev) {
     console.warn('Could not transform image URL:', url);
   }
   
-  // Fallback to placeholder
   return "/placeholder.svg";
+};
+
+/**
+ * Count valid images from car data
+ */
+const countValidImages = (car: CarListing): number => {
+  let count = 0;
+  
+  // Count images from requiredPhotos
+  if (car.requiredPhotos && typeof car.requiredPhotos === 'object') {
+    const photos = car.requiredPhotos as Record<string, string | null>;
+    Object.values(photos).forEach(photo => {
+      if (photo && isValidImageUrl(photo)) {
+        count++;
+      }
+    });
+  }
+  
+  // Count images from images array
+  if (car.images && Array.isArray(car.images)) {
+    car.images.forEach(image => {
+      if (image && isValidImageUrl(image)) {
+        count++;
+      }
+    });
+  }
+  
+  return count;
 };
 
 /**
@@ -64,10 +108,7 @@ export const getPrimaryImage = (car: CarListing): string => {
       id: car.id,
       make: car.make,
       model: car.model,
-      requiredPhotos: car.requiredPhotos,
-      requiredPhotosType: typeof car.requiredPhotos,
-      images: car.images,
-      imagesType: typeof car.images
+      imageCount: countValidImages(car)
     });
   }
 
@@ -75,20 +116,15 @@ export const getPrimaryImage = (car: CarListing): string => {
   if (car.requiredPhotos && typeof car.requiredPhotos === 'object') {
     const photos = car.requiredPhotos as Record<string, string | null>;
     
-    if (isDev) {
-      console.log('Required photos object:', photos);
-      console.log('Available photo keys:', Object.keys(photos));
-    }
-    
     // Check for exterior_front first (most important)
-    if (photos.exterior_front && typeof photos.exterior_front === 'string') {
+    if (photos.exterior_front && isValidImageUrl(photos.exterior_front)) {
       const transformedUrl = transformImageUrl(photos.exterior_front, car.id);
       if (isDev) console.log('Found exterior_front:', photos.exterior_front, '→', transformedUrl);
       return transformedUrl;
     }
     
     // Check for front property (alternative naming)
-    if (photos.front && typeof photos.front === 'string') {
+    if (photos.front && isValidImageUrl(photos.front)) {
       const transformedUrl = transformImageUrl(photos.front, car.id);
       if (isDev) console.log('Found front:', photos.front, '→', transformedUrl);
       return transformedUrl;
@@ -105,7 +141,7 @@ export const getPrimaryImage = (car: CarListing): string => {
     ];
     
     for (const photoKey of exteriorPhotoPriority) {
-      if (photos[photoKey] && typeof photos[photoKey] === 'string') {
+      if (photos[photoKey] && isValidImageUrl(photos[photoKey]!)) {
         const transformedUrl = transformImageUrl(photos[photoKey]!, car.id);
         if (isDev) console.log(`Found ${photoKey}:`, photos[photoKey], '→', transformedUrl);
         return transformedUrl;
@@ -113,7 +149,7 @@ export const getPrimaryImage = (car: CarListing): string => {
     }
 
     // Check any available photo in requiredPhotos
-    const anyPhoto = Object.values(photos).find(photo => photo && typeof photo === 'string');
+    const anyPhoto = Object.values(photos).find(photo => photo && isValidImageUrl(photo));
     if (anyPhoto) {
       const transformedUrl = transformImageUrl(anyPhoto, car.id);
       if (isDev) console.log('Found any required photo:', anyPhoto, '→', transformedUrl);
@@ -123,10 +159,10 @@ export const getPrimaryImage = (car: CarListing): string => {
   
   // Fall back to images array
   if (car.images && Array.isArray(car.images) && car.images.length > 0) {
-    const firstImage = car.images[0];
-    if (firstImage && typeof firstImage === 'string') {
-      const transformedUrl = transformImageUrl(firstImage, car.id);
-      if (isDev) console.log('Found image from images array:', firstImage, '→', transformedUrl);
+    const firstValidImage = car.images.find(image => image && isValidImageUrl(image));
+    if (firstValidImage) {
+      const transformedUrl = transformImageUrl(firstValidImage, car.id);
+      if (isDev) console.log('Found image from images array:', firstValidImage, '→', transformedUrl);
       return transformedUrl;
     }
   }
@@ -148,8 +184,7 @@ export const getAllCarImages = (car: CarListing): { src: string; label: string }
       id: car.id,
       make: car.make,
       model: car.model,
-      requiredPhotos: car.requiredPhotos,
-      images: car.images
+      totalValidImages: countValidImages(car)
     });
   }
 
@@ -158,7 +193,7 @@ export const getAllCarImages = (car: CarListing): { src: string; label: string }
     const photos = car.requiredPhotos as Record<string, string | null>;
     
     Object.entries(photos).forEach(([key, value]) => {
-      if (value && typeof value === 'string') {
+      if (value && isValidImageUrl(value)) {
         const transformedUrl = transformImageUrl(value, car.id);
         allImages.push({
           src: transformedUrl,
@@ -175,7 +210,7 @@ export const getAllCarImages = (car: CarListing): { src: string; label: string }
   // Add images from images array
   if (car.images && Array.isArray(car.images) && car.images.length > 0) {
     car.images.forEach((image, index) => {
-      if (image && typeof image === 'string') {
+      if (image && isValidImageUrl(image)) {
         const transformedUrl = transformImageUrl(image, car.id);
         allImages.push({
           src: transformedUrl,
@@ -191,10 +226,16 @@ export const getAllCarImages = (car: CarListing): { src: string; label: string }
 
   if (isDev) {
     console.log('Total images found:', allImages.length);
-    console.log('Final images list:', allImages);
   }
 
   return allImages;
+};
+
+/**
+ * Get the count of valid images for a car
+ */
+export const getImageCount = (car: CarListing): number => {
+  return countValidImages(car);
 };
 
 /**

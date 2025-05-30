@@ -1,98 +1,143 @@
 
-import { AlertTriangle, CheckCircle, XCircle, Info } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Shield, Check, X } from "lucide-react";
 import { CarListing } from "@/types/cars";
+import { Badge } from "@/components/ui/badge";
 
 interface ConditionAndFeaturesProps {
   car: CarListing;
 }
 
-const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
-  return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5" />
-          Vehicle Condition & Features
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Damage Information */}
-        <div className="space-y-3">
-          <h4 className="font-semibold text-lg">Damage & Condition Status</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center gap-2">
-              {car.isDamaged ? (
-                <XCircle className="w-5 h-5 text-red-500" />
-              ) : (
-                <CheckCircle className="w-5 h-5 text-green-500" />
-              )}
-              <span className="font-medium">
-                {car.isDamaged ? "Damage Reported" : "No Damage Reported"}
-              </span>
-            </div>
-          </div>
+export const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
+  const features = car.features || {};
+  
+  const featureList = [
+    { key: 'satNav', label: 'Satellite Navigation', value: features.satNav },
+    { key: 'heatedSeats', label: 'Heated Seats', value: features.heatedSeats },
+    { key: 'panoramicRoof', label: 'Panoramic Roof', value: features.panoramicRoof },
+    { key: 'reverseCamera', label: 'Reverse Camera', value: features.reverseCamera },
+    { key: 'upgradedSound', label: 'Upgraded Sound System', value: features.upgradedSound },
+  ];
 
-          {/* Seller Notes */}
-          {car.sellerNotes && (
-            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-              <h5 className="font-medium text-gray-800 mb-2">Seller Notes:</h5>
-              <p className="text-gray-700">{car.sellerNotes}</p>
+  return (
+    <div className="space-y-6">
+      {/* Condition Section */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Shield className="h-5 w-5" />
+          Vehicle Condition
+        </h3>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <span className="font-medium">Damage Status</span>
+            <Badge variant={car.isDamaged ? "destructive" : "default"}>
+              {car.isDamaged ? "Has Damage" : "No Known Damage"}
+            </Badge>
+          </div>
+          
+          {car.transmission && (
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <span className="font-medium">Transmission</span>
+              <Badge variant="outline">{car.transmission}</Badge>
+            </div>
+          )}
+          
+          {car.seatMaterial && (
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <span className="font-medium">Seat Material</span>
+              <Badge variant="outline">{car.seatMaterial}</Badge>
+            </div>
+          )}
+          
+          {car.numberOfKeys && (
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <span className="font-medium">Number of Keys</span>
+              <Badge variant="outline">{car.numberOfKeys}</Badge>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Service History */}
-        {car.serviceHistoryType && (
-          <div className="space-y-2">
-            <h4 className="font-semibold">Service History</h4>
-            <Badge variant="outline" className="capitalize">
-              {car.serviceHistoryType.replace(/_/g, ' ')}
-            </Badge>
-            {car.hasServiceHistory && (
-              <p className="text-sm text-green-600 mt-2">
-                <CheckCircle className="w-4 h-4 inline mr-1" />
-                Service history available
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Features */}
-        {car.features && Object.keys(car.features).length > 0 && (
-          <div className="space-y-3">
-            <h4 className="font-semibold">Vehicle Features</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {Object.entries(car.features).map(
-                ([key, value]) =>
-                  value === true && (
-                    <Badge key={key} variant="secondary" className="justify-start">
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      {key
-                        .replace(/([A-Z])/g, " $1")
-                        .replace(/^./, (str) => str.toUpperCase())
-                        .replace(/_/g, " ")}
-                    </Badge>
-                  )
+      {/* Features Section */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Vehicle Features</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {featureList.map((feature) => (
+            <div 
+              key={feature.key} 
+              className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+            >
+              {feature.value ? (
+                <>
+                  <Check className="h-5 w-5 text-green-600" />
+                  <Badge 
+                    variant="default" 
+                    className="bg-green-100 text-green-800 hover:bg-green-200 border-green-300"
+                  >
+                    {feature.label}
+                  </Badge>
+                </>
+              ) : (
+                <>
+                  <X className="h-5 w-5 text-gray-400" />
+                  <span className="text-gray-500">{feature.label}</span>
+                </>
               )}
             </div>
-          </div>
-        )}
+          ))}
+        </div>
+      </div>
 
-        {/* Show message if no condition information available */}
-        {!car.isDamaged && 
-         !car.sellerNotes && 
-         !car.serviceHistoryType && 
-         (!car.features || Object.keys(car.features).length === 0) && (
-          <div className="p-4 bg-gray-50 rounded-lg flex items-center gap-2">
-            <Info className="w-5 h-5 text-gray-500" />
-            <span className="text-gray-600">No specific condition information available for this vehicle.</span>
+      {/* Additional Information */}
+      {(car.serviceHistoryType || car.hasServiceHistory !== undefined || car.isRegisteredInPoland !== undefined) && (
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Additional Information</h3>
+          <div className="space-y-3">
+            {car.serviceHistoryType && (
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="font-medium">Service History</span>
+                <Badge variant="outline">{car.serviceHistoryType}</Badge>
+              </div>
+            )}
+            
+            {car.hasServiceHistory !== undefined && (
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="font-medium">Service History Available</span>
+                <Badge variant={car.hasServiceHistory ? "default" : "secondary"}>
+                  {car.hasServiceHistory ? "Yes" : "No"}
+                </Badge>
+              </div>
+            )}
+            
+            {car.isRegisteredInPoland !== undefined && (
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="font-medium">Registered in Poland</span>
+                <Badge variant={car.isRegisteredInPoland ? "default" : "secondary"}>
+                  {car.isRegisteredInPoland ? "Yes" : "No"}
+                </Badge>
+              </div>
+            )}
+            
+            {car.hasPrivatePlate !== undefined && (
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="font-medium">Private Plate</span>
+                <Badge variant={car.hasPrivatePlate ? "default" : "secondary"}>
+                  {car.hasPrivatePlate ? "Yes" : "No"}
+                </Badge>
+              </div>
+            )}
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+
+      {/* Seller Notes */}
+      {car.sellerNotes && (
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Seller Notes</h3>
+          <div className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-lg">
+            <p className="text-gray-700">{car.sellerNotes}</p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
-
-export default ConditionAndFeatures;
