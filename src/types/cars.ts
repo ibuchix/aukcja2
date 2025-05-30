@@ -21,44 +21,47 @@ export type CarFeatures = {
   [key: string]: boolean | undefined;
 };
 
+// Simplified interface focusing on essential dealer fields
 export interface CarListing {
   id: string;
-  title: string | null;
-  reserve_price: number; // Changed from price to reserve_price
   make: string | null;
   model: string | null;
   year: number | null;
   mileage: number;
+  reservePrice: number; // Essential field - camelCase
   images: string[] | null;
-  features: CarFeatures;
-  transmission: string | null;
-  required_photos: Record<string, string | null> | null;
-  is_auction?: boolean;
-  auction_end_time?: string | null;
-  minimum_bid_increment?: number | null;
-  auction_status?: string | null;
-  is_damaged?: boolean;
+  requiredPhotos: Record<string, string | null> | null;
+  
+  // Optional fields that are nice to have
+  title?: string | null;
+  features?: CarFeatures;
+  transmission?: string | null;
+  isAuction?: boolean;
+  auctionEndTime?: string | null;
+  minimumBidIncrement?: number | null;
+  auctionStatus?: string | null;
+  isDamaged?: boolean;
   address?: string | null;
-  created_at?: string;
-  updated_at?: string;
+  createdAt?: string;
+  updatedAt?: string;
   status?: string | null;
-  current_bid?: number;
-  seller_notes?: string | null;
-  service_history_type?: string | null;
-  has_service_history?: boolean;
-  seller_id?: string | null;
-  seller_name?: string | null;
-  mobile_number?: string | null;
-  additional_photos?: string[] | null;
+  currentBid?: number;
+  sellerNotes?: string | null;
+  serviceHistoryType?: string | null;
+  hasServiceHistory?: boolean;
+  sellerId?: string | null;
+  sellerName?: string | null;
+  mobileNumber?: string | null;
+  additionalPhotos?: string[] | null;
   vin?: string | null;
-  seat_material?: string | null;
-  number_of_keys?: number | null;
-  is_registered_in_poland?: boolean;
-  has_private_plate?: boolean;
-  finance_amount?: number | null;
-  form_metadata?: any;
-  valuation_data?: any;
-  last_saved?: string | null;
-  registration_number?: string | null;
-  is_manually_controlled?: boolean;
+  seatMaterial?: string | null;
+  numberOfKeys?: number | null;
+  isRegisteredInPoland?: boolean;
+  hasPrivatePlate?: boolean;
+  financeAmount?: number | null;
+  formMetadata?: any;
+  valuationData?: any;
+  lastSaved?: string | null;
+  registrationNumber?: string | null;
+  isManuallyControlled?: boolean;
 }

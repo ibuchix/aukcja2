@@ -36,76 +36,21 @@ export const useCarListingsQuery = ({
       }
       
       try {
-        // First, let's check what cars exist in the database without any filters
-        if (isDev) {
-          const { data: allCars, error: allCarsError } = await enhancedSupabase
-            .from("cars")
-            .select("id, title, make, model, status, reserve_price")
-            .limit(5);
-            
-          console.log('=== ALL CARS IN DATABASE (first 5) ===');
-          console.log('All cars query error:', allCarsError);
-          console.log('All cars found:', allCars?.length || 0);
-          if (allCars && allCars.length > 0) {
-            console.log('Sample cars:', allCars.map(car => ({
-              id: car.id,
-              title: car.title,
-              make: car.make,
-              model: car.model,
-              status: car.status,
-              reserve_price: car.reserve_price
-            })));
-          }
-        }
-
-        // Now let's try with just the status filter
-        if (isDev) {
-          const { data: availableCars, error: availableError } = await enhancedSupabase
-            .from("cars")
-            .select("id, title, make, model, status, reserve_price")
-            .eq("status", "available")
-            .limit(5);
-            
-          console.log('=== CARS WITH STATUS = "available" ===');
-          console.log('Available cars query error:', availableError);
-          console.log('Available cars found:', availableCars?.length || 0);
-          if (availableCars && availableCars.length > 0) {
-            console.log('Available cars:', availableCars);
-          }
-        }
-
-        // Now let's try with both filters
-        if (isDev) {
-          const { data: filteredCars, error: filteredError } = await enhancedSupabase
-            .from("cars")
-            .select("id, title, make, model, status, reserve_price")
-            .eq("status", "available")
-            .gt("reserve_price", 0)
-            .limit(5);
-            
-          console.log('=== CARS WITH STATUS = "available" AND RESERVE_PRICE > 0 ===');
-          console.log('Filtered cars query error:', filteredError);
-          console.log('Filtered cars found:', filteredCars?.length || 0);
-          if (filteredCars && filteredCars.length > 0) {
-            console.log('Filtered cars:', filteredCars);
-          }
-        }
-
+        // Build query with essential fields only
         let query = enhancedSupabase
           .from("cars")
           .select(`
             id,
-            title,
-            reserve_price,
             make,
             model,
             year,
             mileage,
+            reserve_price,
             images,
+            required_photos,
+            title,
             features,
             transmission,
-            required_photos,
-            additional_photos,
             is_auction,
             auction_end_time,
             minimum_bid_increment,
@@ -122,6 +67,7 @@ export const useCarListingsQuery = ({
             seller_id,
             seller_name,
             mobile_number,
+            additional_photos,
             vin,
             seat_material,
             number_of_keys,
@@ -211,15 +157,10 @@ export const useCarListingsQuery = ({
         
         if (isDev) {
           console.log('=== DATABASE QUERY RESULT ===');
-          console.log('Query successful. Cars found:', result.data?.length || 0);
+          console.log('Query successful. Raw data count:', result.data?.length || 0);
           
           if (result.data && result.data.length > 0) {
-            console.log('Cars with reserve prices:', result.data.map(car => ({
-              id: car.id,
-              make: car.make,
-              model: car.model,
-              reserve_price: car.reserve_price
-            })));
+            console.log('First raw car from DB:', result.data[0]);
           }
         }
         
@@ -229,13 +170,16 @@ export const useCarListingsQuery = ({
           throw new Error(result.error.message);
         }
         
-        // Process the results - no dealer filter needed since it's handled at DB level
+        // Process the results with transformation
         const rawData = result.data || [];
-        const validCars = processCarListings(rawData, false); // false = no additional dealer filtering
+        const validCars = processCarListings(rawData, false); // Apply transformation and validation
         
         if (isDev) {
           console.log('=== FINAL RESULT ===');
           console.log('Valid cars after processing:', validCars.length);
+          if (validCars.length > 0) {
+            console.log('First processed car:', validCars[0]);
+          }
         }
         
         return {

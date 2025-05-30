@@ -1,4 +1,3 @@
-
 /**
  * Enhanced Supabase Client with automatic data transformation
  * Handles camelCase <-> snake_case conversion automatically
@@ -147,7 +146,7 @@ class EnhancedPostgrestFilterBuilder<T> {
     return new EnhancedPostgrestFilterBuilder(this.originalBuilder.throwOnError());
   }
 
-  // Make the builder thenable for await support
+  // FIXED: Enhanced then method for proper transformation
   then<TResult1 = any, TResult2 = never>(
     onfulfilled?: ((value: any) => TResult1 | PromiseLike<TResult1>) | undefined | null,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null
@@ -157,10 +156,36 @@ class EnhancedPostgrestFilterBuilder<T> {
         if (result.error) {
           return onfulfilled ? onfulfilled(result) : result;
         }
+        
+        // Enhanced transformation logic
+        let transformedData = result.data;
+        
+        if (result.data) {
+          if (Array.isArray(result.data)) {
+            // Transform each item in the array
+            transformedData = result.data.map(item => this.transformer.transformResponse(item));
+          } else {
+            // Transform single object
+            transformedData = this.transformer.transformResponse(result.data);
+          }
+        }
+        
         const transformedResult = {
           ...result,
-          data: result.data ? this.transformer.transformResponse(result.data) : result.data
+          data: transformedData
         };
+        
+        // Log transformation in development
+        if (process.env.NODE_ENV === 'development') {
+          console.log('=== ENHANCED SUPABASE TRANSFORMATION ===');
+          console.log('Original data count:', Array.isArray(result.data) ? result.data.length : (result.data ? 1 : 0));
+          console.log('Transformed data count:', Array.isArray(transformedData) ? transformedData.length : (transformedData ? 1 : 0));
+          if (result.data && Array.isArray(result.data) && result.data.length > 0) {
+            console.log('Sample original:', result.data[0]);
+            console.log('Sample transformed:', transformedData[0]);
+          }
+        }
+        
         return onfulfilled ? onfulfilled(transformedResult) : transformedResult;
       },
       onrejected
