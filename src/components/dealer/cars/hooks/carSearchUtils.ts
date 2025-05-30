@@ -145,11 +145,13 @@ export const processCarListings = (rawData: any[], applyDealerFilter: boolean = 
     if (isValidCarListing(car)) {
       validCars.push(car);
     } else if (isDev) {
+      // Use type assertion for debug logging since TypeScript infers 'never' type here
+      const debugCar = car as any;
       console.log('Invalid car filtered out:', {
-        id: car?.id,
-        make: car?.make,
-        model: car?.model,
-        reservePrice: car?.reservePrice
+        id: debugCar?.id,
+        make: debugCar?.make,
+        model: debugCar?.model,
+        reservePrice: debugCar?.reservePrice
       });
     }
   }
