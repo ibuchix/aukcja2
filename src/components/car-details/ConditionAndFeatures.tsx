@@ -9,9 +9,6 @@ interface ConditionAndFeaturesProps {
 }
 
 const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
-  // Since condition_rating doesn't exist in the database, we'll remove this functionality
-  // and focus on the other condition information that is available
-
   return (
     <Card className="w-full">
       <CardHeader>
@@ -63,18 +60,19 @@ const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
         )}
 
         {/* Features */}
-        {car.features && (
+        {car.features && Object.keys(car.features).length > 0 && (
           <div className="space-y-3">
             <h4 className="font-semibold">Vehicle Features</h4>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {Object.entries(car.features).map(
                 ([key, value]) =>
-                  value && (
-                    <Badge key={key} variant="success" className="justify-start">
+                  value === true && (
+                    <Badge key={key} variant="secondary" className="justify-start">
                       <CheckCircle className="w-3 h-3 mr-1" />
                       {key
                         .replace(/([A-Z])/g, " $1")
-                        .replace(/^./, (str) => str.toUpperCase())}
+                        .replace(/^./, (str) => str.toUpperCase())
+                        .replace(/_/g, " ")}
                     </Badge>
                   )
               )}
@@ -85,7 +83,8 @@ const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
         {/* Show message if no condition information available */}
         {!car.is_damaged && 
          !car.seller_notes && 
-         !car.service_history_type && (
+         !car.service_history_type && 
+         (!car.features || Object.keys(car.features).length === 0) && (
           <div className="p-4 bg-gray-50 rounded-lg flex items-center gap-2">
             <Info className="w-5 h-5 text-gray-500" />
             <span className="text-gray-600">No specific condition information available for this vehicle.</span>

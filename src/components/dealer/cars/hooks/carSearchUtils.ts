@@ -3,11 +3,15 @@ import { CarListing } from "@/types/cars";
 
 // Type guard to ensure we only process valid CarListing objects
 export const isValidCarListing = (item: any): item is CarListing => {
+  // Only check essential fields for validation
   const hasId = item && typeof item === 'object' && 'id' in item && typeof item.id === 'string';
   const hasNoError = !('error' in item);
   const hasValidReservePrice = typeof item?.reserve_price === 'number' && item.reserve_price >= 0;
   
-  return hasId && hasNoError && hasValidReservePrice;
+  // Don't validate features structure - accept any features object or null/undefined
+  const hasValidFeatures = !item.features || typeof item.features === 'object';
+  
+  return hasId && hasNoError && hasValidReservePrice && hasValidFeatures;
 };
 
 // Filter cars specifically for dealer dashboard - only cars with reserve_price > 0
@@ -23,6 +27,18 @@ export const processCarListings = (rawData: any[], applyDealerFilter: boolean = 
     console.log('=== PROCESSING CARS ===');
     console.log('Raw data count:', rawData.length);
     console.log('Apply dealer filter:', applyDealerFilter);
+    
+    // Log first car's structure for debugging
+    if (rawData.length > 0) {
+      console.log('First car structure:', {
+        id: rawData[0]?.id,
+        make: rawData[0]?.make,
+        model: rawData[0]?.model,
+        reserve_price: rawData[0]?.reserve_price,
+        features: rawData[0]?.features,
+        featuresType: typeof rawData[0]?.features
+      });
+    }
   }
   
   const validCars = rawData.filter(item => {
@@ -32,7 +48,9 @@ export const processCarListings = (rawData: any[], applyDealerFilter: boolean = 
         id: item?.id,
         make: item?.make,
         model: item?.model,
-        reserve_price: item?.reserve_price
+        reserve_price: item?.reserve_price,
+        features: item?.features,
+        hasError: 'error' in item
       });
     }
     return isValid;

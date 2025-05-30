@@ -1,10 +1,24 @@
 
 export type CarFeatures = {
-  satNav: boolean;
-  heatedSeats: boolean;
-  panoramicRoof: boolean;
-  reverseCamera: boolean;
-  upgradedSound: boolean;
+  // Core features (existing)
+  satNav?: boolean;
+  heatedSeats?: boolean;
+  panoramicRoof?: boolean;
+  reverseCamera?: boolean;
+  upgradedSound?: boolean;
+  
+  // Additional features from database
+  airConditioning?: boolean;
+  alloyWheels?: boolean;
+  bluetooth?: boolean;
+  cruiseControl?: boolean;
+  electricWindows?: boolean;
+  leatherSeats?: boolean;
+  parkingSensors?: boolean;
+  keylessEntry?: boolean;
+  
+  // Allow any additional boolean features for flexibility
+  [key: string]: boolean | undefined;
 };
 
 export interface CarListing {
