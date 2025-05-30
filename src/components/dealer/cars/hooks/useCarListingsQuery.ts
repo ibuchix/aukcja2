@@ -40,7 +40,7 @@ export const useCarListingsQuery = ({
           .select(`
             id,
             title,
-            price,
+            reserve_price,
             make,
             model,
             year,
@@ -52,7 +52,6 @@ export const useCarListingsQuery = ({
             additional_photos,
             is_auction,
             auction_end_time,
-            reserve_price,
             minimum_bid_increment,
             auction_status,
             is_damaged,
@@ -99,11 +98,11 @@ export const useCarListingsQuery = ({
         }
         
         if (filters.priceMin && typeof filters.priceMin === 'number') {
-          query = query.gte('price', filters.priceMin);
+          query = query.gte('reserve_price', filters.priceMin);
         }
         
         if (filters.priceMax && typeof filters.priceMax === 'number') {
-          query = query.lte('price', filters.priceMax);
+          query = query.lte('reserve_price', filters.priceMax);
         }
         
         if (filters.mileageMin && typeof filters.mileageMin === 'number') {
@@ -128,10 +127,10 @@ export const useCarListingsQuery = ({
             query = query.order('created_at', { ascending: true });
             break;
           case "price-high":
-            query = query.order('price', { ascending: false });
+            query = query.order('reserve_price', { ascending: false });
             break;
           case "price-low":
-            query = query.order('price', { ascending: true });
+            query = query.order('reserve_price', { ascending: true });
             break;
           default:
             query = query.order('created_at', { ascending: false });

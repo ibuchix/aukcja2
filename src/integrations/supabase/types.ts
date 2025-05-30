@@ -485,10 +485,9 @@ export type Database = {
           mobile_number: string | null
           model: string | null
           number_of_keys: number | null
-          price: number
           registration_number: string | null
           required_photos: Json | null
-          reserve_price: number | null
+          reserve_price: number
           seat_material: string | null
           seller_id: string | null
           seller_name: string | null
@@ -527,10 +526,9 @@ export type Database = {
           mobile_number?: string | null
           model?: string | null
           number_of_keys?: number | null
-          price?: number
           registration_number?: string | null
           required_photos?: Json | null
-          reserve_price?: number | null
+          reserve_price?: number
           seat_material?: string | null
           seller_id?: string | null
           seller_name?: string | null
@@ -569,10 +567,9 @@ export type Database = {
           mobile_number?: string | null
           model?: string | null
           number_of_keys?: number | null
-          price?: number
           registration_number?: string | null
           required_photos?: Json | null
-          reserve_price?: number | null
+          reserve_price?: number
           seat_material?: string | null
           seller_id?: string | null
           seller_name?: string | null
@@ -1622,10 +1619,9 @@ export type Database = {
           mobile_number: string | null
           model: string | null
           number_of_keys: number | null
-          price: number
           registration_number: string | null
           required_photos: Json | null
-          reserve_price: number | null
+          reserve_price: number
           seat_material: string | null
           seller_id: string | null
           seller_name: string | null
@@ -1684,10 +1680,9 @@ export type Database = {
           mobile_number: string | null
           model: string | null
           number_of_keys: number | null
-          price: number
           registration_number: string | null
           required_photos: Json | null
-          reserve_price: number | null
+          reserve_price: number
           seat_material: string | null
           seller_id: string | null
           seller_name: string | null
@@ -1953,10 +1948,9 @@ export type Database = {
           mobile_number: string | null
           model: string | null
           number_of_keys: number | null
-          price: number
           registration_number: string | null
           required_photos: Json | null
-          reserve_price: number | null
+          reserve_price: number
           seat_material: string | null
           seller_id: string | null
           seller_name: string | null
@@ -1998,10 +1992,9 @@ export type Database = {
           mobile_number: string | null
           model: string | null
           number_of_keys: number | null
-          price: number
           registration_number: string | null
           required_photos: Json | null
-          reserve_price: number | null
+          reserve_price: number
           seat_material: string | null
           seller_id: string | null
           seller_name: string | null

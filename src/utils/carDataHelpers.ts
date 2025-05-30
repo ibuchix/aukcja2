@@ -1,4 +1,3 @@
-
 import { Database } from "@/integrations/supabase/types";
 import { CarListing, CarFeatures } from "@/types/cars";
 import { isSelectQueryError, safeProcessCarData } from "./supabaseHelpers";
@@ -128,31 +127,8 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
           .filter((img): img is string => img !== null);
       }
 
-      // Extract price from valuation data if car price is 0
-      let finalPrice = car.price || 0;
-      if (finalPrice === 0 && car.valuation_data) {
-        finalPrice = extractPriceFromValuation(car.valuation_data, 0);
-      }
-
-      // CRITICAL: Preserve reserve price from database - ensure it's a number
-      let finalReservePrice: number | null = null;
-      
-      // First, check if we have a direct numeric reserve price
-      if (typeof car.reserve_price === 'number' && !isNaN(car.reserve_price) && car.reserve_price > 0) {
-        finalReservePrice = car.reserve_price;
-        if (isDev) {
-          console.log('Using direct reserve price:', finalReservePrice);
-        }
-      } else if (car.valuation_data) {
-        // Try to extract from valuation data
-        const extractedPrice = extractReservePriceFromValuation(car.valuation_data);
-        if (typeof extractedPrice === 'number' && !isNaN(extractedPrice) && extractedPrice > 0) {
-          finalReservePrice = extractedPrice;
-          if (isDev) {
-            console.log('Using extracted reserve price from valuation:', finalReservePrice);
-          }
-        }
-      }
+      // CRITICAL: Use reserve_price directly from database
+      let finalReservePrice: number = car.reserve_price || 0;
       
       if (isDev) {
         console.log('Reserve price processing result:', {
@@ -168,7 +144,7 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
       const carListing: CarListing = {
         id: car.id,
         title: car.title || `${car.year} ${car.make} ${car.model}`,
-        price: finalPrice,
+        reserve_price: finalReservePrice, // Use reserve_price instead of price
         make: car.make || null,
         model: car.model || null,
         year: car.year || null,
@@ -181,7 +157,6 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         // Add required properties for CarListing type using snake_case
         is_auction: Boolean(car.is_auction),
         auction_end_time: car.auction_end_time || null,
-        reserve_price: finalReservePrice,
         minimum_bid_increment: (car as any).minimum_bid_increment || null,
         auction_status: car.auction_status || null,
         is_damaged: Boolean(car.is_damaged),

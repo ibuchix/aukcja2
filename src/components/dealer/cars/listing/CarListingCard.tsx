@@ -52,7 +52,7 @@ export const CarListingCard = ({ car, onViewDetails }: CarListingCardProps) => {
             {car.year} · {car.make}
           </span>
           <span className="font-medium">
-            {formatCurrency(car.price)}
+            {formatCurrency(car.reserve_price)}
           </span>
         </div>
         {car.is_auction ? (
