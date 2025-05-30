@@ -26,7 +26,8 @@ export const useCarListingsQuery = ({
       const isDev = process.env.NODE_ENV === 'development';
       
       if (isDev) {
-        console.log('Car Search Query:', {
+        console.log('=== CAR SEARCH QUERY START ===');
+        console.log('Query params:', {
           filters,
           sortOption,
           searchQuery,
@@ -79,43 +80,57 @@ export const useCarListingsQuery = ({
             is_manually_controlled
           `)
           .eq("status", "available"); // Fetch all available cars
+
+        if (isDev) {
+          console.log('=== DATABASE QUERY SETUP ===');
+          console.log('Base query configured for available cars');
+        }
         
         // Apply filters
         if (filters.make && typeof filters.make === 'string') {
           query = query.ilike('make', `%${filters.make}%`);
+          if (isDev) console.log('Applied make filter:', filters.make);
         }
         
         if (filters.model && typeof filters.model === 'string') {
           query = query.ilike('model', `%${filters.model}%`);
+          if (isDev) console.log('Applied model filter:', filters.model);
         }
         
         if (filters.yearMin && typeof filters.yearMin === 'number') {
           query = query.gte('year', filters.yearMin);
+          if (isDev) console.log('Applied yearMin filter:', filters.yearMin);
         }
         
         if (filters.yearMax && typeof filters.yearMax === 'number') {
           query = query.lte('year', filters.yearMax);
+          if (isDev) console.log('Applied yearMax filter:', filters.yearMax);
         }
         
         if (filters.priceMin && typeof filters.priceMin === 'number') {
           query = query.gte('reserve_price', filters.priceMin);
+          if (isDev) console.log('Applied priceMin filter:', filters.priceMin);
         }
         
         if (filters.priceMax && typeof filters.priceMax === 'number') {
           query = query.lte('reserve_price', filters.priceMax);
+          if (isDev) console.log('Applied priceMax filter:', filters.priceMax);
         }
         
         if (filters.mileageMin && typeof filters.mileageMin === 'number') {
           query = query.gte('mileage', filters.mileageMin);
+          if (isDev) console.log('Applied mileageMin filter:', filters.mileageMin);
         }
         
         if (filters.mileageMax && typeof filters.mileageMax === 'number') {
           query = query.lte('mileage', filters.mileageMax);
+          if (isDev) console.log('Applied mileageMax filter:', filters.mileageMax);
         }
         
         // Apply search query
         if (searchQuery) {
           query = query.or(`make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%`);
+          if (isDev) console.log('Applied search query:', searchQuery);
         }
         
         // Apply sorting
@@ -135,31 +150,76 @@ export const useCarListingsQuery = ({
           default:
             query = query.order('created_at', { ascending: false });
         }
+
+        if (isDev) {
+          console.log('Applied sorting:', sortOption);
+        }
         
         // Apply pagination
         const fromIndex = (currentPage - 1) * pageSize;
         const to = fromIndex + pageSize - 1;
         query = query.range(fromIndex, to);
+
+        if (isDev) {
+          console.log('Applied pagination:', { fromIndex, to, currentPage, pageSize });
+        }
         
         const result = await query;
         
         if (isDev) {
-          console.log('Car Search Raw Results:', {
+          console.log('=== DATABASE QUERY RESULT ===');
+          console.log('Raw result status:', {
+            hasData: !!result.data,
             dataLength: result.data?.length || 0,
             hasError: !!result.error,
             errorMessage: result.error?.message || null,
-            sampleData: result.data?.[0] || null
+            errorCode: result.error?.code || null,
+            errorDetails: result.error?.details || null
           });
+          
+          if (result.data && result.data.length > 0) {
+            console.log('Sample raw car data:', result.data[0]);
+            console.log('All cars reserve prices:', result.data.map(car => ({
+              id: car.id,
+              make: car.make,
+              model: car.model,
+              reserve_price: car.reserve_price,
+              reserve_price_type: typeof car.reserve_price
+            })));
+          }
         }
         
         if (result.error) {
-          console.error("Enhanced Supabase query error:", result.error);
+          console.error("=== DATABASE ERROR ===");
+          console.error("Error details:", {
+            message: result.error.message,
+            code: result.error.code,
+            details: result.error.details,
+            hint: result.error.hint
+          });
           throw new Error(result.error.message);
         }
         
         // Process and filter the results - Apply dealer filter for dashboard
         const rawData = result.data || [];
+        
+        if (isDev) {
+          console.log('=== PROCESSING CARS ===');
+          console.log('Raw data before processing:', rawData.length);
+        }
+        
         const validCars = processCarListings(rawData, true); // true = apply dealer filter
+        
+        if (isDev) {
+          console.log('=== FINAL RESULT ===');
+          console.log('Valid cars after processing:', validCars.length);
+          console.log('Final car list:', validCars.map(car => ({
+            id: car.id,
+            make: car.make,
+            model: car.model,
+            reserve_price: car.reserve_price
+          })));
+        }
         
         return {
           cars: validCars,
@@ -167,7 +227,13 @@ export const useCarListingsQuery = ({
         };
       } catch (err: any) {
         const errorMessage = err.message || 'Unknown error occurred';
-        console.error("Error fetching cars:", errorMessage, err);
+        console.error("=== QUERY ERROR ===");
+        console.error("Error details:", {
+          message: errorMessage,
+          stack: err.stack,
+          name: err.name,
+          originalError: err
+        });
         throw new Error(errorMessage);
       }
     },
