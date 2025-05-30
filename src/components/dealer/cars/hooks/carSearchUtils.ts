@@ -138,19 +138,21 @@ export const processCarListings = (rawData: any[], applyDealerFilter: boolean = 
     }
   }
   
-  // Filter valid cars
-  const validCars = transformedCars.filter((item): item is CarListing => {
-    const isValid = isValidCarListing(item);
-    if (isDev && !isValid) {
+  // Filter valid cars - fix the type inference issue
+  const validCars: CarListing[] = [];
+  
+  for (const car of transformedCars) {
+    if (isValidCarListing(car)) {
+      validCars.push(car);
+    } else if (isDev) {
       console.log('Invalid car filtered out:', {
-        id: item?.id,
-        make: item?.make,
-        model: item?.model,
-        reservePrice: item?.reservePrice
+        id: car?.id,
+        make: car?.make,
+        model: car?.model,
+        reservePrice: car?.reservePrice
       });
     }
-    return isValid;
-  });
+  }
   
   if (isDev) {
     console.log('Valid cars after validation:', validCars.length);
