@@ -18,12 +18,19 @@ export interface ChartDataPoint {
 export const useBidHistory = (carId: string) => {
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
 
   useEffect(() => {
     const fetchBidHistory = async () => {
+      if (!carId) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
+        setError(null);
         
         // First get bids from the bids table
         const { data: bidData, error: bidError } = await supabase
@@ -40,21 +47,41 @@ export const useBidHistory = (carId: string) => {
           .eq("car_id", carId)
           .order("created_at", { ascending: true });
           
-        if (bidError) throw bidError;
+        if (bidError) {
+          // Handle permission errors gracefully
+          if (bidError.code === '42501' || bidError.message?.includes('permission')) {
+            console.warn('No permission to access bids table, showing limited bid history');
+            setError('Limited bid history available - full history requires authentication');
+            setBids([]);
+            setChartData([]);
+            setLoading(false);
+            return;
+          }
+          throw bidError;
+        }
         
         // Also get proxy bids from audit_logs if available
-        const { data: proxyData, error: proxyError } = await supabase
-          .from("audit_logs")
-          .select(`
-            id,
-            entity_id,
-            user_id,
-            details,
-            created_at
-          `)
-          .eq("entity_id", carId)
-          .eq("action", "auto_proxy_bid")
-          .order("created_at", { ascending: true });
+        let proxyData: any[] = [];
+        try {
+          const { data: auditData, error: proxyError } = await supabase
+            .from("audit_logs")
+            .select(`
+              id,
+              entity_id,
+              user_id,
+              details,
+              created_at
+            `)
+            .eq("entity_id", carId)
+            .eq("action", "auto_proxy_bid")
+            .order("created_at", { ascending: true });
+            
+          if (!proxyError && auditData) {
+            proxyData = auditData;
+          }
+        } catch (auditError) {
+          console.warn('Could not fetch proxy bid information:', auditError);
+        }
           
         // Combine both data sources and format
         const bidHistory: Bid[] = [];
@@ -123,15 +150,16 @@ export const useBidHistory = (carId: string) => {
         
       } catch (error) {
         console.error("Error fetching bid history:", error);
+        setError(error instanceof Error ? error.message : "Failed to fetch bid history");
+        setBids([]);
+        setChartData([]);
       } finally {
         setLoading(false);
       }
     };
 
-    if (carId) {
-      fetchBidHistory();
-    }
+    fetchBidHistory();
   }, [carId]);
 
-  return { bids, loading, chartData };
+  return { bids, loading, error, chartData };
 };

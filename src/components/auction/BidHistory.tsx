@@ -11,10 +11,28 @@ interface BidHistoryProps {
 }
 
 export const BidHistory = ({ carId }: BidHistoryProps) => {
-  const { bids, loading, chartData } = useBidHistory(carId);
+  const { bids, loading, error, chartData } = useBidHistory(carId);
 
   if (loading) {
     return <div className="text-center py-4">Loading bid history...</div>;
+  }
+
+  if (error) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="text-heading-sm font-oswald flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Bid History
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4 text-amber-600">
+            {error}
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

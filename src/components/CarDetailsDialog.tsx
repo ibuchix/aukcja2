@@ -14,9 +14,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
 import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
 import BasicSpecifications from "./car-details/BasicSpecifications";
-import ConditionAndFeatures from "./car-details/ConditionAndFeatures";
+import { ConditionAndFeatures } from "./car-details/ConditionAndFeatures";
 import ServiceHistory from "./car-details/ServiceHistory";
-import VehiclePhotos from "./car-details/VehiclePhotos";
+import { VehiclePhotos } from "./car-details/VehiclePhotos";
 import Location from "./car-details/Location";
 import AdditionalInfo from "./car-details/AdditionalInfo";
 
