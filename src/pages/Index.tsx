@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
@@ -91,9 +90,9 @@ const Index = () => {
                   className="cursor-pointer"
                 >
                   <VehicleCard
-                    image={vehicle.required_photos?.front || vehicle.images?.[0] || "/placeholder.svg"}
+                    image={vehicle.requiredPhotos?.front || vehicle.images?.[0] || "/placeholder.svg"}
                     name={`${vehicle.year || 'N/A'} ${vehicle.make || 'Unknown'} ${vehicle.model || 'Model'}`}
-                    price={vehicle.reserve_price}
+                    price={vehicle.reservePrice}
                     mileage={vehicle.mileage}
                     transmission={vehicle.transmission}
                     year={vehicle.year}

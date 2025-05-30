@@ -140,11 +140,11 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         });
       }
       
-      // Create the car listing with all properties explicitly declared using snake_case
+      // Create the car listing with all properties explicitly declared using camelCase
       const carListing: CarListing = {
         id: car.id,
         title: car.title || `${car.year} ${car.make} ${car.model}`,
-        reserve_price: finalReservePrice, // Use reserve_price instead of price
+        reservePrice: finalReservePrice, // Use camelCase
         make: car.make || null,
         model: car.model || null,
         year: car.year || null,
@@ -152,19 +152,19 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         images: processedImages,
         features: parsedFeatures,
         transmission: car.transmission || null,
-        required_photos: requiredPhotos,
+        requiredPhotos: requiredPhotos,
         
-        // Add required properties for CarListing type using snake_case
-        is_auction: Boolean(car.is_auction),
-        auction_end_time: car.auction_end_time || null,
-        minimum_bid_increment: (car as any).minimum_bid_increment || null,
-        auction_status: car.auction_status || null,
-        is_damaged: Boolean(car.is_damaged),
+        // Add required properties for CarListing type using camelCase
+        isAuction: Boolean(car.is_auction),
+        auctionEndTime: car.auction_end_time || null,
+        minimumBidIncrement: (car as any).minimum_bid_increment || null,
+        auctionStatus: car.auction_status || null,
+        isDamaged: Boolean(car.is_damaged),
         address: (car as any).address || null,
-        created_at: car.created_at,
-        updated_at: car.updated_at || car.created_at,
+        createdAt: car.created_at,
+        updatedAt: car.updated_at || car.created_at,
         status: car.status || null,
-        current_bid: car.current_bid || 0
+        currentBid: car.current_bid || 0
       };
       
       if (isDev) {
@@ -172,9 +172,9 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
           id: carListing.id,
           make: carListing.make,
           model: carListing.model,
-          reserve_price: carListing.reserve_price,
-          reserve_price_type: typeof carListing.reserve_price,
-          isValidReservePrice: typeof carListing.reserve_price === 'number' && !isNaN(carListing.reserve_price) && carListing.reserve_price > 0
+          reservePrice: carListing.reservePrice,
+          reservePrice_type: typeof carListing.reservePrice,
+          isValidReservePrice: typeof carListing.reservePrice === 'number' && !isNaN(carListing.reservePrice) && carListing.reservePrice > 0
         });
       }
       

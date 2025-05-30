@@ -82,13 +82,13 @@ const Marketplace = () => {
       <MarketplaceHero />
       <VehicleListings listings={listings} onSelectCar={setSelectedCar} />
       <TestimonialsSection />
-      {selectedCar?.is_auction && dealerId && (
+      {selectedCar?.isAuction && dealerId && (
         <MaxBidInterface
           carId={selectedCar.id}
           dealerId={dealerId}
-          currentHighestBid={selectedCar.reserve_price}
+          currentHighestBid={selectedCar.reservePrice}
           minimumIncrement={100}
-          auctionEndTime={selectedCar.auction_end_time}
+          auctionEndTime={selectedCar.auctionEndTime}
         />
       )}
       <CarDetailsDialog car={selectedCar} onClose={() => setSelectedCar(null)} />

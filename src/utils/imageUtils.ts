@@ -1,4 +1,3 @@
-
 import { CarListing } from "@/types/cars";
 
 /**
@@ -65,16 +64,16 @@ export const getPrimaryImage = (car: CarListing): string => {
       id: car.id,
       make: car.make,
       model: car.model,
-      requiredPhotos: car.required_photos,
-      requiredPhotosType: typeof car.required_photos,
+      requiredPhotos: car.requiredPhotos,
+      requiredPhotosType: typeof car.requiredPhotos,
       images: car.images,
       imagesType: typeof car.images
     });
   }
 
-  // First check required_photos for exterior front
-  if (car.required_photos && typeof car.required_photos === 'object') {
-    const photos = car.required_photos as Record<string, string | null>;
+  // First check requiredPhotos for exterior front
+  if (car.requiredPhotos && typeof car.requiredPhotos === 'object') {
+    const photos = car.requiredPhotos as Record<string, string | null>;
     
     if (isDev) {
       console.log('Required photos object:', photos);
@@ -113,7 +112,7 @@ export const getPrimaryImage = (car: CarListing): string => {
       }
     }
 
-    // Check any available photo in required_photos
+    // Check any available photo in requiredPhotos
     const anyPhoto = Object.values(photos).find(photo => photo && typeof photo === 'string');
     if (anyPhoto) {
       const transformedUrl = transformImageUrl(anyPhoto, car.id);
@@ -149,14 +148,14 @@ export const getAllCarImages = (car: CarListing): { src: string; label: string }
       id: car.id,
       make: car.make,
       model: car.model,
-      requiredPhotos: car.required_photos,
+      requiredPhotos: car.requiredPhotos,
       images: car.images
     });
   }
 
-  // Add images from required_photos with proper labeling
-  if (car.required_photos && typeof car.required_photos === 'object') {
-    const photos = car.required_photos as Record<string, string | null>;
+  // Add images from requiredPhotos with proper labeling
+  if (car.requiredPhotos && typeof car.requiredPhotos === 'object') {
+    const photos = car.requiredPhotos as Record<string, string | null>;
     
     Object.entries(photos).forEach(([key, value]) => {
       if (value && typeof value === 'string') {

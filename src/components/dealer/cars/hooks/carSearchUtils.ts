@@ -11,7 +11,6 @@ export const isValidCarListing = (item: any): item is CarListing => {
       id: item?.id,
       make: item?.make,
       model: item?.model,
-      reserve_price: item?.reserve_price,
       reservePrice: item?.reservePrice,
       mileage: item?.mileage,
       hasError: 'error' in item
@@ -24,10 +23,9 @@ export const isValidCarListing = (item: any): item is CarListing => {
     return false;
   }
   
-  // Essential field validation - check both snake_case and camelCase
+  // Essential field validation - using camelCase properties
   const hasId = typeof item.id === 'string' && item.id.length > 0;
-  const hasReservePrice = (typeof item.reserve_price === 'number' && item.reserve_price > 0) ||
-                         (typeof item.reservePrice === 'number' && item.reservePrice > 0);
+  const hasReservePrice = typeof item.reservePrice === 'number' && item.reservePrice > 0;
   const hasMileage = typeof item.mileage === 'number' && item.mileage >= 0;
   
   const isValid = hasId && hasReservePrice && hasMileage;
@@ -110,7 +108,7 @@ export const transformCarData = (rawCar: any): CarListing => {
   return transformed;
 };
 
-// Filter cars specifically for dealer dashboard - only cars with reserve_price > 0
+// Filter cars specifically for dealer dashboard - only cars with reservePrice > 0
 export const filterCarsForDealerDashboard = (cars: CarListing[]): CarListing[] => {
   return cars.filter(car => car.reservePrice > 0);
 };
@@ -141,7 +139,7 @@ export const processCarListings = (rawData: any[], applyDealerFilter: boolean = 
   }
   
   // Filter valid cars
-  const validCars = transformedCars.filter(item => {
+  const validCars = transformedCars.filter((item): item is CarListing => {
     const isValid = isValidCarListing(item);
     if (isDev && !isValid) {
       console.log('Invalid car filtered out:', {

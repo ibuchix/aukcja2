@@ -66,21 +66,21 @@ const VehicleListings = ({ listings, onSelectCar }: VehicleListingsProps) => {
             />
             <div className="absolute top-2 right-2">
               <Badge variant="secondary" className="bg-white text-primary font-bold">
-                {car.current_bid ? formatCurrency(car.current_bid) : formatCurrency(car.reserve_price)}
+                {car.currentBid ? formatCurrency(car.currentBid) : formatCurrency(car.reservePrice)}
               </Badge>
             </div>
             
             <div className="absolute bottom-2 right-2">
               <Badge variant="outline" className="bg-white/80 border-primary text-primary text-xs">
                 <ShieldAlert size={12} className="mr-1" />
-                Reserve: {formatCurrency(car.reserve_price)}
+                Reserve: {formatCurrency(car.reservePrice)}
               </Badge>
             </div>
             
-            {car.auction_end_time && (
+            {car.auctionEndTime && (
               <div className="absolute bottom-2 left-2">
                 <Badge variant="outline" className="bg-white/80 border-amber-500 text-amber-700 text-xs">
-                  {getTimeRemaining(car.auction_end_time)}
+                  {getTimeRemaining(car.auctionEndTime)}
                 </Badge>
               </div>
             )}
@@ -98,7 +98,7 @@ const VehicleListings = ({ listings, onSelectCar }: VehicleListingsProps) => {
                   <span>Current Bid:</span>
                 </div>
                 <span className="font-medium">
-                  {car.current_bid ? formatCurrency(car.current_bid) : "No bids yet"}
+                  {car.currentBid ? formatCurrency(car.currentBid) : "No bids yet"}
                 </span>
               </div>
               
@@ -108,7 +108,7 @@ const VehicleListings = ({ listings, onSelectCar }: VehicleListingsProps) => {
                   <span>Ends:</span>
                 </div>
                 <span className="font-medium">
-                  {formatAuctionEndTime(car.auction_end_time)}
+                  {formatAuctionEndTime(car.auctionEndTime)}
                 </span>
               </div>
               
