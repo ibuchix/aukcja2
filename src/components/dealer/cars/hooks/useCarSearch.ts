@@ -28,9 +28,6 @@ export const useCarSearch = (dealerId: string) => {
   if (isDev) {
     console.log('=== USE CAR SEARCH HOOK ===');
     console.log('Dealer ID:', dealerId);
-    console.log('Current filters:', filters);
-    console.log('Current sort:', sortOption);
-    console.log('Current search:', searchQuery);
     console.log('Current page:', currentPage);
   }
 
@@ -46,50 +43,22 @@ export const useCarSearch = (dealerId: string) => {
     console.log('=== QUERY RESULT STATUS ===');
     console.log('Is loading:', isLoading);
     console.log('Has error:', !!error);
-    console.log('Error message:', error?.message);
     console.log('Has data:', !!data);
     console.log('Data cars count:', data?.cars?.length || 0);
   }
 
   useEffect(() => {
-    if (isDev) {
-      console.log('=== USE EFFECT TRIGGERED ===');
-      console.log('Data changed:', {
-        hasData: !!data,
-        carsArray: !!data?.cars,
-        isArray: Array.isArray(data?.cars),
-        carsCount: data?.cars?.length || 0,
-        isLoading,
-        hasError: !!error
-      });
-    }
-
     if (data?.cars && Array.isArray(data.cars)) {
       const carsFromDb = data.cars;
       
       if (isDev) {
         console.log('=== SETTING LISTINGS ===');
         console.log('Cars from database:', carsFromDb.length);
-        console.log('Cars detail:', carsFromDb.map(car => ({
-          id: car.id,
-          make: car.make,
-          model: car.model,
-          reserve_price: car.reserve_price,
-          title: car.title
-        })));
       }
       
       setListings(carsFromDb);
       
-      if (isDev) {
-        console.log('=== LISTINGS SET SUCCESSFULLY ===');
-        console.log('New listings count:', carsFromDb.length);
-      }
-      
       if (carsFromDb.length === 0 && !isLoading && !error) {
-        if (isDev) {
-          console.log('=== SHOWING NO RESULTS TOAST ===');
-        }
         toast({
           title: "No matching vehicles found",
           description: "Try adjusting your filters to see more results",
@@ -97,18 +66,11 @@ export const useCarSearch = (dealerId: string) => {
         });
       }
     } else if (!isLoading && !error) {
-      if (isDev) {
-        console.log('=== NO DATA AVAILABLE ===');
-        console.log('Setting empty listings');
-      }
       setListings([]);
     }
   }, [data, isLoading, error, toast, isDev]);
 
   const handleClearFilters = () => {
-    if (isDev) {
-      console.log('=== CLEARING FILTERS ===');
-    }
     clearFilters();
     
     toast({

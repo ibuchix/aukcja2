@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CarListing } from "@/types/cars";
 import { AuctionFilters } from "../../auction/types";
 import { enhancedSupabase } from "@/utils/enhancedSupabaseClient";
-import { isValidCarListing, processCarListings } from "./carSearchUtils";
+import { processCarListings } from "./carSearchUtils";
 
 interface UseCarListingsQueryProps {
   filters: AuctionFilters;
@@ -79,58 +79,50 @@ export const useCarListingsQuery = ({
             registration_number,
             is_manually_controlled
           `)
-          .eq("status", "available"); // Fetch all available cars
+          .eq("status", "available")
+          .gt("reserve_price", 0); // Filter for cars with reserve_price > 0 at database level
 
         if (isDev) {
           console.log('=== DATABASE QUERY SETUP ===');
-          console.log('Base query configured for available cars');
+          console.log('Base query configured for available cars with reserve_price > 0');
         }
         
         // Apply filters
         if (filters.make && typeof filters.make === 'string') {
           query = query.ilike('make', `%${filters.make}%`);
-          if (isDev) console.log('Applied make filter:', filters.make);
         }
         
         if (filters.model && typeof filters.model === 'string') {
           query = query.ilike('model', `%${filters.model}%`);
-          if (isDev) console.log('Applied model filter:', filters.model);
         }
         
         if (filters.yearMin && typeof filters.yearMin === 'number') {
           query = query.gte('year', filters.yearMin);
-          if (isDev) console.log('Applied yearMin filter:', filters.yearMin);
         }
         
         if (filters.yearMax && typeof filters.yearMax === 'number') {
           query = query.lte('year', filters.yearMax);
-          if (isDev) console.log('Applied yearMax filter:', filters.yearMax);
         }
         
         if (filters.priceMin && typeof filters.priceMin === 'number') {
           query = query.gte('reserve_price', filters.priceMin);
-          if (isDev) console.log('Applied priceMin filter:', filters.priceMin);
         }
         
         if (filters.priceMax && typeof filters.priceMax === 'number') {
           query = query.lte('reserve_price', filters.priceMax);
-          if (isDev) console.log('Applied priceMax filter:', filters.priceMax);
         }
         
         if (filters.mileageMin && typeof filters.mileageMin === 'number') {
           query = query.gte('mileage', filters.mileageMin);
-          if (isDev) console.log('Applied mileageMin filter:', filters.mileageMin);
         }
         
         if (filters.mileageMax && typeof filters.mileageMax === 'number') {
           query = query.lte('mileage', filters.mileageMax);
-          if (isDev) console.log('Applied mileageMax filter:', filters.mileageMax);
         }
         
         // Apply search query
         if (searchQuery) {
           query = query.or(`make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%`);
-          if (isDev) console.log('Applied search query:', searchQuery);
         }
         
         // Apply sorting
@@ -150,10 +142,6 @@ export const useCarListingsQuery = ({
           default:
             query = query.order('created_at', { ascending: false });
         }
-
-        if (isDev) {
-          console.log('Applied sorting:', sortOption);
-        }
         
         // Apply pagination
         const fromIndex = (currentPage - 1) * pageSize;
@@ -168,57 +156,31 @@ export const useCarListingsQuery = ({
         
         if (isDev) {
           console.log('=== DATABASE QUERY RESULT ===');
-          console.log('Raw result status:', {
-            hasData: !!result.data,
-            dataLength: result.data?.length || 0,
-            hasError: !!result.error,
-            errorMessage: result.error?.message || null,
-            errorCode: result.error?.code || null,
-            errorDetails: result.error?.details || null
-          });
+          console.log('Query successful. Cars found:', result.data?.length || 0);
           
           if (result.data && result.data.length > 0) {
-            console.log('Sample raw car data:', result.data[0]);
-            console.log('All cars reserve prices:', result.data.map(car => ({
+            console.log('Cars with reserve prices:', result.data.map(car => ({
               id: car.id,
               make: car.make,
               model: car.model,
-              reserve_price: car.reserve_price,
-              reserve_price_type: typeof car.reserve_price
+              reserve_price: car.reserve_price
             })));
           }
         }
         
         if (result.error) {
           console.error("=== DATABASE ERROR ===");
-          console.error("Error details:", {
-            message: result.error.message,
-            code: result.error.code,
-            details: result.error.details,
-            hint: result.error.hint
-          });
+          console.error("Error details:", result.error);
           throw new Error(result.error.message);
         }
         
-        // Process and filter the results - Apply dealer filter for dashboard
+        // Process the results - no dealer filter needed since it's handled at DB level
         const rawData = result.data || [];
-        
-        if (isDev) {
-          console.log('=== PROCESSING CARS ===');
-          console.log('Raw data before processing:', rawData.length);
-        }
-        
-        const validCars = processCarListings(rawData, true); // true = apply dealer filter
+        const validCars = processCarListings(rawData, false); // false = no additional dealer filtering
         
         if (isDev) {
           console.log('=== FINAL RESULT ===');
           console.log('Valid cars after processing:', validCars.length);
-          console.log('Final car list:', validCars.map(car => ({
-            id: car.id,
-            make: car.make,
-            model: car.model,
-            reserve_price: car.reserve_price
-          })));
         }
         
         return {
@@ -228,12 +190,7 @@ export const useCarListingsQuery = ({
       } catch (err: any) {
         const errorMessage = err.message || 'Unknown error occurred';
         console.error("=== QUERY ERROR ===");
-        console.error("Error details:", {
-          message: errorMessage,
-          stack: err.stack,
-          name: err.name,
-          originalError: err
-        });
+        console.error("Error:", errorMessage);
         throw new Error(errorMessage);
       }
     },
