@@ -32,35 +32,40 @@ export const useBidHistory = (carId: string) => {
         setLoading(true);
         setError(null);
         
-        // First get bids from the bids table
-        const { data: bidData, error: bidError } = await supabase
-          .from("bids")
-          .select(`
-            id,
-            car_id,
-            dealer_id,
-            amount,
-            status,
-            created_at,
-            updated_at
-          `)
-          .eq("car_id", carId)
-          .order("created_at", { ascending: true });
-          
-        if (bidError) {
-          // Handle permission errors gracefully
-          if (bidError.code === '42501' || bidError.message?.includes('permission')) {
-            console.warn('No permission to access bids table, showing limited bid history');
-            setError('Limited bid history available - full history requires authentication');
-            setBids([]);
-            setChartData([]);
-            setLoading(false);
-            return;
+        // Try to get bids from the bids table with better error handling
+        let bidData: any[] = [];
+        try {
+          const { data, error: bidError } = await supabase
+            .from("bids")
+            .select(`
+              id,
+              car_id,
+              dealer_id,
+              amount,
+              status,
+              created_at,
+              updated_at
+            `)
+            .eq("car_id", carId)
+            .order("created_at", { ascending: true });
+            
+          if (bidError) {
+            // Handle permission errors gracefully
+            if (bidError.code === '42501' || bidError.message?.includes('permission') || bidError.code === 'PGRST301') {
+              console.warn('Limited access to bids table:', bidError.message);
+              // Continue with empty bid data but don't fail completely
+            } else {
+              throw bidError;
+            }
+          } else {
+            bidData = data || [];
           }
-          throw bidError;
+        } catch (bidsError) {
+          console.warn('Could not fetch bid data:', bidsError);
+          // Continue with empty data
         }
         
-        // Also get proxy bids from audit_logs if available
+        // Try to get proxy bids from audit_logs if available
         let proxyData: any[] = [];
         try {
           const { data: auditData, error: proxyError } = await supabase
@@ -148,9 +153,14 @@ export const useBidHistory = (carId: string) => {
         setBids(bidHistory);
         setChartData(chartPoints);
         
+        // If we have no data at all, show a helpful message
+        if (bidHistory.length === 0) {
+          setError('No bid history available for this vehicle yet');
+        }
+        
       } catch (error) {
         console.error("Error fetching bid history:", error);
-        setError(error instanceof Error ? error.message : "Failed to fetch bid history");
+        setError("Unable to load bid history at this time");
         setBids([]);
         setChartData([]);
       } finally {

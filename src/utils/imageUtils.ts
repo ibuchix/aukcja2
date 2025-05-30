@@ -1,3 +1,4 @@
+
 import { CarListing } from "@/types/cars";
 
 /**
@@ -9,13 +10,16 @@ const generateSupabaseImageUrl = (carId: string, imageName: string): string => {
 };
 
 /**
- * Check if a URL is a valid image (including blob URLs)
+ * Check if a URL is a valid image (NO blob URLs allowed)
  */
 const isValidImageUrl = (url: string): boolean => {
   if (!url || typeof url !== 'string') return false;
   
-  // Blob URLs are valid
-  if (url.startsWith('blob:')) return true;
+  // Reject blob URLs - they should not be in the database
+  if (url.startsWith('blob:')) {
+    console.warn('Blob URL detected - this should not be stored in database:', url);
+    return false;
+  }
   
   // Data URLs are valid
   if (url.startsWith('data:image/')) return true;
@@ -30,39 +34,20 @@ const isValidImageUrl = (url: string): boolean => {
 };
 
 /**
- * Transform blob URLs to make them accessible from the current domain
+ * Transform image URL to proper storage URL
  */
 const transformImageUrl = (url: string, carId?: string): string => {
-  const isDev = process.env.NODE_ENV === 'development';
-  
   if (!url) return "/placeholder.svg";
   
-  // If it's already a valid image URL (including blob URLs), return as is
+  // If it's already a valid storage URL, return as is
   if (isValidImageUrl(url)) {
-    if (isDev && url.startsWith('blob:')) {
-      console.log('Keeping blob URL as-is:', url);
-    }
     return url;
   }
   
-  // If it's a blob URL and we have carId, try to construct a Supabase Storage URL
-  if (url.startsWith('blob:') && carId) {
-    const imageName = url.includes('exterior_front') ? 'exterior_front.jpg' : 'image.jpg';
-    const supabaseUrl = generateSupabaseImageUrl(carId, imageName);
-    
-    if (isDev) {
-      console.log('Transforming blob URL to Supabase Storage:', {
-        original: url,
-        carId,
-        transformed: supabaseUrl
-      });
-    }
-    
-    return supabaseUrl;
-  }
-  
-  if (isDev) {
-    console.warn('Could not transform image URL:', url);
+  // If it's a blob URL, we cannot transform it - it should have been stored properly
+  if (url.startsWith('blob:')) {
+    console.error('Blob URL found in database - this indicates a storage issue:', url);
+    return "/placeholder.svg";
   }
   
   return "/placeholder.svg";
@@ -100,34 +85,18 @@ const countValidImages = (car: CarListing): number => {
  * Gets the primary image for a car listing with proper URL handling
  */
 export const getPrimaryImage = (car: CarListing): string => {
-  const isDev = process.env.NODE_ENV === 'development';
-  
-  if (isDev) {
-    console.log('=== PRIMARY IMAGE SEARCH ===');
-    console.log('Car:', {
-      id: car.id,
-      make: car.make,
-      model: car.model,
-      imageCount: countValidImages(car)
-    });
-  }
-
   // First check requiredPhotos for exterior front
   if (car.requiredPhotos && typeof car.requiredPhotos === 'object') {
     const photos = car.requiredPhotos as Record<string, string | null>;
     
     // Check for exterior_front first (most important)
     if (photos.exterior_front && isValidImageUrl(photos.exterior_front)) {
-      const transformedUrl = transformImageUrl(photos.exterior_front, car.id);
-      if (isDev) console.log('Found exterior_front:', photos.exterior_front, '→', transformedUrl);
-      return transformedUrl;
+      return transformImageUrl(photos.exterior_front, car.id);
     }
     
     // Check for front property (alternative naming)
     if (photos.front && isValidImageUrl(photos.front)) {
-      const transformedUrl = transformImageUrl(photos.front, car.id);
-      if (isDev) console.log('Found front:', photos.front, '→', transformedUrl);
-      return transformedUrl;
+      return transformImageUrl(photos.front, car.id);
     }
     
     // Then check other exterior photos in priority order
@@ -142,18 +111,14 @@ export const getPrimaryImage = (car: CarListing): string => {
     
     for (const photoKey of exteriorPhotoPriority) {
       if (photos[photoKey] && isValidImageUrl(photos[photoKey]!)) {
-        const transformedUrl = transformImageUrl(photos[photoKey]!, car.id);
-        if (isDev) console.log(`Found ${photoKey}:`, photos[photoKey], '→', transformedUrl);
-        return transformedUrl;
+        return transformImageUrl(photos[photoKey]!, car.id);
       }
     }
 
     // Check any available photo in requiredPhotos
     const anyPhoto = Object.values(photos).find(photo => photo && isValidImageUrl(photo));
     if (anyPhoto) {
-      const transformedUrl = transformImageUrl(anyPhoto, car.id);
-      if (isDev) console.log('Found any required photo:', anyPhoto, '→', transformedUrl);
-      return transformedUrl;
+      return transformImageUrl(anyPhoto, car.id);
     }
   }
   
@@ -161,13 +126,10 @@ export const getPrimaryImage = (car: CarListing): string => {
   if (car.images && Array.isArray(car.images) && car.images.length > 0) {
     const firstValidImage = car.images.find(image => image && isValidImageUrl(image));
     if (firstValidImage) {
-      const transformedUrl = transformImageUrl(firstValidImage, car.id);
-      if (isDev) console.log('Found image from images array:', firstValidImage, '→', transformedUrl);
-      return transformedUrl;
+      return transformImageUrl(firstValidImage, car.id);
     }
   }
   
-  if (isDev) console.log('No image found, using placeholder');
   return "/placeholder.svg";
 };
 
@@ -176,17 +138,6 @@ export const getPrimaryImage = (car: CarListing): string => {
  */
 export const getAllCarImages = (car: CarListing): { src: string; label: string }[] => {
   const allImages: { src: string; label: string }[] = [];
-  const isDev = process.env.NODE_ENV === 'development';
-
-  if (isDev) {
-    console.log('=== ALL IMAGES SEARCH ===');
-    console.log('Car:', {
-      id: car.id,
-      make: car.make,
-      model: car.model,
-      totalValidImages: countValidImages(car)
-    });
-  }
 
   // Add images from requiredPhotos with proper labeling
   if (car.requiredPhotos && typeof car.requiredPhotos === 'object') {
@@ -199,10 +150,6 @@ export const getAllCarImages = (car: CarListing): { src: string; label: string }
           src: transformedUrl,
           label: key.replace(/_/g, " ").toUpperCase()
         });
-        
-        if (isDev) {
-          console.log(`Added required photo ${key}:`, value, '→', transformedUrl);
-        }
       }
     });
   }
@@ -216,16 +163,8 @@ export const getAllCarImages = (car: CarListing): { src: string; label: string }
           src: transformedUrl,
           label: `ADDITIONAL IMAGE ${index + 1}`
         });
-        
-        if (isDev) {
-          console.log(`Added image ${index + 1}:`, image, '→', transformedUrl);
-        }
       }
     });
-  }
-
-  if (isDev) {
-    console.log('Total images found:', allImages.length);
   }
 
   return allImages;
@@ -266,29 +205,5 @@ export const uploadCarImageToStorage = async (
   } catch (error) {
     console.error('Error uploading to Supabase Storage:', error);
     return null;
-  }
-};
-
-/**
- * Create migration utility to convert blob URLs to Supabase Storage
- */
-export const migrateCarImagesToStorage = async (car: CarListing): Promise<boolean> => {
-  const isDev = process.env.NODE_ENV === 'development';
-  
-  if (isDev) {
-    console.log('=== MIGRATING CAR IMAGES ===');
-    console.log('Car ID:', car.id);
-  }
-  
-  try {
-    // This would need to be implemented with proper blob data extraction
-    // For now, we'll just update the URLs to point to Supabase Storage
-    // In a real implementation, you'd extract blob data and re-upload
-    
-    console.log('Image migration placeholder for car:', car.id);
-    return true;
-  } catch (error) {
-    console.error('Error migrating car images:', error);
-    return false;
   }
 };
