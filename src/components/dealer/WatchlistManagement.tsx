@@ -137,17 +137,17 @@ export const WatchlistManagement = ({ dealerId }: WatchlistManagementProps) => {
                   {car.year} {car.make} {car.model}
                 </TableCell>
                 <TableCell>
-                  {car.auction_end_time ? (
-                    format(new Date(car.auction_end_time), "MMM d, yyyy HH:mm")
+                  {car.auctionEndTime ? (
+                    format(new Date(car.auctionEndTime), "MMM d, yyyy HH:mm")
                   ) : (
                     "N/A"
                   )}
                 </TableCell>
                 <TableCell>
-                  ${car.reserve_price?.toLocaleString()}
+                  ${car.reservePrice?.toLocaleString()}
                 </TableCell>
                 <TableCell className="capitalize">
-                  {car.auction_status}
+                  {car.auctionStatus}
                 </TableCell>
                 <TableCell>
                   <Button

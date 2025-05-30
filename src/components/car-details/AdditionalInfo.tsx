@@ -7,8 +7,8 @@ interface AdditionalInfoProps {
 }
 
 const AdditionalInfo = ({ car }: AdditionalInfoProps) => {
-  // Since description doesn't exist in the database, we can use seller_notes instead
-  if (!car.seller_notes) return null;
+  // Use the camelCase property name
+  if (!car.sellerNotes) return null;
 
   return (
     <div className="space-y-2">
@@ -16,7 +16,7 @@ const AdditionalInfo = ({ car }: AdditionalInfoProps) => {
         <Info className="w-5 h-5" />
         Additional Information
       </h3>
-      <p className="text-subtitle-text">{car.seller_notes}</p>
+      <p className="text-subtitle-text">{car.sellerNotes}</p>
     </div>
   );
 };

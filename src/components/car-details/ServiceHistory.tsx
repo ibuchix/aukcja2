@@ -12,14 +12,14 @@ const ServiceHistory = ({ car }: ServiceHistoryProps) => (
       <Wrench className="w-5 h-5" />
       Service History
     </h3>
-    {car.service_history_type ? (
+    {car.serviceHistoryType ? (
       <div className="space-y-2">
         <p className="text-subtitle-text">Service History Type</p>
         <div className="grid grid-cols-1 gap-2">
           <div className="text-iris capitalize">
-            {car.service_history_type.replace(/_/g, ' ')}
+            {car.serviceHistoryType.replace(/_/g, ' ')}
           </div>
-          {car.has_service_history && (
+          {car.hasServiceHistory && (
             <div className="text-green-600 text-sm">
               ✓ Service history documentation available
             </div>

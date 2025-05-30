@@ -17,9 +17,9 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
       make: car.make,
       model: car.model,
       year: car.year,
-      reservePrice: car.reserve_price,
-      reservePriceType: typeof car.reserve_price,
-      isValidReservePrice: typeof car.reserve_price === 'number' && !isNaN(car.reserve_price) && car.reserve_price > 0
+      reservePrice: car.reservePrice,
+      reservePriceType: typeof car.reservePrice,
+      isValidReservePrice: typeof car.reservePrice === 'number' && !isNaN(car.reservePrice) && car.reservePrice > 0
     });
   }
 
@@ -27,19 +27,19 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
   const getReservePriceDisplay = () => {
     if (isDev) {
       console.log('Reserve price evaluation:', {
-        value: car.reserve_price,
-        type: typeof car.reserve_price,
-        isNumber: typeof car.reserve_price === 'number',
-        isGreaterThanZero: typeof car.reserve_price === 'number' && car.reserve_price > 0,
-        isNaN: typeof car.reserve_price === 'number' && isNaN(car.reserve_price)
+        value: car.reservePrice,
+        type: typeof car.reservePrice,
+        isNumber: typeof car.reservePrice === 'number',
+        isGreaterThanZero: typeof car.reservePrice === 'number' && car.reservePrice > 0,
+        isNaN: typeof car.reservePrice === 'number' && isNaN(car.reservePrice)
       });
     }
     
     // Check for valid numeric reserve price
-    if (typeof car.reserve_price === 'number' && !isNaN(car.reserve_price) && car.reserve_price > 0) {
-      const formatted = formatCurrency(car.reserve_price);
+    if (typeof car.reservePrice === 'number' && !isNaN(car.reservePrice) && car.reservePrice > 0) {
+      const formatted = formatCurrency(car.reservePrice);
       if (isDev) {
-        console.log('Formatting reserve price:', car.reserve_price, '→', formatted);
+        console.log('Formatting reserve price:', car.reservePrice, '→', formatted);
       }
       return formatted;
     }
@@ -47,13 +47,13 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
   };
 
   const reservePriceDisplay = getReservePriceDisplay();
-  const hasReservePrice = typeof car.reserve_price === 'number' && !isNaN(car.reserve_price) && car.reserve_price > 0;
+  const hasReservePrice = typeof car.reservePrice === 'number' && !isNaN(car.reservePrice) && car.reservePrice > 0;
 
   if (isDev) {
     console.log('Final reserve price display:', {
       display: reservePriceDisplay,
       hasReservePrice,
-      originalValue: car.reserve_price
+      originalValue: car.reservePrice
     });
   }
 
@@ -91,7 +91,7 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
           </p>
           {isDev && (
             <p className="text-xs text-blue-600 mt-1">
-              Debug: {car.reserve_price} ({typeof car.reserve_price})
+              Debug: {car.reservePrice} ({typeof car.reservePrice})
             </p>
           )}
         </div>

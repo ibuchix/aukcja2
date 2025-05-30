@@ -23,34 +23,34 @@ const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
           <h4 className="font-semibold text-lg">Damage & Condition Status</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-center gap-2">
-              {car.is_damaged ? (
+              {car.isDamaged ? (
                 <XCircle className="w-5 h-5 text-red-500" />
               ) : (
                 <CheckCircle className="w-5 h-5 text-green-500" />
               )}
               <span className="font-medium">
-                {car.is_damaged ? "Damage Reported" : "No Damage Reported"}
+                {car.isDamaged ? "Damage Reported" : "No Damage Reported"}
               </span>
             </div>
           </div>
 
           {/* Seller Notes */}
-          {car.seller_notes && (
+          {car.sellerNotes && (
             <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
               <h5 className="font-medium text-gray-800 mb-2">Seller Notes:</h5>
-              <p className="text-gray-700">{car.seller_notes}</p>
+              <p className="text-gray-700">{car.sellerNotes}</p>
             </div>
           )}
         </div>
 
         {/* Service History */}
-        {car.service_history_type && (
+        {car.serviceHistoryType && (
           <div className="space-y-2">
             <h4 className="font-semibold">Service History</h4>
             <Badge variant="outline" className="capitalize">
-              {car.service_history_type.replace(/_/g, ' ')}
+              {car.serviceHistoryType.replace(/_/g, ' ')}
             </Badge>
-            {car.has_service_history && (
+            {car.hasServiceHistory && (
               <p className="text-sm text-green-600 mt-2">
                 <CheckCircle className="w-4 h-4 inline mr-1" />
                 Service history available
@@ -81,9 +81,9 @@ const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
         )}
 
         {/* Show message if no condition information available */}
-        {!car.is_damaged && 
-         !car.seller_notes && 
-         !car.service_history_type && 
+        {!car.isDamaged && 
+         !car.sellerNotes && 
+         !car.serviceHistoryType && 
          (!car.features || Object.keys(car.features).length === 0) && (
           <div className="p-4 bg-gray-50 rounded-lg flex items-center gap-2">
             <Info className="w-5 h-5 text-gray-500" />

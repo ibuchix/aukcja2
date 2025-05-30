@@ -31,8 +31,8 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   
   if (!car) return null;
 
-  const minimumBidIncrement = car.minimum_bid_increment || 100;
-  const currentHighestBid = car.current_bid || car.reserve_price;
+  const minimumBidIncrement = car.minimumBidIncrement || 100;
+  const currentHighestBid = car.currentBid || car.reservePrice;
   
   return (
     <Dialog open={!!car} onOpenChange={onClose}>
@@ -43,7 +43,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
               {car.year} {car.make} {car.model}
             </span>
             <span className="text-2xl text-primary">
-              {formatCurrency(car.current_bid || car.reserve_price)}
+              {formatCurrency(car.currentBid || car.reservePrice)}
             </span>
           </DialogTitle>
           <DialogDescription>
@@ -66,8 +66,8 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
                   dealerId={dealerProfile.id}
                   currentHighestBid={currentHighestBid}
                   minimumIncrement={minimumBidIncrement}
-                  auctionEndTime={car.auction_end_time || ""}
-                  reservePrice={car.reserve_price}
+                  auctionEndTime={car.auctionEndTime || ""}
+                  reservePrice={car.reservePrice}
                 />
               </div>
             ) : (
