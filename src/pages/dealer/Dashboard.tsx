@@ -1,24 +1,23 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useDealerProfile } from "@/contexts/dealer-profile";
+import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 import { useAuth } from "@/contexts/AuthContext";
 import { DashboardLayout } from '@/components/dealer/dashboard/DashboardLayout';
 import { ProfileInfoSection } from "@/components/dealer/dashboard/ProfileInfoSection";
 import { DealerWelcomeCard } from "@/components/dealer/dashboard/DealerWelcomeCard";
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
-import { DealerProfile } from "@/components/dealer/DealerProfile";
-import { CarSearch } from '@/components/dealer/cars/CarSearch';
+import { CarSearchWrapper } from '@/components/dealer/cars/CarSearchWrapper';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDashboardTabs } from '@/hooks/useDashboardTabs';
 import { QuickActions } from '@/components/dealer/dashboard/QuickActions';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 const DealerDashboard = () => {
   const { user } = useAuth();
-  const { displayProfile, isLoading, error, profileStatus } = useDealerProfile();
-  // Set car search as default active tab
+  const { dealerProfile, isLoading, error, retryFetch } = useDealerProfileSimple();
   const [activeTabRaw, setActiveTabRaw] = useState("cars");
   const location = useLocation();
   
@@ -27,26 +26,38 @@ const DealerDashboard = () => {
   
   // For debugging purposes
   useEffect(() => {
-    if (displayProfile) {
+    if (dealerProfile) {
       console.log("Dealer Profile loaded:", {
-        id: displayProfile.id,
-        dealership: displayProfile.dealership_name,
+        id: dealerProfile.id,
+        dealership: dealerProfile.dealership_name,
         userId: user?.id
       });
-    } else {
-      console.log("No dealer profile available. Profile status:", profileStatus);
+    } else if (!isLoading) {
+      console.log("No dealer profile available");
     }
-  }, [displayProfile, user, profileStatus]);
+  }, [dealerProfile, user, isLoading]);
 
   return (
     <DashboardLayout title="Dealer Dashboard">
       <div className="space-y-6">
-        {/* Dealer Profile Information - handles its own loading/error states */}
-        <DealerProfile />
+        {/* Show error if profile failed to load */}
+        {error && !dealerProfile && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Profile Loading Error</AlertTitle>
+            <AlertDescription className="space-y-4">
+              <p>{error}</p>
+              <Button onClick={retryFetch} variant="outline" size="sm">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry Loading Profile
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
         
-        {/* Welcome Card - uses data from centralized profile provider */}
+        {/* Welcome Card - uses data from profile hook */}
         <DealerWelcomeCard 
-          dealerName={displayProfile?.dealership_name || "Dealer"}
+          dealerName={dealerProfile?.dealership_name || "Dealer"}
           isLoading={isLoading}
         />
         
@@ -62,19 +73,16 @@ const DealerDashboard = () => {
           </TabsList>
           
           <TabsContent value="cars">
-            {/* Car Search Component - always render it but let it handle missing dealer ID */}
             <div className="mt-4">
-              <CarSearch dealerId={displayProfile?.id} />
+              <CarSearchWrapper />
             </div>
           </TabsContent>
           
           <TabsContent value="overview" className="space-y-6">
-            {/* Stats Overview Section */}
             <StatsSection />
           </TabsContent>
           
           <TabsContent value="profile">
-            {/* Profile Information Section */}
             <ProfileInfoSection />
           </TabsContent>
         </Tabs>

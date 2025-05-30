@@ -1,13 +1,38 @@
 
-import { User } from "@supabase/supabase-js";
 import { Building2, User as UserIcon, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDealerProfile } from "@/contexts/dealer-profile";
+import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export const ProfileInfoSection = () => {
-  const { displayProfile, rawProfile, isLoading } = useDealerProfile();
+  const { dealerProfile, isLoading, error, retryFetch } = useDealerProfileSimple();
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  if (error && !dealerProfile) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription className="space-y-4">
+          <p>{error}</p>
+          <div className="flex gap-2">
+            <Button onClick={retryFetch} variant="outline" size="sm">
+              Retry
+            </Button>
+            <Button 
+              onClick={() => navigate('/complete-registration')} 
+              variant="outline" 
+              size="sm"
+            >
+              Complete Registration
+            </Button>
+          </div>
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <div className="mb-10 bg-white shadow-sm rounded-lg overflow-hidden">
@@ -34,9 +59,9 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Name:</span> {displayProfile?.supervisor_name || rawProfile?.supervisor_name || "Not available"}</p>
+              <p><span className="font-medium text-dark">Name:</span> {dealerProfile?.supervisor_name || "Not available"}</p>
               <p><span className="font-medium text-dark">Email:</span> {user?.email || "Not available"}</p>
-              <p><span className="font-medium text-dark">Dealership:</span> {displayProfile?.dealership_name || rawProfile?.dealership_name || "Not available"}</p>
+              <p><span className="font-medium text-dark">Dealership:</span> {dealerProfile?.dealership_name || "Not available"}</p>
             </div>
           )}
         </div>
@@ -56,9 +81,9 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Address:</span> {displayProfile?.address || rawProfile?.address || "Not available"}</p>
-              <p><span className="font-medium text-dark">License:</span> {displayProfile?.license_number || rawProfile?.license_number || "Not available"}</p>
-              <p><span className="font-medium text-dark">Tax ID:</span> {displayProfile?.tax_id || rawProfile?.tax_id || "Not available"}</p>
+              <p><span className="font-medium text-dark">Address:</span> {dealerProfile?.address || "Not available"}</p>
+              <p><span className="font-medium text-dark">License:</span> {dealerProfile?.license_number || "Not available"}</p>
+              <p><span className="font-medium text-dark">Tax ID:</span> {dealerProfile?.tax_id || "Not available"}</p>
             </div>
           )}
         </div>
@@ -77,7 +102,7 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Business Registry:</span> {displayProfile?.business_registry_number || rawProfile?.business_registry_number || "Not available"}</p>
+              <p><span className="font-medium text-dark">Business Registry:</span> {dealerProfile?.business_registry_number || "Not available"}</p>
               <p><span className="font-medium text-dark">Account Status:</span> <span className="text-success font-medium">Active</span></p>
             </div>
           )}
