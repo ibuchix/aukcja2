@@ -29,13 +29,30 @@ export const isValidCarListing = (item: any): item is CarListing => {
   return isValid;
 };
 
+// Filter cars specifically for dealer dashboard - only cars with reserve_price > 0
+export const filterCarsForDealerDashboard = (cars: CarListing[]): CarListing[] => {
+  const isDev = process.env.NODE_ENV === 'development';
+  
+  const filteredCars = cars.filter(car => car.reserve_price > 0);
+  
+  if (isDev) {
+    console.log('=== DEALER DASHBOARD FILTERING ===');
+    console.log('Total cars before dealer filter:', cars.length);
+    console.log('Cars with reserve_price > 0:', filteredCars.length);
+    console.log('Cars filtered out (reserve_price = 0):', cars.length - filteredCars.length);
+  }
+  
+  return filteredCars;
+};
+
 // Process car listings from database - include all cars with valid reserve prices
-export const processCarListings = (rawData: any[]): CarListing[] => {
+export const processCarListings = (rawData: any[], applyDealerFilter: boolean = false): CarListing[] => {
   const isDev = process.env.NODE_ENV === 'development';
   
   if (isDev) {
     console.log('=== RAW DATA PROCESSING START ===');
     console.log('Raw data count:', rawData.length);
+    console.log('Apply dealer filter:', applyDealerFilter);
     console.log('Sample raw item:', rawData[0]);
   }
   
@@ -59,6 +76,11 @@ export const processCarListings = (rawData: any[]): CarListing[] => {
     console.log('Total raw cars:', rawData.length);
     console.log('Valid cars with reserve_price >= 0:', validCars.length);
     console.log('Cars filtered out:', rawData.length - validCars.length);
+  }
+  
+  // Apply dealer-specific filter if requested
+  if (applyDealerFilter) {
+    return filterCarsForDealerDashboard(validCars);
   }
   
   return validCars;

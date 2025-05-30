@@ -78,7 +78,7 @@ export const useCarListingsQuery = ({
             registration_number,
             is_manually_controlled
           `)
-          .eq("status", "available"); // Removed the reserve_price filter to show all available cars
+          .eq("status", "available"); // Fetch all available cars
         
         // Apply filters
         if (filters.make && typeof filters.make === 'string') {
@@ -157,9 +157,9 @@ export const useCarListingsQuery = ({
           throw new Error(result.error.message);
         }
         
-        // Process and filter the results
+        // Process and filter the results - Apply dealer filter for dashboard
         const rawData = result.data || [];
-        const validCars = processCarListings(rawData);
+        const validCars = processCarListings(rawData, true); // true = apply dealer filter
         
         return {
           cars: validCars,
