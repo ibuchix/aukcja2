@@ -1,16 +1,12 @@
 import { FacebookLogo, InstagramLogo, TwitterLogo } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
-
 const Footer = () => {
-  return (
-    <footer className="bg-secondary text-white">
+  return <footer className="bg-secondary text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <h3 className="text-2xl font-bold text-primary mb-4">Auto-Strada</h3>
-            <p className="text-gray-400">
-              Quality vehicles for the discerning driver
-            </p>
+            <p className="text-gray-400">Quality cars for the discerning dealer</p>
           </div>
           <div>
             <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
@@ -48,8 +44,6 @@ const Footer = () => {
           <p>&copy; {new Date().getFullYear()} Auto-Strada. All rights reserved.</p>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
