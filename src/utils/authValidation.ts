@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 
 // Shared validation utilities for authentication
 export const validateEmail = (email: string): { isValid: boolean; error?: string } => {

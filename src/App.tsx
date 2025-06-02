@@ -1,4 +1,3 @@
-
 import {
   Routes,
   Route,
@@ -10,8 +9,6 @@ import CompleteRegistration from "./pages/CompleteRegistration";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/dealer/Profile";
 import HowItWorks from "./pages/HowItWorks";
-import Marketplace from "./pages/Marketplace";
-import Auctions from "./pages/Auctions";
 import Index from "./pages/Index"; // Import Index page
 
 function App() {
@@ -66,9 +63,7 @@ function App() {
           }
         />
         
-        {/* Market pages */}
-        <Route path="/marketplace" element={<Marketplace />} />
-        <Route path="/auctions" element={<Auctions />} />
+        {/* Other pages */}
         <Route path="/how-it-works" element={<HowItWorks />} />
         
         {/* Fallback route - redirect to home page */}

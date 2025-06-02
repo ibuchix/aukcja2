@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Compass, LayoutDashboard, HelpCircle, Loader2 } from "lucide-react";
+import { LayoutDashboard, HelpCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NavbarMobileMenuProps {
@@ -22,10 +22,6 @@ export const NavbarMobileMenu = ({ isOpen, session, isLoading, handleLogout }: N
             Dashboard
           </Link>
         )}
-        <Link to="/auctions" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
-          <Compass size={20} />
-          Browse Auctions
-        </Link>
         <Link to="/how-it-works" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
           <HelpCircle size={20} />
           How It Works

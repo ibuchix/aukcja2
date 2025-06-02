@@ -55,9 +55,6 @@ export default function Navbar() {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-6">
-          <Link to="/auctions" className="text-gray-700 hover:text-primary transition-colors">
-            Browse Auctions
-          </Link>
           <Link to="/how-it-works" className="text-gray-700 hover:text-primary transition-colors">
             How It Works
           </Link>
@@ -106,13 +103,6 @@ export default function Navbar() {
         {isMobileMenuOpen && (
           <div className="absolute top-full left-0 w-full bg-white shadow-md py-4 md:hidden">
             <div className="flex flex-col space-y-3 px-4">
-              <Link 
-                to="/auctions" 
-                className="text-gray-700 hover:text-primary transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Browse Auctions
-              </Link>
               <Link 
                 to="/how-it-works" 
                 className="text-gray-700 hover:text-primary transition-colors"
