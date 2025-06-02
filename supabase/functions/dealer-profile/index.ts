@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
@@ -242,8 +241,17 @@ async function handleDocumentUpload(req: Request, supabase: any) {
 // Handle getting documents
 async function handleGetDocuments(req: Request, supabase: any) {
   try {
-    const url = new URL(req.url);
-    const token = url.searchParams.get("token");
+    let token;
+    
+    // Handle both GET and POST requests
+    if (req.method === "GET") {
+      const url = new URL(req.url);
+      token = url.searchParams.get("token");
+    } else {
+      // Handle POST request with JSON body
+      const body = await req.json();
+      token = body.token;
+    }
 
     if (!token) {
       return new Response(
