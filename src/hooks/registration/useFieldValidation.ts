@@ -23,43 +23,6 @@ export function useFieldValidation() {
     }));
   };
 
-  const validatePolishNIP = (nip: string): boolean => {
-    const weights = [6, 5, 7, 2, 3, 4, 5, 6, 7];
-    const digits = nip.replace(/\D/g, '');
-    
-    if (digits.length !== 10) return false;
-    
-    let sum = 0;
-    for (let i = 0; i < 9; i++) {
-      sum += parseInt(digits[i]) * weights[i];
-    }
-    
-    const checksum = sum % 11;
-    const lastDigit = parseInt(digits[9]);
-    
-    return checksum < 10 && checksum === lastDigit;
-  };
-
-  const validateREGON = (regon: string): boolean => {
-    const digits = regon.replace(/\D/g, '');
-    if (digits.length !== 9 && digits.length !== 14) return false;
-    
-    // Basic REGON validation (simplified)
-    return digits.length === 9 || digits.length === 14;
-  };
-
-  const validatePhoneNumber = (phone: string): { isValid: boolean; normalized: string } => {
-    const cleaned = phone.replace(/\s+/g, '');
-    const withCountryCode = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
-    
-    // Basic international phone validation
-    const phoneRegex = /^\+[1-9]\d{7,14}$/;
-    return {
-      isValid: phoneRegex.test(withCountryCode),
-      normalized: withCountryCode
-    };
-  };
-
   const checkEmailAvailability = useCallback(
     debounce(async (email: string) => {
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -82,6 +45,11 @@ export function useFieldValidation() {
         if (error) {
           console.warn("Email check error:", error);
           updateFieldState('email', { isValid: true, isValidating: false });
+          toast({
+            title: "Email Check Warning",
+            description: "Could not verify email availability, but you can continue",
+            variant: "default",
+          });
           return;
         }
 
@@ -104,6 +72,11 @@ export function useFieldValidation() {
       } catch (error) {
         console.error("Email validation error:", error);
         updateFieldState('email', { isValid: true, isValidating: false });
+        toast({
+          title: "Email Check Error",
+          description: "Could not verify email availability, but you can continue",
+          variant: "default",
+        });
       }
     }, 800),
     [toast]
@@ -111,13 +84,11 @@ export function useFieldValidation() {
 
   const checkBusinessRegistryAvailability = useCallback(
     debounce(async (registryNumber: string) => {
-      const cleaned = registryNumber.replace(/\D/g, '');
-      
-      if (!validateREGON(cleaned)) {
+      if (!registryNumber || registryNumber.length < 9) {
         updateFieldState('businessRegistry', { isValid: false, isValidating: false });
         toast({
           title: "Invalid REGON Format",
-          description: "REGON number must be exactly 9 or 14 digits",
+          description: "REGON number must be at least 9 digits",
           variant: "destructive",
         });
         return;
@@ -126,19 +97,32 @@ export function useFieldValidation() {
       updateFieldState('businessRegistry', { isValidating: true });
       
       try {
-        const { data, error } = await supabase
-          .from('dealers')
-          .select('id')
-          .eq('business_registry_number', cleaned)
-          .maybeSingle();
+        const { data, error } = await supabase.rpc('check_business_registry_exists', {
+          registry_number: registryNumber
+        });
 
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           console.warn("Registry check error:", error);
           updateFieldState('businessRegistry', { isValid: true, isValidating: false });
+          toast({
+            title: "Registry Check Warning",
+            description: "Could not verify business registry, but you can continue",
+            variant: "default",
+          });
           return;
         }
 
-        if (data) {
+        if (!data.valid) {
+          updateFieldState('businessRegistry', { isValid: false, isValidating: false });
+          toast({
+            title: "Invalid REGON Format",
+            description: data.error || "REGON number format is invalid",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data.exists) {
           updateFieldState('businessRegistry', { isValid: false, isValidating: false });
           toast({
             title: "Business Already Registered",
@@ -155,38 +139,124 @@ export function useFieldValidation() {
       } catch (error) {
         console.error("Business registry validation error:", error);
         updateFieldState('businessRegistry', { isValid: true, isValidating: false });
+        toast({
+          title: "Registry Check Error",
+          description: "Could not verify business registry, but you can continue",
+          variant: "default",
+        });
       }
     }, 800),
     [toast]
   );
 
-  const validateTaxID = (taxId: string) => {
-    const cleaned = taxId.replace(/\D/g, '');
-    
-    if (cleaned.length !== 10) {
+  const validateTaxID = useCallback(async (taxId: string) => {
+    if (!taxId) {
       toast({
-        title: "Invalid Tax ID Length",
-        description: "NIP (Tax ID) must be exactly 10 digits",
+        title: "Tax ID Required",
+        description: "Please enter your NIP (Tax ID) number",
         variant: "destructive",
       });
       return false;
     }
 
-    if (!validatePolishNIP(cleaned)) {
+    try {
+      const { data, error } = await supabase.rpc('check_tax_id_exists', {
+        tax_id: taxId
+      });
+
+      if (error) {
+        console.warn("Tax ID check error:", error);
+        toast({
+          title: "Tax ID Check Warning",
+          description: "Could not verify Tax ID, but you can continue",
+          variant: "default",
+        });
+        return true;
+      }
+
+      if (!data.valid) {
+        toast({
+          title: "Invalid Tax ID (NIP)",
+          description: data.error || "The NIP format or checksum is invalid",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      if (data.exists) {
+        toast({
+          title: "Tax ID Already Registered",
+          description: "A dealer with this NIP is already registered in our system",
+          variant: "destructive",
+        });
+        return false;
+      }
+
       toast({
-        title: "Invalid Tax ID (NIP)",
-        description: "The NIP checksum is invalid. Please verify the number is correct",
+        title: "Valid Tax ID ✓",
+        description: "NIP number is valid and available",
+      });
+      return true;
+    } catch (error) {
+      console.error("Tax ID validation error:", error);
+      toast({
+        title: "Tax ID Check Error",
+        description: "Could not verify Tax ID, but you can continue",
+        variant: "default",
+      });
+      return true;
+    }
+  }, [toast]);
+
+  const validatePhoneField = useCallback(async (phone: string) => {
+    if (!phone) {
+      toast({
+        title: "Phone Number Required",
+        description: "Please enter your phone number",
         variant: "destructive",
       });
       return false;
     }
 
-    toast({
-      title: "Valid Tax ID ✓",
-      description: "NIP number format and checksum are correct",
-    });
-    return true;
-  };
+    try {
+      const { data, error } = await supabase.rpc('validate_and_normalize_phone', {
+        phone_number: phone
+      });
+
+      if (error) {
+        console.warn("Phone validation error:", error);
+        toast({
+          title: "Phone Validation Warning",
+          description: "Could not validate phone number, but you can continue",
+          variant: "default",
+        });
+        return true;
+      }
+
+      if (!data.valid) {
+        toast({
+          title: "Invalid Phone Number",
+          description: data.error || "Please enter a valid phone number with country code",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      toast({
+        title: "Phone Number Verified ✓",
+        description: `Phone number normalized to: ${data.normalized_phone}`,
+      });
+      return true;
+    } catch (error) {
+      console.error("Phone validation error:", error);
+      toast({
+        title: "Phone Validation Error",
+        description: "Could not validate phone number, but you can continue",
+        variant: "default",
+      });
+      return true;
+    }
+  }, [toast]);
 
   const validatePassword = (password: string) => {
     const issues = [];
@@ -242,6 +312,10 @@ export function useFieldValidation() {
       return false;
     }
 
+    toast({
+      title: "Valid Name ✓",
+      description: "Supervisor name format is correct",
+    });
     return true;
   };
 
@@ -274,6 +348,10 @@ export function useFieldValidation() {
       return false;
     }
 
+    toast({
+      title: "Valid Company Name ✓",
+      description: "Company name format is correct",
+    });
     return true;
   };
 
@@ -296,24 +374,9 @@ export function useFieldValidation() {
       return false;
     }
 
-    return true;
-  };
-
-  const validatePhoneField = (phone: string) => {
-    const validation = validatePhoneNumber(phone);
-    
-    if (!validation.isValid) {
-      toast({
-        title: "Invalid Phone Number",
-        description: "Please enter a valid phone number with country code (e.g., +48123456789)",
-        variant: "destructive",
-      });
-      return false;
-    }
-
     toast({
-      title: "Phone Number Verified ✓",
-      description: "Phone number format is correct",
+      title: "Valid Address ✓",
+      description: "Address format is correct",
     });
     return true;
   };

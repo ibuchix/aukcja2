@@ -9,7 +9,7 @@ export function useEnhancedFormValidation() {
   const fieldValidation = useFieldValidation();
   const baseValidation = useFormValidation<DealerFormValues>('dealer-registration');
 
-  const validateField = (fieldName: keyof DealerFormValues, value: any) => {
+  const validateField = async (fieldName: keyof DealerFormValues, value: any) => {
     switch (fieldName) {
       case 'supervisorName':
         return fieldValidation.validateSupervisorName(value);
@@ -23,11 +23,11 @@ export function useEnhancedFormValidation() {
         // This is handled by the form schema
         return true;
       case 'phoneNumber':
-        return fieldValidation.validatePhoneField(value);
+        return await fieldValidation.validatePhoneField(value);
       case 'companyName':
         return fieldValidation.validateCompanyName(value);
       case 'taxId':
-        return fieldValidation.validateTaxID(value);
+        return await fieldValidation.validateTaxID(value);
       case 'businessRegistryNumber':
         // Trigger async registry check
         fieldValidation.checkBusinessRegistryAvailability(value);
@@ -43,6 +43,10 @@ export function useEnhancedFormValidation() {
           });
           return false;
         }
+        toast({
+          title: "Terms Accepted ✓",
+          description: "Thank you for accepting our terms and conditions",
+        });
         return true;
       default:
         return true;

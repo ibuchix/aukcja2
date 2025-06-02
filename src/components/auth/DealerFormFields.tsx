@@ -17,15 +17,17 @@ export function DealerFormFields({ form, showPasswordFields = true }: DealerForm
   const { validateField } = useEnhancedFormValidation();
   
   // Watch for field changes and validate them
-  const watchedFields = form.watch();
-  
   useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
+    const subscription = form.watch(async (value, { name }) => {
       if (name && value[name] !== undefined) {
         // Validate field on blur/change with toast feedback
         const fieldValue = value[name];
         if (fieldValue && fieldValue !== '') {
-          validateField(name as keyof DealerFormValues, fieldValue);
+          try {
+            await validateField(name as keyof DealerFormValues, fieldValue);
+          } catch (error) {
+            console.error('Field validation error:', error);
+          }
         }
       }
     });

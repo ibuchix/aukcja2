@@ -8,22 +8,49 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export async function checkBusinessRegistryExists(businessRegistryNumber: string): Promise<boolean> {
   try {
-    // Use direct string literals for simplicity and to avoid type recursion
-    const response = await supabase
-      .from('dealers')
-      .select('business_registry_number')
-      .eq('business_registry_number', businessRegistryNumber)
-      .maybeSingle();
+    const { data, error } = await supabase.rpc('check_business_registry_exists', {
+      registry_number: businessRegistryNumber
+    });
     
-    if (response.error) {
-      console.error("Error checking business registry:", response.error);
-      throw response.error;
+    if (error) {
+      console.error("Error checking business registry:", error);
+      throw error;
     }
     
-    return !!response.data;
+    // Return true if the registry exists and is valid
+    return data?.valid === true && data?.exists === true;
   } catch (error) {
     // Fail silently but log the error
     console.error("Error in business registry check:", error);
     return false; // Continue the flow despite this check failing
+  }
+}
+
+/**
+ * Validates a business registry number format using the new database function
+ * @param businessRegistryNumber The business registry number to validate
+ * @returns Validation result with details
+ */
+export async function validateBusinessRegistryNumber(businessRegistryNumber: string) {
+  try {
+    const { data, error } = await supabase.rpc('check_business_registry_exists', {
+      registry_number: businessRegistryNumber
+    });
+    
+    if (error) {
+      console.error("Error validating business registry:", error);
+      return {
+        valid: false,
+        error: "Could not validate business registry number"
+      };
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error in business registry validation:", error);
+    return {
+      valid: false,
+      error: "Could not validate business registry number"
+    };
   }
 }

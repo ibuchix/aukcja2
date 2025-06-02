@@ -1869,12 +1869,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      check_business_registry_exists: {
+        Args: { registry_number: string }
+        Returns: Json
+      }
       check_email_exists: {
         Args: { email_to_check: string }
         Returns: Json
       }
       check_seller_exists: {
         Args: { p_user_id: string }
+        Returns: Json
+      }
+      check_tax_id_exists: {
+        Args: { tax_id: string }
         Returns: Json
       }
       check_vin_reservation: {
@@ -2299,6 +2307,14 @@ export type Database = {
       }
       upsert_car_listing: {
         Args: { car_data: Json; is_draft?: boolean }
+        Returns: Json
+      }
+      validate_and_normalize_phone: {
+        Args: { phone_number: string }
+        Returns: Json
+      }
+      validate_polish_nip: {
+        Args: { nip_number: string }
         Returns: Json
       }
       verify_dealer: {
