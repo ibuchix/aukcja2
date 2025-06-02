@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
@@ -10,7 +9,7 @@ import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
 import { CarSearchWrapper } from '@/components/dealer/cars/CarSearchWrapper';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDashboardTabs } from '@/hooks/useDashboardTabs';
-import { QuickActions } from '@/components/dealer/dashboard/QuickActions';
+import { QuickActions } from '@/components/dealer/QuickActions';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw } from "lucide-react";
