@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CancellationForm } from "@/components/dealer/documents/CancellationForm";
 import { 
   getDealerDocuments, 
   uploadDealerDocument, 
@@ -127,7 +127,12 @@ export default function DealerDocuments() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">My Documents</h1>
+        <h1 className="text-3xl font-bold mb-6">Document Management</h1>
+        
+        {/* Cancellation Form Section */}
+        <div className="mb-8">
+          <CancellationForm />
+        </div>
         
         {/* Upload section */}
         <Card className="mb-8">

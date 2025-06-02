@@ -5,6 +5,7 @@ import {
 } from "react-router-dom";
 import Auth from "./pages/Auth";
 import DealerDashboard from "./pages/dealer/Dashboard"; 
+import Documents from "./pages/dealer/Documents";
 import CompleteRegistration from "./pages/CompleteRegistration";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/dealer/Profile";
@@ -58,7 +59,7 @@ function App() {
           path="/dealer/documents"
           element={
             <ProtectedRoute>
-              <DealerDashboard />
+              <Documents />
             </ProtectedRoute>
           }
         />
