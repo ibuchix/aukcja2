@@ -98,11 +98,11 @@ export default function Profile() {
               <div className="grid gap-2">
                 <div>
                   <p className="text-gray-600">Dealership Name:</p>
-                  <p className="font-medium">{displayProfile.dealershipName || "Not available"}</p>
+                  <p className="font-medium">{displayProfile.dealership_name || "Not available"}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">Supervisor Name:</p>
-                  <p className="font-medium">{displayProfile.supervisorName || "Not available"}</p>
+                  <p className="font-medium">{displayProfile.supervisor_name || "Not available"}</p>
                 </div>
               </div>
             </div>
@@ -112,11 +112,11 @@ export default function Profile() {
               <div className="grid gap-2">
                 <div>
                   <p className="text-gray-600">Tax ID:</p>
-                  <p className="font-medium">{displayProfile.taxId || "Not available"}</p>
+                  <p className="font-medium">{displayProfile.tax_id || "Not available"}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">Business Registry Number:</p>
-                  <p className="font-medium">{displayProfile.businessRegistryNumber || "Not available"}</p>
+                  <p className="font-medium">{displayProfile.business_registry_number || "Not available"}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">Address:</p>
@@ -124,7 +124,7 @@ export default function Profile() {
                 </div>
                 <div>
                   <p className="text-gray-600">License Number:</p>
-                  <p className="font-medium">{displayProfile.licenseNumber || "Not available"}</p>
+                  <p className="font-medium">{displayProfile.license_number || "Not available"}</p>
                 </div>
               </div>
             </div>
@@ -134,12 +134,12 @@ export default function Profile() {
               <div className="grid gap-2">
                 <div>
                   <p className="text-gray-600">Verification Status:</p>
-                  <p className="font-medium capitalize">{displayProfile.verificationStatus || "Pending"}</p>
+                  <p className="font-medium capitalize">{displayProfile.verification_status || "Pending"}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">Verified:</p>
-                  <p className={`font-medium ${displayProfile.isVerified ? 'text-green-600' : 'text-yellow-600'}`}>
-                    {displayProfile.isVerified ? 'Yes' : 'Pending'}
+                  <p className={`font-medium ${displayProfile.is_verified ? 'text-green-600' : 'text-yellow-600'}`}>
+                    {displayProfile.is_verified ? 'Yes' : 'Pending'}
                   </p>
                 </div>
               </div>
