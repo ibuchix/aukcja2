@@ -5,6 +5,8 @@ import { PersonalInfoFields } from "./dealer-form/PersonalInfoFields";
 import { PasswordFields } from "./dealer-form/PasswordFields";
 import { CompanyInfoFields } from "./dealer-form/CompanyInfoFields";
 import { TermsAcceptance } from "./dealer-form/TermsAcceptance";
+import { useEnhancedFormValidation } from "@/hooks/registration/useEnhancedFormValidation";
+import { useEffect } from "react";
 
 interface DealerFormFieldsProps {
   form: UseFormReturn<DealerFormValues>;
@@ -12,6 +14,25 @@ interface DealerFormFieldsProps {
 }
 
 export function DealerFormFields({ form, showPasswordFields = true }: DealerFormFieldsProps) {
+  const { validateField } = useEnhancedFormValidation();
+  
+  // Watch for field changes and validate them
+  const watchedFields = form.watch();
+  
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name && value[name] !== undefined) {
+        // Validate field on blur/change with toast feedback
+        const fieldValue = value[name];
+        if (fieldValue && fieldValue !== '') {
+          validateField(name as keyof DealerFormValues, fieldValue);
+        }
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form, validateField]);
+  
   return (
     <>
       <PersonalInfoFields form={form} />

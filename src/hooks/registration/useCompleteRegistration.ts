@@ -4,6 +4,7 @@ import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { supabase } from "@/integrations/supabase/client";
 import { signInWithEmail } from "@/services/auth/signin";
 import { preparePassword } from "@/utils/auth-utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface CompleteRegistrationResult {
   success: boolean;
@@ -14,11 +15,18 @@ interface CompleteRegistrationResult {
 
 export function useCompleteRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = async (values: DealerFormValues): Promise<CompleteRegistrationResult> => {
     setIsSubmitting(true);
     
     try {
+      // Show initial progress toast
+      toast({
+        title: "Starting Registration Process",
+        description: "Preparing your account details...",
+      });
+      
       console.log("Creating dealer account with dealer-auth edge function");
       
       // Consistently prepare the password the same way across all code
@@ -28,6 +36,12 @@ export function useCompleteRegistration() {
       console.log("Registration password length after preparation:", cleanedPassword.length, 
                 "First char code:", cleanedPassword.charCodeAt(0),
                 "Last char code:", cleanedPassword.charCodeAt(cleanedPassword.length - 1));
+      
+      // Show account creation progress
+      toast({
+        title: "Creating Account",
+        description: "Setting up your authentication credentials...",
+      });
       
       // Create request body 
       const requestBody = {
@@ -61,6 +75,12 @@ export function useCompleteRegistration() {
         password: '[REDACTED]'
       };
       console.log("Registration request body:", sanitizedBody);
+      
+      // Show backend processing toast
+      toast({
+        title: "Processing Registration",
+        description: "Creating your dealer profile and verifying information...",
+      });
       
       // Send the direct fetch request
       const response = await fetch(url, {
@@ -96,6 +116,12 @@ export function useCompleteRegistration() {
           console.error("Could not parse error response:", e);
         }
         
+        toast({
+          title: "Registration Failed",
+          description: errorMsg,
+          variant: "destructive",
+        });
+        
         return {
           success: false,
           error: errorMsg
@@ -108,6 +134,11 @@ export function useCompleteRegistration() {
         data = responseText ? JSON.parse(responseText) : null;
       } catch (e) {
         console.error("Error parsing registration response:", e);
+        toast({
+          title: "Registration Error",
+          description: "Invalid response format from registration service",
+          variant: "destructive",
+        });
         return {
           success: false,
           error: "Invalid response format from registration service"
@@ -116,6 +147,11 @@ export function useCompleteRegistration() {
       
       if (!data) {
         console.error("Empty response from registration service");
+        toast({
+          title: "Registration Error",
+          description: "No response from registration service",
+          variant: "destructive",
+        });
         return {
           success: false,
           error: "No response from registration service"
@@ -127,15 +163,30 @@ export function useCompleteRegistration() {
       
       if (!response_data.success) {
         console.error("Registration failed with error:", response_data.error);
+        toast({
+          title: "Registration Failed",
+          description: response_data.error || "Registration failed with an unknown error",
+          variant: "destructive",
+        });
         return {
           success: false,
           error: response_data.error || "Registration failed with an unknown error"
         };
       }
 
+      // Show success progress
+      toast({
+        title: "Account Created Successfully! ✓",
+        description: "Your dealer account has been set up. Attempting automatic login...",
+      });
+
       // Check for auto-generated session
       if (response_data.session) {
         console.log("Registration successful with automatic session, user is now logged in");
+        toast({
+          title: "Welcome to Your Dashboard! 🎉",
+          description: "Registration complete and you're now logged in",
+        });
         return {
           success: true,
           userId: response_data.userId || response_data.user?.id,
@@ -147,6 +198,11 @@ export function useCompleteRegistration() {
       // attempt to login immediately 
       try {
         console.log("Registration successful, attempting immediate login");
+        toast({
+          title: "Completing Setup",
+          description: "Logging you into your new account...",
+        });
+        
         const signInResult = await signInWithEmail({
           email: values.email.trim().toLowerCase(),
           password: values.password
@@ -154,6 +210,18 @@ export function useCompleteRegistration() {
         
         const loginSuccessful = !signInResult.error && !!signInResult.data;
         console.log("Immediate login after registration:", loginSuccessful ? "successful" : "failed");
+        
+        if (loginSuccessful) {
+          toast({
+            title: "Welcome to Your Dashboard! 🎉",
+            description: "Registration complete and you're now logged in",
+          });
+        } else {
+          toast({
+            title: "Registration Successful",
+            description: "Account created successfully. Please log in with your credentials.",
+          });
+        }
         
         return {
           success: true,
@@ -163,6 +231,11 @@ export function useCompleteRegistration() {
       } catch (loginError) {
         console.warn("Could not automatically log in after registration:", loginError);
         
+        toast({
+          title: "Registration Successful",
+          description: "Account created successfully. Please log in with your credentials.",
+        });
+        
         return {
           success: true,
           userId: response_data.userId || response_data.user?.id,
@@ -171,6 +244,11 @@ export function useCompleteRegistration() {
       }
     } catch (error) {
       console.error("Unexpected error during registration:", error);
+      toast({
+        title: "Registration Error",
+        description: error instanceof Error ? error.message : "An unexpected error occurred during registration",
+        variant: "destructive",
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : "An unexpected error occurred during registration"

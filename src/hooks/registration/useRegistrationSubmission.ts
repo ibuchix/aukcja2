@@ -2,23 +2,23 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
-import { useFormValidation } from "@/hooks/useFormValidation";
+import { useEnhancedFormValidation } from "./useEnhancedFormValidation";
 import { signupDealer } from "@/integrations/dealers/dealerService";
 import { checkBusinessRegistryExists } from "@/services/validation/businessRegistryService";
 import { checkAccountExists } from "@/utils/authValidation";
 
 /**
- * Custom hook for handling dealer registration form submission with validation
+ * Custom hook for handling dealer registration form submission with enhanced validation and toast feedback
  */
 export function useRegistrationSubmission() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { 
     errors, 
-    validateForm, 
+    validateFormWithToasts, 
     clearErrors, 
     normalizeData 
-  } = useFormValidation<DealerFormValues>('dealer-registration');
+  } = useEnhancedFormValidation();
   
   const handleSubmit = async (values: DealerFormValues) => {
     setIsSubmitting(true);
@@ -27,18 +27,25 @@ export function useRegistrationSubmission() {
     try {
       console.log("Starting registration validation...");
       
-      // Validate form data client-side before proceeding
-      const { isValid, sanitizedData } = validateForm(values);
+      // Show initial validation toast
+      toast({
+        title: "Validating Registration Data",
+        description: "Checking all form fields and requirements...",
+      });
+      
+      // Validate form data client-side with enhanced toast feedback
+      const { isValid, sanitizedData } = validateFormWithToasts(values);
       
       if (!isValid) {
         console.log("Validation failed:", errors);
-        toast({
-          title: "Form Validation Failed",
-          description: errors[0] || "Please correct the errors in the form.",
-          variant: "destructive",
-        });
         return false;
       }
+      
+      // Show progress toast for backend validation
+      toast({
+        title: "Verifying Business Information",
+        description: "Checking email and business registry in our database...",
+      });
       
       // Check if email already exists - passing true to indicate this is a registration flow
       const emailExists = await checkAccountExists(sanitizedData.email, true);
@@ -62,6 +69,12 @@ export function useRegistrationSubmission() {
         return false;
       }
       
+      // Show progress toast for account creation
+      toast({
+        title: "Creating Your Account",
+        description: "Setting up your dealer account and profile...",
+      });
+      
       // Normalize data for submission
       const normalizedData = normalizeData(sanitizedData);
       
@@ -79,8 +92,8 @@ export function useRegistrationSubmission() {
       }
       
       toast({
-        title: "Registration Successful",
-        description: "Your account has been created. Please check your email for verification.",
+        title: "Registration Successful! 🎉",
+        description: "Your dealer account has been created successfully. Please check your email for verification.",
       });
       
       return true;
@@ -90,7 +103,7 @@ export function useRegistrationSubmission() {
       
       toast({
         title: "Registration Error",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description: error instanceof Error ? error.message : "An unexpected error occurred during registration",
         variant: "destructive",
       });
       
