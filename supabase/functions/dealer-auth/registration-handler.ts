@@ -34,6 +34,43 @@ type RegistrationMetadata = {
 };
 
 /**
+ * Check if an email exists as a dealer
+ */
+export async function handleCheckDealerEmail(
+  body: any,
+  requestId: string
+): Promise<Response> {
+  try {
+    const { email } = body;
+    
+    if (!email) {
+      return respondError("Email is required", 400);
+    }
+
+    const sanitizedEmail = sanitizeString(email).toLowerCase();
+    
+    // Use role-specific check
+    const { data, error } = await supabaseAdmin.rpc(
+      "check_email_exists_for_dealer_role",
+      { p_email: sanitizedEmail }
+    );
+
+    if (error) {
+      logError(`Error checking dealer email (request ID: ${requestId})`, error);
+      return respondError(`Error checking email: ${error.message}`, 500);
+    }
+
+    return respondSuccess(data);
+  } catch (error) {
+    logError(`Unexpected error in email check handler (request ID: ${requestId})`, error);
+    return respondError(
+      `Email check failed unexpectedly: ${error.message}`,
+      500
+    );
+  }
+}
+
+/**
  * Handle dealer registration
  */
 export async function handleDealerRegister(
@@ -61,18 +98,18 @@ export async function handleDealerRegister(
     // Sanitize and prepare metadata
     const cleanedMetadata = sanitizeMetadata(metadata);
 
-    // Double-check if email already exists to prevent race conditions
+    // Use role-specific email check
     const { data: existsData, error: existsError } = await supabaseAdmin.rpc(
-      "check_email_exists",
-      { email_to_check: sanitizeString(email).toLowerCase() }
+      "check_email_exists_for_dealer_role",
+      { p_email: sanitizeString(email).toLowerCase() }
     );
 
     if (existsError) {
       logError("Error checking if email exists", existsError);
       // Continue despite this error - the procedure will check again
     } else if (existsData?.exists) {
-      logWarning(`Email ${email} already exists. Rejecting registration attempt.`);
-      return respondError("Email already exists", 409);
+      logWarning(`Email ${email} already exists as a dealer. Rejecting registration attempt.`);
+      return respondError("Email already exists as a dealer", 409);
     }
 
     // Normalize password with our standardized function
@@ -90,42 +127,117 @@ export async function handleDealerRegister(
     const formattedPhone = normalizedPhone.replace(/\s+/g, '');
     const phoneWithCode = formattedPhone.startsWith('+') ? formattedPhone : `+${formattedPhone}`;
 
-    // Use direct admin API to create user with confirmed email
-    // This avoids the need for email verification
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
-      email: sanitizeString(email).toLowerCase(),
-      password: normalizedPassword,
-      email_confirm: true, // Explicitly confirm email
-      user_metadata: {
-        name: cleanedMetadata.name,
-        role: 'dealer'
-      },
-      phone: phoneWithCode || undefined
-    });
-
-    if (userError) {
-      logError(`Error creating user (request ID: ${requestId})`, userError);
+    // Check if user already exists but doesn't have dealer role
+    const { data: userCheck, error: userCheckError } = await supabaseAdmin.rpc(
+      "check_email_exists_for_dealer_role",
+      { p_email: sanitizeString(email).toLowerCase() }
+    );
+    
+    let userId: string;
+    let existingUser = false;
+    
+    if (userCheck?.email_registered && !userCheck?.exists) {
+      // User exists but not as dealer - get their ID
+      logInfo(`User exists but not as dealer: ${email}`);
+      existingUser = true;
       
-      // Check for duplicate key errors
-      if (userError.message?.includes("duplicate") || 
-          userError.message?.includes("already exists") ||
-          userError.message?.toLowerCase().includes("unique violation")) {
-        if (userError.message?.includes("email")) {
-          return respondError("An account with this email already exists", 409);
-        }
-        return respondError("A duplicate entry was detected", 409);
+      // Get existing user ID
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(
+        userCheck?.user_id
+      );
+      
+      if (userError || !userData?.user) {
+        logError(`Error getting existing user (request ID: ${requestId})`, userError);
+        return respondError("Error retrieving existing user", 500);
       }
       
-      // Internal server errors
-      return respondError(
-        `Registration failed: ${userError.message}`,
-        500
-      );
+      userId = userData.user.id;
+    } else {
+      // Use direct admin API to create user with confirmed email
+      // This avoids the need for email verification
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
+        email: sanitizeString(email).toLowerCase(),
+        password: normalizedPassword,
+        email_confirm: true, // Explicitly confirm email
+        user_metadata: {
+          name: cleanedMetadata.name,
+          role: 'dealer'
+        },
+        phone: phoneWithCode || undefined
+      });
+
+      if (userError) {
+        logError(`Error creating user (request ID: ${requestId})`, userError);
+        
+        // Check for duplicate key errors
+        if (userError.message?.includes("duplicate") || 
+            userError.message?.includes("already exists") ||
+            userError.message?.toLowerCase().includes("unique violation")) {
+          if (userError.message?.includes("email")) {
+            return respondError("An account with this email already exists", 409);
+          }
+          return respondError("A duplicate entry was detected", 409);
+        }
+        
+        // Internal server errors
+        return respondError(
+          `Registration failed: ${userError.message}`,
+          500
+        );
+      }
+      
+      if (!userData || !userData.user) {
+        logError(`Empty result from user creation (request ID: ${requestId})`, null);
+        return respondError("Registration failed with no result", 500);
+      }
+      
+      userId = userData.user.id;
     }
-    
-    if (!userData || !userData.user) {
-      logError(`Empty result from user creation (request ID: ${requestId})`, null);
-      return respondError("Registration failed with no result", 500);
+
+    // Update or create profile with dealer role
+    try {
+      // First check if profile already exists
+      const { data: profileData, error: profileCheckError } = await supabaseAdmin
+        .from('profiles')
+        .select('id, role')
+        .eq('id', userId)
+        .single();
+      
+      if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+        logWarning("Error checking for existing profile:", profileCheckError);
+      }
+      
+      if (profileData) {
+        // Profile exists, update it to include dealer role
+        const { error: updateError } = await supabaseAdmin
+          .from('profiles')
+          .update({
+            role: 'dealer',
+            full_name: cleanedMetadata.name,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', userId);
+          
+        if (updateError) {
+          logWarning("Error updating profile:", updateError);
+        }
+      } else {
+        // Create new profile with dealer role
+        const { error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .insert({
+            id: userId,
+            role: 'dealer',
+            full_name: cleanedMetadata.name,
+            updated_at: new Date().toISOString()
+          });
+          
+        if (profileError) {
+          logWarning("Error creating profile:", profileError);
+        }
+      }
+    } catch (metaError) {
+      logWarning("Error managing profile:", metaError);
     }
 
     // Create dealer profile
@@ -133,7 +245,7 @@ export async function handleDealerRegister(
       const { error: dealerError } = await supabaseAdmin
         .from('dealers')
         .insert({
-          user_id: userData.user.id,
+          user_id: userId,
           supervisor_name: cleanedMetadata.name,
           dealership_name: cleanedMetadata.companyName || cleanedMetadata.name,
           tax_id: (cleanedMetadata.taxId || "").replace(/\D/g, ''),
@@ -155,42 +267,24 @@ export async function handleDealerRegister(
       // Continue despite error - we'll return a warning
     }
 
-    // Create profile with dealer role
-    try {
-      const { error: profileError } = await supabaseAdmin
-        .from('profiles')
-        .insert({
-          id: userData.user.id,
-          role: 'dealer',
-          full_name: cleanedMetadata.name,
-          updated_at: new Date().toISOString()
-        });
-        
-      if (profileError) {
-        logWarning("Error creating profile:", profileError);
-      }
-    } catch (metaError) {
-      logWarning("Error creating profile:", metaError);
-    }
-
     // Create a session immediately so the user can be logged in right after registration
     const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
-      userId: userData.user.id
+      userId: userId
     });
 
     if (sessionError) {
-      logWarning(`Error creating immediate session for user ${userData.user.id}:`, sessionError);
+      logWarning(`Error creating immediate session for user ${userId}:`, sessionError);
       // Continue despite error - login will still work manually
     }
 
-    // Successfully created user
-    logInfo(`User registered successfully (request ID: ${requestId}): ${userData.user.id}`);
+    // Successfully created/updated user
+    logInfo(`User registered successfully (request ID: ${requestId}): ${userId}, existingUser: ${existingUser}`);
     
     // Return success with session if available
     return respondSuccess({
       success: true,
-      userId: userData.user.id,
-      user: userData.user,
+      userId: userId,
+      existingUser: existingUser,
       session: sessionData?.session || null,
       message: "Registration successful. You can now log in to your account."
     });

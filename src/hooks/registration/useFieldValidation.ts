@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,8 +37,9 @@ export function useFieldValidation() {
       updateFieldState('email', { isValidating: true });
       
       try {
-        const { data, error } = await supabase.rpc('check_email_exists', {
-          email_to_check: email.toLowerCase().trim()
+        // Use role-specific email check for dealer registration
+        const { data, error } = await supabase.rpc('check_email_exists_for_dealer_role', {
+          p_email: email.toLowerCase().trim()
         });
 
         if (error) {
@@ -53,20 +53,30 @@ export function useFieldValidation() {
           return;
         }
 
-        const emailExists = data?.exists || data > 0 || data === true;
+        const emailExistsAsDealer = data?.exists || false;
+        const emailRegistered = data?.email_registered || false;
+        const existingRoles = data?.existing_roles || [];
         
-        if (emailExists) {
+        if (emailExistsAsDealer) {
           updateFieldState('email', { isValid: false, isValidating: false });
           toast({
-            title: "Email Already Registered",
-            description: "This email is already associated with an account. Please use a different email or sign in.",
+            title: "Email Already Registered as Dealer",
+            description: "This email is already associated with a dealer account. Please use a different email or sign in.",
             variant: "destructive",
+          });
+        } else if (emailRegistered && existingRoles.length > 0) {
+          // Email exists but not as dealer - show informative message
+          const rolesList = existingRoles.join(', ');
+          updateFieldState('email', { isValid: true, isValidating: false });
+          toast({
+            title: "Email Available for Dealer Registration ✓",
+            description: `This email is registered as ${rolesList} but available for dealer registration`,
           });
         } else {
           updateFieldState('email', { isValid: true, isValidating: false });
           toast({
             title: "Email Available ✓",
-            description: "This email address is available for registration",
+            description: "This email address is available for dealer registration",
           });
         }
       } catch (error) {

@@ -1,5 +1,9 @@
 
-// This is a barrel file to re-export handlers from their individual files
+import { handleDealerRegister, handleCheckDealerEmail } from "./registration-handler.ts";
+import { handleDealerLogin } from "./login-handler.ts";
 
-export { handleDealerRegister } from "./registration-handler.ts";
-export { handleDealerLogin } from "./login-handler.ts";
+export { 
+  handleDealerRegister,
+  handleDealerLogin,
+  handleCheckDealerEmail
+};

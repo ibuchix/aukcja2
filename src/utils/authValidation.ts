@@ -38,6 +38,7 @@ export const safeTrim = (value: string | null | undefined): string => {
   return value.trim();
 };
 
+// Updated to check for dealer role specifically during registration
 export const checkAccountExists = async (email: string, isRegistration: boolean = true): Promise<boolean> => {
   if (!email || !email.trim()) {
     console.warn("Empty email provided to checkAccountExists");
@@ -48,32 +49,62 @@ export const checkAccountExists = async (email: string, isRegistration: boolean 
   console.log(`Checking if account exists with email: ${normalizedEmail}, isRegistration: ${isRegistration}`);
   
   try {
-    // Direct API call to check if email exists - most reliable method
-    const { data, error } = await fetch(`https://sdvakfhmoaoucmhbhwvy.supabase.co/auth/v1/user-exists`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M',
-      },
-      body: JSON.stringify({ email: normalizedEmail })
-    }).then(res => res.json());
-
-    if (error) {
-      console.error("Error checking if account exists:", error);
-      // Fall through to next method
-    } else if (data && typeof data === 'object') {
-      // If we have a clear response about existence, return that
-      if ('exists' in data) {
-        console.log(`Email existence check result: ${data.exists}`);
-        return !!data.exists;
-      }
-    }
-
-    // If the check doesn't conclusively say the email exists, and this is for registration,
-    // we assume the email doesn't exist to allow registration to proceed
+    // For dealer registration, use role-specific check
     if (isRegistration) {
-      console.log("No conclusive result from existence check, assuming email is available for registration");
-      return false;
+      const { data, error } = await fetch(`https://sdvakfhmoaoucmhbhwvy.supabase.co/functions/v1/dealer-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M',
+        },
+        body: JSON.stringify({
+          action: 'check_dealer_email',
+          email: normalizedEmail
+        })
+      }).then(res => res.json());
+
+      if (error) {
+        console.error("Error checking if email exists as dealer:", error);
+        // Fall through to database function check
+      } else if (data && typeof data === 'object') {
+        // If we have a clear response about dealer existence
+        if ('exists' in data) {
+          console.log(`Email existence as dealer check result: ${data.exists}`);
+          return !!data.exists;
+        }
+      }
+      
+      // Fallback to database function
+      const { data: dbData, error: dbError } = await supabase.rpc(
+        "check_email_exists_for_dealer_role",
+        { p_email: normalizedEmail }
+      );
+      
+      if (!dbError && dbData) {
+        console.log("check_email_exists_for_dealer_role result:", dbData);
+        return !!dbData.exists;
+      }
+    } else {
+      // For login or other scenarios, use general email exists check
+      const { data, error } = await fetch(`https://sdvakfhmoaoucmhbhwvy.supabase.co/auth/v1/user-exists`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M',
+        },
+        body: JSON.stringify({ email: normalizedEmail })
+      }).then(res => res.json());
+
+      if (error) {
+        console.error("Error checking if account exists:", error);
+        // Fall through to next method
+      } else if (data && typeof data === 'object') {
+        // If we have a clear response about existence, return that
+        if ('exists' in data) {
+          console.log(`Email existence check result: ${data.exists}`);
+          return !!data.exists;
+        }
+      }
     }
 
     // For login flows, we can be more lenient with common domains to prevent turning away legitimate users

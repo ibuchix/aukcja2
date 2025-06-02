@@ -6,6 +6,7 @@ import { useEnhancedFormValidation } from "./useEnhancedFormValidation";
 import { signupDealer } from "@/integrations/dealers/dealerService";
 import { checkBusinessRegistryExists } from "@/services/validation/businessRegistryService";
 import { checkAccountExists } from "@/utils/authValidation";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Custom hook for handling dealer registration form submission with enhanced validation and toast feedback
@@ -47,15 +48,32 @@ export function useRegistrationSubmission() {
         description: "Checking email and business registry in our database...",
       });
       
-      // Check if email already exists - passing true to indicate this is a registration flow
-      const emailExists = await checkAccountExists(sanitizedData.email, true);
-      if (emailExists) {
-        toast({
-          title: "Email Already In Use",
-          description: "An account with this email already exists. Please use a different email or login to your existing account.",
-          variant: "destructive",
+      // Check if email already exists as dealer - using role-specific check
+      try {
+        const { data, error } = await supabase.rpc('check_email_exists_for_dealer_role', {
+          p_email: sanitizedData.email.toLowerCase().trim()
         });
-        return false;
+        
+        if (!error && data && data.exists) {
+          toast({
+            title: "Email Already In Use",
+            description: "This email is already registered as a dealer. Please use a different email or login to your existing account.",
+            variant: "destructive",
+          });
+          return false;
+        }
+      } catch (emailCheckError) {
+        console.error("Error checking email as dealer:", emailCheckError);
+        // Fall back to traditional email check
+        const emailExists = await checkAccountExists(sanitizedData.email, true);
+        if (emailExists) {
+          toast({
+            title: "Email Already In Use",
+            description: "An account with this email already exists. Please use a different email or login to your existing account.",
+            variant: "destructive",
+          });
+          return false;
+        }
       }
       
       // Check if business registry number already exists
