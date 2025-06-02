@@ -94,30 +94,22 @@ export default function Profile() {
         <CardContent>
           <div className="grid gap-4">
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Dealership Information</h3>
+              <h3 className="text-lg font-semibold">Dealer Information</h3>
               <div className="grid gap-2">
+                <div>
+                  <p className="text-gray-600">Name:</p>
+                  <p className="font-medium">{displayProfile.supervisor_name || "Not available"}</p>
+                </div>
                 <div>
                   <p className="text-gray-600">Dealership Name:</p>
                   <p className="font-medium">{displayProfile.dealership_name || "Not available"}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Supervisor Name:</p>
-                  <p className="font-medium">{displayProfile.supervisor_name || "Not available"}</p>
                 </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Business Details</h3>
+              <h3 className="text-lg font-semibold">Company Information</h3>
               <div className="grid gap-2">
-                <div>
-                  <p className="text-gray-600">Tax ID:</p>
-                  <p className="font-medium">{displayProfile.tax_id || "Not available"}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Business Registry Number:</p>
-                  <p className="font-medium">{displayProfile.business_registry_number || "Not available"}</p>
-                </div>
                 <div>
                   <p className="text-gray-600">Address:</p>
                   <p className="font-medium">{displayProfile.address || "Not available"}</p>
@@ -126,12 +118,20 @@ export default function Profile() {
                   <p className="text-gray-600">License Number:</p>
                   <p className="font-medium">{displayProfile.license_number || "Not available"}</p>
                 </div>
+                <div>
+                  <p className="text-gray-600">Tax ID:</p>
+                  <p className="font-medium">{displayProfile.tax_id || "Not available"}</p>
+                </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Account Status</h3>
+              <h3 className="text-lg font-semibold">Additional Details</h3>
               <div className="grid gap-2">
+                <div>
+                  <p className="text-gray-600">Business Registry Number:</p>
+                  <p className="font-medium">{displayProfile.business_registry_number || "Not available"}</p>
+                </div>
                 <div>
                   <p className="text-gray-600">Verification Status:</p>
                   <p className="font-medium capitalize">{displayProfile.verification_status || "Pending"}</p>
