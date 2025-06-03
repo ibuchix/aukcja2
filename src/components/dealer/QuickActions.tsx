@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Gavel, FileText } from "lucide-react";
+import { Gavel, FileText, Trophy } from "lucide-react";
 
 export function QuickActions() {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ export function QuickActions() {
     <div className="mb-6">
       <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <ActionButton
           icon={<Gavel className="h-5 w-5" />}
           title="My Bids"
@@ -25,6 +25,13 @@ export function QuickActions() {
           link="/dealer/documents"
           variant="yellow"
         />
+        <ActionButton
+          icon={<Trophy className="h-5 w-5" />}
+          title="Won Vehicles"
+          description="View your auction wins"
+          link="/dealer/won-vehicles"
+          variant="blue"
+        />
       </div>
     </div>
   );
@@ -35,7 +42,7 @@ interface ActionButtonProps {
   title: string;
   description: string;
   link: string;
-  variant: 'green' | 'yellow';
+  variant: 'green' | 'yellow' | 'blue';
 }
 
 function ActionButton({ icon, title, description, link, variant }: ActionButtonProps) {
@@ -43,17 +50,20 @@ function ActionButton({ icon, title, description, link, variant }: ActionButtonP
 
   const variantStyles = {
     green: "bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200",
-    yellow: "bg-gradient-to-br from-yellow-50 to-yellow-100 border-2 border-yellow-200"
+    yellow: "bg-gradient-to-br from-yellow-50 to-yellow-100 border-2 border-yellow-200",
+    blue: "bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200"
   };
 
   const iconColors = {
     green: "text-success",
-    yellow: "text-yellow-600"
+    yellow: "text-yellow-600",
+    blue: "text-blue-600"
   };
 
   const textColors = {
     green: "text-success",
-    yellow: "text-yellow-600"
+    yellow: "text-yellow-600",
+    blue: "text-blue-600"
   };
 
   return (
@@ -71,7 +81,9 @@ function ActionButton({ icon, title, description, link, variant }: ActionButtonP
       </div>
       <p className="text-subtitle-text mb-3">{description}</p>
       <span className={`${textColors[variant]} font-medium group-hover:underline`}>
-        {title === "My Bids" ? "View My Bids" : "Manage Documents"} →
+        {title === "My Bids" ? "View My Bids" : 
+         title === "Won Vehicles" ? "View Won Vehicles" : 
+         "Manage Documents"} →
       </span>
     </div>
   );

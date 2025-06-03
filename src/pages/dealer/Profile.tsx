@@ -1,159 +1,126 @@
 
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Pencil, Loader2, AlertCircle } from "lucide-react";
-import { useDealerProfile } from "@/contexts/dealer-profile";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import Navbar from "@/components/Navbar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info, Mail } from "lucide-react";
+import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 
 export default function Profile() {
   const navigate = useNavigate();
-  const { 
-    displayProfile, 
-    isLoading, 
-    error, 
-    refreshProfile 
-  } = useDealerProfile();
+  const { dealerProfile, isLoading } = useDealerProfileSimple();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
+    };
+    checkAuth();
+  }, [navigate]);
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Loading Profile...</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-center space-x-2">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              <p>Fetching your profile details...</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
+          Loading profile...
+        </div>
       </div>
     );
   }
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-4">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="space-y-4">
-            <p>Error loading profile: {error}</p>
-            <div className="flex gap-2">
-              <Button onClick={refreshProfile} variant="outline" size="sm">
-                Retry
-              </Button>
-              <Button 
-                onClick={() => navigate('/complete-registration')} 
-                variant="outline" 
-                size="sm"
-              >
-                Complete Registration
-              </Button>
-            </div>
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  if (!displayProfile) {
-    return (
-      <div className="container mx-auto p-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Profile Not Available</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>No profile data found. Please complete your registration.</p>
-            <Button 
-              onClick={() => navigate('/complete-registration')} 
-              className="mt-4"
-            >
-              Complete Registration
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const handleEditClick = () => {
-    // TODO: Implement edit functionality
-    console.log("Edit profile clicked");
-  };
 
   return (
-    <div className="container mx-auto p-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">Dealer Profile</CardTitle>
-          <CardDescription>View and manage your dealer profile information.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4">
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Dealer Information</h3>
-              <div className="grid gap-2">
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">Dealer Profile</h1>
+        
+        {/* Contact Notice */}
+        <Alert className="mb-6">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Profile Changes:</strong> To update any profile information, please contact our support team at{" "}
+            <a href="mailto:support@example.com" className="inline-flex items-center text-primary hover:underline">
+              <Mail className="h-3 w-3 mr-1" />
+              support@example.com
+            </a>
+            {" "}or call us at +1 (555) 123-4567. All changes require verification and approval.
+          </AlertDescription>
+        </Alert>
+
+        {/* Profile Information - Read Only */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-gray-600">Name:</p>
-                  <p className="font-medium">{displayProfile.supervisor_name || "Not available"}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Supervisor Name
+                  </label>
+                  <div className="p-3 bg-gray-50 rounded-md text-gray-900">
+                    {dealerProfile?.supervisor_name || 'Not provided'}
+                  </div>
                 </div>
+                
                 <div>
-                  <p className="text-gray-600">Dealership Name:</p>
-                  <p className="font-medium">{displayProfile.dealership_name || "Not available"}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Dealership Name
+                  </label>
+                  <div className="p-3 bg-gray-50 rounded-md text-gray-900">
+                    {dealerProfile?.dealership_name || 'Not provided'}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Address
+                </label>
+                <div className="p-3 bg-gray-50 rounded-md text-gray-900">
+                  {dealerProfile?.address || 'Not provided'}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number
+                </label>
+                <div className="p-3 bg-gray-50 rounded-md text-gray-900">
+                  {dealerProfile?.phone_number || 'Not provided'}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Registration Date
+                </label>
+                <div className="p-3 bg-gray-50 rounded-md text-gray-900">
+                  {dealerProfile?.created_at ? new Date(dealerProfile.created_at).toLocaleDateString() : 'Not available'}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Verification Status
+                </label>
+                <div className="p-3 bg-gray-50 rounded-md">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Verified
+                  </span>
                 </div>
               </div>
             </div>
-
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Company Information</h3>
-              <div className="grid gap-2">
-                <div>
-                  <p className="text-gray-600">Address:</p>
-                  <p className="font-medium">{displayProfile.address || "Not available"}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">License Number:</p>
-                  <p className="font-medium">{displayProfile.license_number || "Not available"}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Tax ID:</p>
-                  <p className="font-medium">{displayProfile.tax_id || "Not available"}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Additional Details</h3>
-              <div className="grid gap-2">
-                <div>
-                  <p className="text-gray-600">Business Registry Number:</p>
-                  <p className="font-medium">{displayProfile.business_registry_number || "Not available"}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Verification Status:</p>
-                  <p className="font-medium capitalize">{displayProfile.verification_status || "Pending"}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Verified:</p>
-                  <p className={`font-medium ${displayProfile.is_verified ? 'text-green-600' : 'text-yellow-600'}`}>
-                    {displayProfile.is_verified ? 'Yes' : 'Pending'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end mt-4">
-            <Button variant="secondary" onClick={handleEditClick}>
-              <Pencil className="w-4 h-4 mr-2" />
-              Edit Profile
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

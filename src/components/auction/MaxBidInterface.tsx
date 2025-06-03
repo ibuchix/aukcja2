@@ -1,6 +1,5 @@
 
 import { BidNotificationHandler } from "./BidNotificationHandler";
-import { BidHistory } from "./BidHistory";
 import { ProxyBidManager } from "./ProxyBidManager";
 
 interface MaxBidInterfaceProps {
@@ -35,8 +34,6 @@ export const MaxBidInterface = ({
         minimumIncrement={minimumIncrement}
         reservePrice={reservePrice}
       />
-      
-      <BidHistory carId={carId} />
     </div>
   );
 };

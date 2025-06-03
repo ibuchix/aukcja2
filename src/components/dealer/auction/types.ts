@@ -1,4 +1,3 @@
-
 /**
  * Core auction types for the dealer dashboard
  */
@@ -30,15 +29,18 @@ export interface Auction {
 
 // Filters that can be applied to auctions
 export interface AuctionFilters {
-  priceMin?: number;
-  priceMax?: number;
   make?: string;
   model?: string;
+  priceMin?: number;
+  priceMax?: number;
   yearMin?: number;
   yearMax?: number;
   mileageMin?: number;
   mileageMax?: number;
-  searchQuery?: string;
+  transmission?: string;
+  fuelType?: string;
+  serviceHistory?: string;
+  distance?: string;
 }
 
 // Sort options for auction listings

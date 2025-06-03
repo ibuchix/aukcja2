@@ -6,11 +6,12 @@ import {
 import Auth from "./pages/Auth";
 import DealerDashboard from "./pages/dealer/Dashboard"; 
 import Documents from "./pages/dealer/Documents";
+import WonVehicles from "./pages/dealer/WonVehicles";
 import CompleteRegistration from "./pages/CompleteRegistration";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/dealer/Profile";
 import HowItWorks from "./pages/HowItWorks";
-import Index from "./pages/Index"; // Import Index page
+import Index from "./pages/Index";
 
 function App() {
   return (
@@ -60,6 +61,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Documents />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dealer/won-vehicles"
+          element={
+            <ProtectedRoute>
+              <WonVehicles />
             </ProtectedRoute>
           }
         />
