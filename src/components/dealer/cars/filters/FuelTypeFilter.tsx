@@ -26,14 +26,14 @@ export const FuelTypeFilter: React.FC<FuelTypeFilterProps> = ({
     <div className="space-y-2">
       <Label className="text-sm font-medium">Fuel Type</Label>
       <Select 
-        value={value || ""} 
-        onValueChange={(val) => onChange(val || undefined)}
+        value={value || "any"} 
+        onValueChange={(val) => onChange(val === "any" ? undefined : val)}
       >
         <SelectTrigger>
           <SelectValue placeholder="Any" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Any Fuel Type</SelectItem>
+          <SelectItem value="any">Any Fuel Type</SelectItem>
           {FUEL_TYPE_OPTIONS.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}

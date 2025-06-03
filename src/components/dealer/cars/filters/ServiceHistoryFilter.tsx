@@ -23,14 +23,14 @@ export const ServiceHistoryFilter: React.FC<ServiceHistoryFilterProps> = ({
     <div className="space-y-2">
       <Label className="text-sm font-medium">Service History</Label>
       <Select 
-        value={value || ""} 
-        onValueChange={(val) => onChange(val || undefined)}
+        value={value || "any"} 
+        onValueChange={(val) => onChange(val === "any" ? undefined : val)}
       >
         <SelectTrigger>
           <SelectValue placeholder="Any" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Any Service History</SelectItem>
+          <SelectItem value="any">Any Service History</SelectItem>
           {SERVICE_HISTORY_OPTIONS.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}

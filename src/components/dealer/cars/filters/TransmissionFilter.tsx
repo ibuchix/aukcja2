@@ -24,14 +24,14 @@ export const TransmissionFilter: React.FC<TransmissionFilterProps> = ({
     <div className="space-y-2">
       <Label className="text-sm font-medium">Transmission</Label>
       <Select 
-        value={value || ""} 
-        onValueChange={(val) => onChange(val || undefined)}
+        value={value || "any"} 
+        onValueChange={(val) => onChange(val === "any" ? undefined : val)}
       >
         <SelectTrigger>
           <SelectValue placeholder="Any" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Any Transmission</SelectItem>
+          <SelectItem value="any">Any Transmission</SelectItem>
           {TRANSMISSION_OPTIONS.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}

@@ -26,14 +26,14 @@ export const DistanceFilter: React.FC<DistanceFilterProps> = ({
     <div className="space-y-2">
       <Label className="text-sm font-medium">Distance</Label>
       <Select 
-        value={value || ""} 
-        onValueChange={(val) => onChange(val || undefined)}
+        value={value || "any"} 
+        onValueChange={(val) => onChange(val === "any" ? undefined : val)}
       >
         <SelectTrigger>
           <SelectValue placeholder="Any distance" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Any Distance</SelectItem>
+          <SelectItem value="any">Any Distance</SelectItem>
           {DISTANCE_OPTIONS.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}

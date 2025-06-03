@@ -55,14 +55,14 @@ export const MakeModelFilter: React.FC<MakeModelFilterProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Select 
-              value={selectedMake || ""} 
-              onValueChange={(value) => onMakeChange(value || undefined)}
+              value={selectedMake || "any"} 
+              onValueChange={(value) => onMakeChange(value === "any" ? undefined : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select make" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Makes</SelectItem>
+                <SelectItem value="any">All Makes</SelectItem>
                 {CAR_MAKES.map((make) => (
                   <SelectItem key={make} value={make}>
                     {make}
@@ -74,15 +74,15 @@ export const MakeModelFilter: React.FC<MakeModelFilterProps> = ({
           
           <div>
             <Select 
-              value={selectedModel || ""} 
-              onValueChange={(value) => onModelChange(value || undefined)}
+              value={selectedModel || "any"} 
+              onValueChange={(value) => onModelChange(value === "any" ? undefined : value)}
               disabled={!selectedMake || availableModels.length === 0}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select model" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Models</SelectItem>
+                <SelectItem value="any">All Models</SelectItem>
                 {availableModels.map((model) => (
                   <SelectItem key={model} value={model}>
                     {model}
