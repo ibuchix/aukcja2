@@ -1,5 +1,5 @@
 
-import { Bid } from "@/components/auction/bid-history/types";
+// Remove the import for deleted bid-history types since we removed bid history functionality
 
 export interface BidActivity {
   id: string;

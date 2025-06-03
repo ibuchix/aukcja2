@@ -91,10 +91,28 @@ export default function Profile() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
+                  Tax ID
                 </label>
                 <div className="p-3 bg-gray-50 rounded-md text-gray-900">
-                  {dealerProfile?.phone_number || 'Not provided'}
+                  {dealerProfile?.tax_id || 'Not provided'}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Registry Number
+                </label>
+                <div className="p-3 bg-gray-50 rounded-md text-gray-900">
+                  {dealerProfile?.business_registry_number || 'Not provided'}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  License Number
+                </label>
+                <div className="p-3 bg-gray-50 rounded-md text-gray-900">
+                  {dealerProfile?.license_number || 'Not provided'}
                 </div>
               </div>
 
@@ -113,7 +131,7 @@ export default function Profile() {
                 </label>
                 <div className="p-3 bg-gray-50 rounded-md">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Verified
+                    {dealerProfile?.verification_status || 'Pending'}
                   </span>
                 </div>
               </div>

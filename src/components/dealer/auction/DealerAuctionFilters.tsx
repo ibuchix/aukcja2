@@ -18,7 +18,8 @@ export const DealerAuctionFilters = ({
   const [showFilters, setShowFilters] = useState<boolean>(false);
 
   const handleFilterChange = (key: keyof AuctionFilters, value: string) => {
-    const numValue = key !== 'make' && key !== 'model' && key !== 'searchQuery' ? Number(value) || undefined : value;
+    // Remove the searchQuery comparison since we don't have search functionality anymore
+    const numValue = key !== 'make' && key !== 'model' && key !== 'transmission' && key !== 'fuelType' && key !== 'serviceHistory' && key !== 'distance' ? Number(value) || undefined : value;
     const newFilters = { ...filters, [key]: numValue };
     setFilters(newFilters);
     onFiltersChange(newFilters);
