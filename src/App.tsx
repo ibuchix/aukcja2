@@ -1,3 +1,4 @@
+
 import {
   Routes,
   Route,
@@ -7,6 +8,7 @@ import Auth from "./pages/Auth";
 import DealerDashboard from "./pages/dealer/Dashboard"; 
 import Documents from "./pages/dealer/Documents";
 import WonVehicles from "./pages/dealer/WonVehicles";
+import Bids from "./pages/dealer/Bids";
 import CompleteRegistration from "./pages/CompleteRegistration";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/dealer/Profile";
@@ -52,7 +54,7 @@ function App() {
           path="/dealer/bids"
           element={
             <ProtectedRoute>
-              <DealerDashboard />
+              <Bids />
             </ProtectedRoute>
           }
         />
