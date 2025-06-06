@@ -61,7 +61,12 @@ export function useDealerBids(dealerProfileId: string | undefined) {
   } = useQuery({
     queryKey,
     queryFn: async () => {
-      if (!dealerProfileId) return [];
+      if (!dealerProfileId) {
+        console.log('No dealer profile ID provided');
+        return [];
+      }
+
+      console.log('Fetching bids for dealer:', dealerProfileId);
 
       // Get all bids for this dealer
       const { data: activeBids, error: bidsError } = await supabase
@@ -76,22 +81,34 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         .eq("dealer_id", dealerProfileId)
         .order("created_at", { ascending: false });
 
-      if (bidsError) throw bidsError;
+      console.log('Bids query result:', { activeBids, bidsError });
+
+      if (bidsError) {
+        console.error('Error fetching bids:', bidsError);
+        throw bidsError;
+      }
       
       if (!activeBids || activeBids.length === 0) {
+        console.log('No bids found for dealer');
         return [] as MyBid[];
       }
 
+      console.log('Found bids:', activeBids);
+
       // Filter to ensure we only have valid bids without errors
       const validActiveBids = safelyFilterData(activeBids, isValidBidData);
+      console.log('Valid bids after filtering:', validActiveBids);
 
       // Get car details for these bids
       const carIds = validActiveBids.map(bid => bid.car_id).filter(Boolean);
       
       if (carIds.length === 0) {
+        console.log('No valid car IDs found');
         return [] as MyBid[];
       }
       
+      console.log('Fetching car details for IDs:', carIds);
+
       // Get cars without filtering by auction_status to show all bids
       const { data: cars, error: carsError } = await supabase
         .from("cars")
@@ -107,7 +124,12 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         `)
         .in("id", carIds);
       
-      if (carsError) throw carsError;
+      console.log('Cars query result:', { cars, carsError });
+      
+      if (carsError) {
+        console.error('Error fetching cars:', carsError);
+        throw carsError;
+      }
       
       // Create a lookup table for cars
       const carsById: Record<string, CarData> = {};
@@ -115,6 +137,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       // Filter valid car records and populate the lookup
       if (cars && Array.isArray(cars)) {
         const validCars = safelyFilterData(cars, isValidCarData);
+        console.log('Valid cars after filtering:', validCars);
         
         validCars.forEach(car => {
           if (car && car.id) {
@@ -124,11 +147,13 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       }
 
       // Get proxy bids for these cars
-      const { data: proxyBidsData } = await supabase
+      const { data: proxyBidsData, error: proxyBidsError } = await supabase
         .from("proxy_bids")
         .select("car_id, max_bid_amount")
         .eq("dealer_id", dealerProfileId)
         .in("car_id", carIds);
+
+      console.log('Proxy bids query result:', { proxyBidsData, proxyBidsError });
         
       // Create a lookup for proxy bids
       const proxyBidsByCarId: Record<string, ProxyBidData> = {};
@@ -149,6 +174,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       const result = validActiveBids
         .map(bid => {
           if (!bid.car_id || !carsById[bid.car_id]) {
+            console.log('Skipping bid due to missing car:', bid);
             return null; // Skip if bid is invalid or car not found
           }
           
@@ -189,11 +215,14 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         })
         .filter((bid): bid is MyBid => bid !== null);
         
+      console.log('Final result bids:', result);
       return result;
     },
     enabled: !!dealerProfileId,
     // Refetch every 30 seconds
     refetchInterval: 30 * 1000,
+    // Reduce stale time to ensure fresh data after bid placement
+    staleTime: 5 * 1000, // 5 seconds
   });
 
   // Set up realtime listeners for bid status changes
@@ -213,6 +242,22 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         },
         (payload) => {
           console.log('Bid status changed:', payload);
+          // Invalidate query to trigger a refetch
+          queryClient.invalidateQueries({
+            queryKey: queryKey,
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'bids',
+          filter: `dealer_id=eq.${dealerProfileId}`,
+        },
+        (payload) => {
+          console.log('New bid inserted:', payload);
           // Invalidate query to trigger a refetch
           queryClient.invalidateQueries({
             queryKey: queryKey,

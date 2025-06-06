@@ -10,6 +10,8 @@ export function useBidActions(dealerProfileId: string | undefined) {
 
   const cancelBidMutation = useMutation({
     mutationFn: async ({ carId, bidId }: { carId: string; bidId: string }) => {
+      console.log('Cancelling bid:', { carId, bidId, dealerProfileId });
+
       // Delete the bid record
       const { error } = await supabase
         .from("bids")
@@ -17,18 +19,28 @@ export function useBidActions(dealerProfileId: string | undefined) {
         .eq("car_id", carId)
         .eq("dealer_id", dealerProfileId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting bid:', error);
+        throw error;
+      }
 
       // Also delete any proxy bids for this car
-      await supabase
+      const { error: proxyError } = await supabase
         .from("proxy_bids")
         .delete()
         .eq("car_id", carId)
         .eq("dealer_id", dealerProfileId);
 
+      if (proxyError) {
+        console.warn('Error deleting proxy bid (may not exist):', proxyError);
+        // Don't throw error for proxy bid deletion failure
+      }
+
       return { carId, bidId };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Bid cancelled successfully:', data);
+      
       toast({
         title: "Bid Cancelled",
         description: "Your bid has been successfully cancelled.",
@@ -42,6 +54,8 @@ export function useBidActions(dealerProfileId: string | undefined) {
       }
     },
     onError: (error: any) => {
+      console.error('Failed to cancel bid:', error);
+      
       toast({
         title: "Error",
         description: error.message || "Failed to cancel bid",
@@ -64,6 +78,8 @@ export function useBidActions(dealerProfileId: string | undefined) {
       isProxyBid?: boolean;
       maxProxyAmount?: number;
     }) => {
+      console.log('Modifying bid:', { carId, bidId, newAmount, isProxyBid, maxProxyAmount, dealerProfileId });
+
       // Use the place_bid function to update the bid
       const { data, error } = await supabase.rpc('place_bid', {
         p_car_id: carId,
@@ -73,7 +89,12 @@ export function useBidActions(dealerProfileId: string | undefined) {
         p_max_proxy_amount: maxProxyAmount
       });
 
-      if (error) throw error;
+      console.log('Modify bid response:', { data, error });
+
+      if (error) {
+        console.error('Error modifying bid:', error);
+        throw error;
+      }
       
       if (!data.success) {
         throw new Error(data.error || 'Failed to update bid');
@@ -82,6 +103,8 @@ export function useBidActions(dealerProfileId: string | undefined) {
       return { carId, bidId, newAmount };
     },
     onSuccess: (data) => {
+      console.log('Bid modified successfully:', data);
+      
       toast({
         title: "Bid Updated",
         description: `Your bid has been updated to ${new Intl.NumberFormat('en-US', {
@@ -98,6 +121,8 @@ export function useBidActions(dealerProfileId: string | undefined) {
       }
     },
     onError: (error: any) => {
+      console.error('Failed to modify bid:', error);
+      
       toast({
         title: "Error",
         description: error.message || "Failed to update bid",

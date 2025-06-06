@@ -33,6 +33,14 @@ export const useBidFormActions = ({
       setIsSubmitting(true);
       const numericBidAmount = parseFloat(bidAmount);
       
+      console.log('Placing bid:', {
+        carId,
+        dealerId,
+        amount: numericBidAmount,
+        isProxyBid,
+        maxProxyAmount
+      });
+      
       if (isNaN(numericBidAmount)) {
         throw new Error("Please enter a valid number");
       }
@@ -41,7 +49,7 @@ export const useBidFormActions = ({
         throw new Error(`Bid must be higher than current bid of ${currentHighestBid.toLocaleString()} PLN`);
       }
 
-      // Call the place_bid function on the server
+      // Call the place_bid function on the server with explicit parameter names
       const { data, error } = await supabase.rpc('place_bid', {
         p_car_id: carId,
         p_dealer_id: dealerId,
@@ -50,7 +58,10 @@ export const useBidFormActions = ({
         p_max_proxy_amount: maxProxyAmount
       });
 
+      console.log('Bid placement response:', { data, error });
+
       if (error) {
+        console.error('Supabase RPC error:', error);
         throw error;
       }
       
@@ -59,6 +70,8 @@ export const useBidFormActions = ({
         if (!data.success) {
           throw new Error(data.error || 'Failed to place bid');
         }
+
+        console.log('Bid placed successfully:', data);
 
         // Reset retry count on success
         setRetryCount(0);
@@ -75,6 +88,7 @@ export const useBidFormActions = ({
 
         return;
       } else {
+        console.error('Invalid response structure:', data);
         throw new Error('Invalid response from server');
       }
     } catch (error) {
