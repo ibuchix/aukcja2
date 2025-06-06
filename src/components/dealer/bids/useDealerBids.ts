@@ -63,7 +63,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
     queryFn: async () => {
       if (!dealerProfileId) return [];
 
-      // Get active bids for this dealer
+      // Get all bids for this dealer (not just from active auctions)
       const { data: activeBids, error: bidsError } = await supabase
         .from("bids")
         .select(`
@@ -92,6 +92,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         return [] as MyBid[];
       }
       
+      // Get cars without filtering by auction_status to show all bids
       const { data: cars, error: carsError } = await supabase
         .from("cars")
         .select(`
@@ -104,8 +105,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
           current_bid,
           auction_status
         `)
-        .in("id", carIds)
-        .eq("auction_status", "active");
+        .in("id", carIds);
       
       if (carsError) throw carsError;
       
@@ -145,7 +145,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         });
       }
 
-      // Filter bids for active auctions only and merge with car data
+      // Merge bids with car data (show all bids, not just active auctions)
       const result = validActiveBids
         .map(bid => {
           if (!bid.car_id || !carsById[bid.car_id]) {

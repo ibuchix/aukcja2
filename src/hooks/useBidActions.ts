@@ -14,8 +14,8 @@ export function useBidActions(dealerProfileId: string | undefined) {
       const { error } = await supabase
         .from("bids")
         .delete()
-        .eq("id", bidId)
-        .eq("car_id", carId);
+        .eq("car_id", carId)
+        .eq("dealer_id", dealerProfileId);
 
       if (error) throw error;
 
@@ -64,29 +64,19 @@ export function useBidActions(dealerProfileId: string | undefined) {
       isProxyBid?: boolean;
       maxProxyAmount?: number;
     }) => {
-      // Update the bid amount
-      const { error: bidError } = await supabase
-        .from("bids")
-        .update({ amount: newAmount, updated_at: new Date().toISOString() })
-        .eq("id", bidId)
-        .eq("car_id", carId);
+      // Use the place_bid function to update the bid
+      const { data, error } = await supabase.rpc('place_bid', {
+        p_car_id: carId,
+        p_dealer_id: dealerProfileId,
+        p_amount: newAmount,
+        p_is_proxy: isProxyBid,
+        p_max_proxy_amount: maxProxyAmount
+      });
 
-      if (bidError) throw bidError;
-
-      // If it's a proxy bid, update or create proxy bid record
-      if (isProxyBid && maxProxyAmount) {
-        const { error: proxyError } = await supabase
-          .from("proxy_bids")
-          .upsert({
-            car_id: carId,
-            dealer_id: dealerProfileId,
-            max_bid_amount: maxProxyAmount,
-            updated_at: new Date().toISOString(),
-          }, {
-            onConflict: 'car_id,dealer_id'
-          });
-
-        if (proxyError) throw proxyError;
+      if (error) throw error;
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to update bid');
       }
 
       return { carId, bidId, newAmount };

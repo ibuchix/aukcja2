@@ -14,7 +14,7 @@ interface UseBidFormActionsProps {
 interface UseBidFormActionsResult {
   isSubmitting: boolean;
   retryCount: number;
-  handlePlaceBid: (bidAmount: string) => Promise<void>;
+  handlePlaceBid: (bidAmount: string, isProxyBid?: boolean, maxProxyAmount?: number) => Promise<void>;
 }
 
 export const useBidFormActions = ({
@@ -28,7 +28,7 @@ export const useBidFormActions = ({
   const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
 
-  const handlePlaceBid = async (bidAmount: string) => {
+  const handlePlaceBid = async (bidAmount: string, isProxyBid: boolean = false, maxProxyAmount?: number) => {
     try {
       setIsSubmitting(true);
       const numericBidAmount = parseFloat(bidAmount);
@@ -38,12 +38,7 @@ export const useBidFormActions = ({
       }
 
       if (numericBidAmount <= currentHighestBid) {
-        throw new Error(`Bid must be higher than current bid of $${currentHighestBid}`);
-      }
-
-      // Check if the bid is divisible by the minimum increment
-      if (numericBidAmount % minimumIncrement !== 0) {
-        throw new Error(`Bid must be divisible by the minimum increment of $${minimumIncrement}`);
+        throw new Error(`Bid must be higher than current bid of ${currentHighestBid.toLocaleString()} PLN`);
       }
 
       // Call the place_bid function on the server
@@ -51,7 +46,8 @@ export const useBidFormActions = ({
         p_car_id: carId,
         p_dealer_id: dealerId,
         p_amount: numericBidAmount,
-        p_is_proxy: false
+        p_is_proxy: isProxyBid,
+        p_max_proxy_amount: maxProxyAmount
       });
 
       if (error) {
@@ -72,7 +68,7 @@ export const useBidFormActions = ({
             // Wait before retrying
             await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 500));
             setIsSubmitting(false);
-            return handlePlaceBid(bidAmount);
+            return handlePlaceBid(bidAmount, isProxyBid, maxProxyAmount);
           } else {
             throw new Error("The auction is very active right now. Please try again in a moment.");
           }
@@ -92,7 +88,7 @@ export const useBidFormActions = ({
 
         toast({
           title: "Bid Placed",
-          description: `Your bid of $${numericBidAmount.toLocaleString()} has been placed successfully`,
+          description: `Your bid of ${numericBidAmount.toLocaleString()} PLN has been placed successfully`,
         });
 
         // Call onBidPlaced callback if provided

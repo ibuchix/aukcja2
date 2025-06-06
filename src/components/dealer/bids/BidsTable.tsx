@@ -64,9 +64,19 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
     }
   };
 
-  const isAuctionActive = (bid: MyBid) => {
+  // Check if auction has started (not ended) - bids can only be modified before auction starts
+  const hasAuctionStarted = (bid: MyBid) => {
     if (!bid.car?.auction_end_time) return false;
-    return new Date(bid.car.auction_end_time) > new Date();
+    const auctionEndTime = new Date(bid.car.auction_end_time);
+    const now = new Date();
+    // Auction has started if we're within 24 hours of the end time and status is active
+    return (auctionEndTime.getTime() - now.getTime()) <= (24 * 60 * 60 * 1000) && 
+           bid.car.auction_status === 'active';
+  };
+
+  const isAuctionEnded = (bid: MyBid) => {
+    if (!bid.car?.auction_end_time) return false;
+    return new Date(bid.car.auction_end_time) <= new Date();
   };
 
   return (
@@ -85,8 +95,9 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
           </TableHeader>
           <TableBody>
             {bids.map((bid) => {
-              const auctionActive = isAuctionActive(bid);
-              const auctionEnded = bid.car?.auction_end_time && new Date(bid.car.auction_end_time) <= new Date();
+              const auctionStarted = hasAuctionStarted(bid);
+              const auctionEnded = isAuctionEnded(bid);
+              const canModify = !auctionStarted && !auctionEnded;
               
               return (
                 <TableRow key={bid.id}>
@@ -97,6 +108,12 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                         <Badge variant="secondary" className="mt-1">
                           <Clock className="h-3 w-3 mr-1" />
                           Auction Ended
+                        </Badge>
+                      )}
+                      {auctionStarted && !auctionEnded && (
+                        <Badge variant="default" className="mt-1">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Auction Active
                         </Badge>
                       )}
                     </div>
@@ -129,9 +146,9 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                     {bid.car?.auction_end_time ? (
                       <div className="flex flex-col">
                         <span>{format(new Date(bid.car.auction_end_time), "MMM d, HH:mm")}</span>
-                        {auctionActive && (
+                        {!auctionEnded && !auctionStarted && (
                           <Badge variant="outline" className="text-xs w-fit mt-1">
-                            Active
+                            Pending
                           </Badge>
                         )}
                       </div>
@@ -141,7 +158,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      {auctionActive ? (
+                      {canModify ? (
                         <>
                           <Button
                             variant="outline"
@@ -162,7 +179,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                         </>
                       ) : (
                         <Badge variant="secondary" className="text-xs">
-                          No Actions Available
+                          {auctionStarted ? "Auction Started" : auctionEnded ? "Auction Ended" : "No Actions Available"}
                         </Badge>
                       )}
                     </div>
