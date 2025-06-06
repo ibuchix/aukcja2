@@ -37,7 +37,7 @@ export function LoyaltyAgreementForm() {
     buyerAddress: '',
     sellerName: dealerProfile?.supervisor_name || '',
     sellerEmail: '',
-    sellerPhone: dealerProfile?.phone_number || '',
+    sellerPhone: '',
     sellerAddress: dealerProfile?.address || '',
     vinNumber: '',
     cancellationReason: '',
