@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CancellationForm } from "@/components/dealer/documents/CancellationForm";
+import { LoyaltyAgreementForm } from "@/components/dealer/documents/LoyaltyAgreementForm";
 import { 
   getDealerDocuments, 
   uploadDealerDocument, 
@@ -127,11 +128,11 @@ export default function DealerDocuments() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Document Management</h1>
+        <h1 className="text-3xl font-bold mb-6">Zarządzanie Dokumentami</h1>
         
-        {/* Cancellation Form Section */}
+        {/* Loyalty Agreement Form Section */}
         <div className="mb-8">
-          <CancellationForm />
+          <LoyaltyAgreementForm />
         </div>
         
         {/* Upload section */}
@@ -139,31 +140,31 @@ export default function DealerDocuments() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Upload className="w-5 h-5" />
-              Upload Document
+              Prześlij Dokument
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
               <div>
-                <Label htmlFor="documentType">Document Type</Label>
+                <Label htmlFor="documentType">Typ Dokumentu</Label>
                 <Select 
                   value={documentType} 
                   onValueChange={setDocumentType}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select document type" />
+                    <SelectValue placeholder="Wybierz typ dokumentu" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="license">Dealer License</SelectItem>
-                    <SelectItem value="business-registration">Business Registration</SelectItem>
-                    <SelectItem value="tax-document">Tax Document</SelectItem>
-                    <SelectItem value="identity">Identification</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="license">Licencja Dealera</SelectItem>
+                    <SelectItem value="business-registration">Rejestracja Działalności</SelectItem>
+                    <SelectItem value="tax-document">Dokument Podatkowy</SelectItem>
+                    <SelectItem value="identity">Dokument Tożsamości</SelectItem>
+                    <SelectItem value="other">Inne</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="file">Select File</Label>
+                <Label htmlFor="file">Wybierz Plik</Label>
                 <Input 
                   id="file" 
                   type="file" 
@@ -172,7 +173,7 @@ export default function DealerDocuments() {
                 />
                 {file && (
                   <p className="mt-2 text-sm text-subtitle-text">
-                    Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
+                    Wybrany: {file.name} ({(file.size / 1024).toFixed(2)} KB)
                   </p>
                 )}
               </div>
@@ -183,18 +184,18 @@ export default function DealerDocuments() {
               onClick={handleUpload}
               disabled={!file || !documentType || uploadLoading}
             >
-              {uploadLoading ? "Uploading..." : "Upload Document"}
+              {uploadLoading ? "Przesyłanie..." : "Prześlij Dokument"}
             </Button>
           </CardFooter>
         </Card>
         
         {/* Document list */}
-        <h2 className="text-2xl font-semibold mb-4">Uploaded Documents</h2>
+        <h2 className="text-2xl font-semibold mb-4">Przesłane Dokumenty</h2>
         <div className="grid gap-6">
           {documents.length === 0 ? (
             <Card>
               <CardContent className="p-6">
-                <p className="text-center text-subtitle-text">No documents found</p>
+                <p className="text-center text-subtitle-text">Nie znaleziono dokumentów</p>
               </CardContent>
             </Card>
           ) : (
@@ -209,31 +210,31 @@ export default function DealerDocuments() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
                     <div>
-                      <p className="text-sm text-subtitle-text">File Name</p>
+                      <p className="text-sm text-subtitle-text">Nazwa Pliku</p>
                       <p className="font-semibold truncate">{doc.file_name}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-subtitle-text">File Type</p>
+                      <p className="text-sm text-subtitle-text">Typ Pliku</p>
                       <p className="font-semibold capitalize">{doc.file_type.split('/').pop()}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-subtitle-text">Verification Status</p>
+                      <p className="text-sm text-subtitle-text">Status Weryfikacji</p>
                       <div className="flex items-center gap-1">
                         {doc.verified ? (
                           <>
                             <CheckCircle className="w-4 h-4 text-success" />
-                            <span className="font-semibold text-success">Verified</span>
+                            <span className="font-semibold text-success">Zweryfikowany</span>
                           </>
                         ) : (
                           <>
                             <XCircle className="w-4 h-4 text-warning" />
-                            <span className="font-semibold text-warning">Pending</span>
+                            <span className="font-semibold text-warning">Oczekuje</span>
                           </>
                         )}
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm text-subtitle-text">Upload Date</p>
+                      <p className="text-sm text-subtitle-text">Data Przesłania</p>
                       <p className="font-semibold">
                         {format(new Date(doc.uploaded_at), 'PP')}
                       </p>
@@ -250,7 +251,7 @@ export default function DealerDocuments() {
                         disabled={!doc.signedUrl}
                       >
                         <Download className="w-4 h-4 mr-2" />
-                        View Document
+                        Zobacz Dokument
                       </Button>
                     </div>
                   </div>
@@ -266,12 +267,12 @@ export default function DealerDocuments() {
 
 function getDocumentTypeName(type: string): string {
   const types: Record<string, string> = {
-    'license': 'Dealer License',
-    'business-registration': 'Business Registration',
-    'tax-document': 'Tax Document',
-    'identity': 'Identification',
-    'other': 'Other Document'
+    'license': 'Licencja Dealera',
+    'business-registration': 'Rejestracja Działalności',
+    'tax-document': 'Dokument Podatkowy',
+    'identity': 'Dokument Tożsamości',
+    'other': 'Inny Dokument'
   };
   
-  return types[type] || 'Document';
+  return types[type] || 'Dokument';
 }

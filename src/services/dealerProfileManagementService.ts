@@ -116,7 +116,7 @@ export async function getDealerDocuments() {
     }
 
     const response = await supabase.functions.invoke('dealer-profile/get-documents', {
-      body: { token: sessionData.session.access_token },
+      body: JSON.stringify({ token: sessionData.session.access_token }),
       headers: {
         'Content-Type': 'application/json'
       }
