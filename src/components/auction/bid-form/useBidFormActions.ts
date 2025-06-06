@@ -51,36 +51,13 @@ export const useBidFormActions = ({
       });
 
       if (error) {
-        // Check if this is a concurrency or transaction isolation error
-        if (error.message?.includes('SERIALIZATION_FAILURE') || 
-            error.message?.includes('LOCK_TIMEOUT') ||
-            error.message?.includes('CONCURRENT_MODIFICATION') ||
-            error.message?.includes('DEADLOCK')) {
-          
-          if (retryCount < 3) {
-            // Automatic retry with exponential backoff
-            setRetryCount(prev => prev + 1);
-            toast({
-              title: "Bidding System Busy",
-              description: "The auction is experiencing high activity. Retrying your bid...",
-            });
-            
-            // Wait before retrying
-            await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 500));
-            setIsSubmitting(false);
-            return handlePlaceBid(bidAmount, isProxyBid, maxProxyAmount);
-          } else {
-            throw new Error("The auction is very active right now. Please try again in a moment.");
-          }
-        }
-        
         throw error;
       }
       
       // Check the response data structure properly
-      if (typeof data === 'object' && data !== null && 'success' in data) {
+      if (data && typeof data === 'object' && 'success' in data) {
         if (!data.success) {
-          throw new Error(data.error?.toString() || 'Failed to place bid');
+          throw new Error(data.error || 'Failed to place bid');
         }
 
         // Reset retry count on success
@@ -101,9 +78,32 @@ export const useBidFormActions = ({
         throw new Error('Invalid response from server');
       }
     } catch (error) {
+      console.error('Bid placement error:', error);
+      
+      // Check if this is a retryable error
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const isRetryable = errorMessage.includes('SERIALIZATION_FAILURE') || 
+                         errorMessage.includes('LOCK_TIMEOUT') ||
+                         errorMessage.includes('CONCURRENT_MODIFICATION') ||
+                         errorMessage.includes('DEADLOCK');
+      
+      if (isRetryable && retryCount < 3) {
+        // Automatic retry with exponential backoff
+        setRetryCount(prev => prev + 1);
+        toast({
+          title: "Bidding System Busy",
+          description: "The auction is experiencing high activity. Retrying your bid...",
+        });
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 500));
+        setIsSubmitting(false);
+        return handlePlaceBid(bidAmount, isProxyBid, maxProxyAmount);
+      }
+      
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to place bid",
+        description: errorMessage || "Failed to place bid",
         variant: "destructive",
       });
     } finally {

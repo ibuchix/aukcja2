@@ -63,7 +63,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
     queryFn: async () => {
       if (!dealerProfileId) return [];
 
-      // Get all bids for this dealer (not just from active auctions)
+      // Get all bids for this dealer
       const { data: activeBids, error: bidsError } = await supabase
         .from("bids")
         .select(`

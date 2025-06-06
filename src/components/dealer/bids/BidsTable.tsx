@@ -64,7 +64,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
     }
   };
 
-  // Check if auction has started (not ended) - bids can only be modified before auction starts
+  // Check if auction has started - bids can only be modified before auction starts
   const hasAuctionStarted = (bid: MyBid) => {
     if (!bid.car?.auction_end_time) return false;
     const auctionEndTime = new Date(bid.car.auction_end_time);
