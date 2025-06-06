@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { UserCircle, LogOut, Menu } from "lucide-react";
+import { UserCircle, LogOut, Menu, LayoutDashboard } from "lucide-react";
 import { NavbarLogo } from "./navbar/NavbarLogo";
 
 export default function Navbar() {
@@ -55,6 +55,17 @@ export default function Navbar() {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-6">
+          {/* Dashboard Link - Prominently displayed for authenticated users */}
+          {isAuthenticated && (
+            <Link 
+              to="/dealer/dashboard" 
+              className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2 font-medium"
+            >
+              <LayoutDashboard size={18} />
+              Dashboard
+            </Link>
+          )}
+          
           <Link to="/how-it-works" className="text-gray-700 hover:text-primary transition-colors">
             How It Works
           </Link>
@@ -70,9 +81,6 @@ export default function Navbar() {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/dealer/dashboard" className="cursor-pointer w-full">Dashboard</Link>
-                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/dealer/profile" className="cursor-pointer w-full">My Profile</Link>
                 </DropdownMenuItem>
@@ -103,6 +111,18 @@ export default function Navbar() {
         {isMobileMenuOpen && (
           <div className="absolute top-full left-0 w-full bg-white shadow-md py-4 md:hidden">
             <div className="flex flex-col space-y-3 px-4">
+              {/* Dashboard Link - Mobile */}
+              {isAuthenticated && (
+                <Link 
+                  to="/dealer/dashboard" 
+                  className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2 font-medium"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <LayoutDashboard size={18} />
+                  Dashboard
+                </Link>
+              )}
+              
               <Link 
                 to="/how-it-works" 
                 className="text-gray-700 hover:text-primary transition-colors"
@@ -110,15 +130,9 @@ export default function Navbar() {
               >
                 How It Works
               </Link>
+              
               {isAuthenticated ? (
                 <>
-                  <Link 
-                    to="/dealer/dashboard" 
-                    className="text-gray-700 hover:text-primary transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
                   <Link 
                     to="/dealer/profile" 
                     className="text-gray-700 hover:text-primary transition-colors"

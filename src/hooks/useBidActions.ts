@@ -10,6 +10,7 @@ export function useBidActions(dealerProfileId: string | undefined) {
 
   const cancelBidMutation = useMutation({
     mutationFn: async ({ carId, bidId }: { carId: string; bidId: string }) => {
+      console.log('=== CANCELLING BID ===');
       console.log('Cancelling bid:', { carId, bidId, dealerProfileId });
 
       // Delete the bid record
@@ -36,6 +37,7 @@ export function useBidActions(dealerProfileId: string | undefined) {
         // Don't throw error for proxy bid deletion failure
       }
 
+      console.log('Bid cancelled successfully');
       return { carId, bidId };
     },
     onSuccess: (data) => {
@@ -50,6 +52,11 @@ export function useBidActions(dealerProfileId: string | undefined) {
       if (dealerProfileId) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.bids.dealerBids(dealerProfileId),
+        });
+        
+        // Also invalidate general bid queries
+        queryClient.invalidateQueries({
+          queryKey: ['myBids'],
         });
       }
     },
@@ -78,6 +85,7 @@ export function useBidActions(dealerProfileId: string | undefined) {
       isProxyBid?: boolean;
       maxProxyAmount?: number;
     }) => {
+      console.log('=== MODIFYING BID ===');
       console.log('Modifying bid:', { carId, bidId, newAmount, isProxyBid, maxProxyAmount, dealerProfileId });
 
       // Use the place_bid function to update the bid
@@ -100,6 +108,7 @@ export function useBidActions(dealerProfileId: string | undefined) {
         throw new Error(data.error || 'Failed to update bid');
       }
 
+      console.log('Bid modified successfully');
       return { carId, bidId, newAmount };
     },
     onSuccess: (data) => {
@@ -117,6 +126,11 @@ export function useBidActions(dealerProfileId: string | undefined) {
       if (dealerProfileId) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.bids.dealerBids(dealerProfileId),
+        });
+        
+        // Also invalidate general bid queries
+        queryClient.invalidateQueries({
+          queryKey: ['myBids'],
         });
       }
     },

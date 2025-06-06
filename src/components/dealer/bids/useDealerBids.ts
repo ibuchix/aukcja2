@@ -66,7 +66,22 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         return [];
       }
 
+      console.log('=== FETCHING DEALER BIDS ===');
       console.log('Fetching bids for dealer:', dealerProfileId);
+
+      // First, let's verify the dealer exists
+      const { data: dealerVerification, error: dealerError } = await supabase
+        .from("dealers")
+        .select("id, user_id, dealership_name, is_verified")
+        .eq("id", dealerProfileId)
+        .single();
+
+      console.log('Dealer verification:', { dealerVerification, dealerError });
+
+      if (dealerError || !dealerVerification) {
+        console.error('Dealer not found:', dealerError);
+        return [];
+      }
 
       // Get all bids for this dealer
       const { data: activeBids, error: bidsError } = await supabase
@@ -216,6 +231,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         .filter((bid): bid is MyBid => bid !== null);
         
       console.log('Final result bids:', result);
+      console.log('=== END FETCHING DEALER BIDS ===');
       return result;
     },
     enabled: !!dealerProfileId,
