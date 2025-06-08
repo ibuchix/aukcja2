@@ -52,10 +52,10 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
         </DialogHeader>
         <ScrollArea className="max-h-[80vh]">
           <div className="space-y-6 p-4">
+            <VehiclePhotos car={car} />
             <BasicSpecifications car={car} />
             <ConditionAndFeatures car={car} />
             <ServiceHistory car={car} />
-            <VehiclePhotos car={car} />
             <Location car={car} />
             <AdditionalInfo car={car} />
             
