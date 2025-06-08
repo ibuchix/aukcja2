@@ -15,6 +15,7 @@ interface ProxyBidManagerProps {
   currentHighestBid: number;
   minimumIncrement: number;
   reservePrice?: number;
+  isVerified?: boolean;
 }
 
 export const ProxyBidManager = ({
@@ -23,6 +24,7 @@ export const ProxyBidManager = ({
   currentHighestBid,
   minimumIncrement,
   reservePrice,
+  isVerified = true,
 }: ProxyBidManagerProps) => {
   const {
     maxBid,
@@ -41,6 +43,27 @@ export const ProxyBidManager = ({
     currentHighestBid,
     minimumIncrement
   });
+
+  // Early return if dealer is not verified
+  if (!isVerified) {
+    return (
+      <Card className="w-full mb-4">
+        <CardHeader>
+          <CardTitle className="text-heading-sm font-oswald flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            Proxy Bidding - Verification Required
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-amber-800">
+              Proxy bidding is only available to verified dealers. Please complete your dealer verification to access this feature.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <>

@@ -19,6 +19,7 @@ import ServiceHistory from "./car-details/ServiceHistory";
 import { VehiclePhotos } from "./car-details/VehiclePhotos";
 import Location from "./car-details/Location";
 import AdditionalInfo from "./car-details/AdditionalInfo";
+import { VerificationBanner } from "@/components/dealer/VerificationBanner";
 
 interface CarDetailsDialogProps {
   car: CarListing | null;
@@ -27,7 +28,7 @@ interface CarDetailsDialogProps {
 
 const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   const { isAuthenticated } = useAuth();
-  const { dealerProfile } = useCurrentDealerProfile();
+  const { dealerProfile, isVerified } = useCurrentDealerProfile();
   
   if (!car) return null;
 
@@ -61,14 +62,33 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
             
             {isAuthenticated && dealerProfile ? (
               <div className="mt-8 border-t pt-6">
-                <MaxBidInterface
-                  carId={car.id}
-                  dealerId={dealerProfile.id}
-                  currentHighestBid={currentHighestBid}
-                  minimumIncrement={minimumBidIncrement}
-                  auctionEndTime={car.auctionEndTime || ""}
-                  reservePrice={car.reservePrice}
-                />
+                {isVerified ? (
+                  <MaxBidInterface
+                    carId={car.id}
+                    dealerId={dealerProfile.id}
+                    currentHighestBid={currentHighestBid}
+                    minimumIncrement={minimumBidIncrement}
+                    auctionEndTime={car.auctionEndTime || ""}
+                    reservePrice={car.reservePrice}
+                    isVerified={isVerified}
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    <VerificationBanner verificationStatus={dealerProfile.verification_status} />
+                    <div className="p-4 bg-gray-50 rounded-lg border">
+                      <h3 className="font-semibold text-gray-900 mb-2">Bidding Restricted</h3>
+                      <p className="text-gray-600 mb-3">
+                        Only verified dealers can place bids on vehicles. Please complete your dealer verification to participate in auctions.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => window.location.href = "/dealer/profile"}
+                      >
+                        Complete Verification
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="pt-4">
