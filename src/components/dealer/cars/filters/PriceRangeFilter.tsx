@@ -11,7 +11,7 @@ interface PriceRangeFilterProps {
 }
 
 const MIN_PRICE = 0;
-const MAX_PRICE = 100000;
+const MAX_PRICE = 2000000;
 
 export const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
   minPrice = MIN_PRICE,
@@ -72,7 +72,7 @@ export const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
           onValueChange={handleSliderChange}
           max={MAX_PRICE}
           min={MIN_PRICE}
-          step={1000}
+          step={10000}
           className="w-full"
         />
       </div>
@@ -95,7 +95,7 @@ export const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
             type="number"
             value={inputMax}
             onChange={(e) => handleInputChange('max', e.target.value)}
-            placeholder="100000"
+            placeholder="2000000"
             min={MIN_PRICE}
             max={MAX_PRICE}
           />

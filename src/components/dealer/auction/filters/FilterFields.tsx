@@ -17,7 +17,8 @@ export const FilterFields = ({ filters, onFilterChange }: FilterFieldProps) => {
           />
           <Input
             type="number"
-            placeholder="Max"
+            placeholder="Max (2,000,000)"
+            max={2000000}
             onChange={(e) => onFilterChange('priceMax', e.target.value)}
             value={filters.priceMax || ''}
           />
