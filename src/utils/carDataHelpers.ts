@@ -25,6 +25,7 @@ export const processCarData = (rawData: any[]): CarListing[] => {
         model: car.model || 'Unknown',
         year: car.year || 0,
         mileage: car.mileage || 0,
+        price: car.reserve_price || 0, // Add price property mapping to reserve_price
         reservePrice: car.reserve_price || 0,
         currentBid: car.current_bid || 0,
         images: car.images || [],
