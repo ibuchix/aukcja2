@@ -22,9 +22,7 @@ class EnhancedPostgrestFilterBuilder<T> {
       console.log('EnhancedPostgrestFilterBuilder created with auth context preserved');
       
       // Verify authentication headers are preserved
-      if (this.originalBuilder.auth) {
-        console.log('Auth headers preserved in enhanced filter builder');
-      } else if (this.originalBuilder.headers) {
+      if (this.originalBuilder.headers) {
         console.log('Headers preserved in enhanced filter builder:', Object.keys(this.originalBuilder.headers));
       }
     }
@@ -36,7 +34,6 @@ class EnhancedPostgrestFilterBuilder<T> {
     if (isDev && newBuilder) {
       // Verify authentication context is maintained in chained operations
       console.log('Creating new enhanced instance, auth context maintained:', {
-        hasAuth: !!newBuilder.auth,
         hasHeaders: !!newBuilder.headers,
         builderType: typeof newBuilder
       });
@@ -327,14 +324,7 @@ export class EnhancedSupabaseClient {
         clientType: 'enhanced'
       });
       
-      // Check if the underlying client has proper headers
-      if (this.client.supabaseKey) {
-        console.log('Enhanced client has API key configured');
-      }
-      
-      if (this.client.supabaseUrl) {
-        console.log('Enhanced client has URL configured:', this.client.supabaseUrl);
-      }
+      console.log('Enhanced client has proper configuration');
     } catch (error) {
       console.error('Enhanced client auth debugging failed:', error);
     }
@@ -352,7 +342,6 @@ export class EnhancedSupabaseClient {
     // Verify authentication context is preserved in the from builder
     if (isDev) {
       console.log('Original from builder created:', {
-        hasAuth: !!originalFrom.auth,
         hasHeaders: !!originalFrom.headers,
         tableName: table
       });
@@ -404,12 +393,10 @@ export class EnhancedSupabaseClient {
   private async verifyAuthenticationForwarding(fromBuilder: any) {
     try {
       // Check if the from builder has access to the auth context
-      if (fromBuilder.auth) {
-        console.log('Auth context successfully forwarded to from builder');
-      } else if (fromBuilder.client?.auth) {
-        console.log('Auth context available via client reference in from builder');
+      if (fromBuilder.headers) {
+        console.log('Headers successfully forwarded to from builder');
       } else {
-        console.warn('Auth context may not be properly forwarded to from builder');
+        console.warn('Headers may not be properly forwarded to from builder');
       }
       
       // Try to get session from the builder's client

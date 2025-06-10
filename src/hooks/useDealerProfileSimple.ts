@@ -18,6 +18,18 @@ interface DealerProfile {
   updated_at: string;
 }
 
+// Type guard function to check if data is a valid dealer profile
+function isDealerProfile(data: any): data is DealerProfile {
+  return (
+    data !== null &&
+    typeof data === 'object' &&
+    typeof data.id === 'string' &&
+    typeof data.user_id === 'string' &&
+    typeof data.dealership_name === 'string' &&
+    typeof data.supervisor_name === 'string'
+  );
+}
+
 export function useDealerProfileSimple() {
   const [dealerProfile, setDealerProfile] = useState<DealerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,11 +85,10 @@ export function useDealerProfileSimple() {
         return;
       }
       
-      // Fixed null check and type handling
-      if (data && typeof data === 'object' && 'id' in data && data.id) {
+      // Fixed null check and type handling with proper type guard
+      if (data && isDealerProfile(data)) {
         console.log('Dealer profile loaded successfully:', data);
-        // Type guard to ensure data is a valid dealer profile
-        setDealerProfile(data as DealerProfile);
+        setDealerProfile(data);
       } else {
         console.log('No dealer profile found for user:', user.id);
         setError('No dealer profile found. Please complete your registration.');
