@@ -73,10 +73,10 @@ export function useDealerProfileSimple() {
         return;
       }
       
-      if (data) {
+      if (data && typeof data === 'object' && 'id' in data) {
         console.log('Dealer profile loaded successfully:', data);
-        // Properly handle the data without forced type assertion
-        setDealerProfile(data);
+        // Type guard to ensure data is a valid dealer profile
+        setDealerProfile(data as DealerProfile);
       } else {
         console.log('No dealer profile found for user:', user.id);
         setError('No dealer profile found. Please complete your registration.');
