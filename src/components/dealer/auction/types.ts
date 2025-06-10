@@ -52,6 +52,7 @@ export interface Auction {
   schedule_end_time?: string;
   is_manually_controlled?: boolean;
   auction_timing_status?: 'scheduled' | 'running' | 'ended' | 'unknown';
+  auctionTimingStatus?: 'scheduled' | 'running' | 'ended' | 'unknown'; // Add camelCase version for consistency
 }
 
 export interface DealerAuctionBrowserProps {
