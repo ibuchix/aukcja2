@@ -26,7 +26,7 @@ export const useCarListingsQuery = ({
       const isDev = process.env.NODE_ENV === 'development';
       
       if (isDev) {
-        console.log('=== CAR SEARCH QUERY START ===');
+        console.log('=== DEALER CAR SEARCH QUERY START ===');
         console.log('Query params:', {
           filters,
           sortOption,
@@ -36,7 +36,7 @@ export const useCarListingsQuery = ({
       }
       
       try {
-        // Build query with essential fields including auction schedule data
+        // Build query with auction schedule data for authenticated dealers
         let query = enhancedSupabase
           .from("cars")
           .select(`
@@ -88,11 +88,11 @@ export const useCarListingsQuery = ({
             )
           `)
           .eq("status", "available")
-          .gt("reserve_price", 0); // Filter for cars with reserve_price > 0 at database level
+          .gt("reserve_price", 0);
 
         if (isDev) {
-          console.log('=== DATABASE QUERY SETUP ===');
-          console.log('Base query configured for available cars with auction schedule data');
+          console.log('=== DEALER DATABASE QUERY SETUP ===');
+          console.log('Base query configured for dealers with auction schedule data');
         }
         
         // Apply filters
@@ -163,29 +163,29 @@ export const useCarListingsQuery = ({
         const result = await query;
         
         if (isDev) {
-          console.log('=== DATABASE QUERY RESULT ===');
+          console.log('=== DEALER DATABASE QUERY RESULT ===');
           console.log('Query successful. Raw data count:', result.data?.length || 0);
           
           if (result.data && result.data.length > 0) {
-            console.log('First raw car from DB with schedule:', result.data[0]);
+            console.log('First raw car from DB with schedule (dealer view):', result.data[0]);
           }
         }
         
         if (result.error) {
-          console.error("=== DATABASE ERROR ===");
+          console.error("=== DEALER DATABASE ERROR ===");
           console.error("Error details:", result.error);
           throw new Error(result.error.message);
         }
         
-        // Process the results with transformation including schedule data
+        // Process the results with transformation including schedule data for dealers
         const rawData = result.data || [];
-        const validCars = processCarData(rawData); // This will now include schedule data
+        const validCars = processCarData(rawData);
         
         if (isDev) {
-          console.log('=== FINAL RESULT ===');
+          console.log('=== DEALER FINAL RESULT ===');
           console.log('Valid cars after processing:', validCars.length);
           if (validCars.length > 0) {
-            console.log('First processed car with timing status:', {
+            console.log('First processed car with timing status (dealer view):', {
               id: validCars[0].id,
               make: validCars[0].make,
               model: validCars[0].model,
@@ -202,7 +202,7 @@ export const useCarListingsQuery = ({
         };
       } catch (err: any) {
         const errorMessage = err.message || 'Unknown error occurred';
-        console.error("=== QUERY ERROR ===");
+        console.error("=== DEALER QUERY ERROR ===");
         console.error("Error:", errorMessage);
         throw new Error(errorMessage);
       }

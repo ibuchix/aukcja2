@@ -20,6 +20,9 @@ import { VehiclePhotos } from "./car-details/VehiclePhotos";
 import Location from "./car-details/Location";
 import AdditionalInfo from "./car-details/AdditionalInfo";
 import { VerificationBanner } from "@/components/dealer/VerificationBanner";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { calculateAuctionTimingStatus } from "@/components/dealer/auction/hooks/utils/auctionTimingUtils";
 
 interface CarDetailsDialogProps {
   car: CarListing | null;
@@ -30,20 +33,61 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   const { isAuthenticated } = useAuth();
   const { dealerProfile, isVerified } = useCurrentDealerProfile();
   
+  // Fetch auction schedule data only for authenticated dealers
+  const { data: auctionScheduleData } = useQuery({
+    queryKey: ["carAuctionSchedule", car?.id],
+    queryFn: async () => {
+      if (!car?.id || !isAuthenticated || !dealerProfile) {
+        return null;
+      }
+
+      console.log('Fetching auction schedule for authenticated dealer:', car.id);
+      
+      const { data, error } = await supabase
+        .from('auction_schedules')
+        .select('*')
+        .eq('car_id', car.id)
+        .single();
+
+      if (error) {
+        console.log('No auction schedule found or access denied:', error.message);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: Boolean(car?.id && isAuthenticated && dealerProfile),
+    retry: false
+  });
+  
   if (!car) return null;
 
   const minimumBidIncrement = car.minimumBidIncrement || 100;
   const currentHighestBid = car.currentBid || car.reservePrice;
   
-  // Debug logging for auction timing status
-  console.log('CarDetailsDialog - car data:', {
+  // Calculate auction timing status from fetched schedule data
+  const auctionTimingStatus = auctionScheduleData ? 
+    calculateAuctionTimingStatus(
+      auctionScheduleData.start_time,
+      auctionScheduleData.end_time,
+      auctionScheduleData.status
+    ) : 'unknown';
+  
+  // Enhanced car object with auction schedule data for dealers
+  const enhancedCar = {
+    ...car,
+    scheduleStatus: auctionScheduleData?.status,
+    scheduleStartTime: auctionScheduleData?.start_time,
+    scheduleEndTime: auctionScheduleData?.end_time,
+    auctionTimingStatus
+  };
+  
+  console.log('CarDetailsDialog - enhanced car data for dealer:', {
     carId: car.id,
-    make: car.make,
-    model: car.model,
-    auctionTimingStatus: car.auctionTimingStatus,
-    scheduleStatus: car.scheduleStatus,
-    scheduleStartTime: car.scheduleStartTime,
-    scheduleEndTime: car.scheduleEndTime
+    isAuthenticated,
+    isDealerProfile: Boolean(dealerProfile),
+    hasScheduleData: Boolean(auctionScheduleData),
+    auctionTimingStatus
   });
   
   return (
@@ -71,6 +115,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
             <Location car={car} />
             <AdditionalInfo car={car} />
             
+            {/* Layered security: Only show bidding interface to authenticated, verified dealers */}
             {isAuthenticated && dealerProfile ? (
               <div className="mt-8 border-t pt-6">
                 {isVerified ? (
@@ -82,10 +127,10 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
                     auctionEndTime={car.auctionEndTime || ""}
                     reservePrice={car.reservePrice}
                     isVerified={isVerified}
-                    scheduleStatus={car.scheduleStatus}
-                    scheduleStartTime={car.scheduleStartTime}
-                    scheduleEndTime={car.scheduleEndTime}
-                    auctionTimingStatus={car.auctionTimingStatus}
+                    scheduleStatus={enhancedCar.scheduleStatus}
+                    scheduleStartTime={enhancedCar.scheduleStartTime}
+                    scheduleEndTime={enhancedCar.scheduleEndTime}
+                    auctionTimingStatus={enhancedCar.auctionTimingStatus}
                   />
                 ) : (
                   <div className="space-y-4">
@@ -107,9 +152,15 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
               </div>
             ) : (
               <div className="pt-4">
-                <Button className="w-full" onClick={() => window.location.href = "/auth?tab=login"}>
-                  Sign In to Place Bid
-                </Button>
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <h3 className="font-semibold text-gray-900 mb-2">Dealer Access Required</h3>
+                  <p className="text-gray-700 mb-3">
+                    To view auction details and place bids, please sign in with a dealer account.
+                  </p>
+                  <Button className="w-full" onClick={() => window.location.href = "/auth?tab=login"}>
+                    Sign In as Dealer
+                  </Button>
+                </div>
               </div>
             )}
           </div>
