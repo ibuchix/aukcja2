@@ -75,7 +75,8 @@ export function useDealerProfileSimple() {
       
       if (data) {
         console.log('Dealer profile loaded successfully:', data);
-        setDealerProfile(data as DealerProfile);
+        // Properly handle the data without forced type assertion
+        setDealerProfile(data);
       } else {
         console.log('No dealer profile found for user:', user.id);
         setError('No dealer profile found. Please complete your registration.');
