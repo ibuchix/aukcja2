@@ -3,13 +3,13 @@
  * Custom hook for using enhanced Supabase client with automatic data transformation
  */
 
-import { enhancedSupabase } from '@/utils/enhancedSupabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { dataTransformer } from '@/utils/dataTransformer';
 import { useCallback } from 'react';
 
 export const useTransformedSupabase = () => {
   const transformAndQuery = useCallback((table: string) => {
-    return enhancedSupabase.from(table);
+    return supabase.from(table);
   }, []);
 
   const transformData = useCallback((data: any, direction: 'toBackend' | 'fromBackend') => {
@@ -19,11 +19,11 @@ export const useTransformedSupabase = () => {
   }, []);
 
   return {
-    supabase: enhancedSupabase,
+    supabase: supabase,
     from: transformAndQuery,
     transformData,
-    auth: enhancedSupabase.auth,
-    storage: enhancedSupabase.storage,
-    rpc: enhancedSupabase.rpc.bind(enhancedSupabase)
+    auth: supabase.auth,
+    storage: supabase.storage,
+    rpc: supabase.rpc.bind(supabase)
   };
 };

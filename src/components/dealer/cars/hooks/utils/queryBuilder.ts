@@ -1,8 +1,8 @@
 
-import { enhancedSupabase } from "@/utils/enhancedSupabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 
 export const buildCarListingsQuery = () => {
-  return enhancedSupabase
+  return supabase
     .from("cars")
     .select(`
       id,
