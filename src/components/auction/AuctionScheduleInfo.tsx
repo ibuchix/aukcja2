@@ -1,6 +1,7 @@
 
 import { Clock, Calendar, AlertCircle, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { formatUKDateTime } from "@/utils/ukTimeUtils";
 
 interface AuctionScheduleInfoProps {
   scheduleStatus?: string;
@@ -50,18 +51,6 @@ export const AuctionScheduleInfo = ({
     }
   };
 
-  const formatDateTime = (dateString?: string) => {
-    if (!dateString) return 'TBD';
-    return new Date(dateString).toLocaleString('en-GB', {
-      timeZone: 'Europe/London',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   return (
     <div className={`space-y-2 ${className}`}>
       <div className="flex items-center gap-2">
@@ -72,7 +61,7 @@ export const AuctionScheduleInfo = ({
         <div className="text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
-            Starts: {formatDateTime(scheduleStartTime)}
+            Starts: {formatUKDateTime(scheduleStartTime)}
           </div>
         </div>
       )}
@@ -81,7 +70,7 @@ export const AuctionScheduleInfo = ({
         <div className="text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            Ends: {formatDateTime(scheduleEndTime)}
+            Ends: {formatUKDateTime(scheduleEndTime)}
           </div>
         </div>
       )}
@@ -90,7 +79,7 @@ export const AuctionScheduleInfo = ({
         <div className="text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <CheckCircle className="w-3 h-3" />
-            Ended: {formatDateTime(scheduleEndTime)}
+            Ended: {formatUKDateTime(scheduleEndTime)}
           </div>
         </div>
       )}

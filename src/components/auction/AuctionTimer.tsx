@@ -1,14 +1,28 @@
+
 import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
 
 interface AuctionTimerProps {
   auctionEndTime: string;
+  auctionTimingStatus?: 'scheduled' | 'running' | 'ended' | 'unknown';
 }
 
-export const AuctionTimer = ({ auctionEndTime }: AuctionTimerProps) => {
+export const AuctionTimer = ({ auctionEndTime, auctionTimingStatus }: AuctionTimerProps) => {
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
   useEffect(() => {
+    // Only show timer for running auctions
+    if (auctionTimingStatus !== 'running') {
+      if (auctionTimingStatus === 'ended') {
+        setTimeRemaining("Auction ended");
+      } else if (auctionTimingStatus === 'scheduled') {
+        setTimeRemaining("Auction not started");
+      } else {
+        setTimeRemaining("Auction not scheduled");
+      }
+      return;
+    }
+
     const timer = setInterval(() => {
       const end = new Date(auctionEndTime).getTime();
       const now = new Date().getTime();
@@ -30,7 +44,7 @@ export const AuctionTimer = ({ auctionEndTime }: AuctionTimerProps) => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [auctionEndTime]);
+  }, [auctionEndTime, auctionTimingStatus]);
 
   return (
     <div className="flex items-center gap-2 text-subtitle-text">

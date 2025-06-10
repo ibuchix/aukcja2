@@ -15,9 +15,11 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log("Running update-auction-outcomes function");
+    console.log("Running update-auction-outcomes function with UK time handling");
     const supabase = createServiceClient();
-    const now = new Date().toISOString();
+    const now = new Date().toISOString(); // This is UTC, which is what we want for database comparisons
+
+    console.log(`Current time (UTC): ${now}`);
 
     // First, update auction schedule statuses based on current time
     console.log("Updating auction schedule statuses...");
@@ -25,29 +27,43 @@ const handler = async (req: Request): Promise<Response> => {
     // Update schedules from 'scheduled' to 'running' when start time has passed
     const { data: startedSchedules, error: startError } = await supabase
       .from("auction_schedules")
-      .update({ status: "running" })
+      .update({ 
+        status: "running",
+        last_status_change: now,
+        updated_at: now
+      })
       .eq("status", "scheduled")
       .lte("start_time", now)
-      .select("id, car_id");
+      .select("id, car_id, start_time, end_time");
 
     if (startError) {
       console.error("Error updating started schedules:", startError);
     } else {
       console.log(`Updated ${startedSchedules?.length || 0} schedules to 'running'`);
+      if (startedSchedules && startedSchedules.length > 0) {
+        console.log("Started schedules:", startedSchedules);
+      }
     }
 
     // Update schedules from 'running' to 'ended' when end time has passed
     const { data: endedSchedules, error: endError } = await supabase
       .from("auction_schedules")
-      .update({ status: "ended" })
+      .update({ 
+        status: "ended",
+        last_status_change: now,
+        updated_at: now
+      })
       .eq("status", "running")
       .lte("end_time", now)
-      .select("id, car_id");
+      .select("id, car_id, start_time, end_time");
 
     if (endError) {
       console.error("Error updating ended schedules:", endError);
     } else {
       console.log(`Updated ${endedSchedules?.length || 0} schedules to 'ended'`);
+      if (endedSchedules && endedSchedules.length > 0) {
+        console.log("Ended schedules:", endedSchedules);
+      }
     }
 
     // Update car auction statuses for ended schedules
@@ -56,7 +72,10 @@ const handler = async (req: Request): Promise<Response> => {
       
       const { data: endedCars, error: carUpdateError } = await supabase
         .from("cars")
-        .update({ auction_status: "ended" })
+        .update({ 
+          auction_status: "ended",
+          updated_at: now
+        })
         .in("id", carIds)
         .eq("auction_status", "active")
         .select("id, title, current_bid, reserve_price");
@@ -65,6 +84,9 @@ const handler = async (req: Request): Promise<Response> => {
         console.error("Error updating car statuses:", carUpdateError);
       } else {
         console.log(`Updated ${endedCars?.length || 0} cars to 'ended' status`);
+        if (endedCars && endedCars.length > 0) {
+          console.log("Ended cars:", endedCars);
+        }
       }
     }
 
@@ -161,6 +183,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         processed: results.length,
+        current_time_utc: now,
         schedule_updates: {
           started: startedSchedules?.length || 0,
           ended: endedSchedules?.length || 0

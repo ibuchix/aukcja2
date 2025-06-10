@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import {
   Table,
@@ -14,6 +15,7 @@ import { Eye } from "lucide-react";
 import { AuctionWatchlistButton } from "@/components/auction/AuctionWatchlistButton";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { AuctionScheduleInfo } from "@/components/auction/AuctionScheduleInfo";
+import { formatUKDateTime } from "@/utils/ukTimeUtils";
 
 export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProps) => {
   const isMobile = useIsMobile();
@@ -37,7 +39,7 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
             <div className="grid grid-cols-2 gap-2 text-sm mb-3">
               <div>
                 <div className="text-muted-foreground">End Time</div>
-                <div>{format(new Date(auction.auction_end_time), "MMM d, yyyy")}</div>
+                <div>{formatUKDateTime(auction.auction_end_time)}</div>
               </div>
               
               <div>
@@ -64,24 +66,12 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
               </div>
             </div>
             
-            <div className="flex items-center justify-between mb-2">
-              <div className="capitalize">
-                <span className="text-muted-foreground mr-1">Status:</span>
-                {auction.auction_status === "sold" ? (
-                  <span className="text-success font-medium">Sold</span>
-                ) : auction.auction_status === "reserve_not_met" ? (
-                  <span className="text-destructive font-medium">Reserve not met</span>
-                ) : (
-                  auction.auction_status
-                )}
-              </div>
-              
-              {auction.lost_by && (
-                <div className="text-sm text-muted-foreground">
-                  Lost by ${auction.lost_by.toLocaleString()}
-                </div>
-              )}
-            </div>
+            <AuctionScheduleInfo
+              scheduleStatus={auction.schedule_status}
+              scheduleStartTime={auction.schedule_start_time}
+              scheduleEndTime={auction.schedule_end_time}
+              auctionTimingStatus={auction.auctionTimingStatus}
+            />
             
             <div className="flex space-x-2 mt-3">
               <Button variant="outline" size="sm" asChild className="flex-1">
@@ -130,12 +120,12 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
                   scheduleStatus={auction.schedule_status}
                   scheduleStartTime={auction.schedule_start_time}
                   scheduleEndTime={auction.schedule_end_time}
-                  auctionTimingStatus={auction.auction_timing_status}
+                  auctionTimingStatus={auction.auctionTimingStatus}
                 />
               </div>
             </TableCell>
             <TableCell>
-              {format(new Date(auction.auction_end_time), "MMM d, yyyy HH:mm")}
+              {formatUKDateTime(auction.auction_end_time)}
             </TableCell>
             <TableCell>${auction.reserve_price.toLocaleString()}</TableCell>
             <TableCell>
