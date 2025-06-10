@@ -73,7 +73,7 @@ export const useAuctionBrowser = (
     queryKey: ["dealerAuctions", filters, sortOption, searchQuery, cursor, direction],
     queryFn: async () => {
       try {
-        // Updated query to include auction schedule information
+        // Updated query to include auction schedule information and look for both 'active' and 'running' statuses
         let query = supabase
           .from("cars")
           .select(`
@@ -99,8 +99,8 @@ export const useAuctionBrowser = (
           `)
           .eq('auction_status', 'active')
           .eq('is_auction', true)
-          // Only show cars that have auction schedules with running status
-          .eq('auction_schedules.status', 'running');
+          // Show cars that have auction schedules with either 'active' or 'running' status
+          .in('auction_schedules.status', ['active', 'running']);
 
         // Apply search
         if (searchQuery) {
