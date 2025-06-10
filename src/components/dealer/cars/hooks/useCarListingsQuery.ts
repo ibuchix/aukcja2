@@ -1,9 +1,11 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { CarListing } from "@/types/cars";
 import { AuctionFilters } from "../../auction/types";
-import { enhancedSupabase } from "@/utils/enhancedSupabaseClient";
 import { processCarData } from "@/utils/carDataHelpers";
+import { buildCarListingsQuery } from "./utils/queryBuilder";
+import { applyFilters } from "./utils/filterUtils";
+import { applySorting } from "./utils/sortUtils";
+import { applyPagination, calculatePaginationInfo } from "./utils/paginationUtils";
 
 interface UseCarListingsQueryProps {
   filters: AuctionFilters;
@@ -36,127 +38,25 @@ export const useCarListingsQuery = ({
       }
       
       try {
-        // Build query with auction schedule data for authenticated dealers
-        let query = enhancedSupabase
-          .from("cars")
-          .select(`
-            id,
-            make,
-            model,
-            year,
-            mileage,
-            reserve_price,
-            images,
-            required_photos,
-            title,
-            features,
-            transmission,
-            is_auction,
-            auction_end_time,
-            minimum_bid_increment,
-            auction_status,
-            is_damaged,
-            address,
-            created_at,
-            updated_at,
-            status,
-            current_bid,
-            seller_notes,
-            service_history_type,
-            has_service_history,
-            seller_id,
-            seller_name,
-            mobile_number,
-            additional_photos,
-            vin,
-            seat_material,
-            number_of_keys,
-            is_registered_in_poland,
-            has_private_plate,
-            finance_amount,
-            form_metadata,
-            valuation_data,
-            last_saved,
-            registration_number,
-            is_manually_controlled,
-            auction_schedules!left(
-              id,
-              status,
-              start_time,
-              end_time,
-              is_manually_controlled
-            )
-          `)
-          .eq("status", "available")
-          .gt("reserve_price", 0);
+        // Build base query with auction schedule data for authenticated dealers
+        let query = buildCarListingsQuery();
 
         if (isDev) {
           console.log('=== DEALER DATABASE QUERY SETUP ===');
           console.log('Base query configured for dealers with auction schedule data');
         }
         
-        // Apply filters
-        if (filters.make && typeof filters.make === 'string') {
-          query = query.ilike('make', `%${filters.make}%`);
-        }
-        
-        if (filters.model && typeof filters.model === 'string') {
-          query = query.ilike('model', `%${filters.model}%`);
-        }
-        
-        if (filters.yearMin && typeof filters.yearMin === 'number') {
-          query = query.gte('year', filters.yearMin);
-        }
-        
-        if (filters.yearMax && typeof filters.yearMax === 'number') {
-          query = query.lte('year', filters.yearMax);
-        }
-        
-        if (filters.priceMin && typeof filters.priceMin === 'number') {
-          query = query.gte('reserve_price', filters.priceMin);
-        }
-        
-        if (filters.priceMax && typeof filters.priceMax === 'number') {
-          query = query.lte('reserve_price', filters.priceMax);
-        }
-        
-        if (filters.mileageMin && typeof filters.mileageMin === 'number') {
-          query = query.gte('mileage', filters.mileageMin);
-        }
-        
-        if (filters.mileageMax && typeof filters.mileageMax === 'number') {
-          query = query.lte('mileage', filters.mileageMax);
-        }
-        
-        // Apply search query
-        if (searchQuery) {
-          query = query.or(`make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%`);
-        }
+        // Apply filters and search
+        query = applyFilters(query, filters, searchQuery);
         
         // Apply sorting
-        switch (sortOption) {
-          case "newest":
-            query = query.order('created_at', { ascending: false });
-            break;
-          case "oldest":
-            query = query.order('created_at', { ascending: true });
-            break;
-          case "price-high":
-            query = query.order('reserve_price', { ascending: false });
-            break;
-          case "price-low":
-            query = query.order('reserve_price', { ascending: true });
-            break;
-          default:
-            query = query.order('created_at', { ascending: false });
-        }
+        query = applySorting(query, sortOption);
         
         // Apply pagination
-        const fromIndex = (currentPage - 1) * pageSize;
-        const to = fromIndex + pageSize - 1;
-        query = query.range(fromIndex, to);
+        query = applyPagination(query, currentPage, pageSize);
 
         if (isDev) {
+          const { fromIndex, to } = calculatePaginationInfo(currentPage, pageSize);
           console.log('Applied pagination:', { fromIndex, to, currentPage, pageSize });
         }
         
