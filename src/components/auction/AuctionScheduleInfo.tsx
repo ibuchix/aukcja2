@@ -1,5 +1,5 @@
 
-import { Clock, Calendar, AlertCircle } from "lucide-react";
+import { Clock, Calendar, AlertCircle, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface AuctionScheduleInfoProps {
@@ -23,7 +23,7 @@ export const AuctionScheduleInfo = ({
         return (
           <Badge variant="secondary" className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
-            Scheduled
+            Upcoming Auction
           </Badge>
         );
       case 'running':
@@ -35,9 +35,9 @@ export const AuctionScheduleInfo = ({
         );
       case 'ended':
         return (
-          <Badge variant="outline" className="flex items-center gap-1">
-            <AlertCircle className="w-3 h-3" />
-            Ended
+          <Badge variant="outline" className="flex items-center gap-1 text-gray-600">
+            <CheckCircle className="w-3 h-3" />
+            Auction Ended
           </Badge>
         );
       default:
@@ -82,7 +82,7 @@ export const AuctionScheduleInfo = ({
       {auctionTimingStatus === 'ended' && scheduleEndTime && (
         <div className="text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
-            <AlertCircle className="w-3 h-3" />
+            <CheckCircle className="w-3 h-3" />
             Ended: {formatDateTime(scheduleEndTime)}
           </div>
         </div>

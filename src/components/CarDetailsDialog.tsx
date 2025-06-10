@@ -35,6 +35,17 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   const minimumBidIncrement = car.minimumBidIncrement || 100;
   const currentHighestBid = car.currentBid || car.reservePrice;
   
+  // Debug logging for auction timing status
+  console.log('CarDetailsDialog - car data:', {
+    carId: car.id,
+    make: car.make,
+    model: car.model,
+    auctionTimingStatus: car.auctionTimingStatus,
+    scheduleStatus: car.scheduleStatus,
+    scheduleStartTime: car.scheduleStartTime,
+    scheduleEndTime: car.scheduleEndTime
+  });
+  
   return (
     <Dialog open={!!car} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl">

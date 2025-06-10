@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +34,38 @@ interface BidData {
   amount: number;
   status?: string;
 }
+
+// Helper function to determine auction timing status
+const calculateAuctionTimingStatus = (
+  scheduleStartTime?: string,
+  scheduleEndTime?: string,
+  scheduleStatus?: string
+): 'scheduled' | 'running' | 'ended' | 'unknown' => {
+  if (!scheduleStartTime || !scheduleEndTime) {
+    return 'unknown';
+  }
+
+  const now = new Date();
+  const startTime = new Date(scheduleStartTime);
+  const endTime = new Date(scheduleEndTime);
+
+  // Check if auction has ended
+  if (now > endTime) {
+    return 'ended';
+  }
+  
+  // Check if auction is currently running
+  if (now >= startTime && now <= endTime && scheduleStatus === 'running') {
+    return 'running';
+  }
+  
+  // Check if auction is scheduled for the future
+  if (now < startTime && (scheduleStatus === 'active' || scheduleStatus === 'scheduled')) {
+    return 'scheduled';
+  }
+  
+  return 'unknown';
+};
 
 export const useAuctionBrowser = (
   dealerId: string,
@@ -72,7 +105,7 @@ export const useAuctionBrowser = (
     queryKey: ["dealerAuctions", filters, sortOption, searchQuery, cursor, direction],
     queryFn: async () => {
       try {
-        // Updated query to include auction schedule information and look for both 'active' and 'running' statuses
+        // Query to include auction schedule information - show all auctions with schedules
         let query = supabase
           .from("cars")
           .select(`
@@ -98,8 +131,8 @@ export const useAuctionBrowser = (
           `)
           .eq('auction_status', 'active')
           .eq('is_auction', true)
-          // Show cars that have auction schedules with either 'active' or 'running' status
-          .in('auction_schedules.status', ['active', 'running']);
+          // Show all auction schedules regardless of status to include ended auctions
+          .in('auction_schedules.status', ['active', 'running', 'ended', 'scheduled']);
 
         // Apply search
         if (searchQuery) {
@@ -221,21 +254,23 @@ export const useAuctionBrowser = (
             // Check if this auction's current_bid is higher than the dealer's bid
             const isOutbid = dealerBid && currentBid > (dealerBid.amount || 0);
             
-            // Determine auction timing status
-            const now = new Date();
-            const startTime = auction.schedule_start_time ? new Date(auction.schedule_start_time) : null;
-            const endTime = auction.schedule_end_time ? new Date(auction.schedule_end_time) : null;
+            // Calculate auction timing status using the helper function
+            const auctionTimingStatus = calculateAuctionTimingStatus(
+              auction.schedule_start_time,
+              auction.schedule_end_time,
+              auction.schedule_status
+            );
             
-            let auctionTimingStatus = 'unknown';
-            if (startTime && endTime) {
-              if (now < startTime) {
-                auctionTimingStatus = 'scheduled';
-              } else if (now >= startTime && now <= endTime) {
-                auctionTimingStatus = 'running';
-              } else {
-                auctionTimingStatus = 'ended';
-              }
-            }
+            console.log('Auction timing calculation:', {
+              carId: auction.id,
+              make: auction.make,
+              model: auction.model,
+              scheduleStartTime: auction.schedule_start_time,
+              scheduleEndTime: auction.schedule_end_time,
+              scheduleStatus: auction.schedule_status,
+              calculatedStatus: auctionTimingStatus,
+              now: new Date().toISOString()
+            });
             
             return {
               id: auction.id,
@@ -264,7 +299,9 @@ export const useAuctionBrowser = (
               schedule_start_time: auction.schedule_start_time,
               schedule_end_time: auction.schedule_end_time,
               is_manually_controlled: auction.is_manually_controlled,
-              auctionTimingStatus: auctionTimingStatus // Fixed: using camelCase instead of snake_case
+              auctionTimingStatus: auctionTimingStatus,
+              // Also add snake_case for backward compatibility
+              auction_timing_status: auctionTimingStatus
             } as Auction;
           })
           .filter((item): item is Auction => item !== null);
@@ -283,6 +320,16 @@ export const useAuctionBrowser = (
         const prevCursor = auctions.length > 0 
           ? createCursor(auctions[0], sortField as keyof Auction) 
           : null;
+
+        console.log('Final auctions data:', auctions.map(a => ({
+          id: a.id,
+          make: a.make,
+          model: a.model,
+          auctionTimingStatus: a.auctionTimingStatus,
+          scheduleStatus: a.schedule_status,
+          scheduleStartTime: a.schedule_start_time,
+          scheduleEndTime: a.schedule_end_time
+        })));
 
         return {
           auctions,
