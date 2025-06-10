@@ -4,7 +4,7 @@ import { User } from "@supabase/supabase-js";
 import { useToast } from "@/components/ui/use-toast";
 import { DealerRecord } from "@/utils/databaseTypes";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { rawSupabaseClient } from "@/integrations/supabase/client";
 import { executeWithRetry } from "@/utils/retryUtils";
 
 export function useDealerProfile(user: User | null, isAuthLoading: boolean) {
@@ -31,28 +31,29 @@ export function useDealerProfile(user: User | null, isAuthLoading: boolean) {
         }
 
         console.log(`[RLS Debug] Fetching dealer profile for user ID: ${user.id}`);
-        console.log(`[RLS Debug] Current session info:`, await supabase.auth.getSession());
+        console.log(`[RLS Debug] Using raw Supabase client to preserve authentication context`);
         
-        // First try to directly get auth.uid() to see if authentication is working
-        try {
-          const { data: authIdData, error: authIdError } = await supabase.rpc('debug_auth_user_id');
-          console.log("[RLS Debug] Auth user ID from RPC:", authIdData, "Error:", authIdError);
-          
-          if (authIdError) {
-            setFetchError(`Auth check failed: ${authIdError.message}`);
-          } else if (authIdData !== user.id) {
-            console.warn(`[RLS Debug] Auth mismatch: JWT has ${authIdData} but user is ${user.id}`);
-            // Try to refresh the session
-            await refreshSession();
-          }
-        } catch (authCheckError) {
-          console.error("[RLS Debug] Auth check exception:", authCheckError);
+        // Verify session before making query
+        const { data: sessionData, error: sessionError } = await rawSupabaseClient.auth.getSession();
+        
+        if (sessionError) {
+          console.error("[RLS Debug] Session error:", sessionError);
+          setFetchError(`Session error: ${sessionError.message}`);
+          return;
         }
         
-        // Try with executeWithRetry for better reliability
+        if (!sessionData.session) {
+          console.error("[RLS Debug] No active session found");
+          setFetchError("No active session found. Please log in again.");
+          return;
+        }
+        
+        console.log(`[RLS Debug] Active session confirmed for user: ${sessionData.session.user.id}`);
+        
+        // Try with executeWithRetry for better reliability using raw client
         const result = await executeWithRetry(
           async () => {
-            const { data, error } = await supabase
+            const { data, error } = await rawSupabaseClient
               .from('dealers')
               .select('*')
               .eq('user_id', user.id)

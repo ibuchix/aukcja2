@@ -1,8 +1,10 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { rawSupabaseClient } from "@/integrations/supabase/client";
 
 export const buildCarListingsQuery = () => {
-  return supabase
+  console.log("Using raw Supabase client for car listings to preserve authentication context");
+  
+  return rawSupabaseClient
     .from("cars")
     .select(`
       id,

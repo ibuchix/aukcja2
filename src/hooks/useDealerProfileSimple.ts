@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { rawSupabaseClient } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface DealerProfile {
@@ -35,9 +35,27 @@ export function useDealerProfileSimple() {
       setError(null);
       
       console.log('Fetching dealer profile for user:', user.id);
+      console.log('Using raw Supabase client to bypass enhanced wrapper');
       
-      // Direct query to dealers table with proper error handling
-      const { data, error: queryError } = await supabase
+      // Get current session to verify authentication
+      const { data: sessionData, error: sessionError } = await rawSupabaseClient.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        setError('Authentication session error. Please try logging out and back in.');
+        return;
+      }
+      
+      if (!sessionData.session) {
+        console.error('No active session found');
+        setError('No active session. Please log in again.');
+        return;
+      }
+      
+      console.log('Active session confirmed, user ID:', sessionData.session.user.id);
+      
+      // Direct query to dealers table using raw client with proper error handling
+      const { data, error: queryError } = await rawSupabaseClient
         .from('dealers')
         .select('*')
         .eq('user_id', user.id)
