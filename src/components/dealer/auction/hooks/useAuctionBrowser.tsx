@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -265,7 +264,7 @@ export const useAuctionBrowser = (
               schedule_start_time: auction.schedule_start_time,
               schedule_end_time: auction.schedule_end_time,
               is_manually_controlled: auction.is_manually_controlled,
-              auction_timing_status: auctionTimingStatus
+              auctionTimingStatus: auctionTimingStatus // Fixed: using camelCase instead of snake_case
             } as Auction;
           })
           .filter((item): item is Auction => item !== null);
