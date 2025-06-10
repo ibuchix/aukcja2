@@ -8,33 +8,21 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { dataTransformer } from './dataTransformer';
 import type { Database } from '@/integrations/supabase/types';
 
-// Enhanced query builder that adds transformation AND preserves authentication
+// Enhanced query builder that adds transformation while preserving authentication
 class EnhancedPostgrestFilterBuilder<T> {
   private originalBuilder: any;
   private transformer = dataTransformer;
-  private authContext: any; // Store auth context
 
-  constructor(builder: any, authContext?: any) {
+  constructor(builder: any) {
     this.originalBuilder = builder;
-    this.authContext = authContext;
-    
-    // Enhanced logging to track authentication preservation
-    if (process.env.NODE_ENV === 'development') {
-      const hasAuth = authContext?.session?.access_token || authContext?.headers?.Authorization;
-      console.log('=== ENHANCED BUILDER AUTH CHECK ===');
-      console.log('Auth context available:', !!authContext);
-      console.log('Has access token:', !!authContext?.session?.access_token);
-      console.log('Has auth headers:', !!authContext?.headers?.Authorization);
-      console.log('Builder type:', typeof builder);
-    }
   }
 
-  // Helper method to create new instances with preserved auth context
+  // Helper method to create new instances
   private createNewInstance(newBuilder: any): EnhancedPostgrestFilterBuilder<T> {
-    return new EnhancedPostgrestFilterBuilder(newBuilder, this.authContext);
+    return new EnhancedPostgrestFilterBuilder(newBuilder);
   }
 
-  // Transform column names for all filter methods - WITH AUTH PRESERVATION
+  // Transform column names for all filter methods
   eq(column: string, value: any) {
     const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: value });
     const snakeKey = Object.keys(snakeColumn)[0];
@@ -129,7 +117,7 @@ class EnhancedPostgrestFilterBuilder<T> {
     return this.createNewInstance(this.originalBuilder.filter(snakeKey, operator, value));
   }
 
-  // Updated select method to handle options properly - WITH AUTH PRESERVATION
+  // Select method to handle options properly
   select(columns?: string, options?: { count?: 'exact' | 'planned' | 'estimated'; head?: boolean }) {
     if (options) {
       return this.createNewInstance(this.originalBuilder.select(columns, options));
@@ -137,21 +125,10 @@ class EnhancedPostgrestFilterBuilder<T> {
     return this.createNewInstance(this.originalBuilder.select(columns));
   }
 
-  // Result methods that handle transformation - WITH AUTH PRESERVATION
+  // Result methods that handle transformation
   async single() {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('=== ENHANCED CLIENT SINGLE QUERY ===');
-      console.log('Auth context in single():', !!this.authContext);
-    }
-    
     const result = await this.originalBuilder.single();
     if (result.error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('=== ENHANCED CLIENT QUERY ERROR ===');
-        console.error('Error:', result.error);
-        console.error('Error code:', result.error.code);
-        console.error('Error message:', result.error.message);
-      }
       return result; // Return errors unchanged
     }
     return {
@@ -161,17 +138,8 @@ class EnhancedPostgrestFilterBuilder<T> {
   }
 
   async maybeSingle() {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('=== ENHANCED CLIENT MAYBE_SINGLE QUERY ===');
-      console.log('Auth context in maybeSingle():', !!this.authContext);
-    }
-    
     const result = await this.originalBuilder.maybeSingle();
     if (result.error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('=== ENHANCED CLIENT QUERY ERROR ===');
-        console.error('Error:', result.error);
-      }
       return result; // Return errors unchanged
     }
     return {
@@ -184,29 +152,14 @@ class EnhancedPostgrestFilterBuilder<T> {
     return this.createNewInstance(this.originalBuilder.throwOnError());
   }
 
-  // FIXED: Enhanced then method for proper transformation WITH AUTH PRESERVATION
+  // Enhanced then method for proper transformation
   then<TResult1 = any, TResult2 = never>(
     onfulfilled?: ((value: any) => TResult1 | PromiseLike<TResult1>) | undefined | null,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null
   ): Promise<TResult1 | TResult2> {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('=== ENHANCED CLIENT THEN METHOD ===');
-      console.log('Auth context in then():', !!this.authContext);
-    }
-    
     return this.originalBuilder.then(
       (result) => {
         if (result.error) {
-          if (process.env.NODE_ENV === 'development') {
-            console.error('=== ENHANCED CLIENT THEN ERROR ===');
-            console.error('Error:', result.error);
-            console.error('Error code:', result.error.code);
-            console.error('Error message:', result.error.message);
-            if (result.error.message?.includes('permission denied')) {
-              console.error('PERMISSION DENIED - likely auth context lost');
-              console.error('Auth context available:', !!this.authContext);
-            }
-          }
           return onfulfilled ? onfulfilled(result) : result;
         }
         
@@ -228,17 +181,6 @@ class EnhancedPostgrestFilterBuilder<T> {
           data: transformedData
         };
         
-        // Log transformation in development
-        if (process.env.NODE_ENV === 'development') {
-          console.log('=== ENHANCED SUPABASE TRANSFORMATION ===');
-          console.log('Original data count:', Array.isArray(result.data) ? result.data.length : (result.data ? 1 : 0));
-          console.log('Transformed data count:', Array.isArray(transformedData) ? transformedData.length : (transformedData ? 1 : 0));
-          if (result.data && Array.isArray(result.data) && result.data.length > 0) {
-            console.log('Sample original:', result.data[0]);
-            console.log('Sample transformed:', transformedData[0]);
-          }
-        }
-        
         return onfulfilled ? onfulfilled(transformedResult) : transformedResult;
       },
       onrejected
@@ -254,65 +196,40 @@ export class EnhancedSupabaseClient {
     this.client = supabaseClient;
   }
 
-  // Get current auth context for preservation
-  private getAuthContext() {
-    const session = this.client.auth.session;
-    const headers = this.client.auth.headers;
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log('=== ENHANCED CLIENT AUTH CONTEXT ===');
-      console.log('Session available:', !!session);
-      console.log('Headers available:', !!headers);
-      console.log('Access token available:', !!session?.access_token);
-    }
-    
-    return {
-      session,
-      headers,
-      client: this.client
-    };
-  }
-
   from(table: string) {
     const originalFrom = this.client.from(table);
-    const authContext = this.getAuthContext();
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`=== ENHANCED CLIENT FROM "${table}" ===`);
-      console.log('Auth context for table:', !!authContext);
-    }
     
     return {
       select: (columns?: string, options?: { count?: 'exact' | 'planned' | 'estimated'; head?: boolean }) => {
         if (options) {
           const query = originalFrom.select(columns, options);
-          return new EnhancedPostgrestFilterBuilder(query, authContext);
+          return new EnhancedPostgrestFilterBuilder(query);
         }
         const query = originalFrom.select(columns);
-        return new EnhancedPostgrestFilterBuilder(query, authContext);
+        return new EnhancedPostgrestFilterBuilder(query);
       },
       
       insert: (data: any) => {
         const transformedData = this.transformer.toSnakeCaseObject(data);
         const query = originalFrom.insert(transformedData);
-        return new EnhancedPostgrestFilterBuilder(query, authContext);
+        return new EnhancedPostgrestFilterBuilder(query);
       },
       
       update: (data: any) => {
         const transformedData = this.transformer.toSnakeCaseObject(data);
         const query = originalFrom.update(transformedData);
-        return new EnhancedPostgrestFilterBuilder(query, authContext);
+        return new EnhancedPostgrestFilterBuilder(query);
       },
       
       delete: () => {
         const query = originalFrom.delete();
-        return new EnhancedPostgrestFilterBuilder(query, authContext);
+        return new EnhancedPostgrestFilterBuilder(query);
       },
 
       upsert: (data: any, options?: any) => {
         const transformedData = this.transformer.toSnakeCaseObject(data);
         const query = originalFrom.upsert(transformedData, options);
-        return new EnhancedPostgrestFilterBuilder(query, authContext);
+        return new EnhancedPostgrestFilterBuilder(query);
       }
     };
   }
