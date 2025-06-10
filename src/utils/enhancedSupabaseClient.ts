@@ -15,9 +15,15 @@ class EnhancedPostgrestFilterBuilder<T> {
 
   constructor(builder: any) {
     this.originalBuilder = builder;
+    
+    // Debug: Log authentication state preservation
+    const isDev = process.env.NODE_ENV === 'development';
+    if (isDev) {
+      console.log('EnhancedPostgrestFilterBuilder created with auth context preserved');
+    }
   }
 
-  // Helper method to create new instances
+  // Helper method to create new instances while preserving authentication
   private createNewInstance(newBuilder: any): EnhancedPostgrestFilterBuilder<T> {
     return new EnhancedPostgrestFilterBuilder(newBuilder);
   }
@@ -127,7 +133,21 @@ class EnhancedPostgrestFilterBuilder<T> {
 
   // Result methods that handle transformation
   async single() {
+    const isDev = process.env.NODE_ENV === 'development';
+    if (isDev) {
+      console.log('Enhanced client executing single() query with preserved auth context');
+    }
+    
     const result = await this.originalBuilder.single();
+    
+    if (isDev) {
+      console.log('Single query result:', { 
+        hasError: !!result.error, 
+        errorMessage: result.error?.message,
+        hasData: !!result.data 
+      });
+    }
+    
     if (result.error) {
       return result; // Return errors unchanged
     }
@@ -152,14 +172,29 @@ class EnhancedPostgrestFilterBuilder<T> {
     return this.createNewInstance(this.originalBuilder.throwOnError());
   }
 
-  // Enhanced then method for proper transformation
+  // Enhanced then method for proper transformation with auth debugging
   then<TResult1 = any, TResult2 = never>(
     onfulfilled?: ((value: any) => TResult1 | PromiseLike<TResult1>) | undefined | null,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null
   ): Promise<TResult1 | TResult2> {
+    const isDev = process.env.NODE_ENV === 'development';
+    
     return this.originalBuilder.then(
       (result) => {
+        if (isDev) {
+          console.log('Enhanced query result received:', { 
+            hasError: !!result.error, 
+            errorMessage: result.error?.message,
+            errorCode: result.error?.code,
+            hasData: !!result.data,
+            dataLength: Array.isArray(result.data) ? result.data.length : (result.data ? 1 : 0)
+          });
+        }
+        
         if (result.error) {
+          if (isDev) {
+            console.error('Enhanced query error details:', result.error);
+          }
           return onfulfilled ? onfulfilled(result) : result;
         }
         
@@ -181,6 +216,13 @@ class EnhancedPostgrestFilterBuilder<T> {
           data: transformedData
         };
         
+        if (isDev) {
+          console.log('Enhanced query transformation complete:', {
+            originalCount: Array.isArray(result.data) ? result.data.length : (result.data ? 1 : 0),
+            transformedCount: Array.isArray(transformedData) ? transformedData.length : (transformedData ? 1 : 0)
+          });
+        }
+        
         return onfulfilled ? onfulfilled(transformedResult) : transformedResult;
       },
       onrejected
@@ -194,13 +236,38 @@ export class EnhancedSupabaseClient {
 
   constructor(supabaseClient: SupabaseClient<Database>) {
     this.client = supabaseClient;
+    
+    // Debug: Verify authentication context is preserved
+    const isDev = process.env.NODE_ENV === 'development';
+    if (isDev) {
+      console.log('Enhanced Supabase Client initialized with preserved authentication context');
+      
+      // Check if we have a session
+      this.client.auth.getSession().then(({ data: { session } }) => {
+        console.log('Enhanced client auth verification:', {
+          hasSession: !!session,
+          userId: session?.user?.id,
+          sessionExists: !!session
+        });
+      });
+    }
   }
 
   from(table: string) {
+    const isDev = process.env.NODE_ENV === 'development';
+    if (isDev) {
+      console.log(`Enhanced client creating query for table: ${table}`);
+    }
+    
+    // Get the original from builder - this preserves ALL authentication context
     const originalFrom = this.client.from(table);
     
     return {
       select: (columns?: string, options?: { count?: 'exact' | 'planned' | 'estimated'; head?: boolean }) => {
+        if (isDev) {
+          console.log(`Enhanced client select query for ${table}:`, { columns, options });
+        }
+        
         if (options) {
           const query = originalFrom.select(columns, options);
           return new EnhancedPostgrestFilterBuilder(query);
@@ -235,7 +302,7 @@ export class EnhancedSupabaseClient {
   }
 
   /**
-   * Access to the original Supabase client for advanced operations
+   * Direct access to the original Supabase client for operations that need full context
    */
   get auth() {
     return this.client.auth;
@@ -263,12 +330,26 @@ export class EnhancedSupabaseClient {
   }
 
   /**
-   * Direct RPC calls - DON'T transform the response for RPC calls
-   * as they often return data already in the expected format
+   * Direct RPC calls - preserve authentication context completely
    */
   async rpc(functionName: string, params?: any) {
+    const isDev = process.env.NODE_ENV === 'development';
+    if (isDev) {
+      console.log(`Enhanced client RPC call: ${functionName}`, { params });
+    }
+    
     const transformedParams = params ? this.transformer.toSnakeCaseObject(params) : params;
+    
+    // Use the original client's RPC method directly to preserve auth context
     const result = await this.client.rpc(functionName as any, transformedParams);
+    
+    if (isDev) {
+      console.log(`RPC ${functionName} result:`, { 
+        hasError: !!result.error, 
+        errorMessage: result.error?.message,
+        hasData: !!result.data 
+      });
+    }
     
     if (result.error) {
       return result; // Return errors unchanged
