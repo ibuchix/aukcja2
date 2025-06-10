@@ -20,11 +20,27 @@ class EnhancedPostgrestFilterBuilder<T> {
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
       console.log('EnhancedPostgrestFilterBuilder created with auth context preserved');
+      
+      // Verify authentication headers are preserved
+      if (this.originalBuilder.auth) {
+        console.log('Auth headers preserved in enhanced filter builder');
+      } else if (this.originalBuilder.headers) {
+        console.log('Headers preserved in enhanced filter builder:', Object.keys(this.originalBuilder.headers));
+      }
     }
   }
 
   // Helper method to create new instances while preserving authentication
   private createNewInstance(newBuilder: any): EnhancedPostgrestFilterBuilder<T> {
+    const isDev = process.env.NODE_ENV === 'development';
+    if (isDev && newBuilder) {
+      // Verify authentication context is maintained in chained operations
+      console.log('Creating new enhanced instance, auth context maintained:', {
+        hasAuth: !!newBuilder.auth,
+        hasHeaders: !!newBuilder.headers,
+        builderType: typeof newBuilder
+      });
+    }
     return new EnhancedPostgrestFilterBuilder(newBuilder);
   }
 
@@ -136,6 +152,10 @@ class EnhancedPostgrestFilterBuilder<T> {
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
       console.log('Enhanced client executing single() query with preserved auth context');
+      
+      // Check authentication state before query
+      const authState = await this.checkAuthenticationState();
+      console.log('Auth state before single() query:', authState);
     }
     
     const result = await this.originalBuilder.single();
@@ -144,6 +164,7 @@ class EnhancedPostgrestFilterBuilder<T> {
       console.log('Single query result:', { 
         hasError: !!result.error, 
         errorMessage: result.error?.message,
+        errorCode: result.error?.code,
         hasData: !!result.data 
       });
     }
@@ -158,7 +179,26 @@ class EnhancedPostgrestFilterBuilder<T> {
   }
 
   async maybeSingle() {
+    const isDev = process.env.NODE_ENV === 'development';
+    if (isDev) {
+      console.log('Enhanced client executing maybeSingle() query with preserved auth context');
+      
+      // Check authentication state before query
+      const authState = await this.checkAuthenticationState();
+      console.log('Auth state before maybeSingle() query:', authState);
+    }
+    
     const result = await this.originalBuilder.maybeSingle();
+    
+    if (isDev) {
+      console.log('MaybeSingle query result:', { 
+        hasError: !!result.error, 
+        errorMessage: result.error?.message,
+        errorCode: result.error?.code,
+        hasData: !!result.data 
+      });
+    }
+    
     if (result.error) {
       return result; // Return errors unchanged
     }
@@ -172,6 +212,26 @@ class EnhancedPostgrestFilterBuilder<T> {
     return this.createNewInstance(this.originalBuilder.throwOnError());
   }
 
+  // Helper method to check authentication state
+  private async checkAuthenticationState() {
+    try {
+      // Try to access the client instance through the builder chain
+      const client = this.originalBuilder.client || this.originalBuilder._client;
+      if (client && client.auth) {
+        const { data: session } = await client.auth.getSession();
+        return {
+          hasSession: !!session.session,
+          userId: session.session?.user?.id,
+          authenticated: !!session.session
+        };
+      }
+      return { hasSession: false, authenticated: false };
+    } catch (error) {
+      console.warn('Could not check auth state:', error);
+      return { hasSession: false, authenticated: false, error: error.message };
+    }
+  }
+
   // Enhanced then method for proper transformation with auth debugging
   then<TResult1 = any, TResult2 = never>(
     onfulfilled?: ((value: any) => TResult1 | PromiseLike<TResult1>) | undefined | null,
@@ -180,7 +240,7 @@ class EnhancedPostgrestFilterBuilder<T> {
     const isDev = process.env.NODE_ENV === 'development';
     
     return this.originalBuilder.then(
-      (result) => {
+      async (result) => {
         if (isDev) {
           console.log('Enhanced query result received:', { 
             hasError: !!result.error, 
@@ -189,6 +249,14 @@ class EnhancedPostgrestFilterBuilder<T> {
             hasData: !!result.data,
             dataLength: Array.isArray(result.data) ? result.data.length : (result.data ? 1 : 0)
           });
+          
+          // Additional authentication debugging for errors
+          if (result.error && (result.error.code === '401' || result.error.code === '403' || result.error.code === 'PGRST301' || result.error.code === 'PGRST302')) {
+            console.error('Authentication/Authorization error detected in enhanced client:', {
+              error: result.error,
+              authCheck: await this.checkAuthenticationState()
+            });
+          }
         }
         
         if (result.error) {
@@ -242,14 +310,33 @@ export class EnhancedSupabaseClient {
     if (isDev) {
       console.log('Enhanced Supabase Client initialized with preserved authentication context');
       
-      // Check if we have a session
-      this.client.auth.getSession().then(({ data: { session } }) => {
-        console.log('Enhanced client auth verification:', {
-          hasSession: !!session,
-          userId: session?.user?.id,
-          sessionExists: !!session
-        });
+      // Comprehensive authentication debugging
+      this.debugAuthenticationState();
+    }
+  }
+
+  // Comprehensive authentication debugging method
+  private async debugAuthenticationState() {
+    try {
+      const { data: { session }, error } = await this.client.auth.getSession();
+      console.log('Enhanced client auth verification:', {
+        hasSession: !!session,
+        userId: session?.user?.id,
+        sessionExists: !!session,
+        authError: error?.message,
+        clientType: 'enhanced'
       });
+      
+      // Check if the underlying client has proper headers
+      if (this.client.supabaseKey) {
+        console.log('Enhanced client has API key configured');
+      }
+      
+      if (this.client.supabaseUrl) {
+        console.log('Enhanced client has URL configured:', this.client.supabaseUrl);
+      }
+    } catch (error) {
+      console.error('Enhanced client auth debugging failed:', error);
     }
   }
 
@@ -261,6 +348,18 @@ export class EnhancedSupabaseClient {
     
     // Get the original from builder - this preserves ALL authentication context
     const originalFrom = this.client.from(table);
+    
+    // Verify authentication context is preserved in the from builder
+    if (isDev) {
+      console.log('Original from builder created:', {
+        hasAuth: !!originalFrom.auth,
+        hasHeaders: !!originalFrom.headers,
+        tableName: table
+      });
+      
+      // Additional debugging to ensure auth headers are properly forwarded
+      this.verifyAuthenticationForwarding(originalFrom);
+    }
     
     return {
       select: (columns?: string, options?: { count?: 'exact' | 'planned' | 'estimated'; head?: boolean }) => {
@@ -301,6 +400,32 @@ export class EnhancedSupabaseClient {
     };
   }
 
+  // Method to verify authentication forwarding
+  private async verifyAuthenticationForwarding(fromBuilder: any) {
+    try {
+      // Check if the from builder has access to the auth context
+      if (fromBuilder.auth) {
+        console.log('Auth context successfully forwarded to from builder');
+      } else if (fromBuilder.client?.auth) {
+        console.log('Auth context available via client reference in from builder');
+      } else {
+        console.warn('Auth context may not be properly forwarded to from builder');
+      }
+      
+      // Try to get session from the builder's client
+      const client = fromBuilder.client || fromBuilder._client || this.client;
+      if (client?.auth) {
+        const { data: { session } } = await client.auth.getSession();
+        console.log('Auth forwarding verification - session check:', {
+          hasSession: !!session,
+          userId: session?.user?.id
+        });
+      }
+    } catch (error) {
+      console.error('Auth forwarding verification failed:', error);
+    }
+  }
+
   /**
    * Direct access to the original Supabase client for operations that need full context
    */
@@ -336,6 +461,14 @@ export class EnhancedSupabaseClient {
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
       console.log(`Enhanced client RPC call: ${functionName}`, { params });
+      
+      // Check authentication before RPC call
+      const { data: { session } } = await this.client.auth.getSession();
+      console.log('Auth context for RPC call:', {
+        hasSession: !!session,
+        userId: session?.user?.id,
+        rpcFunction: functionName
+      });
     }
     
     const transformedParams = params ? this.transformer.toSnakeCaseObject(params) : params;
@@ -347,6 +480,7 @@ export class EnhancedSupabaseClient {
       console.log(`RPC ${functionName} result:`, { 
         hasError: !!result.error, 
         errorMessage: result.error?.message,
+        errorCode: result.error?.code,
         hasData: !!result.data 
       });
     }

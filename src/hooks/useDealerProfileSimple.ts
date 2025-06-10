@@ -73,7 +73,8 @@ export function useDealerProfileSimple() {
         return;
       }
       
-      if (data && typeof data === 'object' && 'id' in data) {
+      // Fixed null check and type handling
+      if (data && typeof data === 'object' && 'id' in data && data.id) {
         console.log('Dealer profile loaded successfully:', data);
         // Type guard to ensure data is a valid dealer profile
         setDealerProfile(data as DealerProfile);
