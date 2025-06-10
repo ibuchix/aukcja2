@@ -1,4 +1,5 @@
-import { BaseRecord, TableRow } from './common';
+
+import { BaseRecord, TableRow } from '../types/supabase/common';
 
 /**
  * Car record from the database
@@ -21,9 +22,15 @@ export type CarFileUploadRecord = TableRow<'car_file_uploads'> & BaseRecord;
 export type AuctionScheduleRecord = TableRow<'auction_schedules'> & BaseRecord;
 
 /**
- * Car metadata interface
+ * Car features interface - using boolean flags for specific features
  */
 export interface CarFeatures {
+  satNav?: boolean;
+  heatedSeats?: boolean;
+  panoramicRoof?: boolean;
+  reverseCamera?: boolean;
+  upgradedSound?: boolean;
+  // Legacy arrays for backward compatibility
   exterior?: string[];
   interior?: string[];
   safety?: string[];
@@ -55,7 +62,7 @@ export interface CarListing {
   location?: string;
   condition?: string;
   serviceHistory?: string;
-  features?: string[];
+  features?: CarFeatures;
   // New auction schedule fields
   scheduleStatus?: string;
   scheduleStartTime?: string;

@@ -1,3 +1,4 @@
+
 import { Database } from "@/integrations/supabase/types";
 import { CarListing, CarFeatures } from "@/types/cars";
 import { isSelectQueryError, safeProcessCarData } from "./supabaseHelpers";
@@ -74,7 +75,7 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
         });
       }
       
-      // Create default features object
+      // Create default features object with boolean properties
       let parsedFeatures: CarFeatures = {
         satNav: false,
         heatedSeats: false,
@@ -144,10 +145,11 @@ export function processCarData(data: any[] | { error: any } | null): CarListing[
       const carListing: CarListing = {
         id: car.id,
         title: car.title || `${car.year} ${car.make} ${car.model}`,
-        reservePrice: finalReservePrice, // Use camelCase
-        make: car.make || null,
-        model: car.model || null,
-        year: car.year || null,
+        reservePrice: finalReservePrice,
+        price: finalReservePrice, // Add the required price property
+        make: car.make || '',
+        model: car.model || '',
+        year: car.year || 0,
         mileage: car.mileage || 0,
         images: processedImages,
         features: parsedFeatures,

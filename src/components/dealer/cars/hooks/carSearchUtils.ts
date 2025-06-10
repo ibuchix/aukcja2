@@ -59,6 +59,7 @@ export const transformCarData = (rawCar: any): CarListing => {
     mileage: rawCar.mileage || 0,
     // Handle both snake_case and camelCase for reserve price
     reservePrice: rawCar.reservePrice || rawCar.reserve_price || 0,
+    price: rawCar.price || rawCar.reservePrice || rawCar.reserve_price || 0,
     images: rawCar.images,
     requiredPhotos: rawCar.requiredPhotos || rawCar.required_photos,
     

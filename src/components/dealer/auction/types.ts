@@ -1,4 +1,5 @@
-import { BaseRecord, TableRow } from '../../types/supabase/common';
+
+import { BaseRecord, TableRow } from '../../../types/supabase/common';
 
 export interface AuctionFilters {
   priceMin?: string;
@@ -9,6 +10,10 @@ export interface AuctionFilters {
   yearMax?: string;
   mileageMin?: string;
   mileageMax?: string;
+  transmission?: string;
+  fuelType?: string;
+  serviceHistory?: string;
+  distance?: string;
 }
 
 export interface AuctionPaginationResult<T> {
@@ -55,4 +60,40 @@ export interface DealerAuctionBrowserProps {
 export interface FilterFieldProps {
   filters: AuctionFilters;
   onFilterChange: (field: keyof AuctionFilters, value: string) => void;
+}
+
+export interface AuctionTableProps {
+  auctions: Auction[];
+  isLoading: boolean;
+  dealerId: string;
+}
+
+export interface DealerAuctionFiltersProps {
+  onFiltersChange: (filters: AuctionFilters) => void;
+  onSortChange: (sortOption: string) => void;
+  onSearchChange: (searchQuery: string) => void;
+  sortOption: string;
+  searchQuery: string;
+}
+
+export interface SortOption {
+  value: string;
+  label: string;
+}
+
+export interface SearchBarProps {
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+}
+
+export interface SortSelectorProps {
+  sortOption: string;
+  onSortChange: (sortOption: string) => void;
+}
+
+export interface AdvancedFilterPanelProps {
+  showFilters: boolean;
+  filters: AuctionFilters;
+  onFilterChange: (field: keyof AuctionFilters, value: string) => void;
+  clearFilters: () => void;
 }
