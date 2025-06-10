@@ -1,110 +1,58 @@
-/**
- * Core auction types for the dealer dashboard
- */
+import { BaseRecord, TableRow } from '../../types/supabase/common';
 
-// Auction model representing an auction in the system
+export interface AuctionFilters {
+  priceMin?: string;
+  priceMax?: string;
+  make?: string;
+  model?: string;
+  yearMin?: string;
+  yearMax?: string;
+  mileageMin?: string;
+  mileageMax?: string;
+}
+
+export interface AuctionPaginationResult<T> {
+  auctions: T[];
+  hasMore: boolean;
+  nextCursor: string | null;
+  prevCursor: string | null;
+}
+
 export interface Auction {
   id: string;
   title: string;
-  auction_end_time: string;
-  auction_status: string;
-  reserve_price: number;
+  make: string;
+  model: string;
+  year: number;
+  mileage: number;
   price: number;
-  make: string | null;
-  model: string | null;
-  year: number | null;
-  mileage: number | null;
-  current_bid: number | null;
+  auction_end_time?: string;
+  auction_status: string;
+  current_bid: number;
+  reserve_price: number;
+  reserve_met: boolean;
+  my_bid?: {
+    amount: number;
+    status: 'active' | 'outbid' | 'won' | 'lost';
+    car_id: string;
+  };
   highest_bid?: {
     amount: number;
     dealer_id: string;
   };
-  my_bid?: {
-    amount: number;
-    status: string;
-    car_id?: string; // Optional car_id for mapping bids to cars
-  };
-  lost_by?: number;
+  // New auction schedule fields
+  schedule_status?: string;
+  schedule_start_time?: string;
+  schedule_end_time?: string;
+  is_manually_controlled?: boolean;
+  auction_timing_status?: 'scheduled' | 'running' | 'ended' | 'unknown';
 }
 
-// Filters that can be applied to auctions
-export interface AuctionFilters {
-  make?: string;
-  model?: string;
-  priceMin?: number;
-  priceMax?: number;
-  yearMin?: number;
-  yearMax?: number;
-  mileageMin?: number;
-  mileageMax?: number;
-  transmission?: string;
-  fuelType?: string;
-  serviceHistory?: string;
-  distance?: string;
-}
-
-// Sort options for auction listings
-export interface SortOption {
-  value: string;
-  label: string;
-}
-
-// Props for filter field components
-export interface FilterFieldProps {
-  filters: AuctionFilters;
-  onFilterChange: (key: keyof AuctionFilters, value: string) => void;
-}
-
-// Props for auction table component
-export interface AuctionTableProps {
-  auctions: Auction[] | undefined;
-  isLoading: boolean;
-  dealerId: string;
-}
-
-// Props for auction pagination component
-export interface AuctionPaginationProps {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}
-
-// Props for empty state component
-export interface AuctionEmptyStateProps {
-  hasFilters: boolean;
-  hasSearch: boolean;
-}
-
-// Props for advanced filter panel component
-export interface AdvancedFilterPanelProps {
-  showFilters: boolean;
-  filters: AuctionFilters;
-  onFilterChange: (key: keyof AuctionFilters, value: string) => void;
-  clearFilters: () => void;
-}
-
-// Props for sort selector component
-export interface SortSelectorProps {
-  sortOption: string;
-  onSortChange: (sort: string) => void;
-}
-
-// Props for search bar component
-export interface SearchBarProps {
-  searchQuery: string;
-  onSearchChange: (search: string) => void;
-}
-
-// Props for the auction filters component
-export interface DealerAuctionFiltersProps {
-  onFiltersChange: (filters: AuctionFilters) => void;
-  onSortChange: (sort: string) => void;
-  onSearchChange: (search: string) => void;
-  sortOption: string;
-  searchQuery: string;
-}
-
-// Props for the auction browser component
 export interface DealerAuctionBrowserProps {
   dealerId: string;
+}
+
+export interface FilterFieldProps {
+  filters: AuctionFilters;
+  onFilterChange: (field: keyof AuctionFilters, value: string) => void;
 }

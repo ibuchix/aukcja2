@@ -22,6 +22,11 @@ interface CarData {
   reserve_price?: number;
   is_auction?: boolean;
   auction_status?: string;
+  // Auction schedule fields
+  schedule_status?: string;
+  schedule_start_time?: string;
+  schedule_end_time?: string;
+  is_manually_controlled?: boolean;
 }
 
 interface BidData {
@@ -68,7 +73,7 @@ export const useAuctionBrowser = (
     queryKey: ["dealerAuctions", filters, sortOption, searchQuery, cursor, direction],
     queryFn: async () => {
       try {
-        // We'll use the cars table but with a filter for active auctions
+        // Updated query to include auction schedule information
         let query = supabase
           .from("cars")
           .select(`
@@ -83,10 +88,19 @@ export const useAuctionBrowser = (
             current_bid,
             reserve_price,
             is_auction,
-            auction_status
+            auction_status,
+            auction_schedules!inner(
+              id,
+              status,
+              start_time,
+              end_time,
+              is_manually_controlled
+            )
           `)
           .eq('auction_status', 'active')
-          .eq('is_auction', true);
+          .eq('is_auction', true)
+          // Only show cars that have auction schedules with running status
+          .eq('auction_schedules.status', 'running');
 
         // Apply search
         if (searchQuery) {
@@ -145,8 +159,23 @@ export const useAuctionBrowser = (
         const { data: auctionData, error } = await query;
         if (error) throw error;
 
+        // Process the data to extract schedule information
+        const processedData = (auctionData || []).map(item => {
+          const scheduleInfo = Array.isArray(item.auction_schedules) 
+            ? item.auction_schedules[0] 
+            : item.auction_schedules;
+          
+          return {
+            ...item,
+            schedule_status: scheduleInfo?.status,
+            schedule_start_time: scheduleInfo?.start_time,
+            schedule_end_time: scheduleInfo?.end_time,
+            is_manually_controlled: scheduleInfo?.is_manually_controlled
+          };
+        });
+
         // Filter and cast data to proper type
-        const typedAuctionData = (auctionData || [])
+        const typedAuctionData = processedData
           .filter(item => isValidRecord<CarData>(item) && !isSelectQueryError(item)) as CarData[];
         
         // Get dealer's bids for these auctions
@@ -193,6 +222,22 @@ export const useAuctionBrowser = (
             // Check if this auction's current_bid is higher than the dealer's bid
             const isOutbid = dealerBid && currentBid > (dealerBid.amount || 0);
             
+            // Determine auction timing status
+            const now = new Date();
+            const startTime = auction.schedule_start_time ? new Date(auction.schedule_start_time) : null;
+            const endTime = auction.schedule_end_time ? new Date(auction.schedule_end_time) : null;
+            
+            let auctionTimingStatus = 'unknown';
+            if (startTime && endTime) {
+              if (now < startTime) {
+                auctionTimingStatus = 'scheduled';
+              } else if (now >= startTime && now <= endTime) {
+                auctionTimingStatus = 'running';
+              } else {
+                auctionTimingStatus = 'ended';
+              }
+            }
+            
             return {
               id: auction.id,
               title: auction.title || '',
@@ -202,7 +247,7 @@ export const useAuctionBrowser = (
               mileage: auction.mileage || 0,
               price: auction.price || 0,
               auction_end_time: auction.auction_end_time,
-              auction_status: 'active', // This is already filtered for active auctions
+              auction_status: 'active',
               current_bid: currentBid,
               reserve_price: reservePrice,
               my_bid: dealerBid ? {
@@ -212,10 +257,15 @@ export const useAuctionBrowser = (
               } : undefined,
               highest_bid: currentBid ? {
                 amount: currentBid,
-                dealer_id: ''  // We don't have this info without a join
+                dealer_id: ''
               } : undefined,
-              // Additional field to determine if reserve is met
-              reserve_met: currentBid >= reservePrice
+              reserve_met: currentBid >= reservePrice,
+              // Auction schedule information
+              schedule_status: auction.schedule_status,
+              schedule_start_time: auction.schedule_start_time,
+              schedule_end_time: auction.schedule_end_time,
+              is_manually_controlled: auction.is_manually_controlled,
+              auction_timing_status: auctionTimingStatus
             } as Auction;
           })
           .filter((item): item is Auction => item !== null);

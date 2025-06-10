@@ -1,67 +1,66 @@
+import { BaseRecord, TableRow } from './common';
 
-export type CarFeatures = {
-  // Core features (existing)
-  satNav?: boolean;
-  heatedSeats?: boolean;
-  panoramicRoof?: boolean;
-  reverseCamera?: boolean;
-  upgradedSound?: boolean;
-  
-  // Additional features from database
-  airConditioning?: boolean;
-  alloyWheels?: boolean;
-  bluetooth?: boolean;
-  cruiseControl?: boolean;
-  electricWindows?: boolean;
-  leatherSeats?: boolean;
-  parkingSensors?: boolean;
-  keylessEntry?: boolean;
-  
-  // Allow any additional boolean features for flexibility
-  [key: string]: boolean | undefined;
-};
+/**
+ * Car record from the database
+ */
+export type CarRecord = TableRow<'cars'> & BaseRecord;
 
-// Simplified interface focusing on essential dealer fields
+/**
+ * Auction status values
+ */
+export type AuctionStatus = 'active' | 'ended' | 'sold' | 'cancelled';
+
+/**
+ * Car file upload record
+ */
+export type CarFileUploadRecord = TableRow<'car_file_uploads'> & BaseRecord;
+
+/**
+ * Auction schedule record
+ */
+export type AuctionScheduleRecord = TableRow<'auction_schedules'> & BaseRecord;
+
+/**
+ * Car metadata interface
+ */
+export interface CarFeatures {
+  exterior?: string[];
+  interior?: string[];
+  safety?: string[];
+  performance?: string[];
+  technology?: string[];
+  comfort?: string[];
+}
+
 export interface CarListing {
   id: string;
-  make: string | null;
-  model: string | null;
-  year: number | null;
+  title: string;
+  make: string;
+  model: string;
+  year: number;
   mileage: number;
-  reservePrice: number; // Essential field - camelCase
-  images: string[] | null;
-  requiredPhotos: Record<string, string | null> | null;
-  
-  // Optional fields that are nice to have
-  title?: string | null;
-  features?: CarFeatures;
-  transmission?: string | null;
-  isAuction?: boolean;
-  auctionEndTime?: string | null;
-  minimumBidIncrement?: number | null;
-  auctionStatus?: string | null;
-  isDamaged?: boolean;
-  address?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
-  status?: string | null;
+  price: number;
+  reservePrice: number;
   currentBid?: number;
-  sellerNotes?: string | null;
-  serviceHistoryType?: string | null;
-  hasServiceHistory?: boolean;
-  sellerId?: string | null;
-  sellerName?: string | null;
-  mobileNumber?: string | null;
-  additionalPhotos?: string[] | null;
-  vin?: string | null;
-  seatMaterial?: string | null;
-  numberOfKeys?: number | null;
-  isRegisteredInPoland?: boolean;
-  hasPrivatePlate?: boolean;
-  financeAmount?: number | null;
-  formMetadata?: any;
-  valuationData?: any;
-  lastSaved?: string | null;
-  registrationNumber?: string | null;
+  minimumBidIncrement?: number;
+  auctionEndTime?: string;
+  auctionStatus?: string;
+  status?: string;
+  images?: string[];
+  description?: string;
+  fuelType?: string;
+  transmission?: string;
+  bodyType?: string;
+  color?: string;
+  location?: string;
+  condition?: string;
+  serviceHistory?: string;
+  features?: string[];
+  // New auction schedule fields
+  scheduleStatus?: string;
+  scheduleStartTime?: string;
+  scheduleEndTime?: string;
   isManuallyControlled?: boolean;
+  auctionTimingStatus?: 'scheduled' | 'running' | 'ended' | 'unknown';
+  [key: string]: any;
 }

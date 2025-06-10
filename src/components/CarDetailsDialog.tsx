@@ -71,13 +71,17 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
                     auctionEndTime={car.auctionEndTime || ""}
                     reservePrice={car.reservePrice}
                     isVerified={isVerified}
+                    scheduleStatus={car.scheduleStatus}
+                    scheduleStartTime={car.scheduleStartTime}
+                    scheduleEndTime={car.scheduleEndTime}
+                    auctionTimingStatus={car.auctionTimingStatus}
                   />
                 ) : (
                   <div className="space-y-4">
                     <VerificationBanner verificationStatus={dealerProfile.verification_status} />
-                    <div className="p-4 bg-gray-50 rounded-lg border">
-                      <h3 className="font-semibold text-gray-900 mb-2">Bidding Restricted</h3>
-                      <p className="text-gray-600 mb-3">
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <h3 className="font-semibold text-blue-900 mb-2">Verification Required for Bidding</h3>
+                      <p className="text-blue-800 mb-3">
                         Only verified dealers can place bids on vehicles. Please complete your dealer verification to participate in auctions.
                       </p>
                       <Button 

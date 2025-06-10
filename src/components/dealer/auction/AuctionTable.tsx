@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import {
   Table,
@@ -14,6 +13,7 @@ import { Link } from "react-router-dom";
 import { Eye } from "lucide-react";
 import { AuctionWatchlistButton } from "@/components/auction/AuctionWatchlistButton";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { AuctionScheduleInfo } from "@/components/auction/AuctionScheduleInfo";
 
 export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProps) => {
   const isMobile = useIsMobile();
@@ -117,8 +117,23 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
       </TableHeader>
       <TableBody>
         {auctions.map((auction) => (
-          <TableRow key={auction.id}>
-            <TableCell>{auction.title}</TableCell>
+          <TableRow key={auction.id} className="hover:bg-muted/50">
+            <TableCell>
+              <div className="space-y-1">
+                <div className="font-medium">
+                  {auction.year} {auction.make} {auction.model}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {auction.title}
+                </div>
+                <AuctionScheduleInfo
+                  scheduleStatus={auction.schedule_status}
+                  scheduleStartTime={auction.schedule_start_time}
+                  scheduleEndTime={auction.schedule_end_time}
+                  auctionTimingStatus={auction.auction_timing_status}
+                />
+              </div>
+            </TableCell>
             <TableCell>
               {format(new Date(auction.auction_end_time), "MMM d, yyyy HH:mm")}
             </TableCell>
