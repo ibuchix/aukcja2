@@ -92,21 +92,21 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
 
         {/* Price Range Filter */}
         <PriceRangeFilter 
-          minPrice={filters.priceMin}
-          maxPrice={filters.priceMax}
+          minPrice={filters.priceMin ? Number(filters.priceMin) : undefined}
+          maxPrice={filters.priceMax ? Number(filters.priceMax) : undefined}
           onPriceChange={(min, max) => {
-            handleFilterChange('priceMin', min);
-            handleFilterChange('priceMax', max);
+            handleFilterChange('priceMin', min?.toString());
+            handleFilterChange('priceMax', max?.toString());
           }}
         />
 
         {/* Mileage Range Filter */}
         <MileageRangeFilter 
-          minMileage={filters.mileageMin}
-          maxMileage={filters.mileageMax}
+          minMileage={filters.mileageMin ? Number(filters.mileageMin) : undefined}
+          maxMileage={filters.mileageMax ? Number(filters.mileageMax) : undefined}
           onMileageChange={(min, max) => {
-            handleFilterChange('mileageMin', min);
-            handleFilterChange('mileageMax', max);
+            handleFilterChange('mileageMin', min?.toString());
+            handleFilterChange('mileageMax', max?.toString());
           }}
         />
 
