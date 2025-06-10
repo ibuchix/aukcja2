@@ -36,9 +36,10 @@ export interface Auction {
   current_bid: number;
   reserve_price: number;
   reserve_met: boolean;
+  lost_by?: number; // Add missing property
   my_bid?: {
     amount: number;
-    status: 'active' | 'outbid' | 'won' | 'lost';
+    status: 'active' | 'outbid' | 'won' | 'lost' | 'winning'; // Add 'winning' status
     car_id: string;
   };
   highest_bid?: {
