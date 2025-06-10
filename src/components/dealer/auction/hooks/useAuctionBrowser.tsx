@@ -35,7 +35,7 @@ interface BidData {
   status?: string;
 }
 
-// Helper function to determine auction timing status
+// Helper function to determine auction timing status - ALWAYS use calculated time
 const calculateAuctionTimingStatus = (
   scheduleStartTime?: string,
   scheduleEndTime?: string,
@@ -49,18 +49,19 @@ const calculateAuctionTimingStatus = (
   const startTime = new Date(scheduleStartTime);
   const endTime = new Date(scheduleEndTime);
 
-  // Check if auction has ended
+  // Time-based calculation takes priority over database status
+  // Check if auction has ended (past end time)
   if (now > endTime) {
     return 'ended';
   }
   
-  // Check if auction is currently running
-  if (now >= startTime && now <= endTime && scheduleStatus === 'running') {
+  // Check if auction is currently running (between start and end time)
+  if (now >= startTime && now <= endTime) {
     return 'running';
   }
   
-  // Check if auction is scheduled for the future
-  if (now < startTime && (scheduleStatus === 'active' || scheduleStatus === 'scheduled')) {
+  // Check if auction is scheduled for the future (before start time)
+  if (now < startTime) {
     return 'scheduled';
   }
   
@@ -254,14 +255,14 @@ export const useAuctionBrowser = (
             // Check if this auction's current_bid is higher than the dealer's bid
             const isOutbid = dealerBid && currentBid > (dealerBid.amount || 0);
             
-            // Calculate auction timing status using the helper function
+            // Calculate auction timing status using ONLY time-based calculation
             const auctionTimingStatus = calculateAuctionTimingStatus(
               auction.schedule_start_time,
               auction.schedule_end_time,
               auction.schedule_status
             );
             
-            console.log('Auction timing calculation:', {
+            console.log('Auction timing calculation (time-based):', {
               carId: auction.id,
               make: auction.make,
               model: auction.model,
@@ -321,7 +322,7 @@ export const useAuctionBrowser = (
           ? createCursor(auctions[0], sortField as keyof Auction) 
           : null;
 
-        console.log('Final auctions data:', auctions.map(a => ({
+        console.log('Final auctions data (using calculated status):', auctions.map(a => ({
           id: a.id,
           make: a.make,
           model: a.model,

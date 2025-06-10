@@ -17,6 +17,56 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     console.log("Running update-auction-outcomes function");
     const supabase = createServiceClient();
+    const now = new Date().toISOString();
+
+    // First, update auction schedule statuses based on current time
+    console.log("Updating auction schedule statuses...");
+    
+    // Update schedules from 'scheduled' to 'running' when start time has passed
+    const { data: startedSchedules, error: startError } = await supabase
+      .from("auction_schedules")
+      .update({ status: "running" })
+      .eq("status", "scheduled")
+      .lte("start_time", now)
+      .select("id, car_id");
+
+    if (startError) {
+      console.error("Error updating started schedules:", startError);
+    } else {
+      console.log(`Updated ${startedSchedules?.length || 0} schedules to 'running'`);
+    }
+
+    // Update schedules from 'running' to 'ended' when end time has passed
+    const { data: endedSchedules, error: endError } = await supabase
+      .from("auction_schedules")
+      .update({ status: "ended" })
+      .eq("status", "running")
+      .lte("end_time", now)
+      .select("id, car_id");
+
+    if (endError) {
+      console.error("Error updating ended schedules:", endError);
+    } else {
+      console.log(`Updated ${endedSchedules?.length || 0} schedules to 'ended'`);
+    }
+
+    // Update car auction statuses for ended schedules
+    if (endedSchedules && endedSchedules.length > 0) {
+      const carIds = endedSchedules.map(s => s.car_id);
+      
+      const { data: endedCars, error: carUpdateError } = await supabase
+        .from("cars")
+        .update({ auction_status: "ended" })
+        .in("id", carIds)
+        .eq("auction_status", "active")
+        .select("id, title, current_bid, reserve_price");
+
+      if (carUpdateError) {
+        console.error("Error updating car statuses:", carUpdateError);
+      } else {
+        console.log(`Updated ${endedCars?.length || 0} cars to 'ended' status`);
+      }
+    }
 
     // Find recently ended auctions (ended in the last hour)
     const { data: endedAuctions, error: auctionError } = await supabase
@@ -111,6 +161,10 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         processed: results.length,
+        schedule_updates: {
+          started: startedSchedules?.length || 0,
+          ended: endedSchedules?.length || 0
+        },
         results 
       }),
       {
