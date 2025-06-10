@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CarListing } from "@/types/cars";
 import { AuctionFilters } from "../../auction/types";
 import { enhancedSupabase } from "@/utils/enhancedSupabaseClient";
-import { processCarListings } from "./carSearchUtils";
+import { processCarData } from "@/utils/carDataHelpers";
 
 interface UseCarListingsQueryProps {
   filters: AuctionFilters;
@@ -36,7 +36,7 @@ export const useCarListingsQuery = ({
       }
       
       try {
-        // Build query with essential fields only
+        // Build query with essential fields including auction schedule data
         let query = enhancedSupabase
           .from("cars")
           .select(`
@@ -78,14 +78,21 @@ export const useCarListingsQuery = ({
             valuation_data,
             last_saved,
             registration_number,
-            is_manually_controlled
+            is_manually_controlled,
+            auction_schedules!left(
+              id,
+              status,
+              start_time,
+              end_time,
+              is_manually_controlled
+            )
           `)
           .eq("status", "available")
           .gt("reserve_price", 0); // Filter for cars with reserve_price > 0 at database level
 
         if (isDev) {
           console.log('=== DATABASE QUERY SETUP ===');
-          console.log('Base query configured for available cars with reserve_price > 0');
+          console.log('Base query configured for available cars with auction schedule data');
         }
         
         // Apply filters
@@ -160,7 +167,7 @@ export const useCarListingsQuery = ({
           console.log('Query successful. Raw data count:', result.data?.length || 0);
           
           if (result.data && result.data.length > 0) {
-            console.log('First raw car from DB:', result.data[0]);
+            console.log('First raw car from DB with schedule:', result.data[0]);
           }
         }
         
@@ -170,15 +177,22 @@ export const useCarListingsQuery = ({
           throw new Error(result.error.message);
         }
         
-        // Process the results with transformation
+        // Process the results with transformation including schedule data
         const rawData = result.data || [];
-        const validCars = processCarListings(rawData, false); // Apply transformation and validation
+        const validCars = processCarData(rawData); // This will now include schedule data
         
         if (isDev) {
           console.log('=== FINAL RESULT ===');
           console.log('Valid cars after processing:', validCars.length);
           if (validCars.length > 0) {
-            console.log('First processed car:', validCars[0]);
+            console.log('First processed car with timing status:', {
+              id: validCars[0].id,
+              make: validCars[0].make,
+              model: validCars[0].model,
+              auctionTimingStatus: validCars[0].auctionTimingStatus,
+              scheduleStartTime: validCars[0].scheduleStartTime,
+              scheduleEndTime: validCars[0].scheduleEndTime
+            });
           }
         }
         

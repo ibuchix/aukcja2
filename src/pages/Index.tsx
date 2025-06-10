@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
@@ -25,7 +26,16 @@ const Index = () => {
         console.log("Fetching featured vehicles...");
         const { data, error } = await supabase
           .from('cars')
-          .select("*")
+          .select(`
+            *,
+            auction_schedules!left(
+              id,
+              status,
+              start_time,
+              end_time,
+              is_manually_controlled
+            )
+          `)
           .eq(statusColumn, "available")
           .limit(4)
           .order("created_at", { ascending: false });

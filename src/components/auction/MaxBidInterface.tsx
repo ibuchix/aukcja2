@@ -2,6 +2,7 @@
 import { BidNotificationHandler } from "./BidNotificationHandler";
 import { ProxyBidManager } from "./ProxyBidManager";
 import { formatUKDateTime } from "@/utils/ukTimeUtils";
+import { calculateAuctionTimingStatus } from "@/components/dealer/auction/hooks/utils/auctionTimingUtils";
 
 interface MaxBidInterfaceProps {
   carId: string;
@@ -50,16 +51,30 @@ export const MaxBidInterface = ({
     );
   }
 
+  // Calculate timing status if not provided (fallback)
+  const finalTimingStatus = auctionTimingStatus || 
+    (scheduleStartTime && scheduleEndTime ? 
+      calculateAuctionTimingStatus(scheduleStartTime, scheduleEndTime, scheduleStatus) : 
+      'unknown');
+
+  console.log('Final timing status calculation:', {
+    provided: auctionTimingStatus,
+    calculated: finalTimingStatus,
+    scheduleStartTime,
+    scheduleEndTime,
+    scheduleStatus
+  });
+
   // Check auction timing status - ONLY allow bidding if auction is running
-  if (auctionTimingStatus !== 'running') {
+  if (finalTimingStatus !== 'running') {
     let message = '';
     let bgColor = 'bg-blue-50';
     let textColor = 'text-blue-800';
     let borderColor = 'border-blue-200';
 
-    if (auctionTimingStatus === 'scheduled') {
+    if (finalTimingStatus === 'scheduled') {
       message = `Auction has not started yet. ${scheduleStartTime ? `Starts at: ${formatUKDateTime(scheduleStartTime)}` : 'Start time to be announced.'}`;
-    } else if (auctionTimingStatus === 'ended') {
+    } else if (finalTimingStatus === 'ended') {
       message = `Auction has ended. ${scheduleEndTime ? `Ended at: ${formatUKDateTime(scheduleEndTime)}` : ''}`;
       bgColor = 'bg-gray-50';
       textColor = 'text-gray-800';
