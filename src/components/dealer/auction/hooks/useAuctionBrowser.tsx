@@ -19,7 +19,7 @@ export const useAuctionBrowser = (
   const { toast } = useToast();
 
   // Determine sort field and direction based on sortOption
-  const { field: sortField, direction: sortDirection } = getSortConfig();
+  const { field: sortField, direction: sortDirection } = getSortConfig(sortOption);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["dealerAuctions", filters, sortOption, searchQuery, cursor, direction],
