@@ -4,11 +4,10 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { fetchDealerProfile } from "../authUtils";
-
-const STORAGE_KEY = 'dealer_auth_token';
+import { AuthDebugger } from "@/utils/authDebugger";
 
 /**
- * Hook to initialize authentication state and check for existing sessions
+ * Simplified hook to initialize authentication state with better timing
  */
 export function useAuthInitializer() {
   const [session, setSession] = useState<Session | null>(null);
@@ -24,118 +23,62 @@ export function useAuthInitializer() {
       if (isInitializedRef.current) return;
       
       try {
-        console.log("Starting auth initialization sequence");
+        console.log("Starting simplified auth initialization");
         setIsLoading(true);
         isInitializedRef.current = true;
         
-        // Clear any stale tokens
-        try {
-          const storedToken = localStorage.getItem(STORAGE_KEY);
-          if (storedToken) {
-            // Try to parse the token to check if it's valid JSON
-            try {
-              JSON.parse(storedToken);
-            } catch (parseError) {
-              // If we can't parse it, it's probably corrupted
-              console.warn("Found corrupted auth token, removing it");
-              localStorage.removeItem(STORAGE_KEY);
-            }
-          }
-        } catch (storageError) {
-          console.warn("Error accessing localStorage:", storageError);
-        }
+        // Debug auth state at initialization
+        await AuthDebugger.captureAuthState("Auth Initialization Start");
         
-        // Get current session
+        // Get current session without complex retry logic
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Error getting session:", error);
+          await AuthDebugger.captureAuthState("Auth Initialization Error");
           setIsLoading(false);
           setInitializationComplete(true);
           return;
         }
         
         if (data?.session) {
-          console.log("Existing session found, expires at:", 
-                     new Date(data.session.expires_at! * 1000).toLocaleString());
+          console.log("Existing session found");
+          await AuthDebugger.captureAuthState("Session Found");
           
-          // Check if token is close to expiration (within 5 minutes)
-          const expiresAt = data.session.expires_at ? new Date(data.session.expires_at * 1000) : null;
-          const now = new Date();
+          // Set session and user immediately
+          setSession(data.session);
+          setUser(data.session.user);
           
-          if (expiresAt && (expiresAt.getTime() - now.getTime() < 5 * 60 * 1000)) {
-            console.log("Session is about to expire, refreshing...");
+          // Fetch profile after session is established
+          if (data.session.user) {
             try {
-              const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+              // Small delay to ensure auth context propagates to database
+              await new Promise(resolve => setTimeout(resolve, 100));
               
-              if (refreshError) {
-                console.error("Error refreshing token:", refreshError);
-                setIsLoading(false);
-                setInitializationComplete(true);
-                return;
-              }
-              
-              if (refreshData.session) {
-                console.log("Session refreshed successfully");
-                setSession(refreshData.session);
-                setUser(refreshData.session.user);
-                
-                // Fetch profile data if authenticated
-                if (refreshData.session.user) {
-                  try {
-                    const profileData = await fetchDealerProfile(refreshData.session.user.id);
-                    setProfile(profileData);
-                  } catch (profileError) {
-                    console.error("Error fetching profile:", profileError);
-                    // Continue even if profile fetch fails - don't block auth
-                  }
-                }
-              }
-            } catch (refreshErr) {
-              console.error("Exception during token refresh:", refreshErr);
-            } finally {
-              // Always set loading to false and mark initialization as complete
-              setIsLoading(false);
-              setInitializationComplete(true);
-            }
-          } else {
-            // Session is valid and not about to expire
-            setSession(data.session);
-            setUser(data.session.user);
-            
-            // Fetch profile data if authenticated
-            if (data.session.user) {
-              try {
-                const profileData = await fetchDealerProfile(data.session.user.id);
-                setProfile(profileData);
-              } catch (profileError) {
-                console.error("Error fetching profile:", profileError);
-                // Continue even if profile fetch fails - don't block auth
-              } finally {
-                setIsLoading(false);
-                setInitializationComplete(true);
-              }
-            } else {
-              setIsLoading(false);
-              setInitializationComplete(true);
+              const profileData = await fetchDealerProfile(data.session.user.id);
+              setProfile(profileData);
+              await AuthDebugger.captureAuthState("Profile Loaded Successfully");
+            } catch (profileError) {
+              console.error("Error fetching profile:", profileError);
+              await AuthDebugger.captureAuthState("Profile Load Error");
+              // Continue without profile - don't block auth
             }
           }
         } else {
           console.log("No existing session found");
-          setIsLoading(false);
-          setInitializationComplete(true);
+          await AuthDebugger.captureAuthState("No Session Found");
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
+        await AuthDebugger.captureAuthState("Auth Initialization Exception");
+      } finally {
         setIsLoading(false);
         setInitializationComplete(true);
       }
     };
 
-    // Add a forced delay before initializing to prevent race conditions
-    const delay = setTimeout(() => {
-      initializeAuth();
-    }, 500); // 500ms delay before even starting auth initialization
+    // Initialize immediately without artificial delays
+    initializeAuth();
     
     // Set a safety timeout to prevent endless loading
     const safetyTimeout = setTimeout(() => {
@@ -144,13 +87,12 @@ export function useAuthInitializer() {
         setIsLoading(false);
         setInitializationComplete(true);
       }
-    }, 5000); // 5 second maximum loading time
+    }, 3000); // Reduced from 5 seconds
     
     return () => {
-      clearTimeout(delay);
       clearTimeout(safetyTimeout);
     };
-  }, [isLoading, toast]);
+  }, []); // Remove isLoading dependency to prevent re-initialization
 
   return {
     session,

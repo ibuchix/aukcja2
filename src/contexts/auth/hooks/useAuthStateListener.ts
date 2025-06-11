@@ -4,9 +4,10 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { fetchDealerProfile } from "../authUtils";
+import { AuthDebugger } from "@/utils/authDebugger";
 
 /**
- * Hook to listen for authentication state changes
+ * Simplified hook to listen for authentication state changes
  */
 export function useAuthStateListener(
   setSession: (session: Session | null) => void,
@@ -29,16 +30,18 @@ export function useAuthStateListener(
         console.log("Auth state changed:", event);
         
         try {
+          await AuthDebugger.captureAuthState(`Auth State Change: ${event}`);
+          
+          // Update session and user immediately
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
           
           if (event === "SIGNED_IN" && currentSession?.user) {
             setIsLoading(true);
             
-            // Give a small delay to allow auth state to fully establish
+            // Minimal delay to ensure auth context propagates
             setTimeout(async () => {
               try {
-                // Try to fetch the dealer profile, but handle errors gracefully
                 const profileData = await fetchDealerProfile(currentSession.user.id);
                 
                 if (profileData) {
@@ -47,17 +50,20 @@ export function useAuthStateListener(
                     title: "Signed in successfully",
                     description: "Welcome back to your dealer dashboard",
                   });
+                  await AuthDebugger.captureAuthState("Sign In Profile Load Success");
                 } else {
                   console.log("No profile data found after sign in");
-                  // Don't show an error toast here, just log it
+                  await AuthDebugger.captureAuthState("Sign In No Profile");
                 }
               } catch (profileError) {
                 console.error("Error fetching profile after sign in:", profileError);
+                await AuthDebugger.captureAuthState("Sign In Profile Error");
                 // Don't fail the sign in if profile fetch fails
               } finally {
                 setIsLoading(false);
               }
-            }, 500);
+            }, 200); // Reduced from 500ms
+            
           } else if (event === "SIGNED_OUT") {
             setProfile(null);
             setIsLoading(false);
@@ -65,8 +71,11 @@ export function useAuthStateListener(
               title: "Signed out",
               description: "You have been signed out successfully",
             });
+            await AuthDebugger.captureAuthState("Signed Out");
+            
           } else if (event === "TOKEN_REFRESHED" && currentSession) {
             console.log("Session token refreshed successfully");
+            await AuthDebugger.captureAuthState("Token Refreshed");
             
             // Refresh profile data when token is refreshed
             if (currentSession.user) {
@@ -76,12 +85,14 @@ export function useAuthStateListener(
                 try {
                   const profileData = await fetchDealerProfile(currentSession.user.id);
                   setProfile(profileData);
+                  await AuthDebugger.captureAuthState("Token Refresh Profile Success");
                 } catch (profileError) {
                   console.error("Error fetching profile after token refresh:", profileError);
+                  await AuthDebugger.captureAuthState("Token Refresh Profile Error");
                 } finally {
                   setIsLoading(false);
                 }
-              }, 500);
+              }, 200); // Reduced from 500ms
             }
           } else {
             // For any other events, ensure loading is false
@@ -89,17 +100,17 @@ export function useAuthStateListener(
           }
         } catch (error) {
           console.error("Error in auth state change handler:", error);
+          await AuthDebugger.captureAuthState("Auth State Change Error");
           setIsLoading(false);
         } finally {
-          // Reset the lock after a small delay
+          // Reset the lock after a minimal delay
           setTimeout(() => {
             authChangeInProgressRef.current = false;
-          }, 300);
+          }, 100); // Reduced from 300ms
         }
       }
     );
 
-    // Clean up subscription
     return () => {
       subscription.unsubscribe();
     };
