@@ -58,27 +58,6 @@ export function useDealerProfileSimple() {
         return;
       }
       
-      // First try the security definer function approach using generic rpc call
-      try {
-        console.log('Trying security definer function approach');
-        const { data: safeData, error: safeError } = await rawSupabaseClient
-          .rpc('get_dealer_profile_safe' as any, { p_user_id: user.id });
-        
-        if (!safeError && safeData && isDealerProfile(safeData)) {
-          console.log('Security definer function succeeded:', safeData);
-          setDealerProfile(safeData);
-          await AuthDebugger.captureAuthState("Profile Fetch Success (Safe Function)");
-          return;
-        } else if (safeError) {
-          console.warn('Security definer function failed:', safeError);
-        }
-      } catch (safeErr) {
-        console.warn('Security definer function exception:', safeErr);
-      }
-      
-      // Fallback to direct query with enhanced debugging
-      console.log('Trying direct RLS query approach');
-      
       // Verify session is still valid
       const { data: sessionData, error: sessionError } = await rawSupabaseClient.auth.getSession();
       
