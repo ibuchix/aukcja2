@@ -1939,6 +1939,10 @@ export type Database = {
         }
         Returns: Json
       }
+      debug_auth_context: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       debug_auth_user_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -2053,6 +2057,10 @@ export type Database = {
       get_dealer_profile_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_dealer_profile_safe: {
+        Args: { p_user_id?: string }
+        Returns: Json
       }
       get_profile: {
         Args: { p_user_id: string }
