@@ -4,6 +4,7 @@ import { getUserProfile, safeGetProfileData } from './authUtils';
 import { preparePassword, getAuthDiagnostics } from '@/utils/auth-utils';
 import { useToast } from '@/hooks/use-toast';
 import { signInWithEmail } from '@/services/auth/signin';
+import { verifyAuthForDatabase, waitForAuthReady } from '@/utils/authVerification';
 
 export function useSignInHandler() {
   const signIn = async ({ email, password, redirectTo }: { 
@@ -14,13 +15,13 @@ export function useSignInHandler() {
     try {
       // Diagnostics before signin attempt
       const beforeState = getAuthDiagnostics();
-      console.log("Auth state before signin:", beforeState);
+      console.log("📊 Auth state before signin:", beforeState);
       
       // Use consistent password preparation
       const cleanedPassword = preparePassword(password);
       const normalizedEmail = email.trim().toLowerCase();
       
-      console.log("Attempting sign in with normalized credentials using direct fetch method");
+      console.log("🚀 Attempting sign in with normalized credentials using direct fetch method");
       
       // Use the edge function service for authentication via direct fetch
       const { data, error } = await signInWithEmail({
@@ -29,7 +30,7 @@ export function useSignInHandler() {
       });
 
       if (error) {
-        console.error("Sign in error details:", {
+        console.error("❌ Sign in error details:", {
           message: error.message,
           status: error.status,
           name: error.name
@@ -41,27 +42,43 @@ export function useSignInHandler() {
         };
       }
 
-      if (data?.user) {
-        // Get user profile
+      if (data?.user && data?.session) {
+        console.log("✅ Sign in data received, now ensuring database access...");
+        
+        // CRITICAL: Wait for auth context to be properly established and database accessible
+        const authVerification = await waitForAuthReady(5, 800);
+        
+        if (!authVerification.isValid) {
+          console.error("❌ Auth verification failed after sign in:", authVerification);
+          
+          return { 
+            success: false, 
+            error: `Authentication successful but database access failed: ${authVerification.error}` 
+          };
+        }
+        
+        console.log("✅ Database access verified after sign in");
+        
+        // Get user profile after verification
         const userProfile = await getUserProfile(data.user.id);
         
         // Diagnostics after successful signin
         const afterState = getAuthDiagnostics();
-        console.log("Auth state after successful signin:", afterState);
+        console.log("📊 Auth state after successful signin:", afterState);
         
-        // After successful login, refresh the session to ensure RLS policies work correctly
+        // After successful login and verification, refresh the session to ensure RLS policies work correctly
         try {
-          console.log("Refreshing session after login");
+          console.log("🔄 Refreshing session after successful login and verification");
           const { data: refreshData } = await supabase.auth.refreshSession();
           
           if (refreshData?.session) {
-            console.log("Session successfully refreshed after login");
+            console.log("✅ Session successfully refreshed after login");
           } else {
-            console.log("Session refresh did not return new session data");
+            console.log("⚠️ Session refresh did not return new session data");
           }
         } catch (refreshError) {
-          console.warn("Error refreshing session after login:", refreshError);
-          // Continue anyway as the initial login worked
+          console.warn("⚠️ Error refreshing session after login:", refreshError);
+          // Continue anyway as the initial login and verification worked
         }
         
         // Return successful result
@@ -73,9 +90,9 @@ export function useSignInHandler() {
         };
       } else if (data) {
         // Handle case where data exists but no user (unusual but possible)
-        console.log("Sign in successful but no user data returned");
+        console.log("⚠️ Sign in successful but no user data returned");
         const afterState = getAuthDiagnostics();
-        console.log("Auth state after successful signin:", afterState);
+        console.log("📊 Auth state after successful signin:", afterState);
         
         return { 
           success: true,
@@ -88,7 +105,7 @@ export function useSignInHandler() {
         success: true 
       };
     } catch (error) {
-      console.error('Sign in error:', error);
+      console.error('❌ Sign in error:', error);
       
       // More detailed error logging
       if (error instanceof Error) {

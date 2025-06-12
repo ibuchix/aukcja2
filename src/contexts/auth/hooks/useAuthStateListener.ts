@@ -5,9 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { fetchDealerProfile } from "../authUtils";
 import { AuthDebugger } from "@/utils/authDebugger";
+import { verifyAuthForDatabase } from "@/utils/authVerification";
 
 /**
- * Simplified hook to listen for authentication state changes
+ * Enhanced hook to listen for authentication state changes with database verification
  */
 export function useAuthStateListener(
   setSession: (session: Session | null) => void,
@@ -27,7 +28,7 @@ export function useAuthStateListener(
         }
 
         authChangeInProgressRef.current = true;
-        console.log("Auth state changed:", event);
+        console.log("🔄 Auth state changed:", event);
         
         try {
           await AuthDebugger.captureAuthState(`Auth State Change: ${event}`);
@@ -39,8 +40,30 @@ export function useAuthStateListener(
           if (event === "SIGNED_IN" && currentSession?.user) {
             setIsLoading(true);
             
-            // Minimal delay to ensure auth context propagates
-            setTimeout(async () => {
+            console.log("✅ SIGNED_IN event - verifying database access...");
+            
+            // CRITICAL: Verify database access before proceeding
+            try {
+              const authVerification = await verifyAuthForDatabase();
+              
+              if (!authVerification.isValid) {
+                console.error("❌ Database access verification failed after SIGNED_IN:", authVerification);
+                
+                toast({
+                  title: "Authentication Issue",
+                  description: "Sign in was successful but we're having trouble accessing your data. Please try refreshing the page.",
+                  variant: "destructive",
+                });
+                
+                await AuthDebugger.captureAuthState("Sign In Database Access Failed");
+                setIsLoading(false);
+                return;
+              }
+              
+              console.log("✅ Database access verified after SIGNED_IN");
+              await AuthDebugger.captureAuthState("Sign In Database Access Verified");
+              
+              // Now safely fetch profile data
               try {
                 const profileData = await fetchDealerProfile(currentSession.user.id);
                 
@@ -52,17 +75,27 @@ export function useAuthStateListener(
                   });
                   await AuthDebugger.captureAuthState("Sign In Profile Load Success");
                 } else {
-                  console.log("No profile data found after sign in");
+                  console.log("ℹ️ No profile data found after sign in");
                   await AuthDebugger.captureAuthState("Sign In No Profile");
                 }
               } catch (profileError) {
-                console.error("Error fetching profile after sign in:", profileError);
+                console.error("❌ Error fetching profile after sign in:", profileError);
                 await AuthDebugger.captureAuthState("Sign In Profile Error");
                 // Don't fail the sign in if profile fetch fails
-              } finally {
-                setIsLoading(false);
               }
-            }, 200); // Reduced from 500ms
+              
+            } catch (verificationError) {
+              console.error("❌ Auth verification exception after SIGNED_IN:", verificationError);
+              await AuthDebugger.captureAuthState("Sign In Verification Exception");
+              
+              toast({
+                title: "Authentication Error",
+                description: "There was an issue verifying your authentication. Please try signing in again.",
+                variant: "destructive",
+              });
+            } finally {
+              setIsLoading(false);
+            }
             
           } else if (event === "SIGNED_OUT") {
             setProfile(null);
@@ -74,39 +107,48 @@ export function useAuthStateListener(
             await AuthDebugger.captureAuthState("Signed Out");
             
           } else if (event === "TOKEN_REFRESHED" && currentSession) {
-            console.log("Session token refreshed successfully");
+            console.log("🔄 Session token refreshed - verifying database access");
             await AuthDebugger.captureAuthState("Token Refreshed");
             
-            // Refresh profile data when token is refreshed
-            if (currentSession.user) {
-              setIsLoading(true);
+            // Verify database access after token refresh
+            setIsLoading(true);
+            
+            try {
+              const authVerification = await verifyAuthForDatabase();
               
-              setTimeout(async () => {
+              if (authVerification.isValid && currentSession.user) {
+                // Refresh profile data when token is refreshed
                 try {
                   const profileData = await fetchDealerProfile(currentSession.user.id);
                   setProfile(profileData);
                   await AuthDebugger.captureAuthState("Token Refresh Profile Success");
                 } catch (profileError) {
-                  console.error("Error fetching profile after token refresh:", profileError);
+                  console.error("❌ Error fetching profile after token refresh:", profileError);
                   await AuthDebugger.captureAuthState("Token Refresh Profile Error");
-                } finally {
-                  setIsLoading(false);
                 }
-              }, 200); // Reduced from 500ms
+              } else {
+                console.error("❌ Database access failed after token refresh:", authVerification);
+                await AuthDebugger.captureAuthState("Token Refresh Database Access Failed");
+              }
+            } catch (verificationError) {
+              console.error("❌ Auth verification exception after token refresh:", verificationError);
+              await AuthDebugger.captureAuthState("Token Refresh Verification Exception");
+            } finally {
+              setIsLoading(false);
             }
           } else {
             // For any other events, ensure loading is false
             setIsLoading(false);
           }
         } catch (error) {
-          console.error("Error in auth state change handler:", error);
+          console.error("❌ Error in auth state change handler:", error);
           await AuthDebugger.captureAuthState("Auth State Change Error");
           setIsLoading(false);
         } finally {
           // Reset the lock after a minimal delay
           setTimeout(() => {
             authChangeInProgressRef.current = false;
-          }, 100); // Reduced from 300ms
+          }, 100);
         }
       }
     );

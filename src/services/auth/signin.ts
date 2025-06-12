@@ -1,4 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
+
+import { supabase, rawSupabaseClient } from "@/integrations/supabase/client";
 import { preparePassword } from "@/utils/auth-utils";
 
 interface SignInParams {
@@ -7,18 +8,18 @@ interface SignInParams {
 }
 
 export const signInWithEmail = async ({ email, password }: SignInParams) => {
-  console.log("Starting direct fetch sign in process");
+  console.log("🚀 Starting enhanced sign in process with proper session management");
   
   try {
     // Use consistent password preparation
     const cleanedPassword = preparePassword(password);
     
     // Add diagnostic logging for password length
-    console.log("Login password length after preparation:", cleanedPassword.length, 
+    console.log("🔐 Login password length after preparation:", cleanedPassword.length, 
              "First char code:", cleanedPassword.charCodeAt(0),
              "Last char code:", cleanedPassword.charCodeAt(cleanedPassword.length - 1));
     
-    // Create request body without JSON.stringify
+    // Create request body
     const requestBody = {
       action: 'login',
       email: email.trim().toLowerCase(),
@@ -32,7 +33,7 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
     const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M";
     
     // Log the request we're about to send (sanitized)
-    console.log("Sending login request:", {
+    console.log("📤 Sending login request:", {
       ...requestBody,
       password: "[REDACTED]"
     });
@@ -40,7 +41,7 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
     // Build the full URL
     const url = `${supabaseUrl}/functions/v1/dealer-auth`;
     
-    console.log("Direct fetch URL:", url);
+    console.log("🌐 Direct fetch URL:", url);
     
     // Send the direct fetch request
     const response = await fetch(url, {
@@ -55,16 +56,16 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
     });
     
     // Log response status and headers
-    console.log("Login response status:", response.status);
-    console.log("Login response headers:", Object.fromEntries([...response.headers.entries()]));
+    console.log("📥 Login response status:", response.status);
+    console.log("📥 Login response headers:", Object.fromEntries([...response.headers.entries()]));
     
     // Try to get text response first for debugging
     const responseText = await response.text();
-    console.log("Login raw response:", responseText);
+    console.log("📄 Login raw response:", responseText);
     
     // If response isn't successful, handle error
     if (!response.ok) {
-      console.error("Login failed with status:", response.status);
+      console.error("❌ Login failed with status:", response.status);
       
       // Try to extract more specific error from response text
       let errorMsg = "Authentication failed";
@@ -77,7 +78,7 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
           errorMsg = errorData.error || errorMsg;
         }
       } catch (e) {
-        console.error("Could not parse error response:", e);
+        console.error("❌ Could not parse error response:", e);
       }
       
       // For 401 errors, provide more user-friendly message
@@ -100,7 +101,7 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
     try {
       data = responseText ? JSON.parse(responseText) : null;
     } catch (e) {
-      console.error("Error parsing login response:", e);
+      console.error("❌ Error parsing login response:", e);
       return {
         error: { 
           message: "Invalid response format", 
@@ -111,7 +112,7 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
     }
     
     if (!data) {
-      console.error("Empty response from edge function");
+      console.error("❌ Empty response from edge function");
       return {
         error: { 
           message: "No response from authentication service", 
@@ -132,18 +133,50 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
       };
     }
     
-    // Store the session in localStorage under the correct key if needed
+    // CRITICAL: Properly set the session in the Supabase client
     if (data.session) {
-      console.log("Login successful with session:", data.user?.id);
+      console.log("✅ Login successful with session, setting session in client...");
       
-      // Set the auth session in Supabase client
-      // This helps keep the rest of the app working with the session
-      await supabase.auth.setSession({
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token
-      });
+      try {
+        // Set the auth session in Supabase client and WAIT for it to complete
+        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token
+        });
+        
+        if (sessionError) {
+          console.error("❌ Failed to set session in client:", sessionError);
+          return {
+            error: { 
+              message: `Failed to establish session: ${sessionError.message}`, 
+              status: 500,
+              name: 'SessionError'
+            }
+          };
+        }
+        
+        console.log("✅ Session successfully set in Supabase client");
+        
+        // Verify the session was set correctly
+        const { data: verifySession } = await supabase.auth.getSession();
+        if (verifySession.session?.access_token === data.session.access_token) {
+          console.log("✅ Session verification successful");
+        } else {
+          console.warn("⚠️ Session verification mismatch");
+        }
+        
+      } catch (sessionSetError) {
+        console.error("❌ Exception setting session:", sessionSetError);
+        return {
+          error: { 
+            message: `Session setup failed: ${sessionSetError instanceof Error ? sessionSetError.message : 'Unknown error'}`, 
+            status: 500,
+            name: 'SessionSetupError'
+          }
+        };
+      }
     } else {
-      console.warn("Login returned success but no session");
+      console.warn("⚠️ Login returned success but no session");
     }
     
     // Return success data in same format as supabase client would
@@ -154,7 +187,7 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
       }
     };
   } catch (err) {
-    console.error("Exception during login:", err);
+    console.error("❌ Exception during login:", err);
     return {
       error: { 
         message: err instanceof Error ? err.message : "Unknown login error", 
