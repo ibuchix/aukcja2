@@ -80,19 +80,19 @@ export function useAuthInitializer() {
     // Initialize immediately without artificial delays
     initializeAuth();
     
-    // Set a safety timeout to prevent endless loading
+    // Set a single safety timeout to prevent endless loading - increased to 5 seconds
     const safetyTimeout = setTimeout(() => {
       if (isLoading) {
-        console.warn("Auth initialization safety timeout triggered");
+        console.warn("Auth initialization safety timeout triggered - completing initialization");
         setIsLoading(false);
         setInitializationComplete(true);
       }
-    }, 3000); // Reduced from 5 seconds
+    }, 5000);
     
     return () => {
       clearTimeout(safetyTimeout);
     };
-  }, []); // Remove isLoading dependency to prevent re-initialization
+  }, []);
 
   return {
     session,

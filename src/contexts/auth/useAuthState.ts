@@ -1,7 +1,6 @@
 
 import { useAuthInitializer } from "./hooks/useAuthInitializer";
 import { useAuthStateListener } from "./hooks/useAuthStateListener";
-import { useLoadingSafety } from "./hooks/useLoadingSafety";
 import { useState, useEffect } from "react";
 
 /**
@@ -26,9 +25,6 @@ export function useAuthState() {
 
   // Set up auth state change listener
   useAuthStateListener(setSession, setUser, setProfile, setIsLoading);
-  
-  // Safety timeout to prevent endless loading state
-  useLoadingSafety(isLoading, setIsLoading);
   
   // Mark as initialized when initialization is complete
   useEffect(() => {

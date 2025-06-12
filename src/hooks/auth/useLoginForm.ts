@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { normalizeEmail } from "@/utils/dealerProfileMapping";
 import { getAuthDiagnostics, clearAuthStorage } from "@/utils/auth-utils";
 import { signInWithEmail } from "@/services/auth/signin";
-import { verifyAuthForDatabase, waitForAuthReady } from "@/utils/authVerification";
 
 interface LoginFormValues {
   email: string;
@@ -41,7 +40,7 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
       // Normalize email consistently
       const normalizedEmail = normalizeEmail(data.email);
       
-      console.log("🚀 Starting enhanced login flow for:", normalizedEmail);
+      console.log("🚀 Starting login flow for:", normalizedEmail);
       
       // Get auth diagnostic info before attempt
       const beforeAuthInfo = getAuthDiagnostics();
@@ -57,6 +56,7 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
 
       if (!success) {
         console.error("❌ Login error:", result.error);
+        setIsLoading(false); // Reset loading immediately on error
         
         // Handle specific errors with user-friendly messages
         let errorMessage = result.error?.message || "Authentication failed. Please check your credentials and try again.";
@@ -75,50 +75,40 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
         return;
       }
 
-      console.log("✅ Login successful! Now verifying database access...");
+      console.log("✅ Login successful! Proceeding with navigation...");
       
-      // CRITICAL: Wait for auth context to be properly established
-      console.log("⏳ Waiting for auth context to be fully established...");
-      
-      const authVerification = await waitForAuthReady(5, 800);
-      
-      if (!authVerification.isValid) {
-        console.error("❌ Auth verification failed after login:", authVerification);
-        
-        setError(`Login succeeded but database access failed: ${authVerification.error || 'Unknown auth verification error'}`);
-        
-        toast({
-          title: "Authentication Issue",
-          description: "Login was successful but we're having trouble accessing your data. Please try refreshing the page.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log("✅ Auth verification successful! Database access confirmed.");
-      
-      // Show success toast
+      // Show success toast immediately
       toast({
         title: "Login successful",
         description: "Welcome back!",
       });
       
-      // Force a session refresh to ensure fresh JWT
-      try {
-        await refreshSession();
-        console.log("🔄 Session refreshed after login verification");
-      } catch (refreshErr) {
+      // Force a session refresh to ensure fresh JWT (but don't wait for it)
+      refreshSession().catch(refreshErr => {
         console.warn("⚠️ Could not refresh session after login:", refreshErr);
-        // Don't fail here since auth verification already passed
+        // Don't fail here since login was successful
+      });
+      
+      // Clear any auth query parameters and navigate immediately
+      console.log("🧭 Navigating to:", returnUrl);
+      
+      // Use replace to clear the auth state from browser history
+      if (window.location.search.includes('tab=login')) {
+        // Clear the query parameters by replacing the current history entry
+        window.history.replaceState({}, '', window.location.pathname);
       }
       
-      // Navigate to dashboard with confidence that auth is working
-      console.log("🧭 Navigating to:", returnUrl);
-      navigate(returnUrl);
+      navigate(returnUrl, { replace: true });
+      
+      // Reset loading state after navigation starts
+      setIsLoading(false);
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
       console.error("❌ Login exception:", err);
+      
+      // Always reset loading state on exception
+      setIsLoading(false);
       
       setError(errorMessage);
       toast({
@@ -129,8 +119,6 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
       
       // Update diagnostic info after exception
       setDiagnosticInfo(getAuthDiagnostics());
-    } finally {
-      setIsLoading(false);
     }
   };
 
