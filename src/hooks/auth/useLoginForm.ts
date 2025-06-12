@@ -21,7 +21,7 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
   const navigate = useNavigate();
-  const { refreshSession } = useAuth();
+  const { refreshSession, isAuthenticated, user } = useAuth();
   const { toast } = useToast();
 
   // Check auth diagnostics
@@ -56,7 +56,7 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
 
       if (!success) {
         console.error("❌ Login error:", result.error);
-        setIsLoading(false); // Reset loading immediately on error
+        setIsLoading(false);
         
         // Handle specific errors with user-friendly messages
         let errorMessage = result.error?.message || "Authentication failed. Please check your credentials and try again.";
@@ -75,7 +75,7 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
         return;
       }
 
-      console.log("✅ Login successful! Proceeding with navigation...");
+      console.log("✅ Login successful! Waiting for auth context to sync...");
       
       // Show success toast immediately
       toast({
@@ -83,16 +83,46 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
         description: "Welcome back!",
       });
       
-      // Force a session refresh to ensure fresh JWT (but don't wait for it)
+      // Wait for auth context to acknowledge the sign-in with timeout
+      let authCheckAttempts = 0;
+      const maxAuthChecks = 15; // 3 seconds total
+      
+      const waitForAuthSync = () => {
+        return new Promise<void>((resolve) => {
+          const checkAuth = () => {
+            authCheckAttempts++;
+            
+            if (isAuthenticated && user) {
+              console.log("✅ Auth context synced, navigating...");
+              resolve();
+              return;
+            }
+            
+            if (authCheckAttempts >= maxAuthChecks) {
+              console.log("⚠️ Auth sync timeout, proceeding with navigation anyway");
+              resolve();
+              return;
+            }
+            
+            setTimeout(checkAuth, 200);
+          };
+          
+          checkAuth();
+        });
+      };
+      
+      // Wait for auth sync or timeout
+      await waitForAuthSync();
+      
+      // Force a session refresh (but don't wait for it to complete)
       refreshSession().catch(refreshErr => {
         console.warn("⚠️ Could not refresh session after login:", refreshErr);
         // Don't fail here since login was successful
       });
       
-      // Clear any auth query parameters and navigate immediately
+      // Clear any auth query parameters and navigate
       console.log("🧭 Navigating to:", returnUrl);
       
-      // Use replace to clear the auth state from browser history
       if (window.location.search.includes('tab=login')) {
         // Clear the query parameters by replacing the current history entry
         window.history.replaceState({}, '', window.location.pathname);
@@ -100,15 +130,9 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
       
       navigate(returnUrl, { replace: true });
       
-      // Reset loading state after navigation starts
-      setIsLoading(false);
-      
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
       console.error("❌ Login exception:", err);
-      
-      // Always reset loading state on exception
-      setIsLoading(false);
       
       setError(errorMessage);
       toast({
@@ -119,6 +143,9 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
       
       // Update diagnostic info after exception
       setDiagnosticInfo(getAuthDiagnostics());
+    } finally {
+      // Always reset loading state
+      setIsLoading(false);
     }
   };
 

@@ -1,14 +1,12 @@
-
 import { useEffect, useRef } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { fetchDealerProfile } from "../authUtils";
 import { AuthDebugger } from "@/utils/authDebugger";
-import { verifyAuthForDatabase } from "@/utils/authVerification";
 
 /**
- * Enhanced hook to listen for authentication state changes with database verification
+ * Simplified hook to listen for authentication state changes
  */
 export function useAuthStateListener(
   setSession: (session: Session | null) => void,
@@ -38,64 +36,47 @@ export function useAuthStateListener(
           setUser(currentSession?.user ?? null);
           
           if (event === "SIGNED_IN" && currentSession?.user) {
+            console.log("✅ SIGNED_IN event - processing...");
+            
+            // Keep loading state briefly while we fetch profile
             setIsLoading(true);
             
-            console.log("✅ SIGNED_IN event - verifying database access...");
-            
-            // CRITICAL: Verify database access before proceeding
             try {
-              const authVerification = await verifyAuthForDatabase();
+              // Fetch profile data with timeout
+              const profileData = await Promise.race([
+                fetchDealerProfile(currentSession.user.id),
+                new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('Profile fetch timeout')), 3000)
+                )
+              ]);
               
-              if (!authVerification.isValid) {
-                console.error("❌ Database access verification failed after SIGNED_IN:", authVerification);
-                
-                toast({
-                  title: "Authentication Issue",
-                  description: "Sign in was successful but we're having trouble accessing your data. Please try refreshing the page.",
-                  variant: "destructive",
-                });
-                
-                await AuthDebugger.captureAuthState("Sign In Database Access Failed");
-                setIsLoading(false);
-                return;
+              if (profileData) {
+                setProfile(profileData);
+                console.log("✅ Profile loaded successfully after sign in");
+                await AuthDebugger.captureAuthState("Sign In Profile Load Success");
+              } else {
+                console.log("ℹ️ No profile data found after sign in");
+                await AuthDebugger.captureAuthState("Sign In No Profile");
               }
-              
-              console.log("✅ Database access verified after SIGNED_IN");
-              await AuthDebugger.captureAuthState("Sign In Database Access Verified");
-              
-              // Now safely fetch profile data
-              try {
-                const profileData = await fetchDealerProfile(currentSession.user.id);
-                
-                if (profileData) {
-                  setProfile(profileData);
-                  toast({
-                    title: "Signed in successfully",
-                    description: "Welcome back to your dealer dashboard",
-                  });
-                  await AuthDebugger.captureAuthState("Sign In Profile Load Success");
-                } else {
-                  console.log("ℹ️ No profile data found after sign in");
-                  await AuthDebugger.captureAuthState("Sign In No Profile");
-                }
-              } catch (profileError) {
-                console.error("❌ Error fetching profile after sign in:", profileError);
-                await AuthDebugger.captureAuthState("Sign In Profile Error");
-                // Don't fail the sign in if profile fetch fails
-              }
-              
-            } catch (verificationError) {
-              console.error("❌ Auth verification exception after SIGNED_IN:", verificationError);
-              await AuthDebugger.captureAuthState("Sign In Verification Exception");
               
               toast({
-                title: "Authentication Error",
-                description: "There was an issue verifying your authentication. Please try signing in again.",
-                variant: "destructive",
+                title: "Signed in successfully",
+                description: "Welcome back to your dealer dashboard",
               });
-            } finally {
-              setIsLoading(false);
+              
+            } catch (profileError) {
+              console.error("❌ Error fetching profile after sign in:", profileError);
+              await AuthDebugger.captureAuthState("Sign In Profile Error");
+              
+              // Don't block sign in if profile fetch fails
+              toast({
+                title: "Signed in successfully", 
+                description: "Welcome back! Profile data will load shortly.",
+              });
             }
+            
+            // Always reset loading state after processing
+            setIsLoading(false);
             
           } else if (event === "SIGNED_OUT") {
             setProfile(null);
@@ -107,32 +88,19 @@ export function useAuthStateListener(
             await AuthDebugger.captureAuthState("Signed Out");
             
           } else if (event === "TOKEN_REFRESHED" && currentSession) {
-            console.log("🔄 Session token refreshed - verifying database access");
+            console.log("🔄 Session token refreshed");
             await AuthDebugger.captureAuthState("Token Refreshed");
             
-            // Verify database access after token refresh
+            // Briefly set loading to refresh profile
             setIsLoading(true);
             
             try {
-              const authVerification = await verifyAuthForDatabase();
-              
-              if (authVerification.isValid && currentSession.user) {
-                // Refresh profile data when token is refreshed
-                try {
-                  const profileData = await fetchDealerProfile(currentSession.user.id);
-                  setProfile(profileData);
-                  await AuthDebugger.captureAuthState("Token Refresh Profile Success");
-                } catch (profileError) {
-                  console.error("❌ Error fetching profile after token refresh:", profileError);
-                  await AuthDebugger.captureAuthState("Token Refresh Profile Error");
-                }
-              } else {
-                console.error("❌ Database access failed after token refresh:", authVerification);
-                await AuthDebugger.captureAuthState("Token Refresh Database Access Failed");
-              }
-            } catch (verificationError) {
-              console.error("❌ Auth verification exception after token refresh:", verificationError);
-              await AuthDebugger.captureAuthState("Token Refresh Verification Exception");
+              const profileData = await fetchDealerProfile(currentSession.user.id);
+              setProfile(profileData);
+              await AuthDebugger.captureAuthState("Token Refresh Profile Success");
+            } catch (profileError) {
+              console.error("❌ Error fetching profile after token refresh:", profileError);
+              await AuthDebugger.captureAuthState("Token Refresh Profile Error");
             } finally {
               setIsLoading(false);
             }
@@ -145,7 +113,7 @@ export function useAuthStateListener(
           await AuthDebugger.captureAuthState("Auth State Change Error");
           setIsLoading(false);
         } finally {
-          // Reset the lock after a minimal delay
+          // Reset the lock after a brief delay
           setTimeout(() => {
             authChangeInProgressRef.current = false;
           }, 100);
