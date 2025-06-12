@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,12 +13,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { UserCircle, LogOut, Menu, LayoutDashboard } from "lucide-react";
 import { NavbarLogo } from "./navbar/NavbarLogo";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAuthenticated, user, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { toast } = useToast();
 
   // Handle scroll events to change navbar appearance
   useEffect(() => {
@@ -38,7 +41,25 @@ export default function Navbar() {
 
   // Handle user logout
   const handleLogout = async () => {
-    await signOut();
+    try {
+      console.log("🚪 Starting logout process");
+      await signOut();
+      
+      toast({
+        title: "Logged out successfully",
+        description: "You have been signed out",
+      });
+      
+      console.log("✅ Logout successful, redirecting to auth page");
+      navigate("/auth", { replace: true });
+    } catch (error) {
+      console.error("❌ Logout error:", error);
+      toast({
+        title: "Logout failed",
+        description: "There was an error signing you out",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
