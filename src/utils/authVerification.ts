@@ -12,6 +12,12 @@ export interface AuthVerificationResult {
   details?: any;
 }
 
+interface DebugAuthResponse {
+  auth_uid?: string;
+  auth_role?: string;
+  auth_email?: string;
+}
+
 /**
  * Verifies that the current auth session can access the database
  * This is crucial for ensuring RLS policies work correctly
@@ -77,14 +83,15 @@ export async function verifyAuthForDatabase(): Promise<AuthVerificationResult> {
         };
       }
 
-      // Check if the RLS context is working correctly
-      const authContextWorking = debugData?.auth_uid === userId;
+      // Safely parse the debug response
+      const debugResponse = debugData as DebugAuthResponse;
+      const authContextWorking = debugResponse?.auth_uid === userId;
       
       console.log("🔍 Database access test results:", {
-        debugData,
+        debugData: debugResponse,
         authContextWorking,
         expectedUserId: userId,
-        actualUserId: debugData?.auth_uid
+        actualUserId: debugResponse?.auth_uid
       });
 
       if (!authContextWorking) {
@@ -95,7 +102,7 @@ export async function verifyAuthForDatabase(): Promise<AuthVerificationResult> {
           canAccessDatabase: false,
           userId,
           error: "RLS auth context not working - JWT token not being recognized by database",
-          details: { debugData, expectedUserId: userId }
+          details: { debugData: debugResponse, expectedUserId: userId }
         };
       }
 
@@ -125,7 +132,7 @@ export async function verifyAuthForDatabase(): Promise<AuthVerificationResult> {
         hasJwtToken,
         canAccessDatabase: true,
         userId,
-        details: { debugData, dealerData }
+        details: { debugData: debugResponse, dealerData }
       };
 
     } catch (dbError) {
