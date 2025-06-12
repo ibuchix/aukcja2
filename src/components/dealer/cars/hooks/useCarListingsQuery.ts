@@ -23,7 +23,13 @@ export const useCarListingsQuery = ({
   pageSize
 }: UseCarListingsQueryProps) => {
   return useAuthAwareQuery({
-    queryKey: ["carListings", filters, sortOption, searchQuery, currentPage],
+    queryKey: [
+      "carListings", 
+      JSON.stringify(filters), 
+      sortOption, 
+      searchQuery, 
+      currentPage.toString()
+    ],
     queryFn: async () => {
       const isDev = process.env.NODE_ENV === 'development';
       
