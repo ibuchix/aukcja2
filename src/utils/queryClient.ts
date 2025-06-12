@@ -1,4 +1,6 @@
+
 import { QueryClient } from "@tanstack/react-query";
+import { queryInvalidationManager } from "./queryInvalidationManager";
 
 // Create a client with optimized settings
 export const queryClient = new QueryClient({
@@ -21,6 +23,9 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Register the query client with the invalidation manager
+queryInvalidationManager.setQueryClient(queryClient);
 
 // Query key factory to ensure consistent keys throughout the app
 export const queryKeys = {

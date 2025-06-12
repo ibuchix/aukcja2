@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { fetchDealerProfile } from "../authUtils";
 import { AuthDebugger } from "@/utils/authDebugger";
+import { queryInvalidationManager } from "@/utils/queryInvalidationManager";
 
 /**
- * Simplified hook to listen for authentication state changes
+ * Enhanced hook to listen for authentication state changes with query management
  */
 export function useAuthStateListener(
   setSession: (session: Session | null) => void,
@@ -31,12 +32,30 @@ export function useAuthStateListener(
         try {
           await AuthDebugger.captureAuthState(`Auth State Change: ${event}`);
           
-          // Update session and user immediately
-          setSession(currentSession);
-          setUser(currentSession?.user ?? null);
-          
-          if (event === "SIGNED_IN" && currentSession?.user) {
+          if (event === "SIGNED_OUT") {
+            console.log("🚪 SIGNED_OUT event - cleaning up queries and session");
+            
+            // Immediately clear session and user
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+            setIsLoading(false);
+            
+            // Invalidate and clear all auth-dependent queries
+            queryInvalidationManager.clearAllQueries();
+            
+            toast({
+              title: "Signed out",
+              description: "You have been signed out successfully",
+            });
+            await AuthDebugger.captureAuthState("Signed Out with Query Cleanup");
+            
+          } else if (event === "SIGNED_IN" && currentSession?.user) {
             console.log("✅ SIGNED_IN event - processing...");
+            
+            // Update session and user immediately
+            setSession(currentSession);
+            setUser(currentSession.user);
             
             // Keep loading state briefly while we fetch profile
             setIsLoading(true);
@@ -59,6 +78,9 @@ export function useAuthStateListener(
                 await AuthDebugger.captureAuthState("Sign In No Profile");
               }
               
+              // Refresh auth-dependent queries after successful sign in
+              queryInvalidationManager.refreshAuthQueries();
+              
               toast({
                 title: "Signed in successfully",
                 description: "Welcome back to your dealer dashboard",
@@ -78,17 +100,13 @@ export function useAuthStateListener(
             // Always reset loading state after processing
             setIsLoading(false);
             
-          } else if (event === "SIGNED_OUT") {
-            setProfile(null);
-            setIsLoading(false);
-            toast({
-              title: "Signed out",
-              description: "You have been signed out successfully",
-            });
-            await AuthDebugger.captureAuthState("Signed Out");
-            
           } else if (event === "TOKEN_REFRESHED" && currentSession) {
             console.log("🔄 Session token refreshed");
+            
+            // Update session immediately
+            setSession(currentSession);
+            setUser(currentSession.user);
+            
             await AuthDebugger.captureAuthState("Token Refreshed");
             
             // Briefly set loading to refresh profile
@@ -97,6 +115,10 @@ export function useAuthStateListener(
             try {
               const profileData = await fetchDealerProfile(currentSession.user.id);
               setProfile(profileData);
+              
+              // Refresh queries after token refresh
+              queryInvalidationManager.refreshAuthQueries();
+              
               await AuthDebugger.captureAuthState("Token Refresh Profile Success");
             } catch (profileError) {
               console.error("❌ Error fetching profile after token refresh:", profileError);

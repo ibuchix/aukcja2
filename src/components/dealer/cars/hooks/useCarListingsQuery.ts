@@ -1,5 +1,5 @@
 
-import { useAuthAwareQuery } from "@/utils/authAwareQuery";
+import { useEnhancedAuthAwareQuery } from "@/utils/enhancedAuthAwareQuery";
 import { AuctionFilters } from "../../auction/types";
 import { processCarData } from "@/utils/carDataHelpers";
 import { buildCarListingsQuery } from "./utils/queryBuilder";
@@ -22,7 +22,7 @@ export const useCarListingsQuery = ({
   currentPage,
   pageSize
 }: UseCarListingsQueryProps) => {
-  return useAuthAwareQuery({
+  return useEnhancedAuthAwareQuery({
     queryKey: [
       "carListings", 
       JSON.stringify(filters), 
