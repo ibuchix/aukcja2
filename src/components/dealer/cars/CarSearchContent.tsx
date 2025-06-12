@@ -10,12 +10,15 @@ import { CarSearchFilters } from "./filters/CarSearchFilters";
 import { AuctionPagination } from "../auction/AuctionPagination";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Info } from "lucide-react";
+import { useAuthReadiness } from "@/utils/authAwareQuery";
 
 interface CarSearchContentProps {
   dealerId: string;
 }
 
 export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
+  const { canMakeAuthenticatedQueries } = useAuthReadiness();
+  
   const {
     listings,
     isLoading,
@@ -36,10 +39,11 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
 
   const isDev = process.env.NODE_ENV === 'development';
   
-  // Log dealer ID for debugging
+  // Log dealer ID and auth readiness for debugging
   useEffect(() => {
     if (isDev) {
       console.log("CarSearch component mounted with dealer ID:", dealerId);
+      console.log("Auth readiness:", { canMakeAuthenticatedQueries });
       console.log("Current search state:", {
         listings: listings.length,
         isLoading,
@@ -47,7 +51,7 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
         errorMessage: error
       });
     }
-  }, [dealerId, listings.length, isLoading, error, isDev]);
+  }, [dealerId, listings.length, isLoading, error, isDev, canMakeAuthenticatedQueries]);
 
   return (
     <div className="space-y-6 pb-20">
@@ -67,7 +71,7 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
         
         {isDev && (
           <div className="text-xs text-muted-foreground">
-            Dealer ID: {dealerId || "Not available"} | Results: {listings.length}
+            Dealer ID: {dealerId || "Not available"} | Results: {listings.length} | Auth Ready: {canMakeAuthenticatedQueries ? "Yes" : "No"}
           </div>
         )}
       </div>
@@ -81,7 +85,18 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
             Active filters: {Object.keys(filters).length} | 
             Results: {listings.length} | 
             Loading: {isLoading ? "Yes" : "No"} |
-            Error: {error ? "Yes" : "No"}
+            Error: {error ? "Yes" : "No"} |
+            Auth Ready: {canMakeAuthenticatedQueries ? "Yes" : "No"}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Auth not ready warning */}
+      {!canMakeAuthenticatedQueries && (
+        <Alert variant="default" className="bg-yellow-50 border-yellow-200">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Authentication is still loading. Please wait for the search to become available.
           </AlertDescription>
         </Alert>
       )}

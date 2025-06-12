@@ -4,6 +4,8 @@ import { rawSupabaseClient } from "@/integrations/supabase/client";
 export const buildCarListingsQuery = () => {
   console.log("Using raw Supabase client for car listings to preserve authentication context");
   
+  // Build the base query - this will be guarded by the auth-aware query wrapper
+  // so we know auth is ready when this executes
   return rawSupabaseClient
     .from("cars")
     .select(`

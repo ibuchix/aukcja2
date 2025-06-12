@@ -1,5 +1,5 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useAuthAwareQuery } from "@/utils/authAwareQuery";
 import { AuctionFilters } from "../../auction/types";
 import { processCarData } from "@/utils/carDataHelpers";
 import { buildCarListingsQuery } from "./utils/queryBuilder";
@@ -22,7 +22,7 @@ export const useCarListingsQuery = ({
   currentPage,
   pageSize
 }: UseCarListingsQueryProps) => {
-  return useQuery({
+  return useAuthAwareQuery({
     queryKey: ["carListings", filters, sortOption, searchQuery, currentPage],
     queryFn: async () => {
       const isDev = process.env.NODE_ENV === 'development';
@@ -107,6 +107,7 @@ export const useCarListingsQuery = ({
         throw new Error(errorMessage);
       }
     },
+    requireAuth: true, // This query requires authentication
     retry: 2,
     retryDelay: attempt => Math.min(attempt > 1 ? 2000 : 1000, 30000),
   });
