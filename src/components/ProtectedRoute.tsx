@@ -17,7 +17,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Add a delayed safety check to prevent endless loading
   useEffect(() => {
-    // If we're still loading after 3 seconds, we might be stuck
+    // If we're still loading after 2 seconds, we might be stuck
     const safetyTimeout = setTimeout(() => {
       if (isLoading && !authCheckComplete) {
         console.warn("Auth check taking too long, forcing completion");
@@ -26,7 +26,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         // Reset circuit breaker
         sessionCircuitBreaker.reset();
       }
-    }, 3000);
+    }, 2000);
     
     return () => clearTimeout(safetyTimeout);
   }, [isLoading, authCheckComplete]);
@@ -34,6 +34,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Mark auth check complete when initialization is done
   useEffect(() => {
     if (isInitialized && !authCheckComplete) {
+      console.log("Auth initialization complete, marking check as done");
       setAuthCheckComplete(true);
     }
   }, [isInitialized, authCheckComplete]);
@@ -41,10 +42,11 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Handle redirection with a slight delay to avoid flashing
   useEffect(() => {
     if (authCheckComplete && !isAuthenticated && !isLoading) {
+      console.log("User not authenticated, preparing redirect");
       // Prevent immediate redirect to avoid UI flashing
       const redirectTimer = setTimeout(() => {
         setIsRedirecting(true);
-      }, 100);
+      }, 200);
       
       return () => clearTimeout(redirectTimer);
     }

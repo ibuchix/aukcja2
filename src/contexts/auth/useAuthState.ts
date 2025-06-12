@@ -2,7 +2,7 @@
 import { useAuthInitializer } from "./hooks/useAuthInitializer";
 import { useAuthStateListener } from "./hooks/useAuthStateListener";
 import { useLoadingSafety } from "./hooks/useLoadingSafety";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 /**
  * Main hook for managing authentication state
@@ -31,9 +31,12 @@ export function useAuthState() {
   useLoadingSafety(isLoading, setIsLoading);
   
   // Mark as initialized when initialization is complete
-  if (initializationComplete && !isInitialized) {
-    setIsInitialized(true);
-  }
+  useEffect(() => {
+    if (initializationComplete && !isInitialized) {
+      console.log("Auth state initialization complete");
+      setIsInitialized(true);
+    }
+  }, [initializationComplete, isInitialized]);
 
   return {
     session,

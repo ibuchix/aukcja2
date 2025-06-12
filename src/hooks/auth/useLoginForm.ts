@@ -17,12 +17,11 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loginAttempted, setLoginAttempted] = useState(false);
-  const [loginSuccess, setLoginSuccess] = useState(false);
   const [diagnosticInfo, setDiagnosticInfo] = useState<Record<string, unknown> | null>(null);
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
   const navigate = useNavigate();
-  const { signIn, refreshSession } = useAuth();
+  const { refreshSession } = useAuth();
   const { toast } = useToast();
 
   // Check auth diagnostics
@@ -31,23 +30,12 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
     setDiagnosticInfo(authInfo);
     return authInfo;
   };
-  
-  // Always use direct fetch now
-  const useDirectFetch = true;
-  const toggleFetchMethod = () => {
-    // This is now a no-op since we always use direct fetch
-    toast({
-      title: `Using direct fetch`,
-      description: `For reliable operation, we always use direct fetch for authentication`,
-    });
-  };
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsLoading(true);
       setError(null);
       setLoginAttempted(true);
-      setLoginSuccess(false);
 
       // Normalize email consistently
       const normalizedEmail = normalizeEmail(data.email);
@@ -58,7 +46,7 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
       const beforeAuthInfo = getAuthDiagnostics();
       console.log("Auth state before login attempt:", beforeAuthInfo);
       
-      // Always use direct method 
+      // Use direct method 
       const result = await signInWithEmail({
         email: normalizedEmail,
         password: data.password.trim(),
@@ -83,33 +71,31 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
         }
         
         setError(errorMessage);
-        
-        // Don't redirect on error
         return;
       }
 
-      // Login success! Set flag and show toast
-      setLoginSuccess(true);
-      console.log("Login successful, will redirect to:", returnUrl);
+      // Login success! Show success toast
+      console.log("Login successful, preparing navigation to:", returnUrl);
       
       toast({
         title: "Login successful",
         description: "Welcome back!",
       });
       
-      // Before redirecting, force a session refresh to ensure fresh JWT
+      // Force a session refresh to ensure fresh JWT
       try {
         await refreshSession();
-        console.log("Session refreshed after login before redirect");
+        console.log("Session refreshed after login");
       } catch (refreshErr) {
-        console.warn("Could not refresh session before redirect:", refreshErr);
+        console.warn("Could not refresh session after login:", refreshErr);
       }
       
-      // Small delay to ensure the session is properly established
+      // Navigate to dashboard with a small delay to ensure auth context is updated
       setTimeout(() => {
-        // Handle successful login with navigation
+        console.log("Navigating to:", returnUrl);
         navigate(returnUrl);
-      }, 300);
+      }, 500);
+      
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
       console.error("Login exception:", err);
@@ -136,12 +122,9 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
     error,
     errors,
     loginAttempted,
-    loginSuccess,
     diagnosticInfo,
     checkAuthDiagnostics,
     setError,
-    useDirectFetch,
-    toggleFetchMethod,
     clearStorage: clearAuthStorage
   };
 }

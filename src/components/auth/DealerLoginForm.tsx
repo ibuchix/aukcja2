@@ -1,17 +1,14 @@
 
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useLoginForm } from "@/hooks/auth/useLoginForm";
 import { LoginError } from "@/components/auth/login/LoginError";
 import { LoginFormFields } from "@/components/auth/login/LoginFormFields";
 import { LoginSubmitButton } from "@/components/auth/login/LoginSubmitButton";
 import { clearAuthStorage } from "@/utils/auth-utils";
-import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl?: string }) {
-  const navigate = useNavigate();
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
   
   const { 
@@ -22,12 +19,8 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
     error, 
     errors,
     loginAttempted,
-    loginSuccess,
-    diagnosticInfo,
     checkAuthDiagnostics
   } = useLoginForm(returnUrl);
-  
-  const { toast } = useToast();
 
   // Check for auth storage issues on component mount
   useEffect(() => {
@@ -41,18 +34,6 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
     
     setAuthCheckComplete(true);
   }, []);
-
-  // Watch for successful login to ensure we redirect
-  useEffect(() => {
-    if (loginSuccess) {
-      console.log("Login successful, redirecting to:", returnUrl);
-      toast({
-        title: "Login successful",
-        description: "Redirecting to dashboard...",
-      });
-      navigate(returnUrl);
-    }
-  }, [loginSuccess, returnUrl, navigate, toast]);
 
   if (!authCheckComplete) {
     return (
@@ -70,14 +51,6 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
       <LoginFormFields register={register} errors={errors} />
       
       <LoginSubmitButton isLoading={isLoading} />
-      
-      {loginSuccess && (
-        <Alert className="bg-green-50 border-green-200">
-          <AlertDescription>
-            Login successful! Redirecting...
-          </AlertDescription>
-        </Alert>
-      )}
       
       <div className="text-center text-sm mt-4">
         Don't have an account?{" "}
