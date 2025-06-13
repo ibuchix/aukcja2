@@ -21,7 +21,7 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
   const navigate = useNavigate();
-  const { refreshSession, isAuthenticated, user } = useAuth();
+  const { refreshSession } = useAuth();
   const { toast } = useToast();
 
   // Check auth diagnostics
@@ -75,7 +75,7 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
         return;
       }
 
-      console.log("✅ Login successful! Waiting for auth context to sync...");
+      console.log("✅ Login successful! Navigating immediately...");
       
       // Show success toast immediately
       toast({
@@ -83,44 +83,7 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
         description: "Welcome back!",
       });
       
-      // Wait for auth context to acknowledge the sign-in with timeout
-      let authCheckAttempts = 0;
-      const maxAuthChecks = 15; // 3 seconds total
-      
-      const waitForAuthSync = () => {
-        return new Promise<void>((resolve) => {
-          const checkAuth = () => {
-            authCheckAttempts++;
-            
-            if (isAuthenticated && user) {
-              console.log("✅ Auth context synced, navigating...");
-              resolve();
-              return;
-            }
-            
-            if (authCheckAttempts >= maxAuthChecks) {
-              console.log("⚠️ Auth sync timeout, proceeding with navigation anyway");
-              resolve();
-              return;
-            }
-            
-            setTimeout(checkAuth, 200);
-          };
-          
-          checkAuth();
-        });
-      };
-      
-      // Wait for auth sync or timeout
-      await waitForAuthSync();
-      
-      // Force a session refresh (but don't wait for it to complete)
-      refreshSession().catch(refreshErr => {
-        console.warn("⚠️ Could not refresh session after login:", refreshErr);
-        // Don't fail here since login was successful
-      });
-      
-      // Clear any auth query parameters and navigate
+      // Clear any auth query parameters and navigate immediately
       console.log("🧭 Navigating to:", returnUrl);
       
       if (window.location.search.includes('tab=login')) {
@@ -128,7 +91,14 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
         window.history.replaceState({}, '', window.location.pathname);
       }
       
+      // Navigate immediately after successful authentication
       navigate(returnUrl, { replace: true });
+      
+      // Trigger session refresh in background (don't wait for it)
+      refreshSession().catch(refreshErr => {
+        console.warn("⚠️ Could not refresh session after login:", refreshErr);
+        // Don't fail here since login was successful and navigation already happened
+      });
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";

@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +8,7 @@ import { AuthDebugger } from "@/utils/authDebugger";
 import { queryInvalidationManager } from "@/utils/queryInvalidationManager";
 
 /**
- * Enhanced hook to listen for authentication state changes with query management
+ * Enhanced hook to listen for authentication state changes with improved reliability
  */
 export function useAuthStateListener(
   setSession: (session: Session | null) => void,
@@ -56,49 +57,31 @@ export function useAuthStateListener(
             // Update session and user immediately
             setSession(currentSession);
             setUser(currentSession.user);
+            setIsLoading(false); // Set loading to false immediately since we have the session
             
-            // Keep loading state briefly while we fetch profile
-            setIsLoading(true);
-            
-            try {
-              // Fetch profile data with timeout
-              const profileData = await Promise.race([
-                fetchDealerProfile(currentSession.user.id),
-                new Promise((_, reject) => 
-                  setTimeout(() => reject(new Error('Profile fetch timeout')), 3000)
-                )
-              ]);
-              
-              if (profileData) {
-                setProfile(profileData);
-                console.log("✅ Profile loaded successfully after sign in");
-                await AuthDebugger.captureAuthState("Sign In Profile Load Success");
-              } else {
-                console.log("ℹ️ No profile data found after sign in");
-                await AuthDebugger.captureAuthState("Sign In No Profile");
+            // Fetch profile data in background without blocking
+            setTimeout(async () => {
+              try {
+                const profileData = await fetchDealerProfile(currentSession.user.id);
+                
+                if (profileData) {
+                  setProfile(profileData);
+                  console.log("✅ Profile loaded successfully after sign in");
+                  await AuthDebugger.captureAuthState("Sign In Profile Load Success");
+                } else {
+                  console.log("ℹ️ No profile data found after sign in");
+                  await AuthDebugger.captureAuthState("Sign In No Profile");
+                }
+                
+                // Refresh auth-dependent queries after successful sign in
+                queryInvalidationManager.refreshAuthQueries();
+                
+              } catch (profileError) {
+                console.error("❌ Error fetching profile after sign in:", profileError);
+                await AuthDebugger.captureAuthState("Sign In Profile Error");
+                // Don't show error toast for profile issues as they don't block main functionality
               }
-              
-              // Refresh auth-dependent queries after successful sign in
-              queryInvalidationManager.refreshAuthQueries();
-              
-              toast({
-                title: "Signed in successfully",
-                description: "Welcome back to your dealer dashboard",
-              });
-              
-            } catch (profileError) {
-              console.error("❌ Error fetching profile after sign in:", profileError);
-              await AuthDebugger.captureAuthState("Sign In Profile Error");
-              
-              // Don't block sign in if profile fetch fails
-              toast({
-                title: "Signed in successfully", 
-                description: "Welcome back! Profile data will load shortly.",
-              });
-            }
-            
-            // Always reset loading state after processing
-            setIsLoading(false);
+            }, 100);
             
           } else if (event === "TOKEN_REFRESHED" && currentSession) {
             console.log("🔄 Session token refreshed");
@@ -109,23 +92,21 @@ export function useAuthStateListener(
             
             await AuthDebugger.captureAuthState("Token Refreshed");
             
-            // Briefly set loading to refresh profile
-            setIsLoading(true);
-            
-            try {
-              const profileData = await fetchDealerProfile(currentSession.user.id);
-              setProfile(profileData);
-              
-              // Refresh queries after token refresh
-              queryInvalidationManager.refreshAuthQueries();
-              
-              await AuthDebugger.captureAuthState("Token Refresh Profile Success");
-            } catch (profileError) {
-              console.error("❌ Error fetching profile after token refresh:", profileError);
-              await AuthDebugger.captureAuthState("Token Refresh Profile Error");
-            } finally {
-              setIsLoading(false);
-            }
+            // Refresh profile in background
+            setTimeout(async () => {
+              try {
+                const profileData = await fetchDealerProfile(currentSession.user.id);
+                setProfile(profileData);
+                
+                // Refresh queries after token refresh
+                queryInvalidationManager.refreshAuthQueries();
+                
+                await AuthDebugger.captureAuthState("Token Refresh Profile Success");
+              } catch (profileError) {
+                console.error("❌ Error fetching profile after token refresh:", profileError);
+                await AuthDebugger.captureAuthState("Token Refresh Profile Error");
+              }
+            }, 100);
           } else {
             // For any other events, ensure loading is false
             setIsLoading(false);

@@ -1,10 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { getUserProfile, safeGetProfileData } from './authUtils';
+import { getUserProfile } from './authUtils';
 import { preparePassword, getAuthDiagnostics } from '@/utils/auth-utils';
-import { useToast } from '@/hooks/use-toast';
 import { signInWithEmail } from '@/services/auth/signin';
-import { verifyAuthForDatabase, waitForAuthReady } from '@/utils/authVerification';
 
 export function useSignInHandler() {
   const signIn = async ({ email, password, redirectTo }: { 
@@ -43,45 +41,19 @@ export function useSignInHandler() {
       }
 
       if (data?.user && data?.session) {
-        console.log("✅ Sign in data received, now ensuring database access...");
+        console.log("✅ Sign in data received successfully");
         
-        // CRITICAL: Wait for auth context to be properly established and database accessible
-        const authVerification = await waitForAuthReady(5, 800);
-        
-        if (!authVerification.isValid) {
-          console.error("❌ Auth verification failed after sign in:", authVerification);
-          
-          return { 
-            success: false, 
-            error: `Authentication successful but database access failed: ${authVerification.error}` 
-          };
-        }
-        
-        console.log("✅ Database access verified after sign in");
-        
-        // Get user profile after verification
-        const userProfile = await getUserProfile(data.user.id);
+        // Get user profile but don't wait for it or let it block success
+        const userProfile = await getUserProfile(data.user.id).catch(profileError => {
+          console.warn("⚠️ Could not fetch user profile, but continuing with signin:", profileError);
+          return null;
+        });
         
         // Diagnostics after successful signin
         const afterState = getAuthDiagnostics();
         console.log("📊 Auth state after successful signin:", afterState);
         
-        // After successful login and verification, refresh the session to ensure RLS policies work correctly
-        try {
-          console.log("🔄 Refreshing session after successful login and verification");
-          const { data: refreshData } = await supabase.auth.refreshSession();
-          
-          if (refreshData?.session) {
-            console.log("✅ Session successfully refreshed after login");
-          } else {
-            console.log("⚠️ Session refresh did not return new session data");
-          }
-        } catch (refreshError) {
-          console.warn("⚠️ Error refreshing session after login:", refreshError);
-          // Continue anyway as the initial login and verification worked
-        }
-        
-        // Return successful result
+        // Return successful result immediately
         return { 
           success: true, 
           user: data.user, 
@@ -96,7 +68,6 @@ export function useSignInHandler() {
         
         return { 
           success: true,
-          // The session might still exist even if user data isn't explicitly returned
           session: data.session
         };
       }
@@ -106,12 +77,6 @@ export function useSignInHandler() {
       };
     } catch (error) {
       console.error('❌ Sign in error:', error);
-      
-      // More detailed error logging
-      if (error instanceof Error) {
-        console.error('Error name:', error.name);
-        console.error('Error stack:', error.stack);
-      }
       
       return {
         success: false,
