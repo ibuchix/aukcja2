@@ -22,11 +22,9 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
   const navigate = useNavigate();
-  const { isAuthenticated, isInitialized } = useAuth();
   const { toast } = useToast();
   
   const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const loginSuccessRef = useRef(false);
 
   // Check auth diagnostics
   const checkAuthDiagnostics = () => {
@@ -35,34 +33,11 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
     return authInfo;
   };
 
-  // Effect to handle navigation after successful login
-  useEffect(() => {
-    if (loginSuccessRef.current && isAuthenticated && isInitialized && !isLoading) {
-      console.log("✅ Auth context updated after login, navigating to dashboard");
-      
-      if (navigationTimeoutRef.current) {
-        clearTimeout(navigationTimeoutRef.current);
-        navigationTimeoutRef.current = null;
-      }
-      
-      // Clear URL query parameters and navigate
-      const currentUrl = new URL(window.location.href);
-      if (currentUrl.searchParams.has('tab')) {
-        window.history.replaceState({}, '', currentUrl.pathname);
-      }
-      
-      navigate(returnUrl, { replace: true });
-      loginSuccessRef.current = false;
-      setIsLoading(false);
-    }
-  }, [isAuthenticated, isInitialized, isLoading, navigate, returnUrl]);
-
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsLoading(true);
       setError(null);
       setLoginAttempted(true);
-      loginSuccessRef.current = false;
 
       // Normalize email consistently
       const normalizedEmail = normalizeEmail(data.email);
@@ -102,9 +77,9 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
         return;
       }
 
-      console.log("✅ Login successful! Setting session in Supabase client...");
+      console.log("✅ Login successful! Setting session and navigating immediately...");
       
-      // Set the session in Supabase client to trigger auth state change
+      // Set the session in Supabase client
       if (result.data?.session) {
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: result.data.session.access_token,
@@ -116,10 +91,7 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
           throw sessionError;
         }
         
-        console.log("✅ Session set successfully, waiting for auth context to update...");
-        
-        // Mark login as successful and wait for auth context to update
-        loginSuccessRef.current = true;
+        console.log("✅ Session set successfully");
         
         // Show success toast
         toast({
@@ -127,20 +99,21 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
           description: "Welcome back!",
         });
         
-        // Set a timeout as fallback in case auth context doesn't update
-        navigationTimeoutRef.current = setTimeout(() => {
-          console.warn("⚠️ Auth context didn't update in time, forcing navigation");
-          
-          // Clear URL query parameters and navigate
-          const currentUrl = new URL(window.location.href);
-          if (currentUrl.searchParams.has('tab')) {
-            window.history.replaceState({}, '', currentUrl.pathname);
-          }
-          
-          navigate(returnUrl, { replace: true });
-          loginSuccessRef.current = false;
-          setIsLoading(false);
-        }, 3000);
+        // Navigate immediately - don't wait for auth context
+        console.log("🚀 Navigating immediately to:", returnUrl);
+        
+        // Clear URL query parameters and navigate
+        const currentUrl = new URL(window.location.href);
+        if (currentUrl.searchParams.has('tab')) {
+          window.history.replaceState({}, '', currentUrl.pathname);
+        }
+        
+        // Use replace to avoid back navigation issues
+        navigate(returnUrl, { replace: true });
+        setIsLoading(false);
+      } else {
+        console.warn("⚠️ Login returned success but no session");
+        setIsLoading(false);
       }
       
     } catch (err) {
@@ -149,7 +122,6 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
       
       setError(errorMessage);
       setIsLoading(false);
-      loginSuccessRef.current = false;
       
       toast({
         title: "Login failed",

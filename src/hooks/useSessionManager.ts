@@ -14,7 +14,7 @@ const globalRefreshState = {
 };
 
 /**
- * Custom hook to manage session refresh operations with circuit breaker protection
+ * Custom hook to manage session refresh operations with WebSocket failure handling
  */
 export function useSessionManager() {
   const refreshFunctionRef = useRef<RefreshFunction | null>(null);
@@ -22,12 +22,12 @@ export function useSessionManager() {
   const initialized = useRef(false);
   const hadSession = useRef(false);
 
-  // Set up periodic session checking
+  // Set up periodic session checking with error handling
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
     
-    console.log("Setting up session manager");
+    console.log("Setting up session manager with WebSocket fallback");
 
     // Function to check and refresh session if needed
     const checkSession = async () => {
@@ -45,8 +45,15 @@ export function useSessionManager() {
           return;
         }
 
-        const { data } = await supabase.auth.getSession();
-        const session = data?.session;
+        let session;
+        try {
+          const { data } = await supabase.auth.getSession();
+          session = data?.session;
+        } catch (sessionError) {
+          console.warn("Session check failed, possibly due to WebSocket issues:", sessionError);
+          // Continue without session refresh if we can't get current session
+          return;
+        }
 
         if (!session) {
           console.log("No active session to refresh");
@@ -78,7 +85,7 @@ export function useSessionManager() {
               globalRefreshState.currentPromise = refreshFunctionRef.current();
               await globalRefreshState.currentPromise;
             } else {
-              console.warn("No refresh function registered");
+              console.warn("No refresh function registered, using fallback");
               // Fallback to direct refresh
               await refreshAuthToken();
             }
@@ -92,14 +99,26 @@ export function useSessionManager() {
         console.error("Session check error:", error);
         globalRefreshState.isRefreshing = false;
         globalRefreshState.currentPromise = null;
+        
+        // Don't let WebSocket errors break the session manager
+        if (error instanceof Error && error.message.includes("WebSocket")) {
+          console.log("WebSocket error in session manager, continuing...");
+        }
       }
     };
 
-    // Initial check
-    checkSession();
+    // Initial check with error handling
+    checkSession().catch(error => {
+      console.warn("Initial session check failed:", error);
+    });
 
     // Set up interval for periodic checking (every 2 minutes)
-    const intervalId = window.setInterval(checkSession, 2 * 60 * 1000);
+    const intervalId = window.setInterval(() => {
+      checkSession().catch(error => {
+        console.warn("Periodic session check failed:", error);
+      });
+    }, 2 * 60 * 1000);
+    
     intervalRef.current = intervalId as unknown as number;
 
     // Clean up

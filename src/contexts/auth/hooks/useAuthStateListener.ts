@@ -52,16 +52,20 @@ export function useAuthStateListener(
             await AuthDebugger.captureAuthState("Signed Out with Query Cleanup");
             
           } else if (event === "SIGNED_IN" && currentSession?.user) {
-            console.log("✅ SIGNED_IN event - processing...");
+            console.log("✅ SIGNED_IN event - processing immediately...");
             
-            // Update session and user immediately
+            // Update session and user immediately - no delays
             setSession(currentSession);
             setUser(currentSession.user);
-            setIsLoading(false); // Set loading to false immediately since we have the session
+            setIsLoading(false);
             
-            // Fetch profile data in background without blocking
+            console.log("✅ Auth state updated immediately after sign in");
+            await AuthDebugger.captureAuthState("Sign In State Updated");
+            
+            // Fetch profile data in background without blocking - use setTimeout to avoid blocking
             setTimeout(async () => {
               try {
+                console.log("🔄 Fetching profile in background...");
                 const profileData = await fetchDealerProfile(currentSession.user.id);
                 
                 if (profileData) {
@@ -81,7 +85,7 @@ export function useAuthStateListener(
                 await AuthDebugger.captureAuthState("Sign In Profile Error");
                 // Don't show error toast for profile issues as they don't block main functionality
               }
-            }, 100);
+            }, 0);
             
           } else if (event === "TOKEN_REFRESHED" && currentSession) {
             console.log("🔄 Session token refreshed");
@@ -106,7 +110,7 @@ export function useAuthStateListener(
                 console.error("❌ Error fetching profile after token refresh:", profileError);
                 await AuthDebugger.captureAuthState("Token Refresh Profile Error");
               }
-            }, 100);
+            }, 0);
           } else {
             // For any other events, ensure loading is false
             setIsLoading(false);
@@ -119,7 +123,7 @@ export function useAuthStateListener(
           // Reset the lock after a brief delay
           setTimeout(() => {
             authChangeInProgressRef.current = false;
-          }, 100);
+          }, 50); // Reduced delay
         }
       }
     );

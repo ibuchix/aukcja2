@@ -3,7 +3,6 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader } from "@/components/ui/loader";
 import { useEffect, useState } from "react";
-import { sessionCircuitBreaker } from "@/utils/sessionCircuitBreaker";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -18,31 +17,30 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Mark auth check complete when initialization is done and not loading
   useEffect(() => {
     if (isInitialized && !isLoading && !authCheckComplete) {
-      console.log("Auth initialization complete and not loading, marking check as done");
+      console.log("Protected route: Auth initialization complete, marking check as done");
       setAuthCheckComplete(true);
     }
   }, [isInitialized, isLoading, authCheckComplete]);
 
-  // Add a safety timeout to prevent endless loading
+  // Reduced safety timeout for faster response
   useEffect(() => {
     const safetyTimeout = setTimeout(() => {
       if (!authCheckComplete) {
         console.warn("Protected route safety timeout triggered - forcing auth check completion");
         setAuthCheckComplete(true);
-        sessionCircuitBreaker.reset();
       }
-    }, 2000);
+    }, 1000); // Reduced from 2000ms
     
     return () => clearTimeout(safetyTimeout);
   }, [authCheckComplete]);
 
-  // Handle redirection with a slight delay to avoid flashing
+  // Handle redirection with minimal delay
   useEffect(() => {
     if (authCheckComplete && !isAuthenticated && !isLoading && !session) {
-      console.log("User not authenticated after auth check complete, preparing redirect");
+      console.log("Protected route: User not authenticated, preparing redirect");
       const redirectTimer = setTimeout(() => {
         setIsRedirecting(true);
-      }, 100);
+      }, 50); // Reduced delay
       
       return () => clearTimeout(redirectTimer);
     }
@@ -61,7 +59,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   // If user is not authenticated after auth check is complete, redirect to auth page
   if ((!isAuthenticated || !session) && authCheckComplete && !isLoading) {
     if (isRedirecting) {
-      // Redirect to auth page with return URL (no query parameters)
+      console.log("Protected route: Redirecting to auth page");
       return <Navigate to="/auth" replace state={{ returnUrl: location.pathname }} />;
     }
     
