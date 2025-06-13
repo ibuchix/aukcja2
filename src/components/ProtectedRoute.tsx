@@ -31,25 +31,25 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         setAuthCheckComplete(true);
         sessionCircuitBreaker.reset();
       }
-    }, 3000); // Reduced from 2000ms to 3000ms for better reliability
+    }, 2000);
     
     return () => clearTimeout(safetyTimeout);
   }, [authCheckComplete]);
 
   // Handle redirection with a slight delay to avoid flashing
   useEffect(() => {
-    if (authCheckComplete && !isAuthenticated && !isLoading) {
+    if (authCheckComplete && !isAuthenticated && !isLoading && !session) {
       console.log("User not authenticated after auth check complete, preparing redirect");
       const redirectTimer = setTimeout(() => {
         setIsRedirecting(true);
-      }, 200);
+      }, 100);
       
       return () => clearTimeout(redirectTimer);
     }
-  }, [authCheckComplete, isAuthenticated, isLoading]);
+  }, [authCheckComplete, isAuthenticated, isLoading, session]);
 
   // Show loading state during initialization or while auth is loading
-  if (!authCheckComplete || (!authCheckComplete && isLoading)) {
+  if (!authCheckComplete || isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <Loader className="h-8 w-8 text-primary mb-4" />
@@ -59,10 +59,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   // If user is not authenticated after auth check is complete, redirect to auth page
-  if ((!isAuthenticated || !session) && authCheckComplete) {
+  if ((!isAuthenticated || !session) && authCheckComplete && !isLoading) {
     if (isRedirecting) {
-      // Redirect to auth page with return URL
-      return <Navigate to="/auth?tab=login" replace state={{ returnUrl: location.pathname }} />;
+      // Redirect to auth page with return URL (no query parameters)
+      return <Navigate to="/auth" replace state={{ returnUrl: location.pathname }} />;
     }
     
     // Show brief loading state before redirect

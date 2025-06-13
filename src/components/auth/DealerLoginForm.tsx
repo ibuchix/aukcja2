@@ -1,6 +1,5 @@
 
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { useLoginForm } from "@/hooks/auth/useLoginForm";
 import { LoginError } from "@/components/auth/login/LoginError";
 import { LoginFormFields } from "@/components/auth/login/LoginFormFields";
@@ -54,9 +53,9 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
       
       <div className="text-center text-sm mt-4">
         Don't have an account?{" "}
-        <Link to="/auth?tab=register" className="text-primary hover:underline">
-          Register here
-        </Link>
+        <span className="text-primary cursor-pointer hover:underline">
+          Switch to Register tab above
+        </span>
       </div>
     </form>
   );

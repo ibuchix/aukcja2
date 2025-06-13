@@ -1,35 +1,20 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DealerLoginForm } from "@/components/auth/DealerLoginForm";
 import { DealerSignupForm } from "@/pages/auth/DealerSignupForm";
-import { useSearchParams, useNavigate } from "react-router-dom";
 
 export function AuthTabs({ returnUrl = "/dealer/dashboard" }: { returnUrl?: string }) {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = searchParams.get("tab") || "login";
-  const [activeTab, setActiveTab] = useState(initialTab);
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("login");
 
   // Function to handle registration completion
   const handleRegistrationComplete = () => {
     console.log("Registration completed, switching to login tab");
     setActiveTab("login");
-    // Update URL without page reload
-    navigate("/auth?tab=login", { replace: true });
   };
 
-  // Update tab when URL params change
-  useEffect(() => {
-    const tab = searchParams.get("tab") || "login";
-    setActiveTab(tab);
-  }, [searchParams]);
-
   return (
-    <Tabs value={activeTab} className="w-full max-w-md" onValueChange={(value) => {
-      setActiveTab(value);
-      setSearchParams({ tab: value });
-    }}>
+    <Tabs value={activeTab} className="w-full max-w-md" onValueChange={setActiveTab}>
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="login">Login</TabsTrigger>
         <TabsTrigger value="register">Register</TabsTrigger>
