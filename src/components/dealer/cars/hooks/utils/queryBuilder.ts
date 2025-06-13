@@ -47,14 +47,7 @@ export const buildCarListingsQuery = () => {
       valuation_data,
       last_saved,
       registration_number,
-      is_manually_controlled,
-      auction_schedules!left(
-        id,
-        status,
-        start_time,
-        end_time,
-        is_manually_controlled
-      )
+      is_manually_controlled
     `)
     .eq("status", "available")
     .gt("reserve_price", 0);
