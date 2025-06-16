@@ -19,7 +19,7 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
     errors,
     loginAttempted,
     checkAuthDiagnostics
-  } = useLoginForm(returnUrl);
+  } = useLoginForm();
 
   // Check for auth storage issues on component mount
   useEffect(() => {
