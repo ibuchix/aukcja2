@@ -3,12 +3,13 @@ import { useEffect, useRef } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate, useLocation } from "react-router-dom";
 import { fetchDealerProfile } from "../authUtils";
 import { AuthDebugger } from "@/utils/authDebugger";
 import { queryInvalidationManager } from "@/utils/queryInvalidationManager";
 
 /**
- * Enhanced hook to listen for authentication state changes with improved reliability
+ * Enhanced hook to listen for authentication state changes with navigation handling
  */
 export function useAuthStateListener(
   setSession: (session: Session | null) => void,
@@ -18,6 +19,8 @@ export function useAuthStateListener(
 ) {
   const authChangeInProgressRef = useRef(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -52,17 +55,22 @@ export function useAuthStateListener(
             await AuthDebugger.captureAuthState("Signed Out with Query Cleanup");
             
           } else if (event === "SIGNED_IN" && currentSession?.user) {
-            console.log("✅ SIGNED_IN event - processing immediately...");
+            console.log("✅ SIGNED_IN event - processing and navigating...");
             
-            // Update session and user immediately - no delays
+            // Update session and user immediately
             setSession(currentSession);
             setUser(currentSession.user);
             setIsLoading(false);
             
-            console.log("✅ Auth state updated immediately after sign in");
+            console.log("✅ Auth state updated after sign in");
             await AuthDebugger.captureAuthState("Sign In State Updated");
             
-            // Fetch profile data in background without blocking - use setTimeout to avoid blocking
+            // Handle navigation for successful sign-in
+            const returnUrl = location.state?.returnUrl || "/dealer/dashboard";
+            console.log("🚀 Navigating to:", returnUrl);
+            navigate(returnUrl, { replace: true });
+            
+            // Fetch profile data in background without blocking
             setTimeout(async () => {
               try {
                 console.log("🔄 Fetching profile in background...");
@@ -123,7 +131,7 @@ export function useAuthStateListener(
           // Reset the lock after a brief delay
           setTimeout(() => {
             authChangeInProgressRef.current = false;
-          }, 50); // Reduced delay
+          }, 50);
         }
       }
     );
@@ -131,5 +139,5 @@ export function useAuthStateListener(
     return () => {
       subscription.unsubscribe();
     };
-  }, [setSession, setUser, setProfile, setIsLoading, toast]);
+  }, [setSession, setUser, setProfile, setIsLoading, toast, navigate, location.state?.returnUrl]);
 }

@@ -1,5 +1,4 @@
-
-import { supabase, rawSupabaseClient } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { preparePassword } from "@/utils/auth-utils";
 
 interface SignInParams {
@@ -8,16 +7,14 @@ interface SignInParams {
 }
 
 export const signInWithEmail = async ({ email, password }: SignInParams) => {
-  console.log("🚀 Starting enhanced sign in process with proper session management");
+  console.log("🚀 Starting enhanced sign in process");
   
   try {
     // Use consistent password preparation
     const cleanedPassword = preparePassword(password);
     
     // Add diagnostic logging for password length
-    console.log("🔐 Login password length after preparation:", cleanedPassword.length, 
-             "First char code:", cleanedPassword.charCodeAt(0),
-             "Last char code:", cleanedPassword.charCodeAt(cleanedPassword.length - 1));
+    console.log("🔐 Login password length after preparation:", cleanedPassword.length);
     
     // Create request body
     const requestBody = {
@@ -55,9 +52,8 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
       body: JSON.stringify(requestBody)
     });
     
-    // Log response status and headers
+    // Log response status
     console.log("📥 Login response status:", response.status);
-    console.log("📥 Login response headers:", Object.fromEntries([...response.headers.entries()]));
     
     // Try to get text response first for debugging
     const responseText = await response.text();
@@ -133,13 +129,13 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
       };
     }
     
-    // CRITICAL: Properly set the session in the Supabase client
+    // Set the session in the Supabase client
     if (data.session) {
       console.log("✅ Login successful with session, setting session in client...");
       
       try {
-        // Set the auth session in Supabase client and WAIT for it to complete
-        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+        // Set the auth session in Supabase client and wait for it to complete
+        const { error: sessionError } = await supabase.auth.setSession({
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token
         });
@@ -156,14 +152,6 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
         }
         
         console.log("✅ Session successfully set in Supabase client");
-        
-        // Verify the session was set correctly
-        const { data: verifySession } = await supabase.auth.getSession();
-        if (verifySession.session?.access_token === data.session.access_token) {
-          console.log("✅ Session verification successful");
-        } else {
-          console.warn("⚠️ Session verification mismatch");
-        }
         
       } catch (sessionSetError) {
         console.error("❌ Exception setting session:", sessionSetError);
@@ -207,9 +195,7 @@ export const signInWithEmailDirect = async ({ email, password }: SignInParams) =
     const cleanedPassword = preparePassword(password);
     
     // Add diagnostic logging
-    console.log("Direct fetch login password length:", cleanedPassword.length, 
-             "First char code:", cleanedPassword.charCodeAt(0),
-             "Last char code:", cleanedPassword.charCodeAt(cleanedPassword.length - 1));
+    console.log("Direct fetch login password length:", cleanedPassword.length);
     
     // Create the same request body format
     const requestBody = {
@@ -247,9 +233,8 @@ export const signInWithEmailDirect = async ({ email, password }: SignInParams) =
       body: JSON.stringify(requestBody)
     });
     
-    // Log response status and headers
+    // Log response status
     console.log("Direct fetch response status:", response.status);
-    console.log("Direct fetch response headers:", Object.fromEntries([...response.headers.entries()]));
     
     // Try to get text response first for debugging
     const responseText = await response.text();

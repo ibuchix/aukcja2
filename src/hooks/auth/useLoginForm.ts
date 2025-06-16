@@ -1,30 +1,24 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { normalizeEmail } from "@/utils/dealerProfileMapping";
 import { getAuthDiagnostics, clearAuthStorage } from "@/utils/auth-utils";
 import { signInWithEmail } from "@/services/auth/signin";
-import { supabase } from "@/integrations/supabase/client";
 
 interface LoginFormValues {
   email: string;
   password: string;
 }
 
-export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
+export function useLoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loginAttempted, setLoginAttempted] = useState(false);
   const [diagnosticInfo, setDiagnosticInfo] = useState<Record<string, unknown> | null>(null);
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
-  const navigate = useNavigate();
   const { toast } = useToast();
-  
-  const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check auth diagnostics
   const checkAuthDiagnostics = () => {
@@ -48,7 +42,7 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
       const beforeAuthInfo = getAuthDiagnostics();
       console.log("📊 Auth state before login attempt:", beforeAuthInfo);
       
-      // Use direct method 
+      // Use signInWithEmail which handles session setting internally
       const result = await signInWithEmail({
         email: normalizedEmail,
         password: data.password.trim(),
@@ -77,44 +71,22 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
         return;
       }
 
-      console.log("✅ Login successful! Setting session and navigating immediately...");
+      console.log("✅ Login successful! Auth context will handle navigation...");
       
-      // Set the session in Supabase client
-      if (result.data?.session) {
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: result.data.session.access_token,
-          refresh_token: result.data.session.refresh_token
-        });
-        
-        if (sessionError) {
-          console.error("❌ Error setting session:", sessionError);
-          throw sessionError;
-        }
-        
-        console.log("✅ Session set successfully");
-        
-        // Show success toast
-        toast({
-          title: "Login successful",
-          description: "Welcome back!",
-        });
-        
-        // Navigate immediately - don't wait for auth context
-        console.log("🚀 Navigating immediately to:", returnUrl);
-        
-        // Clear URL query parameters and navigate
-        const currentUrl = new URL(window.location.href);
-        if (currentUrl.searchParams.has('tab')) {
-          window.history.replaceState({}, '', currentUrl.pathname);
-        }
-        
-        // Use replace to avoid back navigation issues
-        navigate(returnUrl, { replace: true });
-        setIsLoading(false);
-      } else {
-        console.warn("⚠️ Login returned success but no session");
-        setIsLoading(false);
+      // Show success toast
+      toast({
+        title: "Login successful",
+        description: "Welcome back!",
+      });
+      
+      // Clear URL query parameters if present
+      const currentUrl = new URL(window.location.href);
+      if (currentUrl.searchParams.has('tab')) {
+        window.history.replaceState({}, '', currentUrl.pathname);
       }
+      
+      // Don't navigate here - let the auth context handle it
+      setIsLoading(false);
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
@@ -133,15 +105,6 @@ export function useLoginForm(returnUrl: string = "/dealer/dashboard") {
       setDiagnosticInfo(getAuthDiagnostics());
     }
   };
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (navigationTimeoutRef.current) {
-        clearTimeout(navigationTimeoutRef.current);
-      }
-    };
-  }, []);
 
   return {
     register,
