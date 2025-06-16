@@ -1,114 +1,134 @@
 
-import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, UseQueryOptions } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
-import { validateCurrentSession, isAuthError } from "./sessionValidation";
+import { useAuth } from "@/contexts/AuthContext";
+import { validateCurrentSession } from "@/utils/sessionValidation";
+import { isAuthError } from "@/utils/sessionValidation";
 
-interface EnhancedAuthAwareQueryOptions<T> extends Omit<UseQueryOptions<T>, 'enabled'> {
+interface EnhancedAuthAwareQueryOptions<T> extends Omit<UseQueryOptions<T>, 'enabled' | 'queryFn'> {
   requireAuth?: boolean;
   enabledWhenReady?: boolean;
-  skipSessionValidation?: boolean;
+  queryFn: () => Promise<T>;
 }
 
 /**
- * Enhanced auth-aware query with comprehensive session validation
+ * Enhanced version of useAuthAwareQuery with better session validation
+ * and error handling for authentication issues
  */
 export function useEnhancedAuthAwareQuery<T>(
   options: EnhancedAuthAwareQueryOptions<T> & {
     queryKey: string[];
-    queryFn: () => Promise<T>;
   }
 ) {
-  const { isAuthenticated, isLoading, isInitialized, session } = useAuth();
-  const { 
-    requireAuth = true, 
-    enabledWhenReady = true, 
-    skipSessionValidation = false,
-    queryFn,
-    ...queryOptions 
-  } = options;
+  const { isAuthenticated, isLoading, isInitialized, refreshSession } = useAuth();
+  const { requireAuth = true, enabledWhenReady = true, queryFn, ...queryOptions } = options;
 
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  // Enhanced query function with session validation
   const enhancedQueryFn = async (): Promise<T> => {
-    // Create abort controller for this query
-    abortControllerRef.current = new AbortController();
+    const isDev = process.env.NODE_ENV === 'development';
     
-    try {
-      // Skip validation if explicitly requested or auth not required
-      if (!skipSessionValidation && requireAuth) {
-        console.log('🔍 Validating session before query execution');
-        const sessionValidation = await validateCurrentSession();
-        
-        if (!sessionValidation.isValid) {
-          const errorMessage = `Session invalid: ${sessionValidation.reason || 'unknown'}`;
-          console.warn('❌ Session validation failed:', errorMessage);
-          throw new Error(errorMessage);
+    if (isDev) {
+      console.log('🔍 Validating session before query execution');
+    }
+
+    // If auth is required, validate the current session
+    if (requireAuth) {
+      const validation = await validateCurrentSession();
+      
+      if (!validation.isValid) {
+        if (isDev) {
+          console.warn(`❌ Session validation failed: Session invalid: ${validation.reason}`);
         }
         
-        console.log('✅ Session validation passed');
-      }
-
-      // Execute the original query function
-      const result = await queryFn();
-      return result;
-    } catch (error) {
-      // Check if this is an auth-related error
-      if (isAuthError(error)) {
-        console.error('🚫 Auth-related error detected:', error);
-        
-        // Attempt session refresh for auth errors
+        // Try to refresh session once before failing
         try {
-          console.log('🔄 Attempting session refresh due to auth error');
-          const refreshResult = await validateCurrentSession();
+          await refreshSession();
           
-          if (!refreshResult.isValid) {
-            throw new Error(`Session refresh failed: ${refreshResult.reason}`);
+          // Re-validate after refresh
+          const revalidation = await validateCurrentSession();
+          if (!revalidation.isValid) {
+            throw new Error(`Session invalid: ${revalidation.reason}`);
           }
           
-          // Retry the query once after successful refresh
-          console.log('🔄 Retrying query after session refresh');
-          return await queryFn();
+          if (isDev) {
+            console.log('✅ Session refreshed and validated successfully');
+          }
         } catch (refreshError) {
-          console.error('❌ Session refresh failed:', refreshError);
-          throw error; // Throw original error
+          if (isDev) {
+            console.error('❌ Session refresh failed:', refreshError);
+          }
+          throw new Error(`Session invalid: ${validation.reason}`);
+        }
+      } else if (isDev) {
+        console.log('✅ Session validation successful');
+      }
+    }
+
+    // Execute the original query function
+    try {
+      const result = await queryFn();
+      if (isDev) {
+        console.log('✅ Query executed successfully');
+      }
+      return result;
+    } catch (error) {
+      if (isDev) {
+        console.error('❌ Query execution failed:', error);
+      }
+      
+      // Check if this is an auth-related error
+      if (isAuthError(error)) {
+        // Try one session refresh for auth errors
+        try {
+          await refreshSession();
+          if (isDev) {
+            console.log('🔄 Retrying query after session refresh');
+          }
+          return await queryFn();
+        } catch (retryError) {
+          if (isDev) {
+            console.error('❌ Query retry after refresh failed:', retryError);
+          }
+          throw retryError;
         }
       }
       
+      // Re-throw non-auth errors as-is
       throw error;
     }
   };
-
-  // Clean up abort controller on auth state changes
-  useEffect(() => {
-    if (!isAuthenticated && abortControllerRef.current) {
-      console.log('🛑 Aborting query due to auth state change');
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
-  }, [isAuthenticated]);
 
   // Determine if the query should be enabled
   const shouldEnable = 
     isInitialized && // Auth must be initialized
     !isLoading && // Auth must not be loading
-    (requireAuth ? (isAuthenticated && session) : true) && // If auth required, user must be authenticated with session
+    (requireAuth ? isAuthenticated : true) && // If auth required, user must be authenticated
     enabledWhenReady; // Additional user-controlled flag
 
   return useQuery({
     ...queryOptions,
     queryFn: enhancedQueryFn,
     enabled: shouldEnable,
-    // Add retry logic for auth errors
+    // Add some retry logic for failed queries
     retry: (failureCount, error) => {
-      // Don't retry auth errors more than once
+      // Don't retry auth errors after the first attempt
       if (isAuthError(error)) {
         return failureCount < 1;
       }
-      // Use default retry logic for other errors
-      return failureCount < 3;
+      // Retry other errors up to 2 times
+      return failureCount < 2;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
+}
+
+/**
+ * Utility to check if auth is ready for database operations
+ */
+export function useAuthReadiness() {
+  const { isAuthenticated, isLoading, isInitialized } = useAuth();
+  
+  return {
+    isAuthReady: isInitialized && !isLoading,
+    canMakeAuthenticatedQueries: isInitialized && !isLoading && isAuthenticated,
+    canMakePublicQueries: isInitialized && !isLoading,
+  };
 }

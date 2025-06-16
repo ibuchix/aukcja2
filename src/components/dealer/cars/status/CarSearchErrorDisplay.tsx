@@ -2,8 +2,9 @@
 import React from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CarSearchErrorDisplayProps {
   errorMessage: string;
@@ -14,6 +15,11 @@ interface CarSearchErrorDisplayProps {
 const getReadableErrorMessage = (errorMessage: string): string => {
   if (!errorMessage || errorMessage === "[object Object]") {
     return "An unexpected error occurred while loading vehicles";
+  }
+  
+  // Handle session-related errors
+  if (errorMessage.includes('no_session') || errorMessage.includes('Session invalid')) {
+    return "Your session has expired. Please sign in again to continue.";
   }
   
   // Handle common error patterns
@@ -36,15 +42,20 @@ export const CarSearchErrorDisplay = ({
   errorMessage, 
   onRefresh 
 }: CarSearchErrorDisplayProps) => {
+  const { signOut } = useAuth();
   const readableError = getReadableErrorMessage(errorMessage);
   
+  const isSessionError = 
+    errorMessage.includes('no_session') || 
+    errorMessage.includes('Session invalid');
+    
   const isPossiblePermissionError = 
     errorMessage.includes('permission denied') || 
     errorMessage.includes('42501') ||
     errorMessage.includes('PGRST301');
 
   const handleRefreshWithAuth = async () => {
-    if (isPossiblePermissionError) {
+    if (isPossiblePermissionError || isSessionError) {
       try {
         console.log("Attempting to refresh authentication session...");
         const { error } = await supabase.auth.refreshSession();
@@ -62,6 +73,16 @@ export const CarSearchErrorDisplay = ({
     onRefresh();
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      // Redirect to auth page
+      window.location.href = '/auth';
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
   return (
     <Alert variant="destructive" className="mb-6">
       <AlertTriangle className="h-4 w-4 mr-2" />
@@ -74,15 +95,29 @@ export const CarSearchErrorDisplay = ({
           </div>
         )}
       </AlertDescription>
-      <Button 
-        onClick={handleRefreshWithAuth} 
-        variant="outline" 
-        size="sm" 
-        className="bg-white hover:bg-gray-100 border-destructive text-destructive"
-      >
-        <RefreshCw className="h-4 w-4 mr-2" />
-        {isPossiblePermissionError ? "Refresh Session & Try Again" : "Try Again"}
-      </Button>
+      <div className="flex gap-2">
+        <Button 
+          onClick={handleRefreshWithAuth} 
+          variant="outline" 
+          size="sm" 
+          className="bg-white hover:bg-gray-100 border-destructive text-destructive"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          {isPossiblePermissionError || isSessionError ? "Refresh Session & Try Again" : "Try Again"}
+        </Button>
+        
+        {isSessionError && (
+          <Button 
+            onClick={handleSignOut} 
+            variant="outline" 
+            size="sm" 
+            className="bg-white hover:bg-gray-100 border-destructive text-destructive"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out & Sign In Again
+          </Button>
+        )}
+      </div>
     </Alert>
   );
 };
