@@ -71,3 +71,40 @@ export interface CarListing {
   auctionTimingStatus?: 'scheduled' | 'running' | 'ended' | 'unknown';
   [key: string]: any;
 }
+
+/**
+ * Helper function to check if a car needs additional photos
+ */
+export function needsAdditionalPhotos(car: CarRecord): boolean {
+  const additionalPhotos = car.additional_photos as string[] | null;
+  return !additionalPhotos || additionalPhotos.length === 0;
+}
+
+/**
+ * Helper function to check if a car needs required photos
+ */
+export function needsRequiredPhotos(car: CarRecord): boolean {
+  const requiredPhotos = car.required_photos as Record<string, any> | null;
+  if (!requiredPhotos) return true;
+  
+  // Check if all required photo categories have at least one photo
+  const categories = ['exterior', 'interior', 'engine', 'documents'];
+  return categories.some(category => {
+    const categoryPhotos = requiredPhotos[category];
+    return !categoryPhotos || (Array.isArray(categoryPhotos) && categoryPhotos.length === 0);
+  });
+}
+
+/**
+ * Helper function to get cars that need photos (replacement for the dropped view)
+ */
+export function getCarsNeedingImages(cars: CarRecord[]): Array<CarRecord & { 
+  needs_additional_photos: boolean; 
+  needs_required_photos: boolean; 
+}> {
+  return cars.map(car => ({
+    ...car,
+    needs_additional_photos: needsAdditionalPhotos(car),
+    needs_required_photos: needsRequiredPhotos(car)
+  })).filter(car => car.needs_additional_photos || car.needs_required_photos);
+}
