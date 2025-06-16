@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { preparePassword } from "@/utils/auth-utils";
 
@@ -129,15 +130,33 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
       };
     }
     
-    // Set the session in the Supabase client
+    // Enhanced session handling with proper structure validation
     if (data.session) {
-      console.log("✅ Login successful with session, setting session in client...");
+      console.log("✅ Login successful with session, validating session structure...");
+      
+      // Validate session structure before setting
+      const sessionData = data.session;
+      if (!sessionData.access_token || !sessionData.refresh_token) {
+        console.error("❌ Invalid session structure from edge function:", {
+          hasAccessToken: !!sessionData.access_token,
+          hasRefreshToken: !!sessionData.refresh_token,
+          hasUser: !!data.user
+        });
+        return {
+          error: { 
+            message: "Invalid session data received", 
+            status: 500,
+            name: 'InvalidSessionError'
+          }
+        };
+      }
       
       try {
-        // Set the auth session in Supabase client and wait for it to complete
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token
+        // Set the auth session in Supabase client with enhanced error handling
+        console.log("🔄 Setting session in Supabase client...");
+        const { data: sessionSetResult, error: sessionError } = await supabase.auth.setSession({
+          access_token: sessionData.access_token,
+          refresh_token: sessionData.refresh_token
         });
         
         if (sessionError) {
@@ -153,6 +172,28 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
         
         console.log("✅ Session successfully set in Supabase client");
         
+        // Verify session was actually set by checking current session
+        const { data: verifySession } = await supabase.auth.getSession();
+        if (!verifySession.session) {
+          console.warn("⚠️ Session verification failed - session not found after setSession");
+          // Don't fail here as the session might still be valid, just log the warning
+        } else {
+          console.log("✅ Session verification successful");
+        }
+        
+        // Return success with proper session structure
+        return {
+          data: {
+            user: sessionSetResult.user || data.user,
+            session: sessionSetResult.session || {
+              access_token: sessionData.access_token,
+              refresh_token: sessionData.refresh_token,
+              user: data.user,
+              expires_at: sessionData.expires_at
+            }
+          }
+        };
+        
       } catch (sessionSetError) {
         console.error("❌ Exception setting session:", sessionSetError);
         return {
@@ -165,15 +206,16 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
       }
     } else {
       console.warn("⚠️ Login returned success but no session");
+      
+      // Still return success if the edge function says it was successful
+      return {
+        data: {
+          user: data.user,
+          session: null
+        }
+      };
     }
     
-    // Return success data in same format as supabase client would
-    return {
-      data: {
-        user: data.user,
-        session: data.session
-      }
-    };
   } catch (err) {
     console.error("❌ Exception during login:", err);
     return {

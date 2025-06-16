@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate, useLocation } from "react-router-dom";
 import { normalizeEmail } from "@/utils/dealerProfileMapping";
 import { getAuthDiagnostics, clearAuthStorage } from "@/utils/auth-utils";
 import { signInWithEmail } from "@/services/auth/signin";
@@ -19,6 +20,11 @@ export function useLoginForm() {
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Track navigation to prevent race conditions
+  const navigationTriggeredRef = useRef(false);
 
   // Check auth diagnostics
   const checkAuthDiagnostics = () => {
@@ -32,6 +38,7 @@ export function useLoginForm() {
       setIsLoading(true);
       setError(null);
       setLoginAttempted(true);
+      navigationTriggeredRef.current = false;
 
       // Normalize email consistently
       const normalizedEmail = normalizeEmail(data.email);
@@ -48,9 +55,7 @@ export function useLoginForm() {
         password: data.password.trim(),
       });
       
-      const success = !result.error;
-
-      if (!success) {
+      if (result.error) {
         console.error("❌ Login error:", result.error);
         setIsLoading(false);
         
@@ -71,7 +76,7 @@ export function useLoginForm() {
         return;
       }
 
-      console.log("✅ Login successful! Auth context will handle navigation...");
+      console.log("✅ Login successful! Setting up post-login actions...");
       
       // Show success toast
       toast({
@@ -85,7 +90,32 @@ export function useLoginForm() {
         window.history.replaceState({}, '', currentUrl.pathname);
       }
       
-      // Don't navigate here - let the auth context handle it
+      // Enhanced navigation with fallback
+      const setupNavigation = () => {
+        if (navigationTriggeredRef.current) {
+          console.log("🔄 Navigation already triggered, skipping");
+          return;
+        }
+        
+        navigationTriggeredRef.current = true;
+        const returnUrl = location.state?.returnUrl || "/dealer/dashboard";
+        console.log("🚀 Navigating to:", returnUrl);
+        
+        // Use replace to avoid back button issues
+        navigate(returnUrl, { replace: true });
+      };
+      
+      // Try immediate navigation
+      setupNavigation();
+      
+      // Fallback navigation after a short delay in case auth state listener doesn't fire
+      setTimeout(() => {
+        if (!navigationTriggeredRef.current) {
+          console.log("⏰ Fallback navigation triggered");
+          setupNavigation();
+        }
+      }, 1000);
+      
       setIsLoading(false);
       
     } catch (err) {

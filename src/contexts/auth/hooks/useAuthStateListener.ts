@@ -18,6 +18,7 @@ export function useAuthStateListener(
   setIsLoading: (isLoading: boolean) => void
 ) {
   const authChangeInProgressRef = useRef(false);
+  const navigationHandledRef = useRef(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -27,6 +28,7 @@ export function useAuthStateListener(
       async (event, currentSession) => {
         // Prevent double processing
         if (authChangeInProgressRef.current) {
+          console.log("🔄 Auth change already in progress, skipping");
           return;
         }
 
@@ -38,6 +40,9 @@ export function useAuthStateListener(
           
           if (event === "SIGNED_OUT") {
             console.log("🚪 SIGNED_OUT event - cleaning up queries and session");
+            
+            // Reset navigation flag
+            navigationHandledRef.current = false;
             
             // Immediately clear session and user
             setSession(null);
@@ -65,10 +70,21 @@ export function useAuthStateListener(
             console.log("✅ Auth state updated after sign in");
             await AuthDebugger.captureAuthState("Sign In State Updated");
             
-            // Handle navigation for successful sign-in
-            const returnUrl = location.state?.returnUrl || "/dealer/dashboard";
-            console.log("🚀 Navigating to:", returnUrl);
-            navigate(returnUrl, { replace: true });
+            // Enhanced navigation handling with duplicate prevention
+            if (!navigationHandledRef.current && location.pathname === '/auth') {
+              navigationHandledRef.current = true;
+              const returnUrl = location.state?.returnUrl || "/dealer/dashboard";
+              console.log("🚀 Navigating from auth state listener to:", returnUrl);
+              
+              // Small delay to ensure state is fully updated
+              setTimeout(() => {
+                navigate(returnUrl, { replace: true });
+              }, 100);
+            } else if (navigationHandledRef.current) {
+              console.log("🔄 Navigation already handled, skipping");
+            } else {
+              console.log("🔄 Not on auth page, skipping navigation");
+            }
             
             // Fetch profile data in background without blocking
             setTimeout(async () => {
@@ -139,5 +155,5 @@ export function useAuthStateListener(
     return () => {
       subscription.unsubscribe();
     };
-  }, [setSession, setUser, setProfile, setIsLoading, toast, navigate, location.state?.returnUrl]);
+  }, [setSession, setUser, setProfile, setIsLoading, toast, navigate, location.state?.returnUrl, location.pathname]);
 }
