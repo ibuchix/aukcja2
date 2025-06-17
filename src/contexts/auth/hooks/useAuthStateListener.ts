@@ -67,7 +67,7 @@ export function useAuthStateListener(
             // Update session and user immediately
             setSession(currentSession);
             setUser(currentSession.user);
-            setIsLoading(false);
+            // DON'T set loading to false here - let the login form handle its own loading state
             
             console.log("✅ Auth state updated after sign in");
             await AuthDebugger.captureAuthState("Sign In State Updated");
@@ -146,10 +146,8 @@ export function useAuthStateListener(
                 await AuthDebugger.captureAuthState("Token Refresh Profile Error");
               }
             }, 0);
-          } else {
-            // For any other events, ensure loading is false
-            setIsLoading(false);
           }
+          // Removed the else block that was setting loading to false
         } catch (error) {
           console.error("❌ Error in auth state change handler:", error);
           await AuthDebugger.captureAuthState("Auth State Change Error");
