@@ -58,8 +58,8 @@ export const buildCarListingsQuery = () => {
     // Only show cars that are auctions with active status
     .eq("is_auction", true)
     .eq("auction_status", "active")
-    // Only show cars with active auction schedules
-    .eq("auction_schedules.status", "active")
+    // Only show cars with running auction schedules (not "active")
+    .eq("auction_schedules.status", "running")
     // Only show cars where auction is currently running (between start and end time)
     .lte("auction_schedules.start_time", new Date().toISOString())
     .gte("auction_schedules.end_time", new Date().toISOString())
