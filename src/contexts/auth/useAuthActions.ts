@@ -1,7 +1,5 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { AuthContext } from "./context";
-import { useContext } from 'react';
 
 export interface AuthActionResponse {
   success: boolean;
@@ -15,15 +13,19 @@ export interface UseAuthActionsReturn {
 export function useAuthActions(): UseAuthActionsReturn {
   const signOut = async (): Promise<AuthActionResponse> => {
     try {
+      console.log("🚪 Auth context signOut called");
+      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
+        console.error("❌ Supabase signOut error:", error);
         throw error;
       }
       
+      console.log("✅ Supabase signOut successful in auth context");
       return { success: true };
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error('❌ Sign out error in auth context:', error);
       
       return {
         success: false,

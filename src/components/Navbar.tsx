@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,9 +14,11 @@ import {
 import { UserCircle, LogOut, Menu, LayoutDashboard } from "lucide-react";
 import { NavbarLogo } from "./navbar/NavbarLogo";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAuthenticated, user, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -38,22 +40,43 @@ export default function Navbar() {
     };
   }, []);
 
-  // Handle user logout - NO MANUAL NAVIGATION
+  // Simplified logout with immediate action and fallback navigation
   const handleLogout = async () => {
     try {
-      console.log("🚪 Starting logout process");
-      await signOut();
+      console.log("🚪 Logout button clicked - starting immediate logout");
       
+      // Call Supabase signOut directly for immediate action
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("❌ Supabase signOut error:", error);
+        toast({
+          title: "Logout failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      console.log("✅ Supabase signOut successful");
+      
+      // Show success toast
       toast({
         title: "Logged out successfully",
         description: "You have been signed out",
       });
       
-      console.log("✅ Logout successful - useAuthStateListener will handle navigation");
-      // REMOVED: navigate("/auth", { replace: true });
-      // Let useAuthStateListener handle the navigation on SIGNED_OUT event
+      // Immediate navigation to auth page
+      console.log("🚀 Navigating to auth page immediately");
+      navigate("/auth", { replace: true });
+      
+      // Also call the context signOut for cleanup (but don't wait for it)
+      signOut().catch(err => {
+        console.warn("Context signOut error (non-critical):", err);
+      });
+      
     } catch (error) {
-      console.error("❌ Logout error:", error);
+      console.error("❌ Logout exception:", error);
       toast({
         title: "Logout failed",
         description: "There was an error signing you out",
