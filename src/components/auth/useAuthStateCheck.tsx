@@ -11,8 +11,8 @@ export function useAuthStateCheck(returnUrl: string) {
   const initialLoadCompleted = useRef(false);
   const redirectAttemptedRef = useRef(false);
   
-  // Reduce the auth check delay to minimal to allow faster navigation
-  const [authCheckDelay, setAuthCheckDelay] = useState(true);
+  // Remove the auth check delay to allow faster navigation
+  const [authCheckDelay, setAuthCheckDelay] = useState(false);
   
   const [authContext, authError] = (() => {
     try {
@@ -31,16 +31,11 @@ export function useAuthStateCheck(returnUrl: string) {
   // Force URL parameter-based override to prevent redirect
   const forceShowLogin = searchParams.has("force_login");
 
-  // Reduce delay to allow faster navigation after successful login
+  // Mark initialization as complete immediately to avoid delays
   useEffect(() => {
-    console.log("Setting up minimal auth check delay");
-    const timer = setTimeout(() => {
-      console.log("Minimal auth check delay completed");
-      setAuthCheckDelay(false);
-      initialLoadCompleted.current = true;
-    }, 200); // Reduced from 3000ms to 200ms
-    
-    return () => clearTimeout(timer);
+    console.log("🔄 Auth state check initialization");
+    setAuthCheckDelay(false);
+    initialLoadCompleted.current = true;
   }, []);
 
   useEffect(() => {
@@ -53,23 +48,31 @@ export function useAuthStateCheck(returnUrl: string) {
     return undefined;
   }, [isLoading]);
 
-  // Simplified redirect logic - allow navigation when user is authenticated
+  // Simplified redirect logic - redirect authenticated users away from auth page
   useEffect(() => {
+    console.log("🔍 Auth state check - evaluating redirect conditions:");
+    console.log("  - isInitialized:", isInitialized);
+    console.log("  - isAuthenticated:", isAuthenticated);
+    console.log("  - isLoading:", isLoading);
+    console.log("  - forceShowLogin:", forceShowLogin);
+    console.log("  - redirectAttempted:", redirectAttemptedRef.current);
+    
     // Skip if not initialized or force login is set
     if (!isInitialized || forceShowLogin) {
+      console.log("❌ Skipping redirect - not initialized or force login set");
       return;
     }
     
-    // Only proceed with redirect if fully authenticated and not loading
+    // If user is authenticated and not loading, redirect away from auth page
     if (isAuthenticated && !isLoading && !redirectAttemptedRef.current) {
-      console.log("Auth check: User authenticated, redirecting to:", returnUrl);
+      console.log("✅ User is authenticated - redirecting away from auth page to:", returnUrl);
       redirectAttemptedRef.current = true;
       setRedirectAttempted(true);
       
-      // Navigate immediately without delay
+      // Navigate immediately
       navigate(returnUrl, { replace: true });
     } else if (isInitialized && !isLoading && !isAuthenticated) {
-      console.log("Auth check: No authenticated user found");
+      console.log("ℹ️ User not authenticated - staying on auth page");
     }
   }, [isAuthenticated, isLoading, isInitialized, navigate, returnUrl, forceShowLogin]);
 

@@ -34,6 +34,8 @@ export function useAuthStateListener(
 
         authChangeInProgressRef.current = true;
         console.log("🔄 Auth state changed:", event);
+        console.log("📍 Current location:", location.pathname);
+        console.log("🧭 Navigation handled ref:", navigationHandledRef.current);
         
         try {
           await AuthDebugger.captureAuthState(`Auth State Change: ${event}`);
@@ -70,18 +72,22 @@ export function useAuthStateListener(
             console.log("✅ Auth state updated after sign in");
             await AuthDebugger.captureAuthState("Sign In State Updated");
             
-            // Immediate navigation for any auth page or if not already handled
-            if (!navigationHandledRef.current && (location.pathname === '/auth' || location.pathname.includes('/auth'))) {
+            // Navigation logic - only navigate if on auth page and not already handled
+            const isOnAuthPage = location.pathname === '/auth' || location.pathname.includes('/auth');
+            console.log("🔍 Is on auth page:", isOnAuthPage);
+            console.log("🔍 Navigation already handled:", navigationHandledRef.current);
+            
+            if (isOnAuthPage && !navigationHandledRef.current) {
               navigationHandledRef.current = true;
               const returnUrl = location.state?.returnUrl || "/dealer/dashboard";
-              console.log("🚀 Immediate navigation from auth state listener to:", returnUrl);
+              console.log("🚀 Navigating from auth page to:", returnUrl);
               
-              // Navigate immediately without setTimeout delay
+              // Navigate immediately
               navigate(returnUrl, { replace: true });
+            } else if (!isOnAuthPage) {
+              console.log("🔄 Not on auth page, no navigation needed");
             } else if (navigationHandledRef.current) {
               console.log("🔄 Navigation already handled, skipping");
-            } else {
-              console.log("🔄 Not on auth page, current path:", location.pathname);
             }
             
             // Fetch profile data in background without blocking

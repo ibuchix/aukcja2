@@ -44,6 +44,7 @@ export function useLoginForm() {
       const normalizedEmail = normalizeEmail(data.email);
       
       console.log("🚀 Starting login flow for:", normalizedEmail);
+      console.log("📍 Current location during login:", location.pathname);
       
       // Get auth diagnostic info before attempt
       const beforeAuthInfo = getAuthDiagnostics();
@@ -76,7 +77,8 @@ export function useLoginForm() {
         return;
       }
 
-      console.log("✅ Login successful! Navigation will be handled by auth state listener");
+      console.log("✅ Login successful! Session set in Supabase client");
+      console.log("🔄 Navigation will be handled by useAuthStateListener");
       
       // Show success toast
       toast({
@@ -90,9 +92,8 @@ export function useLoginForm() {
         window.history.replaceState({}, '', currentUrl.pathname);
       }
       
-      // Let the auth state listener handle navigation - remove manual navigation
-      // The useAuthStateListener will detect the SIGNED_IN event and navigate automatically
-      console.log("🔄 Letting auth state listener handle navigation...");
+      // Do NOT manually navigate - let useAuthStateListener handle it
+      console.log("🔄 Letting useAuthStateListener handle navigation automatically");
       
       setIsLoading(false);
       
