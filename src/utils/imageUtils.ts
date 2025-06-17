@@ -1,3 +1,4 @@
+
 import { CarListing } from "@/types/cars";
 import { getCarImagePublicUrl, CAR_IMAGES_BUCKET, listCarImages } from "./storage/carImageStorage";
 
@@ -181,28 +182,6 @@ export const getImageCount = (car: CarListing): number => {
   }
   
   return count;
-};
-
-/**
- * Hook to fetch storage images when database images are missing
- */
-export const useStorageImagesFallback = (car: CarListing) => {
-  const [storageImages, setStorageImages] = React.useState<string[]>([]);
-  const [isLoadingStorage, setIsLoadingStorage] = React.useState(false);
-
-  React.useEffect(() => {
-    const hasValidImages = getImageCount(car) > 0;
-    
-    if (!hasValidImages && car.id) {
-      setIsLoadingStorage(true);
-      fetchImagesFromStorage(car.id).then(images => {
-        setStorageImages(images);
-        setIsLoadingStorage(false);
-      });
-    }
-  }, [car.id, car.images, car.requiredPhotos]);
-
-  return { storageImages, isLoadingStorage };
 };
 
 /**
