@@ -13,6 +13,7 @@ interface UseCarListingsQueryProps {
   searchQuery: string;
   currentPage: number;
   pageSize: number;
+  dealerId?: string; // Add dealer ID for verification check
 }
 
 export const useCarListingsQuery = ({
@@ -20,7 +21,8 @@ export const useCarListingsQuery = ({
   sortOption,
   searchQuery,
   currentPage,
-  pageSize
+  pageSize,
+  dealerId
 }: UseCarListingsQueryProps) => {
   return useEnhancedAuthAwareQuery({
     queryKey: [
@@ -28,28 +30,30 @@ export const useCarListingsQuery = ({
       JSON.stringify(filters), 
       sortOption, 
       searchQuery, 
-      currentPage.toString()
+      currentPage.toString(),
+      "liveAuctionsOnly" // Add cache key to differentiate from other queries
     ],
     queryFn: async () => {
       const isDev = process.env.NODE_ENV === 'development';
       
       if (isDev) {
-        console.log('=== DEALER CAR SEARCH QUERY START ===');
+        console.log('=== LIVE AUCTION CARS QUERY START ===');
         console.log('Query params:', {
           filters,
           sortOption,
           searchQuery,
-          currentPage
+          currentPage,
+          dealerId
         });
       }
       
       try {
-        // Build base query with auction schedule data for authenticated dealers
+        // Build base query for live auctions only
         let query = buildCarListingsQuery();
 
         if (isDev) {
-          console.log('=== DEALER DATABASE QUERY SETUP ===');
-          console.log('Base query configured for dealers with auction schedule data');
+          console.log('=== LIVE AUCTION DATABASE QUERY SETUP ===');
+          console.log('Query configured for live auctions only');
         }
         
         // Apply filters and search
@@ -69,29 +73,29 @@ export const useCarListingsQuery = ({
         const result = await query;
         
         if (isDev) {
-          console.log('=== DEALER DATABASE QUERY RESULT ===');
+          console.log('=== LIVE AUCTION DATABASE QUERY RESULT ===');
           console.log('Query successful. Raw data count:', result.data?.length || 0);
           
           if (result.data && result.data.length > 0) {
-            console.log('First raw car from DB with schedule (dealer view):', result.data[0]);
+            console.log('First live auction car:', result.data[0]);
           }
         }
         
         if (result.error) {
-          console.error("=== DEALER DATABASE ERROR ===");
+          console.error("=== LIVE AUCTION DATABASE ERROR ===");
           console.error("Error details:", result.error);
           throw new Error(result.error.message);
         }
         
-        // Process the results with transformation including schedule data for dealers
+        // Process the results - all cars returned are guaranteed to be live auctions
         const rawData = result.data || [];
         const validCars = processCarData(rawData);
         
         if (isDev) {
-          console.log('=== DEALER FINAL RESULT ===');
-          console.log('Valid cars after processing:', validCars.length);
+          console.log('=== LIVE AUCTION FINAL RESULT ===');
+          console.log('Valid live auction cars:', validCars.length);
           if (validCars.length > 0) {
-            console.log('First processed car with timing status (dealer view):', {
+            console.log('First processed live auction car:', {
               id: validCars[0].id,
               make: validCars[0].make,
               model: validCars[0].model,
@@ -108,12 +112,12 @@ export const useCarListingsQuery = ({
         };
       } catch (err: any) {
         const errorMessage = err.message || 'Unknown error occurred';
-        console.error("=== DEALER QUERY ERROR ===");
+        console.error("=== LIVE AUCTION QUERY ERROR ===");
         console.error("Error:", errorMessage);
         throw new Error(errorMessage);
       }
     },
-    requireAuth: true, // This query requires authentication
+    requireAuth: true,
     retry: 2,
     retryDelay: attempt => Math.min(attempt > 1 ? 2000 : 1000, 30000),
   });

@@ -9,8 +9,9 @@ import { useCarSearch } from "./hooks/useCarSearch";
 import { CarSearchFilters } from "./filters/CarSearchFilters";
 import { AuctionPagination } from "../auction/AuctionPagination";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Info } from "lucide-react";
+import { AlertCircle, Info, Shield } from "lucide-react";
 import { useAuthReadiness } from "@/utils/authAwareQuery";
+import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 
 interface CarSearchContentProps {
   dealerId: string;
@@ -18,6 +19,7 @@ interface CarSearchContentProps {
 
 export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
   const { canMakeAuthenticatedQueries } = useAuthReadiness();
+  const { dealerProfile, isLoading: profileLoading } = useDealerProfileSimple();
   
   const {
     listings,
@@ -38,26 +40,44 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
   } = useCarSearch(dealerId);
 
   const isDev = process.env.NODE_ENV === 'development';
+  const isVerified = dealerProfile?.is_verified;
   
-  // Log dealer ID and auth readiness for debugging
+  // Log dealer verification status for debugging
   useEffect(() => {
     if (isDev) {
-      console.log("CarSearch component mounted with dealer ID:", dealerId);
-      console.log("Auth readiness:", { canMakeAuthenticatedQueries });
-      console.log("Current search state:", {
+      console.log("CarSearch component status:", {
+        dealerId,
+        isVerified,
+        canMakeAuthenticatedQueries,
         listings: listings.length,
         isLoading,
-        hasError: !!error,
-        errorMessage: error
+        hasError: !!error
       });
     }
-  }, [dealerId, listings.length, isLoading, error, isDev, canMakeAuthenticatedQueries]);
+  }, [dealerId, isVerified, listings.length, isLoading, error, isDev, canMakeAuthenticatedQueries]);
+
+  // Show verification warning if dealer is not verified
+  if (!profileLoading && !isVerified) {
+    return (
+      <div className="space-y-6 pb-20">
+        <CarSearchInfoPanel />
+        
+        <Alert variant="destructive" className="border-red-200 bg-red-50">
+          <Shield className="h-4 w-4" />
+          <AlertDescription className="text-red-800">
+            <strong>Verification Required:</strong> Only verified dealers can view live auctions and place bids. 
+            Please complete your dealer verification to access the auction marketplace.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-20">
       <CarSearchInfoPanel />
 
-      {/* Always show search filters */}
+      {/* Always show search filters for verified dealers */}
       <CarSearchFilters
         onFiltersChange={handleFiltersChange}
         onSortChange={handleSortChange}
@@ -71,7 +91,7 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
         
         {isDev && (
           <div className="text-xs text-muted-foreground">
-            Dealer ID: {dealerId || "Not available"} | Results: {listings.length} | Auth Ready: {canMakeAuthenticatedQueries ? "Yes" : "No"}
+            Dealer ID: {dealerId || "Not available"} | Live Auctions: {listings.length} | Verified: {isVerified ? "Yes" : "No"}
           </div>
         )}
       </div>
@@ -81,12 +101,12 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
         <Alert variant="default" className="bg-blue-50 border-blue-200">
           <Info className="h-4 w-4" />
           <AlertDescription className="text-xs">
-            Car Search Debug: Dealer ID: {dealerId || "None"} | 
+            Live Auction Search Debug: Dealer ID: {dealerId || "None"} | 
+            Verified: {isVerified ? "Yes" : "No"} | 
             Active filters: {Object.keys(filters).length} | 
-            Results: {listings.length} | 
+            Live auctions: {listings.length} | 
             Loading: {isLoading ? "Yes" : "No"} |
-            Error: {error ? "Yes" : "No"} |
-            Auth Ready: {canMakeAuthenticatedQueries ? "Yes" : "No"}
+            Error: {error ? "Yes" : "No"}
           </AlertDescription>
         </Alert>
       )}
@@ -96,7 +116,7 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
         <Alert variant="default" className="bg-yellow-50 border-yellow-200">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Authentication is still loading. Please wait for the search to become available.
+            Authentication is still loading. Please wait for the live auction search to become available.
           </AlertDescription>
         </Alert>
       )}
@@ -105,7 +125,7 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
       {!dealerId && (
         <CarSearchErrorDisplay 
           onRefresh={() => window.location.reload()}
-          errorMessage="Your dealer profile needs to be completed before you can search for cars. Please complete your profile setup."
+          errorMessage="Your dealer profile needs to be completed before you can view live auctions. Please complete your profile setup."
         />
       )}
 
@@ -117,7 +137,7 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
       ) : (
         <>
           {listings.length === 0 && !isLoading ? (
-            <NoResultsFound 
+            <NoLiveAuctionsFound 
               searchQuery={searchQuery} 
               onClearFilters={clearFilters} 
             />
@@ -136,6 +156,40 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
             isLoading={isLoading}
           />
         </>
+      )}
+    </div>
+  );
+};
+
+// New component for no live auctions state
+const NoLiveAuctionsFound = ({ 
+  searchQuery, 
+  onClearFilters 
+}: { 
+  searchQuery: string; 
+  onClearFilters: () => void; 
+}) => {
+  return (
+    <div className="text-center py-12 bg-gray-50 rounded-lg">
+      <div className="mx-auto w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+        <Shield className="h-8 w-8 text-gray-400" />
+      </div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        No Live Auctions Found
+      </h3>
+      <p className="text-gray-600 mb-4 max-w-md mx-auto">
+        {searchQuery 
+          ? `No live auctions match your search for "${searchQuery}". Try adjusting your search terms or filters.`
+          : "There are currently no live auctions available. Check back later for new auctions."
+        }
+      </p>
+      {searchQuery && (
+        <button
+          onClick={onClearFilters}
+          className="text-blue-600 hover:text-blue-700 font-medium"
+        >
+          Clear search and filters
+        </button>
       )}
     </div>
   );

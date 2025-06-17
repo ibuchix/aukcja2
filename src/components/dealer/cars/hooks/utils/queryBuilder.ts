@@ -2,10 +2,9 @@
 import { rawSupabaseClient } from "@/integrations/supabase/client";
 
 export const buildCarListingsQuery = () => {
-  console.log("Using raw Supabase client for car listings to preserve authentication context");
+  console.log("Building car listings query for live auctions only");
   
-  // Build the base query - this will be guarded by the auth-aware query wrapper
-  // so we know auth is ready when this executes
+  // Build query to only show cars that are currently in live auction
   return rawSupabaseClient
     .from("cars")
     .select(`
@@ -47,8 +46,23 @@ export const buildCarListingsQuery = () => {
       valuation_data,
       last_saved,
       registration_number,
-      is_manually_controlled
+      is_manually_controlled,
+      auction_schedules!inner(
+        id,
+        status,
+        start_time,
+        end_time,
+        is_manually_controlled
+      )
     `)
-    .eq("status", "available")
+    // Only show cars that are auctions with active status
+    .eq("is_auction", true)
+    .eq("auction_status", "active")
+    // Only show cars with active auction schedules
+    .eq("auction_schedules.status", "active")
+    // Only show cars where auction is currently running (between start and end time)
+    .lte("auction_schedules.start_time", new Date().toISOString())
+    .gte("auction_schedules.end_time", new Date().toISOString())
+    // Ensure we have valid reserve prices
     .gt("reserve_price", 0);
 };

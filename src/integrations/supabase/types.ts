@@ -1978,6 +1978,14 @@ export type Database = {
           unique_bidders: number | null
         }[]
       }
+      get_auction_timing_status: {
+        Args: {
+          schedule_start_time: string
+          schedule_end_time: string
+          schedule_status: string
+        }
+        Returns: string
+      }
       get_bid_recommendations: {
         Args: { p_car_id: string; p_dealer_id: string }
         Returns: Json
