@@ -18,7 +18,6 @@ export function useAuthStateListener(
   setIsLoading: (isLoading: boolean) => void
 ) {
   const authChangeInProgressRef = useRef(false);
-  const navigationHandledRef = useRef(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,9 +41,6 @@ export function useAuthStateListener(
           if (event === "SIGNED_OUT") {
             console.log("🚪 SIGNED_OUT event - cleaning up and navigating to auth");
             
-            // Reset navigation flag
-            navigationHandledRef.current = false;
-            
             // Immediately clear session and user
             setSession(null);
             setUser(null);
@@ -54,49 +50,72 @@ export function useAuthStateListener(
             // Invalidate and clear all auth-dependent queries
             queryInvalidationManager.clearAllQueries();
             
-            // Navigate to auth page immediately
-            console.log("🚀 Navigating to auth page after logout");
-            navigate("/auth", { replace: true });
+            // Navigate to auth page immediately with detailed logging
+            console.log("🚀 About to navigate to auth page after logout");
+            try {
+              navigate("/auth", { replace: true });
+              console.log("✅ Navigation to /auth completed successfully");
+            } catch (navError) {
+              console.error("❌ Navigation to /auth failed:", navError);
+            }
             
             await AuthDebugger.captureAuthState("Signed Out with Navigation");
             
           } else if (event === "SIGNED_IN" && currentSession?.user) {
             console.log("✅ SIGNED_IN event - processing and navigating...");
+            console.log("📊 Session data:", {
+              userId: currentSession.user.id,
+              email: currentSession.user.email,
+              expiresAt: currentSession.expires_at
+            });
             
             // Update session and user immediately
             setSession(currentSession);
             setUser(currentSession.user);
-            // DON'T set loading to false here - let the login form handle its own loading state
             
             console.log("✅ Auth state updated after sign in");
             await AuthDebugger.captureAuthState("Sign In State Updated");
             
-            // Navigation logic - navigate away from auth page to dashboard
+            // Navigation logic with detailed logging
             const isOnAuthPage = location.pathname === '/auth' || location.pathname.includes('/auth');
             const isAlreadyOnDashboard = location.pathname.includes('/dealer/dashboard');
             
             console.log("🔍 Navigation analysis:");
+            console.log("  - Current pathname:", location.pathname);
             console.log("  - Is on auth page:", isOnAuthPage);
             console.log("  - Is already on dashboard:", isAlreadyOnDashboard);
-            console.log("  - Navigation already handled:", navigationHandledRef.current);
             
-            // Navigate to dashboard if not already there and navigation hasn't been handled
-            if (!isAlreadyOnDashboard && !navigationHandledRef.current) {
-              navigationHandledRef.current = true;
-              const returnUrl = location.state?.returnUrl || "/dealer/dashboard";
-              console.log("🚀 Navigating after successful login to:", returnUrl);
+            // Navigate to dashboard if we're on the auth page
+            if (isOnAuthPage && !isAlreadyOnDashboard) {
+              const targetUrl = location.state?.returnUrl || "/dealer/dashboard";
+              console.log("🚀 About to navigate from auth page to:", targetUrl);
               
-              // Navigate immediately - this will trigger the useEffect in useLoginForm to clear loading
-              navigate(returnUrl, { replace: true });
+              try {
+                navigate(targetUrl, { replace: true });
+                console.log("✅ Navigation to dashboard completed successfully");
+                
+                // Set up a fallback navigation in case the first attempt fails
+                setTimeout(() => {
+                  if (window.location.pathname.includes('/auth')) {
+                    console.log("⚠️ Still on auth page after navigation, attempting fallback");
+                    window.location.href = targetUrl;
+                  }
+                }, 100);
+                
+              } catch (navError) {
+                console.error("❌ Navigation to dashboard failed:", navError);
+                // Fallback: use window.location for navigation
+                console.log("🔄 Attempting fallback navigation");
+                window.location.href = targetUrl;
+              }
               
-              console.log("✅ Navigation triggered, login form loading state should clear automatically");
             } else if (isAlreadyOnDashboard) {
-              console.log("🔄 Already on dashboard, no navigation needed");
-            } else if (navigationHandledRef.current) {
-              console.log("🔄 Navigation already handled, skipping");
+              console.log("✅ Already on dashboard, no navigation needed");
+            } else {
+              console.log("ℹ️ Not on auth page, staying on current page:", location.pathname);
             }
             
-            // Fetch profile data in background without blocking
+            // Fetch profile data in background without blocking navigation
             setTimeout(async () => {
               try {
                 console.log("🔄 Fetching profile in background...");
@@ -117,7 +136,6 @@ export function useAuthStateListener(
               } catch (profileError) {
                 console.error("❌ Error fetching profile after sign in:", profileError);
                 await AuthDebugger.captureAuthState("Sign In Profile Error");
-                // Don't show error toast for profile issues as they don't block main functionality
               }
             }, 0);
             
@@ -146,7 +164,7 @@ export function useAuthStateListener(
               }
             }, 0);
           }
-          // Removed the else block that was setting loading to false
+          
         } catch (error) {
           console.error("❌ Error in auth state change handler:", error);
           await AuthDebugger.captureAuthState("Auth State Change Error");

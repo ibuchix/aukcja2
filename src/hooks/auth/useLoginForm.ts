@@ -22,14 +22,11 @@ export function useLoginForm() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Track navigation to prevent race conditions
-  const navigationTriggeredRef = useRef(false);
 
-  // Listen for successful navigation to clear loading state
+  // Listen for navigation away from auth page to clear loading state
   useEffect(() => {
-    if (location.pathname.includes('/dealer/dashboard') && isLoading) {
-      console.log("🎯 Navigation to dashboard detected, clearing loading state");
+    if (!location.pathname.includes('/auth') && isLoading) {
+      console.log("🎯 Navigation away from auth page detected, clearing loading state");
       setIsLoading(false);
     }
   }, [location.pathname, isLoading]);
@@ -46,7 +43,6 @@ export function useLoginForm() {
       setIsLoading(true);
       setError(null);
       setLoginAttempted(true);
-      navigationTriggeredRef.current = false;
 
       // Normalize email consistently
       const normalizedEmail = normalizeEmail(data.email);
@@ -86,8 +82,8 @@ export function useLoginForm() {
       }
 
       console.log("✅ Login successful! Session set in Supabase client");
-      console.log("🔄 Navigation will be handled by useAuthStateListener");
-      console.log("⏳ Keeping loading state active until navigation completes");
+      console.log("🔄 useAuthStateListener will handle all navigation");
+      console.log("⏳ Keeping loading state until navigation away from auth page");
       
       // Show success toast
       toast({
@@ -101,9 +97,9 @@ export function useLoginForm() {
         window.history.replaceState({}, '', currentUrl.pathname);
       }
       
-      // Do NOT clear loading state here - let navigation completion handle it
-      // The useEffect above will clear loading when we detect navigation to dashboard
-      console.log("🔄 Letting useAuthStateListener handle navigation, loading state will persist");
+      // Do NOT clear loading state here or navigate manually
+      // Let useAuthStateListener handle navigation, and useEffect will clear loading when navigation completes
+      console.log("🔄 Login form waiting for useAuthStateListener to handle navigation");
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
