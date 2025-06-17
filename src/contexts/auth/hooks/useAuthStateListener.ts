@@ -34,7 +34,7 @@ export function useAuthStateListener(
 
         authChangeInProgressRef.current = true;
         console.log("🔄 Auth state changed:", event);
-        console.log("📍 Current location:", location.pathname);
+        console.log("📍 Current location during auth change:", location.pathname);
         console.log("🧭 Navigation handled ref:", navigationHandledRef.current);
         
         try {
@@ -72,20 +72,25 @@ export function useAuthStateListener(
             console.log("✅ Auth state updated after sign in");
             await AuthDebugger.captureAuthState("Sign In State Updated");
             
-            // Navigation logic - only navigate if on auth page and not already handled
+            // Navigation logic - navigate away from auth page to dashboard
             const isOnAuthPage = location.pathname === '/auth' || location.pathname.includes('/auth');
-            console.log("🔍 Is on auth page:", isOnAuthPage);
-            console.log("🔍 Navigation already handled:", navigationHandledRef.current);
+            const isAlreadyOnDashboard = location.pathname.includes('/dealer/dashboard');
             
-            if (isOnAuthPage && !navigationHandledRef.current) {
+            console.log("🔍 Navigation analysis:");
+            console.log("  - Is on auth page:", isOnAuthPage);
+            console.log("  - Is already on dashboard:", isAlreadyOnDashboard);
+            console.log("  - Navigation already handled:", navigationHandledRef.current);
+            
+            // Navigate to dashboard if not already there and navigation hasn't been handled
+            if (!isAlreadyOnDashboard && !navigationHandledRef.current) {
               navigationHandledRef.current = true;
               const returnUrl = location.state?.returnUrl || "/dealer/dashboard";
-              console.log("🚀 Navigating from auth page to:", returnUrl);
+              console.log("🚀 Navigating after successful login to:", returnUrl);
               
               // Navigate immediately
               navigate(returnUrl, { replace: true });
-            } else if (!isOnAuthPage) {
-              console.log("🔄 Not on auth page, no navigation needed");
+            } else if (isAlreadyOnDashboard) {
+              console.log("🔄 Already on dashboard, no navigation needed");
             } else if (navigationHandledRef.current) {
               console.log("🔄 Navigation already handled, skipping");
             }
