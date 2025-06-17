@@ -1,6 +1,35 @@
 
 import { CarListing } from "@/types/cars";
 
+// Helper function to generate title from valuation data
+const generateTitleFromValuationData = (valuationData: any): string | null => {
+  if (!valuationData || typeof valuationData !== 'object') {
+    return null;
+  }
+  
+  const year = valuationData.year;
+  const make = valuationData.make;
+  const model = valuationData.model;
+  
+  // Only generate title if we have at least make and model
+  if (make && model) {
+    const parts = [year, make, model].filter(Boolean);
+    return parts.join(' ').trim();
+  }
+  
+  return null;
+};
+
+// Helper function to check if title is generic/meaningless
+const isGenericTitle = (title: string | null | undefined): boolean => {
+  if (!title || typeof title !== 'string') {
+    return true;
+  }
+  
+  const genericTitles = ['Car Listing', 'car listing', 'Car', 'Vehicle', 'Auto'];
+  return genericTitles.includes(title.trim());
+};
+
 // Type guard focusing on essential fields only
 export const isValidCarListing = (item: any): item is CarListing => {
   const isDev = process.env.NODE_ENV === 'development';
@@ -51,6 +80,25 @@ export const transformCarData = (rawCar: any): CarListing => {
     console.log('Raw car:', rawCar);
   }
   
+  // Generate proper title - prioritize valuation data if stored title is generic
+  let finalTitle = rawCar.title || '';
+  
+  if (isGenericTitle(finalTitle)) {
+    // Try to get title from valuation data first
+    const valuationTitle = generateTitleFromValuationData(rawCar.valuation_data || rawCar.valuationData);
+    if (valuationTitle) {
+      finalTitle = valuationTitle;
+    } else {
+      // Fallback to generating from car fields
+      finalTitle = `${rawCar.year || ''} ${rawCar.make || ''} ${rawCar.model || ''}`.trim();
+    }
+  }
+  
+  // Ensure we have some title
+  if (!finalTitle) {
+    finalTitle = `${rawCar.year || ''} ${rawCar.make || ''} ${rawCar.model || ''}`.trim() || 'Vehicle';
+  }
+  
   const transformed: CarListing = {
     id: rawCar.id,
     make: rawCar.make,
@@ -63,8 +111,8 @@ export const transformCarData = (rawCar: any): CarListing => {
     images: rawCar.images,
     requiredPhotos: rawCar.requiredPhotos || rawCar.required_photos,
     
-    // Optional fields with transformation
-    title: rawCar.title,
+    // Use the improved title logic
+    title: finalTitle,
     features: rawCar.features,
     transmission: rawCar.transmission,
     isAuction: rawCar.isAuction || rawCar.is_auction,
@@ -102,7 +150,8 @@ export const transformCarData = (rawCar: any): CarListing => {
       id: transformed.id,
       make: transformed.make,
       model: transformed.model,
-      reservePrice: transformed.reservePrice
+      reservePrice: transformed.reservePrice,
+      title: transformed.title
     });
   }
   

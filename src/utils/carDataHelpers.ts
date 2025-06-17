@@ -2,6 +2,35 @@
 import { CarListing } from "@/types/cars";
 import { calculateAuctionTimingStatus } from "@/components/dealer/auction/hooks/utils/auctionTimingUtils";
 
+// Helper function to generate title from valuation data
+const generateTitleFromValuationData = (valuationData: any): string | null => {
+  if (!valuationData || typeof valuationData !== 'object') {
+    return null;
+  }
+  
+  const year = valuationData.year;
+  const make = valuationData.make;
+  const model = valuationData.model;
+  
+  // Only generate title if we have at least make and model
+  if (make && model) {
+    const parts = [year, make, model].filter(Boolean);
+    return parts.join(' ').trim();
+  }
+  
+  return null;
+};
+
+// Helper function to check if title is generic/meaningless
+const isGenericTitle = (title: string | null | undefined): boolean => {
+  if (!title || typeof title !== 'string') {
+    return true;
+  }
+  
+  const genericTitles = ['Car Listing', 'car listing', 'Car', 'Vehicle', 'Auto'];
+  return genericTitles.includes(title.trim());
+};
+
 export const processCarData = (rawData: any[]): CarListing[] => {
   return rawData
     .filter(item => item && typeof item === 'object')
@@ -18,6 +47,25 @@ export const processCarData = (rawData: any[]): CarListing[] => {
           scheduleInfo.end_time,
           scheduleInfo.status
         ) : 'unknown';
+
+      // Generate proper title - prioritize valuation data if stored title is generic
+      let finalTitle = car.title || '';
+      
+      if (isGenericTitle(finalTitle)) {
+        // Try to get title from valuation data first
+        const valuationTitle = generateTitleFromValuationData(car.valuation_data);
+        if (valuationTitle) {
+          finalTitle = valuationTitle;
+        } else {
+          // Fallback to generating from car fields
+          finalTitle = `${car.year || ''} ${car.make || ''} ${car.model || ''}`.trim();
+        }
+      }
+      
+      // Ensure we have some title
+      if (!finalTitle) {
+        finalTitle = `${car.year || ''} ${car.make || ''} ${car.model || ''}`.trim() || 'Vehicle';
+      }
 
       return {
         id: car.id,
@@ -56,7 +104,7 @@ export const processCarData = (rawData: any[]): CarListing[] => {
         lastSaved: car.last_saved || '',
         registrationNumber: car.registration_number || '',
         isManuallyControlled: car.is_manually_controlled || false,
-        title: car.title || `${car.year || ''} ${car.make || ''} ${car.model || ''}`.trim(),
+        title: finalTitle,
         // Auction schedule fields
         scheduleStatus: scheduleInfo?.status,
         scheduleStartTime: scheduleInfo?.start_time,
