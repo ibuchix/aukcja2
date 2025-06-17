@@ -1,16 +1,9 @@
 
 import { CarListing } from "@/types/cars";
+import { getCarImagePublicUrl, CAR_IMAGES_BUCKET } from "./storage/carImageStorage";
 
 /**
- * Generate Supabase Storage URL for car images
- */
-const generateSupabaseImageUrl = (carId: string, imageName: string): string => {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
-  return `${supabaseUrl}/storage/v1/object/public/car-images/${carId}/${imageName}`;
-};
-
-/**
- * Check if a URL is a valid image (NO blob URLs allowed)
+ * Check if a URL is a valid image URL
  */
 const isValidImageUrl = (url: string): boolean => {
   if (!url || typeof url !== 'string') return false;
@@ -34,51 +27,29 @@ const isValidImageUrl = (url: string): boolean => {
 };
 
 /**
- * Transform image URL to proper storage URL
+ * Transform a database URL to a proper storage URL if needed
  */
 const transformImageUrl = (url: string, carId?: string): string => {
   if (!url) return "/placeholder.svg";
   
-  // If it's already a valid storage URL, return as is
+  // If it's already a valid URL, return as is
   if (isValidImageUrl(url)) {
     return url;
   }
   
-  // If it's a blob URL, we cannot transform it - it should have been stored properly
+  // If it looks like a storage file name and we have a car ID, construct the URL
+  if (carId && url && !url.includes('/') && !url.startsWith('http')) {
+    // This might be just a filename, construct the full storage URL
+    return getCarImagePublicUrl(carId, url);
+  }
+  
+  // If it's a blob URL, we cannot transform it
   if (url.startsWith('blob:')) {
     console.error('Blob URL found in database - this indicates a storage issue:', url);
     return "/placeholder.svg";
   }
   
   return "/placeholder.svg";
-};
-
-/**
- * Count valid images from car data
- */
-const countValidImages = (car: CarListing): number => {
-  let count = 0;
-  
-  // Count images from requiredPhotos
-  if (car.requiredPhotos && typeof car.requiredPhotos === 'object') {
-    const photos = car.requiredPhotos as Record<string, string | null>;
-    Object.values(photos).forEach(photo => {
-      if (photo && isValidImageUrl(photo)) {
-        count++;
-      }
-    });
-  }
-  
-  // Count images from images array
-  if (car.images && Array.isArray(car.images)) {
-    car.images.forEach(image => {
-      if (image && isValidImageUrl(image)) {
-        count++;
-      }
-    });
-  }
-  
-  return count;
 };
 
 /**
@@ -174,11 +145,33 @@ export const getAllCarImages = (car: CarListing): { src: string; label: string }
  * Get the count of valid images for a car
  */
 export const getImageCount = (car: CarListing): number => {
-  return countValidImages(car);
+  let count = 0;
+  
+  // Count images from requiredPhotos
+  if (car.requiredPhotos && typeof car.requiredPhotos === 'object') {
+    const photos = car.requiredPhotos as Record<string, string | null>;
+    Object.values(photos).forEach(photo => {
+      if (photo && isValidImageUrl(photo)) {
+        count++;
+      }
+    });
+  }
+  
+  // Count images from images array
+  if (car.images && Array.isArray(car.images)) {
+    car.images.forEach(image => {
+      if (image && isValidImageUrl(image)) {
+        count++;
+      }
+    });
+  }
+  
+  return count;
 };
 
 /**
  * Upload image to Supabase Storage for a specific car
+ * This is the updated version that properly stores URLs in the database
  */
 export const uploadCarImageToStorage = async (
   carId: string, 
@@ -191,7 +184,7 @@ export const uploadCarImageToStorage = async (
     const filePath = `${carId}/${imageName}`;
     
     const { data, error } = await supabase.storage
-      .from('car-images')
+      .from(CAR_IMAGES_BUCKET)
       .upload(filePath, file, {
         upsert: true
       });
@@ -201,9 +194,31 @@ export const uploadCarImageToStorage = async (
       return null;
     }
 
-    return generateSupabaseImageUrl(carId, imageName);
+    // Get the public URL
+    const { data: urlData } = supabase.storage
+      .from(CAR_IMAGES_BUCKET)
+      .getPublicUrl(filePath);
+
+    console.log('Image uploaded successfully, public URL:', urlData.publicUrl);
+    return urlData.publicUrl;
   } catch (error) {
     console.error('Error uploading to Supabase Storage:', error);
     return null;
   }
+};
+
+/**
+ * Debug function to check car image data
+ */
+export const debugCarImages = (car: CarListing) => {
+  console.log('=== CAR IMAGE DEBUG ===');
+  console.log('Car ID:', car.id);
+  console.log('Title:', car.title);
+  console.log('Images array:', car.images);
+  console.log('Required photos:', car.requiredPhotos);
+  console.log('Additional photos:', car.additionalPhotos);
+  console.log('Primary image result:', getPrimaryImage(car));
+  console.log('All images result:', getAllCarImages(car));
+  console.log('Image count:', getImageCount(car));
+  console.log('======================');
 };
