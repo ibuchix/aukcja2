@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
@@ -7,6 +8,7 @@ import { ProfileInfoSection } from "@/components/dealer/dashboard/ProfileInfoSec
 import { DealerWelcomeCard } from "@/components/dealer/dashboard/DealerWelcomeCard";
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
 import { CarSearchWrapper } from '@/components/dealer/cars/CarSearchWrapper';
+import { ImageManagementCard } from "@/components/dealer/dashboard/ImageManagementCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDashboardTabs } from '@/hooks/useDashboardTabs';
 import { QuickActions } from '@/components/dealer/QuickActions';
