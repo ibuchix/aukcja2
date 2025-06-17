@@ -76,7 +76,7 @@ export function useLoginForm() {
         return;
       }
 
-      console.log("✅ Login successful! Setting up post-login actions...");
+      console.log("✅ Login successful! Navigation will be handled by auth state listener");
       
       // Show success toast
       toast({
@@ -90,31 +90,9 @@ export function useLoginForm() {
         window.history.replaceState({}, '', currentUrl.pathname);
       }
       
-      // Enhanced navigation with fallback
-      const setupNavigation = () => {
-        if (navigationTriggeredRef.current) {
-          console.log("🔄 Navigation already triggered, skipping");
-          return;
-        }
-        
-        navigationTriggeredRef.current = true;
-        const returnUrl = location.state?.returnUrl || "/dealer/dashboard";
-        console.log("🚀 Navigating to:", returnUrl);
-        
-        // Use replace to avoid back button issues
-        navigate(returnUrl, { replace: true });
-      };
-      
-      // Try immediate navigation
-      setupNavigation();
-      
-      // Fallback navigation after a short delay in case auth state listener doesn't fire
-      setTimeout(() => {
-        if (!navigationTriggeredRef.current) {
-          console.log("⏰ Fallback navigation triggered");
-          setupNavigation();
-        }
-      }, 1000);
+      // Let the auth state listener handle navigation - remove manual navigation
+      // The useAuthStateListener will detect the SIGNED_IN event and navigate automatically
+      console.log("🔄 Letting auth state listener handle navigation...");
       
       setIsLoading(false);
       

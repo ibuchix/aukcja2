@@ -70,20 +70,18 @@ export function useAuthStateListener(
             console.log("✅ Auth state updated after sign in");
             await AuthDebugger.captureAuthState("Sign In State Updated");
             
-            // Enhanced navigation handling with duplicate prevention
-            if (!navigationHandledRef.current && location.pathname === '/auth') {
+            // Immediate navigation for any auth page or if not already handled
+            if (!navigationHandledRef.current && (location.pathname === '/auth' || location.pathname.includes('/auth'))) {
               navigationHandledRef.current = true;
               const returnUrl = location.state?.returnUrl || "/dealer/dashboard";
-              console.log("🚀 Navigating from auth state listener to:", returnUrl);
+              console.log("🚀 Immediate navigation from auth state listener to:", returnUrl);
               
-              // Small delay to ensure state is fully updated
-              setTimeout(() => {
-                navigate(returnUrl, { replace: true });
-              }, 100);
+              // Navigate immediately without setTimeout delay
+              navigate(returnUrl, { replace: true });
             } else if (navigationHandledRef.current) {
               console.log("🔄 Navigation already handled, skipping");
             } else {
-              console.log("🔄 Not on auth page, skipping navigation");
+              console.log("🔄 Not on auth page, current path:", location.pathname);
             }
             
             // Fetch profile data in background without blocking

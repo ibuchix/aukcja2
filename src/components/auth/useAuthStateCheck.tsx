@@ -11,7 +11,7 @@ export function useAuthStateCheck(returnUrl: string) {
   const initialLoadCompleted = useRef(false);
   const redirectAttemptedRef = useRef(false);
   
-  // Significantly increase the auth check delay to ensure form is fully loaded
+  // Reduce the auth check delay to minimal to allow faster navigation
   const [authCheckDelay, setAuthCheckDelay] = useState(true);
   
   const [authContext, authError] = (() => {
@@ -31,14 +31,14 @@ export function useAuthStateCheck(returnUrl: string) {
   // Force URL parameter-based override to prevent redirect
   const forceShowLogin = searchParams.has("force_login");
 
-  // Add significant delay before checking auth to allow form interaction
+  // Reduce delay to allow faster navigation after successful login
   useEffect(() => {
-    console.log("Setting up auth check delay");
+    console.log("Setting up minimal auth check delay");
     const timer = setTimeout(() => {
-      console.log("Auth check delay completed");
+      console.log("Minimal auth check delay completed");
       setAuthCheckDelay(false);
       initialLoadCompleted.current = true;
-    }, 3000); // Increased to 3 seconds to ensure form load
+    }, 200); // Reduced from 3000ms to 200ms
     
     return () => clearTimeout(timer);
   }, []);
@@ -53,31 +53,25 @@ export function useAuthStateCheck(returnUrl: string) {
     return undefined;
   }, [isLoading]);
 
-  // Modified to prevent immediate redirect with multiple safeguards
+  // Simplified redirect logic - allow navigation when user is authenticated
   useEffect(() => {
-    // Skip if any of these conditions are true
-    if (!isInitialized || 
-        !initialLoadCompleted.current || 
-        authCheckDelay || 
-        redirectAttemptedRef.current || 
-        forceShowLogin) {
+    // Skip if not initialized or force login is set
+    if (!isInitialized || forceShowLogin) {
       return;
     }
     
-    // Only proceed with redirect if fully authenticated and initialization is complete
-    if (isAuthenticated && !isLoading) {
-      console.log("Auth initialization complete, user authenticated, redirecting to:", returnUrl);
+    // Only proceed with redirect if fully authenticated and not loading
+    if (isAuthenticated && !isLoading && !redirectAttemptedRef.current) {
+      console.log("Auth check: User authenticated, redirecting to:", returnUrl);
       redirectAttemptedRef.current = true;
       setRedirectAttempted(true);
       
-      // Add small delay before navigation to prevent immediate jumps
-      setTimeout(() => {
-        navigate(returnUrl);
-      }, 100);
+      // Navigate immediately without delay
+      navigate(returnUrl, { replace: true });
     } else if (isInitialized && !isLoading && !isAuthenticated) {
-      console.log("Auth initialization complete, no authenticated user found");
+      console.log("Auth check: No authenticated user found");
     }
-  }, [isAuthenticated, isLoading, isInitialized, navigate, redirectAttempted, returnUrl, authCheckDelay, forceShowLogin]);
+  }, [isAuthenticated, isLoading, isInitialized, navigate, returnUrl, forceShowLogin]);
 
   const forceLoginFormDisplay = () => {
     // Add force_login parameter and reload
