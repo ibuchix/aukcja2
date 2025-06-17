@@ -26,6 +26,14 @@ export function useLoginForm() {
   // Track navigation to prevent race conditions
   const navigationTriggeredRef = useRef(false);
 
+  // Listen for successful navigation to clear loading state
+  useEffect(() => {
+    if (location.pathname.includes('/dealer/dashboard') && isLoading) {
+      console.log("🎯 Navigation to dashboard detected, clearing loading state");
+      setIsLoading(false);
+    }
+  }, [location.pathname, isLoading]);
+
   // Check auth diagnostics
   const checkAuthDiagnostics = () => {
     const authInfo = getAuthDiagnostics();
@@ -79,6 +87,7 @@ export function useLoginForm() {
 
       console.log("✅ Login successful! Session set in Supabase client");
       console.log("🔄 Navigation will be handled by useAuthStateListener");
+      console.log("⏳ Keeping loading state active until navigation completes");
       
       // Show success toast
       toast({
@@ -92,10 +101,9 @@ export function useLoginForm() {
         window.history.replaceState({}, '', currentUrl.pathname);
       }
       
-      // Do NOT manually navigate - let useAuthStateListener handle it
-      console.log("🔄 Letting useAuthStateListener handle navigation automatically");
-      
-      setIsLoading(false);
+      // Do NOT clear loading state here - let navigation completion handle it
+      // The useEffect above will clear loading when we detect navigation to dashboard
+      console.log("🔄 Letting useAuthStateListener handle navigation, loading state will persist");
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
@@ -115,6 +123,12 @@ export function useLoginForm() {
     }
   };
 
+  // Provide a way for external components to clear loading state
+  const clearLoadingState = () => {
+    console.log("🧹 Externally clearing loading state");
+    setIsLoading(false);
+  };
+
   return {
     register,
     handleSubmit,
@@ -126,6 +140,7 @@ export function useLoginForm() {
     diagnosticInfo,
     checkAuthDiagnostics,
     setError,
-    clearStorage: clearAuthStorage
+    clearStorage: clearAuthStorage,
+    clearLoadingState
   };
 }

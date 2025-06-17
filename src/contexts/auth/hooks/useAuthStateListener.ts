@@ -87,8 +87,10 @@ export function useAuthStateListener(
               const returnUrl = location.state?.returnUrl || "/dealer/dashboard";
               console.log("🚀 Navigating after successful login to:", returnUrl);
               
-              // Navigate immediately
+              // Navigate immediately - this will trigger the useEffect in useLoginForm to clear loading
               navigate(returnUrl, { replace: true });
+              
+              console.log("✅ Navigation triggered, login form loading state should clear automatically");
             } else if (isAlreadyOnDashboard) {
               console.log("🔄 Already on dashboard, no navigation needed");
             } else if (navigationHandledRef.current) {
