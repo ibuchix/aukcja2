@@ -8,7 +8,6 @@ import { ProfileInfoSection } from "@/components/dealer/dashboard/ProfileInfoSec
 import { DealerWelcomeCard } from "@/components/dealer/dashboard/DealerWelcomeCard";
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
 import { CarSearchWrapper } from '@/components/dealer/cars/CarSearchWrapper';
-import { ImageManagementCard } from "@/components/dealer/dashboard/ImageManagementCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDashboardTabs } from '@/hooks/useDashboardTabs';
 import { QuickActions } from '@/components/dealer/QuickActions';
@@ -65,7 +64,7 @@ const DealerDashboard = () => {
         {/* Quick Actions Section */}
         <QuickActions />
         
-        {/* Dashboard Tabs */}
+        {/* Dashboard Tabs - Removed Image Management tab */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="cars">Car Search</TabsTrigger>

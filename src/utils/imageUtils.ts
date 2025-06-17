@@ -1,6 +1,5 @@
-
 import { CarListing } from "@/types/cars";
-import { getCarImagePublicUrl, CAR_IMAGES_BUCKET } from "./storage/carImageStorage";
+import { getCarImagePublicUrl, CAR_IMAGES_BUCKET, listCarImages } from "./storage/carImageStorage";
 
 /**
  * Check if a URL is a valid image URL
@@ -53,7 +52,21 @@ const transformImageUrl = (url: string, carId?: string): string => {
 };
 
 /**
- * Gets the primary image for a car listing with proper URL handling
+ * Fetch images from storage for a car when database records are missing
+ */
+const fetchImagesFromStorage = async (carId: string): Promise<string[]> => {
+  try {
+    const storageImages = await listCarImages(carId);
+    console.log(`Found ${storageImages.length} images in storage for car ${carId}`);
+    return storageImages;
+  } catch (error) {
+    console.error('Error fetching images from storage for car', carId, error);
+    return [];
+  }
+};
+
+/**
+ * Gets the primary image for a car listing with automatic storage fallback
  */
 export const getPrimaryImage = (car: CarListing): string => {
   // First check requiredPhotos for exterior front
@@ -101,11 +114,12 @@ export const getPrimaryImage = (car: CarListing): string => {
     }
   }
   
+  // If no images found in database, the component will trigger storage fallback
   return "/placeholder.svg";
 };
 
 /**
- * Gets all available images from a car listing with proper handling
+ * Gets all available images from a car listing with automatic storage fallback
  */
 export const getAllCarImages = (car: CarListing): { src: string; label: string }[] => {
   const allImages: { src: string; label: string }[] = [];
@@ -167,6 +181,28 @@ export const getImageCount = (car: CarListing): number => {
   }
   
   return count;
+};
+
+/**
+ * Hook to fetch storage images when database images are missing
+ */
+export const useStorageImagesFallback = (car: CarListing) => {
+  const [storageImages, setStorageImages] = React.useState<string[]>([]);
+  const [isLoadingStorage, setIsLoadingStorage] = React.useState(false);
+
+  React.useEffect(() => {
+    const hasValidImages = getImageCount(car) > 0;
+    
+    if (!hasValidImages && car.id) {
+      setIsLoadingStorage(true);
+      fetchImagesFromStorage(car.id).then(images => {
+        setStorageImages(images);
+        setIsLoadingStorage(false);
+      });
+    }
+  }, [car.id, car.images, car.requiredPhotos]);
+
+  return { storageImages, isLoadingStorage };
 };
 
 /**

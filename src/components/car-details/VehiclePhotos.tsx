@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Camera, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CarListing } from "@/types/cars";
 import { getAllCarImages, getImageCount, debugCarImages } from "@/utils/imageUtils";
+import { useCarImagesFallback } from "@/hooks/useCarImagesFallback";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface VehiclePhotosProps {
@@ -16,8 +17,17 @@ export const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [imageLoadErrors, setImageLoadErrors] = useState<Set<string>>(new Set());
   
-  const allImages = getAllCarImages(car);
-  const imageCount = getImageCount(car);
+  const { 
+    getAllImagesWithFallback, 
+    getTotalImageCount, 
+    isLoadingStorage 
+  } = useCarImagesFallback(car);
+  
+  // Get images with fallback support
+  const dbImages = getAllCarImages(car);
+  const fallbackImages = getAllImagesWithFallback();
+  const allImages = dbImages.length > 0 ? dbImages : (fallbackImages || []);
+  const imageCount = getTotalImageCount();
 
   // Debug images in development
   useEffect(() => {
@@ -41,6 +51,17 @@ export const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
   const isImageBroken = (src: string) => {
     return imageLoadErrors.has(src);
   };
+
+  if (isLoadingStorage) {
+    return (
+      <div className="space-y-4">
+        <div className="bg-gray-100 rounded-lg p-8 text-center">
+          <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-pulse" />
+          <p className="text-gray-500">Loading vehicle photos...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (allImages.length === 0) {
     return (

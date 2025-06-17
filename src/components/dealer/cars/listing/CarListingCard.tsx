@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { CarListing } from "@/types/cars";
 import { formatCurrency } from "@/lib/utils";
 import { getPrimaryImage } from "@/utils/imageUtils";
+import { useCarImagesFallback } from "@/hooks/useCarImagesFallback";
 import { Camera } from "lucide-react";
 
 interface CarListingCardProps {
@@ -13,23 +14,34 @@ interface CarListingCardProps {
 
 export const CarListingCard = ({ car, onViewDetails }: CarListingCardProps) => {
   const [imageError, setImageError] = useState(false);
-  const primaryImage = getPrimaryImage(car);
+  const { getPrimaryImageWithFallback, isLoadingStorage } = useCarImagesFallback(car);
+  
+  // Get primary image with fallback support
+  const primaryImageFromDb = getPrimaryImage(car);
+  const primaryImageWithFallback = getPrimaryImageWithFallback();
+  const finalPrimaryImage = primaryImageFromDb !== "/placeholder.svg" 
+    ? primaryImageFromDb 
+    : primaryImageWithFallback;
 
   const handleImageError = () => {
     setImageError(true);
   };
 
+  const shouldShowPlaceholder = imageError || 
+    (!finalPrimaryImage || finalPrimaryImage === "/placeholder.svg") && 
+    !isLoadingStorage;
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
       <div className="aspect-video w-full overflow-hidden bg-gray-100 dark:bg-gray-900">
-        {!imageError && primaryImage !== "/placeholder.svg" ? (
-          <img 
-            src={primaryImage} 
-            alt={car.title || `${car.year} ${car.make} ${car.model}`} 
-            className="w-full h-full object-cover"
-            onError={handleImageError}
-          />
-        ) : (
+        {isLoadingStorage ? (
+          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+            <div className="text-center">
+              <Camera className="h-12 w-12 text-gray-400 mx-auto mb-2 animate-pulse" />
+              <p className="text-gray-500 text-sm">Loading images...</p>
+            </div>
+          </div>
+        ) : shouldShowPlaceholder ? (
           <div className="w-full h-full flex items-center justify-center bg-gray-100">
             <div className="text-center">
               <Camera className="h-12 w-12 text-gray-400 mx-auto mb-2" />
@@ -39,6 +51,13 @@ export const CarListingCard = ({ car, onViewDetails }: CarListingCardProps) => {
               )}
             </div>
           </div>
+        ) : (
+          <img 
+            src={finalPrimaryImage} 
+            alt={car.title || `${car.year} ${car.make} ${car.model}`} 
+            className="w-full h-full object-cover"
+            onError={handleImageError}
+          />
         )}
       </div>
       <div className="p-4 space-y-2">
