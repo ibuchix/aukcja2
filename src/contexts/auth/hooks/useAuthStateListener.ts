@@ -35,13 +35,12 @@ export function useAuthStateListener(
         authChangeInProgressRef.current = true;
         console.log("🔄 Auth state changed:", event);
         console.log("📍 Current location during auth change:", location.pathname);
-        console.log("🧭 Navigation handled ref:", navigationHandledRef.current);
         
         try {
           await AuthDebugger.captureAuthState(`Auth State Change: ${event}`);
           
           if (event === "SIGNED_OUT") {
-            console.log("🚪 SIGNED_OUT event - cleaning up queries and session");
+            console.log("🚪 SIGNED_OUT event - cleaning up and navigating to auth");
             
             // Reset navigation flag
             navigationHandledRef.current = false;
@@ -55,11 +54,11 @@ export function useAuthStateListener(
             // Invalidate and clear all auth-dependent queries
             queryInvalidationManager.clearAllQueries();
             
-            toast({
-              title: "Signed out",
-              description: "You have been signed out successfully",
-            });
-            await AuthDebugger.captureAuthState("Signed Out with Query Cleanup");
+            // Navigate to auth page immediately
+            console.log("🚀 Navigating to auth page after logout");
+            navigate("/auth", { replace: true });
+            
+            await AuthDebugger.captureAuthState("Signed Out with Navigation");
             
           } else if (event === "SIGNED_IN" && currentSession?.user) {
             console.log("✅ SIGNED_IN event - processing and navigating...");

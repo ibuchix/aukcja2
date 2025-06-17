@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +17,6 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Navbar() {
   const location = useLocation();
-  const navigate = useNavigate();
   const { isAuthenticated, user, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -39,7 +38,7 @@ export default function Navbar() {
     };
   }, []);
 
-  // Handle user logout
+  // Handle user logout - NO MANUAL NAVIGATION
   const handleLogout = async () => {
     try {
       console.log("🚪 Starting logout process");
@@ -50,8 +49,9 @@ export default function Navbar() {
         description: "You have been signed out",
       });
       
-      console.log("✅ Logout successful, redirecting to auth page");
-      navigate("/auth", { replace: true });
+      console.log("✅ Logout successful - useAuthStateListener will handle navigation");
+      // REMOVED: navigate("/auth", { replace: true });
+      // Let useAuthStateListener handle the navigation on SIGNED_OUT event
     } catch (error) {
       console.error("❌ Logout error:", error);
       toast({
