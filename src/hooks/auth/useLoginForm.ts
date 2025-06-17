@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -83,7 +83,6 @@ export function useLoginForm() {
 
       console.log("✅ Login successful! Session set in Supabase client");
       console.log("🔄 useAuthStateListener will handle all navigation");
-      console.log("⏳ Keeping loading state until navigation away from auth page");
       
       // Show success toast
       toast({
@@ -97,8 +96,14 @@ export function useLoginForm() {
         window.history.replaceState({}, '', currentUrl.pathname);
       }
       
-      // Do NOT clear loading state here or navigate manually
-      // Let useAuthStateListener handle navigation, and useEffect will clear loading when navigation completes
+      // Set up a timeout to clear loading state if navigation doesn't happen
+      setTimeout(() => {
+        if (window.location.pathname.includes('/auth')) {
+          console.log("⚠️ Still on auth page after timeout, clearing loading state");
+          setIsLoading(false);
+        }
+      }, 3000);
+      
       console.log("🔄 Login form waiting for useAuthStateListener to handle navigation");
       
     } catch (err) {

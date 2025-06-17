@@ -17,23 +17,33 @@ export function useAuthStateListener(
   setProfile: (profile: any | null) => void,
   setIsLoading: (isLoading: boolean) => void
 ) {
-  const authChangeInProgressRef = useRef(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Use refs to capture location data to avoid dependency cycles
+  const locationRef = useRef(location);
+  const isListenerActiveRef = useRef(false);
+
+  // Update location ref when location changes
   useEffect(() => {
+    locationRef.current = location;
+  }, [location]);
+
+  useEffect(() => {
+    // Prevent multiple listeners
+    if (isListenerActiveRef.current) {
+      console.log("🔄 Auth listener already active, skipping");
+      return;
+    }
+
+    console.log("🎯 Setting up auth state listener");
+    isListenerActiveRef.current = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
-        // Prevent double processing
-        if (authChangeInProgressRef.current) {
-          console.log("🔄 Auth change already in progress, skipping");
-          return;
-        }
-
-        authChangeInProgressRef.current = true;
         console.log("🔄 Auth state changed:", event);
-        console.log("📍 Current location during auth change:", location.pathname);
+        console.log("📍 Current location during auth change:", locationRef.current.pathname);
         
         try {
           await AuthDebugger.captureAuthState(`Auth State Change: ${event}`);
@@ -50,13 +60,15 @@ export function useAuthStateListener(
             // Invalidate and clear all auth-dependent queries
             queryInvalidationManager.clearAllQueries();
             
-            // Navigate to auth page immediately with detailed logging
-            console.log("🚀 About to navigate to auth page after logout");
+            // Navigate to auth page
+            console.log("🚀 Navigating to auth page after logout");
             try {
               navigate("/auth", { replace: true });
               console.log("✅ Navigation to /auth completed successfully");
             } catch (navError) {
               console.error("❌ Navigation to /auth failed:", navError);
+              // Fallback navigation
+              window.location.href = "/auth";
             }
             
             await AuthDebugger.captureAuthState("Signed Out with Navigation");
@@ -76,43 +88,41 @@ export function useAuthStateListener(
             console.log("✅ Auth state updated after sign in");
             await AuthDebugger.captureAuthState("Sign In State Updated");
             
-            // Navigation logic with detailed logging
-            const isOnAuthPage = location.pathname === '/auth' || location.pathname.includes('/auth');
-            const isAlreadyOnDashboard = location.pathname.includes('/dealer/dashboard');
+            // Get current location from ref to avoid dependency issues
+            const currentLocation = locationRef.current;
+            const isOnAuthPage = currentLocation.pathname === '/auth' || currentLocation.pathname.includes('/auth');
+            const targetUrl = currentLocation.state?.returnUrl || "/dealer/dashboard";
             
             console.log("🔍 Navigation analysis:");
-            console.log("  - Current pathname:", location.pathname);
+            console.log("  - Current pathname:", currentLocation.pathname);
             console.log("  - Is on auth page:", isOnAuthPage);
-            console.log("  - Is already on dashboard:", isAlreadyOnDashboard);
+            console.log("  - Target URL:", targetUrl);
             
             // Navigate to dashboard if we're on the auth page
-            if (isOnAuthPage && !isAlreadyOnDashboard) {
-              const targetUrl = location.state?.returnUrl || "/dealer/dashboard";
-              console.log("🚀 About to navigate from auth page to:", targetUrl);
+            if (isOnAuthPage) {
+              console.log("🚀 Navigating from auth page to:", targetUrl);
               
               try {
                 navigate(targetUrl, { replace: true });
                 console.log("✅ Navigation to dashboard completed successfully");
                 
-                // Set up a fallback navigation in case the first attempt fails
+                // Add a fallback navigation in case the first attempt fails
                 setTimeout(() => {
                   if (window.location.pathname.includes('/auth')) {
-                    console.log("⚠️ Still on auth page after navigation, attempting fallback");
+                    console.log("⚠️ Still on auth page after navigation, using fallback");
                     window.location.href = targetUrl;
                   }
-                }, 100);
+                }, 500);
                 
               } catch (navError) {
                 console.error("❌ Navigation to dashboard failed:", navError);
                 // Fallback: use window.location for navigation
-                console.log("🔄 Attempting fallback navigation");
+                console.log("🔄 Using fallback navigation");
                 window.location.href = targetUrl;
               }
               
-            } else if (isAlreadyOnDashboard) {
-              console.log("✅ Already on dashboard, no navigation needed");
             } else {
-              console.log("ℹ️ Not on auth page, staying on current page:", location.pathname);
+              console.log("ℹ️ Not on auth page, staying on current page:", currentLocation.pathname);
             }
             
             // Fetch profile data in background without blocking navigation
@@ -137,7 +147,7 @@ export function useAuthStateListener(
                 console.error("❌ Error fetching profile after sign in:", profileError);
                 await AuthDebugger.captureAuthState("Sign In Profile Error");
               }
-            }, 0);
+            }, 100);
             
           } else if (event === "TOKEN_REFRESHED" && currentSession) {
             console.log("🔄 Session token refreshed");
@@ -162,24 +172,21 @@ export function useAuthStateListener(
                 console.error("❌ Error fetching profile after token refresh:", profileError);
                 await AuthDebugger.captureAuthState("Token Refresh Profile Error");
               }
-            }, 0);
+            }, 100);
           }
           
         } catch (error) {
           console.error("❌ Error in auth state change handler:", error);
           await AuthDebugger.captureAuthState("Auth State Change Error");
           setIsLoading(false);
-        } finally {
-          // Reset the lock after a brief delay
-          setTimeout(() => {
-            authChangeInProgressRef.current = false;
-          }, 50);
         }
       }
     );
 
     return () => {
+      console.log("🧹 Cleaning up auth state listener");
       subscription.unsubscribe();
+      isListenerActiveRef.current = false;
     };
-  }, [setSession, setUser, setProfile, setIsLoading, toast, navigate, location.state?.returnUrl, location.pathname]);
+  }, [setSession, setUser, setProfile, setIsLoading, toast, navigate]); // Removed problematic location dependencies
 }
