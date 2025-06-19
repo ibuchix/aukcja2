@@ -1,11 +1,12 @@
 
-import { rawSupabaseClient } from "@/integrations/supabase/client";
+import { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from "@/integrations/supabase/types";
 
-export const buildLiveAuctionSchedulesQuery = () => {
-  console.log("Building live auction schedules query");
+export const buildLiveAuctionSchedulesQuery = (supabaseClient: SupabaseClient<Database>) => {
+  console.log("Building live auction schedules query with authenticated client");
   
   // First step: Get all running auction schedules
-  return rawSupabaseClient
+  return supabaseClient
     .from("auction_schedules")
     .select(`
       car_id,
@@ -21,19 +22,19 @@ export const buildLiveAuctionSchedulesQuery = () => {
     .gte("end_time", new Date().toISOString());
 };
 
-export const buildCarsForSchedulesQuery = (carIds: string[]) => {
-  console.log("Building cars query for schedules:", carIds.length, "car IDs");
+export const buildCarsForSchedulesQuery = (supabaseClient: SupabaseClient<Database>, carIds: string[]) => {
+  console.log("Building cars query for schedules with authenticated client:", carIds.length, "car IDs");
   
   if (carIds.length === 0) {
     // Return empty query if no car IDs
-    return rawSupabaseClient
+    return supabaseClient
       .from("cars")
       .select("*")
       .eq("id", "00000000-0000-0000-0000-000000000000"); // Impossible ID to return empty result
   }
   
   // Second step: Get cars that match the running auction schedules
-  return rawSupabaseClient
+  return supabaseClient
     .from("cars")
     .select(`
       id,
@@ -86,12 +87,12 @@ export const buildCarsForSchedulesQuery = (carIds: string[]) => {
 };
 
 // Legacy function kept for backward compatibility but now uses two-step approach
-export const buildCarListingsQuery = () => {
+export const buildCarListingsQuery = (supabaseClient: SupabaseClient<Database>) => {
   console.log("Building car listings query (legacy - redirecting to two-step approach)");
   
   // This function is kept for backward compatibility but will be handled
   // by the two-step approach in useCarListingsQuery
-  return rawSupabaseClient
+  return supabaseClient
     .from("cars")
     .select("*")
     .eq("id", "00000000-0000-0000-0000-000000000000"); // Return empty to force two-step approach

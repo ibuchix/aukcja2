@@ -7,6 +7,7 @@ import { mergeCarDataWithSchedules, AuctionScheduleData } from "./utils/dataHelp
 import { applyFilters } from "./utils/filterUtils";
 import { applySorting } from "./utils/sortUtils";
 import { applyPagination, calculatePaginationInfo } from "./utils/paginationUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseCarListingsQueryProps {
   filters: AuctionFilters;
@@ -50,12 +51,12 @@ export const useCarListingsQuery = ({
       }
       
       try {
-        // STEP 1: Get running auction schedules
+        // STEP 1: Get running auction schedules using authenticated client
         if (isDev) {
           console.log('=== STEP 1: FETCHING AUCTION SCHEDULES ===');
         }
         
-        const scheduleQuery = buildLiveAuctionSchedulesQuery();
+        const scheduleQuery = buildLiveAuctionSchedulesQuery(supabase);
         const scheduleResult = await scheduleQuery;
         
         if (scheduleResult.error) {
@@ -89,12 +90,12 @@ export const useCarListingsQuery = ({
           console.log('Car IDs from schedules:', carIds.length);
         }
         
-        // STEP 2: Get cars that match the running schedules
+        // STEP 2: Get cars that match the running schedules using authenticated client
         if (isDev) {
           console.log('=== STEP 2: FETCHING CARS FOR SCHEDULES ===');
         }
         
-        let carsQuery = buildCarsForSchedulesQuery(carIds);
+        let carsQuery = buildCarsForSchedulesQuery(supabase, carIds);
         
         // Apply filters, sorting, and pagination to the cars query
         carsQuery = applyFilters(carsQuery, filters, searchQuery);
