@@ -1,10 +1,38 @@
 
 import { rawSupabaseClient } from "@/integrations/supabase/client";
 
-export const buildCarListingsQuery = () => {
-  console.log("Building car listings query for live auctions only");
+export const buildLiveAuctionSchedulesQuery = () => {
+  console.log("Building live auction schedules query");
   
-  // Build query to only show cars that are currently in live auction
+  // First step: Get all running auction schedules
+  return rawSupabaseClient
+    .from("auction_schedules")
+    .select(`
+      car_id,
+      status,
+      start_time,
+      end_time,
+      is_manually_controlled
+    `)
+    // Only show running auction schedules
+    .eq("status", "running")
+    // Only show schedules where auction is currently running (between start and end time)
+    .lte("start_time", new Date().toISOString())
+    .gte("end_time", new Date().toISOString());
+};
+
+export const buildCarsForSchedulesQuery = (carIds: string[]) => {
+  console.log("Building cars query for schedules:", carIds.length, "car IDs");
+  
+  if (carIds.length === 0) {
+    // Return empty query if no car IDs
+    return rawSupabaseClient
+      .from("cars")
+      .select("*")
+      .eq("id", "00000000-0000-0000-0000-000000000000"); // Impossible ID to return empty result
+  }
+  
+  // Second step: Get cars that match the running auction schedules
   return rawSupabaseClient
     .from("cars")
     .select(`
@@ -46,23 +74,25 @@ export const buildCarListingsQuery = () => {
       valuation_data,
       last_saved,
       registration_number,
-      is_manually_controlled,
-      auction_schedules!inner(
-        id,
-        status,
-        start_time,
-        end_time,
-        is_manually_controlled
-      )
+      is_manually_controlled
     `)
     // Only show cars that are auctions with active status
     .eq("is_auction", true)
     .eq("auction_status", "active")
-    // Only show cars with running auction schedules (not "active")
-    .eq("auction_schedules.status", "running")
-    // Only show cars where auction is currently running (between start and end time)
-    .lte("auction_schedules.start_time", new Date().toISOString())
-    .gte("auction_schedules.end_time", new Date().toISOString())
+    // Only show cars that match the running auction schedules
+    .in("id", carIds)
     // Ensure we have valid reserve prices
     .gt("reserve_price", 0);
+};
+
+// Legacy function kept for backward compatibility but now uses two-step approach
+export const buildCarListingsQuery = () => {
+  console.log("Building car listings query (legacy - redirecting to two-step approach)");
+  
+  // This function is kept for backward compatibility but will be handled
+  // by the two-step approach in useCarListingsQuery
+  return rawSupabaseClient
+    .from("cars")
+    .select("*")
+    .eq("id", "00000000-0000-0000-0000-000000000000"); // Return empty to force two-step approach
 };

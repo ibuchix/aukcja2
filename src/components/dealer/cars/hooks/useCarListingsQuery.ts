@@ -2,7 +2,8 @@
 import { useEnhancedAuthAwareQuery } from "@/utils/enhancedAuthAwareQuery";
 import { AuctionFilters } from "../../auction/types";
 import { processCarData } from "@/utils/carDataHelpers";
-import { buildCarListingsQuery } from "./utils/queryBuilder";
+import { buildLiveAuctionSchedulesQuery, buildCarsForSchedulesQuery } from "./utils/queryBuilder";
+import { mergeCarDataWithSchedules, AuctionScheduleData } from "./utils/dataHelpers";
 import { applyFilters } from "./utils/filterUtils";
 import { applySorting } from "./utils/sortUtils";
 import { applyPagination, calculatePaginationInfo } from "./utils/paginationUtils";
@@ -13,7 +14,7 @@ interface UseCarListingsQueryProps {
   searchQuery: string;
   currentPage: number;
   pageSize: number;
-  dealerId?: string; // Add dealer ID for verification check
+  dealerId?: string;
 }
 
 export const useCarListingsQuery = ({
@@ -31,13 +32,14 @@ export const useCarListingsQuery = ({
       sortOption, 
       searchQuery, 
       currentPage.toString(),
-      "liveAuctionsOnly" // Add cache key to differentiate from other queries
+      "liveAuctionsOnly",
+      "twoStepApproach" // Add cache key to differentiate from old approach
     ],
     queryFn: async () => {
       const isDev = process.env.NODE_ENV === 'development';
       
       if (isDev) {
-        console.log('=== LIVE AUCTION CARS QUERY START ===');
+        console.log('=== TWO-STEP LIVE AUCTION CARS QUERY START ===');
         console.log('Query params:', {
           filters,
           sortOption,
@@ -48,51 +50,86 @@ export const useCarListingsQuery = ({
       }
       
       try {
-        // Build base query for live auctions only
-        let query = buildCarListingsQuery();
-
+        // STEP 1: Get running auction schedules
         if (isDev) {
-          console.log('=== LIVE AUCTION DATABASE QUERY SETUP ===');
-          console.log('Query configured for live auctions only');
+          console.log('=== STEP 1: FETCHING AUCTION SCHEDULES ===');
         }
         
-        // Apply filters and search
-        query = applyFilters(query, filters, searchQuery);
+        const scheduleQuery = buildLiveAuctionSchedulesQuery();
+        const scheduleResult = await scheduleQuery;
         
-        // Apply sorting
-        query = applySorting(query, sortOption);
+        if (scheduleResult.error) {
+          console.error("=== AUCTION SCHEDULES QUERY ERROR ===");
+          console.error("Error details:", scheduleResult.error);
+          throw new Error(scheduleResult.error.message);
+        }
         
-        // Apply pagination
-        query = applyPagination(query, currentPage, pageSize);
+        const schedules = scheduleResult.data || [];
+        if (isDev) {
+          console.log('Auction schedules found:', schedules.length);
+        }
+        
+        // If no running schedules, return empty result
+        if (schedules.length === 0) {
+          if (isDev) {
+            console.log('No running auction schedules found, returning empty result');
+          }
+          return {
+            cars: [],
+            total: 0
+          };
+        }
+        
+        // Extract car IDs from schedules
+        const carIds = schedules.map(schedule => schedule.car_id).filter(Boolean);
+        
+        if (isDev) {
+          console.log('Car IDs from schedules:', carIds.length);
+        }
+        
+        // STEP 2: Get cars that match the running schedules
+        if (isDev) {
+          console.log('=== STEP 2: FETCHING CARS FOR SCHEDULES ===');
+        }
+        
+        let carsQuery = buildCarsForSchedulesQuery(carIds);
+        
+        // Apply filters, sorting, and pagination to the cars query
+        carsQuery = applyFilters(carsQuery, filters, searchQuery);
+        carsQuery = applySorting(carsQuery, sortOption);
+        carsQuery = applyPagination(carsQuery, currentPage, pageSize);
 
         if (isDev) {
           const { fromIndex, to } = calculatePaginationInfo(currentPage, pageSize);
           console.log('Applied pagination:', { fromIndex, to, currentPage, pageSize });
         }
         
-        const result = await query;
+        const carsResult = await carsQuery;
         
         if (isDev) {
-          console.log('=== LIVE AUCTION DATABASE QUERY RESULT ===');
-          console.log('Query successful. Raw data count:', result.data?.length || 0);
-          
-          if (result.data && result.data.length > 0) {
-            console.log('First live auction car:', result.data[0]);
-          }
+          console.log('=== CARS QUERY RESULT ===');
+          console.log('Query successful. Raw data count:', carsResult.data?.length || 0);
         }
         
-        if (result.error) {
-          console.error("=== LIVE AUCTION DATABASE ERROR ===");
-          console.error("Error details:", result.error);
-          throw new Error(result.error.message);
+        if (carsResult.error) {
+          console.error("=== CARS DATABASE ERROR ===");
+          console.error("Error details:", carsResult.error);
+          throw new Error(carsResult.error.message);
         }
         
-        // Process the results - all cars returned are guaranteed to be live auctions
-        const rawData = result.data || [];
-        const validCars = processCarData(rawData);
+        // STEP 3: Merge car data with schedule data
+        if (isDev) {
+          console.log('=== STEP 3: MERGING DATA ===');
+        }
+        
+        const rawCars = carsResult.data || [];
+        const mergedData = mergeCarDataWithSchedules(rawCars, schedules as AuctionScheduleData[]);
+        
+        // Process the merged results
+        const validCars = processCarData(mergedData);
         
         if (isDev) {
-          console.log('=== LIVE AUCTION FINAL RESULT ===');
+          console.log('=== FINAL TWO-STEP RESULT ===');
           console.log('Valid live auction cars:', validCars.length);
           if (validCars.length > 0) {
             console.log('First processed live auction car:', {
@@ -101,7 +138,8 @@ export const useCarListingsQuery = ({
               model: validCars[0].model,
               auctionTimingStatus: validCars[0].auctionTimingStatus,
               scheduleStartTime: validCars[0].scheduleStartTime,
-              scheduleEndTime: validCars[0].scheduleEndTime
+              scheduleEndTime: validCars[0].scheduleEndTime,
+              scheduleStatus: validCars[0].scheduleStatus
             });
           }
         }
@@ -112,7 +150,7 @@ export const useCarListingsQuery = ({
         };
       } catch (err: any) {
         const errorMessage = err.message || 'Unknown error occurred';
-        console.error("=== LIVE AUCTION QUERY ERROR ===");
+        console.error("=== TWO-STEP LIVE AUCTION QUERY ERROR ===");
         console.error("Error:", errorMessage);
         throw new Error(errorMessage);
       }
