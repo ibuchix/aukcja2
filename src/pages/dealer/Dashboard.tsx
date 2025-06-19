@@ -24,19 +24,24 @@ const DealerDashboard = () => {
   // Use our custom hook to sync tab state between components
   const { activeTab, setActiveTab } = useDashboardTabs(activeTabRaw, setActiveTabRaw);
   
-  // For debugging purposes
+  // Enhanced debugging for profile state flow
   useEffect(() => {
-    if (dealerProfile) {
-      console.log("Dealer Profile loaded:", {
-        id: dealerProfile.id,
-        dealership: dealerProfile.dealership_name,
+    const isDev = process.env.NODE_ENV === 'development';
+    if (isDev) {
+      console.log("=== DASHBOARD PROFILE STATE DEBUG ===");
+      console.log("Dashboard Profile loaded:", {
+        exists: !!dealerProfile,
+        id: dealerProfile?.id,
+        dealership: dealerProfile?.dealership_name,
         userId: user?.id,
-        isVerified: dealerProfile.is_verified
+        isVerified: dealerProfile?.is_verified,
+        verificationStatus: dealerProfile?.verification_status,
+        isLoading,
+        error
       });
-    } else if (!isLoading) {
-      console.log("No dealer profile available");
+      console.log("=== END DASHBOARD DEBUG ===");
     }
-  }, [dealerProfile, user, isLoading]);
+  }, [dealerProfile, user, isLoading, error]);
 
   return (
     <DashboardLayout title="Dealer Dashboard">
@@ -76,7 +81,11 @@ const DealerDashboard = () => {
           <TabsContent value="auctions">
             <div className="mt-4">
               {dealerProfile?.id ? (
-                <SimpleLiveAuctionsView dealerId={dealerProfile.id} />
+                <SimpleLiveAuctionsView 
+                  dealerId={dealerProfile.id}
+                  dealerProfile={dealerProfile}
+                  isProfileLoading={isLoading}
+                />
               ) : (
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
