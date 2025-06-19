@@ -46,30 +46,35 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
 
   // Create memoized refresh function to avoid dependency issues
   const memoizedRefreshSession = useCallback(async (): Promise<RefreshResult> => {
-    console.log("Session refresh requested");
-    
     // If we already have a refresh in progress, return the existing promise
     if (refreshStateRef.current.isRefreshing && refreshStateRef.current.currentPromise) {
       console.log("Session refresh already in progress, returning existing promise");
       return refreshStateRef.current.currentPromise;
     }
     
+    // Minimum interval check (prevent rapid-fire refreshes)
+    const now = Date.now();
+    if (now - refreshStateRef.current.lastRefreshTime < 1000) {
+      console.log("Session refresh throttled (too frequent)");
+      return Promise.reject(new Error("Session refresh throttled"));
+    }
+    
     try {
       // Mark refresh in progress before executing circuit breaker
       refreshStateRef.current.isRefreshing = true;
-      refreshStateRef.current.lastRefreshTime = Date.now();
+      refreshStateRef.current.lastRefreshTime = now;
       
       // Create new promise for this refresh attempt
       const refreshPromise = (async () => {
         try {
           // Use circuit breaker to protect against cascading failures
           const refreshResult = await sessionCircuitBreaker.executeRefresh(async () => {
-            console.log("Executing session refresh");
+            console.log("🔄 Executing session refresh through circuit breaker");
             
             const { data, error } = await supabase.auth.refreshSession();
             
             if (error) {
-              console.error('Session refresh error:', error.message);
+              console.error('❌ Session refresh error:', error.message);
               
               // Show a toast for auth errors only when they might affect the user
               if (session && !isRetryableError(error)) {
@@ -84,26 +89,26 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
             }
             
             if (data.session) {
-              console.log("Session refreshed successfully");
+              console.log("✅ Session refreshed successfully");
               setSession(data.session);
               setUser(data.user);
               return { success: true as const, session: data.session, user: data.user };
             } else {
-              console.warn("No session returned from refresh");
+              console.warn("❌ No session returned from refresh");
               throw new Error("No session returned");
             }
           });
           
           return refreshResult as RefreshResult;
         } catch (error) {
-          console.error('Session refresh failed:', error);
+          console.error('❌ Session refresh failed:', error);
           
           // Check if we've hit maximum retries - send user to auth
           const circuitStatus = sessionCircuitBreaker.getStatus();
           
           if (circuitStatus.state === 'open' && session) {
             // Only redirect to auth if we were previously authenticated
-            console.warn('Circuit breaker tripped, redirecting to auth');
+            console.warn('🚨 Circuit breaker tripped, redirecting to auth');
             toast({
               title: "Session Expired",
               description: "You've been signed out due to authentication issues. Please sign in again.",
@@ -119,7 +124,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
           
           return { 
             success: false as const, 
-            session: null, // Add missing required property
+            session: null,
             error: error instanceof Error ? error : new Error(typeof error === 'string' ? error : 'Failed to refresh session')
           };
         } finally {
@@ -142,7 +147,7 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
       console.error("Unexpected error in refreshSession wrapper:", error);
       return {
         success: false as const,
-        session: null, // Add missing required property
+        session: null,
         error: new Error(typeof error === 'string' ? error : 'Unexpected error in refresh session')
       };
     }
@@ -158,8 +163,6 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
     console.log("Registering refresh function with session manager");
     registerRefreshFunction(memoizedRefreshSession);
     initRef.current = true;
-    
-    // Don't include dependencies that would cause this to run multiple times
   }, [registerRefreshFunction, memoizedRefreshSession]);
 
   // Create the auth context value
@@ -203,9 +206,16 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
     },
     signIn: async ({ email, password, redirectTo }) => {
       // Reset the circuit breaker on sign in attempt
+      console.log("🔄 Resetting circuit breaker for new sign in attempt");
       sessionCircuitBreaker.reset();
       const result = await signIn({ email, password, redirectTo });
-      // Map the response to the expected structure in the context
+      
+      // Reset circuit breaker again on successful sign in
+      if (result.success) {
+        console.log("✅ Sign in successful, circuit breaker reset");
+        sessionCircuitBreaker.reset();
+      }
+      
       return result;
     },
   };

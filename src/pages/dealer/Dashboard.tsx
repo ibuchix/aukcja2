@@ -7,7 +7,7 @@ import { DashboardLayout } from '@/components/dealer/dashboard/DashboardLayout';
 import { ProfileInfoSection } from "@/components/dealer/dashboard/ProfileInfoSection";
 import { DealerWelcomeCard } from "@/components/dealer/dashboard/DealerWelcomeCard";
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
-import { CarSearchWrapper } from '@/components/dealer/cars/CarSearchWrapper';
+import { SimpleLiveAuctionsView } from '@/components/dealer/cars/SimpleLiveAuctionsView';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDashboardTabs } from '@/hooks/useDashboardTabs';
 import { QuickActions } from '@/components/dealer/QuickActions';
@@ -18,7 +18,7 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 const DealerDashboard = () => {
   const { user } = useAuth();
   const { dealerProfile, isLoading, error, retryFetch } = useDealerProfileSimple();
-  const [activeTabRaw, setActiveTabRaw] = useState("cars");
+  const [activeTabRaw, setActiveTabRaw] = useState("auctions");
   const location = useLocation();
   
   // Use our custom hook to sync tab state between components
@@ -30,7 +30,8 @@ const DealerDashboard = () => {
       console.log("Dealer Profile loaded:", {
         id: dealerProfile.id,
         dealership: dealerProfile.dealership_name,
-        userId: user?.id
+        userId: user?.id,
+        isVerified: dealerProfile.is_verified
       });
     } else if (!isLoading) {
       console.log("No dealer profile available");
@@ -64,17 +65,26 @@ const DealerDashboard = () => {
         {/* Quick Actions Section */}
         <QuickActions />
         
-        {/* Dashboard Tabs - Removed Image Management tab */}
+        {/* Dashboard Tabs - Simplified to 3 tabs with Live Auctions as default */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="cars">Car Search</TabsTrigger>
+            <TabsTrigger value="auctions">Live Auctions</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="cars">
+          <TabsContent value="auctions">
             <div className="mt-4">
-              <CarSearchWrapper />
+              {dealerProfile?.id ? (
+                <SimpleLiveAuctionsView dealerId={dealerProfile.id} />
+              ) : (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Please complete your dealer profile to view live auctions.
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           </TabsContent>
           
