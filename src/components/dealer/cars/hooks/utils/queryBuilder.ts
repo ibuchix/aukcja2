@@ -1,11 +1,34 @@
 
 import type { Database } from "@/integrations/supabase/types";
 import { EnhancedSupabaseClient } from "@/utils/enhancedSupabaseClient";
+import { rawSupabaseClient } from "@/integrations/supabase/client";
 
 export const buildLiveAuctionSchedulesQuery = (supabaseClient: EnhancedSupabaseClient) => {
-  console.log("Building live auction schedules query with authenticated enhanced client");
+  const isDev = process.env.NODE_ENV === 'development';
   
-  // First step: Get all running auction schedules
+  if (isDev) {
+    console.log("Building live auction schedules query with authenticated enhanced client");
+  }
+  
+  // TEMPORARY DEBUG: Test with raw client to isolate the issue
+  if (isDev) {
+    console.log("TESTING: Using raw client for auction_schedules to isolate auth issue");
+    
+    return rawSupabaseClient
+      .from("auction_schedules")
+      .select(`
+        car_id,
+        status,
+        start_time,
+        end_time,
+        is_manually_controlled
+      `)
+      .eq("status", "running")
+      .lte("start_time", new Date().toISOString())
+      .gte("end_time", new Date().toISOString());
+  }
+  
+  // First step: Get all running auction schedules using enhanced client
   return supabaseClient
     .from("auction_schedules")
     .select(`
@@ -23,7 +46,11 @@ export const buildLiveAuctionSchedulesQuery = (supabaseClient: EnhancedSupabaseC
 };
 
 export const buildCarsForSchedulesQuery = (supabaseClient: EnhancedSupabaseClient, carIds: string[]) => {
-  console.log("Building cars query for schedules with authenticated enhanced client:", carIds.length, "car IDs");
+  const isDev = process.env.NODE_ENV === 'development';
+  
+  if (isDev) {
+    console.log("Building cars query for schedules with authenticated enhanced client:", carIds.length, "car IDs");
+  }
   
   if (carIds.length === 0) {
     // Return empty query if no car IDs

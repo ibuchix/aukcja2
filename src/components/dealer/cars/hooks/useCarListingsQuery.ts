@@ -35,7 +35,7 @@ export const useCarListingsQuery = ({
       searchQuery, 
       currentPage.toString(),
       "liveAuctionsOnly",
-      "twoStepApproach"
+      "authDebugging"
     ],
     queryFn: async () => {
       const isDev = process.env.NODE_ENV === 'development';
@@ -52,10 +52,21 @@ export const useCarListingsQuery = ({
       }
       
       try {
+        // STEP 0: Debug authentication state before any queries
+        if (isDev) {
+          const { data: { session }, error: sessionError } = await rawSupabaseClient.auth.getSession();
+          console.log('Authentication context at query start:', {
+            hasSession: !!session,
+            userId: session?.user?.id,
+            sessionTimestamp: session?.expires_at,
+            sessionError: sessionError?.message
+          });
+        }
+        
         // Create enhanced client from the raw client to preserve authentication
         const enhancedClient = createEnhancedSupabaseClient(rawSupabaseClient);
         
-        // STEP 1: Get running auction schedules using enhanced client
+        // STEP 1: Get running auction schedules using enhanced client OR raw client for debugging
         if (isDev) {
           console.log('=== STEP 1: FETCHING AUCTION SCHEDULES ===');
         }
@@ -66,6 +77,17 @@ export const useCarListingsQuery = ({
         if (scheduleResult.error) {
           console.error("=== AUCTION SCHEDULES QUERY ERROR ===");
           console.error("Error details:", scheduleResult.error);
+          
+          if (isDev) {
+            // Additional debugging for auth context during error
+            const { data: { session } } = await rawSupabaseClient.auth.getSession();
+            console.error("Auth context during error:", {
+              hasSession: !!session,
+              userId: session?.user?.id,
+              errorMessage: scheduleResult.error.message
+            });
+          }
+          
           throw new Error(scheduleResult.error.message);
         }
         

@@ -256,7 +256,7 @@ export class EnhancedSupabaseClient {
     // Debug: Verify authentication context is preserved
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
-      console.log('Enhanced Supabase Client initialized with preserved authentication context');
+      console.log('Enhanced Supabase Client initialized - debugging auth context preservation');
       this.debugAuthenticationState();
     }
   }
@@ -265,13 +265,18 @@ export class EnhancedSupabaseClient {
   private async debugAuthenticationState() {
     try {
       const { data: { session }, error } = await this.client.auth.getSession();
-      console.log('Enhanced client auth verification:', {
-        hasSession: !!session,
-        userId: session?.user?.id,
-        sessionExists: !!session,
-        authError: error?.message,
-        clientType: 'enhanced'
-      });
+      const isDev = process.env.NODE_ENV === 'development';
+      
+      if (isDev) {
+        console.log('Enhanced client auth verification:', {
+          hasSession: !!session,
+          userId: session?.user?.id,
+          sessionExists: !!session,
+          authError: error?.message,
+          clientType: 'enhanced',
+          accessToken: session?.access_token ? `${session.access_token.substring(0, 20)}...` : 'none'
+        });
+      }
     } catch (error) {
       console.error('Enhanced client auth debugging failed:', error);
     }
@@ -283,13 +288,13 @@ export class EnhancedSupabaseClient {
       console.log(`Enhanced client creating query for table: ${table}`);
     }
     
-    // Get the original from builder - this preserves ALL authentication context
+    // Get the original from builder - this should preserve ALL authentication context
     const originalFrom = this.client.from(table);
     
-    // Verify authentication context is preserved in the from builder
+    // DEBUG: Verify authentication context is preserved in the from builder
     if (isDev) {
-      console.log('Original from builder created for table:', table);
-      this.verifyAuthenticationForwarding(originalFrom);
+      console.log(`Original from builder created for table: ${table}`);
+      this.verifyAuthenticationForwarding(originalFrom, table);
     }
     
     return {
@@ -332,14 +337,30 @@ export class EnhancedSupabaseClient {
   }
 
   // Method to verify authentication forwarding
-  private async verifyAuthenticationForwarding(fromBuilder: any) {
+  private async verifyAuthenticationForwarding(fromBuilder: any, table: string) {
     try {
       const { data: { session } } = await this.client.auth.getSession();
-      console.log('Auth verification for query - session check:', {
-        hasSession: !!session,
-        userId: session?.user?.id,
-        timestamp: new Date().toISOString()
-      });
+      const isDev = process.env.NODE_ENV === 'development';
+      
+      if (isDev) {
+        console.log(`Auth verification for ${table} query - session check:`, {
+          hasSession: !!session,
+          userId: session?.user?.id,
+          timestamp: new Date().toISOString(),
+          table
+        });
+
+        // Test a simple auth check to see if auth.uid() works
+        try {
+          const authTest = await this.client.rpc('debug_auth_context');
+          console.log(`Auth context test for ${table}:`, {
+            authTestResult: authTest.data,
+            authTestError: authTest.error?.message
+          });
+        } catch (error) {
+          console.log(`Auth context test failed for ${table}:`, error);
+        }
+      }
     } catch (error) {
       console.error('Auth verification failed:', error);
     }
