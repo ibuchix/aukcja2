@@ -1,9 +1,9 @@
 
-import { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from "@/integrations/supabase/types";
+import { EnhancedSupabaseClient } from "@/utils/enhancedSupabaseClient";
 
-export const buildLiveAuctionSchedulesQuery = (supabaseClient: SupabaseClient<Database>) => {
-  console.log("Building live auction schedules query with authenticated client");
+export const buildLiveAuctionSchedulesQuery = (supabaseClient: EnhancedSupabaseClient) => {
+  console.log("Building live auction schedules query with authenticated enhanced client");
   
   // First step: Get all running auction schedules
   return supabaseClient
@@ -22,8 +22,8 @@ export const buildLiveAuctionSchedulesQuery = (supabaseClient: SupabaseClient<Da
     .gte("end_time", new Date().toISOString());
 };
 
-export const buildCarsForSchedulesQuery = (supabaseClient: SupabaseClient<Database>, carIds: string[]) => {
-  console.log("Building cars query for schedules with authenticated client:", carIds.length, "car IDs");
+export const buildCarsForSchedulesQuery = (supabaseClient: EnhancedSupabaseClient, carIds: string[]) => {
+  console.log("Building cars query for schedules with authenticated enhanced client:", carIds.length, "car IDs");
   
   if (carIds.length === 0) {
     // Return empty query if no car IDs
@@ -87,7 +87,7 @@ export const buildCarsForSchedulesQuery = (supabaseClient: SupabaseClient<Databa
 };
 
 // Legacy function kept for backward compatibility but now uses two-step approach
-export const buildCarListingsQuery = (supabaseClient: SupabaseClient<Database>) => {
+export const buildCarListingsQuery = (supabaseClient: EnhancedSupabaseClient) => {
   console.log("Building car listings query (legacy - redirecting to two-step approach)");
   
   // This function is kept for backward compatibility but will be handled
