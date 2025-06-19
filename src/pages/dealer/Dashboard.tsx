@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,34 +14,47 @@ import { QuickActions } from '@/components/dealer/QuickActions';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const DealerDashboard = () => {
   const { user } = useAuth();
   const { dealerProfile, isLoading, error, retryFetch } = useDealerProfileSimple();
   const [activeTabRaw, setActiveTabRaw] = useState("auctions");
   const location = useLocation();
+  const { toast } = useToast();
   
   // Use our custom hook to sync tab state between components
   const { activeTab, setActiveTab } = useDashboardTabs(activeTabRaw, setActiveTabRaw);
   
-  // Enhanced debugging for profile state flow
+  // Memoize dealer name to prevent unnecessary re-renders
+  const dealerName = useMemo(() => {
+    return dealerProfile?.dealership_name || "Dealer";
+  }, [dealerProfile?.dealership_name]);
+  
+  // Debug logging - only on profile state changes
   useEffect(() => {
     const isDev = process.env.NODE_ENV === 'development';
-    if (isDev) {
-      console.log("=== DASHBOARD PROFILE STATE DEBUG ===");
-      console.log("Dashboard Profile loaded:", {
+    if (isDev && dealerProfile) {
+      console.log("Dashboard Profile State:", {
         exists: !!dealerProfile,
         id: dealerProfile?.id,
         dealership: dealerProfile?.dealership_name,
-        userId: user?.id,
         isVerified: dealerProfile?.is_verified,
-        verificationStatus: dealerProfile?.verification_status,
-        isLoading,
-        error
+        verificationStatus: dealerProfile?.verification_status
       });
-      console.log("=== END DASHBOARD DEBUG ===");
     }
-  }, [dealerProfile, user, isLoading, error]);
+  }, [dealerProfile?.id, dealerProfile?.is_verified]); // Only trigger on actual profile changes
+
+  // Show error toast only when error changes and profile doesn't exist
+  useEffect(() => {
+    if (error && !dealerProfile && !isLoading) {
+      toast({
+        title: "Profile Loading Issue",
+        description: "Having trouble loading your profile. You can try refreshing.",
+        variant: "destructive",
+      });
+    }
+  }, [error, dealerProfile, isLoading]); // Only show toast when these specific conditions change
 
   return (
     <DashboardLayout title="Dealer Dashboard">
@@ -61,9 +74,9 @@ const DealerDashboard = () => {
           </Alert>
         )}
         
-        {/* Welcome Card - uses data from profile hook */}
+        {/* Welcome Card - uses memoized dealer name */}
         <DealerWelcomeCard 
-          dealerName={dealerProfile?.dealership_name || "Dealer"}
+          dealerName={dealerName}
           isLoading={isLoading}
         />
         

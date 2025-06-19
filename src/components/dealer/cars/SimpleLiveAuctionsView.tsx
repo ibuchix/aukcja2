@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -54,21 +54,22 @@ export const SimpleLiveAuctionsView = ({
     clearFilters
   } = useCarSearch(dealerId);
 
-  // Debug logging for profile state tracking
-  const isDev = process.env.NODE_ENV === 'development';
-  if (isDev) {
-    console.log('=== SimpleLiveAuctionsView Profile State Debug ===');
-    console.log('dealerId:', dealerId);
-    console.log('dealerProfile received:', {
-      exists: !!dealerProfile,
-      id: dealerProfile?.id,
-      dealership: dealerProfile?.dealership_name,
-      isVerified: dealerProfile?.is_verified,
-      verificationStatus: dealerProfile?.verification_status
-    });
-    console.log('isProfileLoading:', isProfileLoading);
-    console.log('=== End Profile Debug ===');
-  }
+  // Memoize verification status to prevent unnecessary re-renders
+  const isVerified = useMemo(() => {
+    return dealerProfile?.is_verified === true;
+  }, [dealerProfile?.is_verified]);
+
+  // Debug logging only when dealerProfile changes
+  React.useEffect(() => {
+    const isDev = process.env.NODE_ENV === 'development';
+    if (isDev && dealerProfile) {
+      console.log('SimpleLiveAuctionsView - Profile received:', {
+        exists: !!dealerProfile,
+        dealership: dealerProfile.dealership_name,
+        isVerified: dealerProfile.is_verified
+      });
+    }
+  }, [dealerProfile?.id, dealerProfile?.is_verified]); // Only log when these specific values change
 
   // Show loading state while profile is loading
   if (isProfileLoading) {
@@ -113,11 +114,7 @@ export const SimpleLiveAuctionsView = ({
   }
 
   // Show verification required if dealer is not verified
-  if (!dealerProfile.is_verified) {
-    if (isDev) {
-      console.log('Dealer not verified - showing verification message');
-    }
-    
+  if (!isVerified) {
     return (
       <Card>
         <CardHeader>
@@ -181,14 +178,6 @@ export const SimpleLiveAuctionsView = ({
         </CardContent>
       </Card>
     );
-  }
-
-  if (isDev) {
-    console.log('Rendering auctions for verified dealer:', {
-      dealershipName: dealerProfile.dealership_name,
-      listingsCount: listings.length,
-      isVerified: dealerProfile.is_verified
-    });
   }
 
   // Show no auctions state
