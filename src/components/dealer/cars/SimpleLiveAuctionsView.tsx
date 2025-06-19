@@ -4,8 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Clock } from "lucide-react";
-import { CarListing } from "@/types/cars";
-import { CarListingCard } from "./listing/CarListingCard";
+import { CarSearchFilters } from "./filters/CarSearchFilters";
+import { CarListingsGrid } from "./listing/CarListingsGrid";
+import { AuctionPagination } from "../auction/AuctionPagination";
+import { RefreshListingsButton } from "./actions/RefreshListingsButton";
 import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 import { useCarSearch } from "./hooks/useCarSearch";
 
@@ -15,7 +17,23 @@ interface SimpleLiveAuctionsViewProps {
 
 export const SimpleLiveAuctionsView = ({ dealerId }: SimpleLiveAuctionsViewProps) => {
   const { dealerProfile, isLoading: profileLoading } = useDealerProfileSimple();
-  const { listings, isLoading: auctionsLoading, error } = useCarSearch(dealerId);
+  const {
+    listings,
+    isLoading: auctionsLoading,
+    error,
+    filters,
+    sortOption,
+    searchQuery,
+    currentPage,
+    canGoNext,
+    handleFiltersChange,
+    handleSortChange,
+    handleSearchChange,
+    handleNextPage,
+    handlePreviousPage,
+    refetch,
+    clearFilters
+  } = useCarSearch(dealerId);
 
   // Show loading state
   if (profileLoading || auctionsLoading) {
@@ -112,29 +130,49 @@ export const SimpleLiveAuctionsView = ({ dealerId }: SimpleLiveAuctionsViewProps
     );
   }
 
-  // Show live auctions
+  // Show live auctions with full search functionality
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Clock className="h-5 w-5" />
-          Live Auctions ({listings.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {listings.map((car) => (
-            <CarListingCard 
-              key={car.id} 
-              car={car} 
-              onViewDetails={() => {
-                // Simple view details - could open a modal or navigate
-                console.log('View details for car:', car.id);
-              }}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Live Auctions ({listings.length})
+            </CardTitle>
+            <RefreshListingsButton onRefresh={refetch} />
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Search and Filter Controls */}
+          <div className="mb-6">
+            <CarSearchFilters
+              onFiltersChange={handleFiltersChange}
+              onSearchChange={handleSearchChange}
+              onSortChange={handleSortChange}
+              sortOption={sortOption}
+              searchQuery={searchQuery}
             />
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+
+          {/* Car Listings Grid */}
+          <CarListingsGrid 
+            listings={listings}
+            isLoading={auctionsLoading}
+          />
+
+          {/* Pagination */}
+          <div className="mt-6">
+            <AuctionPagination
+              hasMore={canGoNext}
+              onNext={handleNextPage}
+              onPrevious={handlePreviousPage}
+              canGoBack={currentPage > 1}
+              isLoading={auctionsLoading}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
