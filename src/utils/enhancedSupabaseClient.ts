@@ -20,24 +20,11 @@ class EnhancedPostgrestFilterBuilder<T> {
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
       console.log('EnhancedPostgrestFilterBuilder created with auth context preserved');
-      
-      // Verify authentication headers are preserved
-      if (this.originalBuilder.headers) {
-        console.log('Headers preserved in enhanced filter builder:', Object.keys(this.originalBuilder.headers));
-      }
     }
   }
 
   // Helper method to create new instances while preserving authentication
   private createNewInstance(newBuilder: any): EnhancedPostgrestFilterBuilder<T> {
-    const isDev = process.env.NODE_ENV === 'development';
-    if (isDev && newBuilder) {
-      // Verify authentication context is maintained in chained operations
-      console.log('Creating new enhanced instance, auth context maintained:', {
-        hasHeaders: !!newBuilder.headers,
-        builderType: typeof newBuilder
-      });
-    }
     return new EnhancedPostgrestFilterBuilder(newBuilder);
   }
 
@@ -148,11 +135,7 @@ class EnhancedPostgrestFilterBuilder<T> {
   async single() {
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
-      console.log('Enhanced client executing single() query with preserved auth context');
-      
-      // Check authentication state before query
-      const authState = await this.checkAuthenticationState();
-      console.log('Auth state before single() query:', authState);
+      console.log('Enhanced client executing single() query');
     }
     
     const result = await this.originalBuilder.single();
@@ -178,11 +161,7 @@ class EnhancedPostgrestFilterBuilder<T> {
   async maybeSingle() {
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
-      console.log('Enhanced client executing maybeSingle() query with preserved auth context');
-      
-      // Check authentication state before query
-      const authState = await this.checkAuthenticationState();
-      console.log('Auth state before maybeSingle() query:', authState);
+      console.log('Enhanced client executing maybeSingle() query');
     }
     
     const result = await this.originalBuilder.maybeSingle();
@@ -209,27 +188,7 @@ class EnhancedPostgrestFilterBuilder<T> {
     return this.createNewInstance(this.originalBuilder.throwOnError());
   }
 
-  // Helper method to check authentication state
-  private async checkAuthenticationState() {
-    try {
-      // Try to access the client instance through the builder chain
-      const client = this.originalBuilder.client || this.originalBuilder._client;
-      if (client && client.auth) {
-        const { data: session } = await client.auth.getSession();
-        return {
-          hasSession: !!session.session,
-          userId: session.session?.user?.id,
-          authenticated: !!session.session
-        };
-      }
-      return { hasSession: false, authenticated: false };
-    } catch (error) {
-      console.warn('Could not check auth state:', error);
-      return { hasSession: false, authenticated: false, error: error.message };
-    }
-  }
-
-  // Enhanced then method for proper transformation with auth debugging
+  // Enhanced then method for proper transformation
   then<TResult1 = any, TResult2 = never>(
     onfulfilled?: ((value: any) => TResult1 | PromiseLike<TResult1>) | undefined | null,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null
@@ -246,14 +205,6 @@ class EnhancedPostgrestFilterBuilder<T> {
             hasData: !!result.data,
             dataLength: Array.isArray(result.data) ? result.data.length : (result.data ? 1 : 0)
           });
-          
-          // Additional authentication debugging for errors
-          if (result.error && (result.error.code === '401' || result.error.code === '403' || result.error.code === 'PGRST301' || result.error.code === 'PGRST302')) {
-            console.error('Authentication/Authorization error detected in enhanced client:', {
-              error: result.error,
-              authCheck: await this.checkAuthenticationState()
-            });
-          }
         }
         
         if (result.error) {
@@ -306,13 +257,11 @@ export class EnhancedSupabaseClient {
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
       console.log('Enhanced Supabase Client initialized with preserved authentication context');
-      
-      // Comprehensive authentication debugging
       this.debugAuthenticationState();
     }
   }
 
-  // Comprehensive authentication debugging method
+  // Authentication debugging method
   private async debugAuthenticationState() {
     try {
       const { data: { session }, error } = await this.client.auth.getSession();
@@ -323,8 +272,6 @@ export class EnhancedSupabaseClient {
         authError: error?.message,
         clientType: 'enhanced'
       });
-      
-      console.log('Enhanced client has proper configuration');
     } catch (error) {
       console.error('Enhanced client auth debugging failed:', error);
     }
@@ -341,12 +288,7 @@ export class EnhancedSupabaseClient {
     
     // Verify authentication context is preserved in the from builder
     if (isDev) {
-      console.log('Original from builder created:', {
-        hasHeaders: !!originalFrom.headers,
-        tableName: table
-      });
-      
-      // Additional debugging to ensure auth headers are properly forwarded
+      console.log('Original from builder created for table:', table);
       this.verifyAuthenticationForwarding(originalFrom);
     }
     
@@ -392,24 +334,14 @@ export class EnhancedSupabaseClient {
   // Method to verify authentication forwarding
   private async verifyAuthenticationForwarding(fromBuilder: any) {
     try {
-      // Check if the from builder has access to the auth context
-      if (fromBuilder.headers) {
-        console.log('Headers successfully forwarded to from builder');
-      } else {
-        console.warn('Headers may not be properly forwarded to from builder');
-      }
-      
-      // Try to get session from the builder's client
-      const client = fromBuilder.client || fromBuilder._client || this.client;
-      if (client?.auth) {
-        const { data: { session } } = await client.auth.getSession();
-        console.log('Auth forwarding verification - session check:', {
-          hasSession: !!session,
-          userId: session?.user?.id
-        });
-      }
+      const { data: { session } } = await this.client.auth.getSession();
+      console.log('Auth verification for query - session check:', {
+        hasSession: !!session,
+        userId: session?.user?.id,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
-      console.error('Auth forwarding verification failed:', error);
+      console.error('Auth verification failed:', error);
     }
   }
 

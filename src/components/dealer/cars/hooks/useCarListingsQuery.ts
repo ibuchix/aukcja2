@@ -48,6 +48,14 @@ export const useCarListingsQuery = ({
           currentPage,
           dealerId
         });
+        
+        // Debug authentication context at the start
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Authentication context at query start:', {
+          hasSession: !!session,
+          userId: session?.user?.id,
+          sessionTimestamp: session?.expires_at
+        });
       }
       
       try {
@@ -62,6 +70,17 @@ export const useCarListingsQuery = ({
         if (scheduleResult.error) {
           console.error("=== AUCTION SCHEDULES QUERY ERROR ===");
           console.error("Error details:", scheduleResult.error);
+          
+          // Additional debug for auth errors
+          if (scheduleResult.error.message?.includes('permission denied')) {
+            const { data: { session } } = await supabase.auth.getSession();
+            console.error("Auth context during error:", {
+              hasSession: !!session,  
+              userId: session?.user?.id,
+              errorMessage: scheduleResult.error.message
+            });
+          }
+          
           throw new Error(scheduleResult.error.message);
         }
         
