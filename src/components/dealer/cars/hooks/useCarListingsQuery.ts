@@ -80,8 +80,10 @@ export const useCarListingsQuery = ({
           };
         }
         
-        // Extract car IDs from schedules
-        const carIds = schedules.map(schedule => schedule.car_id).filter(Boolean);
+        // Extract car IDs from schedules - fix the TypeScript error
+        const carIds = schedules
+          .filter((schedule: any) => schedule && typeof schedule === 'object' && schedule.car_id)
+          .map((schedule: any) => schedule.car_id);
         
         if (isDev) {
           console.log('Car IDs from schedules:', carIds.length);
@@ -123,7 +125,19 @@ export const useCarListingsQuery = ({
         }
         
         const rawCars = carsResult.data || [];
-        const mergedData = mergeCarDataWithSchedules(rawCars, schedules as AuctionScheduleData[]);
+        
+        // Properly type the schedules data for merging
+        const typedSchedules: AuctionScheduleData[] = schedules
+          .filter((schedule: any) => schedule && typeof schedule === 'object')
+          .map((schedule: any) => ({
+            car_id: schedule.car_id,
+            status: schedule.status,
+            start_time: schedule.start_time,
+            end_time: schedule.end_time,
+            is_manually_controlled: schedule.is_manually_controlled
+          }));
+        
+        const mergedData = mergeCarDataWithSchedules(rawCars, typedSchedules);
         
         // Process the merged results
         const validCars = processCarData(mergedData);

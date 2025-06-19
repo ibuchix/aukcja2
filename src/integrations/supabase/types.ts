@@ -1893,6 +1893,10 @@ export type Database = {
         }
         Returns: Json
       }
+      debug_auction_schedules_access: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       debug_auth_context: {
         Args: Record<PropertyKey, never>
         Returns: Json
