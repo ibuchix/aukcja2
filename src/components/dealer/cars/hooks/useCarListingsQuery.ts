@@ -7,7 +7,8 @@ import { mergeCarDataWithSchedules, AuctionScheduleData } from "./utils/dataHelp
 import { applyFilters } from "./utils/filterUtils";
 import { applySorting } from "./utils/sortUtils";
 import { applyPagination, calculatePaginationInfo } from "./utils/paginationUtils";
-import { supabase } from "@/integrations/supabase/client";
+import { createEnhancedSupabaseClient } from "@/utils/enhancedSupabaseClient";
+import { rawSupabaseClient } from "@/integrations/supabase/client";
 
 interface UseCarListingsQueryProps {
   filters: AuctionFilters;
@@ -34,7 +35,7 @@ export const useCarListingsQuery = ({
       searchQuery, 
       currentPage.toString(),
       "liveAuctionsOnly",
-      "twoStepApproach" // Add cache key to differentiate from old approach
+      "twoStepApproach"
     ],
     queryFn: async () => {
       const isDev = process.env.NODE_ENV === 'development';
@@ -48,39 +49,23 @@ export const useCarListingsQuery = ({
           currentPage,
           dealerId
         });
-        
-        // Debug authentication context at the start
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('Authentication context at query start:', {
-          hasSession: !!session,
-          userId: session?.user?.id,
-          sessionTimestamp: session?.expires_at
-        });
       }
       
       try {
-        // STEP 1: Get running auction schedules using enhanced authenticated client
+        // Create enhanced client from the raw client to preserve authentication
+        const enhancedClient = createEnhancedSupabaseClient(rawSupabaseClient);
+        
+        // STEP 1: Get running auction schedules using enhanced client
         if (isDev) {
           console.log('=== STEP 1: FETCHING AUCTION SCHEDULES ===');
         }
         
-        const scheduleQuery = buildLiveAuctionSchedulesQuery(supabase);
+        const scheduleQuery = buildLiveAuctionSchedulesQuery(enhancedClient);
         const scheduleResult = await scheduleQuery;
         
         if (scheduleResult.error) {
           console.error("=== AUCTION SCHEDULES QUERY ERROR ===");
           console.error("Error details:", scheduleResult.error);
-          
-          // Additional debug for auth errors
-          if (scheduleResult.error.message?.includes('permission denied')) {
-            const { data: { session } } = await supabase.auth.getSession();
-            console.error("Auth context during error:", {
-              hasSession: !!session,  
-              userId: session?.user?.id,
-              errorMessage: scheduleResult.error.message
-            });
-          }
-          
           throw new Error(scheduleResult.error.message);
         }
         
@@ -100,7 +85,7 @@ export const useCarListingsQuery = ({
           };
         }
         
-        // Extract car IDs from schedules - fix the TypeScript error
+        // Extract car IDs from schedules
         const carIds = schedules
           .filter((schedule: any) => schedule && typeof schedule === 'object' && schedule.car_id)
           .map((schedule: any) => schedule.car_id);
@@ -109,12 +94,12 @@ export const useCarListingsQuery = ({
           console.log('Car IDs from schedules:', carIds.length);
         }
         
-        // STEP 2: Get cars that match the running schedules using enhanced authenticated client
+        // STEP 2: Get cars that match the running schedules using enhanced client
         if (isDev) {
           console.log('=== STEP 2: FETCHING CARS FOR SCHEDULES ===');
         }
         
-        let carsQuery = buildCarsForSchedulesQuery(supabase, carIds);
+        let carsQuery = buildCarsForSchedulesQuery(enhancedClient, carIds);
         
         // Apply filters, sorting, and pagination to the cars query
         carsQuery = applyFilters(carsQuery, filters, searchQuery);
