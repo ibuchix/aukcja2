@@ -61,6 +61,7 @@ export const useBidFormActions = ({
 
       // Safe property access with null checks and proper type checking
       if (!dealerCheck || 
+          dealerCheck === null ||
           typeof dealerCheck !== 'object' || 
           ('error' in dealerCheck) ||
           !('is_verified' in dealerCheck) || 

@@ -1,11 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
-
-interface CarRecord {
-  id: string;
-  email?: string;
-  [key: string]: any;
-}
+import {*} from '@/integrations/supabase/client';
 
 export const checkEmailExists = async (email: string): Promise<boolean> => {
   try {

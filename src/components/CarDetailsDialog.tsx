@@ -43,6 +43,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
 
   // Safe access to schedule data with proper null checks
   const hasValidSchedule = scheduleData && 
+    scheduleData !== null &&
     typeof scheduleData === 'object' && 
     !('error' in scheduleData) &&
     'start_time' in scheduleData &&
@@ -52,7 +53,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
     scheduleData.end_time &&
     scheduleData.status;
 
-  const scheduleInfo = hasValidSchedule ? {
+  const scheduleInfo = hasValidSchedule && scheduleData ? {
     startTime: scheduleData.start_time as string,
     endTime: scheduleData.end_time as string,
     status: scheduleData.status as string

@@ -7,6 +7,24 @@ interface CleanupResult {
   carsUpdated?: number;
 }
 
+// Type guard for car data
+interface CarData {
+  id: string;
+  images?: string[] | null;
+  required_photos?: Record<string, any> | null;
+  additional_photos?: Record<string, any> | null;
+  [key: string]: any;
+}
+
+function isValidCarData(data: any): data is CarData {
+  return data && 
+         data !== null &&
+         typeof data === 'object' && 
+         !('error' in data) && 
+         'id' in data && 
+         typeof data.id === 'string';
+}
+
 /**
  * Clean up blob URLs from car records in the database
  */
@@ -39,7 +57,7 @@ export const cleanupBlobUrls = async (): Promise<CleanupResult> => {
 
     for (const car of cars) {
       // Type guard to ensure car is valid
-      if (!car || typeof car !== 'object' || 'error' in car || !car.id) {
+      if (!isValidCarData(car)) {
         continue;
       }
 
@@ -97,7 +115,7 @@ export const cleanupBlobUrls = async (): Promise<CleanupResult> => {
       }
 
       // Update the car if needed
-      if (needsUpdate && car.id) {
+      if (needsUpdate && car && car.id) {
         console.log(`Cleaning blob URLs for car ${car.id}`);
         
         const { error: updateError } = await supabase

@@ -6,6 +6,23 @@ import { listCarImages } from "@/utils/storage/carImageStorage";
  * Service to manage car images and fix missing URLs in database records
  */
 
+// Type guard for car data
+interface CarData {
+  id: string;
+  images?: string[] | null;
+  required_photos?: Record<string, string> | null;
+  additional_photos?: any;
+  [key: string]: any;
+}
+
+function isValidCarData(data: any): data is CarData {
+  return data && 
+         typeof data === 'object' && 
+         !('error' in data) && 
+         'id' in data && 
+         typeof data.id === 'string';
+}
+
 /**
  * Fix a single car's image URLs by checking storage and updating database
  */
@@ -25,7 +42,7 @@ export const fixCarImageUrls = async (carId: string): Promise<{ success: boolean
     }
 
     // Type guard to check if car is valid
-    if (!car || typeof car !== 'object' || 'error' in car) {
+    if (!isValidCarData(car)) {
       return { success: false, message: 'Invalid car data received' };
     }
 
@@ -39,8 +56,8 @@ export const fixCarImageUrls = async (carId: string): Promise<{ success: boolean
     console.log(`Found ${storageImages.length} images in storage for car ${carId}`);
 
     // Check if database already has proper URLs - with proper type checking
-    const hasValidImages = car && 'images' in car && car.images && Array.isArray(car.images) && car.images.length > 0;
-    const hasValidRequiredPhotos = car && 'required_photos' in car && car.required_photos && typeof car.required_photos === 'object';
+    const hasValidImages = car.images && Array.isArray(car.images) && car.images.length > 0;
+    const hasValidRequiredPhotos = car.required_photos And typeof car.required_photos === 'object' && car.required_photos !== null;
 
     if (hasValidImages && hasValidRequiredPhotos) {
       return { success: true, message: 'Car already has valid image URLs' };
@@ -134,7 +151,7 @@ export const fixAllCarImageUrls = async (): Promise<{
 
     // Process each car with proper type checking
     for (const car of cars) {
-      if (car && typeof car === 'object' && !('error' in car) && 'id' in car && car.id) {
+      if (isValidCarData(car)) {
         const result = await fixCarImageUrls(car.id);
         results.push({
           carId: car.id,
