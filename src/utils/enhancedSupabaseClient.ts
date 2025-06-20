@@ -113,7 +113,7 @@ export class EnhancedSupabaseClient {
    * Enhanced RPC calls with session-aware authentication
    */
   async rpc(functionName: string, params?: any) {
-    const sessionAwareClient = getSessionAwareClient();
+    const sessionAwareClient = await getSessionAwareClient();
     return sessionAwareClient.rpc(functionName, params);
   }
 }
