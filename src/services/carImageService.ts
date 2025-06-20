@@ -57,7 +57,7 @@ export const fixCarImageUrls = async (carId: string): Promise<{ success: boolean
 
     // Check if database already has proper URLs - with proper type checking
     const hasValidImages = car.images && Array.isArray(car.images) && car.images.length > 0;
-    const hasValidRequiredPhotos = car.required_photos And typeof car.required_photos === 'object' && car.required_photos !== null;
+    const hasValidRequiredPhotos = car.required_photos && typeof car.required_photos === 'object' && car.required_photos !== null;
 
     if (hasValidImages && hasValidRequiredPhotos) {
       return { success: true, message: 'Car already has valid image URLs' };

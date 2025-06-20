@@ -1,5 +1,5 @@
 
-import {*} from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 
 export const checkEmailExists = async (email: string): Promise<boolean> => {
   try {
