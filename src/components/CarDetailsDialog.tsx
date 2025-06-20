@@ -41,7 +41,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
 
   if (!car) return null;
 
-  // Safe access to schedule data with proper type checking
+  // Safe access to schedule data with proper null checks
   const hasValidSchedule = scheduleData && 
     typeof scheduleData === 'object' && 
     !('error' in scheduleData) &&
@@ -50,9 +50,9 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
     'status' in scheduleData;
 
   const scheduleInfo = hasValidSchedule ? {
-    startTime: scheduleData?.start_time as string,
-    endTime: scheduleData?.end_time as string,
-    status: scheduleData?.status as string
+    startTime: scheduleData.start_time as string,
+    endTime: scheduleData.end_time as string,
+    status: scheduleData.status as string
   } : null;
 
   const getAuctionStatus = () => {
@@ -129,10 +129,10 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
               </Badge>
               <div className="text-right">
                 <div className="text-3xl font-bold text-blue-600">
-                  {formatCurrency(car.currentBid || car.price)}
+                  {formatCurrency(car.current_bid || car.reserve_price)}
                 </div>
                 <div className="text-sm text-gray-500">
-                  {car.currentBid ? "Current Bid" : "Starting Price"}
+                  {car.current_bid ? "Current Bid" : "Starting Price"}
                 </div>
               </div>
             </div>

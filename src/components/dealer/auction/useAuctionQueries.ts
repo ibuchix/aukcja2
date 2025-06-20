@@ -31,7 +31,7 @@ export const useAuctionQueries = (dealerId: string) => {
   // Process the data to separate into different categories with proper null checks
   const activeAuctions = cars?.filter(car => {
     // Add comprehensive null and type checks
-    if (!car || typeof car !== 'object' || 'error' in car || !car.id) {
+    if (!car || car === null || typeof car !== 'object' || 'error' in car || !car.id) {
       return false;
     }
     
@@ -42,7 +42,7 @@ export const useAuctionQueries = (dealerId: string) => {
   }) || [];
   
   const wonAuctions = cars?.filter(car => {
-    if (!car || typeof car !== 'object' || 'error' in car || !car.id) {
+    if (!car || car === null || typeof car !== 'object' || 'error' in car || !car.id) {
       return false;
     }
     
@@ -52,7 +52,7 @@ export const useAuctionQueries = (dealerId: string) => {
   }) || [];
   
   const lostAuctions = cars?.filter(car => {
-    if (!car || typeof car !== 'object' || 'error' in car || !car.id) {
+    if (!car || car === null || typeof car !== 'object' || 'error' in car || !car.id) {
       return false;
     }
     

@@ -24,6 +24,11 @@ export const fixCarImageUrls = async (carId: string): Promise<{ success: boolean
       return { success: false, message: `Car not found: ${carError?.message}` };
     }
 
+    // Type guard to check if car is valid
+    if (!car || typeof car !== 'object' || 'error' in car) {
+      return { success: false, message: 'Invalid car data received' };
+    }
+
     // Get images from storage
     const storageImages = await listCarImages(carId);
     
@@ -33,7 +38,7 @@ export const fixCarImageUrls = async (carId: string): Promise<{ success: boolean
 
     console.log(`Found ${storageImages.length} images in storage for car ${carId}`);
 
-    // Check if database already has proper URLs
+    // Check if database already has proper URLs - with proper type checking
     const hasValidImages = car.images && Array.isArray(car.images) && car.images.length > 0;
     const hasValidRequiredPhotos = car.required_photos && typeof car.required_photos === 'object';
 
@@ -127,14 +132,16 @@ export const fixAllCarImageUrls = async (): Promise<{
 
     const results: Array<{ carId: string; success: boolean; message: string }> = [];
 
-    // Process each car
+    // Process each car with proper type checking
     for (const car of cars) {
-      const result = await fixCarImageUrls(car.id);
-      results.push({
-        carId: car.id,
-        success: result.success,
-        message: result.message
-      });
+      if (car && typeof car === 'object' && !('error' in car) && 'id' in car) {
+        const result = await fixCarImageUrls(car.id);
+        results.push({
+          carId: car.id,
+          success: result.success,
+          message: result.message
+        });
+      }
     }
 
     const successCount = results.filter(r => r.success).length;

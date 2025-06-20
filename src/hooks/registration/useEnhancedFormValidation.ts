@@ -27,7 +27,7 @@ export function useEnhancedFormValidation() {
       case 'companyName':
         return fieldValidation.validateCompanyName(value);
       case 'taxId':
-        return await fieldValidation.validateTaxID(value);
+        return await fieldValidation.validateTaxId(value); // Fixed typo: validateTaxID -> validateTaxId
       case 'businessRegistryNumber':
         // Trigger async registry check
         fieldValidation.checkBusinessRegistryAvailability(value);
