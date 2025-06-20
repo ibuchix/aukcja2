@@ -292,48 +292,195 @@ export class EnhancedSupabaseClient {
     }
   }
 
-  // CRITICAL FIX: Use session-aware client for JWT token forwarding
+  // FIXED: Return synchronous query builders instead of async Promises
   from(table: string) {
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
       console.log(`Enhanced client creating session-aware query for table: ${table}`);
     }
     
+    // Create session-aware query builders that return immediately
     return {
       select: (columns?: string, options?: { count?: 'exact' | 'planned' | 'estimated'; head?: boolean }) => {
-        return this.createSessionAwareQueryBuilder(table, 'select', { columns, options });
+        return this.createEnhancedQueryBuilder(table, 'select', { columns, options });
       },
       
       insert: (data: any) => {
         const transformedData = this.transformer.toSnakeCaseObject(data);
-        return this.createSessionAwareQueryBuilder(table, 'insert', { data: transformedData });
+        return this.createEnhancedQueryBuilder(table, 'insert', { data: transformedData });
       },
       
       update: (data: any) => {
         const transformedData = this.transformer.toSnakeCaseObject(data);
-        return this.createSessionAwareQueryBuilder(table, 'update', { data: transformedData });
+        return this.createEnhancedQueryBuilder(table, 'update', { data: transformedData });
       },
       
       delete: () => {
-        return this.createSessionAwareQueryBuilder(table, 'delete', {});
+        return this.createEnhancedQueryBuilder(table, 'delete', {});
       },
 
       upsert: (data: any, options?: any) => {
         const transformedData = this.transformer.toSnakeCaseObject(data);
-        return this.createSessionAwareQueryBuilder(table, 'upsert', { data: transformedData, options });
+        return this.createEnhancedQueryBuilder(table, 'upsert', { data: transformedData, options });
       }
     };
   }
 
-  private async createSessionAwareQueryBuilder(table: string, operation: string, params: any) {
-    const sessionAwareClient = getSessionAwareClient();
-    const query = await sessionAwareClient.createSessionAwareQuery(table);
-    
+  // Create enhanced query builder that wraps session-aware queries
+  private createEnhancedQueryBuilder(table: string, operation: string, params: any) {
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
-      console.log(`Session-aware ${operation} query created for ${table}:`, params);
+      console.log(`Creating enhanced query builder for ${operation} on ${table}`);
     }
     
+    // Create a proxy that will handle session-aware queries when executed
+    const sessionAwareProxy = {
+      // Store the operation details for later execution
+      _table: table,
+      _operation: operation,
+      _params: params,
+      
+      // Return a proper query builder interface immediately
+      eq: (column: string, value: any) => {
+        const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: value });
+        const snakeKey = Object.keys(snakeColumn)[0];
+        
+        // Return a new proxy with the filter applied
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.eq(snakeKey, value));
+      },
+      
+      neq: (column: string, value: any) => {
+        const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: value });
+        const snakeKey = Object.keys(snakeColumn)[0];
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.neq(snakeKey, value));
+      },
+      
+      gt: (column: string, value: any) => {
+        const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: value });
+        const snakeKey = Object.keys(snakeColumn)[0];
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.gt(snakeKey, value));
+      },
+      
+      gte: (column: string, value: any) => {
+        const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: value });
+        const snakeKey = Object.keys(snakeColumn)[0];
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.gte(snakeKey, value));
+      },
+      
+      lt: (column: string, value: any) => {
+        const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: value });
+        const snakeKey = Object.keys(snakeColumn)[0];
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.lt(snakeKey, value));
+      },
+      
+      lte: (column: string, value: any) => {
+        const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: value });
+        const snakeKey = Object.keys(snakeColumn)[0];
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.lte(snakeKey, value));
+      },
+      
+      like: (column: string, pattern: string) => {
+        const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: pattern });
+        const snakeKey = Object.keys(snakeColumn)[0];
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.like(snakeKey, pattern));
+      },
+      
+      ilike: (column: string, pattern: string) => {
+        const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: pattern });
+        const snakeKey = Object.keys(snakeColumn)[0];
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.ilike(snakeKey, pattern));
+      },
+      
+      in: (column: string, values: any[]) => {
+        const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: values });
+        const snakeKey = Object.keys(snakeColumn)[0];
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.in(snakeKey, values));
+      },
+      
+      is: (column: string, value: any) => {
+        const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: value });
+        const snakeKey = Object.keys(snakeColumn)[0];
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.is(snakeKey, value));
+      },
+      
+      not: (column: string, operator: string, value: any) => {
+        const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: value });
+        const snakeKey = Object.keys(snakeColumn)[0];
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.not(snakeKey, operator, value));
+      },
+      
+      or: (filters: string) => {
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.or(filters));
+      },
+      
+      and: (filters: string) => {
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.and(filters));
+      },
+      
+      order: (column: string, options?: { ascending?: boolean; nullsFirst?: boolean }) => {
+        const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: '' });
+        const snakeKey = Object.keys(snakeColumn)[0];
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.order(snakeKey, options));
+      },
+      
+      limit: (count: number) => {
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.limit(count));
+      },
+      
+      range: (from: number, to: number) => {
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.range(from, to));
+      },
+      
+      filter: (column: string, operator: string, value: any) => {
+        const snakeColumn = this.transformer.toSnakeCaseObject({ [column]: value });
+        const snakeKey = Object.keys(snakeColumn)[0];
+        return this.createFilteredQueryBuilder(table, operation, params, (query) => query.filter(snakeKey, operator, value));
+      },
+      
+      select: (columns?: string, options?: { count?: 'exact' | 'planned' | 'estimated'; head?: boolean }) => {
+        return this.createFilteredQueryBuilder(table, 'select', { columns, options }, (query) => {
+          return options ? query.select(columns, options) : query.select(columns);
+        });
+      },
+      
+      // Execution methods that trigger the actual query
+      single: async () => {
+        const sessionAwareClient = getSessionAwareClient();
+        const query = await sessionAwareClient.createSessionAwareQuery(table);
+        let builtQuery = this.buildQuery(query, operation, params);
+        const result = await builtQuery.single();
+        return this.transformResult(result);
+      },
+      
+      maybeSingle: async () => {
+        const sessionAwareClient = getSessionAwareClient();
+        const query = await sessionAwareClient.createSessionAwareQuery(table);
+        let builtQuery = this.buildQuery(query, operation, params);
+        const result = await builtQuery.maybeSingle();
+        return this.transformResult(result);
+      },
+      
+      then: (onfulfilled?: any, onrejected?: any) => {
+        return this.executeQuery(table, operation, params, []).then(onfulfilled, onrejected);
+      }
+    };
+    
+    return sessionAwareProxy;
+  }
+  
+  // Create filtered query builder that chains filters
+  private createFilteredQueryBuilder(table: string, operation: string, params: any, filterFn: (query: any) => any) {
+    const filters = params._filters || [];
+    const newFilters = [...filters, filterFn];
+    
+    return this.createEnhancedQueryBuilder(table, operation, { 
+      ...params, 
+      _filters: newFilters 
+    });
+  }
+  
+  // Build the actual query with all filters applied
+  private buildQuery(query: any, operation: string, params: any) {
     let builtQuery;
     
     switch (operation) {
@@ -358,7 +505,47 @@ export class EnhancedSupabaseClient {
         throw new Error(`Unknown operation: ${operation}`);
     }
     
-    return new EnhancedPostgrestFilterBuilder(builtQuery);
+    // Apply all filters
+    if (params._filters) {
+      for (const filterFn of params._filters) {
+        builtQuery = filterFn(builtQuery);
+      }
+    }
+    
+    return builtQuery;
+  }
+  
+  // Execute the query with session awareness
+  private async executeQuery(table: string, operation: string, params: any, filters: any[]) {
+    const sessionAwareClient = getSessionAwareClient();
+    const query = await sessionAwareClient.createSessionAwareQuery(table);
+    
+    let builtQuery = this.buildQuery(query, operation, { ...params, _filters: filters });
+    const result = await builtQuery;
+    
+    return this.transformResult(result);
+  }
+  
+  // Transform the result with camelCase conversion
+  private transformResult(result: any) {
+    if (result.error) {
+      return result;
+    }
+    
+    let transformedData = result.data;
+    
+    if (result.data) {
+      if (Array.isArray(result.data)) {
+        transformedData = result.data.map(item => this.transformer.transformResponse(item));
+      } else {
+        transformedData = this.transformer.transformResponse(result.data);
+      }
+    }
+    
+    return {
+      ...result,
+      data: transformedData
+    };
   }
 
   /**
