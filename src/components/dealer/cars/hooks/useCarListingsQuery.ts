@@ -21,12 +21,13 @@ interface UseCarListingsQueryProps {
 // Type definition for the debug_auth_context RPC response
 interface AuthDebugData {
   auth_uid: string | null;
-  has_auth: boolean;
   dealer_exists?: boolean;
   dealer_id?: string;
   dealership_name?: string;
   is_verified?: boolean;
   verification_status?: string;
+  session_exists?: boolean;
+  timestamp?: string;
   error?: string;
 }
 
@@ -53,7 +54,7 @@ export const useCarListingsQuery = ({
       searchQuery, 
       currentPage.toString(),
       "sessionAwareQuery",
-      "authContextFixed"
+      "authValidationFixed"
     ],
     queryFn: async () => {
       const isDev = process.env.NODE_ENV === 'development';
@@ -119,7 +120,8 @@ export const useCarListingsQuery = ({
             error: authDebugError?.message,
             hasError: !!authDebugError,
             sessionUserId: sessionInfo.userId,
-            authContextUserId: authDebugData?.auth_uid
+            authContextUserId: authDebugData?.auth_uid,
+            actualDataStructure: authDebugData
           });
         }
         
@@ -128,7 +130,8 @@ export const useCarListingsQuery = ({
           throw new Error(`Auth debug failed: ${authDebugError.message}`);
         }
         
-        if (!authDebugData?.has_auth) {
+        // FIXED: Check for auth_uid instead of has_auth
+        if (!authDebugData?.auth_uid) {
           console.error('No authentication context found despite valid session token');
           console.error('Session info:', sessionInfo);
           console.error('Auth debug data:', authDebugData);
@@ -137,7 +140,8 @@ export const useCarListingsQuery = ({
           throw new Error('Authentication context not properly forwarded to database');
         }
         
-        if (!authDebugData?.dealer_exists) {
+        // FIXED: Check dealer_exists with proper boolean validation
+        if (authDebugData?.dealer_exists !== true) {
           console.error('Dealer record not found for authenticated user:', authDebugData?.auth_uid);
           throw new Error('Dealer record not found - please complete your profile');
         }
@@ -149,7 +153,8 @@ export const useCarListingsQuery = ({
             dealerId: authDebugData.dealer_id,
             dealershipName: authDebugData.dealership_name,
             isVerified: authDebugData.is_verified,
-            tokensMatch: sessionInfo.userId === authDebugData.auth_uid
+            tokensMatch: sessionInfo.userId === authDebugData.auth_uid,
+            dealerExists: authDebugData.dealer_exists
           });
         }
         
