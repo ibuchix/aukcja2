@@ -35,57 +35,81 @@ export const useCarListingsQuery = ({
       searchQuery, 
       currentPage.toString(),
       "liveAuctionsOnly",
-      "authDebugging"
+      "authDebugging",
+      "directAuthTest"
     ],
     queryFn: async () => {
       const isDev = process.env.NODE_ENV === 'development';
       
       if (isDev) {
-        console.log('=== TWO-STEP LIVE AUCTION CARS QUERY START ===');
-        console.log('Query params:', {
-          filters,
-          sortOption,
-          searchQuery,
-          currentPage,
-          dealerId
-        });
+        console.log('=== AUTHENTICATION DEBUG TEST START ===');
       }
       
       try {
-        // STEP 0: Debug authentication state before any queries
+        // STEP 0: Test authentication context directly with RPC
         if (isDev) {
-          const { data: { session }, error: sessionError } = await rawSupabaseClient.auth.getSession();
-          console.log('Authentication context at query start:', {
-            hasSession: !!session,
-            userId: session?.user?.id,
-            sessionTimestamp: session?.expires_at,
-            sessionError: sessionError?.message
+          console.log('=== TESTING AUTH CONTEXT WITH RPC ===');
+          const { data: authDebugData, error: authDebugError } = await rawSupabaseClient.rpc('debug_auth_context');
+          
+          console.log('Auth debug RPC result:', {
+            data: authDebugData,
+            error: authDebugError?.message,
+            hasError: !!authDebugError
+          });
+          
+          if (authDebugError) {
+            console.error('Auth debug RPC failed:', authDebugError);
+            throw new Error(`Auth debug failed: ${authDebugError.message}`);
+          }
+          
+          if (!authDebugData?.has_auth) {
+            console.error('No authentication context found at database level');
+            throw new Error('Authentication context not available in database');
+          }
+          
+          if (!authDebugData?.dealer_exists) {
+            console.error('Dealer record not found for authenticated user');
+            throw new Error('Dealer record not found');
+          }
+          
+          console.log('✅ Authentication verified at database level:', {
+            userId: authDebugData.auth_uid,
+            dealerId: authDebugData.dealer_id,
+            dealershipName: authDebugData.dealership_name,
+            isVerified: authDebugData.is_verified,
+            verificationStatus: authDebugData.verification_status
           });
         }
         
-        // Create enhanced client from the raw client to preserve authentication
-        const enhancedClient = createEnhancedSupabaseClient(rawSupabaseClient);
-        
-        // STEP 1: Get running auction schedules using enhanced client OR raw client for debugging
+        // STEP 1: Test direct raw client query to auction_schedules
         if (isDev) {
-          console.log('=== STEP 1: FETCHING AUCTION SCHEDULES ===');
+          console.log('=== TESTING DIRECT RAW CLIENT QUERY ===');
         }
         
-        const scheduleQuery = buildLiveAuctionSchedulesQuery(enhancedClient);
-        const scheduleResult = await scheduleQuery;
+        // Use RAW client directly instead of enhanced client for this test
+        const directScheduleQuery = rawSupabaseClient
+          .from("auction_schedules")
+          .select(`
+            car_id,
+            status,
+            start_time,
+            end_time,
+            is_manually_controlled
+          `)
+          .eq("status", "running")
+          .lte("start_time", new Date().toISOString())
+          .gte("end_time", new Date().toISOString());
+        
+        const scheduleResult = await directScheduleQuery;
         
         if (scheduleResult.error) {
-          console.error("=== AUCTION SCHEDULES QUERY ERROR ===");
+          console.error("=== DIRECT RAW CLIENT QUERY ERROR ===");
           console.error("Error details:", scheduleResult.error);
           
-          if (isDev) {
-            // Additional debugging for auth context during error
-            const { data: { session } } = await rawSupabaseClient.auth.getSession();
-            console.error("Auth context during error:", {
-              hasSession: !!session,
-              userId: session?.user?.id,
-              errorMessage: scheduleResult.error.message
-            });
+          // Test if this is specifically an RLS issue by checking auth context again
+          if (scheduleResult.error.message.includes('permission denied')) {
+            const { data: authRecheck } = await rawSupabaseClient.rpc('debug_auth_context');
+            console.error("Auth context during permission error:", authRecheck);
           }
           
           throw new Error(scheduleResult.error.message);
@@ -93,7 +117,7 @@ export const useCarListingsQuery = ({
         
         const schedules = scheduleResult.data || [];
         if (isDev) {
-          console.log('Auction schedules found:', schedules.length);
+          console.log('✅ Direct raw client query succeeded. Schedules found:', schedules.length);
         }
         
         // If no running schedules, return empty result
@@ -116,14 +140,69 @@ export const useCarListingsQuery = ({
           console.log('Car IDs from schedules:', carIds.length);
         }
         
-        // STEP 2: Get cars that match the running schedules using enhanced client
+        // STEP 2: Get cars using raw client as well
         if (isDev) {
-          console.log('=== STEP 2: FETCHING CARS FOR SCHEDULES ===');
+          console.log('=== FETCHING CARS WITH RAW CLIENT ===');
         }
         
-        let carsQuery = buildCarsForSchedulesQuery(enhancedClient, carIds);
+        if (carIds.length === 0) {
+          return {
+            cars: [],
+            total: 0
+          };
+        }
         
-        // Apply filters, sorting, and pagination to the cars query
+        // Use raw client for cars query too
+        let carsQuery = rawSupabaseClient
+          .from("cars")
+          .select(`
+            id,
+            make,
+            model,
+            year,
+            mileage,
+            reserve_price,
+            images,
+            required_photos,
+            title,
+            features,
+            transmission,
+            is_auction,
+            auction_end_time,
+            minimum_bid_increment,
+            auction_status,
+            is_damaged,
+            address,
+            created_at,
+            updated_at,
+            status,
+            current_bid,
+            seller_notes,
+            service_history_type,
+            has_service_history,
+            seller_id,
+            seller_name,
+            mobile_number,
+            additional_photos,
+            vin,
+            seat_material,
+            number_of_keys,
+            is_registered_in_poland,
+            has_private_plate,
+            finance_amount,
+            form_metadata,
+            valuation_data,
+            last_saved,
+            registration_number,
+            is_manually_controlled
+          `)
+          .eq("is_auction", true)
+          .eq("auction_status", "active")
+          .in("id", carIds)
+          .gt("reserve_price", 0);
+        
+        // Apply filters, sorting, and pagination
+        // Note: These utility functions work with the raw query builder
         carsQuery = applyFilters(carsQuery, filters, searchQuery);
         carsQuery = applySorting(carsQuery, sortOption);
         carsQuery = applyPagination(carsQuery, currentPage, pageSize);
@@ -148,7 +227,7 @@ export const useCarListingsQuery = ({
         
         // STEP 3: Merge car data with schedule data
         if (isDev) {
-          console.log('=== STEP 3: MERGING DATA ===');
+          console.log('=== MERGING DATA ===');
         }
         
         const rawCars = carsResult.data || [];
@@ -170,7 +249,7 @@ export const useCarListingsQuery = ({
         const validCars = processCarData(mergedData);
         
         if (isDev) {
-          console.log('=== FINAL TWO-STEP RESULT ===');
+          console.log('=== FINAL DIRECT RAW CLIENT RESULT ===');
           console.log('Valid live auction cars:', validCars.length);
           if (validCars.length > 0) {
             console.log('First processed live auction car:', {
@@ -191,7 +270,7 @@ export const useCarListingsQuery = ({
         };
       } catch (err: any) {
         const errorMessage = err.message || 'Unknown error occurred';
-        console.error("=== TWO-STEP LIVE AUCTION QUERY ERROR ===");
+        console.error("=== DIRECT RAW CLIENT QUERY ERROR ===");
         console.error("Error:", errorMessage);
         throw new Error(errorMessage);
       }

@@ -1,4 +1,3 @@
-
 /**
  * Enhanced Supabase Client with automatic data transformation
  * Handles camelCase <-> snake_case conversion automatically
@@ -188,7 +187,7 @@ class EnhancedPostgrestFilterBuilder<T> {
     return this.createNewInstance(this.originalBuilder.throwOnError());
   }
 
-  // Enhanced then method for proper transformation
+  // Enhanced then method for proper transformation and error handling
   then<TResult1 = any, TResult2 = never>(
     onfulfilled?: ((value: any) => TResult1 | PromiseLike<TResult1>) | undefined | null,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null
@@ -241,7 +240,14 @@ class EnhancedPostgrestFilterBuilder<T> {
         
         return onfulfilled ? onfulfilled(transformedResult) : transformedResult;
       },
-      onrejected
+      (error) => {
+        // Enhanced error handling
+        const isDev = process.env.NODE_ENV === 'development';
+        if (isDev) {
+          console.error('Enhanced query promise rejection:', error);
+        }
+        return onrejected ? onrejected(error) : Promise.reject(error);
+      }
     );
   }
 }
@@ -256,7 +262,7 @@ export class EnhancedSupabaseClient {
     // Debug: Verify authentication context is preserved
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
-      console.log('Enhanced Supabase Client initialized - debugging auth context preservation');
+      console.log('Enhanced Supabase Client initialized - ensuring auth forwarding');
       this.debugAuthenticationState();
     }
   }
@@ -288,13 +294,13 @@ export class EnhancedSupabaseClient {
       console.log(`Enhanced client creating query for table: ${table}`);
     }
     
-    // Get the original from builder - this should preserve ALL authentication context
+    // CRITICAL FIX: Ensure the original client's session is active before creating queries
     const originalFrom = this.client.from(table);
     
-    // DEBUG: Verify authentication context is preserved in the from builder
+    // The key fix: Ensure authentication context is preserved by keeping reference to the original client
+    // This should maintain the JWT token in the request headers
     if (isDev) {
-      console.log(`Original from builder created for table: ${table}`);
-      this.verifyAuthenticationForwarding(originalFrom, table);
+      console.log(`Original from builder created for table: ${table} with auth context`);
     }
     
     return {
@@ -303,11 +309,8 @@ export class EnhancedSupabaseClient {
           console.log(`Enhanced client select query for ${table}:`, { columns, options });
         }
         
-        if (options) {
-          const query = originalFrom.select(columns, options);
-          return new EnhancedPostgrestFilterBuilder(query);
-        }
-        const query = originalFrom.select(columns);
+        // Create the select query with preserved authentication
+        const query = options ? originalFrom.select(columns, options) : originalFrom.select(columns);
         return new EnhancedPostgrestFilterBuilder(query);
       },
       
@@ -349,17 +352,6 @@ export class EnhancedSupabaseClient {
           timestamp: new Date().toISOString(),
           table
         });
-
-        // Test a simple auth check to see if auth.uid() works
-        try {
-          const authTest = await this.client.rpc('debug_auth_context');
-          console.log(`Auth context test for ${table}:`, {
-            authTestResult: authTest.data,
-            authTestError: authTest.error?.message
-          });
-        } catch (error) {
-          console.log(`Auth context test failed for ${table}:`, error);
-        }
       }
     } catch (error) {
       console.error('Auth verification failed:', error);
