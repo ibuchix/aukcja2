@@ -13,6 +13,7 @@ export const useAuctionQueries = (dealerId: string) => {
         .from("cars")
         .select("*")
         .eq("status", "available")
+        .eq("is_auction", true)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -27,48 +28,36 @@ export const useAuctionQueries = (dealerId: string) => {
     gcTime: 300000, // 5 minutes
   });
 
-  // Process the data to separate into different categories - add safety checks
+  // Process the data to separate into different categories with proper null checks
   const activeAuctions = cars?.filter(car => {
-    // Add null check and proper type guard
-    if (!car || typeof car !== 'object' || 'error' in car) {
+    // Add comprehensive null and type checks
+    if (!car || typeof car !== 'object' || 'error' in car || !car.id) {
       return false;
     }
     
-    // Type assertion after null check
+    // Safe property access with type assertion
     const typedCar = car as any;
-    return typedCar &&
-           typeof typedCar === 'object' &&
-           'is_auction' in typedCar && 
-           'auction_status' in typedCar && 
-           typedCar.is_auction && 
+    return typedCar.is_auction === true && 
            typedCar.auction_status === 'active';
   }) || [];
   
   const wonAuctions = cars?.filter(car => {
-    if (!car || typeof car !== 'object' || 'error' in car) {
+    if (!car || typeof car !== 'object' || 'error' in car || !car.id) {
       return false;
     }
     
     const typedCar = car as any;
-    return typedCar &&
-           typeof typedCar === 'object' &&
-           'is_auction' in typedCar && 
-           'auction_status' in typedCar && 
-           typedCar.is_auction && 
+    return typedCar.is_auction === true && 
            typedCar.auction_status === 'sold';
   }) || [];
   
   const lostAuctions = cars?.filter(car => {
-    if (!car || typeof car !== 'object' || 'error' in car) {
+    if (!car || typeof car !== 'object' || 'error' in car || !car.id) {
       return false;
     }
     
     const typedCar = car as any;
-    return typedCar &&
-           typeof typedCar === 'object' &&
-           'is_auction' in typedCar && 
-           'auction_status' in typedCar && 
-           typedCar.is_auction && 
+    return typedCar.is_auction === true && 
            typedCar.auction_status === 'ended';
   }) || [];
 

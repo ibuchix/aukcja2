@@ -62,7 +62,6 @@ export const useFieldValidation = () => {
       if (response && typeof response === 'object') {
         const exists = Boolean(response.exists);
         const emailRegistered = Boolean(response.email_registered);
-        const existingRoles = response.existing_roles || [];
 
         setEmailValidation({
           isValidating: false,

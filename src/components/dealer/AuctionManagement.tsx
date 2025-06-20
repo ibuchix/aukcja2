@@ -26,37 +26,23 @@ export const AuctionManagement = ({ dealerId }: AuctionManagementProps) => {
     loadingLost,
   } = useAuctionQueries(dealerId);
 
-  // Type-safe conversion with fallback to empty array
-  const safeActiveAuctions: Auction[] = Array.isArray(activeAuctions) 
-    ? activeAuctions.filter((auction: any): auction is Auction => {
-        // Check if this is a valid auction object and not a SelectQueryError
-        return auction && 
-               typeof auction === 'object' && 
-               !('error' in auction) &&
-               'id' in auction &&
-               typeof auction.id === 'string';
-      })
-    : [];
+  // Safe type conversion with proper filtering
+  const convertToAuctions = (auctions: any[]): Auction[] => {
+    if (!Array.isArray(auctions)) return [];
+    
+    return auctions.filter((auction: any): auction is Auction => {
+      // Filter out SelectQueryError objects and invalid entries
+      return auction && 
+             typeof auction === 'object' && 
+             !('error' in auction) &&
+             'id' in auction &&
+             typeof auction.id === 'string';
+    });
+  };
 
-  const safeWonAuctions: Auction[] = Array.isArray(wonAuctions) 
-    ? wonAuctions.filter((auction: any): auction is Auction => {
-        return auction && 
-               typeof auction === 'object' && 
-               !('error' in auction) &&
-               'id' in auction &&
-               typeof auction.id === 'string';
-      })
-    : [];
-
-  const safeLostAuctions: Auction[] = Array.isArray(lostAuctions) 
-    ? lostAuctions.filter((auction: any): auction is Auction => {
-        return auction && 
-               typeof auction === 'object' && 
-               !('error' in auction) &&
-               'id' in auction &&
-               typeof auction.id === 'string';
-      })
-    : [];
+  const safeActiveAuctions = convertToAuctions(activeAuctions);
+  const safeWonAuctions = convertToAuctions(wonAuctions);
+  const safeLostAuctions = convertToAuctions(lostAuctions);
 
   return (
     <Card>

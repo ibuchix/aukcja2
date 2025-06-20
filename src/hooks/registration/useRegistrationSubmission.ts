@@ -1,7 +1,22 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { DealerFormValues } from "@/schemas/dealerFormSchema";
+
+interface DealerFormValues {
+  supervisorName?: string;
+  dealershipName?: string;
+  address?: string;
+  licenseNumber?: string;
+  taxId?: string;
+  businessRegistryNumber?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+  phoneNumber?: string;
+  companyName?: string;
+  companyAddress?: string;
+  acceptTerms?: boolean;
+}
 
 export const useRegistrationSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,8 +43,8 @@ export const useRegistrationSubmission = () => {
 
       // Create the user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
+        email: values.email || '',
+        password: values.password || '',
         options: {
           data: {
             role: 'dealer',
@@ -51,12 +66,12 @@ export const useRegistrationSubmission = () => {
         .from('dealers')
         .insert({
           user_id: authData.user.id,
-          supervisor_name: values.supervisorName,
-          dealership_name: values.dealershipName,
-          address: values.address,
-          license_number: values.licenseNumber,
-          tax_id: values.taxId,
-          business_registry_number: values.businessRegistryNumber,
+          supervisor_name: values.supervisorName || '',
+          dealership_name: values.dealershipName || values.companyName || '',
+          address: values.address || values.companyAddress || '',
+          license_number: values.licenseNumber || '',
+          tax_id: values.taxId || '',
+          business_registry_number: values.businessRegistryNumber || '',
           verification_status: 'pending',
           is_verified: false,
         });
