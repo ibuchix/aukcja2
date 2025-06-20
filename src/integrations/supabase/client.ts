@@ -1,6 +1,5 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { createEnhancedSupabaseClient } from '@/utils/enhancedSupabaseClient';
 import type { Database } from './types';
 
 // Create the main Supabase client with enhanced session persistence
@@ -24,8 +23,5 @@ export const rawSupabaseClient = createClient<Database>(supabaseUrl, supabaseAno
   }
 });
 
-// Create the enhanced version that wraps the authenticated client
-export const enhancedSupabase = createEnhancedSupabaseClient(rawSupabaseClient);
-
-// Export both for compatibility
-export const supabase = enhancedSupabase;
+// Export the raw client as the main client to ensure JWT token consistency
+export const supabase = rawSupabaseClient;

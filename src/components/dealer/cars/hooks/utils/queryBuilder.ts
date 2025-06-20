@@ -1,16 +1,16 @@
 
 import type { Database } from "@/integrations/supabase/types";
-import { rawSupabaseClient } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 
 export const buildLiveAuctionSchedulesQuery = () => {
   const isDev = process.env.NODE_ENV === 'development';
   
   if (isDev) {
-    console.log("Building live auction schedules query with direct raw client");
+    console.log("Building live auction schedules query with consistent client");
   }
   
-  // Use direct raw Supabase client to avoid JWT token forwarding issues
-  return rawSupabaseClient
+  // Use consistent Supabase client to ensure JWT token forwarding
+  return supabase
     .from("auction_schedules")
     .select(`
       car_id,
@@ -28,19 +28,19 @@ export const buildCarsForSchedulesQuery = (carIds: string[]) => {
   const isDev = process.env.NODE_ENV === 'development';
   
   if (isDev) {
-    console.log("Building cars query for schedules with direct raw client:", carIds.length, "car IDs");
+    console.log("Building cars query for schedules with consistent client:", carIds.length, "car IDs");
   }
   
   if (carIds.length === 0) {
     // Return empty query if no car IDs
-    return rawSupabaseClient
+    return supabase
       .from("cars")
       .select("*")
       .eq("id", "00000000-0000-0000-0000-000000000000"); // Impossible ID to return empty result
   }
   
-  // Use direct raw Supabase client for cars query
-  return rawSupabaseClient
+  // Use consistent Supabase client for cars query
+  return supabase
     .from("cars")
     .select(`
       id,

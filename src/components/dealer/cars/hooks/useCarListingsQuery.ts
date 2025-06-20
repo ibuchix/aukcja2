@@ -6,7 +6,7 @@ import { mergeCarDataWithSchedules, AuctionScheduleData } from "./utils/dataHelp
 import { applyFilters } from "./utils/filterUtils";
 import { applySorting } from "./utils/sortUtils";
 import { applyPagination, calculatePaginationInfo } from "./utils/paginationUtils";
-import { rawSupabaseClient } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseCarListingsQueryProps {
   filters: AuctionFilters;
@@ -52,19 +52,18 @@ export const useCarListingsQuery = ({
       sortOption, 
       searchQuery, 
       currentPage.toString(),
-      "simplifiedClient",
-      "directSupabaseAccess"
+      "consistentClient"
     ],
     queryFn: async () => {
       const isDev = process.env.NODE_ENV === 'development';
       
       if (isDev) {
-        console.log('=== SIMPLIFIED CLIENT AUTHENTICATION START ===');
+        console.log('=== CONSISTENT CLIENT AUTHENTICATION START ===');
       }
       
       try {
-        // STEP 1: Verify current session with raw Supabase client
-        const { data: sessionData, error: sessionError } = await rawSupabaseClient.auth.getSession();
+        // STEP 1: Verify current session with consistent client
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
         let sessionInfo: SessionTokenInfo = {
           hasSession: false,
@@ -101,10 +100,10 @@ export const useCarListingsQuery = ({
         
         // STEP 2: Test authentication context to ensure JWT is working
         if (isDev) {
-          console.log('=== TESTING AUTH CONTEXT WITH DIRECT CLIENT ===');
+          console.log('=== TESTING AUTH CONTEXT WITH CONSISTENT CLIENT ===');
         }
         
-        const { data: authDebugRawData, error: authDebugError } = await rawSupabaseClient.rpc('debug_auth_context');
+        const { data: authDebugRawData, error: authDebugError } = await supabase.rpc('debug_auth_context');
         const authDebugData = authDebugRawData as unknown as AuthDebugData;
         
         if (isDev) {
@@ -133,7 +132,7 @@ export const useCarListingsQuery = ({
         }
         
         if (isDev) {
-          console.log('✅ Authentication verified with direct client:', {
+          console.log('✅ Authentication verified with consistent client:', {
             sessionUserId: sessionInfo.userId,
             authContextUserId: authDebugData.auth_uid,
             dealerId: authDebugData.dealer_id,
@@ -144,13 +143,13 @@ export const useCarListingsQuery = ({
           });
         }
         
-        // STEP 3: Use direct Supabase client for database queries
+        // STEP 3: Use consistent client for database queries
         if (isDev) {
-          console.log('=== USING DIRECT SUPABASE CLIENT ===');
+          console.log('=== USING CONSISTENT SUPABASE CLIENT ===');
         }
         
-        // Get auction schedules using direct client (should preserve auth context)
-        const schedulesQuery = rawSupabaseClient
+        // Get auction schedules using consistent client
+        const schedulesQuery = supabase
           .from("auction_schedules")
           .select(`
             car_id,
@@ -166,14 +165,14 @@ export const useCarListingsQuery = ({
         const scheduleResult = await schedulesQuery;
         
         if (scheduleResult.error) {
-          console.error("=== DIRECT CLIENT SCHEDULE QUERY ERROR ===");
+          console.error("=== CONSISTENT CLIENT SCHEDULE QUERY ERROR ===");
           console.error("Error details:", scheduleResult.error);
-          throw new Error(`Direct client schedule query failed: ${scheduleResult.error.message}`);
+          throw new Error(`Consistent client schedule query failed: ${scheduleResult.error.message}`);
         }
         
         const schedules = scheduleResult.data || [];
         if (isDev) {
-          console.log('✅ Direct client schedule query succeeded. Schedules found:', schedules.length);
+          console.log('✅ Consistent client schedule query succeeded. Schedules found:', schedules.length);
         }
         
         // If no running schedules, return empty result
@@ -196,9 +195,9 @@ export const useCarListingsQuery = ({
           console.log('Car IDs from schedules:', carIds.length);
         }
         
-        // STEP 4: Get cars using direct client
+        // STEP 4: Get cars using consistent client
         if (isDev) {
-          console.log('=== FETCHING CARS WITH DIRECT CLIENT ===');
+          console.log('=== FETCHING CARS WITH CONSISTENT CLIENT ===');
         }
         
         if (carIds.length === 0) {
@@ -208,8 +207,8 @@ export const useCarListingsQuery = ({
           };
         }
         
-        // Use direct client for cars query
-        let carsQuery = rawSupabaseClient
+        // Use consistent client for cars query
+        let carsQuery = supabase
           .from("cars")
           .select(`
             id,
@@ -270,14 +269,14 @@ export const useCarListingsQuery = ({
         const carsResult = await carsQuery;
         
         if (isDev) {
-          console.log('=== DIRECT CLIENT CARS QUERY RESULT ===');
+          console.log('=== CONSISTENT CLIENT CARS QUERY RESULT ===');
           console.log('Query successful. Raw data count:', carsResult.data?.length || 0);
         }
         
         if (carsResult.error) {
-          console.error("=== DIRECT CLIENT CARS ERROR ===");
+          console.error("=== CONSISTENT CLIENT CARS ERROR ===");
           console.error("Error details:", carsResult.error);
-          throw new Error(`Direct client cars query failed: ${carsResult.error.message}`);
+          throw new Error(`Consistent client cars query failed: ${carsResult.error.message}`);
         }
         
         // STEP 5: Merge car data with schedule data
@@ -298,13 +297,13 @@ export const useCarListingsQuery = ({
             is_manually_controlled: schedule.is_manually_controlled
           }));
         
-        const mergedData = mergeCarDataWithSchedules(rawCars, typedSchedules);
+        const mergedData = mergeCarDataWithScheduls(rawCars, typedSchedules);
         
         // Process the merged results
         const validCars = processCarData(mergedData);
         
         if (isDev) {
-          console.log('=== FINAL SIMPLIFIED CLIENT RESULT ===');
+          console.log('=== FINAL CONSISTENT CLIENT RESULT ===');
           console.log('Valid live auction cars:', validCars.length);
           if (validCars.length > 0) {
             console.log('First processed live auction car:', {
@@ -325,7 +324,7 @@ export const useCarListingsQuery = ({
         };
       } catch (err: any) {
         const errorMessage = err.message || 'Unknown error occurred';
-        console.error("=== SIMPLIFIED CLIENT QUERY ERROR ===");
+        console.error("=== CONSISTENT CLIENT QUERY ERROR ===");
         console.error("Error:", errorMessage);
         throw new Error(errorMessage);
       }

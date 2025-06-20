@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthState } from "./useAuthState";

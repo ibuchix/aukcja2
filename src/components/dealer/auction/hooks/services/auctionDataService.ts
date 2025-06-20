@@ -1,4 +1,4 @@
-import { rawSupabaseClient } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { AuctionFilters, Auction } from "../../types";
 import { isValidRecord, isSelectQueryError, isValidBid, safelyFilterData } from "@/utils/supabaseHelpers";
 import { decodeCursor, getCursorOperator } from "@/utils/cursorPagination";
@@ -15,8 +15,8 @@ export const buildAuctionQuery = (
   cursor: string | null,
   direction: 'next' | 'prev'
 ) => {
-  // Use direct raw Supabase client for proper JWT token forwarding
-  let query = rawSupabaseClient
+  // Use consistent Supabase client for proper JWT token forwarding
+  let query = supabase
     .from("cars")
     .select(`
       id,
@@ -105,8 +105,8 @@ export const fetchDealerBids = async (dealerId: string, auctionIds: string[]): P
     return [];
   }
 
-  // Use direct raw Supabase client for consistency
-  const { data: bidsData } = await rawSupabaseClient
+  // Use consistent Supabase client
+  const { data: bidsData } = await supabase
     .from("bids")
     .select("car_id, amount, status")
     .eq("dealer_id", dealerId)
