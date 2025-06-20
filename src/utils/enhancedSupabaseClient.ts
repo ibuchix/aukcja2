@@ -6,6 +6,7 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { dataTransformer } from './dataTransformer';
+import { sessionAwareClient } from './sessionAwareClient';
 import type { Database } from '@/integrations/supabase/types';
 
 // Enhanced query builder that adds transformation while preserving authentication
@@ -19,7 +20,7 @@ class EnhancedPostgrestFilterBuilder<T> {
     // Debug: Log authentication state preservation
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
-      console.log('EnhancedPostgrestFilterBuilder created with auth context preserved');
+      console.log('EnhancedPostgrestFilterBuilder created with preserved auth context');
     }
   }
 
@@ -135,7 +136,7 @@ class EnhancedPostgrestFilterBuilder<T> {
   async single() {
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
-      console.log('Enhanced client executing single() query');
+      console.log('Enhanced client executing single() query with JWT forwarding');
     }
     
     const result = await this.originalBuilder.single();
@@ -161,7 +162,7 @@ class EnhancedPostgrestFilterBuilder<T> {
   async maybeSingle() {
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
-      console.log('Enhanced client executing maybeSingle() query');
+      console.log('Enhanced client executing maybeSingle() query with JWT forwarding');
     }
     
     const result = await this.originalBuilder.maybeSingle();
@@ -198,7 +199,7 @@ class EnhancedPostgrestFilterBuilder<T> {
     return this.originalBuilder.then(
       async (result) => {
         if (isDev) {
-          console.log('Enhanced query result received:', { 
+          console.log('Enhanced query result received with JWT forwarding:', { 
             hasError: !!result.error, 
             errorMessage: result.error?.message,
             errorCode: result.error?.code,
@@ -263,7 +264,7 @@ export class EnhancedSupabaseClient {
     // Debug: Verify authentication context is preserved
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
-      console.log('Enhanced Supabase Client initialized - ensuring improved auth forwarding');
+      console.log('Enhanced Supabase Client initialized with JWT token forwarding');
       this.debugAuthenticationState();
     }
   }
@@ -275,12 +276,12 @@ export class EnhancedSupabaseClient {
       const isDev = process.env.NODE_ENV === 'development';
       
       if (isDev) {
-        console.log('Enhanced client auth verification:', {
+        console.log('Enhanced client auth verification with JWT forwarding:', {
           hasSession: !!session,
           userId: session?.user?.id,
           sessionExists: !!session,
           authError: error?.message,
-          clientType: 'enhanced-improved',
+          clientType: 'enhanced-jwt-forwarding',
           accessToken: session?.access_token ? `${session.access_token.substring(0, 20)}...` : 'none',
           tokenLength: session?.access_token?.length || 0,
           expiresAt: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'unknown'
@@ -291,50 +292,51 @@ export class EnhancedSupabaseClient {
     }
   }
 
+  // CRITICAL FIX: Use session-aware client for JWT token forwarding
   from(table: string) {
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
-      console.log(`Enhanced client creating query for table: ${table} with improved auth forwarding`);
-    }
-    
-    // CRITICAL FIX: Ensure current session token is used for all queries
-    const originalFrom = this.client.from(table);
-    
-    if (isDev) {
-      console.log(`Original from builder created for table: ${table} with enhanced auth context`);
+      console.log(`Enhanced client creating session-aware query for table: ${table}`);
     }
     
     return {
-      select: (columns?: string, options?: { count?: 'exact' | 'planned' | 'estimated'; head?: boolean }) => {
+      select: async (columns?: string, options?: { count?: 'exact' | 'planned' | 'estimated'; head?: boolean }) => {
+        // Use session-aware client to ensure JWT token forwarding
+        const sessionSafeQuery = await sessionAwareClient.createSessionAwareQuery(table);
+        
         if (isDev) {
-          console.log(`Enhanced client select query for ${table}:`, { columns, options });
+          console.log(`Session-aware select query created for ${table}:`, { columns, options });
         }
         
         // Create the select query with preserved authentication
-        const query = options ? originalFrom.select(columns, options) : originalFrom.select(columns);
+        const query = options ? sessionSafeQuery.select(columns, options) : sessionSafeQuery.select(columns);
         return new EnhancedPostgrestFilterBuilder(query);
       },
       
-      insert: (data: any) => {
+      insert: async (data: any) => {
+        const sessionSafeQuery = await sessionAwareClient.createSessionAwareQuery(table);
         const transformedData = this.transformer.toSnakeCaseObject(data);
-        const query = originalFrom.insert(transformedData);
+        const query = sessionSafeQuery.insert(transformedData);
         return new EnhancedPostgrestFilterBuilder(query);
       },
       
-      update: (data: any) => {
+      update: async (data: any) => {
+        const sessionSafeQuery = await sessionAwareClient.createSessionAwareQuery(table);
         const transformedData = this.transformer.toSnakeCaseObject(data);
-        const query = originalFrom.update(transformedData);
+        const query = sessionSafeQuery.update(transformedData);
         return new EnhancedPostgrestFilterBuilder(query);
       },
       
-      delete: () => {
-        const query = originalFrom.delete();
+      delete: async () => {
+        const sessionSafeQuery = await sessionAwareClient.createSessionAwareQuery(table);
+        const query = sessionSafeQuery.delete();
         return new EnhancedPostgrestFilterBuilder(query);
       },
 
-      upsert: (data: any, options?: any) => {
+      upsert: async (data: any, options?: any) => {
+        const sessionSafeQuery = await sessionAwareClient.createSessionAwareQuery(table);
         const transformedData = this.transformer.toSnakeCaseObject(data);
-        const query = originalFrom.upsert(transformedData, options);
+        const query = sessionSafeQuery.upsert(transformedData, options);
         return new EnhancedPostgrestFilterBuilder(query);
       }
     };
@@ -369,54 +371,10 @@ export class EnhancedSupabaseClient {
   }
 
   /**
-   * Enhanced RPC calls with better authentication context preservation
+   * Enhanced RPC calls with session-aware authentication
    */
   async rpc(functionName: string, params?: any) {
-    const isDev = process.env.NODE_ENV === 'development';
-    if (isDev) {
-      console.log(`Enhanced client RPC call: ${functionName}`, { params });
-      
-      // Enhanced authentication check before RPC call
-      const { data: { session }, error: sessionError } = await this.client.auth.getSession();
-      console.log('Enhanced auth context for RPC call:', {
-        hasSession: !!session,
-        userId: session?.user?.id,
-        rpcFunction: functionName,
-        tokenLength: session?.access_token?.length || 0,
-        sessionError: sessionError?.message,
-        expiresAt: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'unknown'
-      });
-      
-      if (sessionError) {
-        console.error('Session error before RPC call:', sessionError);
-      }
-      
-      if (!session?.access_token) {
-        console.error('No access token available for RPC call');
-      }
-    }
-    
-    const transformedParams = params ? this.transformer.toSnakeCaseObject(params) : params;
-    
-    // Use the original client's RPC method directly to preserve auth context
-    const result = await this.client.rpc(functionName as any, transformedParams);
-    
-    if (isDev) {
-      console.log(`RPC ${functionName} result:`, { 
-        hasError: !!result.error, 
-        errorMessage: result.error?.message,
-        errorCode: result.error?.code,
-        hasData: !!result.data 
-      });
-    }
-    
-    if (result.error) {
-      return result; // Return errors unchanged
-    }
-    
-    // For RPC calls, return data as-is since many database functions
-    // already return data in the expected format
-    return result;
+    return sessionAwareClient.rpc(functionName, params);
   }
 }
 
