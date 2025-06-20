@@ -33,7 +33,9 @@ export const useAuctionQueries = (dealerId: string) => {
     if (!car || typeof car !== 'object' || 'error' in car) {
       return false;
     }
-    return 'is_auction' in car && 
+    return car &&
+           typeof car === 'object' &&
+           'is_auction' in car && 
            'auction_status' in car && 
            car.is_auction && 
            car.auction_status === 'active';
@@ -43,7 +45,9 @@ export const useAuctionQueries = (dealerId: string) => {
     if (!car || typeof car !== 'object' || 'error' in car) {
       return false;
     }
-    return 'is_auction' in car && 
+    return car &&
+           typeof car === 'object' &&
+           'is_auction' in car && 
            'auction_status' in car && 
            car.is_auction && 
            car.auction_status === 'sold';
@@ -53,7 +57,9 @@ export const useAuctionQueries = (dealerId: string) => {
     if (!car || typeof car !== 'object' || 'error' in car) {
       return false;
     }
-    return 'is_auction' in car && 
+    return car &&
+           typeof car === 'object' &&
+           'is_auction' in car && 
            'auction_status' in car && 
            car.is_auction && 
            car.auction_status === 'ended';

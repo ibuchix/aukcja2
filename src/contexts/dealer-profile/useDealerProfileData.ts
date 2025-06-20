@@ -36,24 +36,24 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
         const { data: rpcData, error: rpcError } = await supabase
           .rpc('get_dealer_by_user_id', { p_user_id: userId });
         
-        if (!rpcError && rpcData && !Array.isArray(rpcData) && typeof rpcData === 'object') {
+        if (!rpcError && rpcData && typeof rpcData === 'object' && !Array.isArray(rpcData)) {
           console.log("[Dealer Profile] RPC returned data:", rpcData);
           
           // Convert the RPC data to match DealerProfileData interface (snake_case)
           const transformedData: DealerProfileData = {
-            id: rpcData.id || '',
-            user_id: rpcData.user_id || rpcData.userId || '',
-            supervisor_name: rpcData.supervisor_name || rpcData.supervisorName || '',
-            dealership_name: rpcData.dealership_name || rpcData.dealershipName || '',
-            address: rpcData.address || '',
-            license_number: rpcData.license_number || rpcData.licenseNumber || '',
-            tax_id: rpcData.tax_id || rpcData.taxId || '',
-            business_registry_number: rpcData.business_registry_number || rpcData.businessRegistryNumber || '',
-            verification_status: rpcData.verification_status || rpcData.verificationStatus || 'pending',
-            is_verified: rpcData.is_verified || rpcData.isVerified || false,
-            created_at: rpcData.created_at || rpcData.createdAt || '',
-            updated_at: rpcData.updated_at || rpcData.updatedAt || '',
-            needs_recovery: rpcData.needs_recovery || rpcData.needsRecovery || false
+            id: (rpcData as any).id || '',
+            user_id: (rpcData as any).user_id || (rpcData as any).userId || '',
+            supervisor_name: (rpcData as any).supervisor_name || (rpcData as any).supervisorName || '',
+            dealership_name: (rpcData as any).dealership_name || (rpcData as any).dealershipName || '',
+            address: (rpcData as any).address || '',
+            license_number: (rpcData as any).license_number || (rpcData as any).licenseNumber || '',
+            tax_id: (rpcData as any).tax_id || (rpcData as any).taxId || '',
+            business_registry_number: (rpcData as any).business_registry_number || (rpcData as any).businessRegistryNumber || '',
+            verification_status: (rpcData as any).verification_status || (rpcData as any).verificationStatus || 'pending',
+            is_verified: (rpcData as any).is_verified || (rpcData as any).isVerified || false,
+            created_at: (rpcData as any).created_at || (rpcData as any).createdAt || '',
+            updated_at: (rpcData as any).updated_at || (rpcData as any).updatedAt || '',
+            needs_recovery: (rpcData as any).needs_recovery || (rpcData as any).needsRecovery || false
           };
           
           setProfileData(transformedData);
