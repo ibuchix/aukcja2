@@ -50,9 +50,9 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
     'status' in scheduleData;
 
   const scheduleInfo = hasValidSchedule ? {
-    startTime: scheduleData.start_time as string,
-    endTime: scheduleData.end_time as string,
-    status: scheduleData.status as string
+    startTime: scheduleData?.start_time as string,
+    endTime: scheduleData?.end_time as string,
+    status: scheduleData?.status as string
   } : null;
 
   const getAuctionStatus = () => {

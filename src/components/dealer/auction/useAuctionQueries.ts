@@ -37,8 +37,8 @@ export const useAuctionQueries = (dealerId: string) => {
     
     // Safe property access with type assertion
     const typedCar = car as any;
-    return typedCar.is_auction === true && 
-           typedCar.auction_status === 'active';
+    return typedCar?.is_auction === true && 
+           typedCar?.auction_status === 'active';
   }) || [];
   
   const wonAuctions = cars?.filter(car => {
@@ -47,8 +47,8 @@ export const useAuctionQueries = (dealerId: string) => {
     }
     
     const typedCar = car as any;
-    return typedCar.is_auction === true && 
-           typedCar.auction_status === 'sold';
+    return typedCar?.is_auction === true && 
+           typedCar?.auction_status === 'sold';
   }) || [];
   
   const lostAuctions = cars?.filter(car => {
@@ -57,8 +57,8 @@ export const useAuctionQueries = (dealerId: string) => {
     }
     
     const typedCar = car as any;
-    return typedCar.is_auction === true && 
-           typedCar.auction_status === 'ended';
+    return typedCar?.is_auction === true && 
+           typedCar?.auction_status === 'ended';
   }) || [];
 
   return {

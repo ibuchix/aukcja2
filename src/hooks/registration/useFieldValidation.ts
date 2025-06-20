@@ -214,6 +214,37 @@ export const useFieldValidation = () => {
     }
   };
 
+  // Additional validation methods that were missing
+  const validateSupervisorName = (name: string) => {
+    return name && name.length >= 2;
+  };
+
+  const checkEmailAvailability = async (email: string) => {
+    await validateEmail(email);
+  };
+
+  const validatePassword = (password: string) => {
+    return password && password.length >= 8;
+  };
+
+  const validatePhoneField = async (phone: string) => {
+    await validatePhoneNumber(phone);
+    return true;
+  };
+
+  const validateCompanyName = (name: string) => {
+    return name && name.length >= 2;
+  };
+
+  const checkBusinessRegistryAvailability = async (registryNumber: string) => {
+    // Mock implementation
+    console.log('Checking business registry availability for:', registryNumber);
+  };
+
+  const validateAddress = (address: string) => {
+    return address && address.length >= 5;
+  };
+
   return {
     emailValidation,
     phoneValidation,
@@ -221,5 +252,12 @@ export const useFieldValidation = () => {
     validateEmail,
     validatePhoneNumber,
     validateTaxId,
+    validateSupervisorName,
+    checkEmailAvailability,
+    validatePassword,
+    validatePhoneField,
+    validateCompanyName,
+    checkBusinessRegistryAvailability,
+    validateAddress,
   };
 };

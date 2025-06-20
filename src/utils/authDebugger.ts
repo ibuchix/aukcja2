@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AuthDebugInfo {
@@ -27,7 +28,9 @@ export class AuthDebugger {
     if (debugInfo.userId) {
       try {
         const { data: debugData } = await supabase.rpc('debug_auth_context');
-        debugInfo.dealerExists = debugData?.dealer_exists || false;
+        // Type assertion for RPC response
+        const response = debugData as any;
+        debugInfo.dealerExists = response?.dealer_exists || false;
       } catch (err) {
         console.warn('Could not check dealer existence:', err);
       }

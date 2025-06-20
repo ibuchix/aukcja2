@@ -17,8 +17,11 @@ export async function checkBusinessRegistryExists(businessRegistryNumber: string
       throw error;
     }
     
+    // Type assertion for RPC response
+    const response = data as any;
+    
     // Return true if the registry exists and is valid
-    return data?.valid === true && data?.exists === true;
+    return response?.valid === true && response?.exists === true;
   } catch (error) {
     // Fail silently but log the error
     console.error("Error in business registry check:", error);
