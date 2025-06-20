@@ -6,7 +6,7 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { dataTransformer } from './dataTransformer';
-import { sessionAwareClient } from './sessionAwareClient';
+import { getSessionAwareClient } from './sessionAwareClient';
 import type { Database } from '@/integrations/supabase/types';
 
 // Enhanced query builder that adds transformation while preserving authentication
@@ -300,46 +300,65 @@ export class EnhancedSupabaseClient {
     }
     
     return {
-      select: async (columns?: string, options?: { count?: 'exact' | 'planned' | 'estimated'; head?: boolean }) => {
-        // Use session-aware client to ensure JWT token forwarding
-        const sessionSafeQuery = await sessionAwareClient.createSessionAwareQuery(table);
-        
-        if (isDev) {
-          console.log(`Session-aware select query created for ${table}:`, { columns, options });
-        }
-        
-        // Create the select query with preserved authentication
-        const query = options ? sessionSafeQuery.select(columns, options) : sessionSafeQuery.select(columns);
-        return new EnhancedPostgrestFilterBuilder(query);
+      select: (columns?: string, options?: { count?: 'exact' | 'planned' | 'estimated'; head?: boolean }) => {
+        return this.createSessionAwareQueryBuilder(table, 'select', { columns, options });
       },
       
-      insert: async (data: any) => {
-        const sessionSafeQuery = await sessionAwareClient.createSessionAwareQuery(table);
+      insert: (data: any) => {
         const transformedData = this.transformer.toSnakeCaseObject(data);
-        const query = sessionSafeQuery.insert(transformedData);
-        return new EnhancedPostgrestFilterBuilder(query);
+        return this.createSessionAwareQueryBuilder(table, 'insert', { data: transformedData });
       },
       
-      update: async (data: any) => {
-        const sessionSafeQuery = await sessionAwareClient.createSessionAwareQuery(table);
+      update: (data: any) => {
         const transformedData = this.transformer.toSnakeCaseObject(data);
-        const query = sessionSafeQuery.update(transformedData);
-        return new EnhancedPostgrestFilterBuilder(query);
+        return this.createSessionAwareQueryBuilder(table, 'update', { data: transformedData });
       },
       
-      delete: async () => {
-        const sessionSafeQuery = await sessionAwareClient.createSessionAwareQuery(table);
-        const query = sessionSafeQuery.delete();
-        return new EnhancedPostgrestFilterBuilder(query);
+      delete: () => {
+        return this.createSessionAwareQueryBuilder(table, 'delete', {});
       },
 
-      upsert: async (data: any, options?: any) => {
-        const sessionSafeQuery = await sessionAwareClient.createSessionAwareQuery(table);
+      upsert: (data: any, options?: any) => {
         const transformedData = this.transformer.toSnakeCaseObject(data);
-        const query = sessionSafeQuery.upsert(transformedData, options);
-        return new EnhancedPostgrestFilterBuilder(query);
+        return this.createSessionAwareQueryBuilder(table, 'upsert', { data: transformedData, options });
       }
     };
+  }
+
+  private async createSessionAwareQueryBuilder(table: string, operation: string, params: any) {
+    const sessionAwareClient = getSessionAwareClient();
+    const query = await sessionAwareClient.createSessionAwareQuery(table);
+    
+    const isDev = process.env.NODE_ENV === 'development';
+    if (isDev) {
+      console.log(`Session-aware ${operation} query created for ${table}:`, params);
+    }
+    
+    let builtQuery;
+    
+    switch (operation) {
+      case 'select':
+        builtQuery = params.options ? 
+          query.select(params.columns, params.options) : 
+          query.select(params.columns);
+        break;
+      case 'insert':
+        builtQuery = query.insert(params.data);
+        break;
+      case 'update':
+        builtQuery = query.update(params.data);
+        break;
+      case 'delete':
+        builtQuery = query.delete();
+        break;
+      case 'upsert':
+        builtQuery = query.upsert(params.data, params.options);
+        break;
+      default:
+        throw new Error(`Unknown operation: ${operation}`);
+    }
+    
+    return new EnhancedPostgrestFilterBuilder(builtQuery);
   }
 
   /**
@@ -374,6 +393,7 @@ export class EnhancedSupabaseClient {
    * Enhanced RPC calls with session-aware authentication
    */
   async rpc(functionName: string, params?: any) {
+    const sessionAwareClient = getSessionAwareClient();
     return sessionAwareClient.rpc(functionName, params);
   }
 }

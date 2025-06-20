@@ -196,7 +196,16 @@ export function createSessionAwareClient(client: SupabaseClient<Database> = rawS
   return new SessionAwareClient(client);
 }
 
-/**
- * Global session-aware client instance
- */
-export const sessionAwareClient = createSessionAwareClient();
+// Create and export the global session-aware client instance
+// This prevents circular dependency by only creating the instance when needed
+let globalSessionAwareClient: SessionAwareClient | null = null;
+
+export const getSessionAwareClient = (): SessionAwareClient => {
+  if (!globalSessionAwareClient) {
+    globalSessionAwareClient = createSessionAwareClient();
+  }
+  return globalSessionAwareClient;
+};
+
+// Export for backwards compatibility
+export const sessionAwareClient = getSessionAwareClient();
