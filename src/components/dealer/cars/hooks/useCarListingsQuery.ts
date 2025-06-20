@@ -19,6 +19,18 @@ interface UseCarListingsQueryProps {
   dealerId?: string;
 }
 
+// Type definition for the debug_auth_context RPC response
+interface AuthDebugData {
+  auth_uid: string | null;
+  has_auth: boolean;
+  dealer_exists?: boolean;
+  dealer_id?: string;
+  dealership_name?: string;
+  is_verified?: boolean;
+  verification_status?: string;
+  error?: string;
+}
+
 export const useCarListingsQuery = ({
   filters,
   sortOption,
@@ -49,7 +61,10 @@ export const useCarListingsQuery = ({
         // STEP 0: Test authentication context directly with RPC
         if (isDev) {
           console.log('=== TESTING AUTH CONTEXT WITH RPC ===');
-          const { data: authDebugData, error: authDebugError } = await rawSupabaseClient.rpc('debug_auth_context');
+          const { data: authDebugRawData, error: authDebugError } = await rawSupabaseClient.rpc('debug_auth_context');
+          
+          // Type assertion for the RPC response
+          const authDebugData = authDebugRawData as AuthDebugData;
           
           console.log('Auth debug RPC result:', {
             data: authDebugData,
@@ -108,7 +123,8 @@ export const useCarListingsQuery = ({
           
           // Test if this is specifically an RLS issue by checking auth context again
           if (scheduleResult.error.message.includes('permission denied')) {
-            const { data: authRecheck } = await rawSupabaseClient.rpc('debug_auth_context');
+            const { data: authRecheckRaw } = await rawSupabaseClient.rpc('debug_auth_context');
+            const authRecheck = authRecheckRaw as AuthDebugData;
             console.error("Auth context during permission error:", authRecheck);
           }
           
