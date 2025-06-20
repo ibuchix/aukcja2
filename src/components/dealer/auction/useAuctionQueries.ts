@@ -28,32 +28,36 @@ export const useAuctionQueries = (dealerId: string) => {
   });
 
   // Process the data to separate into different categories - add safety checks
-  const activeAuctions = cars?.filter(car => 
-    car && 
-    typeof car === 'object' && 
-    'is_auction' in car && 
-    'auction_status' in car && 
-    car.is_auction && 
-    car.auction_status === 'active'
-  ) || [];
+  const activeAuctions = cars?.filter(car => {
+    // Add null check and proper type guard
+    if (!car || typeof car !== 'object' || 'error' in car) {
+      return false;
+    }
+    return 'is_auction' in car && 
+           'auction_status' in car && 
+           car.is_auction && 
+           car.auction_status === 'active';
+  }) || [];
   
-  const wonAuctions = cars?.filter(car => 
-    car && 
-    typeof car === 'object' && 
-    'is_auction' in car && 
-    'auction_status' in car && 
-    car.is_auction && 
-    car.auction_status === 'sold'
-  ) || [];
+  const wonAuctions = cars?.filter(car => {
+    if (!car || typeof car !== 'object' || 'error' in car) {
+      return false;
+    }
+    return 'is_auction' in car && 
+           'auction_status' in car && 
+           car.is_auction && 
+           car.auction_status === 'sold';
+  }) || [];
   
-  const lostAuctions = cars?.filter(car => 
-    car && 
-    typeof car === 'object' && 
-    'is_auction' in car && 
-    'auction_status' in car && 
-    car.is_auction && 
-    car.auction_status === 'ended'
-  ) || [];
+  const lostAuctions = cars?.filter(car => {
+    if (!car || typeof car !== 'object' || 'error' in car) {
+      return false;
+    }
+    return 'is_auction' in car && 
+           'auction_status' in car && 
+           car.is_auction && 
+           car.auction_status === 'ended';
+  }) || [];
 
   return {
     activeAuctions,

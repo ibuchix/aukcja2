@@ -59,7 +59,7 @@ export const useBidFormActions = ({
         throw new Error('Dealer profile not found. Please ensure your profile is complete.');
       }
 
-      // Add proper null checks for dealerCheck properties
+      // Add proper null checks for dealerCheck properties with type guards
       if (dealerCheck && 
           typeof dealerCheck === 'object' && 
           dealerCheck !== null &&
@@ -104,7 +104,7 @@ export const useBidFormActions = ({
       // Check the response data structure properly
       if (data && typeof data === 'object' && 'success' in data) {
         if (!data.success) {
-          const errorMsg = typeof data.error === 'string' ? data.error : 'Failed to place bid';
+          const errorMsg = typeof data.error === 'string' ? String(data.error) : 'Failed to place bid';
           console.error('Bid placement failed:', errorMsg);
           throw new Error(errorMsg);
         }

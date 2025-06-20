@@ -65,37 +65,43 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   const minimumBidIncrement = car.minimumBidIncrement || 100;
   const currentHighestBid = car.currentBid || car.reservePrice;
   
-  // Calculate auction timing status from fetched schedule data - add proper null checks
+  // Calculate auction timing status from fetched schedule data - with proper null checks
   const auctionTimingStatus = auctionScheduleData && 
     typeof auctionScheduleData === 'object' && 
     auctionScheduleData !== null &&
     'start_time' in auctionScheduleData && 
     'end_time' in auctionScheduleData && 
-    'status' in auctionScheduleData ? 
+    'status' in auctionScheduleData && 
+    typeof auctionScheduleData.start_time === 'string' &&
+    typeof auctionScheduleData.end_time === 'string' &&
+    typeof auctionScheduleData.status === 'string' ? 
     calculateAuctionTimingStatus(
-      auctionScheduleData.start_time as string,
-      auctionScheduleData.end_time as string,
-      auctionScheduleData.status as string
+      auctionScheduleData.start_time,
+      auctionScheduleData.end_time,
+      auctionScheduleData.status
     ) : 'unknown';
   
-  // Enhanced car object with auction schedule data for dealers - add proper null checks
+  // Enhanced car object with auction schedule data for dealers - with proper null checks
   const enhancedCar = {
     ...car,
     scheduleStatus: auctionScheduleData && 
       typeof auctionScheduleData === 'object' && 
       auctionScheduleData !== null &&
-      'status' in auctionScheduleData ? 
-      auctionScheduleData.status as string : undefined,
+      'status' in auctionScheduleData && 
+      typeof auctionScheduleData.status === 'string' ? 
+      auctionScheduleData.status : undefined,
     scheduleStartTime: auctionScheduleData && 
       typeof auctionScheduleData === 'object' && 
       auctionScheduleData !== null &&
-      'start_time' in auctionScheduleData ? 
-      auctionScheduleData.start_time as string : undefined,
+      'start_time' in auctionScheduleData && 
+      typeof auctionScheduleData.start_time === 'string' ? 
+      auctionScheduleData.start_time : undefined,
     scheduleEndTime: auctionScheduleData && 
       typeof auctionScheduleData === 'object' && 
       auctionScheduleData !== null &&
-      'end_time' in auctionScheduleData ? 
-      auctionScheduleData.end_time as string : undefined,
+      'end_time' in auctionScheduleData && 
+      typeof auctionScheduleData.end_time === 'string' ? 
+      auctionScheduleData.end_time : undefined,
     auctionTimingStatus
   };
   

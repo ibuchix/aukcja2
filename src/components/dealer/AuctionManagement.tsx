@@ -28,21 +28,34 @@ export const AuctionManagement = ({ dealerId }: AuctionManagementProps) => {
 
   // Type-safe conversion with fallback to empty array
   const safeActiveAuctions: Auction[] = Array.isArray(activeAuctions) 
-    ? activeAuctions.filter((auction): auction is Auction => 
-        auction && typeof auction === 'object' && 'id' in auction
-      )
+    ? activeAuctions.filter((auction: any): auction is Auction => {
+        // Check if this is a valid auction object and not a SelectQueryError
+        return auction && 
+               typeof auction === 'object' && 
+               !('error' in auction) &&
+               'id' in auction &&
+               typeof auction.id === 'string';
+      })
     : [];
 
   const safeWonAuctions: Auction[] = Array.isArray(wonAuctions) 
-    ? wonAuctions.filter((auction): auction is Auction => 
-        auction && typeof auction === 'object' && 'id' in auction
-      )
+    ? wonAuctions.filter((auction: any): auction is Auction => {
+        return auction && 
+               typeof auction === 'object' && 
+               !('error' in auction) &&
+               'id' in auction &&
+               typeof auction.id === 'string';
+      })
     : [];
 
   const safeLostAuctions: Auction[] = Array.isArray(lostAuctions) 
-    ? lostAuctions.filter((auction): auction is Auction => 
-        auction && typeof auction === 'object' && 'id' in auction
-      )
+    ? lostAuctions.filter((auction: any): auction is Auction => {
+        return auction && 
+               typeof auction === 'object' && 
+               !('error' in auction) &&
+               'id' in auction &&
+               typeof auction.id === 'string';
+      })
     : [];
 
   return (
