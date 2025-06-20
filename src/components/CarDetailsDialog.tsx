@@ -53,7 +53,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
     scheduleData.end_time &&
     scheduleData.status;
 
-  const scheduleInfo = hasValidSchedule && scheduleData ? {
+  const scheduleInfo = hasValidSchedule ? {
     startTime: scheduleData.start_time as string,
     endTime: scheduleData.end_time as string,
     status: scheduleData.status as string
