@@ -1,5 +1,4 @@
-
-import { supabase } from "@/integrations/supabase/client";
+import { rawSupabaseClient } from "@/integrations/supabase/client";
 import { AuctionFilters, Auction } from "../../types";
 import { isValidRecord, isSelectQueryError, isValidBid, safelyFilterData } from "@/utils/supabaseHelpers";
 import { decodeCursor, getCursorOperator } from "@/utils/cursorPagination";
@@ -16,8 +15,8 @@ export const buildAuctionQuery = (
   cursor: string | null,
   direction: 'next' | 'prev'
 ) => {
-  // Query to include auction schedule information - show all auctions with schedules
-  let query = supabase
+  // Use direct raw Supabase client to avoid JWT token forwarding issues
+  let query = rawSupabaseClient
     .from("cars")
     .select(`
       id,
@@ -106,7 +105,8 @@ export const fetchDealerBids = async (dealerId: string, auctionIds: string[]): P
     return [];
   }
 
-  const { data: bidsData } = await supabase
+  // Use direct raw Supabase client for consistency
+  const { data: bidsData } = await rawSupabaseClient
     .from("bids")
     .select("car_id, amount, status")
     .eq("dealer_id", dealerId)

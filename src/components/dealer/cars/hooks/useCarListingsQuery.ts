@@ -2,12 +2,11 @@
 import { useEnhancedAuthAwareQuery } from "@/utils/enhancedAuthAwareQuery";
 import { AuctionFilters } from "../../auction/types";
 import { processCarData } from "@/utils/carDataHelpers";
-import { buildLiveAuctionSchedulesQuery, buildCarsForSchedulesQuery } from "./utils/queryBuilder";
 import { mergeCarDataWithSchedules, AuctionScheduleData } from "./utils/dataHelpers";
 import { applyFilters } from "./utils/filterUtils";
 import { applySorting } from "./utils/sortUtils";
 import { applyPagination, calculatePaginationInfo } from "./utils/paginationUtils";
-import { enhancedSupabase, rawSupabaseClient } from "@/integrations/supabase/client";
+import { rawSupabaseClient } from "@/integrations/supabase/client";
 
 interface UseCarListingsQueryProps {
   filters: AuctionFilters;
@@ -53,18 +52,18 @@ export const useCarListingsQuery = ({
       sortOption, 
       searchQuery, 
       currentPage.toString(),
-      "sessionAwareQuery",
-      "authValidationFixed"
+      "simplifiedClient",
+      "directSupabaseAccess"
     ],
     queryFn: async () => {
       const isDev = process.env.NODE_ENV === 'development';
       
       if (isDev) {
-        console.log('=== SESSION-AWARE AUTHENTICATION FIX START ===');
+        console.log('=== SIMPLIFIED CLIENT AUTHENTICATION START ===');
       }
       
       try {
-        // STEP 1: Get current session explicitly and verify JWT token
+        // STEP 1: Verify current session with raw Supabase client
         const { data: sessionData, error: sessionError } = await rawSupabaseClient.auth.getSession();
         
         let sessionInfo: SessionTokenInfo = {
@@ -100,54 +99,41 @@ export const useCarListingsQuery = ({
           console.log('✅ Session verification successful:', sessionInfo);
         }
         
-        // STEP 2: Test authentication context with explicit session token
+        // STEP 2: Test authentication context to ensure JWT is working
         if (isDev) {
-          console.log('=== TESTING AUTH CONTEXT WITH SESSION TOKEN ===');
+          console.log('=== TESTING AUTH CONTEXT WITH DIRECT CLIENT ===');
         }
         
-        // Create a client instance that explicitly uses the current session
-        const sessionAwareClient = rawSupabaseClient;
-        
-        // Test the auth context with our session-aware client
-        const { data: authDebugRawData, error: authDebugError } = await sessionAwareClient.rpc('debug_auth_context');
-        
-        // Type assertion for the RPC response - convert to unknown first, then to our interface
+        const { data: authDebugRawData, error: authDebugError } = await rawSupabaseClient.rpc('debug_auth_context');
         const authDebugData = authDebugRawData as unknown as AuthDebugData;
         
         if (isDev) {
-          console.log('Auth debug RPC result with session token:', {
+          console.log('Auth debug RPC result:', {
             data: authDebugData,
             error: authDebugError?.message,
             hasError: !!authDebugError,
             sessionUserId: sessionInfo.userId,
             authContextUserId: authDebugData?.auth_uid,
-            actualDataStructure: authDebugData
           });
         }
         
         if (authDebugError) {
-          console.error('Auth debug RPC failed with session token:', authDebugError);
+          console.error('Auth debug RPC failed:', authDebugError);
           throw new Error(`Auth debug failed: ${authDebugError.message}`);
         }
         
-        // FIXED: Check for auth_uid instead of has_auth
         if (!authDebugData?.auth_uid) {
           console.error('No authentication context found despite valid session token');
-          console.error('Session info:', sessionInfo);
-          console.error('Auth debug data:', authDebugData);
-          
-          // This indicates the JWT token is not being properly forwarded
           throw new Error('Authentication context not properly forwarded to database');
         }
         
-        // FIXED: Check dealer_exists with proper boolean validation
         if (authDebugData?.dealer_exists !== true) {
           console.error('Dealer record not found for authenticated user:', authDebugData?.auth_uid);
           throw new Error('Dealer record not found - please complete your profile');
         }
         
         if (isDev) {
-          console.log('✅ Authentication verified with session token:', {
+          console.log('✅ Authentication verified with direct client:', {
             sessionUserId: sessionInfo.userId,
             authContextUserId: authDebugData.auth_uid,
             dealerId: authDebugData.dealer_id,
@@ -158,13 +144,13 @@ export const useCarListingsQuery = ({
           });
         }
         
-        // STEP 3: Use enhanced client for database queries (should now have proper auth)
+        // STEP 3: Use direct Supabase client for database queries
         if (isDev) {
-          console.log('=== USING ENHANCED CLIENT WITH VERIFIED SESSION ===');
+          console.log('=== USING DIRECT SUPABASE CLIENT ===');
         }
         
-        // Get auction schedules using enhanced client (should preserve auth context)
-        const schedulesQuery = enhancedSupabase
+        // Get auction schedules using direct client (should preserve auth context)
+        const schedulesQuery = rawSupabaseClient
           .from("auction_schedules")
           .select(`
             car_id,
@@ -180,23 +166,14 @@ export const useCarListingsQuery = ({
         const scheduleResult = await schedulesQuery;
         
         if (scheduleResult.error) {
-          console.error("=== ENHANCED CLIENT SCHEDULE QUERY ERROR ===");
+          console.error("=== DIRECT CLIENT SCHEDULE QUERY ERROR ===");
           console.error("Error details:", scheduleResult.error);
-          
-          // If we still get permission denied with enhanced client, it's an RLS issue
-          if (scheduleResult.error.message.includes('permission denied')) {
-            const { data: authRecheckRaw } = await sessionAwareClient.rpc('debug_auth_context');
-            const authRecheck = authRecheckRaw as unknown as AuthDebugData;
-            console.error("Auth context during enhanced client permission error:", authRecheck);
-            console.error("This indicates an RLS policy issue, not an auth forwarding issue");
-          }
-          
-          throw new Error(`Enhanced client query failed: ${scheduleResult.error.message}`);
+          throw new Error(`Direct client schedule query failed: ${scheduleResult.error.message}`);
         }
         
         const schedules = scheduleResult.data || [];
         if (isDev) {
-          console.log('✅ Enhanced client schedule query succeeded. Schedules found:', schedules.length);
+          console.log('✅ Direct client schedule query succeeded. Schedules found:', schedules.length);
         }
         
         // If no running schedules, return empty result
@@ -219,9 +196,9 @@ export const useCarListingsQuery = ({
           console.log('Car IDs from schedules:', carIds.length);
         }
         
-        // STEP 4: Get cars using enhanced client
+        // STEP 4: Get cars using direct client
         if (isDev) {
-          console.log('=== FETCHING CARS WITH ENHANCED CLIENT ===');
+          console.log('=== FETCHING CARS WITH DIRECT CLIENT ===');
         }
         
         if (carIds.length === 0) {
@@ -231,8 +208,8 @@ export const useCarListingsQuery = ({
           };
         }
         
-        // Use enhanced client for cars query
-        let carsQuery = enhancedSupabase
+        // Use direct client for cars query
+        let carsQuery = rawSupabaseClient
           .from("cars")
           .select(`
             id,
@@ -280,7 +257,7 @@ export const useCarListingsQuery = ({
           .in("id", carIds)
           .gt("reserve_price", 0);
         
-        // Apply filters, sorting, and pagination (these utilities should work with enhanced client)
+        // Apply filters, sorting, and pagination
         carsQuery = applyFilters(carsQuery, filters, searchQuery);
         carsQuery = applySorting(carsQuery, sortOption);
         carsQuery = applyPagination(carsQuery, currentPage, pageSize);
@@ -293,14 +270,14 @@ export const useCarListingsQuery = ({
         const carsResult = await carsQuery;
         
         if (isDev) {
-          console.log('=== ENHANCED CLIENT CARS QUERY RESULT ===');
+          console.log('=== DIRECT CLIENT CARS QUERY RESULT ===');
           console.log('Query successful. Raw data count:', carsResult.data?.length || 0);
         }
         
         if (carsResult.error) {
-          console.error("=== ENHANCED CLIENT CARS ERROR ===");
+          console.error("=== DIRECT CLIENT CARS ERROR ===");
           console.error("Error details:", carsResult.error);
-          throw new Error(`Enhanced client cars query failed: ${carsResult.error.message}`);
+          throw new Error(`Direct client cars query failed: ${carsResult.error.message}`);
         }
         
         // STEP 5: Merge car data with schedule data
@@ -327,7 +304,7 @@ export const useCarListingsQuery = ({
         const validCars = processCarData(mergedData);
         
         if (isDev) {
-          console.log('=== FINAL SESSION-AWARE RESULT ===');
+          console.log('=== FINAL SIMPLIFIED CLIENT RESULT ===');
           console.log('Valid live auction cars:', validCars.length);
           if (validCars.length > 0) {
             console.log('First processed live auction car:', {
@@ -348,7 +325,7 @@ export const useCarListingsQuery = ({
         };
       } catch (err: any) {
         const errorMessage = err.message || 'Unknown error occurred';
-        console.error("=== SESSION-AWARE QUERY ERROR ===");
+        console.error("=== SIMPLIFIED CLIENT QUERY ERROR ===");
         console.error("Error:", errorMessage);
         throw new Error(errorMessage);
       }
