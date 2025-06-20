@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -40,8 +41,9 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
 
   if (!car) return null;
 
-  // Safe access to schedule data with proper null checks
-  const hasValidSchedule = scheduleData && 
+  // Safe access to schedule data with proper null checks and type validation
+  const hasValidSchedule = Boolean(
+    scheduleData && 
     scheduleData !== null &&
     typeof scheduleData === 'object' && 
     !('error' in scheduleData) &&
@@ -50,12 +52,13 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
     'status' in scheduleData &&
     scheduleData.start_time &&
     scheduleData.end_time &&
-    scheduleData.status;
+    scheduleData.status
+  );
 
-  const scheduleInfo = hasValidSchedule ? {
-    startTime: scheduleData!.start_time as string,
-    endTime: scheduleData!.end_time as string,
-    status: scheduleData!.status as string
+  const scheduleInfo = hasValidSchedule && scheduleData ? {
+    startTime: scheduleData.start_time as string,
+    endTime: scheduleData.end_time as string,
+    status: scheduleData.status as string
   } : null;
 
   const getAuctionStatus = () => {

@@ -26,13 +26,23 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
     let updatedCount = 0;
     
     for (const car of cars) {
-      if (!car || !car.id) continue;
+      // Add comprehensive validation for car data
+      const isValidCar = Boolean(
+        car && 
+        car !== null && 
+        typeof car === 'object' && 
+        !('error' in car) && 
+        'id' in car &&
+        car.id
+      );
+
+      if (!isValidCar) continue;
       
       let needsUpdate = false;
       let updatedData: any = {};
       
-      // Check and clean images array
-      if (car.images && Array.isArray(car.images)) {
+      // Check and clean images array with safe property access
+      if ('images' in car && car.images && Array.isArray(car.images)) {
         const cleanedImages = car.images.map((img: string) => {
           if (img && img.startsWith('blob:')) {
             needsUpdate = true;
@@ -46,8 +56,8 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
         }
       }
       
-      // Check and clean required_photos object
-      if (car.required_photos && typeof car.required_photos === 'object') {
+      // Check and clean required_photos object with safe property access
+      if ('required_photos' in car && car.required_photos && typeof car.required_photos === 'object') {
         const cleanedPhotos = { ...car.required_photos };
         Object.keys(cleanedPhotos).forEach(key => {
           if (cleanedPhotos[key] && typeof cleanedPhotos[key] === 'string' && cleanedPhotos[key].startsWith('blob:')) {
@@ -61,8 +71,8 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
         }
       }
       
-      // Check and clean additional_photos
-      if (car.additional_photos && Array.isArray(car.additional_photos)) {
+      // Check and clean additional_photos with safe property access
+      if ('additional_photos' in car && car.additional_photos && Array.isArray(car.additional_photos)) {
         const cleanedAdditional = car.additional_photos.map((img: any) => {
           if (typeof img === 'string' && img.startsWith('blob:')) {
             needsUpdate = true;
@@ -76,8 +86,8 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
         }
       }
       
-      // Update the car if needed
-      if (needsUpdate && car.id) {
+      // Update the car if needed with safe property access
+      if (needsUpdate && 'id' in car && car.id) {
         const { error: updateError } = await supabase
           .from('cars')
           .update(updatedData)
