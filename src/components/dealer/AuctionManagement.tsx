@@ -10,6 +10,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AuctionTable } from "./auction/AuctionTable";
 import { useAuctionQueries } from "./auction/useAuctionQueries";
+import { Auction } from "./auction/types";
 
 interface AuctionManagementProps {
   dealerId: string;
@@ -24,6 +25,25 @@ export const AuctionManagement = ({ dealerId }: AuctionManagementProps) => {
     lostAuctions,
     loadingLost,
   } = useAuctionQueries(dealerId);
+
+  // Type-safe conversion with fallback to empty array
+  const safeActiveAuctions: Auction[] = Array.isArray(activeAuctions) 
+    ? activeAuctions.filter((auction): auction is Auction => 
+        auction && typeof auction === 'object' && 'id' in auction
+      )
+    : [];
+
+  const safeWonAuctions: Auction[] = Array.isArray(wonAuctions) 
+    ? wonAuctions.filter((auction): auction is Auction => 
+        auction && typeof auction === 'object' && 'id' in auction
+      )
+    : [];
+
+  const safeLostAuctions: Auction[] = Array.isArray(lostAuctions) 
+    ? lostAuctions.filter((auction): auction is Auction => 
+        auction && typeof auction === 'object' && 'id' in auction
+      )
+    : [];
 
   return (
     <Card>
@@ -48,21 +68,21 @@ export const AuctionManagement = ({ dealerId }: AuctionManagementProps) => {
           </TabsList>
           <TabsContent value="active" className="mt-4">
             <AuctionTable
-              auctions={activeAuctions}
+              auctions={safeActiveAuctions}
               isLoading={loadingActive}
               dealerId={dealerId}
             />
           </TabsContent>
           <TabsContent value="won" className="mt-4">
             <AuctionTable
-              auctions={wonAuctions}
+              auctions={safeWonAuctions}
               isLoading={loadingWon}
               dealerId={dealerId}
             />
           </TabsContent>
           <TabsContent value="lost" className="mt-4">
             <AuctionTable
-              auctions={lostAuctions}
+              auctions={safeLostAuctions}
               isLoading={loadingLost}
               dealerId={dealerId}
             />

@@ -59,8 +59,12 @@ export const useBidFormActions = ({
         throw new Error('Dealer profile not found. Please ensure your profile is complete.');
       }
 
-      // Add safety check for dealerCheck properties
-      if (dealerCheck && typeof dealerCheck === 'object' && 'is_verified' in dealerCheck && !dealerCheck.is_verified) {
+      // Add proper null checks for dealerCheck properties
+      if (dealerCheck && 
+          typeof dealerCheck === 'object' && 
+          dealerCheck !== null &&
+          'is_verified' in dealerCheck && 
+          !dealerCheck.is_verified) {
         console.error('Dealer not verified:', dealerCheck);
         throw new Error('Your dealer account is not verified. Please contact support.');
       }

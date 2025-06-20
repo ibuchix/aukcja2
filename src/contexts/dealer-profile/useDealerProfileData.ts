@@ -36,7 +36,7 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
         const { data: rpcData, error: rpcError } = await supabase
           .rpc('get_dealer_by_user_id', { p_user_id: userId });
         
-        if (!rpcError && rpcData) {
+        if (!rpcError && rpcData && !Array.isArray(rpcData)) {
           console.log("[Dealer Profile] RPC returned data:", rpcData);
           
           // Convert the RPC data to match DealerProfileData interface (snake_case)
