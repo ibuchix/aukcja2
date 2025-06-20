@@ -64,7 +64,7 @@ export const useBidFormActions = ({
           typeof dealerCheck !== 'object' || 
           ('error' in dealerCheck) ||
           !('is_verified' in dealerCheck) || 
-          !dealerCheck.is_verified) {
+          dealerCheck.is_verified !== true) {
         console.error('Dealer not verified:', dealerCheck);
         throw new Error('Your dealer account is not verified. Please contact support.');
       }

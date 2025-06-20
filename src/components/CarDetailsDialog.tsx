@@ -47,7 +47,10 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
     !('error' in scheduleData) &&
     'start_time' in scheduleData &&
     'end_time' in scheduleData &&
-    'status' in scheduleData;
+    'status' in scheduleData &&
+    scheduleData.start_time &&
+    scheduleData.end_time &&
+    scheduleData.status;
 
   const scheduleInfo = hasValidSchedule ? {
     startTime: scheduleData.start_time as string,

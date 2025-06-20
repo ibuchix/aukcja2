@@ -97,7 +97,7 @@ export const cleanupBlobUrls = async (): Promise<CleanupResult> => {
       }
 
       // Update the car if needed
-      if (needsUpdate) {
+      if (needsUpdate && car.id) {
         console.log(`Cleaning blob URLs for car ${car.id}`);
         
         const { error: updateError } = await supabase

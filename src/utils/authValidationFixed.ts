@@ -1,6 +1,12 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
+interface CarRecord {
+  id: string;
+  email?: string;
+  [key: string]: any;
+}
+
 export const checkEmailExists = async (email: string): Promise<boolean> => {
   try {
     // Use a simple database query instead of RPC function
