@@ -12,9 +12,7 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
     // Get all cars that might have blob URLs
     const { data: cars, error: fetchError } = await supabase
       .from('cars')
-      .select('id, images, required_photos, additional_photos')
-      .not('images', 'is', null)
-      .not('required_photos', 'is', null);
+      .select('id, images, required_photos, additional_photos');
     
     if (fetchError) {
       console.error('Error fetching cars:', fetchError);
@@ -28,6 +26,8 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
     let updatedCount = 0;
     
     for (const car of cars) {
+      if (!car || !car.id) continue;
+      
       let needsUpdate = false;
       let updatedData: any = {};
       
@@ -77,7 +77,7 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
       }
       
       // Update the car if needed
-      if (needsUpdate) {
+      if (needsUpdate && car.id) {
         const { error: updateError } = await supabase
           .from('cars')
           .update(updatedData)

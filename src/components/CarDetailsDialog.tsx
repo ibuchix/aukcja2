@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -54,9 +53,9 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
     scheduleData.status;
 
   const scheduleInfo = hasValidSchedule ? {
-    startTime: scheduleData.start_time as string,
-    endTime: scheduleData.end_time as string,
-    status: scheduleData.status as string
+    startTime: scheduleData!.start_time as string,
+    endTime: scheduleData!.end_time as string,
+    status: scheduleData!.status as string
   } : null;
 
   const getAuctionStatus = () => {

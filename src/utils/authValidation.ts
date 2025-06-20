@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Shared validation utilities for authentication
@@ -50,7 +51,7 @@ export const checkAccountExists = async (email: string, isRegistration: boolean 
   console.log(`Checking if account exists with email: ${normalizedEmail}, isRegistration: ${isRegistration}`);
   
   try {
-    // For dealer registration, use role-specific check
+    // For dealer registration, use the correct RPC function
     if (isRegistration) {
       const { data, error } = await fetch(`https://sdvakfhmoaoucmhbhwvy.supabase.co/functions/v1/dealer-auth`, {
         method: 'POST',
@@ -75,15 +76,22 @@ export const checkAccountExists = async (email: string, isRegistration: boolean 
         }
       }
       
-      // Fallback to database function
+      // Fallback to using check_email_exists function (corrected name)
       const { data: dbData, error: dbError } = await supabase.rpc(
-        "check_email_exists_for_dealer_role",
-        { p_email: normalizedEmail }
+        "check_email_exists",
+        { email_to_check: normalizedEmail }
       );
       
       if (!dbError && dbData) {
-        console.log("check_email_exists_for_dealer_role result:", dbData);
-        return !!dbData.exists;
+        console.log("check_email_exists result:", dbData);
+        // Handle different response formats from the RPC function
+        if (typeof dbData === 'boolean') {
+          return dbData;
+        } else if (typeof dbData === 'object' && dbData !== null && 'exists' in dbData) {
+          return !!dbData.exists;
+        } else if (typeof dbData === 'number') {
+          return dbData > 0;
+        }
       }
     } else {
       // For login or other scenarios, use general email exists check

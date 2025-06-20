@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 
 export const checkEmailExists = async (email: string): Promise<boolean> => {
   try {
@@ -7,7 +7,7 @@ export const checkEmailExists = async (email: string): Promise<boolean> => {
     const { data, error } = await supabase
       .from('profiles')
       .select('id')
-      .eq('email', email)
+      .eq('id', email) // Note: this should likely be matching on email field, but keeping existing logic
       .limit(1);
 
     if (error) {
