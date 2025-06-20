@@ -27,10 +27,33 @@ export const useAuctionQueries = (dealerId: string) => {
     gcTime: 300000, // 5 minutes
   });
 
-  // Process the data to separate into different categories
-  const activeAuctions = cars?.filter(car => car.is_auction && car.auction_status === 'active') || [];
-  const wonAuctions = cars?.filter(car => car.is_auction && car.auction_status === 'sold') || [];
-  const lostAuctions = cars?.filter(car => car.is_auction && car.auction_status === 'ended') || [];
+  // Process the data to separate into different categories - add safety checks
+  const activeAuctions = cars?.filter(car => 
+    car && 
+    typeof car === 'object' && 
+    'is_auction' in car && 
+    'auction_status' in car && 
+    car.is_auction && 
+    car.auction_status === 'active'
+  ) || [];
+  
+  const wonAuctions = cars?.filter(car => 
+    car && 
+    typeof car === 'object' && 
+    'is_auction' in car && 
+    'auction_status' in car && 
+    car.is_auction && 
+    car.auction_status === 'sold'
+  ) || [];
+  
+  const lostAuctions = cars?.filter(car => 
+    car && 
+    typeof car === 'object' && 
+    'is_auction' in car && 
+    'auction_status' in car && 
+    car.is_auction && 
+    car.auction_status === 'ended'
+  ) || [];
 
   return {
     activeAuctions,

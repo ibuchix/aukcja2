@@ -65,20 +65,27 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   const minimumBidIncrement = car.minimumBidIncrement || 100;
   const currentHighestBid = car.currentBid || car.reservePrice;
   
-  // Calculate auction timing status from fetched schedule data
-  const auctionTimingStatus = auctionScheduleData ? 
+  // Calculate auction timing status from fetched schedule data - add safety checks
+  const auctionTimingStatus = auctionScheduleData && 
+    typeof auctionScheduleData === 'object' && 
+    'start_time' in auctionScheduleData && 
+    'end_time' in auctionScheduleData && 
+    'status' in auctionScheduleData ? 
     calculateAuctionTimingStatus(
       auctionScheduleData.start_time,
       auctionScheduleData.end_time,
       auctionScheduleData.status
     ) : 'unknown';
   
-  // Enhanced car object with auction schedule data for dealers
+  // Enhanced car object with auction schedule data for dealers - add safety checks
   const enhancedCar = {
     ...car,
-    scheduleStatus: auctionScheduleData?.status,
-    scheduleStartTime: auctionScheduleData?.start_time,
-    scheduleEndTime: auctionScheduleData?.end_time,
+    scheduleStatus: auctionScheduleData && typeof auctionScheduleData === 'object' && 'status' in auctionScheduleData ? 
+      auctionScheduleData.status : undefined,
+    scheduleStartTime: auctionScheduleData && typeof auctionScheduleData === 'object' && 'start_time' in auctionScheduleData ? 
+      auctionScheduleData.start_time : undefined,
+    scheduleEndTime: auctionScheduleData && typeof auctionScheduleData === 'object' && 'end_time' in auctionScheduleData ? 
+      auctionScheduleData.end_time : undefined,
     auctionTimingStatus
   };
   

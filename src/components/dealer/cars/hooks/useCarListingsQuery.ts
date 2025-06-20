@@ -297,7 +297,7 @@ export const useCarListingsQuery = ({
             is_manually_controlled: schedule.is_manually_controlled
           }));
         
-        const mergedData = mergeCarDataWithScheduls(rawCars, typedSchedules);
+        const mergedData = mergeCarDataWithSchedules(rawCars, typedSchedules);
         
         // Process the merged results
         const validCars = processCarData(mergedData);

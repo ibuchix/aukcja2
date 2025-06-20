@@ -59,7 +59,8 @@ export const useBidFormActions = ({
         throw new Error('Dealer profile not found. Please ensure your profile is complete.');
       }
 
-      if (!dealerCheck.is_verified) {
+      // Add safety check for dealerCheck properties
+      if (dealerCheck && typeof dealerCheck === 'object' && 'is_verified' in dealerCheck && !dealerCheck.is_verified) {
         console.error('Dealer not verified:', dealerCheck);
         throw new Error('Your dealer account is not verified. Please contact support.');
       }
@@ -99,8 +100,9 @@ export const useBidFormActions = ({
       // Check the response data structure properly
       if (data && typeof data === 'object' && 'success' in data) {
         if (!data.success) {
-          console.error('Bid placement failed:', data.error);
-          throw new Error(data.error || 'Failed to place bid');
+          const errorMsg = typeof data.error === 'string' ? data.error : 'Failed to place bid';
+          console.error('Bid placement failed:', errorMsg);
+          throw new Error(errorMsg);
         }
 
         console.log('Bid placed successfully:', data);
