@@ -87,7 +87,7 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
       }
       
       // Update the car if needed with safe property access
-      if (needsUpdate && 'id' in car && car.id) {
+      if (needsUpdate && 'id' in car && car.id && typeof car.id === 'string') {
         const { error: updateError } = await supabase
           .from('cars')
           .update(updatedData)
