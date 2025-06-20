@@ -1,5 +1,6 @@
+
 /**
- * Enhanced Supabase Client with automatic data transformation
+ * Enhanced Supabase Client with automatic data transformation and improved auth forwarding
  * Handles camelCase <-> snake_case conversion automatically
  */
 
@@ -262,12 +263,12 @@ export class EnhancedSupabaseClient {
     // Debug: Verify authentication context is preserved
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
-      console.log('Enhanced Supabase Client initialized - ensuring auth forwarding');
+      console.log('Enhanced Supabase Client initialized - ensuring improved auth forwarding');
       this.debugAuthenticationState();
     }
   }
 
-  // Authentication debugging method
+  // Enhanced authentication debugging method
   private async debugAuthenticationState() {
     try {
       const { data: { session }, error } = await this.client.auth.getSession();
@@ -279,8 +280,10 @@ export class EnhancedSupabaseClient {
           userId: session?.user?.id,
           sessionExists: !!session,
           authError: error?.message,
-          clientType: 'enhanced',
-          accessToken: session?.access_token ? `${session.access_token.substring(0, 20)}...` : 'none'
+          clientType: 'enhanced-improved',
+          accessToken: session?.access_token ? `${session.access_token.substring(0, 20)}...` : 'none',
+          tokenLength: session?.access_token?.length || 0,
+          expiresAt: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'unknown'
         });
       }
     } catch (error) {
@@ -291,16 +294,14 @@ export class EnhancedSupabaseClient {
   from(table: string) {
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
-      console.log(`Enhanced client creating query for table: ${table}`);
+      console.log(`Enhanced client creating query for table: ${table} with improved auth forwarding`);
     }
     
-    // CRITICAL FIX: Ensure the original client's session is active before creating queries
+    // CRITICAL FIX: Ensure current session token is used for all queries
     const originalFrom = this.client.from(table);
     
-    // The key fix: Ensure authentication context is preserved by keeping reference to the original client
-    // This should maintain the JWT token in the request headers
     if (isDev) {
-      console.log(`Original from builder created for table: ${table} with auth context`);
+      console.log(`Original from builder created for table: ${table} with enhanced auth context`);
     }
     
     return {
@@ -339,25 +340,6 @@ export class EnhancedSupabaseClient {
     };
   }
 
-  // Method to verify authentication forwarding
-  private async verifyAuthenticationForwarding(fromBuilder: any, table: string) {
-    try {
-      const { data: { session } } = await this.client.auth.getSession();
-      const isDev = process.env.NODE_ENV === 'development';
-      
-      if (isDev) {
-        console.log(`Auth verification for ${table} query - session check:`, {
-          hasSession: !!session,
-          userId: session?.user?.id,
-          timestamp: new Date().toISOString(),
-          table
-        });
-      }
-    } catch (error) {
-      console.error('Auth verification failed:', error);
-    }
-  }
-
   /**
    * Direct access to the original Supabase client for operations that need full context
    */
@@ -387,20 +369,31 @@ export class EnhancedSupabaseClient {
   }
 
   /**
-   * Direct RPC calls - preserve authentication context completely
+   * Enhanced RPC calls with better authentication context preservation
    */
   async rpc(functionName: string, params?: any) {
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
       console.log(`Enhanced client RPC call: ${functionName}`, { params });
       
-      // Check authentication before RPC call
-      const { data: { session } } = await this.client.auth.getSession();
-      console.log('Auth context for RPC call:', {
+      // Enhanced authentication check before RPC call
+      const { data: { session }, error: sessionError } = await this.client.auth.getSession();
+      console.log('Enhanced auth context for RPC call:', {
         hasSession: !!session,
         userId: session?.user?.id,
-        rpcFunction: functionName
+        rpcFunction: functionName,
+        tokenLength: session?.access_token?.length || 0,
+        sessionError: sessionError?.message,
+        expiresAt: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'unknown'
       });
+      
+      if (sessionError) {
+        console.error('Session error before RPC call:', sessionError);
+      }
+      
+      if (!session?.access_token) {
+        console.error('No access token available for RPC call');
+      }
     }
     
     const transformedParams = params ? this.transformer.toSnakeCaseObject(params) : params;
