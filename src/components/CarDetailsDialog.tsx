@@ -65,16 +65,19 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   const minimumBidIncrement = car.minimumBidIncrement || 100;
   const currentHighestBid = car.currentBid || car.reservePrice;
   
-  // Calculate auction timing status from fetched schedule data - with proper null checks
-  const auctionTimingStatus = auctionScheduleData &&
-    typeof auctionScheduleData === 'object' &&
-    auctionScheduleData !== null &&
+  // Safe check for auction schedule data with proper type guards
+  const hasValidSchedule = auctionScheduleData && 
+    typeof auctionScheduleData === 'object' && 
+    !Array.isArray(auctionScheduleData) &&
     'start_time' in auctionScheduleData &&
     'end_time' in auctionScheduleData &&
     'status' in auctionScheduleData &&
     typeof auctionScheduleData.start_time === 'string' &&
     typeof auctionScheduleData.end_time === 'string' &&
-    typeof auctionScheduleData.status === 'string'
+    typeof auctionScheduleData.status === 'string';
+  
+  // Calculate auction timing status from fetched schedule data - with proper null checks
+  const auctionTimingStatus = hasValidSchedule
     ? calculateAuctionTimingStatus(
         auctionScheduleData.start_time,
         auctionScheduleData.end_time,
@@ -85,27 +88,9 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   // Enhanced car object with auction schedule data for dealers - with proper null checks
   const enhancedCar = {
     ...car,
-    scheduleStatus: auctionScheduleData &&
-      typeof auctionScheduleData === 'object' &&
-      auctionScheduleData !== null &&
-      'status' in auctionScheduleData &&
-      typeof auctionScheduleData.status === 'string'
-      ? auctionScheduleData.status
-      : undefined,
-    scheduleStartTime: auctionScheduleData &&
-      typeof auctionScheduleData === 'object' &&
-      auctionScheduleData !== null &&
-      'start_time' in auctionScheduleData &&
-      typeof auctionScheduleData.start_time === 'string'
-      ? auctionScheduleData.start_time
-      : undefined,
-    scheduleEndTime: auctionScheduleData &&
-      typeof auctionScheduleData === 'object' &&
-      auctionScheduleData !== null &&
-      'end_time' in auctionScheduleData &&
-      typeof auctionScheduleData.end_time === 'string'
-      ? auctionScheduleData.end_time
-      : undefined,
+    scheduleStatus: hasValidSchedule ? auctionScheduleData.status : undefined,
+    scheduleStartTime: hasValidSchedule ? auctionScheduleData.start_time : undefined,
+    scheduleEndTime: hasValidSchedule ? auctionScheduleData.end_time : undefined,
     auctionTimingStatus
   };
   

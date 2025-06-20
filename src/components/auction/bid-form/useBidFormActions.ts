@@ -60,11 +60,7 @@ export const useBidFormActions = ({
       }
 
       // Add proper null checks for dealerCheck properties with type guards
-      if (dealerCheck &&
-          typeof dealerCheck === 'object' &&
-          dealerCheck !== null &&
-          'is_verified' in dealerCheck &&
-          !dealerCheck.is_verified) {
+      if (dealerCheck && !dealerCheck.is_verified) {
         console.error('Dealer not verified:', dealerCheck);
         throw new Error('Your dealer account is not verified. Please contact support.');
       }

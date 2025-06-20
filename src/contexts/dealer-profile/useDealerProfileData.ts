@@ -39,21 +39,24 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
         if (!rpcError && rpcData && typeof rpcData === 'object' && !Array.isArray(rpcData)) {
           console.log("[Dealer Profile] RPC returned data:", rpcData);
           
+          // Safe type conversion with proper checks
+          const rawData = rpcData as Record<string, any>;
+          
           // Convert the RPC data to match DealerProfileData interface (snake_case)
           const transformedData: DealerProfileData = {
-            id: (rpcData as any).id || '',
-            user_id: (rpcData as any).user_id || (rpcData as any).userId || '',
-            supervisor_name: (rpcData as any).supervisor_name || (rpcData as any).supervisorName || '',
-            dealership_name: (rpcData as any).dealership_name || (rpcData as any).dealershipName || '',
-            address: (rpcData as any).address || '',
-            license_number: (rpcData as any).license_number || (rpcData as any).licenseNumber || '',
-            tax_id: (rpcData as any).tax_id || (rpcData as any).taxId || '',
-            business_registry_number: (rpcData as any).business_registry_number || (rpcData as any).businessRegistryNumber || '',
-            verification_status: (rpcData as any).verification_status || (rpcData as any).verificationStatus || 'pending',
-            is_verified: (rpcData as any).is_verified || (rpcData as any).isVerified || false,
-            created_at: (rpcData as any).created_at || (rpcData as any).createdAt || '',
-            updated_at: (rpcData as any).updated_at || (rpcData as any).updatedAt || '',
-            needs_recovery: (rpcData as any).needs_recovery || (rpcData as any).needsRecovery || false
+            id: rawData.id || '',
+            user_id: rawData.user_id || rawData.userId || '',
+            supervisor_name: rawData.supervisor_name || rawData.supervisorName || '',
+            dealership_name: rawData.dealership_name || rawData.dealershipName || '',
+            address: rawData.address || '',
+            license_number: rawData.license_number || rawData.licenseNumber || '',
+            tax_id: rawData.tax_id || rawData.taxId || '',
+            business_registry_number: rawData.business_registry_number || rawData.businessRegistryNumber || '',
+            verification_status: rawData.verification_status || rawData.verificationStatus || 'pending',
+            is_verified: rawData.is_verified || rawData.isVerified || false,
+            created_at: rawData.created_at || rawData.createdAt || '',
+            updated_at: rawData.updated_at || rawData.updatedAt || '',
+            needs_recovery: rawData.needs_recovery || rawData.needsRecovery || false
           };
           
           setProfileData(transformedData);

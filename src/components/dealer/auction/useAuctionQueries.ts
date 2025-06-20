@@ -33,36 +33,43 @@ export const useAuctionQueries = (dealerId: string) => {
     if (!car || typeof car !== 'object' || 'error' in car) {
       return false;
     }
-    return car &&
-           typeof car === 'object' &&
-           'is_auction' in car && 
-           'auction_status' in car && 
-           car.is_auction && 
-           car.auction_status === 'active';
+    
+    // Type assertion after null check
+    const typedCar = car as any;
+    return typedCar &&
+           typeof typedCar === 'object' &&
+           'is_auction' in typedCar && 
+           'auction_status' in typedCar && 
+           typedCar.is_auction && 
+           typedCar.auction_status === 'active';
   }) || [];
   
   const wonAuctions = cars?.filter(car => {
     if (!car || typeof car !== 'object' || 'error' in car) {
       return false;
     }
-    return car &&
-           typeof car === 'object' &&
-           'is_auction' in car && 
-           'auction_status' in car && 
-           car.is_auction && 
-           car.auction_status === 'sold';
+    
+    const typedCar = car as any;
+    return typedCar &&
+           typeof typedCar === 'object' &&
+           'is_auction' in typedCar && 
+           'auction_status' in typedCar && 
+           typedCar.is_auction && 
+           typedCar.auction_status === 'sold';
   }) || [];
   
   const lostAuctions = cars?.filter(car => {
     if (!car || typeof car !== 'object' || 'error' in car) {
       return false;
     }
-    return car &&
-           typeof car === 'object' &&
-           'is_auction' in car && 
-           'auction_status' in car && 
-           car.is_auction && 
-           car.auction_status === 'ended';
+    
+    const typedCar = car as any;
+    return typedCar &&
+           typeof typedCar === 'object' &&
+           'is_auction' in typedCar && 
+           'auction_status' in typedCar && 
+           typedCar.is_auction && 
+           typedCar.auction_status === 'ended';
   }) || [];
 
   return {
