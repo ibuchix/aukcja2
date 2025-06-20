@@ -1,4 +1,3 @@
-
 /**
  * Session-aware Supabase client that ensures JWT token forwarding
  * Fixes authentication context issues for database queries
@@ -198,14 +197,14 @@ export function createSessionAwareClient(client: SupabaseClient<Database>) {
 // Global session-aware client instance - lazy initialization to prevent circular deps
 let globalSessionAwareClient: SessionAwareClient | null = null;
 
-export const getSessionAwareClient = (): SessionAwareClient => {
+export const getSessionAwareClient = async (): Promise<SessionAwareClient> => {
   if (!globalSessionAwareClient) {
-    // Lazy import to prevent circular dependency
-    const { rawSupabaseClient } = require('@/integrations/supabase/client');
+    // Use dynamic import to prevent circular dependency
+    const { rawSupabaseClient } = await import('@/integrations/supabase/client');
     globalSessionAwareClient = createSessionAwareClient(rawSupabaseClient);
   }
   return globalSessionAwareClient;
 };
 
-// Export for backwards compatibility
+// Export for backwards compatibility - but this needs to be async now
 export const sessionAwareClient = getSessionAwareClient();
