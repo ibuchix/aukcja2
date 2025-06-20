@@ -39,7 +39,7 @@ export const cleanupBlobUrls = async (): Promise<CleanupResult> => {
 
     for (const car of cars) {
       // Type guard to ensure car is valid
-      if (!car || typeof car !== 'object' || 'error' in car) {
+      if (!car || typeof car !== 'object' || 'error' in car || !car.id) {
         continue;
       }
 
@@ -97,7 +97,7 @@ export const cleanupBlobUrls = async (): Promise<CleanupResult> => {
       }
 
       // Update the car if needed
-      if (needsUpdate && 'id' in car) {
+      if (needsUpdate) {
         console.log(`Cleaning blob URLs for car ${car.id}`);
         
         const { error: updateError } = await supabase
