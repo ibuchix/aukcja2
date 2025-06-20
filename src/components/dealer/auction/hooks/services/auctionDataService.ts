@@ -15,7 +15,7 @@ export const buildAuctionQuery = (
   cursor: string | null,
   direction: 'next' | 'prev'
 ) => {
-  // Use direct raw Supabase client to avoid JWT token forwarding issues
+  // Use direct raw Supabase client for proper JWT token forwarding
   let query = rawSupabaseClient
     .from("cars")
     .select(`
@@ -41,8 +41,8 @@ export const buildAuctionQuery = (
     `)
     .eq('auction_status', 'active')
     .eq('is_auction', true)
-    // Show all auction schedules regardless of status to include ended auctions
-    .in('auction_schedules.status', ['active', 'running', 'ended', 'scheduled']);
+    // Use correct status values that match the database schema
+    .in('auction_schedules.status', ['running', 'scheduled', 'completed']);
 
   // Apply search
   if (searchQuery) {
