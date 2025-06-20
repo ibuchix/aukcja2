@@ -5,7 +5,6 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { rawSupabaseClient } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 
 interface SessionAwareQueryOptions {
@@ -192,17 +191,18 @@ export class SessionAwareClient {
 /**
  * Create a session-aware client instance
  */
-export function createSessionAwareClient(client: SupabaseClient<Database> = rawSupabaseClient) {
+export function createSessionAwareClient(client: SupabaseClient<Database>) {
   return new SessionAwareClient(client);
 }
 
-// Create and export the global session-aware client instance
-// This prevents circular dependency by only creating the instance when needed
+// Global session-aware client instance - lazy initialization to prevent circular deps
 let globalSessionAwareClient: SessionAwareClient | null = null;
 
 export const getSessionAwareClient = (): SessionAwareClient => {
   if (!globalSessionAwareClient) {
-    globalSessionAwareClient = createSessionAwareClient();
+    // Lazy import to prevent circular dependency
+    const { rawSupabaseClient } = require('@/integrations/supabase/client');
+    globalSessionAwareClient = createSessionAwareClient(rawSupabaseClient);
   }
   return globalSessionAwareClient;
 };
