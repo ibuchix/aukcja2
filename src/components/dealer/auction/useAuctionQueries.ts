@@ -47,18 +47,18 @@ export const useAuctionQueries = (dealerId: string) => {
     gcTime: 300000, // 5 minutes,
   });
 
-  // Process the data to separate into different categories with proper null checks
-  const activeAuctions = (cars?.filter((car) => {
+  // Process the data to separate into different categories with proper type narrowing
+  const activeAuctions = cars?.filter((car): car is ValidCarData => {
     return isValidCar(car) && car.is_auction === true && car.auction_status === 'active';
-  }) || []) as ValidCarData[];
+  }) || [];
   
-  const wonAuctions = (cars?.filter((car) => {
+  const wonAuctions = cars?.filter((car): car is ValidCarData => {
     return isValidCar(car) && car.is_auction === true && car.auction_status === 'sold';
-  }) || []) as ValidCarData[];
+  }) || [];
   
-  const lostAuctions = (cars?.filter((car) => {
+  const lostAuctions = cars?.filter((car): car is ValidCarData => {
     return isValidCar(car) && car.is_auction === true && car.auction_status === 'ended';
-  }) || []) as ValidCarData[];
+  }) || [];
 
   return {
     activeAuctions,
