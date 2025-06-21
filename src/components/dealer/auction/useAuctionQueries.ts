@@ -49,27 +49,15 @@ export const useAuctionQueries = (dealerId: string) => {
 
   // Process the data to separate into different categories with proper null checks
   const activeAuctions = cars?.filter((car): car is ValidCarData => {
-    if (!isValidCar(car)) {
-      return false;
-    }
-    
-    return car.is_auction === true && car.auction_status === 'active';
+    return isValidCar(car) && car.is_auction === true && car.auction_status === 'active';
   }) || [];
   
   const wonAuctions = cars?.filter((car): car is ValidCarData => {
-    if (!isValidCar(car)) {
-      return false;
-    }
-    
-    return car.is_auction === true && car.auction_status === 'sold';
+    return isValidCar(car) && car.is_auction === true && car.auction_status === 'sold';
   }) || [];
   
   const lostAuctions = cars?.filter((car): car is ValidCarData => {
-    if (!isValidCar(car)) {
-      return false;
-    }
-    
-    return car.is_auction === true && car.auction_status === 'ended';
+    return isValidCar(car) && car.is_auction === true && car.auction_status === 'ended';
   }) || [];
 
   return {
