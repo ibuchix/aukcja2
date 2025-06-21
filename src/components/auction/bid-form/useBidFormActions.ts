@@ -59,12 +59,14 @@ export const useBidFormActions = ({
         throw new Error('Dealer profile not found. Please ensure your profile is complete.');
       }
 
-      // Safe null checking for dealerCheck
-      if (!dealerCheck || 
-          typeof dealerCheck !== 'object' || 
-          'error' in dealerCheck ||
-          !('is_verified' in dealerCheck) || 
-          dealerCheck.is_verified !== true) {
+      // Type guard to ensure dealerCheck is not null and has the required properties
+      if (dealerCheck && 
+          typeof dealerCheck === 'object' && 
+          !('error' in dealerCheck) &&
+          'is_verified' in dealerCheck && 
+          dealerCheck.is_verified === true) {
+        // Dealer is verified, continue with bid placement
+      } else {
         console.error('Dealer not verified:', dealerCheck);
         throw new Error('Your dealer account is not verified. Please contact support.');
       }

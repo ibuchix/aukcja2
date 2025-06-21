@@ -26,7 +26,7 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
     let updatedCount = 0;
     
     for (const car of cars) {
-      // Comprehensive null check
+      // Type guard to ensure car is valid
       if (!car || 
           car === null || 
           typeof car !== 'object' || 

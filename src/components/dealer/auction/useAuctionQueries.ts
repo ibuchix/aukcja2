@@ -30,7 +30,7 @@ export const useAuctionQueries = (dealerId: string) => {
 
   // Process the data to separate into different categories with proper null checks
   const activeAuctions = cars?.filter(car => {
-    // Comprehensive null check
+    // Type guard to ensure car is valid
     if (!car || 
         car === null || 
         typeof car !== 'object' || 
@@ -41,14 +41,11 @@ export const useAuctionQueries = (dealerId: string) => {
     }
     
     // Safe property access after validation
-    return Boolean(
-      car.is_auction === true && 
-      car.auction_status === 'active'
-    );
+    return car.is_auction === true && car.auction_status === 'active';
   }) || [];
   
   const wonAuctions = cars?.filter(car => {
-    // Comprehensive null check
+    // Type guard to ensure car is valid
     if (!car || 
         car === null || 
         typeof car !== 'object' || 
@@ -59,14 +56,11 @@ export const useAuctionQueries = (dealerId: string) => {
     }
     
     // Safe property access after validation
-    return Boolean(
-      car.is_auction === true && 
-      car.auction_status === 'sold'
-    );
+    return car.is_auction === true && car.auction_status === 'sold';
   }) || [];
   
   const lostAuctions = cars?.filter(car => {
-    // Comprehensive null check
+    // Type guard to ensure car is valid
     if (!car || 
         car === null || 
         typeof car !== 'object' || 
@@ -77,10 +71,7 @@ export const useAuctionQueries = (dealerId: string) => {
     }
     
     // Safe property access after validation
-    return Boolean(
-      car.is_auction === true && 
-      car.auction_status === 'ended'
-    );
+    return car.is_auction === true && car.auction_status === 'ended';
   }) || [];
 
   return {
