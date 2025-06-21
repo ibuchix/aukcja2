@@ -1,16 +1,39 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+interface CleanupResult {
+  success: boolean;
+  message: string;
+}
+
+// Type guard for car data
+interface ValidCarData {
+  id: string;
+  images?: string[] | null;
+  required_photos?: Record<string, any> | null;
+  additional_photos?: any[] | null;
+  [key: string]: any;
+}
+
+function isValidCar(car: any): car is ValidCarData {
+  return car && 
+         car !== null &&
+         typeof car === 'object' && 
+         !('error' in car) && 
+         'id' in car && 
+         typeof car.id === 'string';
+}
+
 /**
  * Function to clean up blob URLs in the database
  * This should be run once to fix existing data
  */
-export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; message: string }> => {
+export const cleanupBlobUrlsInDatabase = async (): Promise<CleanupResult> => {
   try {
     console.log('Starting blob URL cleanup...');
     
     // Get all cars that might have blob URLs
-    const { data: cars, error: fetchError } = await supabase
+    const { data: carsData, error: fetchError } = await supabase
       .from('cars')
       .select('id, images, required_photos, additional_photos');
     
@@ -19,28 +42,23 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
       return { success: false, message: `Failed to fetch cars: ${fetchError.message}` };
     }
     
-    if (!cars || cars.length === 0) {
+    if (!carsData || carsData.length === 0) {
       return { success: true, message: 'No cars found with image data' };
     }
     
     let updatedCount = 0;
     
-    for (const car of cars) {
-      // Type guard to ensure car is valid
-      if (!car || 
-          car === null || 
-          typeof car !== 'object' || 
-          'error' in car || 
-          !('id' in car) || 
-          !car.id) {
+    for (const carData of carsData) {
+      if (!isValidCar(carData)) {
         continue;
       }
       
+      const car = carData; // Now TypeScript knows this is ValidCarData
       let needsUpdate = false;
       let updatedData: any = {};
       
       // Check and clean images array with safe property access
-      if ('images' in car && car.images && Array.isArray(car.images)) {
+      if (car.images && Array.isArray(car.images)) {
         const cleanedImages = car.images.map((img: string) => {
           if (img && img.startsWith('blob:')) {
             needsUpdate = true;
@@ -55,7 +73,7 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
       }
       
       // Check and clean required_photos object with safe property access
-      if ('required_photos' in car && car.required_photos && typeof car.required_photos === 'object') {
+      if (car.required_photos && typeof car.required_photos === 'object') {
         const cleanedPhotos = { ...car.required_photos };
         Object.keys(cleanedPhotos).forEach(key => {
           if (cleanedPhotos[key] && typeof cleanedPhotos[key] === 'string' && cleanedPhotos[key].startsWith('blob:')) {
@@ -70,7 +88,7 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
       }
       
       // Check and clean additional_photos with safe property access
-      if ('additional_photos' in car && car.additional_photos && Array.isArray(car.additional_photos)) {
+      if (car.additional_photos && Array.isArray(car.additional_photos)) {
         const cleanedAdditional = car.additional_photos.map((img: any) => {
           if (typeof img === 'string' && img.startsWith('blob:')) {
             needsUpdate = true;
@@ -85,7 +103,7 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
       }
       
       // Update the car if needed with safe property access
-      if (needsUpdate && car.id && typeof car.id === 'string') {
+      if (needsUpdate && car.id) {
         const { error: updateError } = await supabase
           .from('cars')
           .update(updatedData)
@@ -102,7 +120,7 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
     
     return { 
       success: true, 
-      message: `Successfully cleaned blob URLs from ${updatedCount} cars out of ${cars.length} total cars` 
+      message: `Successfully cleaned blob URLs from ${updatedCount} cars out of ${carsData.length} total cars` 
     };
     
   } catch (error) {

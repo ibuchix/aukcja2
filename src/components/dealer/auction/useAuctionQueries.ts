@@ -3,6 +3,25 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AuctionFilters } from "./types";
 
+// Type guard for car data
+interface ValidCarData {
+  id: string;
+  is_auction: boolean;
+  auction_status: string;
+  [key: string]: any;
+}
+
+function isValidCar(car: any): car is ValidCarData {
+  return car && 
+         car !== null && 
+         typeof car === 'object' && 
+         !('error' in car) && 
+         'id' in car && 
+         car.id &&
+         'is_auction' in car &&
+         'auction_status' in car;
+}
+
 export const useAuctionQueries = (dealerId: string) => {
   const { data: cars, isLoading, error } = useQuery({
     queryKey: ["auctionListings", dealerId],
@@ -29,48 +48,27 @@ export const useAuctionQueries = (dealerId: string) => {
   });
 
   // Process the data to separate into different categories with proper null checks
-  const activeAuctions = cars?.filter(car => {
-    // Type guard to ensure car is valid
-    if (!car || 
-        car === null || 
-        typeof car !== 'object' || 
-        'error' in car || 
-        !('id' in car) || 
-        !car.id) {
+  const activeAuctions = cars?.filter((car): car is ValidCarData => {
+    if (!isValidCar(car)) {
       return false;
     }
     
-    // Safe property access after validation
     return car.is_auction === true && car.auction_status === 'active';
   }) || [];
   
-  const wonAuctions = cars?.filter(car => {
-    // Type guard to ensure car is valid
-    if (!car || 
-        car === null || 
-        typeof car !== 'object' || 
-        'error' in car || 
-        !('id' in car) || 
-        !car.id) {
+  const wonAuctions = cars?.filter((car): car is ValidCarData => {
+    if (!isValidCar(car)) {
       return false;
     }
     
-    // Safe property access after validation
     return car.is_auction === true && car.auction_status === 'sold';
   }) || [];
   
-  const lostAuctions = cars?.filter(car => {
-    // Type guard to ensure car is valid
-    if (!car || 
-        car === null || 
-        typeof car !== 'object' || 
-        'error' in car || 
-        !('id' in car) || 
-        !car.id) {
+  const lostAuctions = cars?.filter((car): car is ValidCarData => {
+    if (!isValidCar(car)) {
       return false;
     }
     
-    // Safe property access after validation
     return car.is_auction === true && car.auction_status === 'ended';
   }) || [];
 

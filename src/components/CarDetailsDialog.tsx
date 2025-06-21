@@ -14,6 +14,26 @@ interface CarDetailsDialogProps {
   onClose: () => void;
 }
 
+// Type guard for schedule data
+interface ValidScheduleData {
+  start_time: string;
+  end_time: string;
+  status: string;
+}
+
+function isValidScheduleData(data: any): data is ValidScheduleData {
+  return data && 
+         typeof data === 'object' && 
+         data !== null &&
+         !('error' in data) && 
+         'start_time' in data && 
+         'end_time' in data && 
+         'status' in data &&
+         typeof data.start_time === 'string' &&
+         typeof data.end_time === 'string' &&
+         typeof data.status === 'string';
+}
+
 const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -41,21 +61,12 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
 
   if (!car) return null;
 
-  // Safe access to schedule data with comprehensive null checks
-  const scheduleInfo = scheduleData && 
-    typeof scheduleData === 'object' && 
-    scheduleData !== null &&
-    !('error' in scheduleData) && 
-    'start_time' in scheduleData && 
-    'end_time' in scheduleData && 
-    'status' in scheduleData &&
-    scheduleData.start_time && 
-    scheduleData.end_time && 
-    scheduleData.status ? {
-      startTime: scheduleData.start_time as string,
-      endTime: scheduleData.end_time as string,
-      status: scheduleData.status as string
-    } : null;
+  // Safe access to schedule data with explicit validation
+  const scheduleInfo = isValidScheduleData(scheduleData) ? {
+    startTime: scheduleData.start_time,
+    endTime: scheduleData.end_time,
+    status: scheduleData.status
+  } : null;
 
   const getAuctionStatus = () => {
     if (!scheduleInfo) return "Available";

@@ -17,6 +17,25 @@ interface UseBidFormActionsResult {
   handlePlaceBid: (bidAmount: string, isProxyBid?: boolean, maxProxyAmount?: number) => Promise<void>;
 }
 
+// Type guard for dealer data
+interface ValidDealerData {
+  id: string;
+  user_id: string;
+  dealership_name: string;
+  is_verified: boolean;
+  verification_status: string;
+}
+
+function isValidVerifiedDealer(data: any): data is ValidDealerData {
+  return data && 
+         typeof data === 'object' && 
+         data !== null &&
+         !('error' in data) &&
+         'id' in data &&
+         'is_verified' in data &&
+         data.is_verified === true;
+}
+
 export const useBidFormActions = ({
   carId,
   dealerId,
@@ -59,14 +78,8 @@ export const useBidFormActions = ({
         throw new Error('Dealer profile not found. Please ensure your profile is complete.');
       }
 
-      // Type guard to ensure dealerCheck is not null and has the required properties
-      if (dealerCheck && 
-          typeof dealerCheck === 'object' && 
-          !('error' in dealerCheck) &&
-          'is_verified' in dealerCheck && 
-          dealerCheck.is_verified === true) {
-        // Dealer is verified, continue with bid placement
-      } else {
+      // Explicit verification with type guard
+      if (!isValidVerifiedDealer(dealerCheck)) {
         console.error('Dealer not verified:', dealerCheck);
         throw new Error('Your dealer account is not verified. Please contact support.');
       }
