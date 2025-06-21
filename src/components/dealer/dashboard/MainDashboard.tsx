@@ -2,6 +2,7 @@
 import { DealerBids } from "@/components/dealer/DealerBids";
 import { AuctionManagement } from "@/components/dealer/AuctionManagement";
 import { WatchlistManagement } from "@/components/dealer/WatchlistManagement";
+import { SessionMonitor } from "@/components/debug/SessionMonitor";
 
 interface MainDashboardProps {
   profile: any;
@@ -27,6 +28,9 @@ export const MainDashboard = ({ profile, isLoading, error }: MainDashboardProps)
           <WatchlistManagement dealerId={profile.id} />
         </>
       )}
+      
+      {/* Development-only session monitor */}
+      <SessionMonitor />
     </div>
   );
 };

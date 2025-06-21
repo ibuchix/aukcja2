@@ -7,6 +7,8 @@ import { applyFilters } from "./utils/filterUtils";
 import { applySorting } from "./utils/sortUtils";
 import { applyPagination, calculatePaginationInfo } from "./utils/paginationUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { SessionDebugger } from "@/utils/sessionDebugger";
+import { SessionAwareQueryBuilder } from "@/utils/sessionAwareQuery";
 
 interface UseCarListingsQueryProps {
   filters: AuctionFilters;
@@ -30,13 +32,6 @@ interface AuthDebugData {
   error?: string;
 }
 
-interface SessionTokenInfo {
-  hasSession: boolean;
-  userId: string | null;
-  tokenLength: number;
-  tokenPreview: string;
-}
-
 export const useCarListingsQuery = ({
   filters,
   sortOption,
@@ -52,127 +47,85 @@ export const useCarListingsQuery = ({
       sortOption, 
       searchQuery, 
       currentPage.toString(),
-      "consistentClient"
+      "sessionAware"
     ],
     queryFn: async () => {
       const isDev = process.env.NODE_ENV === 'development';
       
       if (isDev) {
-        console.log('=== CONSISTENT CLIENT AUTHENTICATION START ===');
+        console.log('=== SESSION-AWARE CAR LISTINGS QUERY START ===');
       }
       
       try {
-        // STEP 1: Verify current session with consistent client
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        // STEP 1: Capture initial session state
+        const initialSession = await SessionDebugger.captureSessionState('Car Listings Query Start');
         
-        let sessionInfo: SessionTokenInfo = {
-          hasSession: false,
-          userId: null,
-          tokenLength: 0,
-          tokenPreview: 'none'
-        };
-        
-        if (sessionError) {
-          console.error('Session retrieval error:', sessionError);
-          throw new Error(`Session error: ${sessionError.message}`);
+        if (!SessionDebugger.hasValidSession(initialSession)) {
+          throw new Error(`Invalid session state: ${JSON.stringify(initialSession)}`);
         }
         
-        if (!sessionData.session) {
-          console.error('No active session found');
-          throw new Error('No active session - please sign in again');
+        // STEP 2: Test authentication context with session-aware query
+        const authTestResult = await SessionAwareQueryBuilder.executeQuery(
+          async () => {
+            const { data, error } = await supabase.rpc('debug_auth_context');
+            return { data: data as unknown as AuthDebugData, error };
+          },
+          { context: 'Auth Context Test', maxRetries: 2, retryDelay: 1000 }
+        );
+        
+        if (authTestResult.error) {
+          throw new Error(`Auth context test failed: ${authTestResult.error.message}`);
         }
         
-        if (!sessionData.session.access_token) {
-          console.error('No access token in session');
-          throw new Error('No access token available - please sign in again');
-        }
-        
-        sessionInfo = {
-          hasSession: true,
-          userId: sessionData.session.user?.id || null,
-          tokenLength: sessionData.session.access_token.length,
-          tokenPreview: sessionData.session.access_token.substring(0, 20) + '...'
-        };
-        
-        if (isDev) {
-          console.log('✅ Session verification successful:', sessionInfo);
-        }
-        
-        // STEP 2: Test authentication context to ensure JWT is working
-        if (isDev) {
-          console.log('=== TESTING AUTH CONTEXT WITH CONSISTENT CLIENT ===');
-        }
-        
-        const { data: authDebugRawData, error: authDebugError } = await supabase.rpc('debug_auth_context');
-        const authDebugData = authDebugRawData as unknown as AuthDebugData;
-        
-        if (isDev) {
-          console.log('Auth debug RPC result:', {
-            data: authDebugData,
-            error: authDebugError?.message,
-            hasError: !!authDebugError,
-            sessionUserId: sessionInfo.userId,
-            authContextUserId: authDebugData?.auth_uid,
-          });
-        }
-        
-        if (authDebugError) {
-          console.error('Auth debug RPC failed:', authDebugError);
-          throw new Error(`Auth debug failed: ${authDebugError.message}`);
-        }
-        
+        const authDebugData = authTestResult.data;
         if (!authDebugData?.auth_uid) {
-          console.error('No authentication context found despite valid session token');
-          throw new Error('Authentication context not properly forwarded to database');
+          throw new Error('No authentication context found despite valid session token');
         }
         
         if (authDebugData?.dealer_exists !== true) {
-          console.error('Dealer record not found for authenticated user:', authDebugData?.auth_uid);
           throw new Error('Dealer record not found - please complete your profile');
         }
         
         if (isDev) {
-          console.log('✅ Authentication verified with consistent client:', {
-            sessionUserId: sessionInfo.userId,
+          console.log('✅ Session-aware auth test successful:', {
+            sessionUserId: initialSession.userId,
             authContextUserId: authDebugData.auth_uid,
             dealerId: authDebugData.dealer_id,
             dealershipName: authDebugData.dealership_name,
             isVerified: authDebugData.is_verified,
-            tokensMatch: sessionInfo.userId === authDebugData.auth_uid,
+            tokensMatch: initialSession.userId === authDebugData.auth_uid,
             dealerExists: authDebugData.dealer_exists
           });
         }
         
-        // STEP 3: Use consistent client for database queries
-        if (isDev) {
-          console.log('=== USING CONSISTENT SUPABASE CLIENT ===');
+        // STEP 3: Get auction schedules with session-aware query
+        const schedulesResult = await SessionAwareQueryBuilder.executeQuery(
+          async () => {
+            const query = supabase
+              .from("auction_schedules")
+              .select(`
+                car_id,
+                status,
+                start_time,
+                end_time,
+                is_manually_controlled
+              `)
+              .eq("status", "running")
+              .lte("start_time", new Date().toISOString())
+              .gte("end_time", new Date().toISOString());
+            
+            return query;
+          },
+          { context: 'Auction Schedules Query', maxRetries: 2, retryDelay: 1000 }
+        );
+        
+        if (schedulesResult.error) {
+          throw new Error(`Schedules query failed: ${schedulesResult.error.message}`);
         }
         
-        // Get auction schedules using consistent client
-        const schedulesQuery = supabase
-          .from("auction_schedules")
-          .select(`
-            car_id,
-            status,
-            start_time,
-            end_time,
-            is_manually_controlled
-          `)
-          .eq("status", "running")
-          .lte("start_time", new Date().toISOString())
-          .gte("end_time", new Date().toISOString());
-        
-        const scheduleResult = await schedulesQuery;
-        
-        if (scheduleResult.error) {
-          console.error("=== CONSISTENT CLIENT SCHEDULE QUERY ERROR ===");
-          console.error("Error details:", scheduleResult.error);
-          throw new Error(`Consistent client schedule query failed: ${scheduleResult.error.message}`);
-        }
-        
-        const schedules = scheduleResult.data || [];
+        const schedules = schedulesResult.data || [];
         if (isDev) {
-          console.log('✅ Consistent client schedule query succeeded. Schedules found:', schedules.length);
+          console.log('✅ Session-aware schedules query succeeded. Schedules found:', schedules.length);
         }
         
         // If no running schedules, return empty result
@@ -195,11 +148,7 @@ export const useCarListingsQuery = ({
           console.log('Car IDs from schedules:', carIds.length);
         }
         
-        // STEP 4: Get cars using consistent client
-        if (isDev) {
-          console.log('=== FETCHING CARS WITH CONSISTENT CLIENT ===');
-        }
-        
+        // STEP 4: Get cars with session-aware query
         if (carIds.length === 0) {
           return {
             cars: [],
@@ -207,83 +156,77 @@ export const useCarListingsQuery = ({
           };
         }
         
-        // Use consistent client for cars query
-        let carsQuery = supabase
-          .from("cars")
-          .select(`
-            id,
-            make,
-            model,
-            year,
-            mileage,
-            reserve_price,
-            images,
-            required_photos,
-            title,
-            features,
-            transmission,
-            is_auction,
-            auction_end_time,
-            minimum_bid_increment,
-            auction_status,
-            is_damaged,
-            address,
-            created_at,
-            updated_at,
-            status,
-            current_bid,
-            seller_notes,
-            service_history_type,
-            has_service_history,
-            seller_id,
-            seller_name,
-            mobile_number,
-            additional_photos,
-            vin,
-            seat_material,
-            number_of_keys,
-            is_registered_in_poland,
-            has_private_plate,
-            finance_amount,
-            form_metadata,
-            valuation_data,
-            last_saved,
-            registration_number,
-            is_manually_controlled
-          `)
-          .eq("is_auction", true)
-          .eq("auction_status", "active")
-          .in("id", carIds)
-          .gt("reserve_price", 0);
+        const carsResult = await SessionAwareQueryBuilder.executeQuery(
+          async () => {
+            let carsQuery = supabase
+              .from("cars")
+              .select(`
+                id,
+                make,
+                model,
+                year,
+                mileage,
+                reserve_price,
+                images,
+                required_photos,
+                title,
+                features,
+                transmission,
+                is_auction,
+                auction_end_time,
+                minimum_bid_increment,
+                auction_status,
+                is_damaged,
+                address,
+                created_at,
+                updated_at,
+                status,
+                current_bid,
+                seller_notes,
+                service_history_type,
+                has_service_history,
+                seller_id,
+                seller_name,
+                mobile_number,
+                additional_photos,
+                vin,
+                seat_material,
+                number_of_keys,
+                is_registered_in_poland,
+                has_private_plate,
+                finance_amount,
+                form_metadata,
+                valuation_data,
+                last_saved,
+                registration_number,
+                is_manually_controlled
+              `)
+              .eq("is_auction", true)
+              .eq("auction_status", "active")
+              .in("id", carIds)
+              .gt("reserve_price", 0);
+            
+            // Apply filters, sorting, and pagination
+            carsQuery = applyFilters(carsQuery, filters, searchQuery);
+            carsQuery = applySorting(carsQuery, sortOption);
+            carsQuery = applyPagination(carsQuery, currentPage, pageSize);
+            
+            return carsQuery;
+          },
+          { context: 'Cars Query', maxRetries: 2, retryDelay: 1000 }
+        );
         
-        // Apply filters, sorting, and pagination
-        carsQuery = applyFilters(carsQuery, filters, searchQuery);
-        carsQuery = applySorting(carsQuery, sortOption);
-        carsQuery = applyPagination(carsQuery, currentPage, pageSize);
-
+        if (carsResult.error) {
+          throw new Error(`Cars query failed: ${carsResult.error.message}`);
+        }
+        
         if (isDev) {
           const { fromIndex, to } = calculatePaginationInfo(currentPage, pageSize);
           console.log('Applied pagination:', { fromIndex, to, currentPage, pageSize });
-        }
-        
-        const carsResult = await carsQuery;
-        
-        if (isDev) {
-          console.log('=== CONSISTENT CLIENT CARS QUERY RESULT ===');
-          console.log('Query successful. Raw data count:', carsResult.data?.length || 0);
-        }
-        
-        if (carsResult.error) {
-          console.error("=== CONSISTENT CLIENT CARS ERROR ===");
-          console.error("Error details:", carsResult.error);
-          throw new Error(`Consistent client cars query failed: ${carsResult.error.message}`);
+          console.log('Session-aware cars query succeeded. Raw data count:', carsResult.data?.length || 0);
         }
         
         // STEP 5: Merge car data with schedule data
-        if (isDev) {
-          console.log('=== MERGING DATA ===');
-        }
-        
         const rawCars = carsResult.data || [];
         
         // Properly type the schedules data for merging
@@ -303,7 +246,7 @@ export const useCarListingsQuery = ({
         const validCars = processCarData(mergedData);
         
         if (isDev) {
-          console.log('=== FINAL CONSISTENT CLIENT RESULT ===');
+          console.log('=== FINAL SESSION-AWARE RESULT ===');
           console.log('Valid live auction cars:', validCars.length);
           if (validCars.length > 0) {
             console.log('First processed live auction car:', {
@@ -324,13 +267,17 @@ export const useCarListingsQuery = ({
         };
       } catch (err: any) {
         const errorMessage = err.message || 'Unknown error occurred';
-        console.error("=== CONSISTENT CLIENT QUERY ERROR ===");
+        console.error("=== SESSION-AWARE QUERY ERROR ===");
         console.error("Error:", errorMessage);
+        
+        // Capture final session state for debugging
+        await SessionDebugger.captureSessionState(`Query Error: ${errorMessage}`);
+        
         throw new Error(errorMessage);
       }
     },
     requireAuth: true,
-    retry: 2,
-    retryDelay: attempt => Math.min(attempt > 1 ? 2000 : 1000, 30000),
+    retry: 1, // Reduced since we handle retries internally
+    retryDelay: attempt => 2000, // 2 second delay between retries
   });
 };
