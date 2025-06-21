@@ -11,6 +11,7 @@ interface ValidCarData {
   [key: string]: any;
 }
 
+// Proper type predicate function
 function isValidCar(car: any): car is ValidCarData {
   return car && 
          car !== null && 
@@ -48,7 +49,8 @@ export const useAuctionQueries = (dealerId: string) => {
   });
 
   // Process the data to separate into different categories with safe filtering
-  const validCars = (cars || []).filter(isValidCar);
+  // First filter to get only valid cars using the type predicate
+  const validCars: ValidCarData[] = (cars || []).filter(isValidCar);
   
   const activeAuctions = validCars.filter(car => 
     car.is_auction === true && car.auction_status === 'active'
