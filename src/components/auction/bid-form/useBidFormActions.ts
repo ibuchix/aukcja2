@@ -59,17 +59,13 @@ export const useBidFormActions = ({
         throw new Error('Dealer profile not found. Please ensure your profile is complete.');
       }
 
-      // Safe property access with comprehensive null checks and type validation
-      const isDealerValid = Boolean(
-        dealerCheck && 
-        dealerCheck !== null &&
-        typeof dealerCheck === 'object' && 
-        !('error' in dealerCheck) &&
-        'is_verified' in dealerCheck && 
-        dealerCheck.is_verified === true
-      );
+      // Safe property access with explicit null checks
+      if (dealerCheck === null || typeof dealerCheck !== 'object' || 'error' in dealerCheck) {
+        console.error('Invalid dealer data:', dealerCheck);
+        throw new Error('Invalid dealer profile data.');
+      }
 
-      if (!isDealerValid) {
+      if (!('is_verified' in dealerCheck) || dealerCheck.is_verified !== true) {
         console.error('Dealer not verified:', dealerCheck);
         throw new Error('Your dealer account is not verified. Please contact support.');
       }

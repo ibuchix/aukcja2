@@ -30,64 +30,56 @@ export const useAuctionQueries = (dealerId: string) => {
 
   // Process the data to separate into different categories with proper null checks
   const activeAuctions = cars?.filter(car => {
-    // Add comprehensive null and type checks with safe property access
-    const isValidCar = Boolean(
-      car && 
-      car !== null && 
-      typeof car === 'object' && 
-      !('error' in car) && 
-      'id' in car &&
-      car.id
-    );
+    // Explicit null check first
+    if (!car || car === null || typeof car !== 'object' || 'error' in car) {
+      return false;
+    }
     
-    if (!isValidCar) return false;
+    // Check for required ID property
+    if (!('id' in car) || !car.id) {
+      return false;
+    }
     
-    // Safe property access with type assertion after validation
-    const typedCar = car as any;
+    // Safe property access after validation
     return Boolean(
-      typedCar && 
-      typedCar.is_auction === true && 
-      typedCar.auction_status === 'active'
+      car.is_auction === true && 
+      car.auction_status === 'active'
     );
   }) || [];
   
   const wonAuctions = cars?.filter(car => {
-    const isValidCar = Boolean(
-      car && 
-      car !== null && 
-      typeof car === 'object' && 
-      !('error' in car) && 
-      'id' in car &&
-      car.id
-    );
+    // Explicit null check first
+    if (!car || car === null || typeof car !== 'object' || 'error' in car) {
+      return false;
+    }
     
-    if (!isValidCar) return false;
+    // Check for required ID property
+    if (!('id' in car) || !car.id) {
+      return false;
+    }
     
-    const typedCar = car as any;
+    // Safe property access after validation
     return Boolean(
-      typedCar && 
-      typedCar.is_auction === true && 
-      typedCar.auction_status === 'sold'
+      car.is_auction === true && 
+      car.auction_status === 'sold'
     );
   }) || [];
   
   const lostAuctions = cars?.filter(car => {
-    const isValidCar = Boolean(
-      car && 
-      car !== null && 
-      typeof car === 'object' && 
-      !('error' in car) && 
-      'id' in car &&
-      car.id
-    );
+    // Explicit null check first
+    if (!car || car === null || typeof car !== 'object' || 'error' in car) {
+      return false;
+    }
     
-    if (!isValidCar) return false;
+    // Check for required ID property
+    if (!('id' in car) || !car.id) {
+      return false;
+    }
     
-    const typedCar = car as any;
+    // Safe property access after validation
     return Boolean(
-      typedCar && 
-      typedCar.is_auction === true && 
-      typedCar.auction_status === 'ended'
+      car.is_auction === true && 
+      car.auction_status === 'ended'
     );
   }) || [];
 

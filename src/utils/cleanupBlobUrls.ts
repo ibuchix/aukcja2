@@ -26,17 +26,15 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
     let updatedCount = 0;
     
     for (const car of cars) {
-      // Add comprehensive validation for car data
-      const isValidCar = Boolean(
-        car && 
-        car !== null && 
-        typeof car === 'object' && 
-        !('error' in car) && 
-        'id' in car &&
-        car.id
-      );
+      // Explicit null check first
+      if (!car || car === null || typeof car !== 'object' || 'error' in car) {
+        continue;
+      }
 
-      if (!isValidCar) continue;
+      // Check for required ID property
+      if (!('id' in car) || !car.id) {
+        continue;
+      }
       
       let needsUpdate = false;
       let updatedData: any = {};
@@ -87,7 +85,7 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
       }
       
       // Update the car if needed with safe property access
-      if (needsUpdate && 'id' in car && car.id && typeof car.id === 'string') {
+      if (needsUpdate && typeof car.id === 'string') {
         const { error: updateError } = await supabase
           .from('cars')
           .update(updatedData)

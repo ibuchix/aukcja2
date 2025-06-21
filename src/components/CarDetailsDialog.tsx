@@ -42,24 +42,29 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   if (!car) return null;
 
   // Safe access to schedule data with proper null checks and type validation
-  const hasValidSchedule = Boolean(
-    scheduleData && 
-    scheduleData !== null &&
-    typeof scheduleData === 'object' && 
-    !('error' in scheduleData) &&
-    'start_time' in scheduleData &&
-    'end_time' in scheduleData &&
-    'status' in scheduleData &&
-    scheduleData.start_time &&
-    scheduleData.end_time &&
-    scheduleData.status
-  );
+  const scheduleInfo = (() => {
+    if (!scheduleData || scheduleData === null || typeof scheduleData !== 'object') {
+      return null;
+    }
+    
+    if ('error' in scheduleData) {
+      return null;
+    }
 
-  const scheduleInfo = hasValidSchedule ? {
-    startTime: (scheduleData as any).start_time as string,
-    endTime: (scheduleData as any).end_time as string,
-    status: (scheduleData as any).status as string
-  } : null;
+    if (!('start_time' in scheduleData) || !('end_time' in scheduleData) || !('status' in scheduleData)) {
+      return null;
+    }
+
+    if (!scheduleData.start_time || !scheduleData.end_time || !scheduleData.status) {
+      return null;
+    }
+
+    return {
+      startTime: scheduleData.start_time as string,
+      endTime: scheduleData.end_time as string,
+      status: scheduleData.status as string
+    };
+  })();
 
   const getAuctionStatus = () => {
     if (!scheduleInfo) return "Available";
