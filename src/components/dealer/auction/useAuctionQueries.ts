@@ -49,8 +49,9 @@ export const useAuctionQueries = (dealerId: string) => {
   });
 
   // Process the data to separate into different categories with safe filtering
-  // First filter to get only valid cars using the type predicate
-  const validCars: ValidCarData[] = (cars || []).filter(isValidCar);
+  // First filter to get only valid cars and cast to proper type
+  const allCars = cars || [];
+  const validCars = allCars.filter(isValidCar);
   
   const activeAuctions = validCars.filter(car => 
     car.is_auction === true && car.auction_status === 'active'
