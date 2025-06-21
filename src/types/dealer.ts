@@ -72,7 +72,7 @@ export function isDealerProfileData(item: any): item is DealerProfileData {
   );
 }
 
-// Helper function to check if dealer is verified
+// Helper function to check if dealer is verified - updated to handle both approved status and is_verified flag
 export function isDealerVerified(dealer: DealerRecord | DealerProfileData | null): boolean {
   if (!dealer) return false;
   return dealer.verification_status === 'approved' || dealer.is_verified === true;

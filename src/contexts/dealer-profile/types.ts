@@ -8,7 +8,7 @@ export interface DealerProfileData {
   license_number?: string;
   tax_id: string;
   business_registry_number: string;
-  verification_status?: string;
+  verification_status?: 'pending' | 'approved' | 'rejected';
   is_verified?: boolean;
   created_at?: string;
   updated_at?: string;

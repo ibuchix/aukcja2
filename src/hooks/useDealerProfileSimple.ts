@@ -12,7 +12,7 @@ interface DealerProfile {
   tax_id: string; 
   business_registry_number: string;
   address: string;
-  verification_status: string;
+  verification_status: 'pending' | 'approved' | 'rejected';
   is_verified: boolean;
   license_number: string;
   created_at: string;
