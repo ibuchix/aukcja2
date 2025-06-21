@@ -27,7 +27,12 @@ export const cleanupBlobUrlsInDatabase = async (): Promise<{ success: boolean; m
     
     for (const car of cars) {
       // Comprehensive null check
-      if (!car || car === null || typeof car !== 'object' || 'error' in car || !('id' in car) || !car.id) {
+      if (!car || 
+          car === null || 
+          typeof car !== 'object' || 
+          'error' in car || 
+          !('id' in car) || 
+          !car.id) {
         continue;
       }
       

@@ -42,7 +42,9 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   if (!car) return null;
 
   // Safe access to schedule data with comprehensive null checks
-  const scheduleInfo = scheduleData && typeof scheduleData === 'object' && 
+  const scheduleInfo = scheduleData && 
+    typeof scheduleData === 'object' && 
+    scheduleData !== null &&
     !('error' in scheduleData) && 
     'start_time' in scheduleData && 
     'end_time' in scheduleData && 
