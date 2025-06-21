@@ -11,7 +11,7 @@ interface ValidCarData {
   [key: string]: any;
 }
 
-// Proper type predicate function
+// Proper type predicate function that handles both null/undefined and SelectQueryError
 function isValidCar(car: any): car is ValidCarData {
   return car && 
          car !== null && 
@@ -49,9 +49,16 @@ export const useAuctionQueries = (dealerId: string) => {
   });
 
   // Process the data to separate into different categories with safe filtering
-  // First filter to get only valid cars and cast to proper type
+  // Use explicit type assertion after validation
   const allCars = cars || [];
-  const validCars = allCars.filter(isValidCar);
+  const validCars: ValidCarData[] = [];
+  
+  // Manually validate and add valid cars to avoid TypeScript type issues
+  for (const car of allCars) {
+    if (isValidCar(car)) {
+      validCars.push(car);
+    }
+  }
   
   const activeAuctions = validCars.filter(car => 
     car.is_auction === true && car.auction_status === 'active'
