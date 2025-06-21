@@ -17,6 +17,9 @@ export function DealerHeader({ profile, isLoading, error }: DealerHeaderProps) {
     return <div className="mb-8 text-red-500">Error loading dealer profile</div>;
   }
 
+  // Check if dealer is verified (approved status in DB)
+  const isVerified = profile.verification_status === 'approved' || profile.is_verified === true;
+
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-2">
@@ -25,7 +28,7 @@ export function DealerHeader({ profile, isLoading, error }: DealerHeaderProps) {
         {/* Verification Status Badge */}
         {profile && (
           <div className="flex items-center">
-            {profile.is_verified ? (
+            {isVerified ? (
               <Badge variant="success" className="flex items-center gap-1 px-3 py-1">
                 <BadgeCheck className="h-4 w-4 mr-1" />
                 Verified Dealer

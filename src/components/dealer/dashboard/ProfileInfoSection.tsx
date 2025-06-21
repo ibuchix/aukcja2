@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { isDealerVerified } from "@/types/dealer";
 
 export const ProfileInfoSection = () => {
   const { dealerProfile, isLoading, error, retryFetch } = useDealerProfileSimple();
@@ -33,6 +34,9 @@ export const ProfileInfoSection = () => {
       </Alert>
     );
   }
+
+  // Check if dealer is verified using our helper function
+  const isVerified = isDealerVerified(dealerProfile);
 
   return (
     <div className="mb-10 bg-white shadow-sm rounded-lg overflow-hidden">
@@ -62,6 +66,12 @@ export const ProfileInfoSection = () => {
               <p><span className="font-medium text-dark">Name:</span> {dealerProfile?.supervisor_name || "Not available"}</p>
               <p><span className="font-medium text-dark">Email:</span> {user?.email || "Not available"}</p>
               <p><span className="font-medium text-dark">Dealership:</span> {dealerProfile?.dealership_name || "Not available"}</p>
+              <p>
+                <span className="font-medium text-dark">Status:</span> 
+                <span className={`ml-1 ${isVerified ? 'text-green-600' : 'text-amber-600'}`}>
+                  {isVerified ? 'Approved' : (dealerProfile?.verification_status || 'Pending')}
+                </span>
+              </p>
             </div>
           )}
         </div>

@@ -190,12 +190,15 @@ export function useDealerProfileSimple() {
     }
   }, [refreshSession, fetchProfile]);
   
+  // Check if dealer is verified (approved status in DB)
+  const isVerified = dealerProfile?.verification_status === 'approved' || dealerProfile?.is_verified === true;
+  
   return {
     dealerProfile,
     isLoading,
     error,
     retryFetch,
-    isVerified: dealerProfile?.is_verified || false,
+    isVerified,
     profileExists: !!dealerProfile
   };
 }

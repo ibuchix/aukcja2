@@ -16,7 +16,7 @@ export interface DealerRecord {
   business_registry_number: string;
   license_number?: string;
   address: string;
-  verification_status: string;
+  verification_status: 'pending' | 'approved' | 'rejected';
 }
 
 // Pending dealer for admin verification
@@ -24,7 +24,7 @@ export interface PendingDealer {
   id: string;
   dealership_name: string;
   supervisor_name: string;
-  verification_status: string;
+  verification_status: 'pending' | 'approved' | 'rejected';
   created_at: string;
   tax_id: string;
   business_registry_number: string;
@@ -41,7 +41,7 @@ export interface DealerProfileData {
   tax_id?: string;
   business_registry_number?: string;
   address?: string;
-  verification_status?: string;
+  verification_status?: 'pending' | 'approved' | 'rejected';
   is_verified?: boolean;
   license_number?: string;
   created_at?: string;
@@ -70,4 +70,10 @@ export function isDealerProfileData(item: any): item is DealerProfileData {
     typeof item === 'object' &&
     'user_id' in item
   );
+}
+
+// Helper function to check if dealer is verified
+export function isDealerVerified(dealer: DealerRecord | DealerProfileData | null): boolean {
+  if (!dealer) return false;
+  return dealer.verification_status === 'approved' || dealer.is_verified === true;
 }

@@ -29,6 +29,9 @@ export function DealerProfileInfo({ displayProfile }: DealerProfileInfoProps) {
     return value || fallback;
   };
 
+  // Check if dealer is verified (approved status in DB)
+  const isVerified = displayProfile?.verification_status === 'approved' || displayProfile?.is_verified === true;
+
   return (
     <Card className="mb-6 shadow-sm">
       <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
@@ -38,7 +41,7 @@ export function DealerProfileInfo({ displayProfile }: DealerProfileInfoProps) {
             Dealer Profile
           </CardTitle>
           {displayProfile?.verification_status && (
-            displayProfile.is_verified ? (
+            isVerified ? (
               <Badge variant="success" className="flex items-center gap-1">
                 <BadgeCheck className="h-3.5 w-3.5 mr-1" />
                 Verified
@@ -68,8 +71,8 @@ export function DealerProfileInfo({ displayProfile }: DealerProfileInfoProps) {
               <p><span className="font-medium text-dark">Dealership:</span> {getValueWithFallback(displayProfile?.dealership_name)}</p>
               <p>
                 <span className="font-medium text-dark">Verification:</span> 
-                <span className={`ml-1 ${displayProfile?.is_verified ? 'text-green-600' : 'text-amber-600'}`}>
-                  {getValueWithFallback(displayProfile?.verification_status, 'Pending')}
+                <span className={`ml-1 ${isVerified ? 'text-green-600' : 'text-amber-600'}`}>
+                  {isVerified ? 'Approved' : getValueWithFallback(displayProfile?.verification_status, 'Pending')}
                 </span>
               </p>
               <p><span className="font-medium text-dark">Email:</span> {getValueWithFallback(user?.email)}</p>
