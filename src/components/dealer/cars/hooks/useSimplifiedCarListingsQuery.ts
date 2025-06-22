@@ -30,7 +30,7 @@ export const useSimplifiedCarListingsQuery = ({
       sortOption, 
       searchQuery, 
       currentPage.toString(),
-      "v4"
+      "v5"
     ],
     queryFn: async () => {
       const isDev = process.env.NODE_ENV === 'development';
@@ -40,11 +40,11 @@ export const useSimplifiedCarListingsQuery = ({
       }
       
       try {
-        // STEP 1: Get live auction schedules
+        // STEP 1: Get live auction schedules using RPC function
         const schedules = await fetchLiveAuctionSchedules();
         
         if (isDev) {
-          console.log('✅ Direct schedules query succeeded. Schedules found:', schedules.length);
+          console.log('✅ RPC schedules query succeeded. Schedules found:', schedules.length);
         }
         
         // If no running schedules, return empty result
@@ -80,7 +80,6 @@ export const useSimplifiedCarListingsQuery = ({
         }
         
         // STEP 3: Merge car data with schedule data
-        // Type the schedules data properly for merging
         const typedSchedules: AuctionScheduleData[] = schedules.map((schedule) => ({
           car_id: schedule.car_id,
           status: schedule.status,
