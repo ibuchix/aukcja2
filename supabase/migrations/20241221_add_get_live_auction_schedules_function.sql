@@ -19,11 +19,11 @@ BEGIN
     RAISE EXCEPTION 'Authentication required';
   END IF;
   
-  -- Return live auction schedules
+  -- Return live auction schedules with proper enum to text casting
   RETURN QUERY
   SELECT 
     s.car_id,
-    s.status,
+    s.status::text,  -- Cast enum to text to match return type
     s.start_time,
     s.end_time,
     s.is_manually_controlled
