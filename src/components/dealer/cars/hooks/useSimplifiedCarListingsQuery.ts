@@ -40,7 +40,7 @@ export const useSimplifiedCarListingsQuery = ({
       sortOption, 
       searchQuery, 
       currentPage.toString(),
-      "v3"
+      "v4"
     ],
     queryFn: async () => {
       const isDev = process.env.NODE_ENV === 'development';
@@ -68,8 +68,21 @@ export const useSimplifiedCarListingsQuery = ({
           throw new Error(`Live schedules query failed: ${schedulesError.message}`);
         }
         
-        // Ensure schedulesData is an array and properly typed
-        const schedules: LiveAuctionSchedule[] = Array.isArray(schedulesData) ? schedulesData : [];
+        // Properly handle the response - check if it's actually data or an error
+        let schedules: LiveAuctionSchedule[] = [];
+        
+        if (schedulesData && Array.isArray(schedulesData)) {
+          // Filter out any invalid entries and ensure proper typing
+          schedules = schedulesData.filter((item): item is LiveAuctionSchedule => {
+            return item && 
+                   typeof item === 'object' && 
+                   typeof item.car_id === 'string' &&
+                   typeof item.status === 'string' &&
+                   typeof item.start_time === 'string' &&
+                   typeof item.end_time === 'string' &&
+                   typeof item.is_manually_controlled === 'boolean';
+          });
+        }
         
         if (isDev) {
           console.log('✅ Direct schedules query succeeded. Schedules found:', schedules.length);
@@ -86,15 +99,8 @@ export const useSimplifiedCarListingsQuery = ({
           };
         }
         
-        // Extract car IDs from schedules with proper validation
-        const carIds = schedules
-          .filter((schedule): schedule is LiveAuctionSchedule => 
-            schedule && 
-            typeof schedule === 'object' && 
-            typeof schedule.car_id === 'string' &&
-            schedule.car_id.length > 0
-          )
-          .map((schedule) => schedule.car_id);
+        // Extract car IDs from schedules
+        const carIds = schedules.map((schedule) => schedule.car_id);
         
         if (isDev) {
           console.log('Car IDs from schedules:', carIds.length);
