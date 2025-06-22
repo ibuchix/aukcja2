@@ -68,20 +68,33 @@ export const useSimplifiedCarListingsQuery = ({
           throw new Error(`Live schedules query failed: ${schedulesError.message}`);
         }
         
-        // Properly handle the response - check if it's actually data or an error
-        let schedules: LiveAuctionSchedule[] = [];
+        // Properly handle the response with correct typing
+        const schedules: LiveAuctionSchedule[] = [];
         
         if (schedulesData && Array.isArray(schedulesData)) {
-          // Filter out any invalid entries and ensure proper typing
-          schedules = schedulesData.filter((item): item is LiveAuctionSchedule => {
-            return item && 
-                   typeof item === 'object' && 
-                   typeof item.car_id === 'string' &&
-                   typeof item.status === 'string' &&
-                   typeof item.start_time === 'string' &&
-                   typeof item.end_time === 'string' &&
-                   typeof item.is_manually_controlled === 'boolean';
-          });
+          // Process each item with proper null checks and type validation
+          for (const item of schedulesData) {
+            if (item && 
+                typeof item === 'object' && 
+                'car_id' in item &&
+                'status' in item &&
+                'start_time' in item &&
+                'end_time' in item &&
+                'is_manually_controlled' in item &&
+                typeof item.car_id === 'string' &&
+                typeof item.status === 'string' &&
+                typeof item.start_time === 'string' &&
+                typeof item.end_time === 'string' &&
+                typeof item.is_manually_controlled === 'boolean') {
+              schedules.push({
+                car_id: item.car_id,
+                status: item.status,
+                start_time: item.start_time,
+                end_time: item.end_time,
+                is_manually_controlled: item.is_manually_controlled
+              });
+            }
+          }
         }
         
         if (isDev) {
