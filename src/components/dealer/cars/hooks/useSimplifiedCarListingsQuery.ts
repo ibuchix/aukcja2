@@ -74,9 +74,13 @@ export const useSimplifiedCarListingsQuery = ({
         if (schedulesData && Array.isArray(schedulesData)) {
           // Process each item with proper null checks and type validation
           for (const item of schedulesData) {
-            if (item && 
-                typeof item === 'object' && 
-                'car_id' in item &&
+            // First check if item is not null/undefined and is an object
+            if (!item || typeof item !== 'object') {
+              continue;
+            }
+            
+            // Check if all required properties exist and have correct types
+            if ('car_id' in item &&
                 'status' in item &&
                 'start_time' in item &&
                 'end_time' in item &&
