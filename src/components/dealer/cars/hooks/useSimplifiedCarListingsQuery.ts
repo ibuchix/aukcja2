@@ -17,6 +17,14 @@ interface UseSimplifiedCarListingsQueryProps {
   dealerId?: string;
 }
 
+interface LiveAuctionSchedule {
+  car_id: string;
+  status: string;
+  start_time: string;
+  end_time: string;
+  is_manually_controlled: boolean;
+}
+
 export const useSimplifiedCarListingsQuery = ({
   filters,
   sortOption,
@@ -42,17 +50,27 @@ export const useSimplifiedCarListingsQuery = ({
       }
       
       try {
-        // STEP 1: Use the database function to get live auction schedules
+        // STEP 1: Use direct query to get live auction schedules (bypassing RPC for now)
         const { data: schedulesData, error: schedulesError } = await supabase
-          .rpc('get_live_auction_schedules');
+          .from('auction_schedules')
+          .select(`
+            car_id,
+            status,
+            start_time,
+            end_time,
+            is_manually_controlled
+          `)
+          .eq('status', 'running')
+          .lte('start_time', new Date().toISOString())
+          .gte('end_time', new Date().toISOString());
         
         if (schedulesError) {
-          throw new Error(`Live schedules function failed: ${schedulesError.message}`);
+          throw new Error(`Live schedules query failed: ${schedulesError.message}`);
         }
         
         const schedules = schedulesData || [];
         if (isDev) {
-          console.log('✅ Database function call succeeded. Schedules found:', schedules.length);
+          console.log('✅ Direct schedules query succeeded. Schedules found:', schedules.length);
         }
         
         // If no running schedules, return empty result
@@ -149,16 +167,14 @@ export const useSimplifiedCarListingsQuery = ({
         // STEP 3: Merge car data with schedule data
         const rawCars = carsData || [];
         
-        // Properly type the schedules data for merging
-        const typedSchedules: AuctionScheduleData[] = schedules
-          .filter((schedule: any) => schedule && typeof schedule === 'object')
-          .map((schedule: any) => ({
-            car_id: schedule.car_id,
-            status: schedule.status,
-            start_time: schedule.start_time,
-            end_time: schedule.end_time,
-            is_manually_controlled: schedule.is_manually_controlled
-          }));
+        // Type the schedules data properly for merging
+        const typedSchedules: AuctionScheduleData[] = schedules.map((schedule: LiveAuctionSchedule) => ({
+          car_id: schedule.car_id,
+          status: schedule.status,
+          start_time: schedule.start_time,
+          end_time: schedule.end_time,
+          is_manually_controlled: schedule.is_manually_controlled
+        }));
         
         const mergedData = mergeCarDataWithSchedules(rawCars, typedSchedules);
         
