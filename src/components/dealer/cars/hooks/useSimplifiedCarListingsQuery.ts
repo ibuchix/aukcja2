@@ -3,10 +3,8 @@ import { useEnhancedAuthAwareQuery } from "@/utils/enhancedAuthAwareQuery";
 import { AuctionFilters } from "../../auction/types";
 import { processCarData } from "@/utils/carDataHelpers";
 import { mergeCarDataWithSchedules, AuctionScheduleData } from "./utils/dataHelpers";
-import { applyFilters } from "./utils/filterUtils";
-import { applySorting } from "./utils/sortUtils";
-import { applyPagination } from "./utils/paginationUtils";
-import { supabase } from "@/integrations/supabase/client";
+import { fetchLiveAuctionSchedules } from "./utils/liveAuctionSchedulesQuery";
+import { fetchCarsForSchedules } from "./utils/carsQueryBuilder";
 
 interface UseSimplifiedCarListingsQueryProps {
   filters: AuctionFilters;
@@ -15,14 +13,6 @@ interface UseSimplifiedCarListingsQueryProps {
   currentPage: number;
   pageSize: number;
   dealerId?: string;
-}
-
-interface LiveAuctionSchedule {
-  car_id: string;
-  status: string;
-  start_time: string;
-  end_time: string;
-  is_manually_controlled: boolean;
 }
 
 export const useSimplifiedCarListingsQuery = ({
@@ -50,59 +40,8 @@ export const useSimplifiedCarListingsQuery = ({
       }
       
       try {
-        // STEP 1: Get live auction schedules with proper error handling
-        const { data: schedulesData, error: schedulesError } = await supabase
-          .from('auction_schedules')
-          .select(`
-            car_id,
-            status,
-            start_time,
-            end_time,
-            is_manually_controlled
-          `)
-          .eq('status', 'running')
-          .lte('start_time', new Date().toISOString())
-          .gte('end_time', new Date().toISOString());
-        
-        if (schedulesError) {
-          throw new Error(`Live schedules query failed: ${schedulesError.message}`);
-        }
-        
-        // Properly handle the response with correct typing
-        const schedules: LiveAuctionSchedule[] = [];
-        
-        if (schedulesData && Array.isArray(schedulesData)) {
-          // Process each item with proper null checks and type validation
-          for (const item of schedulesData) {
-            // First check if item is not null/undefined and is an object
-            if (!item || typeof item !== 'object') {
-              continue;
-            }
-            
-            // Type assertion after null check
-            const scheduleItem = item as Record<string, any>;
-            
-            // Check if all required properties exist and have correct types
-            if ('car_id' in scheduleItem &&
-                'status' in scheduleItem &&
-                'start_time' in scheduleItem &&
-                'end_time' in scheduleItem &&
-                'is_manually_controlled' in scheduleItem &&
-                typeof scheduleItem.car_id === 'string' &&
-                typeof scheduleItem.status === 'string' &&
-                typeof scheduleItem.start_time === 'string' &&
-                typeof scheduleItem.end_time === 'string' &&
-                typeof scheduleItem.is_manually_controlled === 'boolean') {
-              schedules.push({
-                car_id: scheduleItem.car_id,
-                status: scheduleItem.status,
-                start_time: scheduleItem.start_time,
-                end_time: scheduleItem.end_time,
-                is_manually_controlled: scheduleItem.is_manually_controlled
-              });
-            }
-          }
-        }
+        // STEP 1: Get live auction schedules
+        const schedules = await fetchLiveAuctionSchedules();
         
         if (isDev) {
           console.log('✅ Direct schedules query succeeded. Schedules found:', schedules.length);
@@ -127,81 +66,22 @@ export const useSimplifiedCarListingsQuery = ({
         }
         
         // STEP 2: Get cars for these schedules
-        if (carIds.length === 0) {
-          return {
-            cars: [],
-            total: 0
-          };
-        }
-        
-        let carsQuery = supabase
-          .from("cars")
-          .select(`
-            id,
-            make,
-            model,
-            year,
-            mileage,
-            reserve_price,
-            images,
-            required_photos,
-            title,
-            features,
-            transmission,
-            is_auction,
-            auction_end_time,
-            minimum_bid_increment,
-            auction_status,
-            is_damaged,
-            address,
-            created_at,
-            updated_at,
-            status,
-            current_bid,
-            seller_notes,
-            service_history_type,
-            has_service_history,
-            seller_id,
-            seller_name,
-            mobile_number,
-            additional_photos,
-            vin,
-            seat_material,
-            number_of_keys,
-            is_registered_in_poland,
-            has_private_plate,
-            finance_amount,
-            form_metadata,
-            valuation_data,
-            last_saved,
-            registration_number,
-            is_manually_controlled
-          `)
-          .eq("is_auction", true)
-          .eq("auction_status", "active")
-          .in("id", carIds)
-          .gt("reserve_price", 0);
-        
-        // Apply filters, sorting, and pagination
-        carsQuery = applyFilters(carsQuery, filters, searchQuery);
-        carsQuery = applySorting(carsQuery, sortOption);
-        carsQuery = applyPagination(carsQuery, currentPage, pageSize);
-        
-        const { data: carsData, error: carsError } = await carsQuery;
-        
-        if (carsError) {
-          throw new Error(`Cars query failed: ${carsError.message}`);
-        }
+        const rawCars = await fetchCarsForSchedules(
+          carIds,
+          filters,
+          sortOption,
+          searchQuery,
+          currentPage,
+          pageSize
+        );
         
         if (isDev) {
-          console.log('Cars query succeeded. Raw data count:', carsData?.length || 0);
+          console.log('Cars query succeeded. Raw data count:', rawCars.length);
         }
         
         // STEP 3: Merge car data with schedule data
-        const rawCars = Array.isArray(carsData) ? carsData : [];
-        
         // Type the schedules data properly for merging
-        const typedSchedules: AuctionScheduleData[] = schedules.map((schedule: LiveAuctionSchedule) => ({
+        const typedSchedules: AuctionScheduleData[] = schedules.map((schedule) => ({
           car_id: schedule.car_id,
           status: schedule.status,
           start_time: schedule.start_time,
