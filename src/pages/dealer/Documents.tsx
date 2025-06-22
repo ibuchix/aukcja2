@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { FileText, Download, AlertCircle, Upload, CheckCircle, XCircle, Building2 } from "lucide-react";
+import { FileText, Download, AlertCircle, Upload, CheckCircle, XCircle, Building2, BadgeCheck } from "lucide-react";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,10 @@ export default function DealerDocuments() {
   const [documentType, setDocumentType] = useState<string>("");
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Get dealer profile and verification status
+  const { dealerProfile, isLoading: profileLoading } = useDealerProfileSimple();
+  const isVerified = dealerProfile?.verification_status === 'approved' || dealerProfile?.is_verified === true;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -39,105 +44,7 @@ export default function DealerDocuments() {
     checkAuth();
   }, [navigate]);
 
-  const fetchDocuments = async () => {
-    try {
-      setLoading(true);
-      const result = await getDealerDocuments();
-      
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-      
-      setDocuments(result.documents || []);
-    } catch (error) {
-      console.error('Error fetching documents:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load documents"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const selectedFile = e.target.files[0];
-      
-      // Validate file type for utility bills
-      if (documentType === 'utility-bill') {
-        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-        if (!allowedTypes.includes(selectedFile.type)) {
-          toast({
-            variant: "destructive",
-            title: "Invalid File Type",
-            description: "Utility bills must be in PDF, JPG, or PNG format"
-          });
-          return;
-        }
-        
-        // Check file size (max 10MB)
-        if (selectedFile.size > 10 * 1024 * 1024) {
-          toast({
-            variant: "destructive",
-            title: "File Too Large",
-            description: "File size must be less than 10MB"
-          });
-          return;
-        }
-      }
-      
-      setFile(selectedFile);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!file || !documentType) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please select a file and document type"
-      });
-      return;
-    }
-
-    try {
-      setUploadLoading(true);
-      const result = await uploadDealerDocument({
-        file,
-        documentType
-      });
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      toast({
-        title: "Success",
-        description: "Document uploaded successfully",
-        variant: "default"
-      });
-      
-      // Reset form
-      setFile(null);
-      setDocumentType("");
-      
-      // Refresh documents list
-      fetchDocuments();
-    } catch (error) {
-      console.error('Error uploading document:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to upload document"
-      });
-    } finally {
-      setUploadLoading(false);
-    }
-  };
-
-  if (loading) {
+  if (loading || profileLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -154,70 +61,89 @@ export default function DealerDocuments() {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">Document Management</h1>
         
-        {/* Utility Bill Upload Section - Priority */}
-        <Card className="mb-8 border-2 border-[#DC143C]/20">
-          <CardHeader className="bg-[#DC143C]/5">
-            <CardTitle className="flex items-center gap-2 text-[#DC143C]">
-              <Building2 className="w-6 h-6" />
-              Company Verification Required
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <Alert className="mb-6 border-amber-200 bg-amber-50">
-              <AlertCircle className="h-4 w-4 text-amber-600" />
-              <AlertTitle className="text-amber-800">Verification Required</AlertTitle>
-              <AlertDescription className="text-amber-700">
-                <strong>Please upload your company's utility bill for verification.</strong>
-                <br />
-                <span className="text-sm mt-2 block">
-                  • The utility bill must not be older than 3 months
+        {/* Show verification success message for verified dealers */}
+        {isVerified && (
+          <Card className="mb-8 border-2 border-green-200 bg-green-50">
+            <CardHeader className="bg-green-100">
+              <CardTitle className="flex items-center gap-2 text-green-700">
+                <BadgeCheck className="w-6 h-6" />
+                Account Verified
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <p className="text-green-700">
+                Your dealer account has been successfully verified. You can continue to upload additional documents if needed.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+        
+        {/* Utility Bill Upload Section - Only show for unverified dealers */}
+        {!isVerified && (
+          <Card className="mb-8 border-2 border-[#DC143C]/20">
+            <CardHeader className="bg-[#DC143C]/5">
+              <CardTitle className="flex items-center gap-2 text-[#DC143C]">
+                <Building2 className="w-6 h-6" />
+                Company Verification Required
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <Alert className="mb-6 border-amber-200 bg-amber-50">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertTitle className="text-amber-800">Verification Required</AlertTitle>
+                <AlertDescription className="text-amber-700">
+                  <strong>Please upload your company's utility bill for verification.</strong>
                   <br />
-                  • Accepted formats: PDF, JPG, PNG
-                  <br />
-                  • Maximum file size: 10MB
-                  <br />
-                  • The bill must clearly show your company name and address
-                </span>
-              </AlertDescription>
-            </Alert>
-            
-            <div className="grid gap-4">
-              <div>
-                <Label htmlFor="utilityBill" className="text-base font-semibold">
-                  Upload Company Utility Bill *
-                </Label>
-                <Input 
-                  id="utilityBill" 
-                  type="file" 
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={(e) => {
-                    setDocumentType('utility-bill');
-                    handleFileChange(e);
-                  }}
-                  className="cursor-pointer mt-2"
-                />
-                {file && documentType === 'utility-bill' && (
-                  <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
-                    <p className="text-sm text-green-800">
-                      <CheckCircle className="w-4 h-4 inline mr-1" />
-                      Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                    </p>
-                  </div>
-                )}
+                  <span className="text-sm mt-2 block">
+                    • The utility bill must not be older than 3 months
+                    <br />
+                    • Accepted formats: PDF, JPG, PNG
+                    <br />
+                    • Maximum file size: 10MB
+                    <br />
+                    • The bill must clearly show your company name and address
+                  </span>
+                </AlertDescription>
+              </Alert>
+              
+              <div className="grid gap-4">
+                <div>
+                  <Label htmlFor="utilityBill" className="text-base font-semibold">
+                    Upload Company Utility Bill *
+                  </Label>
+                  <Input 
+                    id="utilityBill" 
+                    type="file" 
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => {
+                      setDocumentType('utility-bill');
+                      handleFileChange(e);
+                    }}
+                    className="cursor-pointer mt-2"
+                  />
+                  {file && documentType === 'utility-bill' && (
+                    <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
+                      <p className="text-sm text-green-800">
+                        <CheckCircle className="w-4 h-4 inline mr-1" />
+                        Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-            
-            <div className="mt-6 flex justify-end">
-              <Button 
-                onClick={handleUpload}
-                disabled={!file || documentType !== 'utility-bill' || uploadLoading}
-                className="bg-[#DC143C] hover:bg-[#DC143C]/90"
-              >
-                {uploadLoading ? "Uploading..." : "Upload Utility Bill"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              
+              <div className="mt-6 flex justify-end">
+                <Button 
+                  onClick={handleUpload}
+                  disabled={!file || documentType !== 'utility-bill' || uploadLoading}
+                  className="bg-[#DC143C] hover:bg-[#DC143C]/90"
+                >
+                  {uploadLoading ? "Uploading..." : "Upload Utility Bill"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         
         {/* Other Documents Upload Section */}
         <Card className="mb-8">
@@ -358,6 +284,104 @@ export default function DealerDocuments() {
       </div>
     </div>
   );
+
+  async function fetchDocuments() {
+    try {
+      setLoading(true);
+      const result = await getDealerDocuments();
+      
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      
+      setDocuments(result.documents || []);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load documents"
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFile = e.target.files[0];
+      
+      // Validate file type for utility bills
+      if (documentType === 'utility-bill') {
+        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        if (!allowedTypes.includes(selectedFile.type)) {
+          toast({
+            variant: "destructive",
+            title: "Invalid File Type",
+            description: "Utility bills must be in PDF, JPG, or PNG format"
+          });
+          return;
+        }
+        
+        // Check file size (max 10MB)
+        if (selectedFile.size > 10 * 1024 * 1024) {
+          toast({
+            variant: "destructive",
+            title: "File Too Large",
+            description: "File size must be less than 10MB"
+          });
+          return;
+        }
+      }
+      
+      setFile(selectedFile);
+    }
+  }
+
+  async function handleUpload() {
+    if (!file || !documentType) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a file and document type"
+      });
+      return;
+    }
+
+    try {
+      setUploadLoading(true);
+      const result = await uploadDealerDocument({
+        file,
+        documentType
+      });
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      toast({
+        title: "Success",
+        description: "Document uploaded successfully",
+        variant: "default"
+      });
+      
+      // Reset form
+      setFile(null);
+      setDocumentType("");
+      
+      // Refresh documents list
+      fetchDocuments();
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to upload document"
+      });
+    } finally {
+      setUploadLoading(false);
+    }
+  }
 }
 
 function getDocumentTypeName(type: string): string {

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 import { useAuth } from "@/contexts/AuthContext";
 import { DashboardLayout } from '@/components/dealer/dashboard/DashboardLayout';
@@ -13,7 +13,7 @@ import { useDashboardTabs } from '@/hooks/useDashboardTabs';
 import { QuickActions } from '@/components/dealer/QuickActions';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, FileText, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const DealerDashboard = () => {
@@ -21,10 +21,14 @@ const DealerDashboard = () => {
   const { dealerProfile, isLoading, error, retryFetch } = useDealerProfileSimple();
   const [activeTabRaw, setActiveTabRaw] = useState("auctions");
   const location = useLocation();
+  const navigate = useNavigate();
   const { toast } = useToast();
   
   // Use our custom hook to sync tab state between components
   const { activeTab, setActiveTab } = useDashboardTabs(activeTabRaw, setActiveTabRaw);
+  
+  // Check if dealer is verified
+  const isVerified = dealerProfile?.verification_status === 'approved' || dealerProfile?.is_verified === true;
   
   // Memoize dealer name to prevent unnecessary re-renders
   const dealerName = useMemo(() => {
@@ -69,6 +73,27 @@ const DealerDashboard = () => {
               <Button onClick={retryFetch} variant="outline" size="sm">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retry Loading Profile
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Verification Banner for Unverified Dealers */}
+        {dealerProfile && !isVerified && (
+          <Alert className="border-[#DC143C]/20 bg-[#DC143C]/5">
+            <Building2 className="h-4 w-4 text-[#DC143C]" />
+            <AlertTitle className="text-[#DC143C]">Account Verification Required</AlertTitle>
+            <AlertDescription className="text-[#DC143C]/80">
+              <p className="mb-3">
+                To access all platform features and start bidding on auctions, please complete your account verification by uploading your company's utility bill.
+              </p>
+              <Button 
+                onClick={() => navigate('/dealer/documents')}
+                className="bg-[#DC143C] hover:bg-[#DC143C]/90 text-white"
+                size="sm"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Go to Documents
               </Button>
             </AlertDescription>
           </Alert>
