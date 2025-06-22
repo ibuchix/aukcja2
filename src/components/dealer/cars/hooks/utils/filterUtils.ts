@@ -13,28 +13,28 @@ export const applyFilters = (query: any, filters: AuctionFilters, searchQuery: s
     filteredQuery = filteredQuery.ilike('model', `%${filters.model}%`);
   }
   
-  if (filters.yearMin && typeof filters.yearMin === 'number') {
-    filteredQuery = filteredQuery.gte('year', filters.yearMin);
+  if (filters.yearFrom && typeof filters.yearFrom === 'number') {
+    filteredQuery = filteredQuery.gte('year', filters.yearFrom);
   }
   
-  if (filters.yearMax && typeof filters.yearMax === 'number') {
-    filteredQuery = filteredQuery.lte('year', filters.yearMax);
+  if (filters.yearTo && typeof filters.yearTo === 'number') {
+    filteredQuery = filteredQuery.lte('year', filters.yearTo);
   }
   
-  if (filters.priceMin && typeof filters.priceMin === 'number') {
-    filteredQuery = filteredQuery.gte('reserve_price', filters.priceMin);
+  if (filters.priceFrom && typeof filters.priceFrom === 'number') {
+    filteredQuery = filteredQuery.gte('reserve_price', filters.priceFrom);
   }
   
-  if (filters.priceMax && typeof filters.priceMax === 'number') {
-    filteredQuery = filteredQuery.lte('reserve_price', filters.priceMax);
+  if (filters.priceTo && typeof filters.priceTo === 'number') {
+    filteredQuery = filteredQuery.lte('reserve_price', filters.priceTo);
   }
   
-  if (filters.mileageMin && typeof filters.mileageMin === 'number') {
-    filteredQuery = filteredQuery.gte('mileage', filters.mileageMin);
+  if (filters.mileageFrom && typeof filters.mileageFrom === 'number') {
+    filteredQuery = filteredQuery.gte('mileage', filters.mileageFrom);
   }
   
-  if (filters.mileageMax && typeof filters.mileageMax === 'number') {
-    filteredQuery = filteredQuery.lte('mileage', filters.mileageMax);
+  if (filters.mileageTo && typeof filters.mileageTo === 'number') {
+    filteredQuery = filteredQuery.lte('mileage', filters.mileageTo);
   }
   
   // Apply search query
