@@ -72,140 +72,143 @@ export default function DealerDocuments() {
             </CardHeader>
             <CardContent className="p-6">
               <p className="text-green-700">
-                Your dealer account has been successfully verified. You can continue to upload additional documents if needed.
+                Your dealer account has been successfully verified. You can view your uploaded documents below.
               </p>
             </CardContent>
           </Card>
         )}
         
-        {/* Utility Bill Upload Section - Only show for unverified dealers */}
+        {/* Only show upload sections for unverified dealers */}
         {!isVerified && (
-          <Card className="mb-8 border-2 border-[#DC143C]/20">
-            <CardHeader className="bg-[#DC143C]/5">
-              <CardTitle className="flex items-center gap-2 text-[#DC143C]">
-                <Building2 className="w-6 h-6" />
-                Company Verification Required
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <Alert className="mb-6 border-amber-200 bg-amber-50">
-                <AlertCircle className="h-4 w-4 text-amber-600" />
-                <AlertTitle className="text-amber-800">Verification Required</AlertTitle>
-                <AlertDescription className="text-amber-700">
-                  <strong>Please upload your company's utility bill for verification.</strong>
-                  <br />
-                  <span className="text-sm mt-2 block">
-                    • The utility bill must not be older than 3 months
+          <>
+            {/* Utility Bill Upload Section */}
+            <Card className="mb-8 border-2 border-[#DC143C]/20">
+              <CardHeader className="bg-[#DC143C]/5">
+                <CardTitle className="flex items-center gap-2 text-[#DC143C]">
+                  <Building2 className="w-6 h-6" />
+                  Company Verification Required
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <Alert className="mb-6 border-amber-200 bg-amber-50">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <AlertTitle className="text-amber-800">Verification Required</AlertTitle>
+                  <AlertDescription className="text-amber-700">
+                    <strong>Please upload your company's utility bill for verification.</strong>
                     <br />
-                    • Accepted formats: PDF, JPG, PNG
-                    <br />
-                    • Maximum file size: 10MB
-                    <br />
-                    • The bill must clearly show your company name and address
-                  </span>
-                </AlertDescription>
-              </Alert>
-              
-              <div className="grid gap-4">
-                <div>
-                  <Label htmlFor="utilityBill" className="text-base font-semibold">
-                    Upload Company Utility Bill *
-                  </Label>
-                  <Input 
-                    id="utilityBill" 
-                    type="file" 
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) => {
-                      setDocumentType('utility-bill');
-                      handleFileChange(e);
-                    }}
-                    className="cursor-pointer mt-2"
-                  />
-                  {file && documentType === 'utility-bill' && (
-                    <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
-                      <p className="text-sm text-green-800">
-                        <CheckCircle className="w-4 h-4 inline mr-1" />
-                        Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                      </p>
-                    </div>
-                  )}
+                    <span className="text-sm mt-2 block">
+                      • The utility bill must not be older than 3 months
+                      <br />
+                      • Accepted formats: PDF, JPG, PNG
+                      <br />
+                      • Maximum file size: 10MB
+                      <br />
+                      • The bill must clearly show your company name and address
+                    </span>
+                  </AlertDescription>
+                </Alert>
+                
+                <div className="grid gap-4">
+                  <div>
+                    <Label htmlFor="utilityBill" className="text-base font-semibold">
+                      Upload Company Utility Bill *
+                    </Label>
+                    <Input 
+                      id="utilityBill" 
+                      type="file" 
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => {
+                        setDocumentType('utility-bill');
+                        handleFileChange(e);
+                      }}
+                      className="cursor-pointer mt-2"
+                    />
+                    {file && documentType === 'utility-bill' && (
+                      <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
+                        <p className="text-sm text-green-800">
+                          <CheckCircle className="w-4 h-4 inline mr-1" />
+                          Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              
-              <div className="mt-6 flex justify-end">
+                
+                <div className="mt-6 flex justify-end">
+                  <Button 
+                    onClick={handleUpload}
+                    disabled={!file || documentType !== 'utility-bill' || uploadLoading}
+                    className="bg-[#DC143C] hover:bg-[#DC143C]/90"
+                  >
+                    {uploadLoading ? "Uploading..." : "Upload Utility Bill"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Other Documents Upload Section */}
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="w-5 h-5" />
+                  Upload Additional Documents
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4">
+                  <div>
+                    <Label htmlFor="documentType">Document Type</Label>
+                    <Select 
+                      value={documentType} 
+                      onValueChange={setDocumentType}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select document type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="license">Dealer License</SelectItem>
+                        <SelectItem value="business-registration">Business Registration</SelectItem>
+                        <SelectItem value="tax-document">Tax Document</SelectItem>
+                        <SelectItem value="identity">Identity Document</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="file">Select File</Label>
+                    <Input 
+                      id="file" 
+                      type="file" 
+                      onChange={handleFileChange} 
+                      className="cursor-pointer"
+                    />
+                    {file && documentType !== 'utility-bill' && (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end">
                 <Button 
                   onClick={handleUpload}
-                  disabled={!file || documentType !== 'utility-bill' || uploadLoading}
-                  className="bg-[#DC143C] hover:bg-[#DC143C]/90"
+                  disabled={!file || !documentType || documentType === 'utility-bill' || uploadLoading}
+                  variant="outline"
                 >
-                  {uploadLoading ? "Uploading..." : "Upload Utility Bill"}
+                  {uploadLoading ? "Uploading..." : "Upload Document"}
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardFooter>
+            </Card>
+          </>
         )}
         
-        {/* Other Documents Upload Section */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="w-5 h-5" />
-              Upload Additional Documents
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              <div>
-                <Label htmlFor="documentType">Document Type</Label>
-                <Select 
-                  value={documentType} 
-                  onValueChange={setDocumentType}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select document type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="license">Dealer License</SelectItem>
-                    <SelectItem value="business-registration">Business Registration</SelectItem>
-                    <SelectItem value="tax-document">Tax Document</SelectItem>
-                    <SelectItem value="identity">Identity Document</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="file">Select File</Label>
-                <Input 
-                  id="file" 
-                  type="file" 
-                  onChange={handleFileChange} 
-                  className="cursor-pointer"
-                />
-                {file && documentType !== 'utility-bill' && (
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
-                  </p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-end">
-            <Button 
-              onClick={handleUpload}
-              disabled={!file || !documentType || documentType === 'utility-bill' || uploadLoading}
-              variant="outline"
-            >
-              {uploadLoading ? "Uploading..." : "Upload Document"}
-            </Button>
-          </CardFooter>
-        </Card>
-        
-        {/* Loyalty Agreement Form Section */}
+        {/* Loyalty Agreement Form Section - shown for all dealers */}
         <div className="mb-8">
           <LoyaltyAgreementForm />
         </div>
         
-        {/* Document list */}
+        {/* Document list - shown for all dealers */}
         <h2 className="text-2xl font-semibold mb-4">Uploaded Documents</h2>
         <div className="grid gap-6">
           {documents.length === 0 ? (
