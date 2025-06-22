@@ -241,7 +241,7 @@ async function handleDocumentUpload(req: Request, supabase: any) {
       throw uploadError;
     }
 
-    // Save document reference in the database
+    // Save document reference in the new dealer_documents table
     const { data: docData, error: docError } = await supabase
       .from("dealer_documents")
       .insert({
@@ -379,7 +379,7 @@ async function handleGetDocuments(req: Request, supabase: any) {
 
     console.log("Dealer found:", dealerData.id);
 
-    // Get all documents for this dealer
+    // Get all documents for this dealer from the new table
     const { data: documents, error: docsError } = await supabase
       .from("dealer_documents")
       .select("*")

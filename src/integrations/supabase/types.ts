@@ -696,6 +696,56 @@ export type Database = {
           },
         ]
       }
+      dealer_documents: {
+        Row: {
+          created_at: string
+          dealer_id: string
+          document_type: string
+          file_name: string
+          file_path: string
+          file_type: string
+          id: string
+          updated_at: string
+          uploaded_at: string
+          verification_notes: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          dealer_id: string
+          document_type: string
+          file_name: string
+          file_path: string
+          file_type: string
+          id?: string
+          updated_at?: string
+          uploaded_at?: string
+          verification_notes?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          dealer_id?: string
+          document_type?: string
+          file_name?: string
+          file_path?: string
+          file_type?: string
+          id?: string
+          updated_at?: string
+          uploaded_at?: string
+          verification_notes?: string | null
+          verified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dealer_documents_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "dealers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dealer_purchases: {
         Row: {
           amount: number

@@ -24,6 +24,8 @@ export interface DealerDocument {
   verified: boolean;
   verification_notes?: string;
   signedUrl?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export async function updateDealerProfile(profileData: ProfileUpdateData) {
@@ -71,6 +73,24 @@ export async function uploadDealerDocument({ file, documentType }: DocumentUploa
         success: false,
         error: "User not authenticated"
       };
+    }
+
+    // Validate utility bill specific requirements
+    if (documentType === 'utility-bill') {
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+      if (!allowedTypes.includes(file.type)) {
+        return {
+          success: false,
+          error: "Utility bills must be in PDF, JPG, or PNG format"
+        };
+      }
+      
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        return {
+          success: false,
+          error: "File size must be less than 10MB"
+        };
+      }
     }
 
     // Create form data for file upload
