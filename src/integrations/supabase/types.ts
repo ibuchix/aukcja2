@@ -2032,6 +2032,16 @@ export type Database = {
         Args: { p_user_id?: string }
         Returns: Json
       }
+      get_live_auction_schedules: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          car_id: string
+          status: string
+          start_time: string
+          end_time: string
+          is_manually_controlled: boolean
+        }[]
+      }
       get_profile: {
         Args: { p_user_id: string }
         Returns: {
