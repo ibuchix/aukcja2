@@ -5,8 +5,7 @@ import { AlertCircle } from "lucide-react";
 import { AuctionFilters } from '../auction/types';
 import { useSimplifiedCarListingsQuery } from './hooks/useSimplifiedCarListingsQuery';
 import { LiveAuctionCard } from './LiveAuctionCard';
-import { AuctionFiltersComponent } from './AuctionFiltersComponent';
-import { AuctionSortSelect } from './AuctionSortSelect';
+import { CarSearchFilters } from './filters/CarSearchFilters';
 import { AuctionPagination } from './AuctionPagination';
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -90,24 +89,18 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Filters and Search */}
-      <div className="space-y-4">
-        <AuctionFiltersComponent
-          filters={filters}
-          onFiltersChange={setFilters}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
-        
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-muted-foreground">
-            {totalCars} live auctions found
-          </div>
-          
-          <AuctionSortSelect
-            value={sortOption}
-            onValueChange={setSortOption}
-          />
+      {/* Comprehensive Filters and Search */}
+      <CarSearchFilters
+        onFiltersChange={setFilters}
+        onSortChange={setSortOption}
+        onSearchChange={setSearchQuery}
+        sortOption={sortOption}
+        searchQuery={searchQuery}
+      />
+      
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-muted-foreground">
+          {totalCars} live auctions found
         </div>
       </div>
 

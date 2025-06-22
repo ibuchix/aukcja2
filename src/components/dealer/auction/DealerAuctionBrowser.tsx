@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AuctionTable } from "./AuctionTable";
-import { DealerAuctionFilters } from "./DealerAuctionFilters";
+import { CarSearchFilters } from "../cars/filters/CarSearchFilters";
 import { AuctionPagination } from "./AuctionPagination";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuctionBrowser } from "./hooks/useAuctionBrowser";
@@ -94,7 +94,7 @@ export const DealerAuctionBrowser = ({ dealerId }: DealerAuctionBrowserProps) =>
         <CardTitle>Available Auctions</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <DealerAuctionFilters
+        <CarSearchFilters
           onFiltersChange={handleFiltersChange}
           onSortChange={handleSortChange}
           onSearchChange={handleSearchChange}
