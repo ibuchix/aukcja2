@@ -14,10 +14,7 @@ export const fetchCarsForSchedules = async (
   pageSize: number
 ) => {
   if (carIds.length === 0) {
-    return {
-      cars: [],
-      total: 0
-    };
+    return [];
   }
   
   let carsQuery = supabase
