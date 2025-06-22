@@ -40,7 +40,7 @@ export const useSimplifiedCarListingsQuery = ({
       sortOption, 
       searchQuery, 
       currentPage.toString(),
-      "v2"
+      "v3"
     ],
     queryFn: async () => {
       const isDev = process.env.NODE_ENV === 'development';
@@ -50,7 +50,7 @@ export const useSimplifiedCarListingsQuery = ({
       }
       
       try {
-        // STEP 1: Use direct query to get live auction schedules (bypassing RPC for now)
+        // STEP 1: Get live auction schedules with proper error handling
         const { data: schedulesData, error: schedulesError } = await supabase
           .from('auction_schedules')
           .select(`
@@ -68,7 +68,9 @@ export const useSimplifiedCarListingsQuery = ({
           throw new Error(`Live schedules query failed: ${schedulesError.message}`);
         }
         
-        const schedules = schedulesData || [];
+        // Ensure schedulesData is an array and properly typed
+        const schedules: LiveAuctionSchedule[] = Array.isArray(schedulesData) ? schedulesData : [];
+        
         if (isDev) {
           console.log('✅ Direct schedules query succeeded. Schedules found:', schedules.length);
         }
@@ -84,10 +86,15 @@ export const useSimplifiedCarListingsQuery = ({
           };
         }
         
-        // Extract car IDs from schedules
+        // Extract car IDs from schedules with proper validation
         const carIds = schedules
-          .filter((schedule: any) => schedule && typeof schedule === 'object' && schedule.car_id)
-          .map((schedule: any) => schedule.car_id);
+          .filter((schedule): schedule is LiveAuctionSchedule => 
+            schedule && 
+            typeof schedule === 'object' && 
+            typeof schedule.car_id === 'string' &&
+            schedule.car_id.length > 0
+          )
+          .map((schedule) => schedule.car_id);
         
         if (isDev) {
           console.log('Car IDs from schedules:', carIds.length);
@@ -165,7 +172,7 @@ export const useSimplifiedCarListingsQuery = ({
         }
         
         // STEP 3: Merge car data with schedule data
-        const rawCars = carsData || [];
+        const rawCars = Array.isArray(carsData) ? carsData : [];
         
         // Type the schedules data properly for merging
         const typedSchedules: AuctionScheduleData[] = schedules.map((schedule: LiveAuctionSchedule) => ({
