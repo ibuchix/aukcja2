@@ -79,23 +79,26 @@ export const useSimplifiedCarListingsQuery = ({
               continue;
             }
             
+            // Type assertion after null check
+            const scheduleItem = item as Record<string, any>;
+            
             // Check if all required properties exist and have correct types
-            if ('car_id' in item &&
-                'status' in item &&
-                'start_time' in item &&
-                'end_time' in item &&
-                'is_manually_controlled' in item &&
-                typeof item.car_id === 'string' &&
-                typeof item.status === 'string' &&
-                typeof item.start_time === 'string' &&
-                typeof item.end_time === 'string' &&
-                typeof item.is_manually_controlled === 'boolean') {
+            if ('car_id' in scheduleItem &&
+                'status' in scheduleItem &&
+                'start_time' in scheduleItem &&
+                'end_time' in scheduleItem &&
+                'is_manually_controlled' in scheduleItem &&
+                typeof scheduleItem.car_id === 'string' &&
+                typeof scheduleItem.status === 'string' &&
+                typeof scheduleItem.start_time === 'string' &&
+                typeof scheduleItem.end_time === 'string' &&
+                typeof scheduleItem.is_manually_controlled === 'boolean') {
               schedules.push({
-                car_id: item.car_id,
-                status: item.status,
-                start_time: item.start_time,
-                end_time: item.end_time,
-                is_manually_controlled: item.is_manually_controlled
+                car_id: scheduleItem.car_id,
+                status: scheduleItem.status,
+                start_time: scheduleItem.start_time,
+                end_time: scheduleItem.end_time,
+                is_manually_controlled: scheduleItem.is_manually_controlled
               });
             }
           }
