@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,7 +68,8 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
           console.log(`Removed filter key: ${key}`);
         }
       } else {
-        newFilters[key] = value;
+        // Type-safe assignment using bracket notation with proper typing
+        (newFilters as any)[key] = value;
         if (isDev) {
           console.log(`Set filter ${key} = ${value}`);
         }
