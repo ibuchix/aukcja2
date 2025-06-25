@@ -105,7 +105,7 @@ export const useCarListingsQuery = ({
           });
         }
         
-        // STEP 3: Get auction schedules with improved time handling
+        // STEP 3: Get auction schedules with relaxed time constraints for debugging
         const now = new Date();
         const schedulesResult = await SessionAwareQueryBuilder.executeQuery(
           async () => {
@@ -118,9 +118,7 @@ export const useCarListingsQuery = ({
                 end_time,
                 is_manually_controlled
               `)
-              .in("status", ["running", "scheduled"])
-              .lte("start_time", now.toISOString())
-              .gte("end_time", now.toISOString());
+              .in("status", ["running", "scheduled", "ended"]); // Include more statuses
             
             return query;
           },
@@ -142,7 +140,7 @@ export const useCarListingsQuery = ({
           }
         }
         
-        // STEP 4: Get all active auction cars (don't limit by schedules initially)
+        // STEP 4: Get all active auction cars with relaxed constraints
         const carsResult = await SessionAwareQueryBuilder.executeQuery(
           async () => {
             let carsQuery = supabase
@@ -190,8 +188,8 @@ export const useCarListingsQuery = ({
                 fuel_type
               `)
               .eq("is_auction", true)
-              .eq("auction_status", "active")
-              .gt("reserve_price", 0);
+              .in("auction_status", ["active", "pending"])  // Include more statuses
+              .gte("reserve_price", 0); // Allow zero reserve prices too
             
             // Apply filters, sorting, and pagination
             carsQuery = applyFilters(carsQuery, filters, searchQuery);
@@ -207,25 +205,31 @@ export const useCarListingsQuery = ({
           throw new Error(`Cars query failed: ${carsResult.error.message}`);
         }
         
+        // Check if carsResult.data is valid before accessing properties
+        const rawCars = Array.isArray(carsResult.data) ? carsResult.data : [];
+        
         if (isDev) {
           const { fromIndex, to } = calculatePaginationInfo(currentPage, pageSize);
           console.log('Applied pagination:', { fromIndex, to, currentPage, pageSize });
-          console.log('Session-aware cars query succeeded. Raw data count:', carsResult.data?.length || 0);
+          console.log('Session-aware cars query succeeded. Raw data count:', rawCars.length);
           
-          if (carsResult.data && carsResult.data.length > 0) {
-            console.log('Sample car data:', {
-              id: carsResult.data[0].id,
-              make: carsResult.data[0].make,
-              model: carsResult.data[0].model,
-              year: carsResult.data[0].year,
-              reserve_price: carsResult.data[0].reserve_price,
-              auction_status: carsResult.data[0].auction_status
-            });
+          if (rawCars.length > 0) {
+            const firstCar = rawCars[0];
+            // Type guard to ensure we have valid car data
+            if (firstCar && typeof firstCar === 'object' && 'id' in firstCar) {
+              console.log('Sample car data:', {
+                id: firstCar.id,
+                make: firstCar.make,
+                model: firstCar.model,
+                year: firstCar.year,
+                reserve_price: firstCar.reserve_price,
+                auction_status: firstCar.auction_status
+              });
+            }
           }
         }
         
         // STEP 5: Merge car data with schedule data (if available)
-        const rawCars = carsResult.data || [];
         
         // Properly type the schedules data for merging
         const typedSchedules: AuctionScheduleData[] = schedules
