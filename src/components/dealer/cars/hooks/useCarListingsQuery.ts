@@ -118,7 +118,7 @@ export const useCarListingsQuery = ({
                 end_time,
                 is_manually_controlled
               `)
-              .in("status", ["running", "scheduled", "ended"]); // Include more statuses
+              .in("status", ["running", "scheduled", "completed"]); // Use valid status values
             
             return query;
           },
@@ -215,15 +215,15 @@ export const useCarListingsQuery = ({
           
           if (rawCars.length > 0) {
             const firstCar = rawCars[0];
-            // Type guard to ensure we have valid car data
-            if (firstCar && typeof firstCar === 'object' && 'id' in firstCar) {
+            // Type guard to ensure we have valid car data with proper null checking
+            if (firstCar && typeof firstCar === 'object' && 'id' in firstCar && firstCar.id) {
               console.log('Sample car data:', {
                 id: firstCar.id,
-                make: firstCar.make,
-                model: firstCar.model,
-                year: firstCar.year,
-                reserve_price: firstCar.reserve_price,
-                auction_status: firstCar.auction_status
+                make: firstCar.make || 'N/A',
+                model: firstCar.model || 'N/A',
+                year: firstCar.year || 'N/A',
+                reserve_price: firstCar.reserve_price || 0,
+                auction_status: firstCar.auction_status || 'N/A'
               });
             }
           }
