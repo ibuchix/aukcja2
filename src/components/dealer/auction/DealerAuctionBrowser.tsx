@@ -6,12 +6,22 @@ import { AuctionPagination } from "./AuctionPagination";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuctionBrowser } from "./hooks/useAuctionBrowser";
 import { AuctionEmptyState } from "./components/AuctionEmptyState";
-import { AuctionFilters, DealerAuctionBrowserProps } from "./types";
+import { DealerAuctionBrowserProps } from "./types";
+import { useCarFilters } from "../cars/hooks/useCarFilters";
 
 export const DealerAuctionBrowser = ({ dealerId }: DealerAuctionBrowserProps) => {
-  const [filters, setFilters] = useState<AuctionFilters>({});
-  const [sortOption, setSortOption] = useState<string>("ending-soon");
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const {
+    filters,
+    debouncedFilters,
+    sortOption,
+    searchQuery,
+    handleFilterChange,
+    handleFiltersChange,
+    handleSortChange,
+    handleSearchChange,
+    cleanup
+  } = useCarFilters();
+
   const [cursor, setCursor] = useState<string | null>(null);
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
   const cursorHistoryRef = useRef<string[]>([]);
@@ -21,7 +31,14 @@ export const DealerAuctionBrowser = ({ dealerId }: DealerAuctionBrowserProps) =>
     setCursor(null);
     setDirection('next');
     cursorHistoryRef.current = [];
-  }, [filters, searchQuery, sortOption]);
+  }, [debouncedFilters, searchQuery, sortOption]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanup();
+    };
+  }, [cleanup]);
 
   const { 
     auctions, 
@@ -32,38 +49,12 @@ export const DealerAuctionBrowser = ({ dealerId }: DealerAuctionBrowserProps) =>
     error 
   } = useAuctionBrowser(
     dealerId,
-    filters,
+    debouncedFilters, // Use debounced filters for API calls
     sortOption,
     searchQuery,
     cursor,
     direction
   );
-
-  const handleFilterChange = (key: keyof AuctionFilters, value: string | undefined) => {
-    setFilters(prevFilters => {
-      const newFilters = { ...prevFilters };
-      
-      if (value === '' || value === null || value === undefined) {
-        delete newFilters[key];
-      } else {
-        (newFilters as any)[key] = value;
-      }
-      
-      return newFilters;
-    });
-  };
-
-  const handleFiltersChange = (newFilters: AuctionFilters) => {
-    setFilters(newFilters);
-  };
-
-  const handleSortChange = (sort: string) => {
-    setSortOption(sort);
-  };
-
-  const handleSearchChange = (search: string) => {
-    setSearchQuery(search);
-  };
 
   const handleNextPage = () => {
     if (nextCursor) {

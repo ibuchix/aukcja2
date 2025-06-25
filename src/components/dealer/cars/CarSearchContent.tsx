@@ -43,19 +43,22 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
   const isDev = process.env.NODE_ENV === 'development';
   const isVerified = dealerProfile?.is_verified;
   
-  // Log dealer verification status for debugging
+  // Enhanced logging for debugging
   useEffect(() => {
     if (isDev) {
-      console.log("CarSearch component status:", {
+      console.log("🏷️ [CAR SEARCH CONTENT STATE]", {
         dealerId,
         isVerified,
         canMakeAuthenticatedQueries,
         listings: listings.length,
         isLoading,
-        hasError: !!error
+        hasError: !!error,
+        filters,
+        activeFilterCount: Object.keys(filters).length,
+        timestamp: new Date().toISOString()
       });
     }
-  }, [dealerId, isVerified, listings.length, isLoading, error, isDev, canMakeAuthenticatedQueries]);
+  }, [dealerId, isVerified, listings.length, isLoading, error, isDev, canMakeAuthenticatedQueries, filters]);
 
   // Show verification warning if dealer is not verified
   if (!profileLoading && !isVerified) {
@@ -99,17 +102,18 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
         )}
       </div>
 
-      {/* Debugging Info in Development */}
+      {/* Enhanced Debugging Info in Development */}
       {isDev && (
         <Alert variant="default" className="bg-blue-50 border-blue-200">
           <Info className="h-4 w-4" />
           <AlertDescription className="text-xs">
-            Live Auction Search Debug: Dealer ID: {dealerId || "None"} | 
+            🔍 Debug: Dealer ID: {dealerId || "None"} | 
             Verified: {isVerified ? "Yes" : "No"} | 
             Active filters: {Object.keys(filters).length} | 
             Live auctions: {listings.length} | 
             Loading: {isLoading ? "Yes" : "No"} |
-            Error: {error ? "Yes" : "No"}
+            Error: {error ? "Yes" : "No"} |
+            Current filter state: {JSON.stringify(filters)}
           </AlertDescription>
         </Alert>
       )}
@@ -164,7 +168,7 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
   );
 };
 
-// New component for no live auctions state
+// Enhanced no auctions component with better debugging
 const NoLiveAuctionsFound = ({ 
   searchQuery, 
   onClearFilters 

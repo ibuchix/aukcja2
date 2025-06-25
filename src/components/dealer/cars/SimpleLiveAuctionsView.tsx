@@ -1,13 +1,13 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { AuctionFilters } from '../auction/types';
 import { useSimplifiedCarListingsQuery } from './hooks/useSimplifiedCarListingsQuery';
 import { LiveAuctionCard } from './LiveAuctionCard';
 import { CarSearchFilters } from './filters/CarSearchFilters';
 import { AuctionPagination } from './AuctionPagination';
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCarFilters } from './hooks/useCarFilters';
 
 interface SimpleLiveAuctionsViewProps {
   dealerId: string;
@@ -20,34 +20,36 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
   dealerProfile,
   isProfileLoading = false
 }) => {
-  const [filters, setFilters] = useState<AuctionFilters>({
-    make: '',
-    model: '',
-    yearFrom: undefined,
-    yearTo: undefined,
-    priceFrom: undefined,
-    priceTo: undefined,
-    mileageFrom: undefined,
-    mileageTo: undefined,
-    transmission: '',
-    fuelType: '',
-    bodyType: '',
-    location: ''
-  });
-  
-  const [sortOption, setSortOption] = useState('ending_soon');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const {
+    filters,
+    debouncedFilters,
+    sortOption,
+    searchQuery,
+    currentPage,
+    handleFilterChange,
+    handleFiltersChange,
+    handleSortChange,
+    handleSearchChange,
+    cleanup
+  } = useCarFilters();
+
   const pageSize = 12;
 
-  // Use the simplified query instead of the original one
+  // Cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      cleanup();
+    };
+  }, [cleanup]);
+
+  // Use the simplified query with debounced filters for API calls
   const { 
     data: queryResult, 
     isLoading, 
     error,
     refetch 
   } = useSimplifiedCarListingsQuery({
-    filters,
+    filters: debouncedFilters, // Use debounced filters for API calls
     sortOption,
     searchQuery,
     currentPage,
@@ -57,20 +59,6 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
 
   const cars = queryResult?.cars || [];
   const totalCars = queryResult?.total || 0;
-
-  const handleFilterChange = (key: keyof AuctionFilters, value: string | undefined) => {
-    setFilters(prevFilters => {
-      const newFilters = { ...prevFilters };
-      
-      if (value === '' || value === null || value === undefined) {
-        delete newFilters[key];
-      } else {
-        (newFilters as any)[key] = value;
-      }
-      
-      return newFilters;
-    });
-  };
 
   // Show loading skeleton
   if (isLoading || isProfileLoading) {
@@ -107,9 +95,9 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
       <CarSearchFilters
         filters={filters}
         onFilterChange={handleFilterChange}
-        onFiltersChange={setFilters}
-        onSortChange={setSortOption}
-        onSearchChange={setSearchQuery}
+        onFiltersChange={handleFiltersChange}
+        onSortChange={handleSortChange}
+        onSearchChange={handleSearchChange}
         sortOption={sortOption}
         searchQuery={searchQuery}
       />

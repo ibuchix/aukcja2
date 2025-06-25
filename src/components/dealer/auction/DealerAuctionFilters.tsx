@@ -8,25 +8,39 @@ import { AdvancedFilterPanel } from "./filters/AdvancedFilterPanel";
 import { AuctionFilters, DealerAuctionFiltersProps } from "./types";
 
 export const DealerAuctionFilters = ({
+  filters = {},
+  onFilterChange,
   onFiltersChange,
   onSortChange,
   onSearchChange,
   sortOption,
   searchQuery,
-}: DealerAuctionFiltersProps) => {
-  const [filters, setFilters] = useState<AuctionFilters>({});
+}: DealerAuctionFiltersProps & {
+  filters?: AuctionFilters;
+  onFilterChange?: (key: keyof AuctionFilters, value: string | undefined) => void;
+}) => {
   const [showFilters, setShowFilters] = useState<boolean>(false);
 
   const handleFilterChange = (key: keyof AuctionFilters, value: string) => {
-    // Handle numeric and string fields appropriately
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    onFiltersChange(newFilters);
+    if (onFilterChange) {
+      onFilterChange(key, value);
+    } else {
+      // Fallback for backward compatibility
+      const newFilters = { ...filters, [key]: value };
+      onFiltersChange(newFilters);
+    }
   };
 
   const clearFilters = () => {
-    setFilters({});
-    onFiltersChange({});
+    if (onFilterChange) {
+      // Clear individual filters
+      Object.keys(filters).forEach(key => {
+        onFilterChange(key as keyof AuctionFilters, undefined);
+      });
+    } else {
+      // Fallback for backward compatibility
+      onFiltersChange({});
+    }
   };
 
   return (
