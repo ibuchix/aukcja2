@@ -30,6 +30,8 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
     handleFiltersChange,
     handleSortChange,
     handleSearchChange,
+    handleNextPage,
+    handlePreviousPage,
     cleanup
   } = useCarFilters();
 
@@ -89,6 +91,19 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
     );
   }
 
+  // Calculate total pages for pagination
+  const totalPages = Math.ceil(totalCars / pageSize);
+
+  // Create a page change handler that works with the existing pagination component
+  const handlePageChange = (page: number) => {
+    const pageDirection = page > currentPage ? 'next' : 'previous';
+    if (pageDirection === 'next') {
+      handleNextPage();
+    } else {
+      handlePreviousPage();
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Comprehensive Filters and Search */}
@@ -130,8 +145,8 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
 
           <AuctionPagination
             currentPage={currentPage}
-            totalPages={Math.ceil(totalCars / pageSize)}
-            onPageChange={setCurrentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
           />
         </>
       )}
