@@ -215,9 +215,9 @@ export const useCarListingsQuery = ({
           
           if (rawCars.length > 0) {
             const firstCar = rawCars[0];
-            // Restructured type guard to ensure proper null safety
-            if (firstCar !== null && firstCar !== undefined && typeof firstCar === 'object' && 'id' in firstCar) {
-              const carData = firstCar as any; // Safe type assertion after null checks
+            // Simplified type guard with explicit null safety
+            if (firstCar) {
+              const carData = firstCar as any;
               console.log('Sample car data:', {
                 id: carData.id || 'N/A',
                 make: carData.make || 'N/A',
