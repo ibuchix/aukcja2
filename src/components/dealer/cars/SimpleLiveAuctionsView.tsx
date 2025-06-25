@@ -58,6 +58,20 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
   const cars = queryResult?.cars || [];
   const totalCars = queryResult?.total || 0;
 
+  const handleFilterChange = (key: keyof AuctionFilters, value: string | undefined) => {
+    setFilters(prevFilters => {
+      const newFilters = { ...prevFilters };
+      
+      if (value === '' || value === null || value === undefined) {
+        delete newFilters[key];
+      } else {
+        (newFilters as any)[key] = value;
+      }
+      
+      return newFilters;
+    });
+  };
+
   // Show loading skeleton
   if (isLoading || isProfileLoading) {
     return (
@@ -91,6 +105,8 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
     <div className="space-y-6">
       {/* Comprehensive Filters and Search */}
       <CarSearchFilters
+        filters={filters}
+        onFilterChange={handleFilterChange}
         onFiltersChange={setFilters}
         onSortChange={setSortOption}
         onSearchChange={setSearchQuery}

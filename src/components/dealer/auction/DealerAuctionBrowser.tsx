@@ -39,6 +39,20 @@ export const DealerAuctionBrowser = ({ dealerId }: DealerAuctionBrowserProps) =>
     direction
   );
 
+  const handleFilterChange = (key: keyof AuctionFilters, value: string | undefined) => {
+    setFilters(prevFilters => {
+      const newFilters = { ...prevFilters };
+      
+      if (value === '' || value === null || value === undefined) {
+        delete newFilters[key];
+      } else {
+        (newFilters as any)[key] = value;
+      }
+      
+      return newFilters;
+    });
+  };
+
   const handleFiltersChange = (newFilters: AuctionFilters) => {
     setFilters(newFilters);
   };
@@ -95,6 +109,8 @@ export const DealerAuctionBrowser = ({ dealerId }: DealerAuctionBrowserProps) =>
       </CardHeader>
       <CardContent className="space-y-6">
         <CarSearchFilters
+          filters={filters}
+          onFilterChange={handleFilterChange}
           onFiltersChange={handleFiltersChange}
           onSortChange={handleSortChange}
           onSearchChange={handleSearchChange}
