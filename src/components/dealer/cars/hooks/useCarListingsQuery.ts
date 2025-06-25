@@ -215,15 +215,16 @@ export const useCarListingsQuery = ({
           
           if (rawCars.length > 0) {
             const firstCar = rawCars[0];
-            // Improved type guard with proper null checking
-            if (firstCar && typeof firstCar === 'object' && firstCar !== null && 'id' in firstCar && firstCar.id) {
+            // Restructured type guard to ensure proper null safety
+            if (firstCar !== null && firstCar !== undefined && typeof firstCar === 'object' && 'id' in firstCar) {
+              const carData = firstCar as any; // Safe type assertion after null checks
               console.log('Sample car data:', {
-                id: firstCar.id,
-                make: (firstCar as any).make || 'N/A',
-                model: (firstCar as any).model || 'N/A',
-                year: (firstCar as any).year || 'N/A',
-                reserve_price: (firstCar as any).reserve_price || 0,
-                auction_status: (firstCar as any).auction_status || 'N/A'
+                id: carData.id || 'N/A',
+                make: carData.make || 'N/A',
+                model: carData.model || 'N/A',
+                year: carData.year || 'N/A',
+                reserve_price: carData.reserve_price || 0,
+                auction_status: carData.auction_status || 'N/A'
               });
             }
           }
