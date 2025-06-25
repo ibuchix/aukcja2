@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,53 +38,69 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
       console.log('CarSearchFilters state updated:', {
         filters,
         activeFilterCount,
-        filterKeys: Object.keys(filters)
+        filterKeys: Object.keys(filters),
+        filterValues: Object.entries(filters).reduce((acc, [key, val]) => {
+          acc[key] = val;
+          return acc;
+        }, {} as Record<string, any>)
       });
     }
   }, [filters, activeFilterCount, isDev]);
 
-  // Debounced filter change to prevent rapid API calls
+  // Stable debounced filter change to prevent rapid API calls
   const debouncedOnFiltersChange = useMemo(() => {
     let timeoutId: NodeJS.Timeout;
     return (newFilters: AuctionFilters) => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
+        if (isDev) {
+          console.log('Debounced filter change executing:', newFilters);
+        }
         onFiltersChange(newFilters);
-      }, 300);
+      }, 500); // Increased debounce time
     };
-  }, [onFiltersChange]);
+  }, [onFiltersChange, isDev]);
 
   const handleFilterChange = useCallback((key: keyof AuctionFilters, value: string | undefined) => {
     if (isDev) {
-      console.log('Filter change requested:', { key, value, currentFilters: filters });
+      console.log('Filter change requested:', { 
+        key, 
+        value, 
+        valueType: typeof value,
+        currentFilters: filters 
+      });
     }
 
     setFilters(prevFilters => {
       const newFilters = { ...prevFilters };
       
-      // Handle the filter value - only remove if explicitly empty
+      // Handle the filter value - only remove if explicitly empty/undefined
       if (value === '' || value === null || value === undefined) {
         delete newFilters[key];
         if (isDev) {
           console.log(`Removed filter key: ${key}`);
         }
       } else {
-        // Type-safe assignment using bracket notation with proper typing
+        // Store the value as-is
         (newFilters as any)[key] = value;
         if (isDev) {
-          console.log(`Set filter ${key} = ${value}`);
+          console.log(`Set filter ${key} = ${value} (type: ${typeof value})`);
         }
       }
 
       // Count active filters more accurately
-      const activeCount = Object.entries(newFilters).filter(([_, val]) => {
-        return val !== '' && val !== null && val !== undefined;
+      const activeCount = Object.entries(newFilters).filter(([filterKey, val]) => {
+        const isActive = val !== '' && val !== null && val !== undefined;
+        if (isDev && isActive) {
+          console.log(`Active filter: ${filterKey} = ${val}`);
+        }
+        return isActive;
       }).length;
       
       setActiveFilterCount(activeCount);
       
       if (isDev) {
-        console.log('New filters state:', {
+        console.log('New filters state after change:', {
           newFilters,
           activeCount,
           changedKey: key,
@@ -96,15 +113,16 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
       
       return newFilters;
     });
-  }, [filters, debouncedOnFiltersChange, isDev]);
+  }, [debouncedOnFiltersChange, isDev]);
 
   const handleClearAllFilters = useCallback(() => {
     if (isDev) {
       console.log('Clearing all filters');
     }
-    setFilters({});
+    const emptyFilters = {};
+    setFilters(emptyFilters);
     setActiveFilterCount(0);
-    onFiltersChange({});
+    onFiltersChange(emptyFilters);
   }, [onFiltersChange, isDev]);
 
   const handleLoadSavedFilters = useCallback((savedFilters: AuctionFilters) => {
@@ -142,6 +160,14 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Debug info in development */}
+        {isDev && (
+          <div className="bg-blue-50 p-2 rounded text-xs">
+            <strong>Debug:</strong> Active filters: {activeFilterCount} | 
+            Current: {Object.keys(filters).join(', ') || 'none'}
+          </div>
+        )}
+
         {/* Make and Model Filter */}
         <MakeModelFilter 
           selectedMake={filters.make}

@@ -54,6 +54,13 @@ export const useCarListingsQuery = ({
       
       if (isDev) {
         console.log('=== SESSION-AWARE CAR LISTINGS QUERY START ===');
+        console.log('Query params:', {
+          filters,
+          sortOption,
+          searchQuery,
+          currentPage,
+          pageSize
+        });
       }
       
       try {
@@ -98,7 +105,8 @@ export const useCarListingsQuery = ({
           });
         }
         
-        // STEP 3: Get auction schedules with session-aware query
+        // STEP 3: Get auction schedules with improved time handling
+        const now = new Date();
         const schedulesResult = await SessionAwareQueryBuilder.executeQuery(
           async () => {
             const query = supabase
@@ -110,9 +118,9 @@ export const useCarListingsQuery = ({
                 end_time,
                 is_manually_controlled
               `)
-              .eq("status", "running")
-              .lte("start_time", new Date().toISOString())
-              .gte("end_time", new Date().toISOString());
+              .in("status", ["running", "scheduled"])
+              .lte("start_time", now.toISOString())
+              .gte("end_time", now.toISOString());
             
             return query;
           },
@@ -120,42 +128,21 @@ export const useCarListingsQuery = ({
         );
         
         if (schedulesResult.error) {
-          throw new Error(`Schedules query failed: ${schedulesResult.error.message}`);
+          if (isDev) {
+            console.log('Schedules query failed:', schedulesResult.error.message);
+          }
+          // Don't throw error, just continue with empty schedules
         }
         
         const schedules = schedulesResult.data || [];
         if (isDev) {
-          console.log('✅ Session-aware schedules query succeeded. Schedules found:', schedules.length);
-        }
-        
-        // If no running schedules, return empty result
-        if (schedules.length === 0) {
-          if (isDev) {
-            console.log('No running auction schedules found, returning empty result');
+          console.log('✅ Session-aware schedules query completed. Schedules found:', schedules.length);
+          if (schedules.length > 0) {
+            console.log('First few schedules:', schedules.slice(0, 3));
           }
-          return {
-            cars: [],
-            total: 0
-          };
         }
         
-        // Extract car IDs from schedules
-        const carIds = schedules
-          .filter((schedule: any) => schedule && typeof schedule === 'object' && schedule.car_id)
-          .map((schedule: any) => schedule.car_id);
-        
-        if (isDev) {
-          console.log('Car IDs from schedules:', carIds.length);
-        }
-        
-        // STEP 4: Get cars with session-aware query
-        if (carIds.length === 0) {
-          return {
-            cars: [],
-            total: 0
-          };
-        }
-        
+        // STEP 4: Get all active auction cars (don't limit by schedules initially)
         const carsResult = await SessionAwareQueryBuilder.executeQuery(
           async () => {
             let carsQuery = supabase
@@ -199,11 +186,11 @@ export const useCarListingsQuery = ({
                 valuation_data,
                 last_saved,
                 registration_number,
-                is_manually_controlled
+                is_manually_controlled,
+                fuel_type
               `)
               .eq("is_auction", true)
               .eq("auction_status", "active")
-              .in("id", carIds)
               .gt("reserve_price", 0);
             
             // Apply filters, sorting, and pagination
@@ -224,9 +211,20 @@ export const useCarListingsQuery = ({
           const { fromIndex, to } = calculatePaginationInfo(currentPage, pageSize);
           console.log('Applied pagination:', { fromIndex, to, currentPage, pageSize });
           console.log('Session-aware cars query succeeded. Raw data count:', carsResult.data?.length || 0);
+          
+          if (carsResult.data && carsResult.data.length > 0) {
+            console.log('Sample car data:', {
+              id: carsResult.data[0].id,
+              make: carsResult.data[0].make,
+              model: carsResult.data[0].model,
+              year: carsResult.data[0].year,
+              reserve_price: carsResult.data[0].reserve_price,
+              auction_status: carsResult.data[0].auction_status
+            });
+          }
         }
         
-        // STEP 5: Merge car data with schedule data
+        // STEP 5: Merge car data with schedule data (if available)
         const rawCars = carsResult.data || [];
         
         // Properly type the schedules data for merging
@@ -247,9 +245,9 @@ export const useCarListingsQuery = ({
         
         if (isDev) {
           console.log('=== FINAL SESSION-AWARE RESULT ===');
-          console.log('Valid live auction cars:', validCars.length);
+          console.log('Valid cars after processing:', validCars.length);
           if (validCars.length > 0) {
-            console.log('First processed live auction car:', {
+            console.log('First processed car:', {
               id: validCars[0].id,
               make: validCars[0].make,
               model: validCars[0].model,
@@ -269,6 +267,7 @@ export const useCarListingsQuery = ({
         const errorMessage = err.message || 'Unknown error occurred';
         console.error("=== SESSION-AWARE QUERY ERROR ===");
         console.error("Error:", errorMessage);
+        console.error("Stack:", err.stack);
         
         // Capture final session state for debugging
         await SessionDebugger.captureSessionState(`Query Error: ${errorMessage}`);

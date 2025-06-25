@@ -3,43 +3,101 @@ import { AuctionFilters } from "../../../auction/types";
 
 export const applyFilters = (query: any, filters: AuctionFilters, searchQuery: string) => {
   let filteredQuery = query;
+  const isDev = process.env.NODE_ENV === 'development';
 
-  // Apply filters
+  if (isDev) {
+    console.log('Applying filters:', {
+      filters,
+      searchQuery,
+      filterKeys: Object.keys(filters)
+    });
+  }
+
+  // Apply make filter with case-insensitive matching
   if (filters.make && typeof filters.make === 'string') {
     filteredQuery = filteredQuery.ilike('make', `%${filters.make}%`);
+    if (isDev) {
+      console.log('Applied make filter:', filters.make);
+    }
   }
   
+  // Apply model filter with case-insensitive matching
   if (filters.model && typeof filters.model === 'string') {
     filteredQuery = filteredQuery.ilike('model', `%${filters.model}%`);
+    if (isDev) {
+      console.log('Applied model filter:', filters.model);
+    }
   }
   
-  if (filters.yearFrom && typeof filters.yearFrom === 'number') {
-    filteredQuery = filteredQuery.gte('year', filters.yearFrom);
+  // Year filters
+  if (filters.yearMin && typeof filters.yearMin === 'string') {
+    const yearValue = parseInt(filters.yearMin);
+    if (!isNaN(yearValue)) {
+      filteredQuery = filteredQuery.gte('year', yearValue);
+    }
   }
   
-  if (filters.yearTo && typeof filters.yearTo === 'number') {
-    filteredQuery = filteredQuery.lte('year', filters.yearTo);
+  if (filters.yearMax && typeof filters.yearMax === 'string') {
+    const yearValue = parseInt(filters.yearMax);
+    if (!isNaN(yearValue)) {
+      filteredQuery = filteredQuery.lte('year', yearValue);
+    }
   }
   
-  if (filters.priceFrom && typeof filters.priceFrom === 'number') {
-    filteredQuery = filteredQuery.gte('reserve_price', filters.priceFrom);
+  // Price filters  
+  if (filters.priceMin && typeof filters.priceMin === 'string') {
+    const priceValue = parseFloat(filters.priceMin);
+    if (!isNaN(priceValue)) {
+      filteredQuery = filteredQuery.gte('reserve_price', priceValue);
+    }
   }
   
-  if (filters.priceTo && typeof filters.priceTo === 'number') {
-    filteredQuery = filteredQuery.lte('reserve_price', filters.priceTo);
+  if (filters.priceMax && typeof filters.priceMax === 'string') {
+    const priceValue = parseFloat(filters.priceMax);
+    if (!isNaN(priceValue)) {
+      filteredQuery = filteredQuery.lte('reserve_price', priceValue);
+    }
   }
   
-  if (filters.mileageFrom && typeof filters.mileageFrom === 'number') {
-    filteredQuery = filteredQuery.gte('mileage', filters.mileageFrom);
+  // Mileage filters
+  if (filters.mileageMin && typeof filters.mileageMin === 'string') {
+    const mileageValue = parseFloat(filters.mileageMin);
+    if (!isNaN(mileageValue)) {
+      filteredQuery = filteredQuery.gte('mileage', mileageValue);
+    }
   }
   
-  if (filters.mileageTo && typeof filters.mileageTo === 'number') {
-    filteredQuery = filteredQuery.lte('mileage', filters.mileageTo);
+  if (filters.mileageMax && typeof filters.mileageMax === 'string') {
+    const mileageValue = parseFloat(filters.mileageMax);
+    if (!isNaN(mileageValue)) {
+      filteredQuery = filteredQuery.lte('mileage', mileageValue);
+    }
+  }
+
+  // Additional string filters
+  if (filters.transmission && typeof filters.transmission === 'string') {
+    filteredQuery = filteredQuery.ilike('transmission', `%${filters.transmission}%`);
+  }
+
+  if (filters.fuelType && typeof filters.fuelType === 'string') {
+    filteredQuery = filteredQuery.ilike('fuel_type', `%${filters.fuelType}%`);
+  }
+
+  if (filters.serviceHistory && typeof filters.serviceHistory === 'string') {
+    filteredQuery = filteredQuery.ilike('service_history_type', `%${filters.serviceHistory}%`);
   }
   
-  // Apply search query
-  if (searchQuery) {
-    filteredQuery = filteredQuery.or(`make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%`);
+  // Apply search query with case-insensitive matching
+  if (searchQuery && searchQuery.trim()) {
+    const searchTerm = searchQuery.trim();
+    filteredQuery = filteredQuery.or(`make.ilike.%${searchTerm}%,model.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`);
+    if (isDev) {
+      console.log('Applied search query:', searchTerm);
+    }
+  }
+
+  if (isDev) {
+    console.log('Filters applied successfully');
   }
 
   return filteredQuery;
