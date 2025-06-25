@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +43,18 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
     }
   }, [filters, activeFilterCount, isDev]);
 
-  const handleFilterChange = useCallback((key: keyof AuctionFilters, value: any) => {
+  // Debounced filter change to prevent rapid API calls
+  const debouncedOnFiltersChange = useMemo(() => {
+    let timeoutId: NodeJS.Timeout;
+    return (newFilters: AuctionFilters) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        onFiltersChange(newFilters);
+      }, 300);
+    };
+  }, [onFiltersChange]);
+
+  const handleFilterChange = useCallback((key: keyof AuctionFilters, value: string | undefined) => {
     if (isDev) {
       console.log('Filter change requested:', { key, value, currentFilters: filters });
     }
@@ -51,14 +62,20 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
     setFilters(prevFilters => {
       const newFilters = { ...prevFilters };
       
-      // Handle the filter value
+      // Handle the filter value - only remove if explicitly empty
       if (value === '' || value === null || value === undefined) {
         delete newFilters[key];
+        if (isDev) {
+          console.log(`Removed filter key: ${key}`);
+        }
       } else {
         newFilters[key] = value;
+        if (isDev) {
+          console.log(`Set filter ${key} = ${value}`);
+        }
       }
 
-      // Count active filters more carefully
+      // Count active filters more accurately
       const activeCount = Object.entries(newFilters).filter(([_, val]) => {
         return val !== '' && val !== null && val !== undefined;
       }).length;
@@ -69,18 +86,17 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
         console.log('New filters state:', {
           newFilters,
           activeCount,
-          removedKey: value === '' || value === null || value === undefined ? key : null
+          changedKey: key,
+          changedValue: value
         });
       }
       
-      // Use setTimeout to prevent rapid API calls
-      setTimeout(() => {
-        onFiltersChange(newFilters);
-      }, 100);
+      // Use debounced callback to prevent rapid API calls
+      debouncedOnFiltersChange(newFilters);
       
       return newFilters;
     });
-  }, [filters, onFiltersChange, isDev]);
+  }, [filters, debouncedOnFiltersChange, isDev]);
 
   const handleClearAllFilters = useCallback(() => {
     if (isDev) {
@@ -96,7 +112,10 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
       console.log('Loading saved filters:', savedFilters);
     }
     setFilters(savedFilters);
-    setActiveFilterCount(Object.keys(savedFilters).length);
+    const activeCount = Object.entries(savedFilters).filter(([_, val]) => {
+      return val !== '' && val !== null && val !== undefined;
+    }).length;
+    setActiveFilterCount(activeCount);
     onFiltersChange(savedFilters);
   }, [onFiltersChange, isDev]);
 
