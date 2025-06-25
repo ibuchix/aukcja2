@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CarListing } from "@/types/cars";
 import { useToast } from "@/hooks/use-toast";
@@ -14,25 +13,31 @@ export const useCarSearch = (dealerId: string) => {
 
   const {
     filters,
+    debouncedFilters, // Use debounced filters for API calls
     sortOption,
     searchQuery,
     currentPage,
+    handleFilterChange,
     handleFiltersChange,
     handleSortChange,
     handleSearchChange,
     handleNextPage,
     handlePreviousPage,
-    clearFilters
+    clearFilters,
+    cleanup
   } = useCarFilters();
 
   if (isDev) {
     console.log('=== USE CAR SEARCH HOOK ===');
     console.log('Dealer ID:', dealerId);
     console.log('Current page:', currentPage);
+    console.log('Current filters (UI):', filters);
+    console.log('Debounced filters (API):', debouncedFilters);
   }
 
+  // Use debounced filters for the API call
   const { isLoading, error, data, refetch } = useCarListingsQuery({
-    filters,
+    filters: debouncedFilters, // Use debounced filters instead of immediate filters
     sortOption,
     searchQuery,
     currentPage,
@@ -70,6 +75,13 @@ export const useCarSearch = (dealerId: string) => {
     }
   }, [data, isLoading, error, toast, isDev]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanup();
+    };
+  }, [cleanup]);
+
   const handleClearFilters = () => {
     clearFilters();
     
@@ -93,11 +105,18 @@ export const useCarSearch = (dealerId: string) => {
     listings,
     isLoading,
     error: error ? (error as Error).message : null,
+    
+    // Return current filters for UI display
     filters,
     sortOption,
     searchQuery,
     currentPage,
     canGoNext,
+    
+    // Return individual filter change handler
+    handleFilterChange,
+    
+    // Keep existing handlers for compatibility
     handleFiltersChange,
     handleSortChange,
     handleSearchChange,

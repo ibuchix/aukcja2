@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,8 @@ import { SavedFiltersManager } from "./SavedFiltersManager";
 import { SortSelector } from "../../auction/filters/SortSelector";
 
 interface CarSearchFiltersProps {
+  filters: AuctionFilters;
+  onFilterChange: (key: keyof AuctionFilters, value: string | undefined) => void;
   onFiltersChange: (filters: AuctionFilters) => void;
   onSearchChange: (search: string) => void;
   onSortChange: (sort: string) => void;
@@ -23,19 +25,23 @@ interface CarSearchFiltersProps {
 }
 
 export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
+  filters,
+  onFilterChange,
   onFiltersChange,
   onSortChange,
   sortOption
 }) => {
-  const [filters, setFilters] = useState<AuctionFilters>({});
-  const [activeFilterCount, setActiveFilterCount] = useState(0);
-
   const isDev = process.env.NODE_ENV === 'development';
+
+  // Calculate active filter count
+  const activeFilterCount = Object.entries(filters).filter(([_, val]) => {
+    return val !== '' && val !== null && val !== undefined;
+  }).length;
 
   // Debug logging for filter changes
   useEffect(() => {
     if (isDev) {
-      console.log('CarSearchFilters state updated:', {
+      console.log('CarSearchFilters props updated:', {
         filters,
         activeFilterCount,
         filterKeys: Object.keys(filters),
@@ -47,93 +53,17 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
     }
   }, [filters, activeFilterCount, isDev]);
 
-  // Stable debounced filter change to prevent rapid API calls
-  const debouncedOnFiltersChange = useMemo(() => {
-    let timeoutId: NodeJS.Timeout;
-    return (newFilters: AuctionFilters) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        if (isDev) {
-          console.log('Debounced filter change executing:', newFilters);
-        }
-        onFiltersChange(newFilters);
-      }, 500); // Increased debounce time
-    };
-  }, [onFiltersChange, isDev]);
-
-  const handleFilterChange = useCallback((key: keyof AuctionFilters, value: string | undefined) => {
-    if (isDev) {
-      console.log('Filter change requested:', { 
-        key, 
-        value, 
-        valueType: typeof value,
-        currentFilters: filters 
-      });
-    }
-
-    setFilters(prevFilters => {
-      const newFilters = { ...prevFilters };
-      
-      // Handle the filter value - only remove if explicitly empty/undefined
-      if (value === '' || value === null || value === undefined) {
-        delete newFilters[key];
-        if (isDev) {
-          console.log(`Removed filter key: ${key}`);
-        }
-      } else {
-        // Store the value as-is
-        (newFilters as any)[key] = value;
-        if (isDev) {
-          console.log(`Set filter ${key} = ${value} (type: ${typeof value})`);
-        }
-      }
-
-      // Count active filters more accurately
-      const activeCount = Object.entries(newFilters).filter(([filterKey, val]) => {
-        const isActive = val !== '' && val !== null && val !== undefined;
-        if (isDev && isActive) {
-          console.log(`Active filter: ${filterKey} = ${val}`);
-        }
-        return isActive;
-      }).length;
-      
-      setActiveFilterCount(activeCount);
-      
-      if (isDev) {
-        console.log('New filters state after change:', {
-          newFilters,
-          activeCount,
-          changedKey: key,
-          changedValue: value
-        });
-      }
-      
-      // Use debounced callback to prevent rapid API calls
-      debouncedOnFiltersChange(newFilters);
-      
-      return newFilters;
-    });
-  }, [debouncedOnFiltersChange, isDev]);
-
   const handleClearAllFilters = useCallback(() => {
     if (isDev) {
       console.log('Clearing all filters');
     }
-    const emptyFilters = {};
-    setFilters(emptyFilters);
-    setActiveFilterCount(0);
-    onFiltersChange(emptyFilters);
+    onFiltersChange({});
   }, [onFiltersChange, isDev]);
 
   const handleLoadSavedFilters = useCallback((savedFilters: AuctionFilters) => {
     if (isDev) {
       console.log('Loading saved filters:', savedFilters);
     }
-    setFilters(savedFilters);
-    const activeCount = Object.entries(savedFilters).filter(([_, val]) => {
-      return val !== '' && val !== null && val !== undefined;
-    }).length;
-    setActiveFilterCount(activeCount);
     onFiltersChange(savedFilters);
   }, [onFiltersChange, isDev]);
 
@@ -170,52 +100,59 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
 
         {/* Make and Model Filter */}
         <MakeModelFilter 
+          key="make-model-filter"
           selectedMake={filters.make}
           selectedModel={filters.model}
-          onMakeChange={(make) => handleFilterChange('make', make)}
-          onModelChange={(model) => handleFilterChange('model', model)}
+          onMakeChange={(make) => onFilterChange('make', make)}
+          onModelChange={(model) => onFilterChange('model', model)}
         />
 
         {/* Price Range Filter */}
         <PriceRangeFilter 
+          key="price-range-filter"
           minPrice={filters.priceMin ? Number(filters.priceMin) : undefined}
           maxPrice={filters.priceMax ? Number(filters.priceMax) : undefined}
           onPriceChange={(min, max) => {
-            handleFilterChange('priceMin', min?.toString());
-            handleFilterChange('priceMax', max?.toString());
+            onFilterChange('priceMin', min?.toString());
+            onFilterChange('priceMax', max?.toString());
           }}
         />
 
         {/* Mileage Range Filter */}
         <MileageRangeFilter 
+          key="mileage-range-filter"
           minMileage={filters.mileageMin ? Number(filters.mileageMin) : undefined}
           maxMileage={filters.mileageMax ? Number(filters.mileageMax) : undefined}
           onMileageChange={(min, max) => {
-            handleFilterChange('mileageMin', min?.toString());
-            handleFilterChange('mileageMax', max?.toString());
+            onFilterChange('mileageMin', min?.toString());
+            onFilterChange('mileageMax', max?.toString());
           }}
         />
 
         {/* Additional Filters Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <TransmissionFilter 
+            key="transmission-filter"
             value={filters.transmission}
-            onChange={(transmission) => handleFilterChange('transmission', transmission)}
+            onChange={(transmission) => onFilterChange('transmission', transmission)}
           />
           
           <FuelTypeFilter 
+            key="fuel-type-filter"
             value={filters.fuelType}
-            onChange={(fuelType) => handleFilterChange('fuelType', fuelType)}
+            onChange={(fuelType) => onFilterChange('fuelType', fuelType)}
           />
           
           <ServiceHistoryFilter 
+            key="service-history-filter"
             value={filters.serviceHistory}
-            onChange={(serviceHistory) => handleFilterChange('serviceHistory', serviceHistory)}
+            onChange={(serviceHistory) => onFilterChange('serviceHistory', serviceHistory)}
           />
 
           <DistanceFilter 
+            key="distance-filter"
             value={filters.distance}
-            onChange={(distance) => handleFilterChange('distance', distance)}
+            onChange={(distance) => onFilterChange('distance', distance)}
           />
         </div>
 

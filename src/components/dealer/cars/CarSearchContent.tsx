@@ -30,6 +30,7 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
     searchQuery,
     canGoNext,
     currentPage,
+    handleFilterChange,
     handleFiltersChange,
     handleSortChange,
     handleSearchChange,
@@ -79,6 +80,8 @@ export const CarSearchContent = ({ dealerId }: CarSearchContentProps) => {
 
       {/* Always show search filters for verified dealers */}
       <CarSearchFilters
+        filters={filters}
+        onFilterChange={handleFilterChange}
         onFiltersChange={handleFiltersChange}
         onSortChange={handleSortChange}
         onSearchChange={handleSearchChange}
