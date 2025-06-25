@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,10 +16,10 @@ import { SortSelector } from "../../auction/filters/SortSelector";
 
 interface CarSearchFiltersProps {
   onFiltersChange: (filters: AuctionFilters) => void;
-  onSearchChange: (search: string) => void; // Keep for compatibility but won't use
+  onSearchChange: (search: string) => void;
   onSortChange: (sort: string) => void;
   sortOption: string;
-  searchQuery: string; // Keep for compatibility but won't use
+  searchQuery: string;
 }
 
 export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
@@ -30,34 +30,75 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
   const [filters, setFilters] = useState<AuctionFilters>({});
   const [activeFilterCount, setActiveFilterCount] = useState(0);
 
-  const handleFilterChange = (key: keyof AuctionFilters, value: any) => {
-    const newFilters = { ...filters, [key]: value };
-    
-    // Remove empty values
-    Object.keys(newFilters).forEach(filterKey => {
-      if (newFilters[filterKey as keyof AuctionFilters] === '' || 
-          newFilters[filterKey as keyof AuctionFilters] === null ||
-          newFilters[filterKey as keyof AuctionFilters] === undefined) {
-        delete newFilters[filterKey as keyof AuctionFilters];
-      }
-    });
-    
-    setFilters(newFilters);
-    setActiveFilterCount(Object.keys(newFilters).length);
-    onFiltersChange(newFilters);
-  };
+  const isDev = process.env.NODE_ENV === 'development';
 
-  const handleClearAllFilters = () => {
+  // Debug logging for filter changes
+  useEffect(() => {
+    if (isDev) {
+      console.log('CarSearchFilters state updated:', {
+        filters,
+        activeFilterCount,
+        filterKeys: Object.keys(filters)
+      });
+    }
+  }, [filters, activeFilterCount, isDev]);
+
+  const handleFilterChange = useCallback((key: keyof AuctionFilters, value: any) => {
+    if (isDev) {
+      console.log('Filter change requested:', { key, value, currentFilters: filters });
+    }
+
+    setFilters(prevFilters => {
+      const newFilters = { ...prevFilters };
+      
+      // Handle the filter value
+      if (value === '' || value === null || value === undefined) {
+        delete newFilters[key];
+      } else {
+        newFilters[key] = value;
+      }
+
+      // Count active filters more carefully
+      const activeCount = Object.entries(newFilters).filter(([_, val]) => {
+        return val !== '' && val !== null && val !== undefined;
+      }).length;
+      
+      setActiveFilterCount(activeCount);
+      
+      if (isDev) {
+        console.log('New filters state:', {
+          newFilters,
+          activeCount,
+          removedKey: value === '' || value === null || value === undefined ? key : null
+        });
+      }
+      
+      // Use setTimeout to prevent rapid API calls
+      setTimeout(() => {
+        onFiltersChange(newFilters);
+      }, 100);
+      
+      return newFilters;
+    });
+  }, [filters, onFiltersChange, isDev]);
+
+  const handleClearAllFilters = useCallback(() => {
+    if (isDev) {
+      console.log('Clearing all filters');
+    }
     setFilters({});
     setActiveFilterCount(0);
     onFiltersChange({});
-  };
+  }, [onFiltersChange, isDev]);
 
-  const handleLoadSavedFilters = (savedFilters: AuctionFilters) => {
+  const handleLoadSavedFilters = useCallback((savedFilters: AuctionFilters) => {
+    if (isDev) {
+      console.log('Loading saved filters:', savedFilters);
+    }
     setFilters(savedFilters);
     setActiveFilterCount(Object.keys(savedFilters).length);
     onFiltersChange(savedFilters);
-  };
+  }, [onFiltersChange, isDev]);
 
   return (
     <Card>

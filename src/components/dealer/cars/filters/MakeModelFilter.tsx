@@ -18,7 +18,9 @@ const CAR_MODELS: Record<string, string[]> = {
   "Mercedes-Benz": ["A-Class", "B-Class", "C-Class", "E-Class", "S-Class", "GLA", "GLC", "GLE", "GLS"],
   "Toyota": ["Yaris", "Corolla", "Camry", "Avensis", "RAV4", "Highlander", "Prius", "Land Cruiser"],
   "Volkswagen": ["Polo", "Golf", "Passat", "Tiguan", "Touareg", "Arteon", "T-Roc"],
-  // Add more models as needed
+  "Volvo": ["V40", "V60", "V90", "XC40", "XC60", "XC90", "S60", "S90"],
+  "Citroen": ["C1", "C3", "C4", "C5", "Berlingo", "Picasso"],
+  "Kia": ["Rio", "Ceed", "Sportage", "Sorento", "Picanto", "Stonic", "Niro"]
 };
 
 interface MakeModelFilterProps {
@@ -35,18 +37,62 @@ export const MakeModelFilter: React.FC<MakeModelFilterProps> = ({
   onModelChange
 }) => {
   const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [lastSelectedMake, setLastSelectedMake] = useState<string | undefined>(selectedMake);
 
+  // Debug logging
+  const isDev = process.env.NODE_ENV === 'development';
+  
   useEffect(() => {
-    if (selectedMake && CAR_MODELS[selectedMake]) {
-      setAvailableModels(CAR_MODELS[selectedMake]);
-    } else {
-      setAvailableModels([]);
-      // Clear model if make changes
-      if (selectedModel) {
+    if (isDev) {
+      console.log('MakeModelFilter state:', {
+        selectedMake,
+        selectedModel,
+        lastSelectedMake,
+        availableModels: availableModels.length
+      });
+    }
+  }, [selectedMake, selectedModel, lastSelectedMake, availableModels.length, isDev]);
+
+  // Only update available models when the make actually changes
+  useEffect(() => {
+    if (selectedMake !== lastSelectedMake) {
+      if (isDev) {
+        console.log('Make changed from', lastSelectedMake, 'to', selectedMake);
+      }
+      
+      if (selectedMake && CAR_MODELS[selectedMake]) {
+        setAvailableModels(CAR_MODELS[selectedMake]);
+      } else {
+        setAvailableModels([]);
+      }
+      
+      // Clear model selection only when make actually changes
+      if (selectedModel && selectedMake !== lastSelectedMake) {
+        if (isDev) {
+          console.log('Clearing model selection due to make change');
+        }
         onModelChange(undefined);
       }
+      
+      setLastSelectedMake(selectedMake);
     }
-  }, [selectedMake, selectedModel, onModelChange]);
+  }, [selectedMake, lastSelectedMake, selectedModel, onModelChange, isDev]);
+
+  const handleMakeChange = (value: string) => {
+    if (isDev) {
+      console.log('Make selection changed to:', value);
+    }
+    const newMake = value === "any" ? undefined : value;
+    onMakeChange(newMake);
+  };
+
+  const handleModelChange = (value: string) => {
+    if (isDev) {
+      console.log('Model selection changed to:', value);
+    }
+    const newModel = value === "any" ? undefined : value;
+    onModelChange(newModel);
+  };
 
   return (
     <div className="space-y-4">
@@ -56,7 +102,7 @@ export const MakeModelFilter: React.FC<MakeModelFilterProps> = ({
           <div>
             <Select 
               value={selectedMake || "any"} 
-              onValueChange={(value) => onMakeChange(value === "any" ? undefined : value)}
+              onValueChange={handleMakeChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select make" />
@@ -75,7 +121,7 @@ export const MakeModelFilter: React.FC<MakeModelFilterProps> = ({
           <div>
             <Select 
               value={selectedModel || "any"} 
-              onValueChange={(value) => onModelChange(value === "any" ? undefined : value)}
+              onValueChange={handleModelChange}
               disabled={!selectedMake || availableModels.length === 0}
             >
               <SelectTrigger>
