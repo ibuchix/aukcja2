@@ -80,18 +80,26 @@ export const fetchCarsForSchedules = async (
     throw error;
   }
 
-  // TEMPORARY: Log successful query result
-  console.log('✅ [CARS QUERY SUCCESS] [ALWAYS SHOWN]', {
-    timestamp: new Date().toISOString(),
-    resultCount: data?.length || 0,
-    filters,
-    sampleResults: data?.slice(0, 2).map(car => ({
-      id: car.id,
-      make: car.make,
-      model: car.model,
-      title: car.title
-    })) || []
-  });
+  // TEMPORARY: Check if data is valid before accessing properties
+  if (Array.isArray(data)) {
+    console.log('✅ [CARS QUERY SUCCESS] [ALWAYS SHOWN]', {
+      timestamp: new Date().toISOString(),
+      resultCount: data.length,
+      filters,
+      sampleResults: data.slice(0, 2).map(car => ({
+        id: car.id,
+        make: car.make,
+        model: car.model,
+        title: car.title
+      }))
+    });
+  } else {
+    console.log('❌ [CARS QUERY DATA ERROR] [ALWAYS SHOWN]', {
+      timestamp: new Date().toISOString(),
+      error: 'Data is not an array',
+      data
+    });
+  }
 
   return data || [];
 };

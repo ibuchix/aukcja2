@@ -33,7 +33,6 @@ export const useSimplifiedCarListingsQuery = ({
       "v5"
     ],
     queryFn: async () => {
-      const isDev = process.env.NODE_ENV === 'development';
       
       // TEMPORARY: Always log query start to debug Toyota issue
       console.log('🚀 [SIMPLIFIED CAR LISTINGS QUERY START] [ALWAYS SHOWN]', {
@@ -83,16 +82,28 @@ export const useSimplifiedCarListingsQuery = ({
           pageSize
         );
         
-        console.log('🚗 [RAW CARS RESULT] [ALWAYS SHOWN]', {
-          rawCarsCount: rawCars.length,
-          appliedFilters: filters,
-          rawCarsPreview: rawCars.slice(0, 2).map(car => ({
-            id: car.id,
-            make: car.make,
-            model: car.model,
-            title: car.title
-          }))
-        });
+        // TEMPORARY: Check if rawCars is valid data before accessing properties
+        if (Array.isArray(rawCars)) {
+          console.log('🚗 [RAW CARS RESULT] [ALWAYS SHOWN]', {
+            rawCarsCount: rawCars.length,
+            appliedFilters: filters,
+            rawCarsPreview: rawCars.slice(0, 2).map(car => ({
+              id: car.id,
+              make: car.make,
+              model: car.model,
+              title: car.title
+            }))
+          });
+        } else {
+          console.log('❌ [RAW CARS ERROR] [ALWAYS SHOWN]', {
+            error: 'rawCars is not an array',
+            rawCars
+          });
+          return {
+            cars: [],
+            total: 0
+          };
+        }
         
         // STEP 3: Merge car data with schedule data
         const typedSchedules: AuctionScheduleData[] = schedules.map((schedule) => ({
