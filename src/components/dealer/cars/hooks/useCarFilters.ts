@@ -16,17 +16,16 @@ export const useCarFilters = () => {
 
   // Enhanced logging utility
   const logFilterAction = useCallback((action: string, data: any) => {
-    if (isDev) {
-      console.log(`🔍 [FILTER ${action.toUpperCase()}]`, {
-        timestamp: new Date().toISOString(),
-        action,
-        data,
-        currentFilters: filters,
-        debouncedFilters,
-        activeFilterCount: Object.keys(filters).length
-      });
-    }
-  }, [filters, debouncedFilters, isDev]);
+    // TEMPORARY: Always log filter actions to debug Toyota issue
+    console.log(`🔍 [FILTER ${action.toUpperCase()}] [ALWAYS SHOWN]`, {
+      timestamp: new Date().toISOString(),
+      action,
+      data,
+      currentFilters: filters,
+      debouncedFilters,
+      activeFilterCount: Object.keys(filters).length
+    });
+  }, [filters, debouncedFilters]);
 
   // Debounced filter update function
   const updateDebouncedFilters = useCallback((newFilters: AuctionFilters) => {
@@ -132,19 +131,17 @@ export const useCarFilters = () => {
     }
   }, [logFilterAction]);
 
-  // Log current state on each render in dev mode
-  if (isDev) {
-    console.log('🎯 [FILTER STATE SNAPSHOT]', {
-      timestamp: new Date().toISOString(),
-      filters,
-      debouncedFilters,
-      sortOption,
-      searchQuery,
-      currentPage,
-      activeFilterCount: Object.keys(filters).length,
-      hasDebounceTimer: !!debounceTimerRef.current
-    });
-  }
+  // TEMPORARY: Always log current state on each render to debug Toyota issue
+  console.log('🎯 [FILTER STATE SNAPSHOT] [ALWAYS SHOWN]', {
+    timestamp: new Date().toISOString(),
+    filters,
+    debouncedFilters,
+    sortOption,
+    searchQuery,
+    currentPage,
+    activeFilterCount: Object.keys(filters).length,
+    hasDebounceTimer: !!debounceTimerRef.current
+  });
 
   return {
     // Current filter states (for UI display)

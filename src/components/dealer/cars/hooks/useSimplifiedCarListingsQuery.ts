@@ -35,23 +35,30 @@ export const useSimplifiedCarListingsQuery = ({
     queryFn: async () => {
       const isDev = process.env.NODE_ENV === 'development';
       
-      if (isDev) {
-        console.log('=== SIMPLIFIED CAR LISTINGS QUERY START ===');
-      }
+      // TEMPORARY: Always log query start to debug Toyota issue
+      console.log('🚀 [SIMPLIFIED CAR LISTINGS QUERY START] [ALWAYS SHOWN]', {
+        timestamp: new Date().toISOString(),
+        filters,
+        sortOption,
+        searchQuery,
+        currentPage,
+        pageSize,
+        dealerId
+      });
       
       try {
         // STEP 1: Get live auction schedules using RPC function
         const schedules = await fetchLiveAuctionSchedules();
         
-        if (isDev) {
-          console.log('✅ RPC schedules query succeeded. Schedules found:', schedules.length);
-        }
+        // TEMPORARY: Always log schedules result
+        console.log('📋 [SCHEDULES RESULT] [ALWAYS SHOWN]', {
+          schedulesCount: schedules.length,
+          schedules: schedules.slice(0, 3) // Show first 3 for debugging
+        });
         
         // If no running schedules, return empty result
         if (schedules.length === 0) {
-          if (isDev) {
-            console.log('No running auction schedules found, returning empty result');
-          }
+          console.log('❌ [NO SCHEDULES] [ALWAYS SHOWN] - No running auction schedules found');
           return {
             cars: [],
             total: 0
@@ -61,9 +68,10 @@ export const useSimplifiedCarListingsQuery = ({
         // Extract car IDs from schedules
         const carIds = schedules.map((schedule) => schedule.car_id);
         
-        if (isDev) {
-          console.log('Car IDs from schedules:', carIds.length);
-        }
+        console.log('🔢 [CAR IDS FROM SCHEDULES] [ALWAYS SHOWN]', {
+          carIdsCount: carIds.length,
+          carIds: carIds.slice(0, 5) // Show first 5 for debugging
+        });
         
         // STEP 2: Get cars for these schedules
         const rawCars = await fetchCarsForSchedules(
@@ -75,9 +83,16 @@ export const useSimplifiedCarListingsQuery = ({
           pageSize
         );
         
-        if (isDev) {
-          console.log('Cars query succeeded. Raw data count:', rawCars.length);
-        }
+        console.log('🚗 [RAW CARS RESULT] [ALWAYS SHOWN]', {
+          rawCarsCount: rawCars.length,
+          appliedFilters: filters,
+          rawCarsPreview: rawCars.slice(0, 2).map(car => ({
+            id: car.id,
+            make: car.make,
+            model: car.model,
+            title: car.title
+          }))
+        });
         
         // STEP 3: Merge car data with schedule data
         const typedSchedules: AuctionScheduleData[] = schedules.map((schedule) => ({
@@ -93,21 +108,16 @@ export const useSimplifiedCarListingsQuery = ({
         // Process the merged results
         const validCars = processCarData(mergedData);
         
-        if (isDev) {
-          console.log('=== SIMPLIFIED FINAL RESULT ===');
-          console.log('Valid live auction cars:', validCars.length);
-          if (validCars.length > 0) {
-            console.log('First processed live auction car:', {
-              id: validCars[0].id,
-              make: validCars[0].make,
-              model: validCars[0].model,
-              auctionTimingStatus: validCars[0].auctionTimingStatus,
-              scheduleStartTime: validCars[0].scheduleStartTime,
-              scheduleEndTime: validCars[0].scheduleEndTime,
-              scheduleStatus: validCars[0].scheduleStatus
-            });
-          }
-        }
+        console.log('✅ [FINAL RESULT] [ALWAYS SHOWN]', {
+          validCarsCount: validCars.length,
+          finalCarsPreview: validCars.slice(0, 2).map(car => ({
+            id: car.id,
+            make: car.make,
+            model: car.model,
+            title: car.title,
+            auctionTimingStatus: car.auctionTimingStatus
+          }))
+        });
         
         return {
           cars: validCars,
@@ -115,8 +125,12 @@ export const useSimplifiedCarListingsQuery = ({
         };
       } catch (err: any) {
         const errorMessage = err.message || 'Unknown error occurred';
-        console.error("=== SIMPLIFIED QUERY ERROR ===");
-        console.error("Error:", errorMessage);
+        console.error("❌ [SIMPLIFIED QUERY ERROR] [ALWAYS SHOWN]", {
+          timestamp: new Date().toISOString(),
+          error: errorMessage,
+          filters,
+          stack: err.stack
+        });
         
         throw new Error(errorMessage);
       }

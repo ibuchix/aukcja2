@@ -66,58 +66,75 @@ export const MakeModelFilter: React.FC<MakeModelFilterProps> = ({
   const isDev = process.env.NODE_ENV === 'development';
   
   useEffect(() => {
-    if (isDev) {
-      console.log('MakeModelFilter state:', {
-        selectedMake,
-        selectedModel,
-        lastSelectedMake,
-        availableModels: availableModels.length,
-        makeIsValid: selectedMake ? CAR_MODELS[selectedMake] : 'no make selected'
-      });
-    }
-  }, [selectedMake, selectedModel, lastSelectedMake, availableModels.length, isDev]);
+    // TEMPORARY: Always log component state to debug Toyota issue
+    console.log('🏭 [MAKE MODEL FILTER STATE] [ALWAYS SHOWN]', {
+      timestamp: new Date().toISOString(),
+      selectedMake,
+      selectedModel,
+      lastSelectedMake,
+      availableModels: availableModels.length,
+      makeIsValid: selectedMake ? CAR_MODELS[selectedMake] : 'no make selected'
+    });
+  }, [selectedMake, selectedModel, lastSelectedMake, availableModels.length]);
 
   // Update available models when make changes
   useEffect(() => {
     if (selectedMake !== lastSelectedMake) {
-      if (isDev) {
-        console.log('Make changed from', lastSelectedMake, 'to', selectedMake);
-        console.log('Available models for make:', selectedMake, CAR_MODELS[selectedMake || ''] || 'none');
-      }
+      console.log('🔄 [MAKE CHANGE DETECTED] [ALWAYS SHOWN]', {
+        timestamp: new Date().toISOString(),
+        oldMake: lastSelectedMake,
+        newMake: selectedMake,
+        availableModels: selectedMake ? CAR_MODELS[selectedMake?.toUpperCase()] || [] : []
+      });
       
       // Normalize make to uppercase for lookup
       const normalizedMake = selectedMake?.toUpperCase();
       
       if (normalizedMake && CAR_MODELS[normalizedMake]) {
         setAvailableModels(CAR_MODELS[normalizedMake]);
+        console.log('✅ [MODELS SET] [ALWAYS SHOWN]', {
+          make: normalizedMake,
+          models: CAR_MODELS[normalizedMake]
+        });
       } else {
         setAvailableModels([]);
+        console.log('❌ [NO MODELS FOUND] [ALWAYS SHOWN]', {
+          make: normalizedMake,
+          reason: 'Make not found in CAR_MODELS'
+        });
       }
       
       // Clear model selection when make changes (but not on initial load)
       if (lastSelectedMake !== undefined && selectedMake !== lastSelectedMake) {
-        if (isDev) {
-          console.log('Clearing model selection due to make change');
-        }
+        console.log('🧹 [CLEARING MODEL] [ALWAYS SHOWN]', {
+          reason: 'Make changed',
+          previousModel: selectedModel
+        });
         onModelChange(undefined);
       }
       
       setLastSelectedMake(selectedMake);
     }
-  }, [selectedMake, lastSelectedMake, selectedModel, onModelChange, isDev]);
+  }, [selectedMake, lastSelectedMake, selectedModel, onModelChange]);
 
   const handleMakeChange = (value: string) => {
-    if (isDev) {
-      console.log('Make selection changed to:', value);
-    }
+    console.log('🏭 [MAKE SELECTION] [ALWAYS SHOWN]', {
+      timestamp: new Date().toISOString(),
+      selectedValue: value,
+      isAny: value === "any",
+      finalValue: value === "any" ? undefined : value
+    });
     const newMake = value === "any" ? undefined : value;
     onMakeChange(newMake);
   };
 
   const handleModelChange = (value: string) => {
-    if (isDev) {
-      console.log('Model selection changed to:', value);
-    }
+    console.log('🚗 [MODEL SELECTION] [ALWAYS SHOWN]', {
+      timestamp: new Date().toISOString(),
+      selectedValue: value,
+      isAny: value === "any",
+      finalValue: value === "any" ? undefined : value
+    });
     const newModel = value === "any" ? undefined : value;
     onModelChange(newModel);
   };

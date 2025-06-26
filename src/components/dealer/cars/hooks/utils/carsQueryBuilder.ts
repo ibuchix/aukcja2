@@ -13,68 +13,85 @@ export const fetchCarsForSchedules = async (
   currentPage: number,
   pageSize: number
 ) => {
-  if (carIds.length === 0) {
-    return [];
+  // TEMPORARY: Always log the query building process
+  console.log('🔧 [BUILDING CARS QUERY] [ALWAYS SHOWN]', {
+    timestamp: new Date().toISOString(),
+    carIdsCount: carIds.length,
+    filters,
+    sortOption,
+    searchQuery,
+    currentPage,
+    pageSize
+  });
+
+  // Start with base query for cars that are in the provided car IDs
+  let query = supabase
+    .from('cars')
+    .select('*')
+    .in('id', carIds)
+    .eq('is_auction', true)
+    .eq('auction_status', 'active');
+
+  // TEMPORARY: Log query after basic filters
+  console.log('🔨 [QUERY AFTER BASIC FILTERS] [ALWAYS SHOWN]', {
+    message: 'Applied basic filters: in(id, carIds), is_auction=true, auction_status=active',
+    carIdsCount: carIds.length
+  });
+
+  // Apply additional filters
+  query = applyFilters(query, filters, searchQuery);
+
+  // TEMPORARY: Log after applying filters
+  console.log('🎯 [QUERY AFTER CUSTOM FILTERS] [ALWAYS SHOWN]', {
+    message: 'Applied custom filters',
+    filters,
+    searchQuery
+  });
+
+  // Apply sorting
+  query = applySorting(query, sortOption);
+
+  // TEMPORARY: Log after sorting
+  console.log('📊 [QUERY AFTER SORTING] [ALWAYS SHOWN]', {
+    message: 'Applied sorting',
+    sortOption
+  });
+
+  // Apply pagination
+  query = applyPagination(query, currentPage, pageSize);
+
+  // TEMPORARY: Log final query
+  console.log('📄 [FINAL QUERY] [ALWAYS SHOWN]', {
+    message: 'Applied pagination, executing query',
+    currentPage,
+    pageSize
+  });
+
+  // Execute the query
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('❌ [CARS QUERY ERROR] [ALWAYS SHOWN]', {
+      timestamp: new Date().toISOString(),
+      error: error.message,
+      filters,
+      carIdsCount: carIds.length
+    });
+    throw error;
   }
-  
-  let carsQuery = supabase
-    .from("cars")
-    .select(`
-      id,
-      make,
-      model,
-      year,
-      mileage,
-      reserve_price,
-      images,
-      required_photos,
-      title,
-      features,
-      transmission,
-      is_auction,
-      auction_end_time,
-      minimum_bid_increment,
-      auction_status,
-      is_damaged,
-      address,
-      created_at,
-      updated_at,
-      status,
-      current_bid,
-      seller_notes,
-      service_history_type,
-      has_service_history,
-      seller_id,
-      seller_name,
-      mobile_number,
-      additional_photos,
-      vin,
-      seat_material,
-      number_of_keys,
-      is_registered_in_poland,
-      has_private_plate,
-      finance_amount,
-      form_metadata,
-      valuation_data,
-      last_saved,
-      registration_number,
-      is_manually_controlled
-    `)
-    .eq("is_auction", true)
-    .eq("auction_status", "active")
-    .in("id", carIds)
-    .gt("reserve_price", 0);
-  
-  // Apply filters, sorting, and pagination
-  carsQuery = applyFilters(carsQuery, filters, searchQuery);
-  carsQuery = applySorting(carsQuery, sortOption);
-  carsQuery = applyPagination(carsQuery, currentPage, pageSize);
-  
-  const { data: carsData, error: carsError } = await carsQuery;
-  
-  if (carsError) {
-    throw new Error(`Cars query failed: ${carsError.message}`);
-  }
-  
-  return Array.isArray(carsData) ? carsData : [];
+
+  // TEMPORARY: Log successful query result
+  console.log('✅ [CARS QUERY SUCCESS] [ALWAYS SHOWN]', {
+    timestamp: new Date().toISOString(),
+    resultCount: data?.length || 0,
+    filters,
+    sampleResults: data?.slice(0, 2).map(car => ({
+      id: car.id,
+      make: car.make,
+      model: car.model,
+      title: car.title
+    })) || []
+  });
+
+  return data || [];
 };
