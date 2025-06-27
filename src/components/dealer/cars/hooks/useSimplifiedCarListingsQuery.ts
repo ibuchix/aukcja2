@@ -17,6 +17,7 @@ interface UseSimplifiedCarListingsQueryProps {
 
 // Enhanced type guard for car objects with comprehensive validation
 const isValidCarObject = (car: any): car is Record<string, any> => {
+  // Basic validation
   if (!car || typeof car !== 'object' || car === null) {
     console.log('❌ [CAR VALIDATION] Invalid car object:', typeof car);
     return false;
@@ -44,6 +45,14 @@ const isValidCarObject = (car: any): car is Record<string, any> => {
   return true;
 };
 
+// Safe property access helper
+const safeGetProperty = (obj: any, prop: string, defaultValue: any = 'Unknown') => {
+  if (obj && typeof obj === 'object' && prop in obj) {
+    return obj[prop] || defaultValue;
+  }
+  return defaultValue;
+};
+
 export const useSimplifiedCarListingsQuery = ({
   filters,
   sortOption,
@@ -59,7 +68,7 @@ export const useSimplifiedCarListingsQuery = ({
       sortOption, 
       searchQuery, 
       currentPage.toString(),
-      "v6" // Increment version for debugging
+      "v7" // Increment version for debugging
     ],
     queryFn: async () => {
       
@@ -135,21 +144,24 @@ export const useSimplifiedCarListingsQuery = ({
         // Filter to only valid car objects before processing
         const validRawCars = rawCars.filter(isValidCarObject);
         
+        // Safe logging for valid cars with proper type handling
+        const validCarsPreview = validRawCars
+          .slice(0, 2)
+          .map(car => ({
+            id: safeGetProperty(car, 'id'),
+            make: safeGetProperty(car, 'make'),
+            model: safeGetProperty(car, 'model'),
+            title: safeGetProperty(car, 'title', 'No title'),
+            reserve_price: safeGetProperty(car, 'reserve_price', 0),
+            price: safeGetProperty(car, 'price', 0)
+          }));
+        
         console.log('🚗 [RAW CARS VALIDATION] [ALWAYS SHOWN]', {
           rawCarsCount: rawCars.length,
           validCarsCount: validRawCars.length,
           invalidCarsCount: rawCars.length - validRawCars.length,
           appliedFilters: filters,
-          validCarsPreview: validRawCars
-            .slice(0, 2)
-            .map(car => ({
-              id: car.id,
-              make: car.make || 'Unknown',
-              model: car.model || 'Unknown',
-              title: car.title || 'No title',
-              reserve_price: car.reserve_price || 0,
-              price: car.price || 0
-            }))
+          validCarsPreview
         });
         
         // STEP 3: Merge car data with schedule data

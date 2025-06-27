@@ -34,6 +34,14 @@ const isValidCarObject = (car: any): car is Record<string, any> => {
   return true;
 };
 
+// Safe property access helper
+const safeGetProperty = (obj: any, prop: string, defaultValue: any = 'Unknown') => {
+  if (obj && typeof obj === 'object' && prop in obj) {
+    return obj[prop] || defaultValue;
+  }
+  return defaultValue;
+};
+
 export const fetchCarsForSchedules = async (
   carIds: string[],
   filters: AuctionFilters,
@@ -133,22 +141,25 @@ export const fetchCarsForSchedules = async (
   // Filter out invalid entries and log detailed info
   const validCarsForSample = data.filter(isValidCarObject);
   
+  // Safe sample results mapping
+  const sampleResults = validCarsForSample
+    .slice(0, 2)
+    .map(car => ({
+      id: safeGetProperty(car, 'id'),
+      make: safeGetProperty(car, 'make'),
+      model: safeGetProperty(car, 'model'),
+      title: safeGetProperty(car, 'title', 'No title'),
+      reserve_price: safeGetProperty(car, 'reserve_price', 0),
+      price: safeGetProperty(car, 'price', 0)
+    }));
+  
   console.log('✅ [CARS QUERY SUCCESS] [ALWAYS SHOWN]', {
     timestamp: new Date().toISOString(),
     resultCount: data.length,
     validCarsCount: validCarsForSample.length,
     invalidCarsCount: data.length - validCarsForSample.length,
     filters,
-    sampleResults: validCarsForSample
-      .slice(0, 2)
-      .map(car => ({
-        id: car.id,
-        make: car.make || 'Unknown',
-        model: car.model || 'Unknown',
-        title: car.title || 'No title',
-        reserve_price: car.reserve_price || 0,
-        price: car.price || 0
-      }))
+    sampleResults
   });
 
   return data || [];
