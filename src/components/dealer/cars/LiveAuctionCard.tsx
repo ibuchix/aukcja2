@@ -23,9 +23,10 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
       return 'No reserve';
     }
     
-    return new Intl.NumberFormat('en-GB', {
+    // Format as PLN currency (Polish Zloty)
+    return new Intl.NumberFormat('pl-PL', {
       style: 'currency',
-      currency: 'GBP',
+      currency: 'PLN',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(numPrice);
@@ -40,6 +41,22 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
 
   // Get auction end time from schedule data or fallback
   const auctionEndTime = car.schedule_end_time || car.auction_end_time;
+
+  // Debug log the car data to understand the pricing issue
+  console.log('🏷️ [LIVE AUCTION CARD PRICE DEBUG]', {
+    carId: car.id,
+    make: car.make,
+    model: car.model,
+    reserve_price: car.reserve_price,
+    current_bid: car.current_bid,
+    price: car.price,
+    allPriceFields: {
+      reserve_price: car.reserve_price,
+      current_bid: car.current_bid,
+      price: car.price,
+      starting_price: car.starting_price
+    }
+  });
 
   return (
     <Card 

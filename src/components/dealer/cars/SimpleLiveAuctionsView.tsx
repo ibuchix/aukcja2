@@ -8,7 +8,7 @@ import { CarSearchFilters } from './filters/CarSearchFilters';
 import { AuctionPagination } from './AuctionPagination';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCarFilters } from './hooks/useCarFilters';
-import { LiveAuctionDetailsDialog } from './LiveAuctionDetailsDialog';
+import CarDetailsDialog from '@/components/CarDetailsDialog';
 
 interface SimpleLiveAuctionsViewProps {
   dealerId: string;
@@ -66,7 +66,18 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
   const totalCars = queryResult?.total || 0;
 
   const handleCarClick = (car: any) => {
-    setSelectedCar(car);
+    // Enhance car data with live auction properties for the existing dialog
+    const enhancedCar = {
+      ...car,
+      // Ensure proper auction status for live auctions
+      auctionStatus: 'Live Auction',
+      auctionTimingStatus: 'running',
+      isLiveAuction: true,
+      // Ensure pricing data is available
+      reservePrice: car.reserve_price,
+      currentBid: car.current_bid || 0
+    };
+    setSelectedCar(enhancedCar);
   };
 
   const handleCloseDialog = () => {
@@ -163,11 +174,9 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
         </>
       )}
 
-      {/* Live Auction Details Dialog */}
-      <LiveAuctionDetailsDialog
+      {/* Use Existing Car Details Dialog */}
+      <CarDetailsDialog
         car={selectedCar}
-        dealerId={dealerId}
-        isVerified={dealerProfile?.is_verified || false}
         onClose={handleCloseDialog}
       />
     </div>

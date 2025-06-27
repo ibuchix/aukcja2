@@ -34,7 +34,7 @@ export const useSimplifiedCarListingsQuery = ({
     ],
     queryFn: async () => {
       
-      // TEMPORARY: Always log query start to debug Toyota issue
+      // TEMPORARY: Always log query start to debug pricing issue
       console.log('🚀 [SIMPLIFIED CAR LISTINGS QUERY START] [ALWAYS SHOWN]', {
         timestamp: new Date().toISOString(),
         filters,
@@ -88,7 +88,7 @@ export const useSimplifiedCarListingsQuery = ({
             rawCarsCount: rawCars.length,
             appliedFilters: filters,
             rawCarsPreview: rawCars.slice(0, 2).map(car => {
-              // Only access properties if car is a valid object
+              // Fixed null check for car
               if (car && typeof car === 'object' && 'id' in car) {
                 return {
                   id: car.id,

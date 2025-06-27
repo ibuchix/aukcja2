@@ -1,3 +1,4 @@
+
 import { BidNotificationHandler } from "./BidNotificationHandler";
 import { ProxyBidManager } from "./ProxyBidManager";
 import { formatUKDateTime } from "@/utils/ukTimeUtils";
@@ -32,7 +33,9 @@ export const MaxBidInterface = ({
   console.log('MaxBidInterface for live auction:', {
     carId,
     auctionTimingStatus,
-    isVerified
+    isVerified,
+    currentHighestBid,
+    reservePrice
   });
 
   // Early return if dealer is not verified
@@ -46,9 +49,11 @@ export const MaxBidInterface = ({
     );
   }
 
-  // Since we only show live auctions, this should rarely be needed,
-  // but keep as a safety check
-  if (auctionTimingStatus !== 'running') {
+  // For live auctions from the dashboard, assume they are running and available for bidding
+  // The fact that they appear in the live auctions list means they should be biddable
+  const isAuctionActive = auctionTimingStatus === 'running' || auctionTimingStatus === 'unknown';
+
+  if (!isAuctionActive && auctionTimingStatus !== 'unknown') {
     let message = '';
     let bgColor = 'bg-blue-50';
     let textColor = 'text-blue-800';

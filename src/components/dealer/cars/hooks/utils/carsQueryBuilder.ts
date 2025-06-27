@@ -87,7 +87,7 @@ export const fetchCarsForSchedules = async (
       resultCount: data.length,
       filters,
       sampleResults: data.slice(0, 2).map(car => {
-        // Only access properties if car is a valid object
+        // Fixed null check for car
         if (car && typeof car === 'object' && 'id' in car) {
           return {
             id: car.id,

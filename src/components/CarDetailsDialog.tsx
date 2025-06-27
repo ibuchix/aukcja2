@@ -8,6 +8,10 @@ import { formatCurrency } from "@/lib/utils";
 import { Calendar, Gauge, MapPin, Clock, Car } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
+import { AuctionTimer } from "@/components/auction/AuctionTimer";
+import { useAuth } from "@/contexts/AuthContext";
+import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 
 interface CarDetailsDialogProps {
   car: CarListing | null;
@@ -36,6 +40,8 @@ function isValidScheduleData(data: any): data is ValidScheduleData {
 
 const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const { user } = useAuth();
+  const { dealerProfile } = useDealerProfileSimple();
 
   // Query for auction schedule data
   const { data: scheduleData } = useQuery({
@@ -69,6 +75,11 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   } : null;
 
   const getAuctionStatus = () => {
+    // If this is marked as a live auction, prioritize that
+    if (car.isLiveAuction || car.auctionStatus === 'Live Auction') {
+      return "Live Auction";
+    }
+    
     if (!scheduleInfo) return "Available";
     
     const now = new Date();
@@ -84,10 +95,33 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   };
 
   const auctionStatus = getAuctionStatus();
+  const isLiveAuction = auctionStatus === "Live Auction";
+
+  // Format price in PLN
+  const formatPricePLN = (price: number | null | undefined) => {
+    if (price === null || price === undefined || isNaN(Number(price))) {
+      return 'Not available';
+    }
+    
+    const numPrice = Number(price);
+    if (numPrice === 0) {
+      return 'No reserve';
+    }
+    
+    return new Intl.NumberFormat('pl-PL', {
+      style: 'currency',
+      currency: 'PLN',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(numPrice);
+  };
+
+  // Check if dealer is verified
+  const isVerified = dealerProfile?.verification_status === 'approved' || dealerProfile?.is_verified === true;
 
   return (
     <Dialog open={!!car} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">{car.title}</DialogTitle>
         </DialogHeader>
@@ -135,18 +169,28 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
             {/* Status and Price */}
             <div className="flex items-center justify-between">
               <Badge 
-                variant={auctionStatus === "Live Auction" ? "default" : "secondary"}
-                className={auctionStatus === "Live Auction" ? "bg-green-600" : ""}
+                variant={isLiveAuction ? "default" : "secondary"}
+                className={isLiveAuction ? "bg-green-600" : ""}
               >
                 {auctionStatus}
               </Badge>
               <div className="text-right">
-                <div className="text-3xl font-bold text-blue-600">
-                  {formatCurrency(car.current_bid || car.reserve_price)}
+                <div className="text-3xl font-bold text-red-600">
+                  {formatPricePLN(car.reservePrice || car.reserve_price)}
                 </div>
                 <div className="text-sm text-gray-500">
-                  {car.current_bid ? "Current Bid" : "Starting Price"}
+                  Reserve Price
                 </div>
+                {car.currentBid && car.currentBid > 0 && (
+                  <div className="mt-1">
+                    <div className="text-2xl font-bold text-green-600">
+                      {formatPricePLN(car.currentBid)}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Current Bid
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -158,7 +202,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
               </div>
               <div className="flex items-center gap-2">
                 <Gauge className="h-5 w-5 text-gray-400" />
-                <span>{car.mileage?.toLocaleString()} km</span>
+                <span>{car.mileage?.toLocaleString()} miles</span>
               </div>
               <div className="flex items-center gap-2">
                 <Car className="h-5 w-5 text-gray-400" />
@@ -172,19 +216,36 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
               )}
             </div>
 
+            {/* VIN Display */}
+            {car.vin && (
+              <div className="space-y-2">
+                <h3 className="font-semibold">Vehicle Identification</h3>
+                <div className="text-sm">
+                  <span className="font-medium">VIN:</span> {car.vin}
+                </div>
+              </div>
+            )}
+
             {/* Auction Timing */}
-            {scheduleInfo && (
+            {(scheduleInfo || isLiveAuction) && (
               <div className="space-y-2">
                 <h3 className="font-semibold">Auction Schedule</h3>
                 <div className="space-y-1 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                    <span>Starts: {new Date(scheduleInfo.startTime).toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                    <span>Ends: {new Date(scheduleInfo.endTime).toLocaleString()}</span>
-                  </div>
+                  {scheduleInfo?.startTime && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-gray-400" />
+                      <span>Started: {new Date(scheduleInfo.startTime).toLocaleString()}</span>
+                    </div>
+                  )}
+                  {(scheduleInfo?.endTime || car.scheduleEndTime) && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-gray-400" />
+                      <AuctionTimer 
+                        auctionEndTime={scheduleInfo?.endTime || car.scheduleEndTime} 
+                        auctionTimingStatus={car.auctionTimingStatus || 'running'} 
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -202,23 +263,44 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
                 </div>
               </div>
             )}
-
-            {/* Call to Action */}
-            <div className="pt-4 border-t">
-              <p className="text-sm text-gray-600 mb-4">
-                To participate in auctions and place bids, you need to register as a verified dealer.
-              </p>
-              <div className="flex gap-2">
-                <Button className="flex-1">
-                  Register as Dealer
-                </Button>
-                <Button variant="outline">
-                  Learn More
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
+
+        {/* Bidding Interface for Live Auctions */}
+        {isLiveAuction && dealerProfile?.id && (
+          <div className="mt-6 pt-6 border-t">
+            <MaxBidInterface
+              carId={car.id}
+              dealerId={dealerProfile.id}
+              currentHighestBid={car.currentBid || car.current_bid || 0}
+              minimumIncrement={car.minimumBidIncrement || car.minimum_bid_increment || 100}
+              auctionEndTime={scheduleInfo?.endTime || car.scheduleEndTime || car.auction_end_time}
+              reservePrice={car.reservePrice || car.reserve_price}
+              isVerified={isVerified}
+              scheduleStatus={scheduleInfo?.status || 'running'}
+              scheduleStartTime={scheduleInfo?.startTime || car.scheduleStartTime}
+              scheduleEndTime={scheduleInfo?.endTime || car.scheduleEndTime}
+              auctionTimingStatus={car.auctionTimingStatus || 'running'}
+            />
+          </div>
+        )}
+
+        {/* Call to Action for Non-Live Auctions */}
+        {!isLiveAuction && (
+          <div className="pt-4 border-t">
+            <p className="text-sm text-gray-600 mb-4">
+              To participate in auctions and place bids, you need to register as a verified dealer.
+            </p>
+            <div className="flex gap-2">
+              <Button className="flex-1">
+                Register as Dealer
+              </Button>
+              <Button variant="outline">
+                Learn More
+              </Button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
