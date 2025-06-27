@@ -87,19 +87,16 @@ export const useSimplifiedCarListingsQuery = ({
           console.log('🚗 [RAW CARS RESULT] [ALWAYS SHOWN]', {
             rawCarsCount: rawCars.length,
             appliedFilters: filters,
-            rawCarsPreview: rawCars.slice(0, 2).map(car => {
-              // Fixed: Added proper null check for car
-              if (!car || typeof car !== 'object' || !('id' in car)) {
-                return { id: 'unknown', make: 'Error', model: 'Error', title: 'Error', reserve_price: 0 };
-              }
-              return {
+            rawCarsPreview: rawCars
+              .filter(car => car && typeof car === 'object' && 'id' in car)
+              .slice(0, 2)
+              .map(car => ({
                 id: car.id || 'unknown',
                 make: car.make || 'Unknown',
                 model: car.model || 'Unknown',
                 title: car.title || 'No title',
                 reserve_price: car.reserve_price || 0
-              };
-            })
+              }))
           });
         } else {
           console.log('❌ [RAW CARS ERROR] [ALWAYS SHOWN]', {
