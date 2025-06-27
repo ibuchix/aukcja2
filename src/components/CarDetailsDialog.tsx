@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -44,31 +45,6 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const { user } = useAuth();
   const { dealerProfile } = useDealerProfileSimple();
-
-  // COMPREHENSIVE DEBUG LOGGING FOR PRICING ISSUE
-  console.log('🔍 [CAR DETAILS DIALOG DEBUG] [ALWAYS SHOWN]', {
-    timestamp: new Date().toISOString(),
-    carReceived: !!car,
-    carId: car?.id,
-    carTitle: car?.title,
-    carStructure: car ? {
-      id: car.id,
-      title: car.title,
-      make: car.make,
-      model: car.model,
-      // ALL POSSIBLE PRICE FIELDS
-      reserve_price: car.reserve_price,
-      reservePrice: car.reservePrice,
-      price: car.price,
-      current_bid: car.current_bid,
-      currentBid: car.currentBid,
-      starting_price: car.starting_price,
-      startingPrice: car.startingPrice,
-      // Check if it's a plain object
-      hasOwnProperty: car.hasOwnProperty ? 'yes' : 'no',
-      constructor: car.constructor?.name || 'unknown'
-    } : null
-  });
 
   // Query for auction schedule data
   const { data: scheduleData } = useQuery({
@@ -124,16 +100,8 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   const auctionStatus = getAuctionStatus();
   const isLiveAuction = auctionStatus === "Live Auction";
 
-  // Format price in PLN - Fix the reserve price display with comprehensive debugging
+  // Format price in PLN
   const formatPricePLN = (price: number | null | undefined) => {
-    console.log('💰 [PRICE FORMATTING DEBUG] [ALWAYS SHOWN]', {
-      inputPrice: price,
-      inputType: typeof price,
-      isNull: price === null,
-      isUndefined: price === undefined,
-      isNaN: isNaN(Number(price))
-    });
-
     if (price === null || price === undefined || isNaN(Number(price))) {
       return 'Not specified';
     }
@@ -151,22 +119,10 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
     }).format(numPrice);
   };
 
-  // FIX: Get the correct reserve price using the properly mapped field
+  // Get the correct reserve price using the properly mapped field
   const getReservePrice = () => {
     // Use the correctly processed reservePrice field first
     const reservePrice = car.reservePrice || car.reserve_price || car.price || 0;
-
-    console.log('🏷️ [RESERVE PRICE DETECTION] [ALWAYS SHOWN]', {
-      carId: car.id,
-      make: car.make,
-      model: car.model,
-      reservePrice: car.reservePrice,
-      reserve_price: car.reserve_price,
-      price: car.price,
-      selectedPrice: reservePrice,
-      allCarKeys: Object.keys(car)
-    });
-
     return reservePrice;
   };
 
@@ -175,13 +131,6 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
 
   const reservePrice = getReservePrice();
   const formattedReservePrice = formatPricePLN(reservePrice);
-
-  console.log('🎯 [FINAL PRICE DISPLAY] [ALWAYS SHOWN]', {
-    carId: car.id,
-    reservePrice,
-    formattedReservePrice,
-    willShow: formattedReservePrice
-  });
 
   return (
     <Dialog open={!!car} onOpenChange={onClose}>

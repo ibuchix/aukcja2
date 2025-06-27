@@ -70,16 +70,6 @@ export const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
           <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500">No photos available for this vehicle</p>
         </div>
-        
-        {process.env.NODE_ENV === 'development' && (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-xs">
-              <strong>Debug Info:</strong> Car ID: {car.id}, Images: {JSON.stringify(car.images)}, 
-              Required Photos: {JSON.stringify(car.requiredPhotos)}
-            </AlertDescription>
-          </Alert>
-        )}
       </div>
     );
   }
@@ -157,18 +147,6 @@ export const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
             </div>
           )}
         </div>
-      )}
-
-      {/* Debug info in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="text-xs">
-            <strong>Debug:</strong> Found {allImages.length} images. 
-            Errors: {imageLoadErrors.size}. 
-            Car ID: {car.id}
-          </AlertDescription>
-        </Alert>
       )}
 
       {/* Gallery Dialog */}
