@@ -5,9 +5,33 @@ import { applyFilters } from "./filterUtils";
 import { applySorting } from "./sortUtils";
 import { applyPagination } from "./paginationUtils";
 
-// Type guard for car objects with proper validation
+// Enhanced type guard for car objects with proper validation and debugging
 const isValidCarObject = (car: any): car is Record<string, any> => {
-  return car && typeof car === 'object' && car !== null && 'id' in car && typeof car.id === 'string';
+  if (!car || typeof car !== 'object' || car === null) {
+    console.log('❌ [CAR BUILDER VALIDATION] Invalid car object:', typeof car);
+    return false;
+  }
+  
+  // Check if it's an error object
+  if ('error' in car || 'message' in car) {
+    console.log('❌ [CAR BUILDER VALIDATION] Error object detected:', car);
+    return false;
+  }
+  
+  // Must have an ID field
+  if (!('id' in car) || typeof car.id !== 'string') {
+    console.log('❌ [CAR BUILDER VALIDATION] Missing or invalid ID:', car.id);
+    return false;
+  }
+  
+  console.log('✅ [CAR BUILDER VALIDATION] Valid car object:', {
+    id: car.id,
+    make: car.make,
+    model: car.model,
+    reserve_price: car.reserve_price
+  });
+  
+  return true;
 };
 
 export const fetchCarsForSchedules = async (
@@ -85,33 +109,47 @@ export const fetchCarsForSchedules = async (
     throw error;
   }
 
-  // Check if data is valid and filter out invalid entries before accessing properties
-  if (Array.isArray(data) && data.length > 0) {
-    const validCarsForSample = data.filter(isValidCarObject);
-    console.log('✅ [CARS QUERY SUCCESS] [ALWAYS SHOWN]', {
-      timestamp: new Date().toISOString(),
-      resultCount: data.length,
-      validCarsCount: validCarsForSample.length,
-      filters,
-      sampleResults: validCarsForSample
-        .slice(0, 2)
-        .map(car => ({
-          id: car.id,
-          make: car.make || 'Unknown',
-          model: car.model || 'Unknown',
-          title: car.title || 'No title',
-          reserve_price: car.reserve_price || 0,
-          price: car.price || 0
-        }))
-    });
-  } else {
+  // Enhanced validation and debugging
+  if (!Array.isArray(data)) {
     console.log('❌ [CARS QUERY DATA ERROR] [ALWAYS SHOWN]', {
       timestamp: new Date().toISOString(),
-      error: 'Data is not a valid array or is empty',
+      error: 'Data is not an array',
       dataType: typeof data,
-      dataLength: Array.isArray(data) ? data.length : 'not array'
+      data: data
     });
+    return [];
   }
+
+  if (data.length === 0) {
+    console.log('⚠️ [CARS QUERY EMPTY] [ALWAYS SHOWN]', {
+      timestamp: new Date().toISOString(),
+      message: 'Query returned empty array',
+      filters,
+      carIdsCount: carIds.length
+    });
+    return [];
+  }
+
+  // Filter out invalid entries and log detailed info
+  const validCarsForSample = data.filter(isValidCarObject);
+  
+  console.log('✅ [CARS QUERY SUCCESS] [ALWAYS SHOWN]', {
+    timestamp: new Date().toISOString(),
+    resultCount: data.length,
+    validCarsCount: validCarsForSample.length,
+    invalidCarsCount: data.length - validCarsForSample.length,
+    filters,
+    sampleResults: validCarsForSample
+      .slice(0, 2)
+      .map(car => ({
+        id: car.id,
+        make: car.make || 'Unknown',
+        model: car.model || 'Unknown',
+        title: car.title || 'No title',
+        reserve_price: car.reserve_price || 0,
+        price: car.price || 0
+      }))
+  });
 
   return data || [];
 };

@@ -15,9 +15,33 @@ interface UseSimplifiedCarListingsQueryProps {
   dealerId?: string;
 }
 
-// Type guard for car objects with proper validation
+// Enhanced type guard for car objects with comprehensive validation
 const isValidCarObject = (car: any): car is Record<string, any> => {
-  return car && typeof car === 'object' && car !== null && 'id' in car && typeof car.id === 'string';
+  if (!car || typeof car !== 'object' || car === null) {
+    console.log('❌ [CAR VALIDATION] Invalid car object:', typeof car);
+    return false;
+  }
+  
+  // Check if it's an error object
+  if ('error' in car || 'message' in car) {
+    console.log('❌ [CAR VALIDATION] Error object detected:', car);
+    return false;
+  }
+  
+  // Must have an ID field
+  if (!('id' in car) || typeof car.id !== 'string') {
+    console.log('❌ [CAR VALIDATION] Missing or invalid ID:', car.id);
+    return false;
+  }
+  
+  console.log('✅ [CAR VALIDATION] Valid car object:', {
+    id: car.id,
+    make: car.make,
+    model: car.model,
+    reserve_price: car.reserve_price
+  });
+  
+  return true;
 };
 
 export const useSimplifiedCarListingsQuery = ({
@@ -35,7 +59,7 @@ export const useSimplifiedCarListingsQuery = ({
       sortOption, 
       searchQuery, 
       currentPage.toString(),
-      "v5"
+      "v6" // Increment version for debugging
     ],
     queryFn: async () => {
       
@@ -87,38 +111,46 @@ export const useSimplifiedCarListingsQuery = ({
           pageSize
         );
         
-        // Check if rawCars is valid and filter out invalid entries
-        if (Array.isArray(rawCars) && rawCars.length > 0) {
-          const validCarsForPreview = rawCars.filter(isValidCarObject);
-          console.log('🚗 [RAW CARS RESULT] [ALWAYS SHOWN]', {
-            rawCarsCount: rawCars.length,
-            validCarsCount: validCarsForPreview.length,
-            appliedFilters: filters,
-            rawCarsPreview: validCarsForPreview
-              .slice(0, 2)
-              .map(car => ({
-                id: car.id,
-                make: car.make || 'Unknown',
-                model: car.model || 'Unknown',
-                title: car.title || 'No title',
-                reserve_price: car.reserve_price || 0,
-                price: car.price || 0
-              }))
-          });
-        } else {
+        // Enhanced validation with better error handling
+        if (!Array.isArray(rawCars)) {
           console.log('❌ [RAW CARS ERROR] [ALWAYS SHOWN]', {
-            error: 'rawCars is not a valid array or is empty',
+            error: 'rawCars is not an array',
             rawCarsType: typeof rawCars,
-            rawCarsLength: Array.isArray(rawCars) ? rawCars.length : 'not array'
+            rawCars: rawCars
           });
           return {
             cars: [],
             total: 0
           };
         }
-        
+
+        if (rawCars.length === 0) {
+          console.log('⚠️ [RAW CARS EMPTY] [ALWAYS SHOWN] - No cars returned from query');
+          return {
+            cars: [],
+            total: 0
+          };
+        }
+
         // Filter to only valid car objects before processing
         const validRawCars = rawCars.filter(isValidCarObject);
+        
+        console.log('🚗 [RAW CARS VALIDATION] [ALWAYS SHOWN]', {
+          rawCarsCount: rawCars.length,
+          validCarsCount: validRawCars.length,
+          invalidCarsCount: rawCars.length - validRawCars.length,
+          appliedFilters: filters,
+          validCarsPreview: validRawCars
+            .slice(0, 2)
+            .map(car => ({
+              id: car.id,
+              make: car.make || 'Unknown',
+              model: car.model || 'Unknown',
+              title: car.title || 'No title',
+              reserve_price: car.reserve_price || 0,
+              price: car.price || 0
+            }))
+        });
         
         // STEP 3: Merge car data with schedule data
         const typedSchedules: AuctionScheduleData[] = schedules.map((schedule) => ({

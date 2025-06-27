@@ -13,7 +13,7 @@ import { AuctionTimer } from "@/components/auction/AuctionTimer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
-import { BasicSpecifications } from "@/components/car-details/BasicSpecifications";
+import BasicSpecifications from "@/components/car-details/BasicSpecifications";
 import { ConditionAndFeatures } from "@/components/car-details/ConditionAndFeatures";
 
 interface CarDetailsDialogProps {
@@ -45,6 +45,31 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const { user } = useAuth();
   const { dealerProfile } = useDealerProfileSimple();
+
+  // COMPREHENSIVE DEBUG LOGGING FOR PRICING ISSUE
+  console.log('🔍 [CAR DETAILS DIALOG DEBUG] [ALWAYS SHOWN]', {
+    timestamp: new Date().toISOString(),
+    carReceived: !!car,
+    carId: car?.id,
+    carTitle: car?.title,
+    carStructure: car ? {
+      id: car.id,
+      title: car.title,
+      make: car.make,
+      model: car.model,
+      // ALL POSSIBLE PRICE FIELDS
+      reserve_price: car.reserve_price,
+      reservePrice: car.reservePrice,
+      price: car.price,
+      current_bid: car.current_bid,
+      currentBid: car.currentBid,
+      starting_price: car.starting_price,
+      startingPrice: car.startingPrice,
+      // Check if it's a plain object
+      hasOwnProperty: car.hasOwnProperty ? 'yes' : 'no',
+      constructor: car.constructor?.name || 'unknown'
+    } : null
+  });
 
   // Query for auction schedule data
   const { data: scheduleData } = useQuery({
@@ -100,8 +125,16 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   const auctionStatus = getAuctionStatus();
   const isLiveAuction = auctionStatus === "Live Auction";
 
-  // Format price in PLN - Fix the reserve price display
+  // Format price in PLN - Fix the reserve price display with comprehensive debugging
   const formatPricePLN = (price: number | null | undefined) => {
+    console.log('💰 [PRICE FORMATTING DEBUG] [ALWAYS SHOWN]', {
+      inputPrice: price,
+      inputType: typeof price,
+      isNull: price === null,
+      isUndefined: price === undefined,
+      isNaN: isNaN(Number(price))
+    });
+
     if (price === null || price === undefined || isNaN(Number(price))) {
       return 'Not specified';
     }
@@ -119,13 +152,40 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
     }).format(numPrice);
   };
 
-  // Get the correct reserve price - check multiple possible fields
+  // Get the correct reserve price - check multiple possible fields with extensive debugging
   const getReservePrice = () => {
+    const candidatePrices = {
+      reservePrice: car.reservePrice,
+      reserve_price: car.reserve_price,
+      price: car.price,
+      starting_price: car.starting_price,
+      startingPrice: car.startingPrice
+    };
+
+    console.log('🏷️ [RESERVE PRICE DETECTION] [ALWAYS SHOWN]', {
+      carId: car.id,
+      make: car.make,
+      model: car.model,
+      candidatePrices,
+      selectedPrice: car.reservePrice || car.reserve_price || car.price || 0,
+      allCarKeys: Object.keys(car)
+    });
+
     return car.reservePrice || car.reserve_price || car.price || 0;
   };
 
   // Check if dealer is verified
   const isVerified = dealerProfile?.verification_status === 'approved' || dealerProfile?.is_verified === true;
+
+  const reservePrice = getReservePrice();
+  const formattedReservePrice = formatPricePLN(reservePrice);
+
+  console.log('🎯 [FINAL PRICE DISPLAY] [ALWAYS SHOWN]', {
+    carId: car.id,
+    reservePrice,
+    formattedReservePrice,
+    willShow: formattedReservePrice
+  });
 
   return (
     <Dialog open={!!car} onOpenChange={onClose}>
@@ -152,7 +212,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
               </Badge>
               <div className="text-right">
                 <div className="text-3xl font-bold text-red-600">
-                  {formatPricePLN(getReservePrice())}
+                  {formattedReservePrice}
                 </div>
                 <div className="text-sm text-gray-500">
                   Reserve Price
@@ -225,7 +285,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
               currentHighestBid={car.currentBid || car.current_bid || 0}
               minimumIncrement={car.minimumBidIncrement || car.minimum_bid_increment || 100}
               auctionEndTime={scheduleInfo?.endTime || car.scheduleEndTime || car.auction_end_time}
-              reservePrice={getReservePrice()}
+              reservePrice={reservePrice}
               isVerified={isVerified}
               scheduleStatus={scheduleInfo?.status || 'running'}
               scheduleStartTime={scheduleInfo?.startTime || car.scheduleStartTime}
