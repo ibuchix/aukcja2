@@ -3,20 +3,32 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin } from "lucide-react";
+import { AuctionTimer } from "@/components/auction/AuctionTimer";
 
 interface LiveAuctionCardProps {
   car: any;
   dealerId: string;
+  onClick: (car: any) => void;
 }
 
-export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car }) => {
-  const formatPrice = (price: number) => {
+export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId, onClick }) => {
+  const formatPrice = (price: number | null | undefined) => {
+    // Handle null, undefined, or NaN values
+    if (price === null || price === undefined || isNaN(Number(price))) {
+      return 'Price not available';
+    }
+    
+    const numPrice = Number(price);
+    if (numPrice === 0) {
+      return 'No reserve';
+    }
+    
     return new Intl.NumberFormat('en-GB', {
       style: 'currency',
       currency: 'GBP',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(price);
+    }).format(numPrice);
   };
 
   const getImageUrl = (images: string[] | string) => {
@@ -26,8 +38,14 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car }) => {
     return '/placeholder.svg';
   };
 
+  // Get auction end time from schedule data or fallback
+  const auctionEndTime = car.schedule_end_time || car.auction_end_time;
+
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+    <Card 
+      className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" 
+      onClick={() => onClick(car)}
+    >
       <div className="aspect-video relative">
         <img 
           src={getImageUrl(car.images)} 
@@ -57,7 +75,14 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car }) => {
           
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
-            <span>Auction ending soon</span>
+            {auctionEndTime ? (
+              <AuctionTimer 
+                auctionEndTime={auctionEndTime} 
+                auctionTimingStatus={car.auctionTimingStatus || 'running'} 
+              />
+            ) : (
+              <span>Auction ending soon</span>
+            )}
           </div>
           
           <div className="pt-2 border-t">
@@ -68,7 +93,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car }) => {
               </span>
             </div>
             
-            {car.current_bid && (
+            {car.current_bid && car.current_bid > 0 && (
               <div className="flex justify-between items-center mt-1">
                 <span className="text-sm text-muted-foreground">Current Bid</span>
                 <span className="font-semibold text-green-600">

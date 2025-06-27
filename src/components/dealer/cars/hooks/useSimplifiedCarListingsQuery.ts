@@ -83,21 +83,29 @@ export const useSimplifiedCarListingsQuery = ({
         );
         
         // TEMPORARY: Check if rawCars is valid data before accessing properties
-        if (Array.isArray(rawCars)) {
+        if (Array.isArray(rawCars) && rawCars.length > 0) {
           console.log('🚗 [RAW CARS RESULT] [ALWAYS SHOWN]', {
             rawCarsCount: rawCars.length,
             appliedFilters: filters,
-            rawCarsPreview: rawCars.slice(0, 2).map(car => ({
-              id: car.id,
-              make: car.make,
-              model: car.model,
-              title: car.title
-            }))
+            rawCarsPreview: rawCars.slice(0, 2).map(car => {
+              // Only access properties if car is a valid object
+              if (car && typeof car === 'object' && 'id' in car) {
+                return {
+                  id: car.id,
+                  make: car.make || 'Unknown',
+                  model: car.model || 'Unknown',
+                  title: car.title || 'No title',
+                  reserve_price: car.reserve_price || 0
+                };
+              }
+              return { id: 'unknown', make: 'Error', model: 'Error', title: 'Error', reserve_price: 0 };
+            })
           });
         } else {
           console.log('❌ [RAW CARS ERROR] [ALWAYS SHOWN]', {
-            error: 'rawCars is not an array',
-            rawCars
+            error: 'rawCars is not a valid array or is empty',
+            rawCarsType: typeof rawCars,
+            rawCarsLength: Array.isArray(rawCars) ? rawCars.length : 'not array'
           });
           return {
             cars: [],
@@ -126,6 +134,7 @@ export const useSimplifiedCarListingsQuery = ({
             make: car.make,
             model: car.model,
             title: car.title,
+            reserve_price: car.reserve_price,
             auctionTimingStatus: car.auctionTimingStatus
           }))
         });

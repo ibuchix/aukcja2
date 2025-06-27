@@ -81,23 +81,31 @@ export const fetchCarsForSchedules = async (
   }
 
   // TEMPORARY: Check if data is valid before accessing properties
-  if (Array.isArray(data)) {
+  if (Array.isArray(data) && data.length > 0) {
     console.log('✅ [CARS QUERY SUCCESS] [ALWAYS SHOWN]', {
       timestamp: new Date().toISOString(),
       resultCount: data.length,
       filters,
-      sampleResults: data.slice(0, 2).map(car => ({
-        id: car.id,
-        make: car.make,
-        model: car.model,
-        title: car.title
-      }))
+      sampleResults: data.slice(0, 2).map(car => {
+        // Only access properties if car is a valid object
+        if (car && typeof car === 'object' && 'id' in car) {
+          return {
+            id: car.id,
+            make: car.make || 'Unknown',
+            model: car.model || 'Unknown',
+            title: car.title || 'No title',
+            reserve_price: car.reserve_price || 0
+          };
+        }
+        return { id: 'unknown', make: 'Error', model: 'Error', title: 'Error', reserve_price: 0 };
+      })
     });
   } else {
     console.log('❌ [CARS QUERY DATA ERROR] [ALWAYS SHOWN]', {
       timestamp: new Date().toISOString(),
-      error: 'Data is not an array',
-      data
+      error: 'Data is not a valid array or is empty',
+      dataType: typeof data,
+      dataLength: Array.isArray(data) ? data.length : 'not array'
     });
   }
 

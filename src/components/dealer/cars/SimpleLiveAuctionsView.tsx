@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { useSimplifiedCarListingsQuery } from './hooks/useSimplifiedCarListingsQuery';
@@ -8,6 +8,7 @@ import { CarSearchFilters } from './filters/CarSearchFilters';
 import { AuctionPagination } from './AuctionPagination';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCarFilters } from './hooks/useCarFilters';
+import { LiveAuctionDetailsDialog } from './LiveAuctionDetailsDialog';
 
 interface SimpleLiveAuctionsViewProps {
   dealerId: string;
@@ -20,6 +21,8 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
   dealerProfile,
   isProfileLoading = false
 }) => {
+  const [selectedCar, setSelectedCar] = useState<any>(null);
+  
   const {
     filters,
     debouncedFilters,
@@ -61,6 +64,14 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
 
   const cars = queryResult?.cars || [];
   const totalCars = queryResult?.total || 0;
+
+  const handleCarClick = (car: any) => {
+    setSelectedCar(car);
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedCar(null);
+  };
 
   // Show loading skeleton
   if (isLoading || isProfileLoading) {
@@ -139,6 +150,7 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
                 key={car.id}
                 car={car}
                 dealerId={dealerId}
+                onClick={handleCarClick}
               />
             ))}
           </div>
@@ -150,6 +162,14 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
           />
         </>
       )}
+
+      {/* Live Auction Details Dialog */}
+      <LiveAuctionDetailsDialog
+        car={selectedCar}
+        dealerId={dealerId}
+        isVerified={dealerProfile?.is_verified || false}
+        onClose={handleCloseDialog}
+      />
     </div>
   );
 };
