@@ -53,7 +53,8 @@ export const MaxBidInterface = ({
   // The fact that they appear in the live auctions list means they should be biddable
   const isAuctionActive = auctionTimingStatus === 'running' || auctionTimingStatus === 'unknown';
 
-  if (!isAuctionActive && auctionTimingStatus !== 'unknown') {
+  // Fixed: Check specifically for non-active states without comparing incompatible types
+  if (!isAuctionActive) {
     let message = '';
     let bgColor = 'bg-blue-50';
     let textColor = 'text-blue-800';

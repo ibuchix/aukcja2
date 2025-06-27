@@ -88,10 +88,10 @@ export const useSimplifiedCarListingsQuery = ({
             rawCarsCount: rawCars.length,
             appliedFilters: filters,
             rawCarsPreview: rawCars.slice(0, 2).map(car => {
-              // Fixed null check for car
+              // Fixed: Added proper null check for car
               if (car && typeof car === 'object' && 'id' in car) {
                 return {
-                  id: car.id,
+                  id: car.id || 'unknown',
                   make: car.make || 'Unknown',
                   model: car.model || 'Unknown',
                   title: car.title || 'No title',
