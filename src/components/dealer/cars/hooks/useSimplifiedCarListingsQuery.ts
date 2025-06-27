@@ -15,6 +15,11 @@ interface UseSimplifiedCarListingsQueryProps {
   dealerId?: string;
 }
 
+// Type guard for car objects
+const isValidCarObject = (car: any): car is Record<string, any> => {
+  return car && typeof car === 'object' && 'id' in car && typeof car.id === 'string';
+};
+
 export const useSimplifiedCarListingsQuery = ({
   filters,
   sortOption,
@@ -84,11 +89,11 @@ export const useSimplifiedCarListingsQuery = ({
         
         // TEMPORARY: Check if rawCars is valid data before accessing properties
         if (Array.isArray(rawCars) && rawCars.length > 0) {
+          const validCarsForPreview = rawCars.filter(isValidCarObject);
           console.log('🚗 [RAW CARS RESULT] [ALWAYS SHOWN]', {
             rawCarsCount: rawCars.length,
             appliedFilters: filters,
-            rawCarsPreview: rawCars
-              .filter(car => car && typeof car === 'object' && 'id' in car)
+            rawCarsPreview: validCarsForPreview
               .slice(0, 2)
               .map(car => ({
                 id: car.id || 'unknown',

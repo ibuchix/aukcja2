@@ -5,6 +5,11 @@ import { applyFilters } from "./filterUtils";
 import { applySorting } from "./sortUtils";
 import { applyPagination } from "./paginationUtils";
 
+// Type guard for car objects
+const isValidCarObject = (car: any): car is Record<string, any> => {
+  return car && typeof car === 'object' && 'id' in car && typeof car.id === 'string';
+};
+
 export const fetchCarsForSchedules = async (
   carIds: string[],
   filters: AuctionFilters,
@@ -82,12 +87,12 @@ export const fetchCarsForSchedules = async (
 
   // TEMPORARY: Check if data is valid before accessing properties
   if (Array.isArray(data) && data.length > 0) {
+    const validCarsForSample = data.filter(isValidCarObject);
     console.log('✅ [CARS QUERY SUCCESS] [ALWAYS SHOWN]', {
       timestamp: new Date().toISOString(),
       resultCount: data.length,
       filters,
-      sampleResults: data
-        .filter(car => car && typeof car === 'object' && 'id' in car)
+      sampleResults: validCarsForSample
         .slice(0, 2)
         .map(car => ({
           id: car.id || 'unknown',
