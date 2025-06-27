@@ -15,9 +15,9 @@ interface UseSimplifiedCarListingsQueryProps {
   dealerId?: string;
 }
 
-// Type guard for car objects
+// Type guard for car objects with proper validation
 const isValidCarObject = (car: any): car is Record<string, any> => {
-  return car && typeof car === 'object' && 'id' in car && typeof car.id === 'string';
+  return car && typeof car === 'object' && car !== null && 'id' in car && typeof car.id === 'string';
 };
 
 export const useSimplifiedCarListingsQuery = ({
@@ -87,20 +87,22 @@ export const useSimplifiedCarListingsQuery = ({
           pageSize
         );
         
-        // TEMPORARY: Check if rawCars is valid data before accessing properties
+        // Check if rawCars is valid and filter out invalid entries
         if (Array.isArray(rawCars) && rawCars.length > 0) {
           const validCarsForPreview = rawCars.filter(isValidCarObject);
           console.log('🚗 [RAW CARS RESULT] [ALWAYS SHOWN]', {
             rawCarsCount: rawCars.length,
+            validCarsCount: validCarsForPreview.length,
             appliedFilters: filters,
             rawCarsPreview: validCarsForPreview
               .slice(0, 2)
               .map(car => ({
-                id: car.id || 'unknown',
+                id: car.id,
                 make: car.make || 'Unknown',
                 model: car.model || 'Unknown',
                 title: car.title || 'No title',
-                reserve_price: car.reserve_price || 0
+                reserve_price: car.reserve_price || 0,
+                price: car.price || 0
               }))
           });
         } else {
@@ -115,6 +117,9 @@ export const useSimplifiedCarListingsQuery = ({
           };
         }
         
+        // Filter to only valid car objects before processing
+        const validRawCars = rawCars.filter(isValidCarObject);
+        
         // STEP 3: Merge car data with schedule data
         const typedSchedules: AuctionScheduleData[] = schedules.map((schedule) => ({
           car_id: schedule.car_id,
@@ -124,7 +129,7 @@ export const useSimplifiedCarListingsQuery = ({
           is_manually_controlled: schedule.is_manually_controlled
         }));
         
-        const mergedData = mergeCarDataWithSchedules(rawCars, typedSchedules);
+        const mergedData = mergeCarDataWithSchedules(validRawCars, typedSchedules);
         
         // Process the merged results
         const validCars = processCarData(mergedData);

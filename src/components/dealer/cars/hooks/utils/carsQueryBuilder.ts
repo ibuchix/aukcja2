@@ -5,9 +5,9 @@ import { applyFilters } from "./filterUtils";
 import { applySorting } from "./sortUtils";
 import { applyPagination } from "./paginationUtils";
 
-// Type guard for car objects
+// Type guard for car objects with proper validation
 const isValidCarObject = (car: any): car is Record<string, any> => {
-  return car && typeof car === 'object' && 'id' in car && typeof car.id === 'string';
+  return car && typeof car === 'object' && car !== null && 'id' in car && typeof car.id === 'string';
 };
 
 export const fetchCarsForSchedules = async (
@@ -85,21 +85,23 @@ export const fetchCarsForSchedules = async (
     throw error;
   }
 
-  // TEMPORARY: Check if data is valid before accessing properties
+  // Check if data is valid and filter out invalid entries before accessing properties
   if (Array.isArray(data) && data.length > 0) {
     const validCarsForSample = data.filter(isValidCarObject);
     console.log('✅ [CARS QUERY SUCCESS] [ALWAYS SHOWN]', {
       timestamp: new Date().toISOString(),
       resultCount: data.length,
+      validCarsCount: validCarsForSample.length,
       filters,
       sampleResults: validCarsForSample
         .slice(0, 2)
         .map(car => ({
-          id: car.id || 'unknown',
+          id: car.id,
           make: car.make || 'Unknown',
           model: car.model || 'Unknown',
           title: car.title || 'No title',
-          reserve_price: car.reserve_price || 0
+          reserve_price: car.reserve_price || 0,
+          price: car.price || 0
         }))
     });
   } else {

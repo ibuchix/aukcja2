@@ -12,6 +12,9 @@ import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
 import { AuctionTimer } from "@/components/auction/AuctionTimer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
+import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
+import { BasicSpecifications } from "@/components/car-details/BasicSpecifications";
+import { ConditionAndFeatures } from "@/components/car-details/ConditionAndFeatures";
 
 interface CarDetailsDialogProps {
   car: CarListing | null;
@@ -97,10 +100,10 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   const auctionStatus = getAuctionStatus();
   const isLiveAuction = auctionStatus === "Live Auction";
 
-  // Format price in PLN
+  // Format price in PLN - Fix the reserve price display
   const formatPricePLN = (price: number | null | undefined) => {
     if (price === null || price === undefined || isNaN(Number(price))) {
-      return 'Not available';
+      return 'Not specified';
     }
     
     const numPrice = Number(price);
@@ -116,6 +119,11 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
     }).format(numPrice);
   };
 
+  // Get the correct reserve price - check multiple possible fields
+  const getReservePrice = () => {
+    return car.reservePrice || car.reserve_price || car.price || 0;
+  };
+
   // Check if dealer is verified
   const isVerified = dealerProfile?.verification_status === 'approved' || dealerProfile?.is_verified === true;
 
@@ -127,41 +135,9 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
         </DialogHeader>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Image Gallery */}
+          {/* Vehicle Photos */}
           <div className="space-y-4">
-            <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
-              {car.images && car.images.length > 0 ? (
-                <img
-                  src={car.images[selectedImageIndex] || car.images[0]}
-                  alt={car.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  <Car className="w-16 h-16" />
-                </div>
-              )}
-            </div>
-            
-            {car.images && car.images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto">
-                {car.images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImageIndex(index)}
-                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                      selectedImageIndex === index ? 'border-blue-500' : 'border-gray-200'
-                    }`}
-                  >
-                    <img
-                      src={image}
-                      alt={`${car.title} ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
+            <VehiclePhotos car={car} />
           </div>
 
           {/* Vehicle Details */}
@@ -176,7 +152,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
               </Badge>
               <div className="text-right">
                 <div className="text-3xl font-bold text-red-600">
-                  {formatPricePLN(car.reservePrice || car.reserve_price)}
+                  {formatPricePLN(getReservePrice())}
                 </div>
                 <div className="text-sm text-gray-500">
                   Reserve Price
@@ -192,28 +168,6 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Basic Info */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-gray-400" />
-                <span>{car.year}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Gauge className="h-5 w-5 text-gray-400" />
-                <span>{car.mileage?.toLocaleString()} miles</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Car className="h-5 w-5 text-gray-400" />
-                <span className="capitalize">{car.transmission}</span>
-              </div>
-              {car.address && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-gray-400" />
-                  <span className="truncate">{car.address}</span>
-                </div>
-              )}
             </div>
 
             {/* VIN Display */}
@@ -249,21 +203,17 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
                 </div>
               </div>
             )}
-
-            {/* Features */}
-            {car.features && typeof car.features === 'object' && Object.keys(car.features).length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-semibold">Features</h3>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(car.features).map(([key, value]) => (
-                    <Badge key={key} variant="outline">
-                      {key}: {String(value)}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
+        </div>
+
+        {/* Basic Specifications */}
+        <div className="mt-6">
+          <BasicSpecifications car={car} />
+        </div>
+
+        {/* Condition and Features */}
+        <div className="mt-6">
+          <ConditionAndFeatures car={car} />
         </div>
 
         {/* Bidding Interface for Live Auctions */}
@@ -275,7 +225,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
               currentHighestBid={car.currentBid || car.current_bid || 0}
               minimumIncrement={car.minimumBidIncrement || car.minimum_bid_increment || 100}
               auctionEndTime={scheduleInfo?.endTime || car.scheduleEndTime || car.auction_end_time}
-              reservePrice={car.reservePrice || car.reserve_price}
+              reservePrice={getReservePrice()}
               isVerified={isVerified}
               scheduleStatus={scheduleInfo?.status || 'running'}
               scheduleStartTime={scheduleInfo?.startTime || car.scheduleStartTime}
