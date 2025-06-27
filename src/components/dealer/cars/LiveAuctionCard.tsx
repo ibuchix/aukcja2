@@ -42,20 +42,20 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
   // Get auction end time from schedule data or fallback
   const auctionEndTime = car.schedule_end_time || car.auction_end_time;
 
-  // Debug log the car data to understand the pricing issue
-  console.log('🏷️ [LIVE AUCTION CARD PRICE DEBUG]', {
+  // FIX: Use the correctly mapped reservePrice field from the processed data
+  const reservePrice = car.reservePrice || car.reserve_price || car.price || 0;
+
+  // Debug log to verify the fix worked
+  console.log('🏷️ [LIVE AUCTION CARD PRICE DEBUG] [FIXED]', {
     carId: car.id,
     make: car.make,
     model: car.model,
-    reserve_price: car.reserve_price,
+    reservePrice: reservePrice,
+    car_reservePrice: car.reservePrice,
+    car_reserve_price: car.reserve_price,
+    car_price: car.price,
     current_bid: car.current_bid,
-    price: car.price,
-    allPriceFields: {
-      reserve_price: car.reserve_price,
-      current_bid: car.current_bid,
-      price: car.price,
-      starting_price: car.starting_price
-    }
+    formattedPrice: formatPrice(reservePrice)
   });
 
   return (
@@ -106,7 +106,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Reserve Price</span>
               <span className="font-semibold text-lg">
-                {formatPrice(car.reserve_price)}
+                {formatPrice(reservePrice)}
               </span>
             </div>
             

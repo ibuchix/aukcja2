@@ -67,14 +67,17 @@ export const processCarData = (rawData: any[]): CarListing[] => {
         finalTitle = `${car.year || ''} ${car.make || ''} ${car.model || ''}`.trim() || 'Vehicle';
       }
 
+      // FIX: The database 'price' field IS the reserve price - map it correctly
+      const reservePrice = car.price || car.reserve_price || 0;
+
       return {
         id: car.id,
         make: car.make || 'Unknown',
         model: car.model || 'Unknown',
         year: car.year || 0,
         mileage: car.mileage || 0,
-        price: car.reserve_price || 0, // Add price property mapping to reserve_price
-        reservePrice: car.reserve_price || 0,
+        price: reservePrice, // Map to the reserve price for backwards compatibility
+        reservePrice: reservePrice, // This is the main field components should use
         currentBid: car.current_bid || 0,
         images: car.images || [],
         requiredPhotos: car.required_photos || {},

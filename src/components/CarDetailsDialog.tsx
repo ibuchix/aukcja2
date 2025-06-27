@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -152,26 +151,23 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
     }).format(numPrice);
   };
 
-  // Get the correct reserve price - check multiple possible fields with extensive debugging
+  // FIX: Get the correct reserve price using the properly mapped field
   const getReservePrice = () => {
-    const candidatePrices = {
-      reservePrice: car.reservePrice,
-      reserve_price: car.reserve_price,
-      price: car.price,
-      starting_price: car.starting_price,
-      startingPrice: car.startingPrice
-    };
+    // Use the correctly processed reservePrice field first
+    const reservePrice = car.reservePrice || car.reserve_price || car.price || 0;
 
     console.log('🏷️ [RESERVE PRICE DETECTION] [ALWAYS SHOWN]', {
       carId: car.id,
       make: car.make,
       model: car.model,
-      candidatePrices,
-      selectedPrice: car.reservePrice || car.reserve_price || car.price || 0,
+      reservePrice: car.reservePrice,
+      reserve_price: car.reserve_price,
+      price: car.price,
+      selectedPrice: reservePrice,
       allCarKeys: Object.keys(car)
     });
 
-    return car.reservePrice || car.reserve_price || car.price || 0;
+    return reservePrice;
   };
 
   // Check if dealer is verified
