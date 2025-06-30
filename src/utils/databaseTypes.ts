@@ -23,7 +23,6 @@ export type ProfileRecord = TableRow<'profiles'>;
 export type CarRecord = TableRow<'cars'>;
 export type BidRecord = TableRow<'bids'>;
 export type DealerWatchlistRecord = TableRow<'dealer_watchlist'>;
-export type ProxyBidRecord = TableRow<'proxy_bids'>;
 
 // Define insert types for specific tables
 export type DealerInsert = TableInsertRow<'dealers'>;
@@ -31,4 +30,3 @@ export type ProfileInsert = TableInsertRow<'profiles'>;
 export type CarInsert = TableInsertRow<'cars'>;
 export type BidInsert = TableInsertRow<'bids'>;
 export type DealerWatchlistInsert = TableInsertRow<'dealer_watchlist'>;
-export type ProxyBidInsert = TableInsertRow<'proxy_bids'>;

@@ -111,9 +111,12 @@ export const useAuctionStatusMonitor = ({
       }
       
       console.log('Manual status update result:', data);
+      
+      // Type-safe access to response data
+      const response = data as any;
       toast({
         title: "Status Updated",
-        description: `Processed ${data?.processed_count || 0} auctions`,
+        description: `Processed ${response?.processed_count || 0} auctions`,
       });
       
       return data;

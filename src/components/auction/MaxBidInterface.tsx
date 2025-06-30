@@ -1,6 +1,6 @@
 
 import { BidNotificationHandler } from "./BidNotificationHandler";
-import { ProxyBidManager } from "./ProxyBidManager";
+import { SimpleBidManager } from "./SimpleBidManager";
 import { formatUKDateTime } from "@/utils/ukTimeUtils";
 
 interface MaxBidInterfaceProps {
@@ -97,7 +97,7 @@ export const MaxBidInterface = ({
         currentBid={currentHighestBid}
       />
       
-      <ProxyBidManager
+      <SimpleBidManager
         carId={carId}
         dealerId={dealerId}
         currentHighestBid={currentHighestBid}

@@ -7,11 +7,6 @@ import { BaseRecord, TableRow } from './common';
 export type BidRecord = TableRow<'bids'> & BaseRecord;
 
 /**
- * Proxy bid record
- */
-export type ProxyBidRecord = TableRow<'proxy_bids'> & BaseRecord;
-
-/**
  * Bid status values
  */
 export type BidStatus = 'active' | 'outbid' | 'won' | 'lost';

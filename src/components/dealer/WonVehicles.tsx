@@ -65,7 +65,10 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setWonVehicles(data || []);
+      
+      // Type-safe handling of the response
+      const typedData = data as any[];
+      setWonVehicles(typedData || []);
     } catch (error) {
       console.error('Error fetching won vehicles:', error);
       toast({

@@ -86,7 +86,9 @@ export const SimpleBidManager = ({
 
       if (error) throw error;
 
-      if (data?.success) {
+      // Type-safe access to response data
+      const response = data as any;
+      if (response?.success) {
         toast({
           title: "Bid placed successfully",
           description: `Your bid of ${formatCurrency(numericBidAmount)} has been placed`,
@@ -94,7 +96,7 @@ export const SimpleBidManager = ({
         setBidAmount("");
         // The parent component should handle refreshing the data
       } else {
-        throw new Error(data?.error || "Failed to place bid");
+        throw new Error(response?.error || "Failed to place bid");
       }
     } catch (error) {
       toast({
