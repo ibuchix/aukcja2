@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin } from "lucide-react";
 import { AuctionTimer } from "@/components/auction/AuctionTimer";
+import { AuctionStatusIndicator } from "./AuctionStatusIndicator";
 
 interface LiveAuctionCardProps {
   car: any;
@@ -45,6 +46,10 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
   // Use the correctly mapped reservePrice field from the processed data
   const reservePrice = car.reservePrice || car.reserve_price || car.price || 0;
 
+  // Determine if this auction should still be shown as "live"
+  const isActuallyLive = car.auctionTimingStatus === 'running';
+  const hasEnded = car.auctionTimingStatus === 'ended';
+
   return (
     <Card 
       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" 
@@ -56,9 +61,19 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
           alt={`${car.make} ${car.model}`}
           className="w-full h-full object-cover"
         />
-        <Badge className="absolute top-2 right-2 bg-red-500">
-          Live Auction
-        </Badge>
+        <div className="absolute top-2 right-2">
+          <AuctionStatusIndicator
+            auctionTimingStatus={car.auctionTimingStatus || 'unknown'}
+            scheduleStartTime={car.scheduleStartTime}
+            scheduleEndTime={car.scheduleEndTime}
+            auctionStatus={car.auction_status}
+          />
+        </div>
+        {isActuallyLive && (
+          <Badge className="absolute top-2 left-2 bg-red-500">
+            Live Auction
+          </Badge>
+        )}
       </div>
       
       <CardContent className="p-4">
@@ -79,11 +94,13 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
           
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
-            {auctionEndTime ? (
+            {auctionEndTime && !hasEnded ? (
               <AuctionTimer 
                 auctionEndTime={auctionEndTime} 
                 auctionTimingStatus={car.auctionTimingStatus || 'running'} 
               />
+            ) : hasEnded ? (
+              <span>Auction ended</span>
             ) : (
               <span>Auction ending soon</span>
             )}
@@ -100,9 +117,16 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
             {car.current_bid && car.current_bid > 0 && (
               <div className="flex justify-between items-center mt-1">
                 <span className="text-sm text-muted-foreground">Current Bid</span>
-                <span className="font-semibold text-green-600">
+                <span className={`font-semibold ${hasEnded ? 'text-gray-600' : 'text-green-600'}`}>
                   {formatPrice(car.current_bid)}
                 </span>
+              </div>
+            )}
+            
+            {hasEnded && car.auction_status === 'sold' && (
+              <div className="flex justify-between items-center mt-1">
+                <span className="text-sm font-medium text-green-600">Final Result</span>
+                <span className="font-semibold text-green-600">SOLD</span>
               </div>
             )}
           </div>

@@ -1,134 +1,91 @@
 
-import React, { useState } from 'react';
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { useSimplifiedCarListingsQuery } from './hooks/useSimplifiedCarListingsQuery';
-import { LiveAuctionCard } from './LiveAuctionCard';
-import { CarSearchFilters } from './filters/CarSearchFilters';
-import { AuctionPagination } from './AuctionPagination';
-import { Skeleton } from "@/components/ui/skeleton";
-import { useCarFilters } from './hooks/useCarFilters';
-import CarDetailsDialog from '@/components/CarDetailsDialog';
+import { useState } from "react";
+import { useSimplifiedCarListingsQuery } from "./hooks/useSimplifiedCarListingsQuery";
+import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
+import { LiveAuctionCard } from "./LiveAuctionCard";
+import { LiveAuctionDetailsDialog } from "./LiveAuctionDetailsDialog";
+import { CarSearchFilters } from "./filters/CarSearchFilters";
+import { useCarFilters } from "./hooks/useCarFilters";
+import { AuctionEmptyState } from "../auction/components/AuctionEmptyState";
+import { RefreshListingsButton } from "./actions/RefreshListingsButton";
+import { useAuctionStatusMonitor } from "@/hooks/useAuctionStatusMonitor";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { RotateCcw } from "lucide-react";
 
-interface SimpleLiveAuctionsViewProps {
-  dealerId: string;
-  dealerProfile?: any;
-  isProfileLoading?: boolean;
-}
-
-export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
-  dealerId,
-  dealerProfile,
-  isProfileLoading = false
-}) => {
+export const SimpleLiveAuctionsView = () => {
   const [selectedCar, setSelectedCar] = useState<any>(null);
-  
+  const { dealerProfile } = useDealerProfileSimple();
+  const queryClient = useQueryClient();
+
   const {
     filters,
     debouncedFilters,
     sortOption,
     searchQuery,
-    currentPage,
     handleFilterChange,
     handleFiltersChange,
     handleSortChange,
     handleSearchChange,
-    handleNextPage,
-    handlePreviousPage,
-    cleanup
   } = useCarFilters();
 
-  const pageSize = 12;
-
-  // Cleanup on unmount
-  React.useEffect(() => {
-    return () => {
-      cleanup();
-    };
-  }, [cleanup]);
-
-  // Use the simplified query with debounced filters for API calls
-  const { 
-    data: queryResult, 
-    isLoading, 
-    error,
-    refetch 
-  } = useSimplifiedCarListingsQuery({
-    filters: debouncedFilters, // Use debounced filters for API calls
+  const { data, isLoading, error, refetch } = useSimplifiedCarListingsQuery({
+    filters: debouncedFilters,
     sortOption,
     searchQuery,
-    currentPage,
-    pageSize,
-    dealerId
+    currentPage: 1,
+    pageSize: 50,
+    dealerId: dealerProfile?.id,
   });
 
-  const cars = queryResult?.cars || [];
-  const totalCars = queryResult?.total || 0;
+  // Monitor auction status changes and refresh data when needed
+  const { triggerStatusUpdate } = useAuctionStatusMonitor({
+    onAuctionEnded: (carId, finalStatus) => {
+      console.log(`Auction ended for car ${carId} with status ${finalStatus}`);
+      // Invalidate and refetch the listings
+      queryClient.invalidateQueries({ queryKey: ["simplifiedCarListings"] });
+    },
+    onAuctionStarted: (carId) => {
+      console.log(`Auction started for car ${carId}`);
+      // Invalidate and refetch the listings
+      queryClient.invalidateQueries({ queryKey: ["simplifiedCarListings"] });
+    },
+  });
 
-  const handleCarClick = (car: any) => {
-    // Enhance car data with live auction properties for the existing dialog
-    const enhancedCar = {
-      ...car,
-      // Ensure proper auction status for live auctions
-      auctionStatus: 'Live Auction',
-      auctionTimingStatus: 'running',
-      isLiveAuction: true,
-      // Ensure pricing data is available
-      reservePrice: car.reserve_price,
-      currentBid: car.current_bid || 0
-    };
-    setSelectedCar(enhancedCar);
+  const cars = data?.cars || [];
+
+  const handleRefreshStatuses = async () => {
+    await triggerStatusUpdate();
+    refetch();
   };
 
-  const handleCloseDialog = () => {
-    setSelectedCar(null);
-  };
-
-  // Show loading skeleton
-  if (isLoading || isProfileLoading) {
+  if (error) {
     return (
-      <div className="space-y-6">
-        <div className="flex gap-4">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-10 w-48" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-96 w-full" />
-          ))}
-        </div>
+      <div className="p-6 text-center">
+        <p className="text-red-600 mb-4">Error loading auctions: {error.message}</p>
+        <Button onClick={() => refetch()}>Try Again</Button>
       </div>
     );
   }
 
-  // Show error state
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Failed to load live auctions: {error.message}
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  // Calculate total pages for pagination
-  const totalPages = Math.ceil(totalCars / pageSize);
-
-  // Create a page change handler that works with the existing pagination component
-  const handlePageChange = (page: number) => {
-    const pageDirection = page > currentPage ? 'next' : 'previous';
-    if (pageDirection === 'next') {
-      handleNextPage();
-    } else {
-      handlePreviousPage();
-    }
-  };
-
   return (
     <div className="space-y-6">
-      {/* Comprehensive Filters and Search */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Live Auctions</h2>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefreshStatuses}
+            className="flex items-center gap-2"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Update Statuses
+          </Button>
+          <RefreshListingsButton onRefresh={refetch} isLoading={isLoading} />
+        </div>
+      </div>
+
       <CarSearchFilters
         filters={filters}
         onFilterChange={handleFilterChange}
@@ -138,47 +95,43 @@ export const SimpleLiveAuctionsView: React.FC<SimpleLiveAuctionsViewProps> = ({
         sortOption={sortOption}
         searchQuery={searchQuery}
       />
-      
-      <div className="flex justify-between items-center">
-        <div className="text-sm text-muted-foreground">
-          {totalCars} live auctions found
+
+      {isLoading ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-gray-200 aspect-video rounded-lg mb-4"></div>
+              <div className="space-y-2">
+                <div className="bg-gray-200 h-4 rounded"></div>
+                <div className="bg-gray-200 h-4 rounded w-3/4"></div>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
-
-      {/* Results */}
-      {cars.length === 0 ? (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            No live auctions found matching your criteria.
-          </AlertDescription>
-        </Alert>
+      ) : cars.length === 0 ? (
+        <AuctionEmptyState 
+          hasFilters={Object.keys(filters).length > 0}
+          hasSearch={!!searchQuery}
+        />
       ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {cars.map((car) => (
-              <LiveAuctionCard
-                key={car.id}
-                car={car}
-                dealerId={dealerId}
-                onClick={handleCarClick}
-              />
-            ))}
-          </div>
-
-          <AuctionPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        </>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {cars.map((car) => (
+            <LiveAuctionCard
+              key={car.id}
+              car={car}
+              dealerId={dealerProfile?.id || ""}
+              onClick={setSelectedCar}
+            />
+          ))}
+        </div>
       )}
 
-      {/* Use Existing Car Details Dialog */}
-      <CarDetailsDialog
-        car={selectedCar}
-        onClose={handleCloseDialog}
-      />
+      {selectedCar && (
+        <LiveAuctionDetailsDialog
+          car={selectedCar}
+          onClose={() => setSelectedCar(null)}
+        />
+      )}
     </div>
   );
 };
