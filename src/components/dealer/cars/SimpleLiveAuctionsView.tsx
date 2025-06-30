@@ -59,6 +59,9 @@ export const SimpleLiveAuctionsView = () => {
     refetch();
   };
 
+  // Check if dealer is verified
+  const isVerified = dealerProfile?.verification_status === 'approved' || dealerProfile?.is_verified === true;
+
   if (error) {
     return (
       <div className="p-6 text-center">
@@ -129,6 +132,8 @@ export const SimpleLiveAuctionsView = () => {
       {selectedCar && (
         <LiveAuctionDetailsDialog
           car={selectedCar}
+          dealerId={dealerProfile?.id || ""}
+          isVerified={isVerified}
           onClose={() => setSelectedCar(null)}
         />
       )}

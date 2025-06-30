@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
@@ -30,7 +29,7 @@ const DealerDashboard = () => {
   // Check if dealer is verified
   const isVerified = dealerProfile?.verification_status === 'approved' || dealerProfile?.is_verified === true;
   
-  // Memoize dealer name to prevent unnecessary re-renders
+  // Memoized dealer name to prevent unnecessary re-renders
   const dealerName = useMemo(() => {
     return dealerProfile?.dealership_name || "Dealer";
   }, [dealerProfile?.dealership_name]);
@@ -119,11 +118,7 @@ const DealerDashboard = () => {
           <TabsContent value="auctions">
             <div className="mt-4">
               {dealerProfile?.id ? (
-                <SimpleLiveAuctionsView 
-                  dealerId={dealerProfile.id}
-                  dealerProfile={dealerProfile}
-                  isProfileLoading={isLoading}
-                />
+                <SimpleLiveAuctionsView />
               ) : (
                 <Alert>
                   <AlertCircle className="h-4 w-4" />

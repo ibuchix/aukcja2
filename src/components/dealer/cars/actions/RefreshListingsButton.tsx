@@ -5,18 +5,20 @@ import { Car } from "lucide-react";
 
 interface RefreshListingsButtonProps {
   onRefresh: () => void;
+  isLoading?: boolean;
 }
 
-export const RefreshListingsButton = ({ onRefresh }: RefreshListingsButtonProps) => {
+export const RefreshListingsButton = ({ onRefresh, isLoading = false }: RefreshListingsButtonProps) => {
   return (
     <div className="flex justify-end">
       <Button 
         variant="outline" 
         onClick={onRefresh} 
+        disabled={isLoading}
         className="flex items-center gap-2"
       >
         <Car className="h-4 w-4" />
-        Refresh Listings
+        {isLoading ? "Refreshing..." : "Refresh Listings"}
       </Button>
     </div>
   );

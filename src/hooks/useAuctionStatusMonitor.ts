@@ -94,10 +94,12 @@ export const useAuctionStatusMonitor = ({
     };
   }, [onAuctionEnded, onAuctionStarted, toast]);
 
-  // Function to manually trigger status update
+  // Function to manually trigger status update via edge function
   const triggerStatusUpdate = async () => {
     try {
-      const { data, error } = await supabase.rpc('manual_auction_status_update');
+      const { data, error } = await supabase.functions.invoke('update-auction-outcomes', {
+        body: { trigger: 'manual' }
+      });
       
       if (error) {
         console.error('Error triggering status update:', error);
