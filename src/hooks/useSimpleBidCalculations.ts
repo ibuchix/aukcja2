@@ -31,11 +31,16 @@ export const useBidRecommendations = (carId: string, dealerId: string) => {
     queryKey: ['bid-recommendations', carId, dealerId],
     queryFn: async (): Promise<BidRecommendationData> => {
       // Get current bid and car details
-      const { data: car } = await supabase
+      const { data: car, error } = await supabase
         .from('cars')
         .select('current_bid, reserve_price, make, model, year')
         .eq('id', carId)
         .single();
+
+      if (error) {
+        console.error('Error fetching car data:', error);
+        throw new Error('Failed to fetch car data');
+      }
 
       if (!car) {
         throw new Error('Car not found');
@@ -73,7 +78,7 @@ export const useDealerBidExposure = (dealerId: string) => {
     queryKey: ['dealer-bid-exposure', dealerId],
     queryFn: async (): Promise<DealerBidExposure> => {
       // Get dealer's active bids
-      const { data: bids } = await supabase
+      const { data: bids, error } = await supabase
         .from('bids')
         .select(`
           id,
@@ -84,6 +89,20 @@ export const useDealerBidExposure = (dealerId: string) => {
         `)
         .eq('dealer_id', dealerId)
         .eq('status', 'active');
+
+      if (error) {
+        console.error('Error fetching dealer bids:', error);
+        // Return empty state instead of throwing
+        return {
+          active_bids_count: 0,
+          winning_bids_count: 0,
+          outbid_bids_count: 0,
+          proxy_bids_count: 0,
+          winning_bids_exposure: 0,
+          proxy_bids_exposure: 0,
+          maximum_potential_exposure: 0,
+        };
+      }
 
       if (!bids) {
         return {
