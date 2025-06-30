@@ -46,6 +46,7 @@ export const useBidRecommendations = (carId: string, dealerId: string) => {
         throw new Error('Car not found');
       }
 
+      // Now TypeScript knows car is valid, but we still need to safely access properties
       const currentBid = car.current_bid || 0;
       const reservePrice = car.reserve_price || 0;
       
