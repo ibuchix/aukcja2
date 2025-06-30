@@ -7,6 +7,7 @@ import { ProfileInfoSection } from "@/components/dealer/dashboard/ProfileInfoSec
 import { DealerWelcomeCard } from "@/components/dealer/dashboard/DealerWelcomeCard";
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
 import { SimpleLiveAuctionsView } from '@/components/dealer/cars/SimpleLiveAuctionsView';
+import { WonVehicles } from '@/components/dealer/WonVehicles';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDashboardTabs } from '@/hooks/useDashboardTabs';
 import { QuickActions } from '@/components/dealer/QuickActions';
@@ -46,7 +47,7 @@ const DealerDashboard = () => {
         verificationStatus: dealerProfile?.verification_status
       });
     }
-  }, [dealerProfile?.id, dealerProfile?.is_verified]); // Only trigger on actual profile changes
+  }, [dealerProfile?.id, dealerProfile?.is_verified]);
 
   // Show error toast only when error changes and profile doesn't exist
   useEffect(() => {
@@ -57,7 +58,7 @@ const DealerDashboard = () => {
         variant: "destructive",
       });
     }
-  }, [error, dealerProfile, isLoading]); // Only show toast when these specific conditions change
+  }, [error, dealerProfile, isLoading]);
 
   return (
     <DashboardLayout title="Dealer Dashboard">
@@ -107,10 +108,11 @@ const DealerDashboard = () => {
         {/* Quick Actions Section */}
         <QuickActions />
         
-        {/* Dashboard Tabs - Simplified to 3 tabs with Live Auctions as default */}
+        {/* Dashboard Tabs - Updated to include Won Vehicles */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="auctions">Live Auctions</TabsTrigger>
+            <TabsTrigger value="won-vehicles">Won Vehicles</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
@@ -124,6 +126,21 @@ const DealerDashboard = () => {
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
                     Please complete your dealer profile to view live auctions.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="won-vehicles">
+            <div className="mt-4">
+              {dealerProfile?.id ? (
+                <WonVehicles dealerId={dealerProfile.id} />
+              ) : (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Please complete your dealer profile to view won vehicles.
                   </AlertDescription>
                 </Alert>
               )}
