@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Scale, DollarSign, AlertTriangle, Wallet } from "lucide-react";
-import { useDealerBidExposure } from "@/hooks/useBidCalculations";
+import { useDealerBidExposure } from "@/hooks/useSimpleBidCalculations";
 import { formatCurrency } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -37,7 +37,7 @@ export const BidExposureCard = ({ dealerId }: BidExposureCardProps) => {
   if (!exposure) return null;
 
   // Calculate risk level based on potential exposure vs winning exposure
-  const exposureRatio = exposure.maximum_potential_exposure / (exposure.winning_bids_exposure || 1);
+  const exposureRatio = (exposure.maximum_potential_exposure || 1) / (exposure.winning_bids_exposure || 1);
   const riskLevel = 
     exposureRatio > 5 ? "High" : 
     exposureRatio > 2 ? "Moderate" : 
@@ -77,11 +77,11 @@ export const BidExposureCard = ({ dealerId }: BidExposureCardProps) => {
           <div>
             <div className="text-muted-foreground text-sm mb-1 flex items-center">
               <DollarSign className="h-4 w-4 mr-1" />
-              Proxy Bids
+              Direct Bids Only
             </div>
-            <div className="text-xl font-bold">{exposure.proxy_bids_count}</div>
+            <div className="text-xl font-bold">Simple System</div>
             <div className="text-xs mt-1">
-              Maximum exposure: {formatCurrency(exposure.proxy_bids_exposure)}
+              No proxy bidding complexity
             </div>
           </div>
         </div>

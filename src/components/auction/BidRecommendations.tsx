@@ -1,10 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Lightbulb, TrendingUp, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useBidRecommendations } from "@/hooks/useBidCalculations";
+import { useBidRecommendations } from "@/hooks/useSimpleBidCalculations";
 import { formatCurrency } from "@/lib/utils";
 
 interface BidRecommendationsProps {
@@ -121,7 +120,7 @@ export const BidRecommendations = ({
             <div className="mt-4 space-y-3 text-sm">
               <div className="flex justify-between items-center text-muted-foreground">
                 <span>Current Bid</span>
-                <span className="font-semibold">{formatCurrency(recommendations.current_bid)}</span>
+                <span className="font-semibold">{formatCurrency(recommendations?.current_bid || 0)}</span>
               </div>
               
               {reservePrice && (
@@ -133,25 +132,18 @@ export const BidRecommendations = ({
               
               <div className="flex justify-between items-center text-muted-foreground">
                 <span>Average Bid Increase</span>
-                <span className="font-semibold">{formatCurrency(recommendations.average_bid_increase)}</span>
+                <span className="font-semibold">{formatCurrency(recommendations?.average_bid_increase || 0)}</span>
               </div>
-              
-              {recommendations.similar_car_average_price && (
-                <div className="flex justify-between items-center text-muted-foreground">
-                  <span>Similar Cars Average</span>
-                  <span className="font-semibold">{formatCurrency(recommendations.similar_car_average_price)}</span>
-                </div>
-              )}
               
               <div className="flex justify-between items-center text-muted-foreground">
                 <span>Reserve Met</span>
-                <span className={`font-semibold ${recommendations.reserve_met ? 'text-green-500' : 'text-amber-500'}`}>
-                  {recommendations.reserve_met ? 'Yes' : 'No'}
+                <span className={`font-semibold ${recommendations?.reserve_met ? 'text-green-500' : 'text-amber-500'}`}>
+                  {recommendations?.reserve_met ? 'Yes' : 'No'}
                 </span>
               </div>
               
               <div className="mt-4 text-xs text-muted-foreground">
-                <p>{reservePrice ? 'Recommendations calculated based on the disclosed reserve price to help you bid strategically.' : 'Our AI analyzes similar vehicles, bidding patterns, and market trends to recommend optimal bid amounts.'}</p>
+                <p>{reservePrice ? 'Recommendations calculated based on the disclosed reserve price to help you bid strategically.' : 'Recommendations based on current bid activity and standard bidding increments.'}</p>
               </div>
             </div>
           )}
