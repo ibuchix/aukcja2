@@ -1,6 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 
 interface BidRecommendation {
   conservative: number;
@@ -26,37 +27,39 @@ interface DealerBidExposure {
   maximum_potential_exposure: number;
 }
 
-// Type for a valid car record
-interface CarRecord {
-  id: string;
+// Type for Supabase car query result
+type CarQueryResult = {
   current_bid: number | null;
   reserve_price: number | null;
   make: string | null;
   model: string | null;
   year: number | null;
-}
+};
 
 export const useBidRecommendations = (carId: string, dealerId: string) => {
   return useQuery({
     queryKey: ['bid-recommendations', carId, dealerId],
     queryFn: async (): Promise<BidRecommendationData> => {
-      // Get current bid and car details
-      const { data: car, error } = await supabase
+      // Get current bid and car details with explicit typing
+      const { data: carData, error } = await supabase
         .from('cars')
         .select('current_bid, reserve_price, make, model, year')
         .eq('id', carId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching car data:', error);
         throw new Error('Failed to fetch car data');
       }
 
-      if (!car) {
+      if (!carData) {
         throw new Error('Car not found');
       }
 
-      // Now TypeScript knows car is valid, but we still need to safely access properties
+      // Cast to our expected type to ensure TypeScript knows the structure
+      const car = carData as CarQueryResult;
+      
+      // Now TypeScript knows car has the expected properties
       const currentBid = car.current_bid || 0;
       const reservePrice = car.reserve_price || 0;
       
