@@ -14,7 +14,7 @@ interface UseBidFormActionsProps {
 interface UseBidFormActionsResult {
   isSubmitting: boolean;
   retryCount: number;
-  handlePlaceBid: (bidAmount: string, isProxyBid?: boolean, maxProxyAmount?: number) => Promise<void>;
+  handlePlaceBid: (bidAmount: string) => Promise<void>;
 }
 
 // Type guard for dealer data
@@ -47,7 +47,7 @@ export const useBidFormActions = ({
   const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
 
-  const handlePlaceBid = async (bidAmount: string, isProxyBid: boolean = false, maxProxyAmount?: number) => {
+  const handlePlaceBid = async (bidAmount: string) => {
     try {
       setIsSubmitting(true);
       const numericBidAmount = parseFloat(bidAmount);
@@ -58,8 +58,6 @@ export const useBidFormActions = ({
         carId,
         dealerId,
         amount: numericBidAmount,
-        isProxyBid,
-        maxProxyAmount,
         currentHighestBid,
         minimumIncrement
       });
@@ -92,21 +90,17 @@ export const useBidFormActions = ({
         throw new Error(`Bid must be higher than current bid of ${currentHighestBid.toLocaleString()} PLN`);
       }
 
-      // Call the place_bid function on the server with explicit parameter names
-      console.log('Calling place_bid RPC with parameters:', {
+      // Call the simplified place_bid function
+      console.log('Calling simplified place_bid RPC with parameters:', {
         p_car_id: carId,
         p_dealer_id: dealerId,
-        p_amount: numericBidAmount,
-        p_is_proxy: isProxyBid,
-        p_max_proxy_amount: maxProxyAmount
+        p_amount: numericBidAmount
       });
 
       const { data, error } = await supabase.rpc('place_bid', {
         p_car_id: carId,
         p_dealer_id: dealerId,
-        p_amount: numericBidAmount,
-        p_is_proxy: isProxyBid,
-        p_max_proxy_amount: maxProxyAmount
+        p_amount: numericBidAmount
       });
 
       console.log('Bid placement response:', { data, error });
@@ -166,7 +160,7 @@ export const useBidFormActions = ({
         // Wait before retrying
         await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 500));
         setIsSubmitting(false);
-        return handlePlaceBid(bidAmount, isProxyBid, maxProxyAmount);
+        return handlePlaceBid(bidAmount);
       }
       
       toast({

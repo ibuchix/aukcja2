@@ -15,7 +15,4 @@ export interface MyBid {
     current_bid: number;
     auction_status: string;
   };
-  proxy_bid?: {
-    max_bid_amount: number;
-  };
 }

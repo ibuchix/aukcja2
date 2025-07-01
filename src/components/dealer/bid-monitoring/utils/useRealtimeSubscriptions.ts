@@ -138,45 +138,10 @@ export function useRealtimeSubscriptions(
       )
       .subscribe();
 
-    // Subscribe to proxy bid events from audit logs
-    const auditChannel = supabase
-      .channel('bid-monitoring-audit')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'audit_logs',
-          filter: `action=eq.auto_proxy_bid`,
-        },
-        (payload) => {
-          console.log('Proxy bid audit log received:', payload);
-          
-          const newLog = payload.new as any;
-          const details = newLog.details as Record<string, any> | null;
-          
-          const newActivity: BidActivity = {
-            id: `proxy-${newLog.id}`,
-            timestamp: newLog.created_at,
-            type: 'proxy_executed',
-            carId: newLog.entity_id,
-            carTitle: "Proxy Bid", // We would need to fetch this
-            bidAmount: details?.result?.amount || 0,
-            bidId: details?.result?.bid_id,
-            dealerId: newLog.user_id,
-            isOwnActivity: newLog.user_id === dealerId
-          };
-          
-          addActivity(newActivity);
-        }
-      )
-      .subscribe();
-
     // Cleanup subscriptions on unmount
     return () => {
       supabase.removeChannel(bidsChannel);
       supabase.removeChannel(carsChannel);
-      supabase.removeChannel(auditChannel);
     };
   }, [dealerId, addActivity, updateMetrics]);
 }

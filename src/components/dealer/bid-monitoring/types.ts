@@ -1,10 +1,8 @@
 
-// Remove the import for deleted bid-history types since we removed bid history functionality
-
 export interface BidActivity {
   id: string;
   timestamp: string;
-  type: 'new_bid' | 'outbid' | 'won' | 'lost' | 'proxy_executed' | 'auction_ended';
+  type: 'new_bid' | 'outbid' | 'won' | 'lost' | 'auction_ended';
   carId: string;
   carTitle: string;
   bidAmount?: number;
@@ -42,4 +40,4 @@ export interface BidEventSubscription {
   onBidEvent: (activity: BidActivity) => void;
 }
 
-export type BidEventType = 'new_bid' | 'outbid' | 'won' | 'lost' | 'proxy_executed' | 'auction_ended';
+export type BidEventType = 'new_bid' | 'outbid' | 'won' | 'lost' | 'auction_ended';

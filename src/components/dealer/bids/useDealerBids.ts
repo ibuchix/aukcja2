@@ -6,7 +6,6 @@ import { MyBid } from "./types";
 import { queryKeys } from "@/utils/queryClient";
 import { 
   isValidCarData, 
-  isValidProxyBidData,
   safelyFilterData
 } from "@/utils/supabaseHelpers";
 
@@ -19,11 +18,6 @@ interface CarData {
   auction_end_time: string;
   current_bid: number;
   auction_status: string;
-}
-
-interface ProxyBidData {
-  car_id: string;
-  max_bid_amount: number;
 }
 
 interface BidData {
@@ -161,30 +155,6 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         });
       }
 
-      // Get proxy bids for these cars
-      const { data: proxyBidsData, error: proxyBidsError } = await supabase
-        .from("proxy_bids")
-        .select("car_id, max_bid_amount")
-        .eq("dealer_id", dealerProfileId)
-        .in("car_id", carIds);
-
-      console.log('Proxy bids query result:', { proxyBidsData, proxyBidsError });
-        
-      // Create a lookup for proxy bids
-      const proxyBidsByCarId: Record<string, ProxyBidData> = {};
-      
-      // Filter and process valid proxy bids
-      if (proxyBidsData && Array.isArray(proxyBidsData)) {
-        const validProxyBids = safelyFilterData(proxyBidsData, isValidProxyBidData);
-        
-        validProxyBids.forEach(pb => {
-          proxyBidsByCarId[pb.car_id] = {
-            car_id: pb.car_id,
-            max_bid_amount: pb.max_bid_amount
-          };
-        });
-      }
-
       // Merge bids with car data (show all bids, not just active auctions)
       const result = validActiveBids
         .map(bid => {
@@ -217,14 +187,6 @@ export function useDealerBids(dealerProfileId: string | undefined) {
               auction_status: car.auction_status
             }
           };
-          
-          // Add proxy bid information if it exists
-          if (bid.car_id && proxyBidsByCarId[bid.car_id]) {
-            const proxyBid = proxyBidsByCarId[bid.car_id];
-            myBid.proxy_bid = {
-              max_bid_amount: proxyBid.max_bid_amount
-            };
-          }
           
           return myBid;
         })

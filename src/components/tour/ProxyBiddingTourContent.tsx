@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { TourStep } from '@/contexts/tour/TourContext';
-import { DollarSign, Gift, Bell, TrendingUp, Shield, ThumbsUp } from 'lucide-react';
+import { DollarSign, Bell, TrendingUp, Shield, ThumbsUp } from 'lucide-react';
 
-export const proxyBiddingTourSteps: TourStep[] = [
+export const simpleBiddingTourSteps: TourStep[] = [
   {
     id: 'welcome',
     title: 'Welcome to Auto-Strada!',
@@ -11,54 +11,54 @@ export const proxyBiddingTourSteps: TourStep[] = [
       <div className="space-y-2">
         <p>
           Welcome to your new dealer dashboard! We'll guide you through the key features 
-          to help you get started with proxy bidding.
+          to help you get started with bidding on vehicles.
         </p>
         <p className="text-sm text-muted-foreground">
-          This tour will show you how to use our proxy bidding system to win auctions efficiently.
+          This tour will show you how to use our bidding system to win auctions efficiently.
         </p>
       </div>
     ),
   },
   {
-    id: 'proxy-bidding-intro',
-    title: 'What is Proxy Bidding?',
+    id: 'bidding-intro',
+    title: 'How Bidding Works',
     content: (
       <div className="space-y-2">
         <div className="flex items-center gap-2 mb-2">
           <Shield className="h-5 w-5 text-primary" />
-          <span className="font-medium">Automated Bidding System</span>
+          <span className="font-medium">Simple Bidding System</span>
         </div>
         <p>
-          Proxy bidding lets you set your maximum bid amount once, and our system
-          automatically bids for you up to that amount.
+          Our straightforward bidding system allows you to place bids on vehicles
+          during live auctions. Simply enter your bid amount and place your bid.
         </p>
         <p className="text-sm text-muted-foreground">
-          This means you don't have to manually place every bid!
+          You can update your bid anytime during the auction!
         </p>
       </div>
     ),
-    targetElement: '#proxy-bidding-section',
+    targetElement: '#bidding-section',
     placement: 'top',
   },
   {
-    id: 'setting-max-bid',
-    title: 'Setting Your Maximum Bid',
+    id: 'placing-bid',
+    title: 'Placing Your Bid',
     content: (
       <div className="space-y-2">
         <div className="flex items-center gap-2 mb-2">
           <DollarSign className="h-5 w-5 text-primary" />
-          <span className="font-medium">Your Budget Limit</span>
+          <span className="font-medium">Enter Your Bid Amount</span>
         </div>
         <p>
-          Enter the maximum amount you're willing to pay for a vehicle. This stays private - 
-          other bidders won't know your maximum.
+          Enter the amount you're willing to pay for a vehicle. Your bid must be higher
+          than the current highest bid by at least the minimum increment.
         </p>
         <p className="text-sm text-muted-foreground">
-          The system will only bid as much as needed to keep you winning!
+          The minimum increment is typically 250 PLN for most auctions.
         </p>
       </div>
     ),
-    targetElement: '#max-bid-input',
+    targetElement: '#bid-input',
     placement: 'bottom',
   },
   {
@@ -68,14 +68,14 @@ export const proxyBiddingTourSteps: TourStep[] = [
       <div className="space-y-2">
         <div className="flex items-center gap-2 mb-2">
           <TrendingUp className="h-5 w-5 text-primary" />
-          <span className="font-medium">Step-by-Step Bidding</span>
+          <span className="font-medium">Minimum Bid Increments</span>
         </div>
         <p>
-          Our system bids in increments - the minimum amount needed to outbid others.
-          For example, if the current bid is $10,000 with $500 increments, your next bid will be $10,500.
+          Each bid must be at least 250 PLN higher than the current highest bid.
+          For example, if the current bid is 10,000 PLN, your bid must be at least 10,250 PLN.
         </p>
         <p className="text-sm text-muted-foreground">
-          Even if your maximum is $15,000, we'll only bid $10,500 if that's enough to win!
+          This ensures fair competition and prevents spam bidding.
         </p>
       </div>
     ),
@@ -83,27 +83,8 @@ export const proxyBiddingTourSteps: TourStep[] = [
     placement: 'right',
   },
   {
-    id: 'auto-bidding',
-    title: 'Automatic Outbidding',
-    content: (
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Gift className="h-5 w-5 text-primary" />
-          <span className="font-medium">Let the System Work for You</span>
-        </div>
-        <p>
-          If someone outbids you, our system automatically places a new bid on your behalf,
-          up to your maximum amount.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          You can relax knowing the system is working for you 24/7!
-        </p>
-      </div>
-    ),
-  },
-  {
-    id: 'outbid-notifications',
-    title: 'Outbid Notifications',
+    id: 'bid-notifications',
+    title: 'Bid Notifications',
     content: (
       <div className="space-y-2">
         <div className="flex items-center gap-2 mb-2">
@@ -111,8 +92,8 @@ export const proxyBiddingTourSteps: TourStep[] = [
           <span className="font-medium">Stay Informed</span>
         </div>
         <p>
-          When your maximum bid is exceeded by another bidder, we'll notify you
-          so you can decide whether to increase your maximum bid.
+          When someone outbids you, we'll notify you so you can decide whether
+          to place a higher bid before the auction ends.
         </p>
         <p className="text-sm text-muted-foreground">
           You'll never miss out on a vehicle you really want!
@@ -130,8 +111,8 @@ export const proxyBiddingTourSteps: TourStep[] = [
           <span className="font-medium">You're All Set!</span>
         </div>
         <p>
-          Congratulations! You now understand how proxy bidding works. Browse available 
-          auctions and set your maximum bids to start competing.
+          Congratulations! You now understand how our bidding system works. Browse available 
+          auctions and place your bids to start competing.
         </p>
         <p className="text-sm text-muted-foreground">
           You can always revisit this tour from your dashboard if you need a refresher.

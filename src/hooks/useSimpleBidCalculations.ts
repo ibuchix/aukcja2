@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -21,9 +22,7 @@ interface DealerBidExposure {
   active_bids_count: number;
   winning_bids_count: number;
   outbid_bids_count: number;
-  proxy_bids_count: number; // Always 0 now, kept for compatibility
   winning_bids_exposure: number;
-  proxy_bids_exposure: number; // Always 0 now, kept for compatibility
   maximum_potential_exposure: number;
 }
 
@@ -108,9 +107,7 @@ export const useDealerBidExposure = (dealerId: string) => {
           active_bids_count: 0,
           winning_bids_count: 0,
           outbid_bids_count: 0,
-          proxy_bids_count: 0,
           winning_bids_exposure: 0,
-          proxy_bids_exposure: 0,
           maximum_potential_exposure: 0,
         };
       }
@@ -120,9 +117,7 @@ export const useDealerBidExposure = (dealerId: string) => {
           active_bids_count: 0,
           winning_bids_count: 0,
           outbid_bids_count: 0,
-          proxy_bids_count: 0,
           winning_bids_exposure: 0,
-          proxy_bids_exposure: 0,
           maximum_potential_exposure: 0,
         };
       }
@@ -145,9 +140,7 @@ export const useDealerBidExposure = (dealerId: string) => {
         active_bids_count: bids.length,
         winning_bids_count: winningBidsCount,
         outbid_bids_count: outbidBidsCount,
-        proxy_bids_count: 0, // No proxy bids in simplified system
         winning_bids_exposure: winningBidsExposure,
-        proxy_bids_exposure: 0, // No proxy bids in simplified system
         maximum_potential_exposure: winningBidsExposure,
       };
     },

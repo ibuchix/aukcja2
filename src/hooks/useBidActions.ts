@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 export const useBidActions = (dealerId?: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
-  const [isModifying, setIsModifying] = useState(false);
   const { toast } = useToast();
 
   const placeBid = async (carId: string, dealerId: string, amount: number) => {
@@ -16,9 +15,7 @@ export const useBidActions = (dealerId?: string) => {
       const { data, error } = await supabase.rpc('place_bid', {
         p_car_id: carId,
         p_dealer_id: dealerId,
-        p_amount: amount,
-        p_is_proxy: false,
-        p_max_proxy_amount: null
+        p_amount: amount
       });
 
       if (error) {
@@ -87,58 +84,10 @@ export const useBidActions = (dealerId?: string) => {
     }
   };
 
-  const modifyBid = async ({ 
-    carId, 
-    bidId, 
-    newAmount, 
-    isProxyBid, 
-    maxProxyAmount 
-  }: { 
-    carId: string; 
-    bidId: string; 
-    newAmount: number; 
-    isProxyBid: boolean; 
-    maxProxyAmount?: number; 
-  }) => {
-    if (!dealerId) return;
-    
-    setIsModifying(true);
-    
-    try {
-      const { error } = await supabase
-        .from('bids')
-        .update({ 
-          amount: newAmount,
-          is_proxy_bid: isProxyBid,
-          max_proxy_amount: maxProxyAmount 
-        })
-        .eq('id', bidId)
-        .eq('dealer_id', dealerId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Bid Modified",
-        description: `Your bid has been updated to ${newAmount.toLocaleString()} PLN`,
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to modify bid';
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsModifying(false);
-    }
-  };
-
   return {
     placeBid,
     cancelBid,
-    modifyBid,
     isSubmitting,
     isCancelling,
-    isModifying,
   };
 };
