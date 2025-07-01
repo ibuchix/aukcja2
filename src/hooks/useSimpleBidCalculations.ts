@@ -26,6 +26,16 @@ interface DealerBidExposure {
   maximum_potential_exposure: number;
 }
 
+// Type for a valid car record
+interface CarRecord {
+  id: string;
+  current_bid: number | null;
+  reserve_price: number | null;
+  make: string | null;
+  model: string | null;
+  year: number | null;
+}
+
 export const useBidRecommendations = (carId: string, dealerId: string) => {
   return useQuery({
     queryKey: ['bid-recommendations', carId, dealerId],
