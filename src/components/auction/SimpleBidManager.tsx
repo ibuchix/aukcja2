@@ -12,7 +12,7 @@ interface SimpleBidManagerProps {
   carId: string;
   dealerId: string;
   currentHighestBid: number;
-  minimumIncrement: number;
+  minimumIncrement?: number; // Made optional since we're allowing any increment
   reservePrice?: number;
   isVerified?: boolean;
 }
@@ -21,7 +21,7 @@ export const SimpleBidManager = ({
   carId,
   dealerId,
   currentHighestBid,
-  minimumIncrement,
+  minimumIncrement = 1, // Set to 1 PLN as absolute minimum
   reservePrice,
   isVerified = true,
 }: SimpleBidManagerProps) => {
@@ -50,6 +50,7 @@ export const SimpleBidManager = ({
     );
   }
 
+  // Only requirement is that bid must be higher than current highest bid
   const minBidAmount = currentHighestBid + minimumIncrement;
 
   const handlePlaceBid = async () => {
@@ -66,10 +67,10 @@ export const SimpleBidManager = ({
       return;
     }
 
-    if (numericBidAmount < minBidAmount) {
+    if (numericBidAmount <= currentHighestBid) {
       toast({
         title: "Bid too low",
-        description: `Minimum bid is ${formatCurrency(minBidAmount)}`,
+        description: `Your bid must be higher than the current bid of ${formatCurrency(currentHighestBid)}`,
         variant: "destructive",
       });
       return;
@@ -124,7 +125,7 @@ export const SimpleBidManager = ({
               Current highest bid: <span className="font-semibold">{formatCurrency(currentHighestBid)}</span>
             </p>
             <p className="text-xs text-muted-foreground">
-              Minimum bid: {formatCurrency(minBidAmount)}
+              Your bid must be higher than {formatCurrency(currentHighestBid)}
             </p>
             {reservePrice && (
               <p className="text-xs text-muted-foreground">
@@ -142,16 +143,16 @@ export const SimpleBidManager = ({
               type="number"
               value={bidAmount}
               onChange={(e) => setBidAmount(e.target.value)}
-              min={minBidAmount}
-              step={minimumIncrement}
-              placeholder={`Enter amount (min ${formatCurrency(minBidAmount)})`}
+              min={currentHighestBid + 1}
+              step="1"
+              placeholder={`Enter amount (minimum ${formatCurrency(minBidAmount)})`}
               disabled={isSubmitting}
             />
           </div>
 
           <Button
             onClick={handlePlaceBid}
-            disabled={isSubmitting || !bidAmount || parseFloat(bidAmount) < minBidAmount}
+            disabled={isSubmitting || !bidAmount || parseFloat(bidAmount) <= currentHighestBid}
             className="w-full"
           >
             {isSubmitting ? "Placing Bid..." : "Place Bid"}

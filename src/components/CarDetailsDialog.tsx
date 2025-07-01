@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
 import { AuctionTimer } from "@/components/auction/AuctionTimer";
+import { BidCountDisplay } from "@/components/auction/BidCountDisplay";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
@@ -175,6 +176,11 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
               </div>
             </div>
 
+            {/* Bid Count Display for Live Auctions */}
+            {isLiveAuction && (
+              <BidCountDisplay carId={car.id} />
+            )}
+
             {/* VIN Display */}
             {car.vin && (
               <div className="space-y-2">
@@ -228,7 +234,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
               carId={car.id}
               dealerId={dealerProfile.id}
               currentHighestBid={car.currentBid || car.current_bid || 0}
-              minimumIncrement={car.minimumBidIncrement || car.minimum_bid_increment || 100}
+              minimumIncrement={1} // Allow any increment above current bid
               auctionEndTime={scheduleInfo?.endTime || car.scheduleEndTime || car.auction_end_time}
               reservePrice={reservePrice}
               isVerified={isVerified}

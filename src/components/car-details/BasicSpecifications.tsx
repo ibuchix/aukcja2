@@ -35,6 +35,10 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
           <p className="font-medium">{car.transmission || "N/A"}</p>
         </div>
         <div>
+          <p className="text-subtitle-text">Fuel Type</p>
+          <p className="font-medium">{car.fuel_type || car.fuelType || "N/A"}</p>
+        </div>
+        <div>
           <p className="text-subtitle-text">VIN Number</p>
           <p className="font-medium">{car.vin || "Not available"}</p>
         </div>

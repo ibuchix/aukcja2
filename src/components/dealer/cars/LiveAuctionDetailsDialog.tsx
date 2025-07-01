@@ -3,6 +3,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { SimpleBidManager } from "@/components/auction/SimpleBidManager";
+import { BidCountDisplay } from "@/components/auction/BidCountDisplay";
 import { AuctionTimer } from "@/components/auction/AuctionTimer";
 import { formatCurrency } from "@/lib/utils";
 
@@ -61,6 +62,10 @@ export const LiveAuctionDetailsDialog = ({
                 <p className="font-medium">{car.transmission}</p>
               </div>
               <div>
+                <p className="text-muted-foreground">Fuel Type</p>
+                <p className="font-medium">{car.fuel_type || car.fuelType || 'N/A'}</p>
+              </div>
+              <div>
                 <p className="text-muted-foreground">Location</p>
                 <p className="font-medium">{car.address || 'Not specified'}</p>
               </div>
@@ -76,6 +81,11 @@ export const LiveAuctionDetailsDialog = ({
 
           {/* Auction Details */}
           <div className="space-y-4">
+            {/* Bid Count Display */}
+            {isLive && !hasEnded && (
+              <BidCountDisplay carId={car.id} />
+            )}
+
             <div className="p-4 bg-muted rounded-lg">
               <h3 className="font-semibold mb-2">Auction Status</h3>
               <div className="space-y-2 text-sm">
@@ -113,7 +123,7 @@ export const LiveAuctionDetailsDialog = ({
                 carId={car.id}
                 dealerId={dealerId}
                 currentHighestBid={car.current_bid || 0}
-                minimumIncrement={car.minimum_bid_increment || 250}
+                minimumIncrement={1} // Allow any increment above current bid
                 reservePrice={car.reservePrice || car.reserve_price}
                 isVerified={isVerified}
               />

@@ -5,7 +5,7 @@ interface BidInputProps {
   bidAmount: string;
   onBidAmountChange: (value: string) => void;
   currentHighestBid: number;
-  minimumIncrement: number;
+  minimumIncrement?: number; // Made optional
   isDisabled?: boolean;
 }
 
@@ -13,7 +13,7 @@ export const BidInput = ({
   bidAmount,
   onBidAmountChange,
   currentHighestBid,
-  minimumIncrement,
+  minimumIncrement = 1, // Set to 1 PLN as absolute minimum
   isDisabled = false
 }: BidInputProps) => {
   return (
@@ -22,8 +22,8 @@ export const BidInput = ({
       value={bidAmount}
       onChange={(e) => onBidAmountChange(e.target.value)}
       placeholder="Enter bid amount"
-      min={currentHighestBid + minimumIncrement}
-      step={minimumIncrement}
+      min={currentHighestBid + 1}
+      step="1"
       className="flex-1"
       disabled={isDisabled}
     />

@@ -34,7 +34,7 @@ export const ModifyBidDialog = ({
   if (!bid) return null;
 
   const currentBid = bid.car?.current_bid || 0;
-  const minimumBid = Math.max(currentBid + 250, bid.amount + 100); // Minimum increment
+  const minimumBid = Math.max(currentBid + 1, bid.amount + 1); // Just needs to be higher than current
   const newAmountNum = parseFloat(newAmount) || 0;
 
   const isValidBid = newAmountNum >= minimumBid;
@@ -64,7 +64,7 @@ export const ModifyBidDialog = ({
             <div className="text-sm text-muted-foreground space-y-1">
               <div>Your current bid: {formatCurrency(bid.amount)}</div>
               <div>Current highest bid: {formatCurrency(currentBid)}</div>
-              <div>Minimum new bid: {formatCurrency(minimumBid)}</div>
+              <div>Your new bid must be at least: {formatCurrency(minimumBid)}</div>
             </div>
           </div>
 
@@ -74,7 +74,7 @@ export const ModifyBidDialog = ({
               id="newAmount"
               type="number"
               min={minimumBid}
-              step="50"
+              step="1"
               value={newAmount}
               onChange={(e) => setNewAmount(e.target.value)}
               placeholder={`Minimum: ${minimumBid}`}
