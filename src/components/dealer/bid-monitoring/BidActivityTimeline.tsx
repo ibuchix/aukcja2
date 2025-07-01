@@ -1,7 +1,7 @@
 
 import { format } from "date-fns";
 import { BidActivity } from "./types";
-import { Gavel, ArrowUp, ArrowDown, Clock, Bot, Trophy, Ban } from "lucide-react";
+import { Gavel, ArrowUp, ArrowDown, Clock, Trophy, Ban } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -61,8 +61,6 @@ export const BidActivityTimeline = ({ activities, isLoading }: BidActivityTimeli
         return <Trophy className="h-5 w-5 text-green-500" />;
       case 'lost':
         return <Ban className="h-5 w-5 text-destructive" />;
-      case 'proxy_executed':
-        return <Bot className="h-5 w-5 text-blue-500" />;
       case 'auction_ended':
         return <Clock className="h-5 w-5 text-muted-foreground" />;
       default:
@@ -88,10 +86,6 @@ export const BidActivityTimeline = ({ activities, isLoading }: BidActivityTimeli
         return activity.isOwnActivity 
           ? "You lost an auction" 
           : `${activity.dealerName || "A dealer"} lost the auction`;
-      case 'proxy_executed':
-        return activity.isOwnActivity 
-          ? "Your proxy bid was executed" 
-          : "A proxy bid was executed";
       case 'auction_ended':
         return "Auction ended";
       default:

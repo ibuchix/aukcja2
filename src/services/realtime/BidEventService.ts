@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { BidActivity, BidEventSubscription, BidMonitoringFilters } from "@/components/dealer/bid-monitoring/types";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -55,18 +56,6 @@ class BidEventService {
           },
           (payload) => {
             this.handleCarChange(payload, filters, onBidEvent);
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'audit_logs',
-            filter: `action=eq.auto_proxy_bid`,
-          },
-          (payload) => {
-            this.handleProxyBidLog(payload, filters, onBidEvent);
           }
         )
         .subscribe();
@@ -180,33 +169,6 @@ class BidEventService {
       
       onBidEvent(activity);
     }
-  }
-
-  private handleProxyBidLog(payload: any, filters: BidMonitoringFilters, onBidEvent: (activity: BidActivity) => void): void {
-    const newLog = payload.new as any;
-    const details = newLog.details as Record<string, any> | null;
-    
-    // Apply filters
-    if (filters.onlyMyBids && newLog.user_id !== this.dealerId) {
-      return;
-    }
-    
-    const activity: BidActivity = {
-      id: `proxy-${newLog.id}`,
-      timestamp: newLog.created_at,
-      type: 'proxy_executed',
-      carId: newLog.entity_id,
-      carTitle: "Proxy Bid", // We'll fetch this asynchronously
-      bidAmount: details?.result?.amount || 0,
-      bidId: details?.result?.bid_id,
-      dealerId: newLog.user_id,
-      isOwnActivity: newLog.user_id === this.dealerId
-    };
-    
-    // Fetch additional car details
-    this.enrichBidActivity(activity).then(enrichedActivity => {
-      onBidEvent(enrichedActivity);
-    });
   }
 
   private async enrichBidActivity(activity: BidActivity): Promise<BidActivity> {

@@ -4,11 +4,10 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 // Define tour step IDs
 export type TourStepId = 
   | 'welcome'
-  | 'proxy-bidding-intro'
-  | 'setting-max-bid'
+  | 'bidding-intro'
+  | 'placing-bid'
   | 'bid-increments'
-  | 'auto-bidding'
-  | 'outbid-notifications'
+  | 'bid-notifications'
   | 'complete';
 
 // Tour step interface
