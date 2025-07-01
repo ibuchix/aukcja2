@@ -1,7 +1,7 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
+import { isValidRecord } from '@/utils/supabaseHelpers';
 
 interface BidRecommendation {
   conservative: number;
@@ -52,16 +52,13 @@ export const useBidRecommendations = (carId: string, dealerId: string) => {
         throw new Error('Failed to fetch car data');
       }
 
-      if (!carData) {
+      if (!carData || !isValidRecord<CarQueryResult>(carData)) {
         throw new Error('Car not found');
       }
 
-      // Cast to our expected type to ensure TypeScript knows the structure
-      const car = carData as CarQueryResult;
-      
-      // Now TypeScript knows car has the expected properties
-      const currentBid = car.current_bid || 0;
-      const reservePrice = car.reserve_price || 0;
+      // Now TypeScript knows carData is a valid record
+      const currentBid = carData.current_bid || 0;
+      const reservePrice = carData.reserve_price || 0;
       
       // Get average bid increase (simplified - use a default of 500)
       const averageBidIncrease = 500;
