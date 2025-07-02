@@ -36,6 +36,17 @@ interface WonVehiclesProps {
   dealerId: string;
 }
 
+// Type guard to check if an item is a valid WonVehicle data structure
+const isValidWonVehicleData = (item: any): item is Record<string, any> => {
+  return item !== null && 
+         typeof item === 'object' && 
+         'winning_bid_amount' in item && 
+         typeof item.winning_bid_amount === 'number' &&
+         'cars' in item && 
+         item.cars !== null &&
+         typeof item.cars === 'object';
+};
+
 export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
   const [wonVehicles, setWonVehicles] = useState<WonVehicle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,28 +81,17 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
         throw error;
       }
       
-      // Process data safely
+      // Process data safely with proper type checking
       const processedData: WonVehicle[] = [];
       
       if (Array.isArray(data)) {
-        for (const item of data) {
-          // First check if item is not null and has required properties
-          if (!item || typeof item !== 'object') {
-            console.warn('Invalid item encountered:', item);
-            continue;
-          }
-          
-          // Check if the item has the required structure
-          if (!('winning_bid_amount' in item) || 
-              typeof item.winning_bid_amount !== 'number' ||
-              !('cars' in item) || 
-              !item.cars || 
-              typeof item.cars !== 'object') {
+        data.forEach((item) => {
+          if (!isValidWonVehicleData(item)) {
             console.warn('Invalid item structure:', item);
-            continue;
+            return;
           }
           
-          // Now we can safely access the properties
+          // Create a safe vehicle object with all required properties
           const vehicle: WonVehicle = {
             id: item.id || '',
             car_id: item.car_id || '',
@@ -104,19 +104,19 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
             payment_date: item.payment_date || null,
             seller_details_unlocked: item.seller_details_unlocked || false,
             cars: {
-              make: (item.cars as any)?.make || 'Unknown',
-              model: (item.cars as any)?.model || 'Unknown',
-              year: (item.cars as any)?.year || 0,
-              mileage: (item.cars as any)?.mileage || 0,
-              images: Array.isArray((item.cars as any)?.images) ? (item.cars as any).images : [],
-              seller_name: (item.cars as any)?.seller_name,
-              mobile_number: (item.cars as any)?.mobile_number,
-              address: (item.cars as any)?.address
+              make: item.cars?.make || 'Unknown',
+              model: item.cars?.model || 'Unknown',
+              year: item.cars?.year || 0,
+              mileage: item.cars?.mileage || 0,
+              images: Array.isArray(item.cars?.images) ? item.cars.images : [],
+              seller_name: item.cars?.seller_name,
+              mobile_number: item.cars?.mobile_number,
+              address: item.cars?.address
             }
           };
           
           processedData.push(vehicle);
-        }
+        });
       }
       
       setWonVehicles(processedData);
