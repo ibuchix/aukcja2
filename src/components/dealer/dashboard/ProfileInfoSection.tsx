@@ -1,7 +1,7 @@
 
 import { Building2, User as UserIcon, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
+import { useDealerProfile } from "@/contexts/dealer-profile";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -9,17 +9,24 @@ import { useNavigate } from "react-router-dom";
 import { isDealerVerified } from "@/types/dealer";
 
 export const ProfileInfoSection = () => {
-  const { dealerProfile, isLoading, error, retryFetch } = useDealerProfileSimple();
+  const { displayProfile, isLoading, error, refreshProfile } = useDealerProfile();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  if (error && !dealerProfile) {
+  console.log('ProfileInfoSection - Profile data:', {
+    displayProfile,
+    isLoading,
+    error,
+    userId: user?.id
+  });
+
+  if (error && !displayProfile) {
     return (
       <Alert variant="destructive">
         <AlertDescription className="space-y-4">
           <p>{error}</p>
           <div className="flex gap-2">
-            <Button onClick={retryFetch} variant="outline" size="sm">
+            <Button onClick={refreshProfile} variant="outline" size="sm">
               Retry
             </Button>
             <Button 
@@ -36,7 +43,7 @@ export const ProfileInfoSection = () => {
   }
 
   // Check if dealer is verified using our helper function
-  const isVerified = isDealerVerified(dealerProfile);
+  const isVerified = isDealerVerified(displayProfile);
 
   return (
     <div className="mb-10 bg-white shadow-sm rounded-lg overflow-hidden">
@@ -63,13 +70,13 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Name:</span> {dealerProfile?.supervisor_name || "Not available"}</p>
+              <p><span className="font-medium text-dark">Name:</span> {displayProfile?.supervisorName || "Not available"}</p>
               <p><span className="font-medium text-dark">Email:</span> {user?.email || "Not available"}</p>
-              <p><span className="font-medium text-dark">Dealership:</span> {dealerProfile?.dealership_name || "Not available"}</p>
+              <p><span className="font-medium text-dark">Dealership:</span> {displayProfile?.dealershipName || "Not available"}</p>
               <p>
                 <span className="font-medium text-dark">Status:</span> 
                 <span className={`ml-1 ${isVerified ? 'text-green-600' : 'text-amber-600'}`}>
-                  {isVerified ? 'Approved' : (dealerProfile?.verification_status || 'Pending')}
+                  {isVerified ? 'Approved' : (displayProfile?.verificationStatus || 'Pending')}
                 </span>
               </p>
             </div>
@@ -91,9 +98,9 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Address:</span> {dealerProfile?.address || "Not available"}</p>
-              <p><span className="font-medium text-dark">License:</span> {dealerProfile?.license_number || "Not available"}</p>
-              <p><span className="font-medium text-dark">Tax ID:</span> {dealerProfile?.tax_id || "Not available"}</p>
+              <p><span className="font-medium text-dark">Address:</span> {displayProfile?.address || "Not available"}</p>
+              <p><span className="font-medium text-dark">License:</span> {displayProfile?.licenseNumber || "Not available"}</p>
+              <p><span className="font-medium text-dark">Tax ID:</span> {displayProfile?.taxId || "Not available"}</p>
             </div>
           )}
         </div>
@@ -112,7 +119,7 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Business Registry:</span> {dealerProfile?.business_registry_number || "Not available"}</p>
+              <p><span className="font-medium text-dark">Business Registry:</span> {displayProfile?.businessRegistryNumber || "Not available"}</p>
               <p><span className="font-medium text-dark">Account Status:</span> <span className="text-success font-medium">Active</span></p>
             </div>
           )}

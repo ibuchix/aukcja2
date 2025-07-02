@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 const isValidBid = (bid: any): bid is { dealer_id: string } => {
   return bid !== null && 
          typeof bid === 'object' && 
+         !('message' in bid) && // Check it's not an error object
          'dealer_id' in bid && 
          typeof bid.dealer_id === 'string' && 
          bid.dealer_id.length > 0;

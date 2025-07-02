@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 import { useAuth } from "@/contexts/AuthContext";
+import { DealerProfileProvider } from '@/contexts/dealer-profile';
 import { DashboardLayout } from '@/components/dealer/dashboard/DashboardLayout';
 import { ProfileInfoSection } from "@/components/dealer/dashboard/ProfileInfoSection";
 import { DealerWelcomeCard } from "@/components/dealer/dashboard/DealerWelcomeCard";
@@ -15,10 +16,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw, FileText, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useDealerProfile } from "@/contexts/dealer-profile";
 
-const DealerDashboard = () => {
+const DashboardContent = () => {
   const { user } = useAuth();
-  const { dealerProfile, isLoading, error, retryFetch } = useDealerProfileSimple();
+  const { displayProfile, isLoading, error, refreshProfile } = useDealerProfile();
   const [activeTabRaw, setActiveTabRaw] = useState("auctions");
   const location = useLocation();
   const navigate = useNavigate();
@@ -28,49 +30,53 @@ const DealerDashboard = () => {
   const { activeTab, setActiveTab } = useDashboardTabs(activeTabRaw, setActiveTabRaw);
   
   // Check if dealer is verified
-  const isVerified = dealerProfile?.verification_status === 'approved' || dealerProfile?.is_verified === true;
+  const isVerified = displayProfile?.verificationStatus === 'approved' || displayProfile?.isVerified === true;
   
   // Memoized dealer name to prevent unnecessary re-renders
   const dealerName = useMemo(() => {
-    return dealerProfile?.dealership_name || "Dealer";
-  }, [dealerProfile?.dealership_name]);
+    return displayProfile?.dealershipName || "Dealer";
+  }, [displayProfile?.dealershipName]);
   
   // Debug logging - only on profile state changes
   useEffect(() => {
     const isDev = process.env.NODE_ENV === 'development';
-    if (isDev && dealerProfile) {
+    if (isDev) {
       console.log("Dashboard Profile State:", {
-        exists: !!dealerProfile,
-        id: dealerProfile?.id,
-        dealership: dealerProfile?.dealership_name,
-        isVerified: dealerProfile?.is_verified,
-        verificationStatus: dealerProfile?.verification_status
+        exists: !!displayProfile,
+        id: displayProfile?.id,
+        dealership: displayProfile?.dealershipName,
+        supervisorName: displayProfile?.supervisorName,
+        isVerified: displayProfile?.isVerified,
+        verificationStatus: displayProfile?.verificationStatus,
+        user: user?.id,
+        isLoading,
+        error
       });
     }
-  }, [dealerProfile?.id, dealerProfile?.is_verified]);
+  }, [displayProfile, user?.id, isLoading, error]);
 
   // Show error toast only when error changes and profile doesn't exist
   useEffect(() => {
-    if (error && !dealerProfile && !isLoading) {
+    if (error && !displayProfile && !isLoading) {
       toast({
         title: "Profile Loading Issue",
         description: "Having trouble loading your profile. You can try refreshing.",
         variant: "destructive",
       });
     }
-  }, [error, dealerProfile, isLoading]);
+  }, [error, displayProfile, isLoading, toast]);
 
   return (
     <DashboardLayout title="Dealer Dashboard">
       <div className="space-y-6">
         {/* Show error if profile failed to load */}
-        {error && !dealerProfile && (
+        {error && !displayProfile && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Profile Loading Error</AlertTitle>
             <AlertDescription className="space-y-4">
               <p>{error}</p>
-              <Button onClick={retryFetch} variant="outline" size="sm">
+              <Button onClick={refreshProfile} variant="outline" size="sm">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retry Loading Profile
               </Button>
@@ -79,7 +85,7 @@ const DealerDashboard = () => {
         )}
 
         {/* Verification Banner for Unverified Dealers */}
-        {dealerProfile && !isVerified && (
+        {displayProfile && !isVerified && (
           <Alert className="border-[#DC143C]/20 bg-[#DC143C]/5">
             <Building2 className="h-4 w-4 text-[#DC143C]" />
             <AlertTitle className="text-[#DC143C]">Account Verification Required</AlertTitle>
@@ -119,7 +125,7 @@ const DealerDashboard = () => {
           
           <TabsContent value="auctions">
             <div className="mt-4">
-              {dealerProfile?.id ? (
+              {displayProfile?.id ? (
                 <SimpleLiveAuctionsView />
               ) : (
                 <Alert>
@@ -134,13 +140,13 @@ const DealerDashboard = () => {
           
           <TabsContent value="won-vehicles">
             <div className="mt-4">
-              {dealerProfile?.id ? (
-                <WonVehicles dealerId={dealerProfile.id} />
+              {user?.id ? (
+                <WonVehicles dealerId={user.id} />
               ) : (
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Please complete your dealer profile to view won vehicles.
+                    Please log in to view won vehicles.
                   </AlertDescription>
                 </Alert>
               )}
@@ -157,6 +163,29 @@ const DealerDashboard = () => {
         </Tabs>
       </div>
     </DashboardLayout>
+  );
+};
+
+const DealerDashboard = () => {
+  const { user } = useAuth();
+
+  if (!user) {
+    return (
+      <DashboardLayout title="Dealer Dashboard">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Please log in to access your dashboard.
+          </AlertDescription>
+        </Alert>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DealerProfileProvider>
+      <DashboardContent />
+    </DealerProfileProvider>
   );
 };
 

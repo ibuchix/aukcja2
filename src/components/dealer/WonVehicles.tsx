@@ -36,10 +36,11 @@ interface WonVehiclesProps {
   dealerId: string;
 }
 
-// Type guard to check if an item is a valid WonVehicle data structure
-const isValidWonVehicleData = (item: any): item is Record<string, any> => {
+// Type guard to check if a data item is valid and not a query error
+const isValidWonVehicleData = (item: any): item is any => {
   return item !== null && 
          typeof item === 'object' && 
+         !('message' in item) && // Check it's not an error object
          'winning_bid_amount' in item && 
          typeof item.winning_bid_amount === 'number' &&
          'cars' in item && 
@@ -58,6 +59,8 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
 
   const fetchWonVehicles = async () => {
     try {
+      console.log('Fetching won vehicles for dealer:', dealerId);
+      
       const { data, error } = await supabase
         .from('dealer_won_vehicles')
         .select(`
@@ -80,6 +83,8 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
         console.error('Supabase error:', error);
         throw error;
       }
+      
+      console.log('Raw data from Supabase:', data);
       
       // Process data safely with proper type checking
       const processedData: WonVehicle[] = [];
@@ -119,6 +124,7 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
         });
       }
       
+      console.log('Processed won vehicles:', processedData);
       setWonVehicles(processedData);
     } catch (error) {
       console.error('Error fetching won vehicles:', error);
