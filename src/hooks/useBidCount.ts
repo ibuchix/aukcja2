@@ -8,6 +8,7 @@ const isValidBid = (bid: any): bid is { dealer_id: string } => {
          typeof bid === 'object' && 
          !('message' in bid) && // Check it's not an error object
          !('code' in bid) && // Additional check for error objects
+         !('error' in bid) && // Additional check for SelectQueryError
          'dealer_id' in bid && 
          typeof bid.dealer_id === 'string' && 
          bid.dealer_id.length > 0;
@@ -35,8 +36,8 @@ export const useBidCount = (carId: string) => {
         return { count: 0, uniqueBidders: 0 };
       }
 
-      // Filter out any invalid entries first, then extract dealer_ids
-      const validBids: { dealer_id: string }[] = data.filter(isValidBid);
+      // Filter out any invalid entries first - let TypeScript infer the type after filtering
+      const validBids = data.filter(isValidBid);
       const totalBids = validBids.length;
       const uniqueBidders = new Set(validBids.map(bid => bid.dealer_id)).size;
 
