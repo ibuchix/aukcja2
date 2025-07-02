@@ -83,8 +83,8 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
               (item as any).cars !== null &&
               typeof (item as any).cars === 'object') {
             
-            // TypeScript assertion after validation
-            const validItem = item as {
+            // Create a properly typed item after validation
+            const validatedItem = item as NonNullable<typeof item> & {
               id: string;
               car_id: string;
               auction_end_time: string;
@@ -107,25 +107,25 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
             };
             
             const vehicle: WonVehicle = {
-              id: validItem.id,
-              car_id: validItem.car_id,
-              auction_end_time: validItem.auction_end_time,
-              winning_bid_amount: validItem.winning_bid_amount,
-              original_bid_amount: validItem.original_bid_amount,
-              second_highest_bid: validItem.second_highest_bid,
-              platform_fee: calculatePlatformFee(validItem.winning_bid_amount),
-              payment_status: validItem.payment_status as 'pending' | 'paid' | 'failed',
-              payment_date: validItem.payment_date,
-              seller_details_unlocked: validItem.seller_details_unlocked,
+              id: validatedItem.id,
+              car_id: validatedItem.car_id,
+              auction_end_time: validatedItem.auction_end_time,
+              winning_bid_amount: validatedItem.winning_bid_amount,
+              original_bid_amount: validatedItem.original_bid_amount,
+              second_highest_bid: validatedItem.second_highest_bid,
+              platform_fee: calculatePlatformFee(validatedItem.winning_bid_amount),
+              payment_status: validatedItem.payment_status as 'pending' | 'paid' | 'failed',
+              payment_date: validatedItem.payment_date,
+              seller_details_unlocked: validatedItem.seller_details_unlocked,
               cars: {
-                make: validItem.cars.make || 'Unknown',
-                model: validItem.cars.model || 'Unknown',
-                year: validItem.cars.year || 0,
-                mileage: validItem.cars.mileage || 0,
-                images: Array.isArray(validItem.cars.images) ? validItem.cars.images : [],
-                seller_name: validItem.cars.seller_name,
-                mobile_number: validItem.cars.mobile_number,
-                address: validItem.cars.address
+                make: validatedItem.cars.make || 'Unknown',
+                model: validatedItem.cars.model || 'Unknown',
+                year: validatedItem.cars.year || 0,
+                mileage: validatedItem.cars.mileage || 0,
+                images: Array.isArray(validatedItem.cars.images) ? validatedItem.cars.images : [],
+                seller_name: validatedItem.cars.seller_name,
+                mobile_number: validatedItem.cars.mobile_number,
+                address: validatedItem.cars.address
               }
             };
             

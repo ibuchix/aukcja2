@@ -26,7 +26,7 @@ export const useBidCount = (carId: string) => {
       }
 
       // Filter out any invalid entries and extract dealer_ids
-      const validBids = data.filter((bid): bid is { dealer_id: string } => 
+      const validBids = data.filter((bid): bid is NonNullable<typeof bid> & { dealer_id: string } => 
         bid !== null && 
         typeof bid === 'object' && 
         'dealer_id' in bid && 
