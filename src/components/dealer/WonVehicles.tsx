@@ -7,6 +7,7 @@ import { Lock, Eye, CreditCard, Car } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
+import { calculatePlatformFee, getPlatformFeeTier } from "@/utils/platformFeeCalculator";
 
 interface WonVehicle {
   id: string;
@@ -66,9 +67,13 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
 
       if (error) throw error;
       
-      // Type-safe handling of the response
-      const typedData = data as any[];
-      setWonVehicles(typedData || []);
+      // Calculate correct platform fees for each vehicle
+      const updatedData = (data || []).map(vehicle => ({
+        ...vehicle,
+        platform_fee: calculatePlatformFee(vehicle.winning_bid_amount)
+      }));
+      
+      setWonVehicles(updatedData);
     } catch (error) {
       console.error('Error fetching won vehicles:', error);
       toast({
@@ -81,12 +86,31 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
     }
   };
 
-  const handlePayForAccess = async (vehicleId: string) => {
-    // TODO: Integrate with Stripe for payment processing
-    toast({
-      title: "Payment Required",
-      description: "Stripe integration will be implemented to unlock seller details"
-    });
+  const handlePayForAccess = async (vehicleId: string, platformFee: number) => {
+    try {
+      // Call Stripe checkout function - we'll implement this next
+      const { data, error } = await supabase.functions.invoke('create-platform-fee-payment', {
+        body: {
+          vehicleId,
+          platformFee,
+          dealerId
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      toast({
+        title: "Payment Error",
+        description: "Failed to initiate payment. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleViewDetails = (vehicle: WonVehicle) => {
@@ -131,116 +155,126 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
       </div>
 
       <div className="grid gap-6">
-        {wonVehicles.map((vehicle) => (
-          <Card key={vehicle.id}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle className="text-xl">
-                  {vehicle.cars.year} {vehicle.cars.make} {vehicle.cars.model}
-                </CardTitle>
-                <Badge variant={vehicle.payment_status === 'paid' ? 'default' : 'secondary'}>
-                  {vehicle.payment_status === 'paid' ? 'Access Granted' : 'Payment Required'}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* Vehicle Image */}
-                <div className="aspect-video lg:aspect-square">
-                  <img 
-                    src={Array.isArray(vehicle.cars.images) && vehicle.cars.images.length > 0 
-                      ? vehicle.cars.images[0] 
-                      : '/placeholder.svg'
-                    }
-                    alt={`${vehicle.cars.make} ${vehicle.cars.model}`}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
+        {wonVehicles.map((vehicle) => {
+          const correctPlatformFee = calculatePlatformFee(vehicle.winning_bid_amount);
+          const feeTier = getPlatformFeeTier(vehicle.winning_bid_amount);
+          
+          return (
+            <Card key={vehicle.id}>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-xl">
+                    {vehicle.cars.year} {vehicle.cars.make} {vehicle.cars.model}
+                  </CardTitle>
+                  <Badge variant={vehicle.payment_status === 'paid' ? 'default' : 'secondary'}>
+                    {vehicle.payment_status === 'paid' ? 'Access Granted' : 'Payment Required'}
+                  </Badge>
                 </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                  {/* Vehicle Image */}
+                  <div className="aspect-video lg:aspect-square">
+                    <img 
+                      src={Array.isArray(vehicle.cars.images) && vehicle.cars.images.length > 0 
+                        ? vehicle.cars.images[0] 
+                        : '/placeholder.svg'
+                      }
+                      alt={`${vehicle.cars.make} ${vehicle.cars.model}`}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  </div>
 
-                {/* Vehicle Details */}
-                <div className="lg:col-span-2">
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Mileage</p>
-                      <p className="font-medium">{vehicle.cars.mileage?.toLocaleString()} km</p>
+                  {/* Vehicle Details */}
+                  <div className="lg:col-span-2">
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Mileage</p>
+                        <p className="font-medium">{vehicle.cars.mileage?.toLocaleString()} km</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Final Price</p>
+                        <p className="font-medium text-green-600">{formatCurrency(vehicle.winning_bid_amount)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Your Original Bid</p>
+                        <p className="font-medium">{formatCurrency(vehicle.original_bid_amount)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Won Date</p>
+                        <p className="font-medium">{new Date(vehicle.auction_end_time).toLocaleDateString()}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Final Price</p>
-                      <p className="font-medium text-green-600">{formatCurrency(vehicle.winning_bid_amount)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Your Original Bid</p>
-                      <p className="font-medium">{formatCurrency(vehicle.original_bid_amount)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Won Date</p>
-                      <p className="font-medium">{new Date(vehicle.auction_end_time).toLocaleDateString()}</p>
+
+                    {/* Platform Fee Details */}
+                    <div className="p-3 bg-muted rounded-lg mb-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Platform Fee</span>
+                          <span className="font-medium">{formatCurrency(correctPlatformFee)}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Fee tier: {feeTier}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Platform Fee */}
-                  <div className="p-3 bg-muted rounded-lg mb-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Platform Fee (5%)</span>
-                      <span className="font-medium">{formatCurrency(vehicle.platform_fee)}</span>
-                    </div>
+                  {/* Seller Details Section */}
+                  <div>
+                    <h4 className="font-medium mb-3">Seller Information</h4>
+                    {vehicle.payment_status === 'paid' && vehicle.seller_details_unlocked ? (
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Seller Name</p>
+                          <p className="font-medium">{vehicle.cars.seller_name || 'Not provided'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Contact</p>
+                          <p className="font-medium">{vehicle.cars.mobile_number || 'Not provided'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Address</p>
+                          <p className="font-medium text-sm">{vehicle.cars.address || 'Not provided'}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-muted rounded-lg">
+                        <div className="flex items-center justify-center text-muted-foreground mb-2">
+                          <Lock className="w-5 h-5 mr-2" />
+                          <span className="text-sm">Seller details are locked</span>
+                        </div>
+                        <p className="text-xs text-center text-muted-foreground mb-3">
+                          Pay the platform fee to unlock seller contact information
+                        </p>
+                        <Button 
+                          onClick={() => handlePayForAccess(vehicle.id, correctPlatformFee)}
+                          className="w-full"
+                          size="sm"
+                        >
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          Pay {formatCurrency(correctPlatformFee)}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Seller Details Section */}
-                <div>
-                  <h4 className="font-medium mb-3">Seller Information</h4>
-                  {vehicle.payment_status === 'paid' && vehicle.seller_details_unlocked ? (
-                    <div className="space-y-2">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Seller Name</p>
-                        <p className="font-medium">{vehicle.cars.seller_name || 'Not provided'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Contact</p>
-                        <p className="font-medium">{vehicle.cars.mobile_number || 'Not provided'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Address</p>
-                        <p className="font-medium text-sm">{vehicle.cars.address || 'Not provided'}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-4 bg-muted rounded-lg">
-                      <div className="flex items-center justify-center text-muted-foreground mb-2">
-                        <Lock className="w-5 h-5 mr-2" />
-                        <span className="text-sm">Seller details are locked</span>
-                      </div>
-                      <p className="text-xs text-center text-muted-foreground mb-3">
-                        Pay the platform fee to unlock seller contact information
-                      </p>
-                      <Button 
-                        onClick={() => handlePayForAccess(vehicle.id)}
-                        className="w-full"
-                        size="sm"
-                      >
-                        <CreditCard className="w-4 h-4 mr-2" />
-                        Pay {formatCurrency(vehicle.platform_fee)}
-                      </Button>
-                    </div>
-                  )}
+                {/* Action Buttons */}
+                <div className="flex gap-2 mt-6">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleViewDetails(vehicle)}
+                    className="flex-1"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    View Full Details
+                  </Button>
                 </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-2 mt-6">
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleViewDetails(vehicle)}
-                  className="flex-1"
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  View Full Details
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
