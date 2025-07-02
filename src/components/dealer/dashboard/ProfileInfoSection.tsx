@@ -70,13 +70,13 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Name:</span> {displayProfile?.supervisorName || "Not available"}</p>
+              <p><span className="font-medium text-dark">Name:</span> {displayProfile?.supervisor_name || "Not available"}</p>
               <p><span className="font-medium text-dark">Email:</span> {user?.email || "Not available"}</p>
-              <p><span className="font-medium text-dark">Dealership:</span> {displayProfile?.dealershipName || "Not available"}</p>
+              <p><span className="font-medium text-dark">Dealership:</span> {displayProfile?.dealership_name || "Not available"}</p>
               <p>
                 <span className="font-medium text-dark">Status:</span> 
                 <span className={`ml-1 ${isVerified ? 'text-green-600' : 'text-amber-600'}`}>
-                  {isVerified ? 'Approved' : (displayProfile?.verificationStatus || 'Pending')}
+                  {isVerified ? 'Approved' : (displayProfile?.verification_status || 'Pending')}
                 </span>
               </p>
             </div>
@@ -99,8 +99,8 @@ export const ProfileInfoSection = () => {
           ) : (
             <div className="space-y-3 text-subtitle-text">
               <p><span className="font-medium text-dark">Address:</span> {displayProfile?.address || "Not available"}</p>
-              <p><span className="font-medium text-dark">License:</span> {displayProfile?.licenseNumber || "Not available"}</p>
-              <p><span className="font-medium text-dark">Tax ID:</span> {displayProfile?.taxId || "Not available"}</p>
+              <p><span className="font-medium text-dark">License:</span> {displayProfile?.license_number || "Not available"}</p>
+              <p><span className="font-medium text-dark">Tax ID:</span> {displayProfile?.tax_id || "Not available"}</p>
             </div>
           )}
         </div>
@@ -119,7 +119,7 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-dark">Business Registry:</span> {displayProfile?.businessRegistryNumber || "Not available"}</p>
+              <p><span className="font-medium text-dark">Business Registry:</span> {displayProfile?.business_registry_number || "Not available"}</p>
               <p><span className="font-medium text-dark">Account Status:</span> <span className="text-success font-medium">Active</span></p>
             </div>
           )}

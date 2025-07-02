@@ -29,13 +29,13 @@ const DashboardContent = () => {
   // Use our custom hook to sync tab state between components
   const { activeTab, setActiveTab } = useDashboardTabs(activeTabRaw, setActiveTabRaw);
   
-  // Check if dealer is verified
-  const isVerified = displayProfile?.verificationStatus === 'approved' || displayProfile?.isVerified === true;
+  // Check if dealer is verified - using correct property names
+  const isVerified = displayProfile?.verification_status === 'approved' || displayProfile?.is_verified === true;
   
-  // Memoized dealer name to prevent unnecessary re-renders
+  // Memoized dealer name to prevent unnecessary re-renders - using correct property name
   const dealerName = useMemo(() => {
-    return displayProfile?.dealershipName || "Dealer";
-  }, [displayProfile?.dealershipName]);
+    return displayProfile?.dealership_name || "Dealer";
+  }, [displayProfile?.dealership_name]);
   
   // Debug logging - only on profile state changes
   useEffect(() => {
@@ -44,10 +44,10 @@ const DashboardContent = () => {
       console.log("Dashboard Profile State:", {
         exists: !!displayProfile,
         id: displayProfile?.id,
-        dealership: displayProfile?.dealershipName,
-        supervisorName: displayProfile?.supervisorName,
-        isVerified: displayProfile?.isVerified,
-        verificationStatus: displayProfile?.verificationStatus,
+        dealership: displayProfile?.dealership_name,
+        supervisorName: displayProfile?.supervisor_name,
+        isVerified: displayProfile?.is_verified,
+        verificationStatus: displayProfile?.verification_status,
         user: user?.id,
         isLoading,
         error
