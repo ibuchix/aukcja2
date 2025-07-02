@@ -18,8 +18,14 @@ export const useBidCount = (carId: string) => {
         return { count: 0, uniqueBidders: 0 };
       }
 
-      const totalBids = data?.length || 0;
-      const uniqueBidders = new Set(data?.map(bid => bid.dealer_id)).size;
+      // Ensure data is an array before processing
+      if (!Array.isArray(data)) {
+        console.error("Expected array but got:", data);
+        return { count: 0, uniqueBidders: 0 };
+      }
+
+      const totalBids = data.length;
+      const uniqueBidders = new Set(data.map(bid => bid.dealer_id)).size;
 
       return { count: totalBids, uniqueBidders };
     },

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,7 +50,7 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
         .from('dealer_won_vehicles')
         .select(`
           *,
-          cars (
+          cars!inner (
             make,
             model,
             year,
@@ -65,23 +64,55 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
         .eq('dealer_id', dealerId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
       
-      // Calculate correct platform fees for each vehicle and ensure proper typing
-      const updatedData = (data || []).map(vehicle => {
-        // Ensure we have the required properties before processing
-        if (!vehicle || typeof vehicle.winning_bid_amount !== 'number') {
-          console.error('Invalid vehicle data:', vehicle);
-          return null;
+      // Process data with proper type checking
+      const processedData: WonVehicle[] = [];
+      
+      if (Array.isArray(data)) {
+        for (const item of data) {
+          // Validate that the item has the required structure
+          if (item && 
+              typeof item === 'object' && 
+              'winning_bid_amount' in item && 
+              typeof item.winning_bid_amount === 'number' &&
+              item.cars &&
+              typeof item.cars === 'object') {
+            
+            const vehicle: WonVehicle = {
+              id: item.id,
+              car_id: item.car_id,
+              auction_end_time: item.auction_end_time,
+              winning_bid_amount: item.winning_bid_amount,
+              original_bid_amount: item.original_bid_amount,
+              second_highest_bid: item.second_highest_bid,
+              platform_fee: calculatePlatformFee(item.winning_bid_amount),
+              payment_status: item.payment_status,
+              payment_date: item.payment_date,
+              seller_details_unlocked: item.seller_details_unlocked,
+              cars: {
+                make: item.cars.make || 'Unknown',
+                model: item.cars.model || 'Unknown',
+                year: item.cars.year || 0,
+                mileage: item.cars.mileage || 0,
+                images: Array.isArray(item.cars.images) ? item.cars.images : [],
+                seller_name: item.cars.seller_name,
+                mobile_number: item.cars.mobile_number,
+                address: item.cars.address
+              }
+            };
+            
+            processedData.push(vehicle);
+          } else {
+            console.warn('Invalid vehicle data structure:', item);
+          }
         }
-        
-        return {
-          ...vehicle,
-          platform_fee: calculatePlatformFee(vehicle.winning_bid_amount)
-        } as WonVehicle;
-      }).filter(Boolean) as WonVehicle[];
+      }
       
-      setWonVehicles(updatedData);
+      setWonVehicles(processedData);
     } catch (error) {
       console.error('Error fetching won vehicles:', error);
       toast({
