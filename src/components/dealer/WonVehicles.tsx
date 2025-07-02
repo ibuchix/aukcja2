@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,70 +70,52 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
         throw error;
       }
       
-      // Process data with proper type checking
+      // Process data safely
       const processedData: WonVehicle[] = [];
       
       if (Array.isArray(data)) {
         for (const item of data) {
-          // Validate that the item has the required structure and is not null
-          if (item !== null && 
-              typeof item === 'object' && 
-              'winning_bid_amount' in item && 
-              typeof (item as any).winning_bid_amount === 'number' &&
-              'cars' in item &&
-              (item as any).cars !== null &&
-              typeof (item as any).cars === 'object') {
-            
-            // Create a properly typed item after validation
-            const validatedItem = item as NonNullable<typeof item> & {
-              id: string;
-              car_id: string;
-              auction_end_time: string;
-              winning_bid_amount: number;
-              original_bid_amount: number;
-              second_highest_bid: number | null;
-              payment_status: string;
-              payment_date: string | null;
-              seller_details_unlocked: boolean;
-              cars: {
-                make?: string;
-                model?: string;
-                year?: number;
-                mileage?: number;
-                images?: string[];
-                seller_name?: string;
-                mobile_number?: string;
-                address?: string;
-              };
-            };
-            
-            const vehicle: WonVehicle = {
-              id: validatedItem.id,
-              car_id: validatedItem.car_id,
-              auction_end_time: validatedItem.auction_end_time,
-              winning_bid_amount: validatedItem.winning_bid_amount,
-              original_bid_amount: validatedItem.original_bid_amount,
-              second_highest_bid: validatedItem.second_highest_bid,
-              platform_fee: calculatePlatformFee(validatedItem.winning_bid_amount),
-              payment_status: validatedItem.payment_status as 'pending' | 'paid' | 'failed',
-              payment_date: validatedItem.payment_date,
-              seller_details_unlocked: validatedItem.seller_details_unlocked,
-              cars: {
-                make: validatedItem.cars.make || 'Unknown',
-                model: validatedItem.cars.model || 'Unknown',
-                year: validatedItem.cars.year || 0,
-                mileage: validatedItem.cars.mileage || 0,
-                images: Array.isArray(validatedItem.cars.images) ? validatedItem.cars.images : [],
-                seller_name: validatedItem.cars.seller_name,
-                mobile_number: validatedItem.cars.mobile_number,
-                address: validatedItem.cars.address
-              }
-            };
-            
-            processedData.push(vehicle);
-          } else {
-            console.warn('Invalid vehicle data structure:', item);
+          // First check if item is not null and has required properties
+          if (!item || typeof item !== 'object') {
+            console.warn('Invalid item encountered:', item);
+            continue;
           }
+          
+          // Check if the item has the required structure
+          if (!('winning_bid_amount' in item) || 
+              typeof item.winning_bid_amount !== 'number' ||
+              !('cars' in item) || 
+              !item.cars || 
+              typeof item.cars !== 'object') {
+            console.warn('Invalid item structure:', item);
+            continue;
+          }
+          
+          // Now we can safely access the properties
+          const vehicle: WonVehicle = {
+            id: item.id || '',
+            car_id: item.car_id || '',
+            auction_end_time: item.auction_end_time || '',
+            winning_bid_amount: item.winning_bid_amount,
+            original_bid_amount: item.original_bid_amount || 0,
+            second_highest_bid: item.second_highest_bid || null,
+            platform_fee: calculatePlatformFee(item.winning_bid_amount),
+            payment_status: (item.payment_status as 'pending' | 'paid' | 'failed') || 'pending',
+            payment_date: item.payment_date || null,
+            seller_details_unlocked: item.seller_details_unlocked || false,
+            cars: {
+              make: (item.cars as any)?.make || 'Unknown',
+              model: (item.cars as any)?.model || 'Unknown',
+              year: (item.cars as any)?.year || 0,
+              mileage: (item.cars as any)?.mileage || 0,
+              images: Array.isArray((item.cars as any)?.images) ? (item.cars as any).images : [],
+              seller_name: (item.cars as any)?.seller_name,
+              mobile_number: (item.cars as any)?.mobile_number,
+              address: (item.cars as any)?.address
+            }
+          };
+          
+          processedData.push(vehicle);
         }
       }
       

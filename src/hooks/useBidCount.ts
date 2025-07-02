@@ -1,5 +1,4 @@
 
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,13 +25,17 @@ export const useBidCount = (carId: string) => {
       }
 
       // Filter out any invalid entries and extract dealer_ids
-      const validBids = data.filter((bid): bid is NonNullable<typeof bid> & { dealer_id: string } => 
-        bid !== null && 
-        typeof bid === 'object' && 
-        'dealer_id' in bid && 
-        typeof bid.dealer_id === 'string' &&
-        bid.dealer_id.length > 0
-      );
+      const validBids = data.filter((bid) => {
+        // Check if bid is not null and is an object
+        if (!bid || typeof bid !== 'object') {
+          return false;
+        }
+        
+        // Check if it has dealer_id property that's a non-empty string
+        return 'dealer_id' in bid && 
+               typeof bid.dealer_id === 'string' && 
+               bid.dealer_id.length > 0;
+      });
 
       const totalBids = validBids.length;
       const uniqueBidders = new Set(validBids.map(bid => bid.dealer_id)).size;
