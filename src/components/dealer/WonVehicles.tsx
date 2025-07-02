@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,33 +76,57 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
       if (Array.isArray(data)) {
         for (const item of data) {
           // Validate that the item has the required structure
-          if (item && 
+          if (item !== null && 
               typeof item === 'object' && 
               'winning_bid_amount' in item && 
               typeof item.winning_bid_amount === 'number' &&
-              item.cars &&
+              'cars' in item &&
+              item.cars !== null &&
               typeof item.cars === 'object') {
             
-            const vehicle: WonVehicle = {
-              id: item.id,
-              car_id: item.car_id,
-              auction_end_time: item.auction_end_time,
-              winning_bid_amount: item.winning_bid_amount,
-              original_bid_amount: item.original_bid_amount,
-              second_highest_bid: item.second_highest_bid,
-              platform_fee: calculatePlatformFee(item.winning_bid_amount),
-              payment_status: item.payment_status,
-              payment_date: item.payment_date,
-              seller_details_unlocked: item.seller_details_unlocked,
+            // TypeScript assertion after validation
+            const validItem = item as {
+              id: string;
+              car_id: string;
+              auction_end_time: string;
+              winning_bid_amount: number;
+              original_bid_amount: number;
+              second_highest_bid: number | null;
+              payment_status: string;
+              payment_date: string | null;
+              seller_details_unlocked: boolean;
               cars: {
-                make: item.cars.make || 'Unknown',
-                model: item.cars.model || 'Unknown',
-                year: item.cars.year || 0,
-                mileage: item.cars.mileage || 0,
-                images: Array.isArray(item.cars.images) ? item.cars.images : [],
-                seller_name: item.cars.seller_name,
-                mobile_number: item.cars.mobile_number,
-                address: item.cars.address
+                make?: string;
+                model?: string;
+                year?: number;
+                mileage?: number;
+                images?: string[];
+                seller_name?: string;
+                mobile_number?: string;
+                address?: string;
+              };
+            };
+            
+            const vehicle: WonVehicle = {
+              id: validItem.id,
+              car_id: validItem.car_id,
+              auction_end_time: validItem.auction_end_time,
+              winning_bid_amount: validItem.winning_bid_amount,
+              original_bid_amount: validItem.original_bid_amount,
+              second_highest_bid: validItem.second_highest_bid,
+              platform_fee: calculatePlatformFee(validItem.winning_bid_amount),
+              payment_status: validItem.payment_status as 'pending' | 'paid' | 'failed',
+              payment_date: validItem.payment_date,
+              seller_details_unlocked: validItem.seller_details_unlocked,
+              cars: {
+                make: validItem.cars.make || 'Unknown',
+                model: validItem.cars.model || 'Unknown',
+                year: validItem.cars.year || 0,
+                mileage: validItem.cars.mileage || 0,
+                images: Array.isArray(validItem.cars.images) ? validItem.cars.images : [],
+                seller_name: validItem.cars.seller_name,
+                mobile_number: validItem.cars.mobile_number,
+                address: validItem.cars.address
               }
             };
             

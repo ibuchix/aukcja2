@@ -18,14 +18,22 @@ export const useBidCount = (carId: string) => {
         return { count: 0, uniqueBidders: 0 };
       }
 
-      // Ensure data is an array before processing
+      // Ensure data is an array and contains valid bid objects
       if (!Array.isArray(data)) {
         console.error("Expected array but got:", data);
         return { count: 0, uniqueBidders: 0 };
       }
 
-      const totalBids = data.length;
-      const uniqueBidders = new Set(data.map(bid => bid.dealer_id)).size;
+      // Filter out any invalid entries and extract dealer_ids
+      const validBids = data.filter(bid => 
+        bid && 
+        typeof bid === 'object' && 
+        'dealer_id' in bid && 
+        bid.dealer_id
+      );
+
+      const totalBids = validBids.length;
+      const uniqueBidders = new Set(validBids.map(bid => bid.dealer_id)).size;
 
       return { count: totalBids, uniqueBidders };
     },
