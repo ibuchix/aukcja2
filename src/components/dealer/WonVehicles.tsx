@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,14 +74,14 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
       
       if (Array.isArray(data)) {
         for (const item of data) {
-          // Validate that the item has the required structure
+          // Validate that the item has the required structure and is not null
           if (item !== null && 
               typeof item === 'object' && 
               'winning_bid_amount' in item && 
-              typeof item.winning_bid_amount === 'number' &&
+              typeof (item as any).winning_bid_amount === 'number' &&
               'cars' in item &&
-              item.cars !== null &&
-              typeof item.cars === 'object') {
+              (item as any).cars !== null &&
+              typeof (item as any).cars === 'object') {
             
             // TypeScript assertion after validation
             const validItem = item as {

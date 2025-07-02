@@ -1,4 +1,5 @@
 
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -25,11 +26,12 @@ export const useBidCount = (carId: string) => {
       }
 
       // Filter out any invalid entries and extract dealer_ids
-      const validBids = data.filter(bid => 
-        bid && 
+      const validBids = data.filter((bid): bid is { dealer_id: string } => 
+        bid !== null && 
         typeof bid === 'object' && 
         'dealer_id' in bid && 
-        bid.dealer_id
+        typeof bid.dealer_id === 'string' &&
+        bid.dealer_id.length > 0
       );
 
       const totalBids = validBids.length;
