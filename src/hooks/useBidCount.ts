@@ -36,7 +36,7 @@ export const useBidCount = (carId: string) => {
       }
 
       // Filter out any invalid entries first, then extract dealer_ids
-      const validBids = data.filter(isValidBid);
+      const validBids: { dealer_id: string }[] = data.filter(isValidBid);
       const totalBids = validBids.length;
       const uniqueBidders = new Set(validBids.map(bid => bid.dealer_id)).size;
 
