@@ -32,10 +32,6 @@ interface WonVehicle {
   };
 }
 
-interface WonVehiclesProps {
-  dealerId: string;
-}
-
 // Type guard to check if a data item is valid and not a query error
 const isValidWonVehicleData = (item: any): item is any => {
   return item !== null && 
@@ -49,19 +45,20 @@ const isValidWonVehicleData = (item: any): item is any => {
          typeof item.cars === 'object';
 };
 
-export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
+export const WonVehicles = () => {
   const [wonVehicles, setWonVehicles] = useState<WonVehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchWonVehicles();
-  }, [dealerId]);
+  }, []);
 
   const fetchWonVehicles = async () => {
     try {
-      console.log('Fetching won vehicles for dealer:', dealerId);
+      console.log('Fetching won vehicles for current dealer');
       
+      // Remove the explicit dealer_id filter - let RLS handle access control
       const { data, error } = await supabase
         .from('dealer_won_vehicles')
         .select(`
@@ -77,7 +74,6 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
             address
           )
         `)
-        .eq('dealer_id', dealerId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -143,8 +139,7 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
       const { data, error } = await supabase.functions.invoke('create-platform-fee-payment', {
         body: {
           vehicleId,
-          platformFee,
-          dealerId
+          platformFee
         }
       });
 

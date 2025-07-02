@@ -24,7 +24,7 @@ export default function WonVehiclesPage() {
 
   return (
     <DashboardLayout title="Won Vehicles">
-      <WonVehicles dealerId={user.id} />
+      <WonVehicles />
     </DashboardLayout>
   );
 }
