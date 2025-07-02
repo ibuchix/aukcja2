@@ -67,11 +67,19 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
 
       if (error) throw error;
       
-      // Calculate correct platform fees for each vehicle
-      const updatedData = (data || []).map(vehicle => ({
-        ...vehicle,
-        platform_fee: calculatePlatformFee(vehicle.winning_bid_amount)
-      }));
+      // Calculate correct platform fees for each vehicle and ensure proper typing
+      const updatedData = (data || []).map(vehicle => {
+        // Ensure we have the required properties before processing
+        if (!vehicle || typeof vehicle.winning_bid_amount !== 'number') {
+          console.error('Invalid vehicle data:', vehicle);
+          return null;
+        }
+        
+        return {
+          ...vehicle,
+          platform_fee: calculatePlatformFee(vehicle.winning_bid_amount)
+        } as WonVehicle;
+      }).filter(Boolean) as WonVehicle[];
       
       setWonVehicles(updatedData);
     } catch (error) {
