@@ -7,6 +7,7 @@ const isValidBid = (bid: any): bid is { dealer_id: string } => {
   return bid !== null && 
          typeof bid === 'object' && 
          !('message' in bid) && // Check it's not an error object
+         !('code' in bid) && // Additional check for error objects
          'dealer_id' in bid && 
          typeof bid.dealer_id === 'string' && 
          bid.dealer_id.length > 0;
@@ -34,9 +35,8 @@ export const useBidCount = (carId: string) => {
         return { count: 0, uniqueBidders: 0 };
       }
 
-      // Filter out any invalid entries and extract dealer_ids using the type guard
+      // Filter out any invalid entries first, then extract dealer_ids
       const validBids = data.filter(isValidBid);
-
       const totalBids = validBids.length;
       const uniqueBidders = new Set(validBids.map(bid => bid.dealer_id)).size;
 

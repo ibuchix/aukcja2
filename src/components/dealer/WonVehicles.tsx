@@ -41,6 +41,7 @@ const isValidWonVehicleData = (item: any): item is any => {
   return item !== null && 
          typeof item === 'object' && 
          !('message' in item) && // Check it's not an error object
+         !('code' in item) && // Additional check for error objects
          'winning_bid_amount' in item && 
          typeof item.winning_bid_amount === 'number' &&
          'cars' in item && 
@@ -90,12 +91,10 @@ export const WonVehicles = ({ dealerId }: WonVehiclesProps) => {
       const processedData: WonVehicle[] = [];
       
       if (Array.isArray(data)) {
-        data.forEach((item) => {
-          if (!isValidWonVehicleData(item)) {
-            console.warn('Invalid item structure:', item);
-            return;
-          }
-          
+        // Filter valid items first, then process them
+        const validItems = data.filter(isValidWonVehicleData);
+        
+        validItems.forEach((item) => {
           // Create a safe vehicle object with all required properties
           const vehicle: WonVehicle = {
             id: item.id || '',
