@@ -1,14 +1,30 @@
 
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { DashboardLayout } from "@/components/dealer/dashboard/DashboardLayout";
+import { WonVehicles } from "@/components/dealer/WonVehicles";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
-export default function WonVehicles() {
-  const navigate = useNavigate();
+export default function WonVehiclesPage() {
+  const { user } = useAuth();
 
-  useEffect(() => {
-    // Redirect to dashboard with won-vehicles tab
-    navigate('/dealer/dashboard?tab=won-vehicles', { replace: true });
-  }, [navigate]);
+  if (!user) {
+    return (
+      <DashboardLayout title="Won Vehicles">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Please log in to view your won vehicles.
+          </AlertDescription>
+        </Alert>
+      </DashboardLayout>
+    );
+  }
 
-  return null;
+  return (
+    <DashboardLayout title="Won Vehicles">
+      <WonVehicles dealerId={user.id} />
+    </DashboardLayout>
+  );
 }

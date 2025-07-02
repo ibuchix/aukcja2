@@ -36,8 +36,14 @@ export const useBidCount = (carId: string) => {
         return { count: 0, uniqueBidders: 0 };
       }
 
-      // Filter out any invalid entries first - let TypeScript infer the type after filtering
-      const validBids = data.filter(isValidBid);
+      // Use reduce to build valid bids array with proper typing
+      const validBids = data.reduce<{ dealer_id: string }[]>((acc, bid) => {
+        if (isValidBid(bid)) {
+          acc.push(bid);
+        }
+        return acc;
+      }, []);
+
       const totalBids = validBids.length;
       const uniqueBidders = new Set(validBids.map(bid => bid.dealer_id)).size;
 

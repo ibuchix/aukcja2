@@ -8,7 +8,6 @@ import { ProfileInfoSection } from "@/components/dealer/dashboard/ProfileInfoSec
 import { DealerWelcomeCard } from "@/components/dealer/dashboard/DealerWelcomeCard";
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
 import { SimpleLiveAuctionsView } from '@/components/dealer/cars/SimpleLiveAuctionsView';
-import { WonVehicles } from '@/components/dealer/WonVehicles';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDashboardTabs } from '@/hooks/useDashboardTabs';
 import { QuickActions } from '@/components/dealer/QuickActions';
@@ -114,11 +113,10 @@ const DashboardContent = () => {
         {/* Quick Actions Section */}
         <QuickActions />
         
-        {/* Dashboard Tabs - Updated to include Won Vehicles */}
+        {/* Dashboard Tabs - Removed Won Vehicles */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="auctions">Live Auctions</TabsTrigger>
-            <TabsTrigger value="won-vehicles">Won Vehicles</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
@@ -132,21 +130,6 @@ const DashboardContent = () => {
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
                     Please complete your dealer profile to view live auctions.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="won-vehicles">
-            <div className="mt-4">
-              {user?.id ? (
-                <WonVehicles dealerId={user.id} />
-              ) : (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Please log in to view won vehicles.
                   </AlertDescription>
                 </Alert>
               )}
