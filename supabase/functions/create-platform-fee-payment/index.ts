@@ -20,10 +20,17 @@ serve(async (req) => {
       throw new Error("Vehicle ID and platform fee are required");
     }
 
-    // Create Supabase client
+    // Create Supabase client for user authentication
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
+
+    // Create service role client for database operations (bypasses RLS)
+    const supabaseService = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
     );
 
     // Get authenticated user
@@ -41,8 +48,8 @@ serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
-    // Get vehicle details for metadata
-    const { data: vehicle, error: vehicleError } = await supabaseClient
+    // Get vehicle details for metadata using service role (bypasses RLS)
+    const { data: vehicle, error: vehicleError } = await supabaseService
       .from('dealer_won_vehicles')
       .select(`
         *,
@@ -56,6 +63,7 @@ serve(async (req) => {
       .single();
 
     if (vehicleError || !vehicle) {
+      console.error('Vehicle query error:', vehicleError);
       throw new Error("Vehicle not found");
     }
 
@@ -97,8 +105,8 @@ serve(async (req) => {
       }
     });
 
-    // Store payment intent ID in database
-    const { error: updateError } = await supabaseClient
+    // Store payment intent ID in database using service role
+    const { error: updateError } = await supabaseService
       .from('dealer_won_vehicles')
       .update({ 
         stripe_payment_intent_id: session.payment_intent,
