@@ -3,11 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Lock, Eye, CreditCard, Car } from "lucide-react";
+import { Lock, Eye, CreditCard, Car, CheckCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
-import { calculatePlatformFee, getPlatformFeeTier } from "@/utils/platformFeeCalculator";
+import { calculatePlatformFee } from "@/utils/platformFeeCalculator";
 
 interface WonVehicle {
   id: string;
@@ -48,10 +48,23 @@ const isValidWonVehicleData = (item: any): item is any => {
 export const WonVehicles = () => {
   const [wonVehicles, setWonVehicles] = useState<WonVehicle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [processingPayment, setProcessingPayment] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchWonVehicles();
+    
+    // Check for payment success on page load
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentSuccess = urlParams.get('payment_success');
+    const sessionId = urlParams.get('session_id');
+    const vehicleId = urlParams.get('vehicle_id');
+    
+    if (paymentSuccess === 'true' && sessionId && vehicleId) {
+      handlePaymentSuccess(sessionId, vehicleId);
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   const fetchWonVehicles = async () => {
@@ -133,9 +146,52 @@ export const WonVehicles = () => {
     }
   };
 
+  const handlePaymentSuccess = async (sessionId: string, vehicleId: string) => {
+    try {
+      setProcessingPayment(vehicleId);
+      
+      // Verify payment status with Stripe
+      const { data, error } = await supabase.functions.invoke('verify-payment-status', {
+        body: {
+          sessionId,
+          vehicleId
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.seller_details_unlocked) {
+        // Refresh the vehicles list to show updated payment status
+        await fetchWonVehicles();
+        
+        toast({
+          title: "Payment Successful!",
+          description: "Seller details have been unlocked. You can now contact the seller.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Payment Verification",
+          description: "Payment is being processed. Please refresh the page in a moment.",
+          variant: "default",
+        });
+      }
+    } catch (error) {
+      console.error('Error verifying payment:', error);
+      toast({
+        title: "Verification Error",
+        description: "Could not verify payment status. Please contact support if payment was successful.",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingPayment(null);
+    }
+  };
+
   const handlePayForAccess = async (vehicleId: string, platformFee: number) => {
     try {
-      // Call Stripe checkout function - we'll implement this next
+      setProcessingPayment(vehicleId);
+      
       const { data, error } = await supabase.functions.invoke('create-platform-fee-payment', {
         body: {
           vehicleId,
@@ -148,6 +204,12 @@ export const WonVehicles = () => {
       if (data?.url) {
         // Open Stripe checkout in a new tab
         window.open(data.url, '_blank');
+        
+        toast({
+          title: "Redirecting to Payment",
+          description: "You will be redirected to Stripe to complete your payment.",
+          variant: "default",
+        });
       }
     } catch (error) {
       console.error('Error creating payment:', error);
@@ -156,6 +218,9 @@ export const WonVehicles = () => {
         description: "Failed to initiate payment. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      // Don't clear processing state here - keep it until payment completes
+      setTimeout(() => setProcessingPayment(null), 2000);
     }
   };
 
@@ -299,11 +364,21 @@ export const WonVehicles = () => {
                           </p>
                           <Button 
                             onClick={() => handlePayForAccess(vehicle.id, correctPlatformFee)}
+                            disabled={processingPayment === vehicle.id}
                             className="w-full bg-primary hover:bg-primary/90 text-white font-medium"
                             size="lg"
                           >
-                            <CreditCard className="w-5 h-5 mr-2" />
-                            Pay {formatCurrency(correctPlatformFee)}
+                            {processingPayment === vehicle.id ? (
+                              <>
+                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <CreditCard className="w-5 h-5 mr-2" />
+                                Pay {formatCurrency(correctPlatformFee)}
+                              </>
+                            )}
                           </Button>
                         </div>
                       )}
