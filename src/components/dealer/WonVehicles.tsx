@@ -194,7 +194,6 @@ export const WonVehicles = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-body-text">Won Vehicles</h1>
         <Badge variant="outline" className="bg-accent text-body-text border-accent">
           {wonVehicles.length} vehicle{wonVehicles.length !== 1 ? 's' : ''}
         </Badge>
@@ -203,7 +202,6 @@ export const WonVehicles = () => {
       <div className="grid gap-6">
         {wonVehicles.map((vehicle) => {
           const correctPlatformFee = calculatePlatformFee(vehicle.winning_bid_amount);
-          const feeTier = getPlatformFeeTier(vehicle.winning_bid_amount);
           
           return (
             <Card key={vehicle.id} className="bg-background border-accent shadow-sm hover:shadow-md transition-shadow">
@@ -221,7 +219,7 @@ export const WonVehicles = () => {
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
                   {/* Vehicle Image */}
                   <div className="aspect-video lg:aspect-[4/3]">
                     <img 
@@ -235,7 +233,7 @@ export const WonVehicles = () => {
                   </div>
 
                   {/* Vehicle Details & Platform Fee */}
-                  <div className="space-y-6">
+                  <div className="flex flex-col justify-between space-y-6">
                     <div>
                       <h3 className="font-semibold text-body-text mb-3">Vehicle Details</h3>
                       <div className="grid grid-cols-2 gap-3">
@@ -262,12 +260,9 @@ export const WonVehicles = () => {
                           <span className="font-semibold text-body-text">{formatCurrency(vehicle.original_bid_amount)}</span>
                         </div>
                         <div className="p-3 bg-iris-light rounded-lg border border-iris/20">
-                          <div className="flex justify-between items-center mb-2">
+                          <div className="flex justify-between items-center">
                             <span className="text-sm text-subtitle-text">Platform Fee</span>
                             <span className="font-semibold text-body-text">{formatCurrency(correctPlatformFee)}</span>
-                          </div>
-                          <div className="text-xs text-iris">
-                            Fee tier: {feeTier}
                           </div>
                         </div>
                       </div>
@@ -275,42 +270,44 @@ export const WonVehicles = () => {
                   </div>
 
                   {/* Seller Details Section */}
-                  <div>
+                  <div className="flex flex-col">
                     <h3 className="font-semibold text-body-text mb-3">Seller Information</h3>
-                    {vehicle.payment_status === 'paid' && vehicle.seller_details_unlocked ? (
-                      <div className="bg-accent/50 p-4 rounded-lg space-y-3">
-                        <div>
-                          <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Seller Name</p>
-                          <p className="font-semibold text-body-text">{vehicle.cars.seller_name || 'Not provided'}</p>
+                    <div className="flex-1 flex flex-col">
+                      {vehicle.payment_status === 'paid' && vehicle.seller_details_unlocked ? (
+                        <div className="bg-accent/50 p-4 rounded-lg space-y-3 h-full">
+                          <div>
+                            <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Seller Name</p>
+                            <p className="font-semibold text-body-text">{vehicle.cars.seller_name || 'Not provided'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Contact</p>
+                            <p className="font-semibold text-body-text">{vehicle.cars.mobile_number || 'Not provided'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Address</p>
+                            <p className="font-semibold text-body-text text-sm leading-relaxed">{vehicle.cars.address || 'Not provided'}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Contact</p>
-                          <p className="font-semibold text-body-text">{vehicle.cars.mobile_number || 'Not provided'}</p>
+                      ) : (
+                        <div className="bg-gradient-to-br from-accent/30 to-accent/50 p-6 rounded-lg border border-accent text-center h-full flex flex-col justify-center">
+                          <div className="flex items-center justify-center text-subtitle-text mb-3">
+                            <Lock className="w-6 h-6 mr-2 text-primary" />
+                            <span className="font-medium">Seller Details Locked</span>
+                          </div>
+                          <p className="text-sm text-subtitle-text mb-4 leading-relaxed">
+                            Pay the platform fee to unlock seller contact information and complete your purchase
+                          </p>
+                          <Button 
+                            onClick={() => handlePayForAccess(vehicle.id, correctPlatformFee)}
+                            className="w-full bg-primary hover:bg-primary/90 text-white font-medium"
+                            size="lg"
+                          >
+                            <CreditCard className="w-5 h-5 mr-2" />
+                            Pay {formatCurrency(correctPlatformFee)}
+                          </Button>
                         </div>
-                        <div>
-                          <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Address</p>
-                          <p className="font-semibold text-body-text text-sm leading-relaxed">{vehicle.cars.address || 'Not provided'}</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-gradient-to-br from-accent/30 to-accent/50 p-6 rounded-lg border border-accent text-center">
-                        <div className="flex items-center justify-center text-subtitle-text mb-3">
-                          <Lock className="w-6 h-6 mr-2 text-primary" />
-                          <span className="font-medium">Seller Details Locked</span>
-                        </div>
-                        <p className="text-sm text-subtitle-text mb-4 leading-relaxed">
-                          Pay the platform fee to unlock seller contact information and complete your purchase
-                        </p>
-                        <Button 
-                          onClick={() => handlePayForAccess(vehicle.id, correctPlatformFee)}
-                          className="w-full bg-primary hover:bg-primary/90 text-white font-medium"
-                          size="lg"
-                        >
-                          <CreditCard className="w-5 h-5 mr-2" />
-                          Pay {formatCurrency(correctPlatformFee)}
-                        </Button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
 
