@@ -194,8 +194,8 @@ export const WonVehicles = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Won Vehicles</h2>
-        <Badge variant="secondary">
+        <h1 className="text-3xl font-bold text-body-text">Won Vehicles</h1>
+        <Badge variant="outline" className="bg-accent text-body-text border-accent">
           {wonVehicles.length} vehicle{wonVehicles.length !== 1 ? 's' : ''}
         </Badge>
       </div>
@@ -206,61 +206,69 @@ export const WonVehicles = () => {
           const feeTier = getPlatformFeeTier(vehicle.winning_bid_amount);
           
           return (
-            <Card key={vehicle.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-xl">
+            <Card key={vehicle.id} className="bg-background border-accent shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="pb-4">
+                <div className="flex justify-between items-start gap-4">
+                  <CardTitle className="text-xl text-body-text font-oswald">
                     {vehicle.cars.year} {vehicle.cars.make} {vehicle.cars.model}
                   </CardTitle>
-                  <Badge variant={vehicle.payment_status === 'paid' ? 'default' : 'secondary'}>
+                  <Badge 
+                    variant={vehicle.payment_status === 'paid' ? 'success' : 'warning'}
+                    className="shrink-0 font-medium"
+                  >
                     {vehicle.payment_status === 'paid' ? 'Access Granted' : 'Payment Required'}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Vehicle Image */}
-                  <div className="aspect-video lg:aspect-square">
+                  <div className="aspect-video lg:aspect-[4/3]">
                     <img 
                       src={Array.isArray(vehicle.cars.images) && vehicle.cars.images.length > 0 
                         ? vehicle.cars.images[0] 
                         : '/placeholder.svg'
                       }
                       alt={`${vehicle.cars.make} ${vehicle.cars.model}`}
-                      className="w-full h-full object-cover rounded-lg"
+                      className="w-full h-full object-cover rounded-lg border border-accent"
                     />
                   </div>
 
-                  {/* Vehicle Details */}
-                  <div className="lg:col-span-2">
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Mileage</p>
-                        <p className="font-medium">{vehicle.cars.mileage?.toLocaleString()} km</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Final Price</p>
-                        <p className="font-medium text-green-600">{formatCurrency(vehicle.winning_bid_amount)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Your Original Bid</p>
-                        <p className="font-medium">{formatCurrency(vehicle.original_bid_amount)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Won Date</p>
-                        <p className="font-medium">{new Date(vehicle.auction_end_time).toLocaleDateString()}</p>
+                  {/* Vehicle Details & Platform Fee */}
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="font-semibold text-body-text mb-3">Vehicle Details</h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-accent/50 p-3 rounded-lg">
+                          <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Mileage</p>
+                          <p className="font-semibold text-body-text">{vehicle.cars.mileage?.toLocaleString()} km</p>
+                        </div>
+                        <div className="bg-accent/50 p-3 rounded-lg">
+                          <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Won Date</p>
+                          <p className="font-semibold text-body-text">{new Date(vehicle.auction_end_time).toLocaleDateString()}</p>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Platform Fee Details */}
-                    <div className="p-3 bg-muted rounded-lg mb-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Platform Fee</span>
-                          <span className="font-medium">{formatCurrency(correctPlatformFee)}</span>
+                    <div>
+                      <h3 className="font-semibold text-body-text mb-3">Pricing Details</h3>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center p-3 bg-success/10 rounded-lg border border-success/20">
+                          <span className="text-sm text-subtitle-text">Final Price</span>
+                          <span className="font-bold text-success text-lg">{formatCurrency(vehicle.winning_bid_amount)}</span>
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          Fee tier: {feeTier}
+                        <div className="flex justify-between items-center p-3 bg-accent/50 rounded-lg">
+                          <span className="text-sm text-subtitle-text">Your Original Bid</span>
+                          <span className="font-semibold text-body-text">{formatCurrency(vehicle.original_bid_amount)}</span>
+                        </div>
+                        <div className="p-3 bg-iris-light rounded-lg border border-iris/20">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm text-subtitle-text">Platform Fee</span>
+                            <span className="font-semibold text-body-text">{formatCurrency(correctPlatformFee)}</span>
+                          </div>
+                          <div className="text-xs text-iris">
+                            Fee tier: {feeTier}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -268,37 +276,37 @@ export const WonVehicles = () => {
 
                   {/* Seller Details Section */}
                   <div>
-                    <h4 className="font-medium mb-3">Seller Information</h4>
+                    <h3 className="font-semibold text-body-text mb-3">Seller Information</h3>
                     {vehicle.payment_status === 'paid' && vehicle.seller_details_unlocked ? (
-                      <div className="space-y-2">
+                      <div className="bg-accent/50 p-4 rounded-lg space-y-3">
                         <div>
-                          <p className="text-sm text-muted-foreground">Seller Name</p>
-                          <p className="font-medium">{vehicle.cars.seller_name || 'Not provided'}</p>
+                          <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Seller Name</p>
+                          <p className="font-semibold text-body-text">{vehicle.cars.seller_name || 'Not provided'}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground">Contact</p>
-                          <p className="font-medium">{vehicle.cars.mobile_number || 'Not provided'}</p>
+                          <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Contact</p>
+                          <p className="font-semibold text-body-text">{vehicle.cars.mobile_number || 'Not provided'}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground">Address</p>
-                          <p className="font-medium text-sm">{vehicle.cars.address || 'Not provided'}</p>
+                          <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Address</p>
+                          <p className="font-semibold text-body-text text-sm leading-relaxed">{vehicle.cars.address || 'Not provided'}</p>
                         </div>
                       </div>
                     ) : (
-                      <div className="p-4 bg-muted rounded-lg">
-                        <div className="flex items-center justify-center text-muted-foreground mb-2">
-                          <Lock className="w-5 h-5 mr-2" />
-                          <span className="text-sm">Seller details are locked</span>
+                      <div className="bg-gradient-to-br from-accent/30 to-accent/50 p-6 rounded-lg border border-accent text-center">
+                        <div className="flex items-center justify-center text-subtitle-text mb-3">
+                          <Lock className="w-6 h-6 mr-2 text-primary" />
+                          <span className="font-medium">Seller Details Locked</span>
                         </div>
-                        <p className="text-xs text-center text-muted-foreground mb-3">
-                          Pay the platform fee to unlock seller contact information
+                        <p className="text-sm text-subtitle-text mb-4 leading-relaxed">
+                          Pay the platform fee to unlock seller contact information and complete your purchase
                         </p>
                         <Button 
                           onClick={() => handlePayForAccess(vehicle.id, correctPlatformFee)}
-                          className="w-full"
-                          size="sm"
+                          className="w-full bg-primary hover:bg-primary/90 text-white font-medium"
+                          size="lg"
                         >
-                          <CreditCard className="w-4 h-4 mr-2" />
+                          <CreditCard className="w-5 h-5 mr-2" />
                           Pay {formatCurrency(correctPlatformFee)}
                         </Button>
                       </div>
@@ -307,11 +315,11 @@ export const WonVehicles = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-2 mt-6">
+                <div className="mt-6 pt-4 border-t border-accent">
                   <Button 
                     variant="outline" 
                     onClick={() => handleViewDetails(vehicle)}
-                    className="flex-1"
+                    className="w-full border-primary/20 text-primary hover:bg-primary/5"
                   >
                     <Eye className="w-4 h-4 mr-2" />
                     View Full Details
