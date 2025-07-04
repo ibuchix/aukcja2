@@ -40,12 +40,8 @@ serve(async (req) => {
       throw new Error("Vehicle ID and platform fee are required");
     }
 
-    // Create Supabase client with service role for database operations
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseServiceKey) {
-      throw new Error("Supabase service role key not configured");
-    }
-    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+    // Create anon client for user authentication
+    const supabaseAnonClient = createClient(supabaseUrl, supabaseAnonKey);
 
     // Get authenticated user
     const authHeader = req.headers.get("Authorization");
@@ -57,7 +53,7 @@ serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     console.log('Attempting to authenticate user...');
     
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: userData, error: userError } = await supabaseAnonClient.auth.getUser(token);
     
     if (userError || !userData.user?.email) {
       console.error('Authentication failed:', userError);
@@ -66,26 +62,24 @@ serve(async (req) => {
 
     console.log('User authenticated:', userData.user.email);
 
+    // Create service role client for database operations that bypass RLS
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseServiceKey) {
+      throw new Error("Supabase service role key not configured");
+    }
+    const supabaseServiceClient = createClient(supabaseUrl, supabaseServiceKey);
+
     // Initialize Stripe
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
     });
 
-    // Get vehicle details - since RLS is disabled, we can query directly
+    // Get vehicle details - use service client to bypass RLS
     console.log('Fetching vehicle details for ID:', vehicleId);
     
-    const { data: vehicle, error: vehicleError } = await supabaseClient
+    const { data: vehicle, error: vehicleError } = await supabaseServiceClient
       .from('dealer_won_vehicles')
-      .select(`
-        *,  
-        cars (
-          make,
-          model,
-          year,
-          mileage,
-          images
-        )
-      `)
+      .select('*')
       .eq('id', vehicleId)
       .single();
 
@@ -101,7 +95,6 @@ serve(async (req) => {
 
     console.log('Vehicle found:', {
       id: vehicle.id,
-      carDetails: vehicle.cars ? 'Present' : 'Missing',
       winningBid: vehicle.winning_bid_amount
     });
 
@@ -120,12 +113,8 @@ serve(async (req) => {
       console.log('No existing customer found, will create new one');
     }
 
-    // Build product name safely
-    const carInfo = vehicle.cars;
-    const productName = carInfo 
-      ? `Platform Fee - ${carInfo.year} ${carInfo.make} ${carInfo.model}`
-      : `Platform Fee - Vehicle ${vehicleId}`;
-    
+    // Build product name safely - use generic name since we removed car details
+    const productName = `Platform Fee - Vehicle Purchase`;
     const productDescription = `Platform fee for winning bid of ${vehicle.winning_bid_amount} PLN`;
 
     console.log('Creating Stripe checkout session...');
@@ -159,9 +148,9 @@ serve(async (req) => {
 
     console.log('Checkout session created:', session.id);
 
-    // Store payment intent ID in database (RLS is disabled so this should work)
+    // Store payment intent ID in database using service client
     console.log('Updating vehicle with payment intent ID...');
-    const { error: updateError } = await supabaseClient
+    const { error: updateError } = await supabaseServiceClient
       .from('dealer_won_vehicles')
       .update({ 
         stripe_payment_intent_id: session.payment_intent,
