@@ -40,7 +40,7 @@ export const StatsSection = () => {
           <CardContent className="pt-6">
             <div className="text-center text-destructive">
               <p>Failed to load statistics</p>
-              <p className="text-sm">{error}</p>
+              <p className="text-sm text-muted-foreground">{error}</p>
             </div>
           </CardContent>
         </Card>

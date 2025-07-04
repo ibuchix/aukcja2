@@ -31,14 +31,17 @@ export const useDealerStats = () => {
     try {
       setStats(prev => ({ ...prev, loading: true, error: null }));
 
-      // Get active bids count
+      // Get active bids count for this dealer
       const { count: activeBidsCount, error: bidsError } = await supabase
         .from('bids')
         .select('*', { count: 'exact', head: true })
         .eq('dealer_id', dealerProfile.id)
         .eq('status', 'active');
 
-      if (bidsError) throw bidsError;
+      if (bidsError) {
+        console.error('Error fetching active bids:', bidsError);
+        throw new Error(`Failed to fetch active bids: ${bidsError.message}`);
+      }
 
       // Get available auctions count (running auctions)
       const { count: availableAuctionsCount, error: auctionsError } = await supabase
