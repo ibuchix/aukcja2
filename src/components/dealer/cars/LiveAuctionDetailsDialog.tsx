@@ -118,7 +118,7 @@ export const LiveAuctionDetailsDialog = ({
             </div>
 
             {/* Bidding Section */}
-            {isLive && !hasEnded && (
+            {isLive && !hasEnded && isVerified && (
               <SimpleBidManager
                 carId={car.id}
                 dealerId={dealerId}
@@ -127,6 +127,15 @@ export const LiveAuctionDetailsDialog = ({
                 reservePrice={car.reservePrice || car.reserve_price}
                 isVerified={isVerified}
               />
+            )}
+
+            {/* Show verification message if not verified */}
+            {isLive && !hasEnded && !isVerified && (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-amber-800">
+                  Bidding is only available to verified dealers. Please complete your dealer verification to access this feature.
+                </p>
+              </div>
             )}
 
             {hasEnded && (
