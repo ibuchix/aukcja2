@@ -102,15 +102,13 @@ export const LiveAuctionDetailsDialog = ({
                 <div className="flex justify-between">
                   <span>Time Remaining:</span>
                   <span className="font-medium">
-                    {car.scheduleEndTime && !hasEnded ? (
-                      <AuctionTimer 
-                        auctionEndTime={car.scheduleEndTime} 
-                        auctionTimingStatus={car.auctionTimingStatus || 'running'} 
-                      />
-                    ) : hasEnded ? (
+                    {hasEnded ? (
                       'Auction ended'
                     ) : (
-                      'Time not available'
+                      <AuctionTimer 
+                        auctionEndTime={car.scheduleEndTime || car.auction_end_time} 
+                        auctionTimingStatus={car.auctionTimingStatus || 'running'} 
+                      />
                     )}
                   </span>
                 </div>
