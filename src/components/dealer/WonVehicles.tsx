@@ -49,6 +49,7 @@ export const WonVehicles = () => {
   const [wonVehicles, setWonVehicles] = useState<WonVehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingPayment, setProcessingPayment] = useState<string | null>(null);
+  const [refreshingPayment, setRefreshingPayment] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -219,6 +220,46 @@ export const WonVehicles = () => {
     }
   };
 
+  const handleRefreshPaymentStatus = async (vehicleId: string) => {
+    try {
+      setRefreshingPayment(vehicleId);
+      
+      const { data, error } = await supabase.functions.invoke('verify-payment-status', {
+        body: {
+          vehicleId
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.seller_details_unlocked) {
+        // Refresh the vehicles list to show updated payment status
+        await fetchWonVehicles();
+        
+        toast({
+          title: "Payment Verified!",
+          description: "Payment status has been updated and seller details are now unlocked.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Payment Still Pending",
+          description: "Payment verification could not confirm a successful payment. Please try again later or contact support.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error refreshing payment status:', error);
+      toast({
+        title: "Verification Error",
+        description: "Could not verify payment status. Please try again or contact support.",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshingPayment(null);
+    }
+  };
+
   const handleViewDetails = (vehicle: WonVehicle) => {
     // TODO: Open detailed view modal
     toast({
@@ -357,24 +398,43 @@ export const WonVehicles = () => {
                           <p className="text-sm text-subtitle-text mb-4 leading-relaxed">
                             Pay the platform fee to unlock seller contact information and complete your purchase
                           </p>
-                          <Button 
-                            onClick={() => handlePayForAccess(vehicle.id, correctPlatformFee)}
-                            disabled={processingPayment === vehicle.id}
-                            className="w-full bg-primary hover:bg-primary/90 text-white font-medium"
-                            size="lg"
-                          >
-                            {processingPayment === vehicle.id ? (
-                              <>
-                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                Processing...
-                              </>
-                            ) : (
-                              <>
-                                <CreditCard className="w-5 h-5 mr-2" />
-                                Pay {formatCurrency(correctPlatformFee)}
-                              </>
-                            )}
-                          </Button>
+                          <div className="space-y-3">
+                            <Button 
+                              onClick={() => handlePayForAccess(vehicle.id, correctPlatformFee)}
+                              disabled={processingPayment === vehicle.id}
+                              className="w-full bg-primary hover:bg-primary/90 text-white font-medium"
+                              size="lg"
+                            >
+                              {processingPayment === vehicle.id ? (
+                                <>
+                                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                  Processing...
+                                </>
+                              ) : (
+                                <>
+                                  <CreditCard className="w-5 h-5 mr-2" />
+                                  Pay {formatCurrency(correctPlatformFee)}
+                                </>
+                              )}
+                            </Button>
+                            
+                            <Button 
+                              variant="outline"
+                              onClick={() => handleRefreshPaymentStatus(vehicle.id)}
+                              disabled={refreshingPayment === vehicle.id}
+                              className="w-full border-primary/20 text-primary hover:bg-primary/5"
+                              size="sm"
+                            >
+                              {refreshingPayment === vehicle.id ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Checking...
+                                </>
+                              ) : (
+                                "Refresh Payment Status"
+                              )}
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>

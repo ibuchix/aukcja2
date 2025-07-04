@@ -16,8 +16,9 @@ serve(async (req) => {
   try {
     const { sessionId, vehicleId } = await req.json();
 
-    if (!sessionId || !vehicleId) {
-      throw new Error("Session ID and vehicle ID are required");
+    // Either sessionId + vehicleId OR just vehicleId is required
+    if (!vehicleId) {
+      throw new Error("Vehicle ID is required");
     }
 
     // Create Supabase client with service role for database updates
@@ -32,12 +33,33 @@ serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
-    // Retrieve the checkout session from Stripe
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    let session;
+    let paymentStatus;
 
-    console.log('Payment session status:', session.payment_status, 'for vehicle:', vehicleId);
+    if (sessionId) {
+      // Use provided session ID
+      session = await stripe.checkout.sessions.retrieve(sessionId);
+      paymentStatus = session.payment_status;
+      console.log('Payment session status:', paymentStatus, 'for vehicle:', vehicleId);
+    } else {
+      // Look up payment intent from database
+      const { data: vehicle, error: vehicleError } = await supabaseService
+        .from('dealer_won_vehicles')
+        .select('stripe_payment_intent_id')
+        .eq('id', vehicleId)
+        .single();
 
-    if (session.payment_status === 'paid') {
+      if (vehicleError || !vehicle?.stripe_payment_intent_id) {
+        throw new Error('Vehicle not found or no payment intent stored');
+      }
+
+      // Retrieve payment intent from Stripe
+      const paymentIntent = await stripe.paymentIntents.retrieve(vehicle.stripe_payment_intent_id);
+      paymentStatus = paymentIntent.status === 'succeeded' ? 'paid' : paymentIntent.status;
+      console.log('Payment intent status:', paymentStatus, 'for vehicle:', vehicleId);
+    }
+
+    if (paymentStatus === 'paid') {
       // Payment was successful, unlock seller details
       const { error: updateError } = await supabaseService
         .from('dealer_won_vehicles')
@@ -72,9 +94,9 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          payment_status: session.payment_status,
+          payment_status: paymentStatus,
           seller_details_unlocked: false
-        }), 
+        }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
