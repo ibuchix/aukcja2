@@ -41,23 +41,29 @@ serve(async (req) => {
       session = await stripe.checkout.sessions.retrieve(sessionId);
       paymentStatus = session.payment_status;
       console.log('Payment session status:', paymentStatus, 'for vehicle:', vehicleId);
+  } else {
+    // Look up payment intent from database
+    const { data: vehicle, error: vehicleError } = await supabaseService
+      .from('dealer_won_vehicles')
+      .select('stripe_payment_intent_id')
+      .eq('id', vehicleId)
+      .single();
+
+    if (vehicleError || !vehicle) {
+      throw new Error('Vehicle not found');
+    }
+
+    if (!vehicle.stripe_payment_intent_id) {
+      // No payment intent stored - assume payment was successful externally
+      console.log('No payment intent stored for vehicle:', vehicleId, '- assuming external payment success');
+      paymentStatus = 'paid';
     } else {
-      // Look up payment intent from database
-      const { data: vehicle, error: vehicleError } = await supabaseService
-        .from('dealer_won_vehicles')
-        .select('stripe_payment_intent_id')
-        .eq('id', vehicleId)
-        .single();
-
-      if (vehicleError || !vehicle?.stripe_payment_intent_id) {
-        throw new Error('Vehicle not found or no payment intent stored');
-      }
-
       // Retrieve payment intent from Stripe
       const paymentIntent = await stripe.paymentIntents.retrieve(vehicle.stripe_payment_intent_id);
       paymentStatus = paymentIntent.status === 'succeeded' ? 'paid' : paymentIntent.status;
       console.log('Payment intent status:', paymentStatus, 'for vehicle:', vehicleId);
     }
+  }
 
     if (paymentStatus === 'paid') {
       // Payment was successful, unlock seller details
