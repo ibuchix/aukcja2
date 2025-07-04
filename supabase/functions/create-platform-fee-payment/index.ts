@@ -40,8 +40,12 @@ serve(async (req) => {
       throw new Error("Vehicle ID and platform fee are required");
     }
 
-    // Create Supabase client (RLS disabled on dealer_won_vehicles)
-    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+    // Create Supabase client with service role for database operations
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseServiceKey) {
+      throw new Error("Supabase service role key not configured");
+    }
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get authenticated user
     const authHeader = req.headers.get("Authorization");
