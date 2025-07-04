@@ -20,12 +20,12 @@ interface WonVehicle {
   payment_status: 'pending' | 'paid' | 'failed';
   payment_date: string | null;
   seller_details_unlocked: boolean;
+  vehicle_make: string;
+  vehicle_model: string;
+  vehicle_year: number;
+  vehicle_mileage: number | null;
+  vehicle_images: string[];
   cars: {
-    make: string;
-    model: string;
-    year: number;
-    mileage: number;
-    images: string[];
     seller_name?: string;
     mobile_number?: string;
     address?: string;
@@ -40,9 +40,9 @@ const isValidWonVehicleData = (item: any): item is any => {
          !('code' in item) && // Additional check for error objects
          'winning_bid_amount' in item && 
          typeof item.winning_bid_amount === 'number' &&
-         'cars' in item && 
-         item.cars !== null &&
-         typeof item.cars === 'object';
+         'vehicle_make' in item &&
+         'vehicle_model' in item &&
+         'vehicle_year' in item;
 };
 
 export const WonVehicles = () => {
@@ -71,17 +71,12 @@ export const WonVehicles = () => {
     try {
       console.log('Fetching won vehicles for current dealer');
       
-      // Remove the explicit dealer_id filter - let RLS handle access control
+      // Simplified query - now get vehicle details directly from dealer_won_vehicles
       const { data, error } = await supabase
         .from('dealer_won_vehicles')
         .select(`
           *,
           cars!inner (
-            make,
-            model,
-            year,
-            mileage,
-            images,
             seller_name,
             mobile_number,
             address
@@ -104,7 +99,7 @@ export const WonVehicles = () => {
         const validItems = data.filter(isValidWonVehicleData);
         
         validItems.forEach((item) => {
-          // Create a safe vehicle object with all required properties
+          // Create a safe vehicle object with all required properties using new columns
           const vehicle: WonVehicle = {
             id: item.id || '',
             car_id: item.car_id || '',
@@ -116,12 +111,12 @@ export const WonVehicles = () => {
             payment_status: (item.payment_status as 'pending' | 'paid' | 'failed') || 'pending',
             payment_date: item.payment_date || null,
             seller_details_unlocked: item.seller_details_unlocked || false,
+            vehicle_make: item.vehicle_make || 'Unknown',
+            vehicle_model: item.vehicle_model || 'Unknown',
+            vehicle_year: item.vehicle_year || 2000,
+            vehicle_mileage: item.vehicle_mileage || null,
+            vehicle_images: Array.isArray(item.vehicle_images) ? item.vehicle_images : [],
             cars: {
-              make: item.cars?.make || 'Unknown',
-              model: item.cars?.model || 'Unknown',
-              year: item.cars?.year || 0,
-              mileage: item.cars?.mileage || 0,
-              images: Array.isArray(item.cars?.images) ? item.cars.images : [],
               seller_name: item.cars?.seller_name,
               mobile_number: item.cars?.mobile_number,
               address: item.cars?.address
@@ -228,7 +223,7 @@ export const WonVehicles = () => {
     // TODO: Open detailed view modal
     toast({
       title: "Vehicle Details",
-      description: `Viewing details for ${vehicle.cars.make} ${vehicle.cars.model}`
+      description: `Viewing details for ${vehicle.vehicle_make} ${vehicle.vehicle_model}`
     });
   };
 
@@ -273,7 +268,7 @@ export const WonVehicles = () => {
               <CardHeader className="pb-4">
                 <div className="flex justify-between items-start gap-4">
                   <CardTitle className="text-xl text-body-text font-oswald">
-                    {vehicle.cars.year} {vehicle.cars.make} {vehicle.cars.model}
+                    {vehicle.vehicle_year} {vehicle.vehicle_make} {vehicle.vehicle_model}
                   </CardTitle>
                   <Badge 
                     variant={vehicle.payment_status === 'paid' ? 'success' : 'warning'}
@@ -288,11 +283,11 @@ export const WonVehicles = () => {
                   {/* Vehicle Image */}
                   <div className="aspect-video lg:aspect-[4/3]">
                     <img 
-                      src={Array.isArray(vehicle.cars.images) && vehicle.cars.images.length > 0 
-                        ? vehicle.cars.images[0] 
+                      src={Array.isArray(vehicle.vehicle_images) && vehicle.vehicle_images.length > 0 
+                        ? vehicle.vehicle_images[0] 
                         : '/placeholder.svg'
                       }
-                      alt={`${vehicle.cars.make} ${vehicle.cars.model}`}
+                      alt={`${vehicle.vehicle_make} ${vehicle.vehicle_model}`}
                       className="w-full h-full object-cover rounded-lg border border-accent"
                     />
                   </div>
@@ -304,7 +299,7 @@ export const WonVehicles = () => {
                       <div className="grid grid-cols-2 gap-3">
                         <div className="bg-accent/50 p-3 rounded-lg">
                           <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Mileage</p>
-                          <p className="font-semibold text-body-text">{vehicle.cars.mileage?.toLocaleString()} km</p>
+                          <p className="font-semibold text-body-text">{vehicle.vehicle_mileage?.toLocaleString() || 'N/A'} km</p>
                         </div>
                         <div className="bg-accent/50 p-3 rounded-lg">
                           <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Won Date</p>

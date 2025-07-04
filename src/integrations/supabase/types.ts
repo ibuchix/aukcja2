@@ -904,6 +904,11 @@ export type Database = {
           seller_details_unlocked: boolean
           stripe_payment_intent_id: string | null
           updated_at: string
+          vehicle_images: Json | null
+          vehicle_make: string
+          vehicle_mileage: number | null
+          vehicle_model: string
+          vehicle_year: number
           winning_bid_amount: number
         }
         Insert: {
@@ -920,6 +925,11 @@ export type Database = {
           seller_details_unlocked?: boolean
           stripe_payment_intent_id?: string | null
           updated_at?: string
+          vehicle_images?: Json | null
+          vehicle_make: string
+          vehicle_mileage?: number | null
+          vehicle_model: string
+          vehicle_year: number
           winning_bid_amount: number
         }
         Update: {
@@ -936,6 +946,11 @@ export type Database = {
           seller_details_unlocked?: boolean
           stripe_payment_intent_id?: string | null
           updated_at?: string
+          vehicle_images?: Json | null
+          vehicle_make?: string
+          vehicle_mileage?: number | null
+          vehicle_model?: string
+          vehicle_year?: number
           winning_bid_amount?: number
         }
         Relationships: [

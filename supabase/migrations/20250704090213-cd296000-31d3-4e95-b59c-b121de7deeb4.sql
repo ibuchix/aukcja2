@@ -18,7 +18,7 @@ BEGIN
   -- Find ended auctions that haven't been processed
   FOR auction_rec IN 
     SELECT DISTINCT c.id as car_id, c.seller_id, c.auction_end_time, c.reserve_price,
-           c.make, c.model, c.year, c.current_bid
+           c.make, c.model, c.year, c.current_bid, c.mileage, c.images
     FROM cars c
     LEFT JOIN auction_schedules sch ON sch.car_id = c.id
     WHERE (c.auction_status = 'active' OR c.auction_status IS NULL)
@@ -61,7 +61,7 @@ BEGIN
       WHERE car_id = auction_rec.car_id 
         AND NOT (dealer_id = highest_bid_rec.dealer_id AND amount = highest_bid_rec.amount);
       
-      -- Create won vehicle record
+      -- Create won vehicle record with vehicle details
       INSERT INTO dealer_won_vehicles (
         dealer_id,
         car_id,
@@ -71,7 +71,12 @@ BEGIN
         platform_fee,
         auction_end_time,
         payment_status,
-        seller_details_unlocked
+        seller_details_unlocked,
+        vehicle_make,
+        vehicle_model,
+        vehicle_year,
+        vehicle_mileage,
+        vehicle_images
       ) 
       SELECT 
         highest_bid_rec.dealer_id,
@@ -85,7 +90,15 @@ BEGIN
         0, -- Platform fee will be calculated by the app
         auction_rec.auction_end_time,
         'pending',
-        false;
+        false,
+        auction_rec.make,
+        auction_rec.model,
+        auction_rec.year,
+        auction_rec.mileage,
+        CASE 
+          WHEN auction_rec.images IS NOT NULL THEN to_jsonb(auction_rec.images)
+          ELSE '[]'::jsonb
+        END;
       
       -- Create auction result record
       INSERT INTO auction_results (
