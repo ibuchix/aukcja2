@@ -51,20 +51,17 @@ export const useDealerStats = () => {
 
       if (auctionsError) throw auctionsError;
 
-      // Get won auctions count - simplified approach using auction_results table
-      const { data: wonAuctions, error: wonError } = await supabase
-        .from('auction_results')
-        .select('*')
-        .eq('highest_bid_dealer_id', dealerProfile.id)
-        .eq('sale_status', 'sold');
+      // Get won auctions count from dealer_won_vehicles table
+      const { count: wonCount, error: wonError } = await supabase
+        .from('dealer_won_vehicles')
+        .select('*', { count: 'exact', head: true })
+        .eq('dealer_id', dealerProfile.id);
 
       if (wonError) throw wonError;
 
-      const wonCount = wonAuctions?.length || 0;
-
       setStats({
         activeBids: activeBidsCount || 0,
-        wonAuctions: wonCount,
+        wonAuctions: wonCount || 0,
         availableAuctions: availableAuctionsCount || 0,
         loading: false,
         error: null,
@@ -118,9 +115,26 @@ export const useDealerStats = () => {
       )
       .subscribe();
 
+    const wonVehiclesChannel = supabase
+      .channel('dealer-won-vehicles-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'dealer_won_vehicles',
+          filter: `dealer_id=eq.${dealerProfile.id}`,
+        },
+        () => {
+          fetchStats();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(bidsChannel);
       supabase.removeChannel(auctionsChannel);
+      supabase.removeChannel(wonVehiclesChannel);
     };
   }, [dealerProfile?.id, dealerProfile?.user_id]);
 

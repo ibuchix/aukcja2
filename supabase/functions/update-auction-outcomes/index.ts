@@ -45,11 +45,11 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Update schedules from 'running' to 'ended' when end time has passed
+    // Update schedules from 'running' to 'completed' when end time has passed
     const { data: endedSchedules, error: endError } = await supabase
       .from("auction_schedules")
       .update({ 
-        status: "ended",
+        status: "completed",
         last_status_change: now,
         updated_at: now
       })
@@ -122,44 +122,34 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        // If auction was sold (reserve price met), update winner
-        if (auction.auction_status === "sold" && highestBid) {
-          // Update winning bid
-          const { error: winnerError } = await supabase
-            .from("bids")
-            .update({ status: "won" })
-            .eq("id", highestBid.id);
+        // Check if current bid meets reserve price
+        const reservePriceMet = auction.current_bid >= auction.reserve_price;
+        
+        if (reservePriceMet && highestBid) {
+          console.log(`Processing winning auction ${auction.id} - bid ${highestBid.amount} meets reserve ${auction.reserve_price}`);
+          
+          // Use the process_specific_ended_auction function to handle the complete process
+          const { data: processResult, error: processError } = await supabase
+            .rpc("process_specific_ended_auction", { p_car_id: auction.id });
 
-          if (winnerError) {
-            console.error(`Error updating winning bid: ${winnerError.message}`);
+          if (processError) {
+            console.error(`Error processing ended auction with function: ${processError.message}`);
           } else {
-            console.log(`Updated winning bid ${highestBid.id} for auction ${auction.id}`);
+            console.log(`Successfully processed auction ${auction.id}:`, processResult);
           }
-
-          // Update all other bids for this auction as lost
-          const { error: loserError } = await supabase
-            .from("bids")
-            .update({ status: "lost" })
-            .eq("car_id", auction.id)
-            .neq("id", highestBid.id);
-
-          if (loserError) {
-            console.error(`Error updating losing bids: ${loserError.message}`);
-          } else {
-            console.log(`Updated losing bids for auction ${auction.id}`);
-          }
-        } 
-        // If auction ended without selling (reserve not met), mark all bids as lost
-        else if (auction.auction_status === "ended") {
+        } else {
+          console.log(`Auction ${auction.id} ended without meeting reserve - bid ${auction.current_bid} < reserve ${auction.reserve_price}`);
+          
+          // Mark all bids as ended for auctions that didn't meet reserve
           const { error: updateError } = await supabase
             .from("bids")
-            .update({ status: "lost" })
+            .update({ status: "ended" })
             .eq("car_id", auction.id);
 
           if (updateError) {
             console.error(`Error updating bids for ended auction: ${updateError.message}`);
           } else {
-            console.log(`Updated all bids as lost for ended auction ${auction.id}`);
+            console.log(`Updated all bids as ended for auction ${auction.id}`);
           }
         }
 
