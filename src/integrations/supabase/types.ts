@@ -2318,6 +2318,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      process_specific_ended_auction: {
+        Args: { p_car_id: string }
+        Returns: Json
+      }
       publish_car_listing: {
         Args: { p_car_id: string }
         Returns: Json
