@@ -860,35 +860,6 @@ export type Database = {
           },
         ]
       }
-      dealer_watchlist: {
-        Row: {
-          buyer_id: string
-          car_id: string
-          created_at: string
-          id: string
-        }
-        Insert: {
-          buyer_id: string
-          car_id: string
-          created_at?: string
-          id?: string
-        }
-        Update: {
-          buyer_id?: string
-          car_id?: string
-          created_at?: string
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dealer_watchlist_car_id_fkey"
-            columns: ["car_id"]
-            isOneToOne: false
-            referencedRelation: "cars"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       dealer_won_vehicles: {
         Row: {
           auction_end_time: string

@@ -1,10 +1,10 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { GavelIcon, ShoppingCart, Car, Clock, Loader2 } from "lucide-react";
+import { GavelIcon, ShoppingCart, Car } from "lucide-react";
 import { useDealerStats } from "@/hooks/useDealerStats";
 
 export const StatsSection = () => {
-  const { activeBids, wonAuctions, availableAuctions, watchlist, loading, error } = useDealerStats();
+  const { activeBids, wonAuctions, availableAuctions, loading, error } = useDealerStats();
 
   const stats = [
     {
@@ -25,12 +25,6 @@ export const StatsSection = () => {
       icon: <Car className="h-5 w-5 text-purple-500" />,
       description: "Ready to bid"
     },
-    {
-      title: "Watchlist",
-      value: loading ? "..." : watchlist.toString(),
-      icon: <Clock className="h-5 w-5 text-amber-500" />,
-      description: "Vehicles you're watching"
-    }
   ];
 
   if (error) {

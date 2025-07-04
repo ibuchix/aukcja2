@@ -28,13 +28,6 @@ export const dealerVerificationSchema = baseRecordSchema.extend({
   notes: z.string().optional(),
 });
 
-/**
- * Schema for dealer watchlist
- */
-export const dealerWatchlistSchema = baseRecordSchema.extend({
-  buyer_id: z.string().uuid(),
-  car_id: z.string().uuid(),
-});
 
 /**
  * Schema for dealer purchase

@@ -6,7 +6,6 @@ interface DealerStats {
   activeBids: number;
   wonAuctions: number;
   availableAuctions: number;
-  watchlist: number;
   loading: boolean;
   error: string | null;
 }
@@ -17,7 +16,6 @@ export const useDealerStats = () => {
     activeBids: 0,
     wonAuctions: 0,
     availableAuctions: 0,
-    watchlist: 0,
     loading: true,
     error: null,
   });
@@ -64,19 +62,10 @@ export const useDealerStats = () => {
 
       const wonCount = wonAuctions?.length || 0;
 
-      // Get watchlist count
-      const { count: watchlistCount, error: watchlistError } = await supabase
-        .from('dealer_watchlist')
-        .select('*', { count: 'exact', head: true })
-        .eq('buyer_id', dealerProfile.user_id);
-
-      if (watchlistError) throw watchlistError;
-
       setStats({
         activeBids: activeBidsCount || 0,
         wonAuctions: wonCount,
         availableAuctions: availableAuctionsCount || 0,
-        watchlist: watchlistCount || 0,
         loading: false,
         error: null,
       });
@@ -129,26 +118,9 @@ export const useDealerStats = () => {
       )
       .subscribe();
 
-    const watchlistChannel = supabase
-      .channel('watchlist-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'dealer_watchlist',
-          filter: `buyer_id=eq.${dealerProfile.user_id}`,
-        },
-        () => {
-          fetchStats();
-        }
-      )
-      .subscribe();
-
     return () => {
       supabase.removeChannel(bidsChannel);
       supabase.removeChannel(auctionsChannel);
-      supabase.removeChannel(watchlistChannel);
     };
   }, [dealerProfile?.id, dealerProfile?.user_id]);
 

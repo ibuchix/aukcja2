@@ -12,7 +12,7 @@ import { AuctionTableProps } from "./types";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Eye } from "lucide-react";
-import { AuctionWatchlistButton } from "@/components/auction/AuctionWatchlistButton";
+
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { AuctionScheduleInfo } from "@/components/auction/AuctionScheduleInfo";
 import { formatUKDateTime } from "@/utils/ukTimeUtils";
@@ -80,10 +80,6 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
                   View
                 </Link>
               </Button>
-              <AuctionWatchlistButton
-                carId={auction.id}
-                dealerId={dealerId}
-              />
             </div>
           </div>
         ))}
@@ -168,10 +164,6 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
                     View
                   </Link>
                 </Button>
-                <AuctionWatchlistButton
-                  carId={auction.id}
-                  dealerId={dealerId}
-                />
               </div>
             </TableCell>
           </TableRow>

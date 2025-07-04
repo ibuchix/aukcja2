@@ -1,7 +1,7 @@
 
 import { DealerBids } from "@/components/dealer/DealerBids";
 import { AuctionManagement } from "@/components/dealer/AuctionManagement";
-import { WatchlistManagement } from "@/components/dealer/WatchlistManagement";
+
 import { SessionMonitor } from "@/components/debug/SessionMonitor";
 
 interface MainDashboardProps {
@@ -25,7 +25,6 @@ export const MainDashboard = ({ profile, isLoading, error }: MainDashboardProps)
       {profile?.id && (
         <>
           <AuctionManagement dealerId={profile.id} />
-          <WatchlistManagement dealerId={profile.id} />
         </>
       )}
       

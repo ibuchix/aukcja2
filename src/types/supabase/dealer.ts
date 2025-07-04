@@ -16,10 +16,6 @@ export type DealerVerificationRecord = TableRow<'dealer_verifications'> & BaseRe
  */
 export type VerificationStatus = 'pending' | 'approved' | 'rejected';
 
-/**
- * Dealer watchlist record
- */
-export type DealerWatchlistRecord = TableRow<'dealer_watchlist'> & BaseRecord;
 
 /**
  * Dealer purchase record
