@@ -188,6 +188,33 @@ export type Database = {
           },
         ]
       }
+      auction_processing_logs: {
+        Row: {
+          car_id: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          processing_type: string
+          status: string | null
+        }
+        Insert: {
+          car_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          processing_type: string
+          status?: string | null
+        }
+        Update: {
+          car_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          processing_type?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
       auction_results: {
         Row: {
           admin_review_status: string | null
@@ -2258,6 +2285,10 @@ export type Database = {
       }
       publish_car_listing: {
         Args: { p_car_id: string }
+        Returns: Json
+      }
+      recover_missed_auctions: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
       register_seller: {
