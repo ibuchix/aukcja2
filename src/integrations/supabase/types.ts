@@ -2318,6 +2318,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      update_dealer_profile: {
+        Args: {
+          p_user_id: string
+          p_supervisor_name: string
+          p_dealership_name: string
+          p_address: string
+          p_phone_number?: string
+        }
+        Returns: Json
+      }
       update_system_health: {
         Args: {
           p_component_name: string

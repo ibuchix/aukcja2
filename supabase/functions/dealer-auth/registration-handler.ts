@@ -253,31 +253,59 @@ export async function handleDealerRegister(
       logWarning("Error managing profile:", metaError);
     }
 
-    // Create dealer profile
+    // Create dealer profile with better error handling
     try {
-      const { error: dealerError } = await supabaseAdmin
+      const dealerInsertData = {
+        user_id: userId,
+        supervisor_name: cleanedMetadata.name,
+        dealership_name: cleanedMetadata.companyName || cleanedMetadata.name,
+        tax_id: (cleanedMetadata.taxId || "").replace(/\D/g, ''),
+        business_registry_number: (cleanedMetadata.businessRegistryNumber || "").replace(/\D/g, ''),
+        address: cleanedMetadata.companyAddress || "",
+        verification_status: 'pending',
+        is_verified: false,
+        license_number: (cleanedMetadata.businessRegistryNumber || "").replace(/\D/g, ''),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      logInfo("Inserting dealer record:", dealerInsertData);
+
+      const { data: dealerData, error: dealerError } = await supabaseAdmin
         .from('dealers')
-        .insert({
-          user_id: userId,
-          supervisor_name: cleanedMetadata.name,
-          dealership_name: cleanedMetadata.companyName || cleanedMetadata.name,
-          tax_id: (cleanedMetadata.taxId || "").replace(/\D/g, ''),
-          business_registry_number: (cleanedMetadata.businessRegistryNumber || "").replace(/\D/g, ''),
-          address: cleanedMetadata.companyAddress || "",
-          verification_status: 'pending',
-          is_verified: false,
-          license_number: (cleanedMetadata.businessRegistryNumber || "").replace(/\D/g, ''),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
+        .insert(dealerInsertData)
+        .select()
+        .single();
 
       if (dealerError) {
         logError("Error creating dealer profile:", dealerError);
-        // Continue despite error - we'll return a warning
+        
+        // If dealer creation fails but user was created, return partial success
+        return respondSuccess({
+          success: true,
+          userId: userId,
+          existingUser: existingUser,
+          session: sessionData?.session || null,
+          partialSuccess: true,
+          warning: "User account created but dealer profile setup incomplete. Please contact support.",
+          message: "Registration partially successful. Please log in and complete your profile setup."
+        });
       }
+
+      logInfo("Dealer profile created successfully:", dealerData?.id);
     } catch (profileError) {
-      logWarning("Error creating dealer profile:", profileError);
-      // Continue despite error - we'll return a warning
+      logError("Exception creating dealer profile:", profileError);
+      
+      // Return partial success if dealer profile creation fails
+      return respondSuccess({
+        success: true,
+        userId: userId,
+        existingUser: existingUser,
+        session: sessionData?.session || null,
+        partialSuccess: true,
+        warning: "User account created but dealer profile setup failed. Please contact support.",
+        message: "Registration partially successful. Please log in and complete your profile setup."
+      });
     }
 
     // Create a session immediately so the user can be logged in right after registration

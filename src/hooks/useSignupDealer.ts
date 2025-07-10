@@ -72,6 +72,17 @@ export function useSignupDealer() {
       }
 
       if (!signUpResult.success) {
+        // Special handling for 409 errors - check if user actually exists
+        if (signUpResult.errorType === 'auth' && signUpResult.error?.includes('already been registered')) {
+          // User was actually created, treat as success but warn about existing account
+          console.log("User already exists, attempting login flow");
+          return {
+            success: true,
+            message: "Account already exists. Please use the login form to access your account.",
+            partialSuccess: true,
+            warning: "User account already exists"
+          };
+        }
         return handleAuthResult(signUpResult);
       }
 
