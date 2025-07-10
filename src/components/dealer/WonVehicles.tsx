@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Lock, Eye, CreditCard, Car, CheckCircle, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Lock, Eye, CreditCard, Car, CheckCircle, Loader2, Clock, X, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
@@ -25,6 +26,24 @@ interface WonVehicle {
   vehicle_year: number;
   vehicle_mileage: number | null;
   vehicle_images: string[];
+  // Seller decision fields
+  seller_decision?: 'accepted' | 'declined' | null;
+  seller_decided_at?: string | null;
+  // Enhanced car details for modal
+  car_details?: {
+    vin?: string;
+    fuel_type?: string;
+    transmission?: string;
+    features?: Record<string, any>;
+    registration_number?: string;
+    seller_notes?: string;
+    reserve_price?: number;
+    number_of_keys?: number;
+    has_service_history?: boolean;
+    service_history_type?: string;
+    is_damaged?: boolean;
+    seat_material?: string;
+  };
   cars: {
     seller_name?: string;
     mobile_number?: string;
@@ -72,7 +91,7 @@ export const WonVehicles = () => {
     try {
       console.log('Fetching won vehicles for current dealer');
       
-      // Simplified query - now get vehicle details directly from dealer_won_vehicles
+      // Enhanced query to include seller decision data and full car details
       const { data, error } = await supabase
         .from('dealer_won_vehicles')
         .select(`
@@ -80,7 +99,23 @@ export const WonVehicles = () => {
           cars!inner (
             seller_name,
             mobile_number,
-            address
+            address,
+            vin,
+            fuel_type,
+            transmission,
+            features,
+            registration_number,
+            seller_notes,
+            reserve_price,
+            number_of_keys,
+            has_service_history,
+            service_history_type,
+            is_damaged,
+            seat_material
+          ),
+          seller_bid_decisions:seller_bid_decisions!car_id (
+            decision,
+            decided_at
           )
         `)
         .order('created_at', { ascending: false });
@@ -100,6 +135,11 @@ export const WonVehicles = () => {
         const validItems = data.filter(isValidWonVehicleData);
         
         validItems.forEach((item) => {
+          // Extract seller decision data
+          const sellerDecisionData = Array.isArray(item.seller_bid_decisions) && item.seller_bid_decisions.length > 0 
+            ? item.seller_bid_decisions[0] 
+            : null;
+
           // Create a safe vehicle object with all required properties using new columns
           const vehicle: WonVehicle = {
             id: item.id || '',
@@ -117,6 +157,24 @@ export const WonVehicles = () => {
             vehicle_year: item.vehicle_year || 2000,
             vehicle_mileage: item.vehicle_mileage || null,
             vehicle_images: Array.isArray(item.vehicle_images) ? item.vehicle_images : [],
+            // Seller decision fields
+            seller_decision: sellerDecisionData?.decision || null,
+            seller_decided_at: sellerDecisionData?.decided_at || null,
+            // Enhanced car details
+            car_details: {
+              vin: item.cars?.vin,
+              fuel_type: item.cars?.fuel_type,
+              transmission: item.cars?.transmission,
+              features: item.cars?.features,
+              registration_number: item.cars?.registration_number,
+              seller_notes: item.cars?.seller_notes,
+              reserve_price: item.cars?.reserve_price,
+              number_of_keys: item.cars?.number_of_keys,
+              has_service_history: item.cars?.has_service_history,
+              service_history_type: item.cars?.service_history_type,
+              is_damaged: item.cars?.is_damaged,
+              seat_material: item.cars?.seat_material,
+            },
             cars: {
               seller_name: item.cars?.seller_name,
               mobile_number: item.cars?.mobile_number,
@@ -260,12 +318,125 @@ export const WonVehicles = () => {
     }
   };
 
-  const handleViewDetails = (vehicle: WonVehicle) => {
-    // TODO: Open detailed view modal
-    toast({
-      title: "Vehicle Details",
-      description: `Viewing details for ${vehicle.vehicle_make} ${vehicle.vehicle_model}`
-    });
+  // Helper function to get seller decision status
+  const getSellerDecisionStatus = (vehicle: WonVehicle) => {
+    if (vehicle.seller_decision === 'accepted') {
+      return { status: 'accepted', message: 'Seller has accepted your bid', canPay: true };
+    } else if (vehicle.seller_decision === 'declined') {
+      return { status: 'declined', message: 'Seller has declined your bid', canPay: false };
+    } else {
+      return { status: 'pending', message: 'Awaiting seller decision', canPay: false };
+    }
+  };
+
+  // Vehicle Details Modal Component
+  const VehicleDetailsModal = ({ vehicle }: { vehicle: WonVehicle }) => {
+    const renderFeature = (key: string, value: any) => {
+      if (value === null || value === undefined || value === '') return null;
+      
+      return (
+        <div key={key} className="flex justify-between py-2 border-b border-accent/30">
+          <span className="text-subtitle-text capitalize">{key.replace(/_/g, ' ')}</span>
+          <span className="text-body-text font-medium">
+            {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}
+          </span>
+        </div>
+      );
+    };
+
+    return (
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-oswald">
+            {vehicle.vehicle_year} {vehicle.vehicle_make} {vehicle.vehicle_model}
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Images Section */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-lg">Vehicle Images</h3>
+            <div className="grid grid-cols-1 gap-3">
+              {Array.isArray(vehicle.vehicle_images) && vehicle.vehicle_images.length > 0 ? 
+                vehicle.vehicle_images.map((image, index) => (
+                  <img 
+                    key={index}
+                    src={image} 
+                    alt={`${vehicle.vehicle_make} ${vehicle.vehicle_model} - ${index + 1}`}
+                    className="w-full h-48 object-cover rounded-lg border border-accent"
+                  />
+                )) : (
+                  <div className="w-full h-48 bg-accent/50 rounded-lg flex items-center justify-center">
+                    <Car className="w-12 h-12 text-muted-foreground" />
+                  </div>
+                )}
+            </div>
+          </div>
+
+          {/* Vehicle Details Section */}
+          <div className="space-y-6">
+            {/* Basic Information */}
+            <div>
+              <h3 className="font-semibold text-lg mb-3">Basic Information</h3>
+              <div className="space-y-1">
+                {renderFeature('VIN', vehicle.car_details?.vin)}
+                {renderFeature('Registration Number', vehicle.car_details?.registration_number)}
+                {renderFeature('Year', vehicle.vehicle_year)}
+                {renderFeature('Make', vehicle.vehicle_make)}
+                {renderFeature('Model', vehicle.vehicle_model)}
+                {renderFeature('Mileage', vehicle.vehicle_mileage ? `${vehicle.vehicle_mileage.toLocaleString()} km` : null)}
+              </div>
+            </div>
+
+            {/* Technical Specifications */}
+            <div>
+              <h3 className="font-semibold text-lg mb-3">Technical Specifications</h3>
+              <div className="space-y-1">
+                {renderFeature('Fuel Type', vehicle.car_details?.fuel_type)}
+                {renderFeature('Transmission', vehicle.car_details?.transmission)}
+                {renderFeature('Seat Material', vehicle.car_details?.seat_material)}
+                {renderFeature('Number of Keys', vehicle.car_details?.number_of_keys)}
+                {renderFeature('Has Service History', vehicle.car_details?.has_service_history)}
+                {renderFeature('Service History Type', vehicle.car_details?.service_history_type)}
+                {renderFeature('Is Damaged', vehicle.car_details?.is_damaged)}
+              </div>
+            </div>
+
+            {/* Financial Information */}
+            <div>
+              <h3 className="font-semibold text-lg mb-3">Financial Information</h3>
+              <div className="space-y-1">
+                {renderFeature('Reserve Price', vehicle.car_details?.reserve_price ? formatCurrency(vehicle.car_details.reserve_price) : null)}
+                {renderFeature('Final Price', formatCurrency(vehicle.winning_bid_amount))}
+                {renderFeature('Platform Fee', formatCurrency(calculatePlatformFee(vehicle.winning_bid_amount)))}
+              </div>
+            </div>
+
+            {/* Features */}
+            {vehicle.car_details?.features && Object.keys(vehicle.car_details.features).length > 0 && (
+              <div>
+                <h3 className="font-semibold text-lg mb-3">Features</h3>
+                <div className="space-y-1">
+                  {Object.entries(vehicle.car_details.features).map(([key, value]) => 
+                    renderFeature(key, value)
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Seller Notes */}
+            {vehicle.car_details?.seller_notes && (
+              <div>
+                <h3 className="font-semibold text-lg mb-3">Seller Notes</h3>
+                <p className="text-body-text bg-accent/30 p-3 rounded-lg">
+                  {vehicle.car_details.seller_notes}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    );
   };
 
   if (loading) {
@@ -389,68 +560,121 @@ export const WonVehicles = () => {
                             <p className="font-semibold text-body-text text-sm leading-relaxed">{vehicle.cars.address || 'Not provided'}</p>
                           </div>
                         </div>
-                      ) : (
-                        <div className="bg-gradient-to-br from-accent/30 to-accent/50 p-6 rounded-lg border border-accent text-center h-full flex flex-col justify-center">
-                          <div className="flex items-center justify-center text-subtitle-text mb-3">
-                            <Lock className="w-6 h-6 mr-2 text-primary" />
-                            <span className="font-medium">Seller Details Locked</span>
+                      ) : (() => {
+                        const sellerStatus = getSellerDecisionStatus(vehicle);
+                        
+                        if (sellerStatus.status === 'declined') {
+                          return (
+                            <div className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-lg border border-red-200 text-center h-full flex flex-col justify-center">
+                              <div className="flex items-center justify-center text-red-600 mb-3">
+                                <X className="w-6 h-6 mr-2" />
+                                <span className="font-medium">Sale Declined</span>
+                              </div>
+                              <p className="text-sm text-red-700 leading-relaxed">
+                                {sellerStatus.message}. No payment is required.
+                              </p>
+                            </div>
+                          );
+                        }
+                        
+                        if (sellerStatus.status === 'pending') {
+                          return (
+                            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-lg border border-yellow-200 text-center h-full flex flex-col justify-center">
+                              <div className="flex items-center justify-center text-yellow-600 mb-3">
+                                <Clock className="w-6 h-6 mr-2" />
+                                <span className="font-medium">Awaiting Seller Decision</span>
+                              </div>
+                              <p className="text-sm text-yellow-700 mb-4 leading-relaxed">
+                                {sellerStatus.message}. Payment will be available once the seller accepts.
+                              </p>
+                              <Button 
+                                variant="outline"
+                                onClick={() => handleRefreshPaymentStatus(vehicle.id)}
+                                disabled={refreshingPayment === vehicle.id}
+                                className="w-full border-yellow-400 text-yellow-700 hover:bg-yellow-50"
+                                size="sm"
+                              >
+                                {refreshingPayment === vehicle.id ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Checking...
+                                  </>
+                                ) : (
+                                  "Check Status"
+                                )}
+                              </Button>
+                            </div>
+                          );
+                        }
+                        
+                        // Seller accepted - show payment option
+                        return (
+                          <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg border border-green-200 text-center h-full flex flex-col justify-center">
+                            <div className="flex items-center justify-center text-green-600 mb-3">
+                              <Check className="w-6 h-6 mr-2" />
+                              <span className="font-medium">Bid Accepted!</span>
+                            </div>
+                            <p className="text-sm text-green-700 mb-4 leading-relaxed">
+                              {sellerStatus.message}. You can now pay the platform fee to complete the purchase.
+                            </p>
+                            <div className="space-y-3">
+                              <Button 
+                                onClick={() => handlePayForAccess(vehicle.id, correctPlatformFee)}
+                                disabled={processingPayment === vehicle.id}
+                                className="w-full bg-primary hover:bg-primary/90 text-white font-medium"
+                                size="lg"
+                              >
+                                {processingPayment === vehicle.id ? (
+                                  <>
+                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                    Processing...
+                                  </>
+                                ) : (
+                                  <>
+                                    <CreditCard className="w-5 h-5 mr-2" />
+                                    Pay {formatCurrency(correctPlatformFee)}
+                                  </>
+                                )}
+                              </Button>
+                              
+                              <Button 
+                                variant="outline"
+                                onClick={() => handleRefreshPaymentStatus(vehicle.id)}
+                                disabled={refreshingPayment === vehicle.id}
+                                className="w-full border-primary/20 text-primary hover:bg-primary/5"
+                                size="sm"
+                              >
+                                {refreshingPayment === vehicle.id ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Checking...
+                                  </>
+                                ) : (
+                                  "Refresh Payment Status"
+                                )}
+                              </Button>
+                            </div>
                           </div>
-                          <p className="text-sm text-subtitle-text mb-4 leading-relaxed">
-                            Pay the platform fee to unlock seller contact information and complete your purchase
-                          </p>
-                          <div className="space-y-3">
-                            <Button 
-                              onClick={() => handlePayForAccess(vehicle.id, correctPlatformFee)}
-                              disabled={processingPayment === vehicle.id}
-                              className="w-full bg-primary hover:bg-primary/90 text-white font-medium"
-                              size="lg"
-                            >
-                              {processingPayment === vehicle.id ? (
-                                <>
-                                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                  Processing...
-                                </>
-                              ) : (
-                                <>
-                                  <CreditCard className="w-5 h-5 mr-2" />
-                                  Pay {formatCurrency(correctPlatformFee)}
-                                </>
-                              )}
-                            </Button>
-                            
-                            <Button 
-                              variant="outline"
-                              onClick={() => handleRefreshPaymentStatus(vehicle.id)}
-                              disabled={refreshingPayment === vehicle.id}
-                              className="w-full border-primary/20 text-primary hover:bg-primary/5"
-                              size="sm"
-                            >
-                              {refreshingPayment === vehicle.id ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                  Checking...
-                                </>
-                              ) : (
-                                "Refresh Payment Status"
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
 
                 {/* Action Buttons */}
                 <div className="mt-6 pt-4 border-t border-accent">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => handleViewDetails(vehicle)}
-                    className="w-full border-primary/20 text-primary hover:bg-primary/5"
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    View Full Details
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-primary/20 text-primary hover:bg-primary/5"
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        View Full Details
+                      </Button>
+                    </DialogTrigger>
+                    <VehicleDetailsModal vehicle={vehicle} />
+                  </Dialog>
                 </div>
               </CardContent>
             </Card>
