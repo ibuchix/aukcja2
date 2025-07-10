@@ -169,14 +169,27 @@ export async function handleDealerRegister(
       if (userError) {
         logError(`Error creating user (request ID: ${requestId})`, userError);
         
-        // Check for duplicate key errors
+        // Check for duplicate key errors with more specific handling
         if (userError.message?.includes("duplicate") || 
             userError.message?.includes("already exists") ||
-            userError.message?.toLowerCase().includes("unique violation")) {
-          if (userError.message?.includes("email")) {
-            return respondError("An account with this email already exists", 409);
+            userError.message?.toLowerCase().includes("unique violation") ||
+            userError.message?.includes("User already registered")) {
+          
+          // For duplicate email specifically
+          if (userError.message?.includes("email") || userError.message?.includes("User already registered")) {
+            return respondError("A user with this email address has already been registered", 409);
           }
           return respondError("A duplicate entry was detected", 409);
+        }
+        
+        // Rate limiting errors
+        if (userError.message?.includes("rate limit") || userError.message?.includes("too many")) {
+          return respondError("Too many registration attempts. Please try again later.", 429);
+        }
+        
+        // Invalid credentials or validation errors  
+        if (userError.message?.includes("invalid") || userError.message?.includes("validation")) {
+          return respondError(`Registration validation failed: ${userError.message}`, 400);
         }
         
         // Internal server errors
