@@ -511,10 +511,22 @@ export const WonVehicles = () => {
                     {vehicle.vehicle_year} {vehicle.vehicle_make} {vehicle.vehicle_model}
                   </CardTitle>
                   <Badge 
-                    variant={vehicle.payment_status === 'paid' ? 'success' : 'warning'}
+                    variant={(() => {
+                      const sellerStatus = getSellerDecisionStatus(vehicle);
+                      if (sellerStatus.status === 'declined') return 'destructive';
+                      if (sellerStatus.status === 'pending') return 'warning';
+                      if (sellerStatus.status === 'accepted' && vehicle.payment_status === 'paid') return 'success';
+                      return 'warning';
+                    })()}
                     className="shrink-0 font-medium"
                   >
-                    {vehicle.payment_status === 'paid' ? 'Access Granted' : 'Payment Required'}
+                    {(() => {
+                      const sellerStatus = getSellerDecisionStatus(vehicle);
+                      if (sellerStatus.status === 'declined') return 'Bid Declined';
+                      if (sellerStatus.status === 'pending') return 'Awaiting Decision';
+                      if (sellerStatus.status === 'accepted' && vehicle.payment_status === 'paid') return 'Access Granted';
+                      return 'Payment Required';
+                    })()}
                   </Badge>
                 </div>
               </CardHeader>
@@ -573,24 +585,30 @@ export const WonVehicles = () => {
                   <div className="flex flex-col">
                     <h3 className="font-semibold text-body-text mb-3">Seller Information</h3>
                     <div className="flex-1 flex flex-col">
-                      {vehicle.payment_status === 'paid' && vehicle.seller_details_unlocked ? (
-                        <div className="bg-accent/50 p-4 rounded-lg space-y-3 h-full">
-                          <div>
-                            <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Seller Name</p>
-                            <p className="font-semibold text-body-text">{vehicle.cars.seller_name || 'Not provided'}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Contact</p>
-                            <p className="font-semibold text-body-text">{vehicle.cars.mobile_number || 'Not provided'}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Address</p>
-                            <p className="font-semibold text-body-text text-sm leading-relaxed">{vehicle.cars.address || 'Not provided'}</p>
-                          </div>
-                        </div>
-                      ) : (() => {
+                      {(() => {
                         const sellerStatus = getSellerDecisionStatus(vehicle);
                         
+                        // Only show seller details if seller accepted AND payment is complete
+                        if (sellerStatus.status === 'accepted' && vehicle.payment_status === 'paid' && vehicle.seller_details_unlocked) {
+                          return (
+                            <div className="bg-accent/50 p-4 rounded-lg space-y-3 h-full">
+                              <div>
+                                <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Seller Name</p>
+                                <p className="font-semibold text-body-text">{vehicle.cars.seller_name || 'Not provided'}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Contact</p>
+                                <p className="font-semibold text-body-text">{vehicle.cars.mobile_number || 'Not provided'}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-subtitle-text uppercase tracking-wide mb-1">Address</p>
+                                <p className="font-semibold text-body-text text-sm leading-relaxed">{vehicle.cars.address || 'Not provided'}</p>
+                              </div>
+                            </div>
+                          );
+                        }
+                        
+                        // All other cases handled below
                         if (sellerStatus.status === 'declined') {
                           return (
                             <div className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-lg border border-red-200 text-center h-full flex flex-col justify-center">
