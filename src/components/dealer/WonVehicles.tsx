@@ -91,8 +91,8 @@ export const WonVehicles = () => {
     try {
       console.log('Fetching won vehicles for current dealer');
       
-      // Enhanced query to include seller decision data and full car details
-      const { data, error } = await supabase
+      // First query: Get dealer won vehicles with car details
+      const { data: wonVehiclesData, error: vehiclesError } = await supabase
         .from('dealer_won_vehicles')
         .select(`
           *,
@@ -112,33 +112,50 @@ export const WonVehicles = () => {
             service_history_type,
             is_damaged,
             seat_material
-          ),
-          seller_bid_decisions:seller_bid_decisions!car_id (
-            decision,
-            decided_at
           )
         `)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
+      if (vehiclesError) {
+        console.error('Supabase error:', vehiclesError);
+        throw vehiclesError;
       }
       
-      console.log('Raw data from Supabase:', data);
+      console.log('Won vehicles data:', wonVehiclesData);
+      
+      // Get car IDs for seller decisions query
+      const carIds = wonVehiclesData?.map((item: any) => item.car_id) || [];
+      
+      // Second query: Get seller decisions for these cars
+      let sellerDecisionsData: any[] = [];
+      if (carIds.length > 0) {
+        const { data, error: decisionsError } = await supabase
+          .from('seller_bid_decisions')
+          .select('car_id, decision, decided_at')
+          .in('car_id', carIds);
+        
+        if (decisionsError) {
+          console.error('Seller decisions error:', decisionsError);
+          // Don't throw here, just log - we can still show vehicles without decisions
+        } else {
+          sellerDecisionsData = data || [];
+        }
+      }
+      
+      console.log('Seller decisions data:', sellerDecisionsData);
       
       // Process data safely with proper type checking
       const processedData: WonVehicle[] = [];
       
-      if (Array.isArray(data)) {
+      if (Array.isArray(wonVehiclesData)) {
         // Filter valid items first, then process them
-        const validItems = data.filter(isValidWonVehicleData);
+        const validItems = wonVehiclesData.filter(isValidWonVehicleData);
         
-        validItems.forEach((item) => {
-          // Extract seller decision data
-          const sellerDecisionData = Array.isArray(item.seller_bid_decisions) && item.seller_bid_decisions.length > 0 
-            ? item.seller_bid_decisions[0] 
-            : null;
+        validItems.forEach((item: any) => {
+          // Find matching seller decision
+          const sellerDecisionData = sellerDecisionsData.find(
+            (decision: any) => decision.car_id === item.car_id
+          ) || null;
 
           // Create a safe vehicle object with all required properties using new columns
           const vehicle: WonVehicle = {
@@ -282,35 +299,46 @@ export const WonVehicles = () => {
     try {
       setRefreshingPayment(vehicleId);
       
-      const { data, error } = await supabase.functions.invoke('verify-payment-status', {
-        body: {
-          vehicleId
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.success && data?.seller_details_unlocked) {
-        // Refresh the vehicles list to show updated payment status
-        await fetchWonVehicles();
+      // Simply refresh the vehicles data to get updated seller decisions
+      await fetchWonVehicles();
+      
+      // Find the updated vehicle to check its status
+      const updatedVehicle = wonVehicles.find(v => v.id === vehicleId);
+      
+      if (updatedVehicle) {
+        const sellerStatus = getSellerDecisionStatus(updatedVehicle);
         
-        toast({
-          title: "Payment Verified!",
-          description: "Payment status has been updated and seller details are now unlocked.",
-          variant: "default",
-        });
+        if (sellerStatus.status === 'accepted') {
+          toast({
+            title: "Seller Decision Updated!",
+            description: "The seller has accepted your bid. You can now proceed with payment.",
+            variant: "default",
+          });
+        } else if (sellerStatus.status === 'declined') {
+          toast({
+            title: "Seller Decision Updated",
+            description: "Unfortunately, the seller has declined your bid.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Status Refreshed",
+            description: "Still awaiting seller decision. We'll notify you once the seller responds.",
+            variant: "default",
+          });
+        }
       } else {
         toast({
-          title: "Payment Still Pending",
-          description: "Payment verification could not confirm a successful payment. Please try again later or contact support.",
-          variant: "destructive",
+          title: "Status Refreshed",
+          description: "Vehicle data has been updated.",
+          variant: "default",
         });
       }
     } catch (error) {
-      console.error('Error refreshing payment status:', error);
+      console.error('Error refreshing status:', error);
       toast({
-        title: "Verification Error",
-        description: "Could not verify payment status. Please try again or contact support.",
+        title: "Refresh Error",
+        description: "Could not refresh status. Please try again.",
         variant: "destructive",
       });
     } finally {
