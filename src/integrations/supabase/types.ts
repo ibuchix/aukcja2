@@ -1816,6 +1816,10 @@ export type Database = {
         Args: { email_to_check: string }
         Returns: Json
       }
+      check_email_exists_for_dealer_role: {
+        Args: { p_email: string }
+        Returns: Json
+      }
       check_seller_exists: {
         Args: { p_user_id: string }
         Returns: Json

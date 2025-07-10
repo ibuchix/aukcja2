@@ -1,5 +1,5 @@
 
-import { validateEmail, safeTrim, checkAccountExists } from "./validation";
+import { validateEmail, safeTrim } from "./validation";
 import { 
   SignUpResult, 
   UserMetadata
@@ -24,15 +24,8 @@ export const signUpDealerWithEmail = async (
       return { success: false, error: emailValidation.error };
     }
 
-    // Check if email already exists before proceeding
-    const emailExists = await checkAccountExists(email, true);
-    if (emailExists) {
-      console.warn(`Email ${email} already exists, stopping signup process`);
-      return {
-        success: false,
-        error: "An account with this email already exists. Please use a different email or login to your existing account."
-      };
-    }
+    // Note: Email existence check is now handled by the edge function
+    // This prevents race conditions and inconsistencies
 
     // Use consistent password preparation
     const cleanedPassword = preparePassword(password);
