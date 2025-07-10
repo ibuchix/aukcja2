@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useBidFormActions } from "./useBidFormActions";
 
 interface UseBidFormProps {
@@ -15,12 +15,9 @@ export const useBidForm = ({
   currentHighestBid,
   minimumIncrement,
 }: UseBidFormProps) => {
-  const [bidAmount, setBidAmount] = useState<string>((currentHighestBid + minimumIncrement).toString());
+  const [bidAmount, setBidAmount] = useState<string>("");
   
-  // Update bid amount when current highest bid or minimum increment changes
-  useEffect(() => {
-    setBidAmount((currentHighestBid + minimumIncrement).toString());
-  }, [currentHighestBid, minimumIncrement]);
+  // No automatic bid amount setting - let dealers enter their desired amount
   
   const { isSubmitting, handlePlaceBid } = useBidFormActions({
     carId,
@@ -28,8 +25,8 @@ export const useBidForm = ({
     currentHighestBid,
     minimumIncrement,
     onBidPlaced: (amount) => {
-      // Update the bid amount input field to be the current + minimum increment
-      setBidAmount((amount + minimumIncrement).toString());
+      // Clear the bid amount after successful bid
+      setBidAmount("");
     }
   });
 

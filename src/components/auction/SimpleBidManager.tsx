@@ -50,9 +50,6 @@ export const SimpleBidManager = ({
     );
   }
 
-  // Only requirement is that bid must be higher than current highest bid
-  const minBidAmount = currentHighestBid + minimumIncrement;
-
   const handlePlaceBid = async () => {
     if (isSubmitting) return;
 
@@ -67,10 +64,10 @@ export const SimpleBidManager = ({
       return;
     }
 
-    if (numericBidAmount <= currentHighestBid) {
+    if (numericBidAmount <= 0) {
       toast({
-        title: "Bid too low",
-        description: `Your bid must be higher than the current bid of ${formatCurrency(currentHighestBid)}`,
+        title: "Invalid bid amount",
+        description: "Bid amount must be greater than 0",
         variant: "destructive",
       });
       return;
@@ -122,10 +119,10 @@ export const SimpleBidManager = ({
         <div className="space-y-4">
           <div>
             <p className="text-sm text-muted-foreground mb-2">
-              Current highest bid: <span className="font-semibold">{formatCurrency(currentHighestBid)}</span>
+              Latest bid: <span className="font-semibold">{formatCurrency(currentHighestBid)}</span>
             </p>
             <p className="text-xs text-muted-foreground">
-              Your bid must be higher than {formatCurrency(currentHighestBid)}
+              Enter any amount you're willing to pay for this vehicle
             </p>
             {reservePrice && (
               <p className="text-xs text-muted-foreground">
@@ -143,16 +140,16 @@ export const SimpleBidManager = ({
               type="number"
               value={bidAmount}
               onChange={(e) => setBidAmount(e.target.value)}
-              min={currentHighestBid + 1}
+              min="1"
               step="1"
-              placeholder={`Enter amount (minimum ${formatCurrency(minBidAmount)})`}
+              placeholder="Enter your bid amount (PLN)"
               disabled={isSubmitting}
             />
           </div>
 
           <Button
             onClick={handlePlaceBid}
-            disabled={isSubmitting || !bidAmount || parseFloat(bidAmount) <= currentHighestBid}
+            disabled={isSubmitting || !bidAmount || parseFloat(bidAmount) <= 0}
             className="w-full"
           >
             {isSubmitting ? "Placing Bid..." : "Place Bid"}

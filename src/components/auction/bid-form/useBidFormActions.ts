@@ -86,8 +86,8 @@ export const useBidFormActions = ({
         throw new Error("Please enter a valid number");
       }
 
-      if (numericBidAmount <= currentHighestBid) {
-        throw new Error(`Bid must be higher than current bid of ${currentHighestBid.toLocaleString()} PLN`);
+      if (numericBidAmount <= 0) {
+        throw new Error("Bid amount must be greater than 0");
       }
 
       // Call the simplified place_bid function
