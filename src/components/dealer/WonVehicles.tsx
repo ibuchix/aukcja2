@@ -98,12 +98,19 @@ export const WonVehicles = () => {
         .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
-      if (dealerError || !dealerProfile) {
+      if (dealerError || !dealerProfile || !('id' in dealerProfile)) {
         console.error('Error getting dealer profile:', dealerError);
         return;
       }
 
       console.log('Dealer profile:', dealerProfile);
+      
+      // Type safety check - ensure dealerProfile has an id
+      const dealerId = dealerProfile.id as string;
+      if (!dealerId) {
+        console.error('Dealer profile missing ID');
+        return;
+      }
 
       // First query: Get confirmed won vehicles from dealer_won_vehicles table
       const { data: wonVehiclesData, error: vehiclesError } = await supabase
@@ -143,60 +150,75 @@ export const WonVehicles = () => {
         .select('*')
         .eq('awaiting_seller_decision', true);
 
-      if (!pendingError && pendingCars) {
+      if (!pendingError && Array.isArray(pendingCars)) {
         console.log('Found pending cars:', pendingCars);
         
         // Check which of these have winning bids from this dealer
-        for (const car of pendingCars) {
-          // Type safety check for car object
-          if (!car || typeof car !== 'object' || !(car as any)?.id) continue;
-          
-          const { data: dealerBids, error: bidsError } = await supabase
-            .from('bids')
-            .select('dealer_id, amount, status, created_at')
-            .eq('car_id', (car as any).id)
-            .eq('dealer_id', dealerProfile.id)
-            .eq('status', 'active')
-            .order('amount', { ascending: false })
-            .limit(1);
+        for (const carItem of pendingCars) {
+          try {
+            // Type safety check for car object
+            if (!carItem || typeof carItem !== 'object') continue;
+            
+            // Cast to any to safely access properties
+            const car = carItem as any;
+            
+            // Check if car has required properties
+            if (!car?.id || typeof car.id !== 'string') continue;
+            
+            const { data: dealerBids, error: bidsError } = await supabase
+              .from('bids')
+              .select('dealer_id, amount, status, created_at')
+              .eq('car_id', car.id)
+              .eq('dealer_id', dealerId)
+              .eq('status', 'active')
+              .order('amount', { ascending: false })
+              .limit(1);
 
-          if (!bidsError && Array.isArray(dealerBids) && dealerBids.length > 0) {
-            const dealerBid = dealerBids[0];
-            // Check if this dealer's bid is the current highest bid
-            if (dealerBid && 
-                (dealerBid as any)?.amount === (car as any)?.current_bid) {
+            if (!bidsError && Array.isArray(dealerBids) && dealerBids.length > 0) {
+              const bidItem = dealerBids[0];
               
-              console.log('Found pending win for car:', (car as any).id, 'bid amount:', (dealerBid as any).amount);
-              
-              // Create a pending won vehicle entry
-              const pendingWonVehicle: any = {
-                id: `pending-${(car as any).id}`,
-                car_id: (car as any).id,
-                auction_end_time: (car as any).auction_end_time || '',
-                winning_bid_amount: (dealerBid as any).amount,
-                original_bid_amount: (dealerBid as any).amount,
-                second_highest_bid: null,
-                platform_fee: 0,
-                payment_status: 'awaiting_seller_decision' as const,
-                payment_date: null,
-                seller_details_unlocked: false,
-                vehicle_make: (car as any).make || 'Unknown',
-                vehicle_model: (car as any).model || 'Unknown',
-                vehicle_year: (car as any).year || 2000,
-                vehicle_mileage: (car as any).mileage || null,
-                vehicle_images: Array.isArray((car as any).images) ? (car as any).images : [],
-                cars: {
-                  seller_name: (car as any).seller_name,
-                  mobile_number: (car as any).mobile_number,
-                  address: (car as any).address,
+              // Type safety check for bid data
+              if (bidItem && 
+                  typeof bidItem === 'object' && 
+                  typeof (bidItem as any).amount === 'number' &&
+                  (bidItem as any).amount === car.current_bid) {
+                
+                const dealerBid = bidItem as any;
+                console.log('Found pending win for car:', car.id, 'bid amount:', dealerBid.amount);
+                
+                // Create a pending won vehicle entry
+                const pendingWonVehicle: any = {
+                  id: `pending-${car.id}`,
+                  car_id: car.id,
+                  auction_end_time: car.auction_end_time || '',
+                  winning_bid_amount: dealerBid.amount,
+                  original_bid_amount: dealerBid.amount,
+                  second_highest_bid: null,
+                  platform_fee: 0,
+                  payment_status: 'awaiting_seller_decision' as const,
+                  payment_date: null,
+                  seller_details_unlocked: false,
+                  vehicle_make: car.make || 'Unknown',
+                  vehicle_model: car.model || 'Unknown',
+                  vehicle_year: car.year || 2000,
+                  vehicle_mileage: car.mileage || null,
+                  vehicle_images: Array.isArray(car.images) ? car.images : [],
+                  cars: {
+                    seller_name: car.seller_name,
+                    mobile_number: car.mobile_number,
+                    address: car.address,
+                  }
+                };
+                
+                // Add pending vehicle to the beginning of the array
+                if (Array.isArray(wonVehiclesData)) {
+                  wonVehiclesData.unshift(pendingWonVehicle);
                 }
-              };
-              
-              // Add pending vehicle to the beginning of the array
-              if (Array.isArray(wonVehiclesData)) {
-                wonVehiclesData.unshift(pendingWonVehicle);
               }
             }
+          } catch (innerError) {
+            console.error('Error processing pending car:', innerError);
+            continue;
           }
         }
       }
