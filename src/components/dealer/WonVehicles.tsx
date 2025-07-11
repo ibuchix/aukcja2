@@ -18,7 +18,7 @@ interface WonVehicle {
   original_bid_amount: number;
   second_highest_bid: number | null;
   platform_fee: number;
-  payment_status: 'pending' | 'paid' | 'failed';
+  payment_status: 'pending' | 'paid' | 'failed' | 'awaiting_seller_decision';
   payment_date: string | null;
   seller_details_unlocked: boolean;
   vehicle_make: string;
@@ -91,7 +91,21 @@ export const WonVehicles = () => {
     try {
       console.log('Fetching won vehicles for current dealer');
       
-      // First query: Get dealer won vehicles with car details
+      // Get current dealer profile first
+      const { data: dealerProfile, error: dealerError } = await supabase
+        .from('dealers')
+        .select('id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (dealerError || !dealerProfile) {
+        console.error('Error getting dealer profile:', dealerError);
+        return;
+      }
+
+      console.log('Dealer profile:', dealerProfile);
+
+      // First query: Get confirmed won vehicles from dealer_won_vehicles table
       const { data: wonVehiclesData, error: vehiclesError } = await supabase
         .from('dealer_won_vehicles')
         .select(`
@@ -122,6 +136,72 @@ export const WonVehicles = () => {
       }
       
       console.log('Won vehicles data:', wonVehiclesData);
+
+      // Second query: Get pending won vehicles (where dealer has winning bid but awaiting seller decision)
+      const { data: pendingCars, error: pendingError } = await supabase
+        .from('cars')
+        .select('*')
+        .eq('awaiting_seller_decision', true);
+
+      if (!pendingError && pendingCars) {
+        console.log('Found pending cars:', pendingCars);
+        
+        // Check which of these have winning bids from this dealer
+        for (const car of pendingCars) {
+          // Type safety check for car object
+          if (!car || typeof car !== 'object' || !(car as any)?.id) continue;
+          
+          const { data: dealerBids, error: bidsError } = await supabase
+            .from('bids')
+            .select('dealer_id, amount, status, created_at')
+            .eq('car_id', (car as any).id)
+            .eq('dealer_id', dealerProfile.id)
+            .eq('status', 'active')
+            .order('amount', { ascending: false })
+            .limit(1);
+
+          if (!bidsError && Array.isArray(dealerBids) && dealerBids.length > 0) {
+            const dealerBid = dealerBids[0];
+            // Check if this dealer's bid is the current highest bid
+            if (dealerBid && 
+                (dealerBid as any)?.amount === (car as any)?.current_bid) {
+              
+              console.log('Found pending win for car:', (car as any).id, 'bid amount:', (dealerBid as any).amount);
+              
+              // Create a pending won vehicle entry
+              const pendingWonVehicle: any = {
+                id: `pending-${(car as any).id}`,
+                car_id: (car as any).id,
+                auction_end_time: (car as any).auction_end_time || '',
+                winning_bid_amount: (dealerBid as any).amount,
+                original_bid_amount: (dealerBid as any).amount,
+                second_highest_bid: null,
+                platform_fee: 0,
+                payment_status: 'awaiting_seller_decision' as const,
+                payment_date: null,
+                seller_details_unlocked: false,
+                vehicle_make: (car as any).make || 'Unknown',
+                vehicle_model: (car as any).model || 'Unknown',
+                vehicle_year: (car as any).year || 2000,
+                vehicle_mileage: (car as any).mileage || null,
+                vehicle_images: Array.isArray((car as any).images) ? (car as any).images : [],
+                cars: {
+                  seller_name: (car as any).seller_name,
+                  mobile_number: (car as any).mobile_number,
+                  address: (car as any).address,
+                }
+              };
+              
+              // Add pending vehicle to the beginning of the array
+              if (Array.isArray(wonVehiclesData)) {
+                wonVehiclesData.unshift(pendingWonVehicle);
+              }
+            }
+          }
+        }
+      }
+      
+      console.log('Final won vehicles data (including pending):', wonVehiclesData);
       
       // Get car IDs for seller decisions query
       const carIds = wonVehiclesData?.map((item: any) => item.car_id) || [];
@@ -166,7 +246,7 @@ export const WonVehicles = () => {
             original_bid_amount: item.original_bid_amount || 0,
             second_highest_bid: item.second_highest_bid || null,
             platform_fee: calculatePlatformFee(item.winning_bid_amount),
-            payment_status: (item.payment_status as 'pending' | 'paid' | 'failed') || 'pending',
+            payment_status: (item.payment_status as 'pending' | 'paid' | 'failed' | 'awaiting_seller_decision') || 'pending',
             payment_date: item.payment_date || null,
             seller_details_unlocked: item.seller_details_unlocked || false,
             vehicle_make: item.vehicle_make || 'Unknown',

@@ -507,6 +507,8 @@ export type Database = {
           awaiting_seller_decision: boolean
           created_at: string
           current_bid: number | null
+          email_notification_sent: boolean | null
+          email_sent_at: string | null
           features: Json | null
           finance_amount: number | null
           form_metadata: Json | null
@@ -551,6 +553,8 @@ export type Database = {
           awaiting_seller_decision?: boolean
           created_at?: string
           current_bid?: number | null
+          email_notification_sent?: boolean | null
+          email_sent_at?: string | null
           features?: Json | null
           finance_amount?: number | null
           form_metadata?: Json | null
@@ -595,6 +599,8 @@ export type Database = {
           awaiting_seller_decision?: boolean
           created_at?: string
           current_bid?: number | null
+          email_notification_sent?: boolean | null
+          email_sent_at?: string | null
           features?: Json | null
           finance_amount?: number | null
           form_metadata?: Json | null
@@ -1703,6 +1709,8 @@ export type Database = {
           awaiting_seller_decision: boolean
           created_at: string
           current_bid: number | null
+          email_notification_sent: boolean | null
+          email_sent_at: string | null
           features: Json | null
           finance_amount: number | null
           form_metadata: Json | null
@@ -1767,6 +1775,8 @@ export type Database = {
           awaiting_seller_decision: boolean
           created_at: string
           current_bid: number | null
+          email_notification_sent: boolean | null
+          email_sent_at: string | null
           features: Json | null
           finance_amount: number | null
           form_metadata: Json | null
@@ -2088,6 +2098,8 @@ export type Database = {
           awaiting_seller_decision: boolean
           created_at: string
           current_bid: number | null
+          email_notification_sent: boolean | null
+          email_sent_at: string | null
           features: Json | null
           finance_amount: number | null
           form_metadata: Json | null
@@ -2135,6 +2147,8 @@ export type Database = {
           awaiting_seller_decision: boolean
           created_at: string
           current_bid: number | null
+          email_notification_sent: boolean | null
+          email_sent_at: string | null
           features: Json | null
           finance_amount: number | null
           form_metadata: Json | null
