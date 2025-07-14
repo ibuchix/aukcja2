@@ -11,7 +11,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   signIn: (credentials: { email: string; password: string; redirectTo?: string }) => 
     Promise<{ success: boolean; error?: string }>;
-  signOut: () => Promise<void>;
+  signOut: () => Promise<{ success: boolean; error?: string }>;
   refreshSession: () => Promise<void>;
 }
 
@@ -24,7 +24,7 @@ export const defaultContextValue: AuthContextType = {
   isInitialized: false, // Default to not initialized
   isAuthenticated: false,
   signIn: async () => ({ success: false, error: "Auth context not initialized" }),
-  signOut: async () => { throw new Error("Auth context not initialized") },
+  signOut: async () => ({ success: false, error: "Auth context not initialized" }),
   refreshSession: async () => { throw new Error("Auth context not initialized") }
 };
 

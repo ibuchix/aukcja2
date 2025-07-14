@@ -1,6 +1,7 @@
 
 import { useAuthInitializer } from "./hooks/useAuthInitializer";
 import { useAuthStateListener } from "./hooks/useAuthStateListener";
+import { useAuthMonitor } from "@/hooks/useAuthMonitor";
 import { useState, useEffect } from "react";
 
 /**
@@ -25,6 +26,9 @@ export function useAuthState() {
 
   // Set up auth state change listener
   useAuthStateListener(setSession, setUser, setProfile, setIsLoading);
+  
+  // Monitor session health
+  useAuthMonitor();
   
   // Mark as initialized when initialization is complete
   useEffect(() => {

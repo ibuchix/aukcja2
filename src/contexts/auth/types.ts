@@ -9,7 +9,7 @@ export type AuthContextType = {
   isLoading: boolean;
   isInitialized: boolean; // Add the isInitialized property
   isAuthenticated: boolean;
-  signOut: () => Promise<void>;
+  signOut: () => Promise<{ success: boolean; error?: string }>;
   refreshSession: () => Promise<void>;
   signIn: (options: { 
     email: string;
@@ -26,7 +26,7 @@ export const defaultContextValue: AuthContextType = {
   isLoading: false,
   isInitialized: false, // Add the isInitialized property with a default value
   isAuthenticated: false,
-  signOut: async () => {},
+  signOut: async () => ({ success: false, error: "Auth context not initialized" }),
   refreshSession: async () => {},
   signIn: async () => ({ success: false, error: "Auth context not initialized" })
 };

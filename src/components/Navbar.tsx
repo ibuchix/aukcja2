@@ -40,48 +40,44 @@ export default function Navbar() {
     };
   }, []);
 
-  // Simplified logout with immediate action and fallback navigation
+  // Enhanced logout with session validation and cleanup
   const handleLogout = async () => {
     try {
-      console.log("🚪 Logout button clicked - starting immediate logout");
+      console.log("🚪 Logout button clicked - starting enhanced logout");
       
-      // Call Supabase signOut directly for immediate action
-      const { error } = await supabase.auth.signOut();
+      // Use the auth context signOut which now has proper session validation
+      const result = await signOut();
       
-      if (error) {
-        console.error("❌ Supabase signOut error:", error);
+      if (result.success) {
+        console.log("✅ Context signOut successful");
+        
+        // Show success toast
+        toast({
+          title: "Logged out successfully",
+          description: "You have been signed out",
+        });
+        
+        // Navigate to auth page
+        console.log("🚀 Navigating to auth page");
+        navigate("/auth", { replace: true });
+      } else {
+        console.error("❌ Context signOut failed:", result.error);
         toast({
           title: "Logout failed",
-          description: error.message,
+          description: result.error || "Failed to sign out",
           variant: "destructive",
         });
-        return;
       }
-      
-      console.log("✅ Supabase signOut successful");
-      
-      // Show success toast
-      toast({
-        title: "Logged out successfully",
-        description: "You have been signed out",
-      });
-      
-      // Immediate navigation to auth page
-      console.log("🚀 Navigating to auth page immediately");
-      navigate("/auth", { replace: true });
-      
-      // Also call the context signOut for cleanup (but don't wait for it)
-      signOut().catch(err => {
-        console.warn("Context signOut error (non-critical):", err);
-      });
       
     } catch (error) {
       console.error("❌ Logout exception:", error);
+      
+      // Even on error, try to navigate to auth page for safety
       toast({
-        title: "Logout failed",
-        description: "There was an error signing you out",
-        variant: "destructive",
+        title: "Logout completed",
+        description: "You have been signed out (with cleanup)",
       });
+      navigate("/auth", { replace: true });
     }
   };
 
