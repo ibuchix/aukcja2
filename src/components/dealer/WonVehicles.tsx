@@ -18,7 +18,7 @@ interface WonVehicle {
   original_bid_amount: number;
   second_highest_bid: number | null;
   platform_fee: number;
-  payment_status: 'pending' | 'paid' | 'failed' | 'awaiting_seller_decision';
+  payment_status: 'pending' | 'paid' | 'failed' | 'awaiting_seller_decision' | 'payment_required';
   payment_date: string | null;
   seller_details_unlocked: boolean;
   vehicle_make: string;
@@ -91,28 +91,7 @@ export const WonVehicles = () => {
     try {
       console.log('Fetching won vehicles for current dealer');
       
-      // Get current dealer profile first
-      const { data: dealerProfile, error: dealerError } = await supabase
-        .from('dealers')
-        .select('id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (dealerError || !dealerProfile || !('id' in dealerProfile)) {
-        console.error('Error getting dealer profile:', dealerError);
-        return;
-      }
-
-      console.log('Dealer profile:', dealerProfile);
-      
-      // Type safety check - ensure dealerProfile has an id
-      const dealerId = dealerProfile.id as string;
-      if (!dealerId) {
-        console.error('Dealer profile missing ID');
-        return;
-      }
-
-      // First query: Get confirmed won vehicles from dealer_won_vehicles table
+      // Simplified: Get all won vehicles directly from dealer_won_vehicles table
       const { data: wonVehiclesData, error: vehiclesError } = await supabase
         .from('dealer_won_vehicles')
         .select(`
@@ -143,114 +122,26 @@ export const WonVehicles = () => {
       }
       
       console.log('Won vehicles data:', wonVehiclesData);
-
-      // Second query: Get pending won vehicles (where dealer has winning bid but awaiting seller decision)
-      const { data: pendingCars, error: pendingError } = await supabase
-        .from('cars')
-        .select('*')
-        .eq('awaiting_seller_decision', true);
-
-      if (!pendingError && Array.isArray(pendingCars)) {
-        console.log('Found pending cars:', pendingCars);
-        
-        // Check which of these have winning bids from this dealer
-        for (const carItem of pendingCars) {
-          try {
-            // Type safety check for car object
-            if (!carItem || typeof carItem !== 'object') continue;
-            
-            // Cast to any to safely access properties
-            const car = carItem as any;
-            
-            // Check if car has required properties
-            if (!car?.id || typeof car.id !== 'string') continue;
-            
-            const { data: dealerBids, error: bidsError } = await supabase
-              .from('bids')
-              .select('dealer_id, amount, status, created_at')
-              .eq('car_id', car.id)
-              .eq('dealer_id', dealerId)
-              .eq('status', 'active')
-              .order('amount', { ascending: false })
-              .limit(1);
-
-            if (!bidsError && Array.isArray(dealerBids) && dealerBids.length > 0) {
-              const bidItem = dealerBids[0];
-              
-              // Type safety check for bid data
-              if (bidItem && 
-                  typeof bidItem === 'object' && 
-                  typeof (bidItem as any).amount === 'number' &&
-                  (bidItem as any).amount === car.current_bid) {
-                
-                const dealerBid = bidItem as any;
-                console.log('Found pending win for car:', car.id, 'bid amount:', dealerBid.amount);
-                
-                // Create a pending won vehicle entry
-                const pendingWonVehicle: any = {
-                  id: `pending-${car.id}`,
-                  car_id: car.id,
-                  auction_end_time: car.auction_end_time || '',
-                  winning_bid_amount: dealerBid.amount,
-                  original_bid_amount: dealerBid.amount,
-                  second_highest_bid: null,
-                  platform_fee: 0,
-                  payment_status: 'awaiting_seller_decision' as const,
-                  payment_date: null,
-                  seller_details_unlocked: false,
-                  vehicle_make: car.make || 'Unknown',
-                  vehicle_model: car.model || 'Unknown',
-                  vehicle_year: car.year || 2000,
-                  vehicle_mileage: car.mileage || null,
-                  vehicle_images: Array.isArray(car.images) ? car.images : [],
-                  cars: {
-                    seller_name: car.seller_name,
-                    mobile_number: car.mobile_number,
-                    address: car.address,
-                  }
-                };
-                
-                // Add pending vehicle to the beginning of the array
-                if (Array.isArray(wonVehiclesData)) {
-                  wonVehiclesData.unshift(pendingWonVehicle);
-                }
-              }
-            }
-          } catch (innerError) {
-            console.error('Error processing pending car:', innerError);
-            continue;
-          }
-        }
-      }
       
-      console.log('Final won vehicles data (including pending):', wonVehiclesData);
-      
-      // Get car IDs for seller decisions query
+      // Get seller decisions for these cars
       const carIds = wonVehiclesData?.map((item: any) => item.car_id) || [];
-      
-      // Second query: Get seller decisions for these cars
       let sellerDecisionsData: any[] = [];
+      
       if (carIds.length > 0) {
         const { data, error: decisionsError } = await supabase
           .from('seller_bid_decisions')
           .select('car_id, decision, decided_at')
           .in('car_id', carIds);
         
-        if (decisionsError) {
-          console.error('Seller decisions error:', decisionsError);
-          // Don't throw here, just log - we can still show vehicles without decisions
-        } else {
+        if (!decisionsError) {
           sellerDecisionsData = data || [];
         }
       }
-      
-      console.log('Seller decisions data:', sellerDecisionsData);
       
       // Process data safely with proper type checking
       const processedData: WonVehicle[] = [];
       
       if (Array.isArray(wonVehiclesData)) {
-        // Filter valid items first, then process them
         const validItems = wonVehiclesData.filter(isValidWonVehicleData);
         
         validItems.forEach((item: any) => {
@@ -259,7 +150,12 @@ export const WonVehicles = () => {
             (decision: any) => decision.car_id === item.car_id
           ) || null;
 
-          // Create a safe vehicle object with all required properties using new columns
+          // Update payment status based on seller decision
+          let paymentStatus = item.payment_status;
+          if (sellerDecisionData?.decision === 'accepted' && paymentStatus === 'awaiting_seller_decision') {
+            paymentStatus = 'payment_required';
+          }
+
           const vehicle: WonVehicle = {
             id: item.id || '',
             car_id: item.car_id || '',
@@ -268,7 +164,7 @@ export const WonVehicles = () => {
             original_bid_amount: item.original_bid_amount || 0,
             second_highest_bid: item.second_highest_bid || null,
             platform_fee: calculatePlatformFee(item.winning_bid_amount),
-            payment_status: (item.payment_status as 'pending' | 'paid' | 'failed' | 'awaiting_seller_decision') || 'pending',
+            payment_status: paymentStatus as 'awaiting_seller_decision' | 'payment_required' | 'paid' | 'pending',
             payment_date: item.payment_date || null,
             seller_details_unlocked: item.seller_details_unlocked || false,
             vehicle_make: item.vehicle_make || 'Unknown',
@@ -276,10 +172,8 @@ export const WonVehicles = () => {
             vehicle_year: item.vehicle_year || 2000,
             vehicle_mileage: item.vehicle_mileage || null,
             vehicle_images: Array.isArray(item.vehicle_images) ? item.vehicle_images : [],
-            // Seller decision fields
             seller_decision: sellerDecisionData?.decision || null,
             seller_decided_at: sellerDecisionData?.decided_at || null,
-            // Enhanced car details
             car_details: {
               vin: item.cars?.vin,
               fuel_type: item.cars?.fuel_type,

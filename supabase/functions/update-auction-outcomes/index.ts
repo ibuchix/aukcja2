@@ -186,7 +186,7 @@ const handler = async (req: Request): Promise<Response> => {
             .eq("car_id", auction.id)
             .neq("id", winningBid.id);
 
-          // Create dealer won vehicle record
+          // Create dealer won vehicle record immediately with awaiting seller decision status
           const { error: wonVehicleError } = await supabase
             .from("dealer_won_vehicles")
             .insert({
@@ -197,7 +197,7 @@ const handler = async (req: Request): Promise<Response> => {
               second_highest_bid: secondHighestBid?.[0]?.amount || null,
               platform_fee: 0, // Will be calculated later
               auction_end_time: now,
-              payment_status: "pending",
+              payment_status: "awaiting_seller_decision",
               seller_details_unlocked: false,
               vehicle_make: auction.make || "",
               vehicle_model: auction.model || "",
