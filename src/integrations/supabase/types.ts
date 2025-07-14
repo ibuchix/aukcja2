@@ -1867,10 +1867,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
-      complete_scheduled_auctions: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
       create_admin_user: {
         Args: { p_user_id: string; p_full_name?: string }
         Returns: boolean
@@ -1907,10 +1903,6 @@ export type Database = {
           p_valuation_data?: Json
           p_duration_minutes?: number
         }
-        Returns: Json
-      }
-      debug_admin_context: {
-        Args: Record<PropertyKey, never>
         Returns: Json
       }
       debug_auction_schedules_access: {
@@ -2210,12 +2202,8 @@ export type Database = {
         Args: { p_vin: string; p_mileage: number; p_log_id?: string }
         Returns: Json
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_current_user_admin: {
-        Args: Record<PropertyKey, never>
+      is_admin_user: {
+        Args: { user_id?: string }
         Returns: boolean
       }
       is_dealer: {
@@ -2317,10 +2305,6 @@ export type Database = {
         Args: { p_uploads: Json }
         Returns: boolean
       }
-      start_scheduled_auctions: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
       store_vin_valuation_cache: {
         Args: { p_vin: string; p_mileage: number; p_valuation_data: Json }
         Returns: undefined
@@ -2328,10 +2312,6 @@ export type Database = {
       sync_auction_results_with_seller_decisions: {
         Args: Record<PropertyKey, never>
         Returns: undefined
-      }
-      test_admin_access: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
       }
       test_admin_policies: {
         Args: Record<PropertyKey, never>
