@@ -444,13 +444,6 @@ export type Database = {
             referencedRelation: "cars"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "bids_dealer_id_fkey"
-            columns: ["dealer_id"]
-            isOneToOne: false
-            referencedRelation: "dealers"
-            referencedColumns: ["id"]
-          },
         ]
       }
       car_file_uploads: {
@@ -1469,13 +1462,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "cars"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "seller_bid_decisions_seller_id_fkey"
-            columns: ["seller_id"]
-            isOneToOne: false
-            referencedRelation: "sellers"
-            referencedColumns: ["user_id"]
           },
         ]
       }
