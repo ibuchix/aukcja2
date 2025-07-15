@@ -61,6 +61,8 @@ export interface Auction {
   is_manually_controlled?: boolean;
   auction_timing_status?: 'scheduled' | 'running' | 'ended' | 'unknown';
   auctionTimingStatus?: 'scheduled' | 'running' | 'ended' | 'unknown'; // Add camelCase version for consistency
+  biddingAllowed?: boolean; // Whether bidding is currently allowed
+  timeDisplay?: string; // Human-readable time until start/end
 }
 
 export interface DealerAuctionBrowserProps {

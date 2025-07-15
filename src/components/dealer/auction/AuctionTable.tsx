@@ -66,12 +66,23 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
               </div>
             </div>
             
-            <AuctionScheduleInfo
-              scheduleStatus={auction.schedule_status}
-              scheduleStartTime={auction.schedule_start_time}
-              scheduleEndTime={auction.schedule_end_time}
-              auctionTimingStatus={auction.auctionTimingStatus}
-            />
+            <div className="mb-2">
+              <AuctionScheduleInfo
+                scheduleStatus={auction.schedule_status}
+                scheduleStartTime={auction.schedule_start_time}
+                scheduleEndTime={auction.schedule_end_time}
+                auctionTimingStatus={auction.auctionTimingStatus}
+              />
+              {auction.timeDisplay && (
+                <div className={`text-sm font-medium ${
+                  auction.auctionTimingStatus === 'running' ? 'text-orange-600' :
+                  auction.auctionTimingStatus === 'scheduled' ? 'text-blue-600' :
+                  'text-muted-foreground'
+                }`}>
+                  {auction.timeDisplay}
+                </div>
+              )}
+            </div>
             
             <div className="flex space-x-2 mt-3">
               <Button variant="outline" size="sm" asChild className="flex-1">
@@ -112,12 +123,23 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
                 <div className="text-sm text-muted-foreground">
                   {auction.title}
                 </div>
-                <AuctionScheduleInfo
-                  scheduleStatus={auction.schedule_status}
-                  scheduleStartTime={auction.schedule_start_time}
-                  scheduleEndTime={auction.schedule_end_time}
-                  auctionTimingStatus={auction.auctionTimingStatus}
-                />
+                <div className="space-y-1">
+                  <AuctionScheduleInfo
+                    scheduleStatus={auction.schedule_status}
+                    scheduleStartTime={auction.schedule_start_time}
+                    scheduleEndTime={auction.schedule_end_time}
+                    auctionTimingStatus={auction.auctionTimingStatus}
+                  />
+                  {auction.timeDisplay && (
+                    <div className={`text-sm font-medium ${
+                      auction.auctionTimingStatus === 'running' ? 'text-orange-600' :
+                      auction.auctionTimingStatus === 'scheduled' ? 'text-blue-600' :
+                      'text-muted-foreground'
+                    }`}>
+                      {auction.timeDisplay}
+                    </div>
+                  )}
+                </div>
               </div>
             </TableCell>
             <TableCell>
@@ -142,19 +164,35 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
                 "No bid"
               )}
             </TableCell>
-            <TableCell className="capitalize">
-              {auction.auction_status === "sold" ? (
-                <span className="text-success font-medium">Sold</span>
-              ) : auction.auction_status === "reserve_not_met" ? (
-                <span className="text-destructive font-medium">Reserve not met</span>
-              ) : (
-                auction.auction_status
-              )}
-              {auction.lost_by && (
-                <div className="text-sm text-muted-foreground">
-                  Lost by ${auction.lost_by.toLocaleString()}
+            <TableCell>
+              <div className="space-y-1">
+                <div className={`font-medium capitalize ${
+                  auction.auctionTimingStatus === 'running' ? 'text-green-600' :
+                  auction.auctionTimingStatus === 'scheduled' ? 'text-blue-600' :
+                  auction.auctionTimingStatus === 'ended' ? 'text-gray-600' :
+                  'text-muted-foreground'
+                }`}>
+                  {auction.auctionTimingStatus === 'running' ? 'Live Auction' :
+                   auction.auctionTimingStatus === 'scheduled' ? 'Starting Soon' :
+                   auction.auctionTimingStatus === 'ended' ? 'Auction Ended' :
+                   auction.auction_status}
                 </div>
-              )}
+                {auction.biddingAllowed === false && auction.auctionTimingStatus === 'scheduled' && (
+                  <div className="text-xs text-muted-foreground">
+                    Bidding not yet available
+                  </div>
+                )}
+                {auction.lost_by && (
+                  <div className="text-sm text-muted-foreground">
+                    Lost by ${auction.lost_by.toLocaleString()}
+                  </div>
+                )}
+                {auction.reserve_met && auction.auctionTimingStatus === 'running' && (
+                  <div className="text-xs text-green-600 font-medium">
+                    Reserve met
+                  </div>
+                )}
+              </div>
             </TableCell>
             <TableCell>
               <div className="flex space-x-2">
