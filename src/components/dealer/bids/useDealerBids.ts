@@ -18,6 +18,8 @@ interface CarData {
   auction_end_time: string;
   current_bid: number;
   auction_status: string;
+  reserve_price: number;
+  awaiting_seller_decision: boolean;
 }
 
 interface BidData {
@@ -41,7 +43,6 @@ function isValidBidData(item: any): item is BidData {
 
 export function useDealerBids(dealerProfileId: string | undefined) {
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [realtimeInitialized, setRealtimeInitialized] = useState(false);
   const queryClient = useQueryClient();
 
   const queryKey = dealerProfileId 
@@ -63,53 +64,39 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       console.log('=== FETCHING DEALER BIDS ===');
       console.log('Fetching bids for dealer:', dealerProfileId);
 
-      // First, let's verify the dealer exists
-      const { data: dealerVerification, error: dealerError } = await supabase
-        .from("dealers")
-        .select("id, user_id, dealership_name, is_verified")
-        .eq("id", dealerProfileId)
-        .single();
-
-      console.log('Dealer verification:', { dealerVerification, dealerError });
-
-      if (dealerError || !dealerVerification) {
-        console.error('Dealer not found:', dealerError);
-        return [];
-      }
-
-      // Get all bids for this dealer
-      const { data: activeBids, error: bidsError } = await supabase
+      // Get all bids for this dealer (RLS will filter automatically)
+      const { data: dealerBids, error: bidsError } = await supabase
         .from("bids")
         .select(`
           id,
           car_id,
           amount,
           status,
-          created_at
+          created_at,
+          dealer_id
         `)
-        .eq("dealer_id", dealerProfileId)
         .order("created_at", { ascending: false });
 
-      console.log('Bids query result:', { activeBids, bidsError });
+      console.log('Bids query result:', { dealerBids, bidsError });
 
       if (bidsError) {
         console.error('Error fetching bids:', bidsError);
         throw bidsError;
       }
       
-      if (!activeBids || activeBids.length === 0) {
+      if (!dealerBids || dealerBids.length === 0) {
         console.log('No bids found for dealer');
         return [] as MyBid[];
       }
 
-      console.log('Found bids:', activeBids);
+      console.log('Found bids:', dealerBids);
 
-      // Filter to ensure we only have valid bids without errors
-      const validActiveBids = safelyFilterData(activeBids, isValidBidData);
-      console.log('Valid bids after filtering:', validActiveBids);
+      // Filter to ensure we only have valid bids
+      const validBids = safelyFilterData(dealerBids, isValidBidData);
+      console.log('Valid bids after filtering:', validBids);
 
       // Get car details for these bids
-      const carIds = validActiveBids.map(bid => bid.car_id).filter(Boolean);
+      const carIds = validBids.map(bid => bid.car_id).filter(Boolean);
       
       if (carIds.length === 0) {
         console.log('No valid car IDs found');
@@ -118,7 +105,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       
       console.log('Fetching car details for IDs:', carIds);
 
-      // Get cars without filtering by auction_status to show all bids
+      // Get cars data
       const { data: cars, error: carsError } = await supabase
         .from("cars")
         .select(`
@@ -129,7 +116,9 @@ export function useDealerBids(dealerProfileId: string | undefined) {
           year,
           auction_end_time,
           current_bid,
-          auction_status
+          auction_status,
+          reserve_price,
+          awaiting_seller_decision
         `)
         .in("id", carIds);
       
@@ -141,50 +130,73 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       }
       
       // Create a lookup table for cars
-      const carsById: Record<string, CarData> = {};
+      const carsById: Record<string, any> = {};
       
-      // Filter valid car records and populate the lookup
       if (cars && Array.isArray(cars)) {
         const validCars = safelyFilterData(cars, isValidCarData);
         console.log('Valid cars after filtering:', validCars);
         
         validCars.forEach(car => {
           if (car && car.id) {
-            carsById[car.id] = car as CarData;
+            carsById[car.id] = car;
           }
         });
       }
 
-      // Merge bids with car data (show all bids, not just active auctions)
-      const result = validActiveBids
+      // Calculate bid status based on auction state and current bid
+      const result = validBids
         .map(bid => {
-          if (!bid.car_id || !carsById[bid.car_id]) {
-            console.log('Skipping bid due to missing car:', bid);
-            return null; // Skip if bid is invalid or car not found
-          }
-          
           const car = carsById[bid.car_id];
           if (!car) {
             return null; // Skip if car not found
           }
           
-          const isOutbid = car && car.current_bid > bid.amount;
+          // Calculate auction timing status
+          const now = new Date();
+          const auctionEndTime = car.auction_end_time ? new Date(car.auction_end_time) : null;
+          
+          let auctionTimingStatus = 'unknown';
+          let bidStatus = bid.status || 'active';
+          
+          if (auctionEndTime) {
+            if (now > auctionEndTime) {
+              auctionTimingStatus = 'ended';
+              // Determine final bid status
+              if (car.current_bid >= car.reserve_price && car.current_bid === bid.amount) {
+                bidStatus = car.awaiting_seller_decision ? 'winning_pending' : 'won';
+              } else {
+                bidStatus = 'lost';
+              }
+            } else {
+              const hoursUntilEnd = (auctionEndTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+              if (hoursUntilEnd <= 24 && car.auction_status === 'active') {
+                auctionTimingStatus = 'running';
+                bidStatus = car.current_bid === bid.amount ? 'winning' : 'outbid';
+              } else {
+                auctionTimingStatus = 'scheduled';
+                bidStatus = 'active';
+              }
+            }
+          }
           
           const myBid: MyBid = {
-            id: `${bid.car_id}-${dealerProfileId}`, // Create a unique ID
+            id: bid.id,
             car_id: bid.car_id,
             amount: bid.amount,
-            status: isOutbid ? 'outbid' : 'active',
+            status: bidStatus,
             created_at: bid.created_at,
+            auctionTimingStatus,
             car: {
               id: car.id,
-              title: car.title,
+              title: car.title || `${car.year} ${car.make} ${car.model}`,
               make: car.make,
               model: car.model,
               year: car.year,
               auction_end_time: car.auction_end_time,
-              current_bid: car.current_bid,
-              auction_status: car.auction_status
+              current_bid: car.current_bid || 0,
+              auction_status: car.auction_status,
+              reserve_price: car.reserve_price,
+              awaiting_seller_decision: car.awaiting_seller_decision
             }
           };
           
@@ -205,7 +217,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
 
   // Set up realtime listeners for bid status changes
   useEffect(() => {
-    if (!dealerProfileId || !myBids || myBids.length === 0 || realtimeInitialized) return;
+    if (!dealerProfileId || !myBids || myBids.length === 0) return;
 
     // Set up realtime subscription for the dealer's bids
     const channel = supabase
@@ -213,29 +225,12 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'bids',
-          filter: `dealer_id=eq.${dealerProfileId}`,
         },
         (payload) => {
-          console.log('Bid status changed:', payload);
-          // Invalidate query to trigger a refetch
-          queryClient.invalidateQueries({
-            queryKey: queryKey,
-          });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'bids',
-          filter: `dealer_id=eq.${dealerProfileId}`,
-        },
-        (payload) => {
-          console.log('New bid inserted:', payload);
+          console.log('Bid changed:', payload);
           // Invalidate query to trigger a refetch
           queryClient.invalidateQueries({
             queryKey: queryKey,
@@ -246,34 +241,39 @@ export function useDealerBids(dealerProfileId: string | undefined) {
 
     // Set up realtime subscription for car status/current_bid changes
     const carIds = myBids.map(bid => bid.car_id);
-    const carChannel = supabase
-      .channel('dealer_cars_status')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'cars',
-          filter: `id=in.(${carIds.join(',')})`,
-        },
-        (payload) => {
-          console.log('Car status changed:', payload);
-          // Invalidate query to trigger a refetch
-          queryClient.invalidateQueries({
-            queryKey: queryKey,
-          });
-        }
-      )
-      .subscribe();
+    if (carIds.length > 0) {
+      const carChannel = supabase
+        .channel('dealer_cars_status')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'cars',
+            filter: `id=in.(${carIds.join(',')})`,
+          },
+          (payload) => {
+            console.log('Car status changed:', payload);
+            // Invalidate query to trigger a refetch
+            queryClient.invalidateQueries({
+              queryKey: queryKey,
+            });
+          }
+        )
+        .subscribe();
 
-    setRealtimeInitialized(true);
+      // Clean up subscriptions
+      return () => {
+        supabase.removeChannel(channel);
+        supabase.removeChannel(carChannel);
+      };
+    }
 
     // Clean up subscriptions
     return () => {
       supabase.removeChannel(channel);
-      supabase.removeChannel(carChannel);
     };
-  }, [dealerProfileId, myBids, queryClient, queryKey, realtimeInitialized]);
+  }, [dealerProfileId, myBids, queryClient, queryKey]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

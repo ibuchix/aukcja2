@@ -5,6 +5,7 @@ export interface MyBid {
   amount: number;
   status: string;
   created_at: string;
+  auctionTimingStatus?: string;
   car: {
     id: string;
     title: string;
@@ -14,5 +15,7 @@ export interface MyBid {
     auction_end_time: string;
     current_bid: number;
     auction_status: string;
+    reserve_price?: number;
+    awaiting_seller_decision?: boolean;
   };
 }
