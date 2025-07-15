@@ -345,11 +345,11 @@ export const WonVehicles = () => {
   // Helper function to get seller decision status
   const getSellerDecisionStatus = (vehicle: WonVehicle) => {
     if (vehicle.seller_decision === 'accepted') {
-      return { status: 'accepted', message: 'Seller has accepted your bid', canPay: true };
+      return { status: 'accepted', message: 'Seller has accepted your bid - Payment required', canPay: true };
     } else if (vehicle.seller_decision === 'declined') {
       return { status: 'declined', message: 'Seller has declined your bid', canPay: false };
     } else {
-      return { status: 'pending', message: 'Awaiting seller decision', canPay: false };
+      return { status: 'pending', message: 'Awaiting seller decision to accept or decline', canPay: false };
     }
   };
 
@@ -624,10 +624,13 @@ export const WonVehicles = () => {
                             <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-lg border border-yellow-200 text-center h-full flex flex-col justify-center">
                               <div className="flex items-center justify-center text-yellow-600 mb-3">
                                 <Clock className="w-6 h-6 mr-2" />
-                                <span className="font-medium">Awaiting Seller Decision</span>
+                                <span className="font-medium">🎉 Congratulations! You Won This Auction</span>
                               </div>
-                              <p className="text-sm text-yellow-700 mb-4 leading-relaxed">
-                                {sellerStatus.message}. Payment will be available once the seller accepts.
+                              <p className="text-sm text-yellow-700 mb-2 leading-relaxed">
+                                <strong>Status:</strong> {sellerStatus.message}
+                              </p>
+                              <p className="text-xs text-yellow-700 mb-4 leading-relaxed">
+                                The seller has 48 hours to accept or decline your winning bid. You'll receive an email notification once they decide.
                               </p>
                               <Button 
                                 variant="outline"
@@ -639,10 +642,10 @@ export const WonVehicles = () => {
                                 {refreshingPayment === vehicle.id ? (
                                   <>
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Checking...
+                                    Checking Status...
                                   </>
                                 ) : (
-                                  "Check Status"
+                                  "Check for Seller Decision"
                                 )}
                               </Button>
                             </div>

@@ -39,9 +39,8 @@ export const buildAuctionQuery = (
         is_manually_controlled
       )
     `)
-    .eq('auction_status', 'active')
-    .eq('is_auction', true)
-    // Use correct status values that match the database schema
+    // Updated logic: Show cars that have auction schedules regardless of is_auction/auction_status
+    // This allows scheduled auctions to be visible immediately
     .in('auction_schedules.status', ['running', 'scheduled', 'completed']);
 
   // Apply search
