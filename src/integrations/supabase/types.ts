@@ -2351,6 +2351,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_won_vehicle_payment_status: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       upsert_car_listing: {
         Args: { car_data: Json; is_draft?: boolean }
         Returns: Json

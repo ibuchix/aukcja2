@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Lock, Eye, CreditCard, Car, CheckCircle, Loader2, Clock, X, Check } from "lucide-react";
+import { Lock, Eye, CreditCard, Car, CheckCircle, Loader2, Clock, X, Check, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 import { calculatePlatformFee } from "@/utils/platformFeeCalculator";
+import { useRealtimeWonVehicles } from "@/hooks/useRealtimeWonVehicles";
 
 interface WonVehicle {
   id: string;
@@ -69,7 +70,14 @@ export const WonVehicles = () => {
   const [loading, setLoading] = useState(true);
   const [processingPayment, setProcessingPayment] = useState<string | null>(null);
   const [refreshingPayment, setRefreshingPayment] = useState<string | null>(null);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
   const { toast } = useToast();
+
+  // Set up real-time listening for won vehicles
+  const { isListening } = useRealtimeWonVehicles((newVehicle) => {
+    // Refresh the list when a new won vehicle is received
+    fetchWonVehicles();
+  });
 
   useEffect(() => {
     fetchWonVehicles();
@@ -85,7 +93,19 @@ export const WonVehicles = () => {
       // Clean up URL parameters
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, []);
+
+    // Set up auto-refresh every 30 seconds if enabled
+    let interval: NodeJS.Timeout;
+    if (autoRefreshEnabled) {
+      interval = setInterval(() => {
+        fetchWonVehicles();
+      }, 30000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [autoRefreshEnabled]);
 
   const fetchWonVehicles = async () => {
     try {
@@ -210,6 +230,27 @@ export const WonVehicles = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Enhanced refresh with better user feedback
+  const handleManualRefresh = async () => {
+    setRefreshingPayment('manual');
+    try {
+      await fetchWonVehicles();
+      toast({
+        title: "Refreshed",
+        description: "Won vehicles list has been updated.",
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh Failed",
+        description: "Could not refresh the list. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshingPayment(null);
     }
   };
 
@@ -489,10 +530,48 @@ export const WonVehicles = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header with status and controls */}
       <div className="flex items-center justify-between">
-        <Badge variant="outline" className="bg-accent text-body-text border-accent">
-          {wonVehicles.length} vehicle{wonVehicles.length !== 1 ? 's' : ''}
-        </Badge>
+        <div className="flex items-center gap-4">
+          <Badge variant="outline" className="bg-accent text-body-text border-accent">
+            {wonVehicles.length} vehicle{wonVehicles.length !== 1 ? 's' : ''}
+          </Badge>
+          {isListening && (
+            <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+              Real-time updates active
+            </Badge>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleManualRefresh}
+            disabled={refreshingPayment === 'manual'}
+            className="border-primary/20 text-primary hover:bg-primary/5"
+          >
+            {refreshingPayment === 'manual' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
+            <span className="ml-2">Refresh</span>
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
+            className={autoRefreshEnabled 
+              ? "border-success/20 text-success hover:bg-success/5" 
+              : "border-muted text-muted-foreground hover:bg-accent"
+            }
+          >
+            <Clock className="w-4 h-4 mr-2" />
+            {autoRefreshEnabled ? 'Auto-refresh ON' : 'Auto-refresh OFF'}
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6">
