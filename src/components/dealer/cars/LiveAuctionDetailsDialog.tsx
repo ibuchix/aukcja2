@@ -32,17 +32,17 @@ export const LiveAuctionDetailsDialog = ({
           </DialogTitle>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Car Details */}
-          <div className="space-y-4">
-            <div className="aspect-video relative">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* Car Details - Takes up 2 columns on xl screens */}
+          <div className="xl:col-span-2 space-y-6">
+            <div className="aspect-video relative max-w-2xl">
               <img 
                 src={Array.isArray(car.images) && car.images.length > 0 ? car.images[0] : '/placeholder.svg'}
                 alt={`${car.make} ${car.model}`}
-                className="w-full h-full object-cover rounded-lg"
+                className="w-full h-full object-cover rounded-lg shadow-md"
               />
-              <div className="absolute top-2 right-2">
-                <Badge variant={isLive ? "default" : hasEnded ? "secondary" : "outline"}>
+              <div className="absolute top-4 right-4">
+                <Badge variant={isLive ? "default" : hasEnded ? "secondary" : "outline"} className="text-sm px-3 py-1">
                   {isLive ? "Live" : hasEnded ? "Ended" : "Scheduled"}
                 </Badge>
               </div>
@@ -51,42 +51,42 @@ export const LiveAuctionDetailsDialog = ({
             {/* Vehicle Specifications */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-4">Vehicle Specifications</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <h3 className="text-xl font-semibold mb-6">Vehicle Specifications</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
-                      <span className="text-muted-foreground">Year</span>
-                      <span className="font-semibold">{car.year}</span>
+                    <div className="flex justify-between items-center p-4 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground font-medium">Year</span>
+                      <span className="font-semibold text-lg">{car.year}</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
-                      <span className="text-muted-foreground">Mileage</span>
-                      <span className="font-semibold">{car.mileage?.toLocaleString()} miles</span>
+                    <div className="flex justify-between items-center p-4 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground font-medium">Mileage</span>
+                      <span className="font-semibold text-lg">{car.mileage?.toLocaleString()} miles</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
-                      <span className="text-muted-foreground">Transmission</span>
-                      <span className="font-semibold capitalize">{car.transmission || 'Not specified'}</span>
+                    <div className="flex justify-between items-center p-4 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground font-medium">Transmission</span>
+                      <span className="font-semibold text-lg capitalize">{car.transmission || 'Not specified'}</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
-                      <span className="text-muted-foreground">Fuel Type</span>
-                      <span className="font-semibold capitalize">{car.fuel_type || car.fuelType || 'Not specified'}</span>
+                    <div className="flex justify-between items-center p-4 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground font-medium">Fuel Type</span>
+                      <span className="font-semibold text-lg capitalize">{car.fuel_type || car.fuelType || 'Not specified'}</span>
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
-                      <span className="text-muted-foreground">VIN</span>
-                      <span className="font-semibold font-mono text-xs">{car.vin || 'Not available'}</span>
+                    <div className="flex justify-between items-center p-4 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground font-medium">VIN</span>
+                      <span className="font-semibold font-mono text-sm break-all">{car.vin || 'Not available'}</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
-                      <span className="text-muted-foreground">Registration</span>
-                      <span className="font-semibold">{car.registration_number || 'Not specified'}</span>
+                    <div className="flex justify-between items-center p-4 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground font-medium">Registration</span>
+                      <span className="font-semibold text-lg">{car.registration_number || 'Not specified'}</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
-                      <span className="text-muted-foreground">Number of Keys</span>
-                      <span className="font-semibold">{(car.numberOfKeys || car.number_of_keys) || 'Not specified'}</span>
+                    <div className="flex justify-between items-center p-4 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground font-medium">Number of Keys</span>
+                      <span className="font-semibold text-lg">{(car.numberOfKeys || car.number_of_keys) || 'Not specified'}</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
-                      <span className="text-muted-foreground">Seat Material</span>
-                      <span className="font-semibold capitalize">{(car.seatMaterial || car.seat_material) || 'Not specified'}</span>
+                    <div className="flex justify-between items-center p-4 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground font-medium">Seat Material</span>
+                      <span className="font-semibold text-lg capitalize">{car.seat_material || car.seatMaterial || 'Not specified'}</span>
                     </div>
                   </div>
                 </div>
@@ -110,10 +110,10 @@ export const LiveAuctionDetailsDialog = ({
 
                 return (
                   <div>
-                    <h4 className="text-lg font-semibold mb-3">Vehicle Features</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <h4 className="text-xl font-semibold mb-4">Vehicle Features</h4>
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                       {activeFeatures.map((feature, index) => (
-                        <div key={index} className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                        <div key={index} className="flex items-center gap-3 p-4 bg-primary/10 rounded-lg border border-primary/20">
                           <div className="w-2 h-2 bg-primary rounded-full"></div>
                           <span className="text-sm font-medium">{feature}</span>
                         </div>
@@ -125,46 +125,46 @@ export const LiveAuctionDetailsDialog = ({
 
               {/* Service History */}
               {(car.service_history_type || car.has_service_history) && (
-                <div className="p-3 bg-accent/50 rounded-lg">
-                  <h4 className="font-medium text-sm mb-2">Service History</h4>
-                  <div className="text-xs space-y-1">
+                <div className="p-4 bg-accent/50 rounded-lg">
+                  <h4 className="font-medium text-base mb-3">Service History</h4>
+                  <div className="text-sm space-y-2">
                     {car.service_history_type && (
-                      <p><span className="text-muted-foreground">Type:</span> {car.service_history_type}</p>
+                      <p><span className="text-muted-foreground">Type:</span> <span className="font-medium">{car.service_history_type}</span></p>
                     )}
                     {car.has_service_history && (
-                      <p className="text-green-600">✓ Service history documentation available</p>
+                      <p className="text-green-600 font-medium">✓ Service history documentation available</p>
                     )}
                   </div>
                 </div>
               )}
 
               {/* Vehicle Condition */}
-              <div className="p-3 bg-accent/50 rounded-lg">
-                <h4 className="font-medium text-sm mb-2">Vehicle Condition</h4>
-                <div className="text-xs space-y-1">
-                  <p><span className="text-muted-foreground">Damaged:</span> {car.is_damaged ? 'Yes' : 'No'}</p>
-                  <p><span className="text-muted-foreground">Registered in Poland:</span> {(car.isRegisteredInPoland || car.is_registered_in_poland) ? 'Yes' : 'No'}</p>
-                  <p><span className="text-muted-foreground">Private Plate:</span> {car.has_private_plate ? 'Yes' : 'No'}</p>
+              <div className="p-4 bg-accent/50 rounded-lg">
+                <h4 className="font-medium text-base mb-3">Vehicle Condition</h4>
+                <div className="text-sm space-y-2">
+                  <p><span className="text-muted-foreground">Damaged:</span> <span className="font-medium">{car.is_damaged ? 'Yes' : 'No'}</span></p>
+                  <p><span className="text-muted-foreground">Registered in Poland:</span> <span className="font-medium">{(car.isRegisteredInPoland || car.is_registered_in_poland) ? 'Yes' : 'No'}</span></p>
+                  <p><span className="text-muted-foreground">Private Plate:</span> <span className="font-medium">{car.has_private_plate ? 'Yes' : 'No'}</span></p>
                   {car.finance_amount && (
-                    <p><span className="text-muted-foreground">Finance Outstanding:</span> {formatCurrency(car.finance_amount)}</p>
+                    <p><span className="text-muted-foreground">Finance Outstanding:</span> <span className="font-medium">{formatCurrency(car.finance_amount)}</span></p>
                   )}
                 </div>
               </div>
 
               {/* Location */}
-              <div className="p-3 bg-accent/50 rounded-lg">
-                <h4 className="font-medium text-sm mb-2">Location</h4>
-                <p className="text-sm">{car.address || 'Location not specified'}</p>
+              <div className="p-4 bg-accent/50 rounded-lg">
+                <h4 className="font-medium text-base mb-3">Location</h4>
+                <p className="text-sm font-medium">{car.address || 'Location not specified'}</p>
               </div>
 
               {/* Seller Contact */}
               {car.seller_name && (
-                <div className="p-3 bg-accent/50 rounded-lg">
-                  <h4 className="font-medium text-sm mb-2">Seller Information</h4>
-                  <div className="text-xs space-y-1">
-                    <p><span className="text-muted-foreground">Name:</span> {car.seller_name}</p>
+                <div className="p-4 bg-accent/50 rounded-lg">
+                  <h4 className="font-medium text-base mb-3">Seller Information</h4>
+                  <div className="text-sm space-y-2">
+                    <p><span className="text-muted-foreground">Name:</span> <span className="font-medium">{car.seller_name}</span></p>
                     {car.mobile_number && (
-                      <p><span className="text-muted-foreground">Contact:</span> {car.mobile_number}</p>
+                      <p><span className="text-muted-foreground">Contact:</span> <span className="font-medium">{car.mobile_number}</span></p>
                     )}
                   </div>
                 </div>
@@ -172,39 +172,39 @@ export const LiveAuctionDetailsDialog = ({
 
               {/* Seller Notes */}
               {car.seller_notes && (
-                <div className="p-3 bg-accent/50 rounded-lg">
-                  <h4 className="font-medium text-sm mb-2">Seller Notes</h4>
+                <div className="p-4 bg-accent/50 rounded-lg">
+                  <h4 className="font-medium text-base mb-3">Seller Notes</h4>
                   <p className="text-sm leading-relaxed">{car.seller_notes}</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Auction Details */}
-          <div className="space-y-4">
+          {/* Auction Details - Takes up 1 column on xl screens */}
+          <div className="xl:col-span-1 space-y-6">
             {/* Bid Count Display */}
             {isLive && !hasEnded && (
               <BidCountDisplay carId={car.id} />
             )}
 
-            <div className="p-4 bg-muted rounded-lg">
-              <h3 className="font-semibold mb-2">Auction Status</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Reserve Price:</span>
-                  <span className="font-medium">{formatCurrency(car.reservePrice || car.reserve_price || 0)}</span>
+            <div className="p-6 bg-muted rounded-lg">
+              <h3 className="text-xl font-semibold mb-4">Auction Status</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground font-medium">Reserve Price:</span>
+                  <span className="font-bold text-lg">{formatCurrency(car.reservePrice || car.reserve_price || 0)}</span>
                 </div>
                 {car.current_bid > 0 && (
-                  <div className="flex justify-between">
-                    <span>Current Bid:</span>
-                    <span className="font-medium text-green-600">{formatCurrency(car.current_bid)}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground font-medium">Latest bid:</span>
+                    <span className="font-bold text-lg text-green-600">{formatCurrency(car.current_bid)}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span>Time Remaining:</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground font-medium">Time Remaining:</span>
                   <span className="font-medium">
                     {hasEnded ? (
-                      'Auction ended'
+                      <span className="text-red-600">Time not available</span>
                     ) : (
                       <AuctionTimer 
                         auctionEndTime={car.scheduleEndTime || car.auction_end_time} 
