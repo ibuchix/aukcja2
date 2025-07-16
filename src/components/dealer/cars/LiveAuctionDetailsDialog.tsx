@@ -48,57 +48,80 @@ export const LiveAuctionDetailsDialog = ({
               </div>
             </div>
             
-            {/* Comprehensive Car Details */}
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Year</p>
-                  <p className="font-medium">{car.year}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Mileage</p>
-                  <p className="font-medium">{car.mileage?.toLocaleString()} miles</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Transmission</p>
-                  <p className="font-medium">{car.transmission || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Fuel Type</p>
-                  <p className="font-medium">{car.fuel_type || car.fuelType || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">VIN</p>
-                  <p className="font-medium">{car.vin || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Registration</p>
-                  <p className="font-medium">{car.registration_number || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Keys</p>
-                  <p className="font-medium">{car.number_of_keys || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Seat Material</p>
-                  <p className="font-medium">{car.seat_material || 'N/A'}</p>
+            {/* Vehicle Specifications */}
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Vehicle Specifications</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground">Year</span>
+                      <span className="font-semibold">{car.year}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground">Mileage</span>
+                      <span className="font-semibold">{car.mileage?.toLocaleString()} miles</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground">Transmission</span>
+                      <span className="font-semibold capitalize">{car.transmission || 'Not specified'}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground">Fuel Type</span>
+                      <span className="font-semibold capitalize">{car.fuel_type || car.fuelType || 'Not specified'}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground">VIN</span>
+                      <span className="font-semibold font-mono text-xs">{car.vin || 'Not available'}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground">Registration</span>
+                      <span className="font-semibold">{car.registration_number || 'Not specified'}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground">Number of Keys</span>
+                      <span className="font-semibold">{car.number_of_keys || 'Not specified'}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
+                      <span className="text-muted-foreground">Seat Material</span>
+                      <span className="font-semibold capitalize">{car.seat_material || 'Not specified'}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Vehicle Features */}
-              {car.features && Object.keys(car.features).length > 0 && (
-                <div className="p-3 bg-accent/50 rounded-lg">
-                  <h4 className="font-medium text-sm mb-2">Features</h4>
-                  <div className="grid grid-cols-2 gap-1 text-xs">
-                    {Object.entries(car.features).map(([key, value]) => (
-                      <div key={key} className="flex items-center">
-                        <span className="text-muted-foreground">{key}:</span>
-                        <span className="ml-1">{String(value)}</span>
-                      </div>
-                    ))}
+              {car.features && Object.keys(car.features).length > 0 && (() => {
+                // Filter features to only show ones that are true
+                const activeFeatures = Object.entries(car.features)
+                  .filter(([_, value]) => value === true)
+                  .map(([key, _]) => {
+                    // Convert camelCase to readable format
+                    const readableKey = key
+                      .replace(/([A-Z])/g, ' $1')
+                      .replace(/^./, str => str.toUpperCase())
+                      .trim();
+                    return readableKey;
+                  });
+
+                if (activeFeatures.length === 0) return null;
+
+                return (
+                  <div>
+                    <h4 className="text-lg font-semibold mb-3">Vehicle Features</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {activeFeatures.map((feature, index) => (
+                        <div key={index} className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                          <div className="w-2 h-2 bg-primary rounded-full"></div>
+                          <span className="text-sm font-medium">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Service History */}
               {(car.service_history_type || car.has_service_history) && (
