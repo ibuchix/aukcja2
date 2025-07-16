@@ -143,7 +143,7 @@ export const LiveAuctionDetailsDialog = ({
                 <h4 className="font-medium text-sm mb-2">Vehicle Condition</h4>
                 <div className="text-xs space-y-1">
                   <p><span className="text-muted-foreground">Damaged:</span> {car.is_damaged ? 'Yes' : 'No'}</p>
-                  <p><span className="text-muted-foreground">Registered in Poland:</span> {car.is_registered_in_poland ? 'Yes' : 'No'}</p>
+                  <p><span className="text-muted-foreground">Registered in Poland:</span> {(car.isRegisteredInPoland || car.is_registered_in_poland) ? 'Yes' : 'No'}</p>
                   <p><span className="text-muted-foreground">Private Plate:</span> {car.has_private_plate ? 'Yes' : 'No'}</p>
                   {car.finance_amount && (
                     <p><span className="text-muted-foreground">Finance Outstanding:</span> {formatCurrency(car.finance_amount)}</p>
