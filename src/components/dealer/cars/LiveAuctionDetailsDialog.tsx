@@ -82,11 +82,11 @@ export const LiveAuctionDetailsDialog = ({
                     </div>
                     <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
                       <span className="text-muted-foreground">Number of Keys</span>
-                      <span className="font-semibold">{car.number_of_keys || 'Not specified'}</span>
+                      <span className="font-semibold">{(car.numberOfKeys || car.number_of_keys) || 'Not specified'}</span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-accent/30 rounded-lg">
                       <span className="text-muted-foreground">Seat Material</span>
-                      <span className="font-semibold capitalize">{car.seat_material || 'Not specified'}</span>
+                      <span className="font-semibold capitalize">{(car.seatMaterial || car.seat_material) || 'Not specified'}</span>
                     </div>
                   </div>
                 </div>
