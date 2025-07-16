@@ -48,35 +48,113 @@ export const LiveAuctionDetailsDialog = ({
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Year</p>
-                <p className="font-medium">{car.year}</p>
+            {/* Comprehensive Car Details */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Year</p>
+                  <p className="font-medium">{car.year}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Mileage</p>
+                  <p className="font-medium">{car.mileage?.toLocaleString()} miles</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Transmission</p>
+                  <p className="font-medium">{car.transmission || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Fuel Type</p>
+                  <p className="font-medium">{car.fuel_type || car.fuelType || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">VIN</p>
+                  <p className="font-medium">{car.vin || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Registration</p>
+                  <p className="font-medium">{car.registration_number || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Keys</p>
+                  <p className="font-medium">{car.number_of_keys || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Seat Material</p>
+                  <p className="font-medium">{car.seat_material || 'N/A'}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-muted-foreground">Mileage</p>
-                <p className="font-medium">{car.mileage?.toLocaleString()} miles</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Transmission</p>
-                <p className="font-medium">{car.transmission}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Fuel Type</p>
-                <p className="font-medium">{car.fuel_type || car.fuelType || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Location</p>
-                <p className="font-medium">{car.address || 'Not specified'}</p>
-              </div>
-            </div>
 
-            {car.seller_notes && (
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Seller Notes</p>
-                <p className="text-sm">{car.seller_notes}</p>
+              {/* Vehicle Features */}
+              {car.features && Object.keys(car.features).length > 0 && (
+                <div className="p-3 bg-accent/50 rounded-lg">
+                  <h4 className="font-medium text-sm mb-2">Features</h4>
+                  <div className="grid grid-cols-2 gap-1 text-xs">
+                    {Object.entries(car.features).map(([key, value]) => (
+                      <div key={key} className="flex items-center">
+                        <span className="text-muted-foreground">{key}:</span>
+                        <span className="ml-1">{String(value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Service History */}
+              {(car.service_history_type || car.has_service_history) && (
+                <div className="p-3 bg-accent/50 rounded-lg">
+                  <h4 className="font-medium text-sm mb-2">Service History</h4>
+                  <div className="text-xs space-y-1">
+                    {car.service_history_type && (
+                      <p><span className="text-muted-foreground">Type:</span> {car.service_history_type}</p>
+                    )}
+                    {car.has_service_history && (
+                      <p className="text-green-600">✓ Service history documentation available</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Vehicle Condition */}
+              <div className="p-3 bg-accent/50 rounded-lg">
+                <h4 className="font-medium text-sm mb-2">Vehicle Condition</h4>
+                <div className="text-xs space-y-1">
+                  <p><span className="text-muted-foreground">Damaged:</span> {car.is_damaged ? 'Yes' : 'No'}</p>
+                  <p><span className="text-muted-foreground">Registered in Poland:</span> {car.is_registered_in_poland ? 'Yes' : 'No'}</p>
+                  <p><span className="text-muted-foreground">Private Plate:</span> {car.has_private_plate ? 'Yes' : 'No'}</p>
+                  {car.finance_amount && (
+                    <p><span className="text-muted-foreground">Finance Outstanding:</span> {formatCurrency(car.finance_amount)}</p>
+                  )}
+                </div>
               </div>
-            )}
+
+              {/* Location */}
+              <div className="p-3 bg-accent/50 rounded-lg">
+                <h4 className="font-medium text-sm mb-2">Location</h4>
+                <p className="text-sm">{car.address || 'Location not specified'}</p>
+              </div>
+
+              {/* Seller Contact */}
+              {car.seller_name && (
+                <div className="p-3 bg-accent/50 rounded-lg">
+                  <h4 className="font-medium text-sm mb-2">Seller Information</h4>
+                  <div className="text-xs space-y-1">
+                    <p><span className="text-muted-foreground">Name:</span> {car.seller_name}</p>
+                    {car.mobile_number && (
+                      <p><span className="text-muted-foreground">Contact:</span> {car.mobile_number}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Seller Notes */}
+              {car.seller_notes && (
+                <div className="p-3 bg-accent/50 rounded-lg">
+                  <h4 className="font-medium text-sm mb-2">Seller Notes</h4>
+                  <p className="text-sm leading-relaxed">{car.seller_notes}</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Auction Details */}

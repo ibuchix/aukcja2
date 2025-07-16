@@ -64,7 +64,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       console.log('=== FETCHING DEALER BIDS ===');
       console.log('Fetching bids for dealer:', dealerProfileId);
 
-      // Get all bids for this dealer (RLS will filter automatically)
+      // Get only this dealer's bids (RLS will filter automatically)
       const { data: dealerBids, error: bidsError } = await supabase
         .from("bids")
         .select(`
@@ -75,6 +75,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
           created_at,
           dealer_id
         `)
+        .eq('dealer_id', dealerProfileId)
         .order("created_at", { ascending: false });
 
       console.log('Bids query result:', { dealerBids, bidsError });
@@ -161,22 +162,25 @@ export function useDealerBids(dealerProfileId: string | undefined) {
           if (auctionEndTime) {
             if (now > auctionEndTime) {
               auctionTimingStatus = 'ended';
-              // Determine final bid status
+              // Determine final bid status based on whether this dealer's bid is the winning bid
+              // A dealer wins only if their bid amount matches the current_bid (highest bid)
+              // and the current_bid meets or exceeds the reserve price
               if (car.current_bid >= car.reserve_price && car.current_bid === bid.amount) {
                 bidStatus = car.awaiting_seller_decision ? 'winning_pending' : 'won';
               } else {
                 bidStatus = 'lost';
               }
-            } else {
-              const hoursUntilEnd = (auctionEndTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-              if (hoursUntilEnd <= 24 && car.auction_status === 'active') {
-                auctionTimingStatus = 'running';
-                bidStatus = car.current_bid === bid.amount ? 'winning' : 'outbid';
               } else {
-                auctionTimingStatus = 'scheduled';
-                bidStatus = 'active';
+                const hoursUntilEnd = (auctionEndTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+                if (hoursUntilEnd <= 24 && car.auction_status === 'active') {
+                  auctionTimingStatus = 'running';
+                  // Check if this dealer's bid is currently the highest
+                  bidStatus = car.current_bid === bid.amount ? 'winning' : 'outbid';
+                } else {
+                  auctionTimingStatus = 'scheduled';
+                  bidStatus = 'active';
+                }
               }
-            }
           }
           
           const myBid: MyBid = {

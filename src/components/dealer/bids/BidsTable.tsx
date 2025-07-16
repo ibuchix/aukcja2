@@ -79,19 +79,19 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
     
     switch (bid.status) {
       case 'winning':
-        return { text: 'Winning', variant: 'default' as const, className: 'bg-green-100 text-green-800' };
+        return { text: 'Winning', variant: 'success' as const, className: 'bg-green-500 text-white font-medium' };
       case 'winning_pending':
-        return { text: 'Won - Awaiting Decision', variant: 'secondary' as const, className: 'bg-blue-100 text-blue-800' };
+        return { text: 'Won - Awaiting Decision', variant: 'secondary' as const, className: 'bg-blue-500 text-white font-medium' };
       case 'won':
-        return { text: 'Won', variant: 'default' as const, className: 'bg-green-100 text-green-800' };
+        return { text: 'Won', variant: 'success' as const, className: 'bg-green-600 text-white font-medium' };
       case 'outbid':
-        return { text: 'Outbid', variant: 'destructive' as const, className: '' };
+        return { text: 'Outbid', variant: 'warning' as const, className: 'bg-orange-500 text-white font-medium' };
       case 'lost':
-        return { text: 'Lost', variant: 'destructive' as const, className: '' };
+        return { text: 'Lost', variant: 'destructive' as const, className: 'bg-red-500 text-white font-medium' };
       case 'active':
-        return { text: 'Active', variant: 'outline' as const, className: '' };
+        return { text: 'Active', variant: 'outline' as const, className: 'border-2 font-medium' };
       default:
-        return { text: bid.status || 'Unknown', variant: 'secondary' as const, className: '' };
+        return { text: bid.status || 'Unknown', variant: 'secondary' as const, className: 'font-medium' };
     }
   };
 
@@ -100,11 +100,11 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
     
     switch (timingStatus) {
       case 'running':
-        return { text: 'Live Auction', variant: 'default' as const, icon: Clock };
+        return { text: 'Live Auction', variant: 'default' as const, icon: Clock, className: 'bg-green-100 text-green-800 border-green-300' };
       case 'ended':
-        return { text: 'Auction Ended', variant: 'secondary' as const, icon: Clock };
+        return { text: 'Auction Ended', variant: 'secondary' as const, icon: Clock, className: 'bg-gray-100 text-gray-800 border-gray-300' };
       case 'scheduled':
-        return { text: 'Scheduled', variant: 'outline' as const, icon: Clock };
+        return { text: 'Scheduled', variant: 'outline' as const, icon: Clock, className: 'bg-blue-50 text-blue-700 border-blue-300' };
       default:
         return null;
     }
@@ -141,7 +141,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                     <div>
                       <div>{bid.car?.title || `${bid.car?.year} ${bid.car?.make} ${bid.car?.model}`}</div>
                       {auctionStatusDisplay && (
-                        <Badge variant={auctionStatusDisplay.variant} className="mt-1">
+                        <Badge variant={auctionStatusDisplay.variant} className={`mt-1 font-medium ${auctionStatusDisplay.className}`}>
                           <auctionStatusDisplay.icon className="h-3 w-3 mr-1" />
                           {auctionStatusDisplay.text}
                         </Badge>
@@ -165,7 +165,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                       <div className="flex flex-col">
                         <span>{format(new Date(bid.car.auction_end_time), "MMM d, HH:mm")}</span>
                         {getAuctionTimingStatus(bid) === 'scheduled' && (
-                          <Badge variant="outline" className="text-xs w-fit mt-1">
+                          <Badge variant="outline" className="text-xs w-fit mt-1 font-medium border-2 bg-blue-50 text-blue-700 border-blue-300">
                             Scheduled
                           </Badge>
                         )}
@@ -198,7 +198,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                           </Button>
                         </>
                       ) : (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs font-medium">
                           {getAuctionTimingStatus(bid) === 'running' ? "Live Auction" 
                            : getAuctionTimingStatus(bid) === 'ended' ? "Auction Ended" 
                            : "No Actions"}
