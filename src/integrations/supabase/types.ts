@@ -2025,6 +2025,12 @@ export type Database = {
           changed_by: string
         }[]
       }
+      get_dealer_bidding_car_ids: {
+        Args: { p_dealer_user_id: string }
+        Returns: {
+          car_id: string
+        }[]
+      }
       get_dealer_by_user_id: {
         Args: { p_user_id: string } | { user_id: number }
         Returns: {
