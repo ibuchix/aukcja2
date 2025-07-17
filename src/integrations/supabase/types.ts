@@ -2271,13 +2271,21 @@ export type Database = {
       }
       process_ended_auctions: {
         Args: Record<PropertyKey, never>
-        Returns: number
+        Returns: Json
       }
       process_pending_proxy_bids: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
       process_specific_ended_auction: {
+        Args: { p_car_id: string }
+        Returns: Json
+      }
+      process_stuck_auction: {
+        Args: { p_car_id: string }
+        Returns: Json
+      }
+      process_stuck_auction_safe: {
         Args: { p_car_id: string }
         Returns: Json
       }
