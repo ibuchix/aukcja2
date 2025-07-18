@@ -2343,6 +2343,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      test_dealer_email_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       transition_car_status: {
         Args: { p_car_id: string; p_new_status: string; p_is_draft?: boolean }
         Returns: Json
