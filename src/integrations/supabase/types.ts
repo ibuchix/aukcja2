@@ -2269,11 +2269,19 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      process_dealer_post_seller_decision: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       process_ended_auctions: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
       process_pending_proxy_bids: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      process_seller_auction_end: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
@@ -2342,6 +2350,10 @@ export type Database = {
       transition_ended_auctions: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      trigger_seller_email_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       update_auction_status: {
         Args: Record<PropertyKey, never>
