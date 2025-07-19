@@ -2359,6 +2359,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      update_auction_status: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       update_dealer_profile: {
         Args: {
           p_user_id: string
