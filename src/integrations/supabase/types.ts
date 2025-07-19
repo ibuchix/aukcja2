@@ -2025,6 +2025,14 @@ export type Database = {
           changed_by: string
         }[]
       }
+      get_correct_auction_status: {
+        Args: {
+          p_start_time: string
+          p_end_time: string
+          p_current_status?: Database["public"]["Enums"]["auction_schedule_status"]
+        }
+        Returns: Database["public"]["Enums"]["auction_schedule_status"]
+      }
       get_dealer_bidding_car_ids: {
         Args: { p_dealer_user_id: string }
         Returns: {
