@@ -84,6 +84,21 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
   const isStartingSoon = displayStatus.status === 'starting-soon';
   const hasEnded = displayStatus.status === 'ended';
 
+  // Map display status to timer status
+  const getTimerStatus = (): 'scheduled' | 'running' | 'ended' | 'unknown' => {
+    switch (displayStatus.status) {
+      case 'live':
+        return 'running';
+      case 'starting-soon':
+      case 'scheduled':
+        return 'scheduled';
+      case 'ended':
+        return 'ended';
+      default:
+        return 'unknown';
+    }
+  };
+
   return (
     <Card 
       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" 
@@ -97,7 +112,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
         />
         <div className="absolute top-2 right-2">
           <AuctionStatusIndicator
-            auctionTimingStatus={car.auctionTimingStatus || displayStatus.status}
+            auctionTimingStatus={car.auctionTimingStatus || getTimerStatus()}
             scheduleStartTime={car.scheduleStartTime}
             scheduleEndTime={car.scheduleEndTime}
             auctionStatus={car.auction_status}
@@ -141,7 +156,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
             {auctionEndTime && !hasEnded ? (
               <AuctionTimer 
                 auctionEndTime={auctionEndTime} 
-                auctionTimingStatus={displayStatus.status} 
+                auctionTimingStatus={getTimerStatus()} 
               />
             ) : hasEnded ? (
               <span>Auction ended</span>
