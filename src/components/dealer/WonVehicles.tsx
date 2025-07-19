@@ -62,7 +62,7 @@ export const WonVehicles = () => {
   });
 
   // Query for car details when showing dialog
-  const { data: selectedCar } = useQuery({
+  const { data: selectedCarData } = useQuery({
     queryKey: ["carDetails", selectedCarId],
     queryFn: async () => {
       if (!selectedCarId) return null;
@@ -82,6 +82,30 @@ export const WonVehicles = () => {
     },
     enabled: !!selectedCarId,
   });
+
+  // Transform database car data to CarListing format
+  const selectedCar = selectedCarData ? {
+    id: (selectedCarData as any).id || '',
+    title: (selectedCarData as any).title || `${(selectedCarData as any).year} ${(selectedCarData as any).make} ${(selectedCarData as any).model}`,
+    make: (selectedCarData as any).make || '',
+    model: (selectedCarData as any).model || '',
+    year: (selectedCarData as any).year || 0,
+    mileage: (selectedCarData as any).mileage || 0,
+    price: (selectedCarData as any).reserve_price || 0,
+    reservePrice: (selectedCarData as any).reserve_price || 0,
+    currentBid: (selectedCarData as any).current_bid,
+    auctionEndTime: (selectedCarData as any).auction_end_time,
+    auctionStatus: (selectedCarData as any).auction_status,
+    status: (selectedCarData as any).status,
+    images: (selectedCarData as any).images || [],
+    fuelType: (selectedCarData as any).fuel_type,
+    transmission: (selectedCarData as any).transmission,
+    location: (selectedCarData as any).address,
+    vin: (selectedCarData as any).vin,
+    features: (selectedCarData as any).features || {},
+    additional_photos: (selectedCarData as any).additional_photos,
+    required_photos: (selectedCarData as any).required_photos
+  } : null;
 
   const handleRefresh = async () => {
     try {
@@ -161,10 +185,7 @@ export const WonVehicles = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-heading-lg font-oswald">Won Vehicles</h1>
-      </div>
+      <div className="space-y-6">
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

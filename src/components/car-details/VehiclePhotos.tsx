@@ -29,12 +29,6 @@ export const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
   const allImages = dbImages.length > 0 ? dbImages : (fallbackImages || []);
   const imageCount = getTotalImageCount();
 
-  // Debug images in development
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      debugCarImages(car);
-    }
-  }, [car]);
 
   const nextImage = () => {
     setSelectedImageIndex((prev) => (prev + 1) % allImages.length);

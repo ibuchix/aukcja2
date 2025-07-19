@@ -246,8 +246,8 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
           </div>
         )}
 
-        {/* Call to Action for Non-Live Auctions */}
-        {!isLiveAuction && (
+        {/* Call to Action for Non-Live Auctions - Only show for non-dealers */}
+        {!isLiveAuction && !dealerProfile?.id && (
           <div className="pt-4 border-t">
             <p className="text-sm text-gray-600 mb-4">
               To participate in auctions and place bids, you need to register as a verified dealer.
