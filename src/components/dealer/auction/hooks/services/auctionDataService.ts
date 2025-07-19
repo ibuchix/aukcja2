@@ -40,9 +40,17 @@ export const buildAuctionQuery = (
       )
     `)
     // Show ALL auction schedules (active, scheduled, and recently completed)
-    .in('auction_schedules.status', ['active', 'scheduled', 'completed'])
-    // Show auctions that are currently active OR ended recently (within 24 hours)
-    .or(`auction_schedules.status.eq.active,auction_schedules.end_time.gte.${new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()}`);
+    .in('auction_schedules.status', ['active', 'scheduled', 'completed']);
+
+  // Apply additional time-based filtering for completed auctions only
+  // Active auctions should always show regardless of time
+  // For completed auctions, only show those that ended within the last 24 hours
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  
+  // This query logic: show active auctions OR completed auctions that ended recently
+  query = query.or(
+    `auction_schedules.status.eq.active,auction_schedules.status.eq.scheduled,and(auction_schedules.status.eq.completed,auction_schedules.end_time.gte.${twentyFourHoursAgo})`
+  );
 
   // Apply search
   if (searchQuery) {
