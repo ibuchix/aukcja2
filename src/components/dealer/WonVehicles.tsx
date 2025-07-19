@@ -1,15 +1,16 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Car, Eye } from "lucide-react";
+import { RefreshCw, Eye } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { calculatePlatformFee } from "@/utils/platformFeeCalculator";
+import CarDetailsDialog from "@/components/CarDetailsDialog";
 
 interface WonVehicle {
   id: string;
@@ -31,6 +32,7 @@ interface WonVehicle {
 export const WonVehicles = () => {
   const { dealerProfile, isLoading: dealerLoading } = useCurrentDealerProfile();
   const { toast } = useToast();
+  const [selectedCarId, setSelectedCarId] = useState<string | null>(null);
 
   const { data: wonVehicles, isLoading, error, refetch } = useQuery({
     queryKey: ["wonVehicles", dealerProfile?.id],
@@ -59,6 +61,28 @@ export const WonVehicles = () => {
     enabled: !!dealerProfile?.id,
   });
 
+  // Query for car details when showing dialog
+  const { data: selectedCar } = useQuery({
+    queryKey: ["carDetails", selectedCarId],
+    queryFn: async () => {
+      if (!selectedCarId) return null;
+      
+      const { data, error } = await supabase
+        .from("cars")
+        .select("*")
+        .eq("id", selectedCarId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching car details:", error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!selectedCarId,
+  });
+
   const handleRefresh = async () => {
     try {
       await refetch();
@@ -83,14 +107,6 @@ export const WonVehicles = () => {
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pl-PL', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
   const getVehicleImage = (images: any) => {
     if (typeof images === 'string') {
       try {
@@ -104,6 +120,14 @@ export const WonVehicles = () => {
       return images[0];
     }
     return '/placeholder.svg';
+  };
+
+  const handleViewDetails = (carId: string) => {
+    setSelectedCarId(carId);
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedCarId(null);
   };
 
   if (dealerLoading) {
@@ -187,8 +211,7 @@ export const WonVehicles = () => {
         </div>
       ) : wonVehicles && wonVehicles.length > 0 ? (
         <div className="space-y-6">
-          {/* Show only the first vehicle */}
-          {wonVehicles.slice(0, 1).map((vehicle) => {
+          {wonVehicles.map((vehicle) => {
             const calculatedPlatformFee = calculatePlatformFee(vehicle.winning_bid_amount);
             
             return (
@@ -301,6 +324,7 @@ export const WonVehicles = () => {
                     variant="outline" 
                     className="text-red-600 border-red-200 hover:bg-red-50"
                     size="lg"
+                    onClick={() => handleViewDetails(vehicle.car_id)}
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     View Full Details
@@ -313,13 +337,23 @@ export const WonVehicles = () => {
       ) : (
         <Card>
           <CardContent className="p-12 text-center">
-            <Car className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <div className="h-16 w-16 text-gray-400 mx-auto mb-4 flex items-center justify-center">
+              <Eye className="h-8 w-8" />
+            </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No won vehicles</h3>
             <p className="text-gray-600">
               You haven't won any auctions yet. Continue bidding on vehicles that interest you!
             </p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Car Details Dialog */}
+      {selectedCar && (
+        <CarDetailsDialog
+          car={selectedCar}
+          onClose={handleCloseDialog}
+        />
       )}
     </div>
   );
