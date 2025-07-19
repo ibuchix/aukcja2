@@ -11,7 +11,7 @@ export const AuctionTimer = ({ auctionEndTime, auctionTimingStatus }: AuctionTim
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
   useEffect(() => {
-    // Show timer for running auctions and also handle 'unknown' status better
+    // Show timer for active auctions and also handle 'unknown' status better
     if (auctionTimingStatus === 'ended') {
       setTimeRemaining("Auction ended");
       return;
@@ -20,7 +20,7 @@ export const AuctionTimer = ({ auctionEndTime, auctionTimingStatus }: AuctionTim
       return;
     }
     
-    // For 'running' or 'unknown' status, show the countdown if we have an end time
+    // For 'active' or 'unknown' status, show the countdown if we have an end time
     if (!auctionEndTime) {
       setTimeRemaining("Time not available");
       return;

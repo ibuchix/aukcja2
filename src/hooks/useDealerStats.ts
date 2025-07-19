@@ -41,7 +41,7 @@ export const useDealerStats = () => {
         throw new Error(`Failed to fetch active bids: ${bidsError.message}`);
       }
 
-      // Get available auctions count (running auctions)
+      // Get available auctions count (active auctions)
       const { count: availableAuctionsCount, error: auctionsError } = await supabase
         .from('auction_schedules')
         .select('*', { count: 'exact', head: true })

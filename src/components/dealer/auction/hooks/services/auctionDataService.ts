@@ -40,7 +40,7 @@ export const buildAuctionQuery = (
       )
     `)
     // Show auctions that haven't ended yet (time-based filtering)
-    // This includes scheduled, running, and even completed auctions that are still within reasonable viewing time
+    // This includes scheduled, active, and even completed auctions that are still within reasonable viewing time
     .gte('auction_schedules.end_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Show auctions that ended less than 24h ago
     .in('auction_schedules.status', ['active', 'scheduled', 'completed']);
 

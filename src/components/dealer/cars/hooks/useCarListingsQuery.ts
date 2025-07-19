@@ -118,7 +118,7 @@ export const useCarListingsQuery = ({
                 end_time,
                 is_manually_controlled
               `)
-              .in("status", ["running", "scheduled", "completed"]); // Use valid status values
+              .in("status", ["active", "scheduled", "completed"]); // Use valid status values
             
             return query;
           },

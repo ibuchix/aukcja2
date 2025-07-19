@@ -93,9 +93,9 @@ export const useSimplifiedCarListingsQuery = ({
           schedules: schedules.slice(0, 3) // Show first 3 for debugging
         });
         
-        // If no running schedules, return empty result
+        // If no active schedules, return empty result
         if (schedules.length === 0) {
-          console.log('❌ [NO SCHEDULES] [ALWAYS SHOWN] - No running auction schedules found');
+          console.log('❌ [NO SCHEDULES] [ALWAYS SHOWN] - No active auction schedules found');
           return {
             cars: [],
             total: 0

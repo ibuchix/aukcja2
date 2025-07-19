@@ -11,7 +11,7 @@ export function useDirectQueryTest(user: User | null, isAuthLoading: boolean) {
       if (!user) return;
       
       try {
-        console.log(`[Direct Query Test] Running test query for user: ${user.id}`);
+        console.log(`[Direct Query Test] Executing test query for user: ${user.id}`);
         
         // Test 1: Try to get user's own profile via RPC
         const { data: userIdFromRpc, error: rpcError } = await supabase.rpc('debug_auth_user_id', {});

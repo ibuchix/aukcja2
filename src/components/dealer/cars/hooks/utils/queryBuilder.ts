@@ -19,7 +19,7 @@ export const buildLiveAuctionSchedulesQuery = () => {
       end_time,
       is_manually_controlled
     `)
-    .eq("status", "running")
+    .eq("status", "active")
     .lte("start_time", new Date().toISOString())
     .gte("end_time", new Date().toISOString());
 };

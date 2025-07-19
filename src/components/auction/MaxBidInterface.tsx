@@ -49,7 +49,7 @@ export const MaxBidInterface = ({
     );
   }
 
-  // For live auctions from the dashboard, assume they are running and available for bidding
+  // For live auctions from the dashboard, assume they are active and available for bidding
   // The fact that they appear in the live auctions list means they should be biddable
   const isAuctionActive = auctionTimingStatus === 'active' || auctionTimingStatus === 'unknown';
 

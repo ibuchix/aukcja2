@@ -72,7 +72,7 @@ export const mergeCarDataWithSchedules = (
     console.warn("No schedule found for car:", car.id);
     return car;
   }).filter(car => {
-    // Updated filter logic: Accept both 'scheduled' and 'running' statuses
+    // Updated filter logic: Accept both 'scheduled' and 'active' statuses
     // but apply time-based filtering to determine actual availability
     if (!car.scheduleStatus || !car.scheduleStartTime || !car.scheduleEndTime) {
       console.warn("Car missing schedule data:", car.id);
