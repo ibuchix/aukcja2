@@ -63,13 +63,13 @@ export const WonVehicles = () => {
     try {
       await refetch();
       toast({
-        title: "Refreshed",
-        description: "Won vehicles list has been updated",
+        title: "Odświeżono",
+        description: "Lista wygranych pojazdów została zaktualizowana",
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to refresh won vehicles list",
+        title: "Błąd",
+        description: "Nie udało się odświeżyć listy wygranych pojazdów",
         variant: "destructive",
       });
     }
@@ -81,6 +81,14 @@ export const WonVehicles = () => {
       currency: 'PLN',
       minimumFractionDigits: 0,
     }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pl-PL', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   const getVehicleImage = (images: any) => {
@@ -112,7 +120,7 @@ export const WonVehicles = () => {
     return (
       <Alert>
         <AlertDescription>
-          Please complete your dealer profile setup to view won vehicles.
+          Proszę uzupełnić profil dealera, aby zobaczyć wygrane pojazdy.
         </AlertDescription>
       </Alert>
     );
@@ -122,7 +130,7 @@ export const WonVehicles = () => {
     return (
       <Alert variant="destructive">
         <AlertDescription>
-          Error loading won vehicles: {error instanceof Error ? error.message : 'Unknown error'}
+          Błąd podczas ładowania wygranych pojazdów: {error instanceof Error ? error.message : 'Nieznany błąd'}
         </AlertDescription>
       </Alert>
     );
@@ -134,10 +142,10 @@ export const WonVehicles = () => {
         <div>
           <h1 className="text-heading-lg font-oswald flex items-center gap-2">
             <Car className="h-8 w-8 text-primary" />
-            Won Vehicles
+            Wygrane Pojazdy
           </h1>
           <p className="text-muted-foreground">
-            Vehicles you've successfully won at auction
+            Pojazdy, które wygrałeś na aukcji
           </p>
         </div>
         <Button
@@ -147,7 +155,7 @@ export const WonVehicles = () => {
           disabled={isLoading}
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-          Refresh
+          Odśwież
         </Button>
       </div>
 
@@ -172,12 +180,11 @@ export const WonVehicles = () => {
         <div className="grid gap-6">
           {wonVehicles.map((vehicle) => {
             const calculatedPlatformFee = calculatePlatformFee(vehicle.winning_bid_amount);
-            const totalAmount = vehicle.winning_bid_amount + calculatedPlatformFee;
             
             return (
               <Card key={vehicle.id} className="overflow-hidden">
                 <CardContent className="p-0">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-0">
                     {/* Vehicle Image Section */}
                     <div className="relative">
                       <img
@@ -186,75 +193,83 @@ export const WonVehicles = () => {
                         className="w-full h-48 lg:h-full object-cover"
                       />
                       <div className="absolute top-4 left-4">
-                        <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                          Bid Accepted!
+                        <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                          Licytacja wygrana!
                         </div>
                       </div>
                     </div>
 
-                    {/* Vehicle & Pricing Details Section */}
-                    <div className="p-6">
+                    {/* Vehicle Details Section */}
+                    <div className="p-6 lg:col-span-2">
                       <div className="mb-4">
                         <h3 className="text-xl font-bold text-gray-900 mb-1">
                           {vehicle.vehicle_year} {vehicle.vehicle_make} {vehicle.vehicle_model}
                         </h3>
                         {vehicle.vehicle_mileage && (
                           <p className="text-gray-600">
-                            {vehicle.vehicle_mileage.toLocaleString()} miles
+                            {vehicle.vehicle_mileage.toLocaleString()} km
                           </p>
                         )}
+                        <p className="text-sm text-gray-500 mt-1">
+                          Data wygranej: {formatDate(vehicle.auction_end_time)}
+                        </p>
                       </div>
 
                       <div className="space-y-3">
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Your winning bid:</span>
-                          <span className="font-semibold text-green-600">
+                          <span className="text-gray-600">Końcowa cena:</span>
+                          <span className="font-semibold text-lg">
                             {formatCurrency(vehicle.winning_bid_amount)}
                           </span>
                         </div>
                         
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Platform fee:</span>
+                          <span className="text-gray-600">Twoja pierwotna oferta:</span>
                           <span className="font-semibold">
-                            {formatCurrency(calculatedPlatformFee)}
+                            {formatCurrency(vehicle.winning_bid_amount)}
                           </span>
                         </div>
                         
                         <div className="border-t pt-3">
                           <div className="flex justify-between">
-                            <span className="font-semibold text-gray-900">Total to pay:</span>
-                            <span className="font-bold text-lg text-gray-900">
-                              {formatCurrency(totalAmount)}
+                            <span className="text-gray-600">Opłata platformy:</span>
+                            <span className="font-bold text-lg text-primary">
+                              {formatCurrency(calculatedPlatformFee)}
                             </span>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Seller Information & Actions Section */}
+                    {/* Payment & Actions Section */}
                     <div className="p-6 bg-gray-50 flex flex-col justify-between">
                       <div className="mb-4">
-                        <h4 className="font-semibold text-gray-900 mb-2">Seller Information</h4>
-                        <div className="text-sm text-gray-600 space-y-1">
-                          <p>Auction ended: {new Date(vehicle.auction_end_time).toLocaleDateString()}</p>
-                          <p>Status: Payment Required</p>
+                        <h4 className="font-semibold text-gray-900 mb-3">Status płatności</h4>
+                        <div className="text-sm text-gray-600 space-y-2">
+                          <div className="flex items-center">
+                            <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
+                            <span>Oczekuje na płatność</span>
+                          </div>
+                          <p className="text-xs text-gray-500 ml-4">
+                            Po dokonaniu płatności będziesz mógł zobaczyć pełne dane sprzedającego
+                          </p>
                         </div>
                       </div>
 
                       <div className="space-y-3">
                         <Button 
-                          className="w-full bg-red-600 hover:bg-red-700 text-white"
+                          className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold"
                           size="lg"
                         >
-                          Pay {formatCurrency(totalAmount)}
+                          Zapłać {formatCurrency(calculatedPlatformFee)}
                         </Button>
                         
                         <Button 
                           variant="outline" 
-                          className="w-full"
+                          className="w-full text-gray-600"
                           size="sm"
                         >
-                          View Full Details
+                          Odśwież status płatności
                         </Button>
                       </div>
                     </div>
@@ -268,9 +283,9 @@ export const WonVehicles = () => {
         <Card>
           <CardContent className="p-12 text-center">
             <Car className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Won Vehicles Yet</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Brak wygranych pojazdów</h3>
             <p className="text-gray-600">
-              You haven't won any auctions yet. Keep bidding on vehicles you're interested in!
+              Nie wygrałeś jeszcze żadnej aukcji. Kontynuuj licytowanie pojazdów, które Cię interesują!
             </p>
           </CardContent>
         </Card>
