@@ -3,13 +3,13 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Car, Calendar, CreditCard, RefreshCw } from "lucide-react";
+import { RefreshCw, Car } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import { calculatePlatformFee } from "@/utils/platformFeeCalculator";
 
 interface WonVehicle {
   id: string;
@@ -83,21 +83,6 @@ export const WonVehicles = () => {
     }).format(amount);
   };
 
-  const getPaymentStatusBadge = (status: string) => {
-    switch (status) {
-      case 'awaiting_seller_decision':
-        return <Badge variant="secondary">Awaiting Seller Decision</Badge>;
-      case 'payment_required':
-        return <Badge variant="destructive">Payment Required</Badge>;
-      case 'paid':
-        return <Badge variant="default">Paid</Badge>;
-      case 'completed':
-        return <Badge variant="default" className="bg-green-600">Completed</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
   const getVehicleImage = (images: any) => {
     if (typeof images === 'string') {
       try {
@@ -148,11 +133,11 @@ export const WonVehicles = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-heading-lg font-oswald flex items-center gap-2">
-            <Trophy className="h-8 w-8 text-yellow-500" />
+            <Car className="h-8 w-8 text-primary" />
             Won Vehicles
           </h1>
           <p className="text-muted-foreground">
-            Auctions you've won and their payment status
+            Vehicles you've successfully won at auction
           </p>
         </div>
         <Button
@@ -172,7 +157,7 @@ export const WonVehicles = () => {
             <Card key={i}>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4">
-                  <Skeleton className="h-16 w-16 rounded" />
+                  <Skeleton className="h-24 w-32 rounded" />
                   <div className="space-y-2 flex-1">
                     <Skeleton className="h-4 w-48" />
                     <Skeleton className="h-4 w-32" />
@@ -184,94 +169,110 @@ export const WonVehicles = () => {
           ))}
         </div>
       ) : wonVehicles && wonVehicles.length > 0 ? (
-        <div className="grid gap-4">
-          {wonVehicles.map((vehicle) => (
-            <Card key={vehicle.id} className="overflow-hidden">
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="flex-shrink-0">
-                    <img
-                      src={getVehicleImage(vehicle.vehicle_images)}
-                      alt={`${vehicle.vehicle_year} ${vehicle.vehicle_make} ${vehicle.vehicle_model}`}
-                      className="h-16 w-16 rounded object-cover"
-                    />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-semibold text-lg flex items-center gap-2">
-                          <Car className="h-5 w-5" />
+        <div className="grid gap-6">
+          {wonVehicles.map((vehicle) => {
+            const calculatedPlatformFee = calculatePlatformFee(vehicle.winning_bid_amount);
+            const totalAmount = vehicle.winning_bid_amount + calculatedPlatformFee;
+            
+            return (
+              <Card key={vehicle.id} className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
+                    {/* Vehicle Image Section */}
+                    <div className="relative">
+                      <img
+                        src={getVehicleImage(vehicle.vehicle_images)}
+                        alt={`${vehicle.vehicle_year} ${vehicle.vehicle_make} ${vehicle.vehicle_model}`}
+                        className="w-full h-48 lg:h-full object-cover"
+                      />
+                      <div className="absolute top-4 left-4">
+                        <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                          Bid Accepted!
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Vehicle & Pricing Details Section */}
+                    <div className="p-6">
+                      <div className="mb-4">
+                        <h3 className="text-xl font-bold text-gray-900 mb-1">
                           {vehicle.vehicle_year} {vehicle.vehicle_make} {vehicle.vehicle_model}
                         </h3>
                         {vehicle.vehicle_mileage && (
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-gray-600">
                             {vehicle.vehicle_mileage.toLocaleString()} miles
                           </p>
                         )}
                       </div>
-                      {getPaymentStatusBadge(vehicle.payment_status)}
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Winning Bid</p>
-                        <p className="font-semibold text-green-600">
-                          {formatCurrency(vehicle.winning_bid_amount)}
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Platform Fee</p>
-                        <p className="font-semibold">
-                          {formatCurrency(vehicle.platform_fee)}
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          Auction Ended
-                        </p>
-                        <p className="text-sm">
-                          {new Date(vehicle.auction_end_time).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {vehicle.payment_status === 'payment_required' && (
-                      <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <div className="flex items-center gap-2 text-yellow-800">
-                          <CreditCard className="h-4 w-4" />
-                          <span className="font-medium">Payment Required</span>
+
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Your winning bid:</span>
+                          <span className="font-semibold text-green-600">
+                            {formatCurrency(vehicle.winning_bid_amount)}
+                          </span>
                         </div>
-                        <p className="text-sm text-yellow-700 mt-1">
-                          The seller has accepted your bid. Please complete payment to secure your purchase.
-                        </p>
-                        <div className="mt-2">
-                          <p className="text-sm font-medium">
-                            Total Amount: {formatCurrency(vehicle.winning_bid_amount + vehicle.platform_fee)}
-                          </p>
+                        
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Platform fee:</span>
+                          <span className="font-semibold">
+                            {formatCurrency(calculatedPlatformFee)}
+                          </span>
+                        </div>
+                        
+                        <div className="border-t pt-3">
+                          <div className="flex justify-between">
+                            <span className="font-semibold text-gray-900">Total to pay:</span>
+                            <span className="font-bold text-lg text-gray-900">
+                              {formatCurrency(totalAmount)}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    )}
+                    </div>
+
+                    {/* Seller Information & Actions Section */}
+                    <div className="p-6 bg-gray-50 flex flex-col justify-between">
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-gray-900 mb-2">Seller Information</h4>
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <p>Auction ended: {new Date(vehicle.auction_end_time).toLocaleDateString()}</p>
+                          <p>Status: Payment Required</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <Button 
+                          className="w-full bg-red-600 hover:bg-red-700 text-white"
+                          size="lg"
+                        >
+                          Pay {formatCurrency(totalAmount)}
+                        </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          size="sm"
+                        >
+                          View Full Details
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       ) : (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="h-6 w-6" />
-              No Won Vehicles Yet
-            </CardTitle>
-            <CardDescription>
+          <CardContent className="p-12 text-center">
+            <Car className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Won Vehicles Yet</h3>
+            <p className="text-gray-600">
               You haven't won any auctions yet. Keep bidding on vehicles you're interested in!
-            </CardDescription>
-          </CardHeader>
+            </p>
+          </CardContent>
         </Card>
       )}
     </div>
