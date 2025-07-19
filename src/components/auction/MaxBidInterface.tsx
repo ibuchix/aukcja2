@@ -15,7 +15,7 @@ interface MaxBidInterfaceProps {
   scheduleStatus?: string;
   scheduleStartTime?: string;
   scheduleEndTime?: string;
-  auctionTimingStatus?: 'scheduled' | 'running' | 'ended' | 'unknown';
+  auctionTimingStatus?: 'scheduled' | 'active' | 'ended' | 'unknown';
 }
 
 export const MaxBidInterface = ({
@@ -28,7 +28,7 @@ export const MaxBidInterface = ({
   isVerified = true,
   scheduleStartTime,
   scheduleEndTime,
-  auctionTimingStatus = 'running', // Default to running since we only show live auctions
+  auctionTimingStatus = 'active', // Default to active since we only show live auctions
 }: MaxBidInterfaceProps) => {
   console.log('MaxBidInterface for live auction:', {
     carId,
@@ -51,7 +51,7 @@ export const MaxBidInterface = ({
 
   // For live auctions from the dashboard, assume they are running and available for bidding
   // The fact that they appear in the live auctions list means they should be biddable
-  const isAuctionActive = auctionTimingStatus === 'running' || auctionTimingStatus === 'unknown';
+  const isAuctionActive = auctionTimingStatus === 'active' || auctionTimingStatus === 'unknown';
 
   // Fixed: Check specifically for non-active states without comparing incompatible types
   if (!isAuctionActive) {

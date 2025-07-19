@@ -20,7 +20,7 @@ export const LiveAuctionDetailsDialog = ({
   isVerified,
   onClose
 }: LiveAuctionDetailsDialogProps) => {
-  const isLive = car.auctionTimingStatus === 'running' || car.auctionTimingStatus === 'unknown';
+  const isLive = car.auctionTimingStatus === 'active' || car.auctionTimingStatus === 'unknown';
   const hasEnded = car.auctionTimingStatus === 'ended';
 
   return (
@@ -208,7 +208,7 @@ export const LiveAuctionDetailsDialog = ({
                     ) : (
                       <AuctionTimer 
                         auctionEndTime={car.scheduleEndTime || car.auction_end_time} 
-                        auctionTimingStatus={car.auctionTimingStatus || 'running'} 
+                        auctionTimingStatus={car.auctionTimingStatus || 'active'} 
                       />
                     )}
                   </span>

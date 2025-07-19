@@ -68,7 +68,7 @@ export interface CarListing {
   scheduleStartTime?: string;
   scheduleEndTime?: string;
   isManuallyControlled?: boolean;
-  auctionTimingStatus?: 'scheduled' | 'running' | 'ended' | 'unknown';
+  auctionTimingStatus?: 'scheduled' | 'active' | 'ended' | 'unknown';
   [key: string]: any;
 }
 

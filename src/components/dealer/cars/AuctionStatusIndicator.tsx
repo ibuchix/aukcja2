@@ -4,7 +4,7 @@ import { Clock, Play, StopCircle, CheckCircle } from "lucide-react";
 import { formatUKDateTime } from "@/utils/ukTimeUtils";
 
 interface AuctionStatusIndicatorProps {
-  auctionTimingStatus: 'scheduled' | 'running' | 'ended' | 'unknown';
+  auctionTimingStatus: 'scheduled' | 'active' | 'ended' | 'unknown';
   scheduleStartTime?: string;
   scheduleEndTime?: string;
   auctionStatus?: string;
@@ -26,7 +26,7 @@ export const AuctionStatusIndicator = ({
           color: 'text-blue-600',
           bgColor: 'bg-blue-50'
         };
-      case 'running':
+      case 'active':
         return {
           variant: 'default' as const,
           icon: <Play className="h-3 w-3" />,
@@ -69,7 +69,7 @@ export const AuctionStatusIndicator = ({
         </p>
       )}
       
-      {auctionTimingStatus === 'running' && scheduleEndTime && (
+      {auctionTimingStatus === 'active' && scheduleEndTime && (
         <p className="text-xs text-gray-500">
           Ends: {formatUKDateTime(scheduleEndTime)}
         </p>

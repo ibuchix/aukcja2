@@ -42,7 +42,7 @@ export const buildAuctionQuery = (
     // Show auctions that haven't ended yet (time-based filtering)
     // This includes scheduled, running, and even completed auctions that are still within reasonable viewing time
     .gte('auction_schedules.end_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Show auctions that ended less than 24h ago
-    .in('auction_schedules.status', ['running', 'scheduled', 'completed']);
+    .in('auction_schedules.status', ['active', 'scheduled', 'completed']);
 
   // Apply search
   if (searchQuery) {
@@ -174,8 +174,8 @@ export const formatAuctionData = (auctionData: CarData[], dealerBids: BidData[])
         auction.schedule_status
       );
       
-      // Determine if bidding is allowed (only for running auctions)
-      const biddingAllowed = auctionTimingStatus === 'running';
+      // Determine if bidding is allowed (only for active auctions)
+      const biddingAllowed = auctionTimingStatus === 'active';
       
       // Calculate time until start/end for UX
       const startTime = auction.schedule_start_time ? new Date(auction.schedule_start_time) : null;
@@ -187,7 +187,7 @@ export const formatAuctionData = (auctionData: CarData[], dealerBids: BidData[])
         const hours = Math.floor(timeToStart / (1000 * 60 * 60));
         const minutes = Math.floor((timeToStart % (1000 * 60 * 60)) / (1000 * 60));
         timeDisplay = `Starts in ${hours}h ${minutes}m`;
-      } else if (auctionTimingStatus === 'running' && endTime) {
+      } else if (auctionTimingStatus === 'active' && endTime) {
         const timeToEnd = Math.max(0, endTime.getTime() - now.getTime());
         const hours = Math.floor(timeToEnd / (1000 * 60 * 60));
         const minutes = Math.floor((timeToEnd % (1000 * 60 * 60)) / (1000 * 60));
@@ -215,7 +215,7 @@ export const formatAuctionData = (auctionData: CarData[], dealerBids: BidData[])
         mileage: auction.mileage || 0,
         price: auction.price || 0,
         auction_end_time: auction.schedule_end_time || auction.auction_end_time, // Use schedule end time
-        auction_status: auctionTimingStatus === 'running' ? 'active' : auctionTimingStatus === 'ended' ? 'ended' : 'scheduled',
+        auction_status: auctionTimingStatus === 'active' ? 'active' : auctionTimingStatus === 'ended' ? 'ended' : 'scheduled',
         current_bid: currentBid,
         reserve_price: reservePrice,
         my_bid: dealerBid ? {
@@ -242,7 +242,7 @@ export const formatAuctionData = (auctionData: CarData[], dealerBids: BidData[])
     .filter((item): item is Auction => item !== null)
     // Sort to prioritize live auctions, then starting soon, then scheduled
     .sort((a, b) => {
-      const priorityOrder = { running: 0, scheduled: 1, ended: 2, unknown: 3 };
+      const priorityOrder = { active: 0, scheduled: 1, ended: 2, unknown: 3 };
       return priorityOrder[a.auctionTimingStatus] - priorityOrder[b.auctionTimingStatus];
     });
 };

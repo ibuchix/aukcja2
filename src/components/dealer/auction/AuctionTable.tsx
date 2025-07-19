@@ -75,7 +75,7 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
               />
               {auction.timeDisplay && (
                 <div className={`text-sm font-medium ${
-                  auction.auctionTimingStatus === 'running' ? 'text-orange-600' :
+                  auction.auctionTimingStatus === 'active' ? 'text-orange-600' :
                   auction.auctionTimingStatus === 'scheduled' ? 'text-blue-600' :
                   'text-muted-foreground'
                 }`}>
@@ -132,7 +132,7 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
                   />
                   {auction.timeDisplay && (
                     <div className={`text-sm font-medium ${
-                      auction.auctionTimingStatus === 'running' ? 'text-orange-600' :
+                      auction.auctionTimingStatus === 'active' ? 'text-orange-600' :
                       auction.auctionTimingStatus === 'scheduled' ? 'text-blue-600' :
                       'text-muted-foreground'
                     }`}>
@@ -167,12 +167,12 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
             <TableCell>
               <div className="space-y-1">
                 <div className={`font-medium capitalize ${
-                  auction.auctionTimingStatus === 'running' ? 'text-green-600' :
+                  auction.auctionTimingStatus === 'active' ? 'text-green-600' :
                   auction.auctionTimingStatus === 'scheduled' ? 'text-blue-600' :
                   auction.auctionTimingStatus === 'ended' ? 'text-gray-600' :
                   'text-muted-foreground'
                 }`}>
-                  {auction.auctionTimingStatus === 'running' ? 'Live Auction' :
+                  {auction.auctionTimingStatus === 'active' ? 'Live Auction' :
                    auction.auctionTimingStatus === 'scheduled' ? 'Starting Soon' :
                    auction.auctionTimingStatus === 'ended' ? 'Auction Ended' :
                    auction.auction_status}
@@ -187,7 +187,7 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
                     Lost by ${auction.lost_by.toLocaleString()}
                   </div>
                 )}
-                {auction.reserve_met && auction.auctionTimingStatus === 'running' && (
+                {auction.reserve_met && auction.auctionTimingStatus === 'active' && (
                   <div className="text-xs text-green-600 font-medium">
                     Reserve met
                   </div>

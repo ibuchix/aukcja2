@@ -93,12 +93,12 @@ export const mergeCarDataWithSchedules = (
     });
 
     // Accept auctions that are:
-    // 1. 'running' status (should always be shown if within time bounds)
+    // 1. 'active' status (should always be shown if within time bounds)
     // 2. 'scheduled' status BUT currently within the auction time window
     // 3. 'scheduled' status AND starting soon (within next hour for preparation)
     
-    if (status === 'running') {
-      // Running auctions should be shown if they haven't ended yet
+    if (status === 'active') {
+      // Active auctions should be shown if they haven't ended yet
       const now = new Date();
       const end = new Date(endTime);
       return now <= end;
@@ -133,7 +133,7 @@ export const mergeCarDataWithSchedules = (
     mergedCars: mergedData.length,
     filteredToActive: mergedData.filter(c => {
       if (!c.scheduleStartTime || !c.scheduleEndTime) return false;
-      return c.scheduleStatus === 'running' || isAuctionActiveByTime(c.scheduleStartTime, c.scheduleEndTime);
+      return c.scheduleStatus === 'active' || isAuctionActiveByTime(c.scheduleStartTime, c.scheduleEndTime);
     }).length
   });
 

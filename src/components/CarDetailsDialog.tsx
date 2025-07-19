@@ -207,7 +207,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
                       <Clock className="h-4 w-4 text-gray-400" />
                       <AuctionTimer 
                         auctionEndTime={scheduleInfo?.endTime || car.scheduleEndTime} 
-                        auctionTimingStatus={car.auctionTimingStatus || 'running'} 
+                        auctionTimingStatus={car.auctionTimingStatus || 'active'}
                       />
                     </div>
                   )}
@@ -238,10 +238,10 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
               auctionEndTime={scheduleInfo?.endTime || car.scheduleEndTime || car.auction_end_time}
               reservePrice={reservePrice}
               isVerified={isVerified}
-              scheduleStatus={scheduleInfo?.status || 'running'}
+              scheduleStatus={scheduleInfo?.status || 'active'}
               scheduleStartTime={scheduleInfo?.startTime || car.scheduleStartTime}
               scheduleEndTime={scheduleInfo?.endTime || car.scheduleEndTime}
-              auctionTimingStatus={car.auctionTimingStatus || 'running'}
+              auctionTimingStatus={car.auctionTimingStatus || 'active'}
             />
           </div>
         )}

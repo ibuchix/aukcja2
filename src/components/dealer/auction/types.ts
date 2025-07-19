@@ -59,8 +59,8 @@ export interface Auction {
   schedule_start_time?: string;
   schedule_end_time?: string;
   is_manually_controlled?: boolean;
-  auction_timing_status?: 'scheduled' | 'running' | 'ended' | 'unknown';
-  auctionTimingStatus?: 'scheduled' | 'running' | 'ended' | 'unknown'; // Add camelCase version for consistency
+  auction_timing_status?: 'scheduled' | 'active' | 'ended' | 'unknown';
+  auctionTimingStatus?: 'scheduled' | 'active' | 'ended' | 'unknown'; // Add camelCase version for consistency
   biddingAllowed?: boolean; // Whether bidding is currently allowed
   timeDisplay?: string; // Human-readable time until start/end
 }

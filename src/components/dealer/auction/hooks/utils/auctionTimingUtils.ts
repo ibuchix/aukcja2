@@ -6,7 +6,7 @@ export const calculateAuctionTimingStatus = (
   scheduleStartTime?: string,
   scheduleEndTime?: string,
   scheduleStatus?: string
-): 'scheduled' | 'running' | 'ended' | 'unknown' => {
+): 'scheduled' | 'active' | 'ended' | 'unknown' => {
   if (!scheduleStartTime || !scheduleEndTime) {
     return 'unknown';
   }
@@ -26,10 +26,10 @@ export const calculateAuctionTimingStatus = (
     return 'ended';
   }
   
-  // Check if auction is currently running (between start and end time)
+  // Check if auction is currently active (between start and end time)
   if (isCurrentlyBetweenTimes(scheduleStartTime, scheduleEndTime)) {
-    console.log('Auction is currently running - current time is between start and end');
-    return 'running';
+    console.log('Auction is currently active - current time is between start and end');
+    return 'active';
   }
   
   // Check if auction is scheduled for the future (before start time)

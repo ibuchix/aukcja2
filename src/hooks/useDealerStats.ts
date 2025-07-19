@@ -45,7 +45,7 @@ export const useDealerStats = () => {
       const { count: availableAuctionsCount, error: auctionsError } = await supabase
         .from('auction_schedules')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'running')
+        .eq('status', 'active')
         .lte('start_time', new Date().toISOString())
         .gte('end_time', new Date().toISOString());
 

@@ -163,7 +163,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
             } else {
               const hoursUntilEnd = (auctionEndTime.getTime() - now.getTime()) / (1000 * 60 * 60);
               if (hoursUntilEnd <= 24 && car.auction_status === 'active') {
-                auctionTimingStatus = 'running';
+                auctionTimingStatus = 'active';
               } else {
                 auctionTimingStatus = 'scheduled';
               }

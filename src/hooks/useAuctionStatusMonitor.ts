@@ -34,14 +34,14 @@ export const useAuctionStatusMonitor = ({
           const carId = payload.new?.car_id;
           
           if (oldStatus !== newStatus && carId) {
-            if (newStatus === 'running' && oldStatus === 'scheduled') {
+            if (newStatus === 'active' && oldStatus === 'scheduled') {
               toast({
                 title: "Auction Started",
                 description: "An auction you're watching has just started!",
                 duration: 5000,
               });
               onAuctionStarted?.(carId);
-            } else if (newStatus === 'completed' && oldStatus === 'running') {
+            } else if (newStatus === 'completed' && oldStatus === 'active') {
               toast({
                 title: "Auction Ended",
                 description: "An auction has ended. Check the results!",

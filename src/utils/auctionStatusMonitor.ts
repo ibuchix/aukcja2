@@ -83,7 +83,7 @@ export class AuctionStatusMonitor {
 
       let expectedStatus = 'scheduled';
       if (now >= startTime && now <= endTime) {
-        expectedStatus = 'running';
+        expectedStatus = 'active';
       } else if (now > endTime) {
         expectedStatus = 'completed';
       }

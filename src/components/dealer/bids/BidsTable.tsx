@@ -77,7 +77,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
     const timingStatus = getAuctionTimingStatus(bid);
     
     switch (timingStatus) {
-      case 'running':
+      case 'active':
         return { text: 'Live Auction', variant: 'default' as const, icon: Clock, className: 'bg-green-100 text-green-800 border-green-300' };
       case 'ended':
         return { text: 'Auction Ended', variant: 'secondary' as const, icon: Clock, className: 'bg-gray-100 text-gray-800 border-gray-300' };
@@ -167,7 +167,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                         </>
                       ) : (
                         <Badge variant="secondary" className="text-xs font-medium bg-gray-100 text-gray-700">
-                          {getAuctionTimingStatus(bid) === 'running' ? "Live Auction" 
+                          {getAuctionTimingStatus(bid) === 'active' ? "Live Auction" 
                            : getAuctionTimingStatus(bid) === 'ended' ? "Auction Ended" 
                            : "No Actions"}
                         </Badge>

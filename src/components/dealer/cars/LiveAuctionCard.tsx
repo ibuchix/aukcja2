@@ -85,10 +85,10 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
   const hasEnded = displayStatus.status === 'ended';
 
   // Map display status to timer status
-  const getTimerStatus = (): 'scheduled' | 'running' | 'ended' | 'unknown' => {
+  const getTimerStatus = (): 'scheduled' | 'active' | 'ended' | 'unknown' => {
     switch (displayStatus.status) {
       case 'live':
-        return 'running';
+        return 'active';
       case 'starting-soon':
       case 'scheduled':
         return 'scheduled';

@@ -4,7 +4,7 @@ import { Clock } from "lucide-react";
 
 interface AuctionTimerProps {
   auctionEndTime: string;
-  auctionTimingStatus?: 'scheduled' | 'running' | 'ended' | 'unknown';
+  auctionTimingStatus?: 'scheduled' | 'active' | 'ended' | 'unknown';
 }
 
 export const AuctionTimer = ({ auctionEndTime, auctionTimingStatus }: AuctionTimerProps) => {

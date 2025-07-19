@@ -7,7 +7,7 @@ interface AuctionScheduleInfoProps {
   scheduleStatus?: string;
   scheduleStartTime?: string;
   scheduleEndTime?: string;
-  auctionTimingStatus?: 'scheduled' | 'running' | 'ended' | 'unknown';
+  auctionTimingStatus?: 'scheduled' | 'active' | 'ended' | 'unknown';
   className?: string;
 }
 
@@ -27,7 +27,7 @@ export const AuctionScheduleInfo = ({
             Upcoming Auction
           </Badge>
         );
-      case 'running':
+      case 'active':
         return (
           <Badge variant="default" className="flex items-center gap-1 bg-green-600">
             <Clock className="w-3 h-3" />
@@ -66,7 +66,7 @@ export const AuctionScheduleInfo = ({
         </div>
       )}
       
-      {auctionTimingStatus === 'running' && scheduleEndTime && (
+      {auctionTimingStatus === 'active' && scheduleEndTime && (
         <div className="text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
