@@ -1,4 +1,5 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 const corsHeaders = {
@@ -12,150 +13,132 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log("Processing dealer email notifications");
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Check for dealers that need bid accepted notifications
-    const { data: pendingNotifications } = await supabase
-      .from('system_logs')
-      .select('*')
-      .eq('log_type', 'dealer_bid_accepted_email_queued')
-      .order('created_at', { ascending: true })
-      .limit(10);
+    // Find dealers who need bid accepted emails (seller accepted their bid but no email sent yet)
+    const { data: pendingNotifications, error } = await supabase
+      .from('dealer_won_vehicles')
+      .select(`
+        id,
+        dealer_id,
+        car_id,
+        winning_bid_amount,
+        vehicle_make,
+        vehicle_model,
+        vehicle_year,
+        dealers!inner(
+          dealership_name,
+          user_id
+        )
+      `)
+      .eq('payment_status', 'payment_required')
+      .not('id', 'in', `(
+        SELECT details->>'won_vehicle_id' 
+        FROM system_logs 
+        WHERE log_type = 'dealer_bid_accepted_email_sent'
+        AND details->>'won_vehicle_id' IS NOT NULL
+      )`);
 
-    if (!pendingNotifications || pendingNotifications.length === 0) {
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: 'No pending dealer notifications found',
-        processed: 0 
-      }), {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
+    if (error) {
+      console.error("Error fetching pending notifications:", error);
+      throw error;
     }
 
-    let processed = 0;
-    let errors = 0;
+    console.log(`Found ${pendingNotifications?.length || 0} pending notifications`);
 
-    for (const notification of pendingNotifications) {
+    let emailsSent = 0;
+    const results = [];
+
+    for (const notification of pendingNotifications || []) {
       try {
-        const details = notification.details;
-        const wonVehicleId = details.won_vehicle_id;
-
-        // Get dealer and user information
-        const { data: dealerInfo } = await supabase
-          .from('dealer_won_vehicles')
-          .select(`
-            *,
-            dealers!inner(
-              user_id,
-              dealership_name
-            )
-          `)
-          .eq('id', wonVehicleId)
-          .single();
-
-        if (!dealerInfo) {
-          throw new Error(`Won vehicle record not found: ${wonVehicleId}`);
-        }
-
-        // Get user email
-        const { data: userData } = await supabase.auth.admin.getUserById(dealerInfo.dealers.user_id);
-        const dealerEmail = userData.user?.email;
-
-        if (!dealerEmail) {
-          throw new Error(`Dealer email not found for user: ${dealerInfo.dealers.user_id}`);
+        // Get dealer's email
+        const { data: userData } = await supabase.auth.admin.getUserById(notification.dealers.user_id);
+        
+        if (!userData.user?.email) {
+          console.log(`No email found for dealer ${notification.dealer_id}`);
+          continue;
         }
 
         // Call the send-dealer-bid-accepted function
-        const emailPayload = {
-          dealerId: dealerInfo.dealer_id,
-          carId: dealerInfo.car_id,
-          winningBid: dealerInfo.winning_bid_amount,
-          vehicleDetails: {
-            make: dealerInfo.vehicle_make,
-            model: dealerInfo.vehicle_model,
-            year: dealerInfo.vehicle_year
-          },
-          dealershipName: dealerInfo.dealers.dealership_name,
-          userEmail: dealerEmail
-        };
-
-        const emailResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-dealer-bid-accepted`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`
-          },
-          body: JSON.stringify(emailPayload)
-        });
-
-        if (emailResponse.ok) {
-          // Mark notification as processed by deleting the queued log
-          await supabase
-            .from('system_logs')
-            .delete()
-            .eq('id', notification.id);
-
-          processed++;
-        } else {
-          const errorData = await emailResponse.text();
-          throw new Error(`Email service error: ${errorData}`);
-        }
-
-      } catch (error) {
-        console.error(`Error processing notification ${notification.id}:`, error);
-        
-        // Log the specific error
-        await supabase.from('system_logs').insert({
-          log_type: 'dealer_notification_processing_error',
-          message: `Failed to process dealer notification: ${notification.id}`,
-          error_message: error.message,
-          details: {
-            notification_id: notification.id,
-            original_details: notification.details,
-            error: error.toString()
+        const { data: emailResult, error: emailError } = await supabase.functions.invoke(
+          'send-dealer-bid-accepted',
+          {
+            body: {
+              dealerId: notification.dealer_id,
+              carId: notification.car_id,
+              winningBid: notification.winning_bid_amount,
+              vehicleDetails: {
+                make: notification.vehicle_make,
+                model: notification.vehicle_model,
+                year: notification.vehicle_year
+              },
+              dealershipName: notification.dealers.dealership_name,
+              userEmail: userData.user.email
+            }
           }
-        });
+        );
 
-        errors++;
+        if (emailError) {
+          console.error(`Error sending email for dealer ${notification.dealer_id}:`, emailError);
+          results.push({
+            dealer_id: notification.dealer_id,
+            car_id: notification.car_id,
+            status: 'error',
+            error: emailError.message
+          });
+        } else {
+          console.log(`Email sent successfully for dealer ${notification.dealer_id}`);
+          emailsSent++;
+          results.push({
+            dealer_id: notification.dealer_id,
+            car_id: notification.car_id,
+            status: 'sent',
+            email: userData.user.email
+          });
+        }
+      } catch (err) {
+        console.error(`Error processing notification for dealer ${notification.dealer_id}:`, err);
+        results.push({
+          dealer_id: notification.dealer_id,
+          car_id: notification.car_id,
+          status: 'error',
+          error: err instanceof Error ? err.message : String(err)
+        });
       }
     }
 
-    // Log the batch processing result
-    await supabase.from('system_logs').insert({
-      log_type: 'dealer_notification_batch_complete',
-      message: 'Completed batch processing of dealer notifications',
-      details: {
-        total_notifications: pendingNotifications.length,
-        processed: processed,
-        errors: errors,
+    console.log(`Dealer notification processing complete. Emails sent: ${emailsSent}`);
+
+    return new Response(
+      JSON.stringify({ 
+        success: true,
+        emails_sent: emailsSent,
+        total_processed: results.length,
+        results,
         timestamp: new Date().toISOString()
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       }
-    });
+    );
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      processed: processed,
-      errors: errors,
-      total: pendingNotifications.length
-    }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
-
-  } catch (error: any) {
-    console.error("Error in dealer notifications processor:", error);
-    
-    return new Response(JSON.stringify({ 
-      success: false, 
-      error: error.message 
-    }), {
-      status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+  } catch (error) {
+    console.error("Error in dealer notifications processing:", error);
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: error instanceof Error ? error.message : String(error) 
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
   }
 };
 

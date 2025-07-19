@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -35,6 +36,27 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { dealerId, carId, winningBid, vehicleDetails, dealershipName, userEmail } = await req.json() as DealerNotificationRequest;
 
+    // Check if email was already sent for this dealer/car combination to prevent duplicates
+    const { data: existingEmailLog } = await supabase
+      .from('system_logs')
+      .select('id')
+      .eq('log_type', 'dealer_bid_accepted_email_sent')
+      .eq('details->dealer_id', dealerId)
+      .eq('details->car_id', carId)
+      .limit(1);
+
+    if (existingEmailLog && existingEmailLog.length > 0) {
+      console.log(`Email already sent for dealer ${dealerId} and car ${carId}`);
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: 'Email already sent',
+        sentTo: userEmail || 'unknown'
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     // Get dealer user email if not provided
     let dealerEmail = userEmail;
     if (!dealerEmail) {
@@ -68,7 +90,7 @@ const handler = async (req: Request): Promise<Response> => {
     const dashboardUrl = `${Deno.env.get("SITE_URL")}/dealer/dashboard/won-vehicles`;
 
     const emailResponse = await resend.emails.send({
-      from: "Car Auction Platform <notifications@carauction.com>",
+      from: "Auto-Strada <notifications@auto-strada.pl>", // FIXED: Using verified domain
       to: [dealerEmail],
       subject: `🎉 Your bid has been accepted for ${vehicle}`,
       html: `
@@ -107,7 +129,7 @@ const handler = async (req: Request): Promise<Response> => {
                 Please complete your payment within 48 hours to avoid cancellation.
               </p>
               <p style="color: #6b7280; font-size: 12px; margin: 10px 0 0 0;">
-                This is an automated message from Car Auction Platform.
+                This is an automated message from Auto-Strada.
               </p>
             </div>
           </div>
@@ -115,7 +137,7 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    // Log successful email send
+    // Log successful email send with deduplication tracking
     await supabase.from('system_logs').insert({
       log_type: 'dealer_bid_accepted_email_sent',
       message: 'Successfully sent bid accepted email to dealer',
@@ -125,7 +147,8 @@ const handler = async (req: Request): Promise<Response> => {
         email: dealerEmail,
         vehicle: vehicle,
         winning_bid: winningBid,
-        resend_response: emailResponse
+        resend_response: emailResponse,
+        timestamp: new Date().toISOString()
       }
     });
 

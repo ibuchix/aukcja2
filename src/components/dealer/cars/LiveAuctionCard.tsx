@@ -47,35 +47,58 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
   // Use the correctly mapped reservePrice field from the processed data
   const reservePrice = car.reservePrice || car.reserve_price || car.price || 0;
 
-  // Enhanced auction status logic
+  // Enhanced auction status logic with better timing calculation
   const getAuctionDisplayStatus = () => {
     const now = new Date();
     
-    if (!auctionStartTime || !auctionEndTime) {
-      return { status: 'unknown', label: 'Status Unknown' };
-    }
-    
-    const startTime = new Date(auctionStartTime);
-    const endTime = new Date(auctionEndTime);
-    
-    if (now > endTime) {
-      return { status: 'ended', label: 'Auction Ended' };
-    }
-    
-    if (now >= startTime && now <= endTime) {
-      return { status: 'live', label: 'Live Auction' };
-    }
-    
-    if (now < startTime) {
-      const timeUntilStart = startTime.getTime() - now.getTime();
-      const hoursUntilStart = Math.ceil(timeUntilStart / (1000 * 60 * 60));
+    // If we have timing data, use it for accurate status
+    if (auctionStartTime && auctionEndTime) {
+      const startTime = new Date(auctionStartTime);
+      const endTime = new Date(auctionEndTime);
       
-      if (hoursUntilStart <= 1) {
-        return { status: 'starting-soon', label: 'Starting Soon' };
+      if (now > endTime) {
+        return { status: 'ended', label: 'Auction Ended' };
       }
-      return { status: 'scheduled', label: `Starts in ${hoursUntilStart}h` };
+      
+      if (now >= startTime && now <= endTime) {
+        return { status: 'live', label: 'Live Auction' };
+      }
+      
+      if (now < startTime) {
+        const timeUntilStart = startTime.getTime() - now.getTime();
+        const hoursUntilStart = Math.ceil(timeUntilStart / (1000 * 60 * 60));
+        
+        if (hoursUntilStart <= 1) {
+          return { status: 'starting-soon', label: 'Starting Soon' };
+        }
+        return { status: 'scheduled', label: `Starts in ${hoursUntilStart}h` };
+      }
     }
     
+    // Fallback: check car's auction_status or provided timing status
+    if (car.auctionTimingStatus) {
+      switch (car.auctionTimingStatus) {
+        case 'active':
+          return { status: 'live', label: 'Live Auction' };
+        case 'scheduled':
+          return { status: 'scheduled', label: 'Scheduled' };
+        case 'ended':
+          return { status: 'ended', label: 'Auction Ended' };
+        default:
+          // If we have an end time but status is unknown, calculate from time
+          if (auctionEndTime) {
+            const endTime = new Date(auctionEndTime);
+            if (now <= endTime) {
+              return { status: 'live', label: 'Live Auction' };
+            } else {
+              return { status: 'ended', label: 'Auction Ended' };
+            }
+          }
+          return { status: 'unknown', label: 'Status Unknown' };
+      }
+    }
+    
+    // Final fallback
     return { status: 'unknown', label: 'Status Unknown' };
   };
 
@@ -95,6 +118,12 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
       case 'ended':
         return 'ended';
       default:
+        // If we have timing data but status is unknown, determine from time
+        if (auctionEndTime) {
+          const now = new Date();
+          const endTime = new Date(auctionEndTime);
+          return now <= endTime ? 'active' : 'ended';
+        }
         return 'unknown';
     }
   };
@@ -160,6 +189,12 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
               />
             ) : hasEnded ? (
               <span>Auction ended</span>
+            ) : auctionEndTime ? (
+              // Show countdown even if status calculation failed
+              <AuctionTimer 
+                auctionEndTime={auctionEndTime} 
+                auctionTimingStatus="active" 
+              />
             ) : (
               <span>{displayStatus.label}</span>
             )}
