@@ -5,7 +5,7 @@ import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Car } from "lucide-react";
+import { RefreshCw, Car, Eye } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
@@ -139,24 +139,33 @@ export const WonVehicles = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-heading-lg font-oswald flex items-center gap-2">
-            <Car className="h-8 w-8 text-primary" />
-            Won Vehicles
-          </h1>
-          <p className="text-muted-foreground">
-            Vehicles you have won at auction
-          </p>
+        <h1 className="text-heading-lg font-oswald">Won Vehicles</h1>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium">{wonVehicles?.length || 0} vehicles</span>
+          <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            Real-time updates active
+          </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isLoading}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="text-red-600 border-red-200 hover:bg-red-50"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          <div className="flex items-center gap-2 text-sm text-green-600">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            Auto-refresh ON
+          </div>
+        </div>
       </div>
 
       {isLoading ? (
@@ -177,105 +186,127 @@ export const WonVehicles = () => {
           ))}
         </div>
       ) : wonVehicles && wonVehicles.length > 0 ? (
-        <div className="grid gap-6">
-          {wonVehicles.map((vehicle) => {
+        <div className="space-y-6">
+          {/* Show only the first vehicle */}
+          {wonVehicles.slice(0, 1).map((vehicle) => {
             const calculatedPlatformFee = calculatePlatformFee(vehicle.winning_bid_amount);
             
             return (
-              <Card key={vehicle.id} className="overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-0">
-                    {/* Vehicle Image Section */}
-                    <div className="relative">
-                      <img
-                        src={getVehicleImage(vehicle.vehicle_images)}
-                        alt={`${vehicle.vehicle_year} ${vehicle.vehicle_make} ${vehicle.vehicle_model}`}
-                        className="w-full h-48 lg:h-full object-cover"
-                      />
-                      <div className="absolute top-4 left-4">
-                        <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                          Bid Accepted!
-                        </div>
-                      </div>
-                    </div>
+              <div key={vehicle.id} className="space-y-4">
+                {/* Vehicle Title and Payment Badge */}
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {vehicle.vehicle_year} {vehicle.vehicle_make} {vehicle.vehicle_model}
+                  </h2>
+                  <div className="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-lg text-sm font-semibold">
+                    Payment Required
+                  </div>
+                </div>
 
-                    {/* Vehicle Details Section */}
-                    <div className="p-6 lg:col-span-2">
-                      <div className="mb-4">
-                        <h3 className="text-xl font-bold text-gray-900 mb-1">
-                          {vehicle.vehicle_year} {vehicle.vehicle_make} {vehicle.vehicle_model}
-                        </h3>
-                        {vehicle.vehicle_mileage && (
-                          <p className="text-gray-600">
-                            {vehicle.vehicle_mileage.toLocaleString()} km
-                          </p>
-                        )}
-                        <p className="text-sm text-gray-500 mt-1">
-                          Won Date: {formatDate(vehicle.auction_end_time)}
-                        </p>
+                {/* Main Card */}
+                <Card className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
+                      {/* Vehicle Image Section */}
+                      <div className="relative bg-gray-100 flex items-center justify-center h-64">
+                        <img
+                          src={getVehicleImage(vehicle.vehicle_images)}
+                          alt={`${vehicle.vehicle_year} ${vehicle.vehicle_make} ${vehicle.vehicle_model}`}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
 
-                      <div className="space-y-3">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Final Price:</span>
-                          <span className="font-semibold text-lg">
-                            {formatCurrency(vehicle.winning_bid_amount)}
-                          </span>
-                        </div>
+                      {/* Vehicle Details Section */}
+                      <div className="p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Vehicle Details</h3>
                         
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Your Original Bid:</span>
-                          <span className="font-semibold">
-                            {formatCurrency(vehicle.winning_bid_amount)}
-                          </span>
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                          <div>
+                            <p className="text-sm text-gray-500 uppercase tracking-wide">MILEAGE</p>
+                            <p className="font-semibold">{vehicle.vehicle_mileage?.toLocaleString() || 'N/A'} km</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500 uppercase tracking-wide">WON DATE</p>
+                            <p className="font-semibold">{new Date(vehicle.auction_end_time).toLocaleDateString('en-GB')}</p>
+                          </div>
                         </div>
+
+                        <h4 className="text-lg font-semibold text-gray-900 mb-4">Pricing Details</h4>
                         
-                        <div className="border-t pt-3">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Platform Fee:</span>
-                            <span className="font-bold text-lg text-primary">
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                            <span className="text-gray-700">Final Price</span>
+                            <span className="font-bold text-green-600 text-lg">
+                              {formatCurrency(vehicle.winning_bid_amount)}
+                            </span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span className="text-gray-700">Your Original Bid</span>
+                            <span className="font-semibold">
+                              {formatCurrency(vehicle.winning_bid_amount)}
+                            </span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                            <span className="text-gray-700">Platform Fee</span>
+                            <span className="font-bold text-blue-600">
                               {formatCurrency(calculatedPlatformFee)}
                             </span>
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Payment & Actions Section */}
-                    <div className="p-6 bg-gray-50 flex flex-col justify-between">
-                      <div className="mb-4">
-                        <h4 className="font-semibold text-gray-900 mb-3">Payment Status</h4>
-                        <div className="text-sm text-gray-600 space-y-2">
-                          <div className="flex items-center">
-                            <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
-                            <span>Payment Required</span>
+                      {/* Seller Information Section */}
+                      <div className="p-6 bg-green-50">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Seller Information</h3>
+                        
+                        <div className="text-center mb-6">
+                          <div className="flex items-center justify-center gap-2 text-green-600 mb-2">
+                            <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                            <span className="font-semibold">Bid Accepted!</span>
                           </div>
-                          <p className="text-xs text-gray-500 ml-4">
-                            After payment you will be able to see full seller details
+                          <p className="text-sm text-gray-600 mb-4">
+                            Seller has accepted your bid - Payment required. You can now pay the platform fee to complete the purchase.
                           </p>
                         </div>
-                      </div>
 
-                      <div className="space-y-3">
-                        <Button 
-                          className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold"
-                          size="lg"
-                        >
-                          Pay {formatCurrency(calculatedPlatformFee)}
-                        </Button>
-                        
-                        <Button 
-                          variant="outline" 
-                          className="w-full text-gray-600"
-                          size="sm"
-                        >
-                          Refresh Payment Status
-                        </Button>
+                        <div className="space-y-3">
+                          <Button 
+                            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold"
+                            size="lg"
+                          >
+                            <span className="mr-2">💳</span>
+                            Pay {formatCurrency(calculatedPlatformFee)}
+                          </Button>
+                          
+                          <Button 
+                            variant="outline" 
+                            className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                            size="sm"
+                          >
+                            Refresh Payment Status
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+
+                {/* View Full Details Button */}
+                <div className="flex justify-center">
+                  <Button 
+                    variant="outline" 
+                    className="text-red-600 border-red-200 hover:bg-red-50"
+                    size="lg"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    View Full Details
+                  </Button>
+                </div>
+              </div>
             );
           })}
         </div>
