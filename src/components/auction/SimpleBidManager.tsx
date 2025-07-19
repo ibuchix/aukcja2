@@ -73,6 +73,8 @@ export const SimpleBidManager = ({
       return;
     }
 
+    // Removed minimum bid restrictions - dealers can bid any positive amount
+
     setIsSubmitting(true);
 
     try {

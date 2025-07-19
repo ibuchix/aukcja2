@@ -21,8 +21,8 @@ export const BidInput = ({
       type="number"
       value={bidAmount}
       onChange={(e) => onBidAmountChange(e.target.value)}
-      placeholder="Enter bid amount"
-      min={currentHighestBid + 1}
+      placeholder="Enter any bid amount"
+      min={1}
       step="1"
       className="flex-1"
       disabled={isDisabled}

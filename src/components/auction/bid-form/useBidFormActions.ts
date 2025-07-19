@@ -91,6 +91,8 @@ export const useBidFormActions = ({
         throw new Error("Bid amount must be greater than 0");
       }
 
+      // Removed minimum bid and current bid restrictions - dealers can bid any positive amount
+
       // Force status synchronization before bid placement to ensure accuracy
       console.log('Forcing auction status synchronization...');
       const syncResult = await auctionStatusMonitor.forceSynchronization();
