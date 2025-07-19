@@ -16,7 +16,6 @@ interface CarData {
   model: string;
   year: number;
   auction_end_time: string;
-  current_bid: number;
   auction_status: string;
   reserve_price: number;
   awaiting_seller_decision: boolean;
@@ -108,7 +107,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       
       console.log('Fetching car details for IDs:', carIds);
 
-      // Get cars data
+      // Get cars data - only what we need, no current_bid
       const { data: cars, error: carsError } = await supabase
         .from("cars")
         .select(`
@@ -118,7 +117,6 @@ export function useDealerBids(dealerProfileId: string | undefined) {
           model,
           year,
           auction_end_time,
-          current_bid,
           auction_status,
           reserve_price,
           awaiting_seller_decision
@@ -132,29 +130,6 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         throw carsError;
       }
 
-      // Get ALL bids for these cars to determine correct bid status
-      const { data: allBids, error: allBidsError } = await supabase
-        .from("bids")
-        .select(`
-          id,
-          car_id,
-          amount,
-          status,
-          dealer_id,
-          created_at
-        `)
-        .in('car_id', carIds)
-        .eq('status', 'active')
-        .order('amount', { ascending: false })
-        .order('created_at', { ascending: true }); // Earlier bids win in case of ties
-
-      console.log('All bids query result:', { allBids, allBidsError });
-      
-      if (allBidsError) {
-        console.error('Error fetching all bids:', allBidsError);
-        throw allBidsError;
-      }
-      
       // Create a lookup table for cars
       const carsById: Record<string, any> = {};
       
@@ -169,32 +144,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         });
       }
 
-      // Create a lookup for highest bids per car from ALL bids
-      const highestBidPerCar: Record<string, { amount: number; dealerId: string; created_at: string }> = {};
-      
-      if (allBids && Array.isArray(allBids)) {
-        // Filter and validate all bids data
-        const validAllBids = safelyFilterData(allBids, isValidBidData);
-        
-        validAllBids.forEach(bid => {
-          if (bid && bid.car_id && bid.amount !== undefined && bid.dealer_id && bid.created_at) {
-            if (!highestBidPerCar[bid.car_id] || 
-                bid.amount > highestBidPerCar[bid.car_id].amount ||
-                (bid.amount === highestBidPerCar[bid.car_id].amount && 
-                 new Date(bid.created_at) < new Date(highestBidPerCar[bid.car_id].created_at))) {
-              highestBidPerCar[bid.car_id] = {
-                amount: bid.amount,
-                dealerId: bid.dealer_id,
-                created_at: bid.created_at
-              };
-            }
-          }
-        });
-      }
-
-      console.log('Highest bid per car:', highestBidPerCar);
-
-      // Calculate bid status based on auction state and highest bid
+      // Build the result without complex status calculations since we're not showing them
       const result = validBids
         .map(bid => {
           const car = carsById[bid.car_id];
@@ -207,30 +157,16 @@ export function useDealerBids(dealerProfileId: string | undefined) {
           const auctionEndTime = car.auction_end_time ? new Date(car.auction_end_time) : null;
           
           let auctionTimingStatus = 'unknown';
-          let bidStatus = bid.status || 'active';
-          
-          // Get the actual highest bid for this car
-          const highestBid = highestBidPerCar[bid.car_id];
-          const isHighestBidder = highestBid && highestBid.dealerId === dealerProfileId && highestBid.amount === bid.amount;
           
           if (auctionEndTime) {
             if (now > auctionEndTime) {
               auctionTimingStatus = 'ended';
-              // Determine final bid status based on whether this dealer's bid is the winning bid
-              if (isHighestBidder && highestBid.amount >= car.reserve_price) {
-                bidStatus = car.awaiting_seller_decision ? 'winning_pending' : 'won';
-              } else {
-                bidStatus = 'lost';
-              }
             } else {
               const hoursUntilEnd = (auctionEndTime.getTime() - now.getTime()) / (1000 * 60 * 60);
               if (hoursUntilEnd <= 24 && car.auction_status === 'active') {
                 auctionTimingStatus = 'running';
-                // Check if this dealer's bid is currently the highest
-                bidStatus = isHighestBidder ? 'winning' : 'outbid';
               } else {
                 auctionTimingStatus = 'scheduled';
-                bidStatus = 'active';
               }
             }
           }
@@ -239,7 +175,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
             id: bid.id,
             car_id: bid.car_id,
             amount: bid.amount,
-            status: bidStatus,
+            status: bid.status,
             created_at: bid.created_at,
             auctionTimingStatus,
             car: {
@@ -249,7 +185,6 @@ export function useDealerBids(dealerProfileId: string | undefined) {
               model: car.model,
               year: car.year,
               auction_end_time: car.auction_end_time,
-              current_bid: highestBid ? highestBid.amount : (car.current_bid || 0),
               auction_status: car.auction_status,
               reserve_price: car.reserve_price,
               awaiting_seller_decision: car.awaiting_seller_decision
@@ -295,7 +230,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       )
       .subscribe();
 
-    // Set up realtime subscription for car status/current_bid changes
+    // Set up realtime subscription for car status changes
     const carIds = myBids.map(bid => bid.car_id);
     if (carIds.length > 0) {
       const carChannel = supabase

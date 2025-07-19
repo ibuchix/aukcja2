@@ -33,9 +33,7 @@ export const ModifyBidDialog = ({
 
   if (!bid) return null;
 
-  const currentBid = bid.car?.current_bid || 0;
   const newAmountNum = parseFloat(newAmount) || 0;
-
   const isValidBid = newAmountNum > 0;
 
   const handleSubmit = () => {
@@ -62,8 +60,7 @@ export const ModifyBidDialog = ({
             <Label>Current Information</Label>
             <div className="text-sm text-muted-foreground space-y-1">
               <div>Your current bid: {formatCurrency(bid.amount)}</div>
-              <div>Latest bid: {formatCurrency(currentBid)}</div>
-              <div>Enter any amount you're willing to pay for this vehicle</div>
+              <div>Enter the new amount you're willing to pay for this vehicle</div>
             </div>
           </div>
 

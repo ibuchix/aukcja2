@@ -13,7 +13,6 @@ export interface MyBid {
     model: string;
     year: number;
     auction_end_time: string;
-    current_bid: number;
     auction_status: string;
     reserve_price?: number;
     awaiting_seller_decision?: boolean;

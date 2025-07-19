@@ -69,30 +69,8 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
     }
   };
 
-  // Enhanced auction status checks
   const getAuctionTimingStatus = (bid: MyBid) => {
     return bid.auctionTimingStatus || 'unknown';
-  };
-
-  const getBidStatusDisplay = (bid: MyBid) => {
-    const timingStatus = getAuctionTimingStatus(bid);
-    
-    switch (bid.status) {
-      case 'winning':
-        return { text: 'Winning', variant: 'success' as const, className: 'bg-green-500 text-white font-medium' };
-      case 'winning_pending':
-        return { text: 'Won - Awaiting Decision', variant: 'secondary' as const, className: 'bg-blue-500 text-white font-medium' };
-      case 'won':
-        return { text: 'Won', variant: 'success' as const, className: 'bg-green-600 text-white font-medium' };
-      case 'outbid':
-        return { text: 'Outbid', variant: 'warning' as const, className: 'bg-orange-500 text-white font-medium' };
-      case 'lost':
-        return { text: 'Lost', variant: 'destructive' as const, className: 'bg-red-500 text-white font-medium' };
-      case 'active':
-        return { text: 'Active', variant: 'outline' as const, className: 'border-2 font-medium' };
-      default:
-        return { text: bid.status || 'Unknown', variant: 'secondary' as const, className: 'font-medium' };
-    }
   };
 
   const getAuctionStatusDisplay = (bid: MyBid) => {
@@ -112,7 +90,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
 
   const canModifyBid = (bid: MyBid) => {
     const timingStatus = getAuctionTimingStatus(bid);
-    return timingStatus === 'scheduled' && !['won', 'lost', 'winning_pending'].includes(bid.status);
+    return timingStatus === 'scheduled';
   };
 
   return (
@@ -123,15 +101,12 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
             <TableRow>
               <TableHead>Vehicle</TableHead>
               <TableHead>Your Bid</TableHead>
-              <TableHead>Current Bid</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead>Auction Ends</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
           {bids.map((bid) => {
-              const bidStatusDisplay = getBidStatusDisplay(bid);
               const auctionStatusDisplay = getAuctionStatusDisplay(bid);
               const canModify = canModifyBid(bid);
               
@@ -149,16 +124,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span>{formatCurrency(bid.amount)}</span>
-                  </TableCell>
-                  <TableCell>{formatCurrency(bid.car?.current_bid || 0)}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={bidStatusDisplay.variant}
-                      className={bidStatusDisplay.className}
-                    >
-                      {bidStatusDisplay.text}
-                    </Badge>
+                    <span className="font-semibold">{formatCurrency(bid.amount)}</span>
                   </TableCell>
                   <TableCell>
                     {bid.car?.auction_end_time ? (
@@ -184,6 +150,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                             onClick={() => handleModifyBid(bid)}
                             disabled={isModifying}
                             title="Modify bid"
+                            className="border-blue-500 text-blue-600 hover:bg-blue-50"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -193,12 +160,13 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                             onClick={() => handleCancelBid(bid)}
                             disabled={isCancelling}
                             title="Cancel bid"
+                            className="border-red-500 text-red-600 hover:bg-red-50"
                           >
                             <X className="h-4 w-4" />
                           </Button>
                         </>
                       ) : (
-                        <Badge variant="secondary" className="text-xs font-medium">
+                        <Badge variant="secondary" className="text-xs font-medium bg-gray-100 text-gray-700">
                           {getAuctionTimingStatus(bid) === 'running' ? "Live Auction" 
                            : getAuctionTimingStatus(bid) === 'ended' ? "Auction Ended" 
                            : "No Actions"}
