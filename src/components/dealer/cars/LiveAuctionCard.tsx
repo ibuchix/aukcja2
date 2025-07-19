@@ -41,14 +41,48 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
   };
 
   // Get auction end time from schedule data or fallback
-  const auctionEndTime = car.schedule_end_time || car.auction_end_time;
+  const auctionEndTime = car.scheduleEndTime || car.auction_end_time;
+  const auctionStartTime = car.scheduleStartTime;
 
   // Use the correctly mapped reservePrice field from the processed data
   const reservePrice = car.reservePrice || car.reserve_price || car.price || 0;
 
-  // Determine if this auction should still be shown as "live"
-  const isActuallyLive = car.auctionTimingStatus === 'running';
-  const hasEnded = car.auctionTimingStatus === 'ended';
+  // Enhanced auction status logic
+  const getAuctionDisplayStatus = () => {
+    const now = new Date();
+    
+    if (!auctionStartTime || !auctionEndTime) {
+      return { status: 'unknown', label: 'Status Unknown' };
+    }
+    
+    const startTime = new Date(auctionStartTime);
+    const endTime = new Date(auctionEndTime);
+    
+    if (now > endTime) {
+      return { status: 'ended', label: 'Auction Ended' };
+    }
+    
+    if (now >= startTime && now <= endTime) {
+      return { status: 'live', label: 'Live Auction' };
+    }
+    
+    if (now < startTime) {
+      const timeUntilStart = startTime.getTime() - now.getTime();
+      const hoursUntilStart = Math.ceil(timeUntilStart / (1000 * 60 * 60));
+      
+      if (hoursUntilStart <= 1) {
+        return { status: 'starting-soon', label: 'Starting Soon' };
+      }
+      return { status: 'scheduled', label: `Starts in ${hoursUntilStart}h` };
+    }
+    
+    return { status: 'unknown', label: 'Status Unknown' };
+  };
+
+  const displayStatus = getAuctionDisplayStatus();
+  const isLive = displayStatus.status === 'live';
+  const isStartingSoon = displayStatus.status === 'starting-soon';
+  const hasEnded = displayStatus.status === 'ended';
 
   return (
     <Card 
@@ -63,15 +97,25 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
         />
         <div className="absolute top-2 right-2">
           <AuctionStatusIndicator
-            auctionTimingStatus={car.auctionTimingStatus || 'unknown'}
+            auctionTimingStatus={car.auctionTimingStatus || displayStatus.status}
             scheduleStartTime={car.scheduleStartTime}
             scheduleEndTime={car.scheduleEndTime}
             auctionStatus={car.auction_status}
           />
         </div>
-        {isActuallyLive && (
+        {isLive && (
           <Badge className="absolute top-2 left-2 bg-red-500">
             Live Auction
+          </Badge>
+        )}
+        {isStartingSoon && (
+          <Badge className="absolute top-2 left-2 bg-orange-500">
+            Starting Soon
+          </Badge>
+        )}
+        {displayStatus.status === 'scheduled' && (
+          <Badge className="absolute top-2 left-2 bg-blue-500">
+            Scheduled
           </Badge>
         )}
       </div>
@@ -97,12 +141,12 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
             {auctionEndTime && !hasEnded ? (
               <AuctionTimer 
                 auctionEndTime={auctionEndTime} 
-                auctionTimingStatus={car.auctionTimingStatus || 'running'} 
+                auctionTimingStatus={displayStatus.status} 
               />
             ) : hasEnded ? (
               <span>Auction ended</span>
             ) : (
-              <span>Auction ending soon</span>
+              <span>{displayStatus.label}</span>
             )}
           </div>
           

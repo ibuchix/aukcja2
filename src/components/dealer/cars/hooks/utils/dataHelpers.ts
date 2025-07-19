@@ -17,6 +17,25 @@ export interface CarWithSchedule {
   isManuallyControlled?: boolean;
 }
 
+// Helper function to determine if an auction should be considered active based on time
+const isAuctionActiveByTime = (startTime: string, endTime: string): boolean => {
+  const now = new Date();
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  
+  // Auction is active if current time is between start and end times
+  return now >= start && now <= end;
+};
+
+// Helper function to determine if an auction is upcoming (scheduled for future)
+const isAuctionUpcoming = (startTime: string): boolean => {
+  const now = new Date();
+  const start = new Date(startTime);
+  
+  // Auction is upcoming if start time is in the future
+  return start > now;
+};
+
 export const mergeCarDataWithSchedules = (
   cars: any[],
   schedules: AuctionScheduleData[]
@@ -52,12 +71,70 @@ export const mergeCarDataWithSchedules = (
     // If no schedule found, return car as-is (shouldn't happen in live auctions)
     console.warn("No schedule found for car:", car.id);
     return car;
-  }).filter(car => car.scheduleStatus === 'running'); // Only return cars with running schedules
+  }).filter(car => {
+    // Updated filter logic: Accept both 'scheduled' and 'running' statuses
+    // but apply time-based filtering to determine actual availability
+    if (!car.scheduleStatus || !car.scheduleStartTime || !car.scheduleEndTime) {
+      console.warn("Car missing schedule data:", car.id);
+      return false;
+    }
+
+    const status = car.scheduleStatus;
+    const startTime = car.scheduleStartTime;
+    const endTime = car.scheduleEndTime;
+
+    // Log the filtering decision for debugging
+    console.log(`Filtering car ${car.id}:`, {
+      status,
+      startTime,
+      endTime,
+      isActiveByTime: isAuctionActiveByTime(startTime, endTime),
+      isUpcoming: isAuctionUpcoming(startTime)
+    });
+
+    // Accept auctions that are:
+    // 1. 'running' status (should always be shown if within time bounds)
+    // 2. 'scheduled' status BUT currently within the auction time window
+    // 3. 'scheduled' status AND starting soon (within next hour for preparation)
+    
+    if (status === 'running') {
+      // Running auctions should be shown if they haven't ended yet
+      const now = new Date();
+      const end = new Date(endTime);
+      return now <= end;
+    }
+    
+    if (status === 'scheduled') {
+      // For scheduled auctions, check if they should be active based on time
+      if (isAuctionActiveByTime(startTime, endTime)) {
+        console.log(`Scheduled auction ${car.id} is now active based on time`);
+        return true;
+      }
+      
+      // Also include auctions starting within the next hour for dealer preparation
+      const now = new Date();
+      const start = new Date(startTime);
+      const timeUntilStart = start.getTime() - now.getTime();
+      const oneHourInMs = 60 * 60 * 1000;
+      
+      if (timeUntilStart > 0 && timeUntilStart <= oneHourInMs) {
+        console.log(`Scheduled auction ${car.id} starts within an hour`);
+        return true;
+      }
+    }
+    
+    // Filter out completed, cancelled, or other statuses
+    console.log(`Filtering out car ${car.id} with status ${status}`);
+    return false;
+  });
 
   console.log("Merged data result:", {
     originalCars: cars.length,
     mergedCars: mergedData.length,
-    filteredToRunning: mergedData.filter(c => c.scheduleStatus === 'running').length
+    filteredToActive: mergedData.filter(c => {
+      if (!c.scheduleStartTime || !c.scheduleEndTime) return false;
+      return c.scheduleStatus === 'running' || isAuctionActiveByTime(c.scheduleStartTime, c.scheduleEndTime);
+    }).length
   });
 
   return mergedData;
