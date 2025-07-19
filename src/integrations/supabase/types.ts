@@ -2410,6 +2410,10 @@ export type Database = {
         Args: { p_vin: string }
         Returns: boolean
       }
+      verify_auction_status_consistency: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       verify_dealer: {
         Args: { p_dealer_id: string; p_admin_id: string; p_notes?: string }
         Returns: Json
