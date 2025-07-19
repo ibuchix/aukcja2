@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { auctionStatusMonitor } from "@/utils/auctionStatusMonitor";
 
 interface UseBidFormActionsProps {
   carId: string;
@@ -53,7 +54,7 @@ export const useBidFormActions = ({
       const numericBidAmount = parseFloat(bidAmount);
       
       // Enhanced debugging logs
-      console.log('=== BID PLACEMENT DEBUG ===');
+      console.log('=== ENHANCED BID PLACEMENT DEBUG ===');
       console.log('Placing bid with params:', {
         carId,
         dealerId,
@@ -90,8 +91,13 @@ export const useBidFormActions = ({
         throw new Error("Bid amount must be greater than 0");
       }
 
-      // Call the simplified place_bid function
-      console.log('Calling simplified place_bid RPC with parameters:', {
+      // Force status synchronization before bid placement to ensure accuracy
+      console.log('Forcing auction status synchronization...');
+      const syncResult = await auctionStatusMonitor.forceSynchronization();
+      console.log('Synchronization result:', syncResult);
+
+      // Call the enhanced place_bid function
+      console.log('Calling enhanced place_bid RPC with parameters:', {
         p_car_id: carId,
         p_dealer_id: dealerId,
         p_amount: numericBidAmount
@@ -103,7 +109,7 @@ export const useBidFormActions = ({
         p_amount: numericBidAmount
       });
 
-      console.log('Bid placement response:', { data, error });
+      console.log('Enhanced bid placement response:', { data, error });
 
       if (error) {
         console.error('Supabase RPC error:', error);
@@ -114,17 +120,41 @@ export const useBidFormActions = ({
       if (data && typeof data === 'object' && 'success' in data) {
         if (!data.success) {
           const errorMsg = typeof data.error === 'string' ? String(data.error) : 'Failed to place bid';
-          console.error('Bid placement failed:', errorMsg);
+          console.error('Enhanced bid placement failed:', errorMsg);
+          
+          // Check if it's a status-related error and suggest retry
+          if (errorMsg.includes('not currently active') || errorMsg.includes('not accepting bids')) {
+            console.log('Status-related error detected, verifying consistency...');
+            const consistencyResult = await auctionStatusMonitor.verifyConsistency();
+            console.log('Consistency verification result:', consistencyResult);
+            
+            // Suggest retry for status issues
+            if (retryCount < 2) {
+              toast({
+                title: "Auction Status Issue",
+                description: "Auction status is being synchronized. Retrying...",
+              });
+              
+              setRetryCount(prev => prev + 1);
+              // Wait a moment and retry
+              setTimeout(() => {
+                setIsSubmitting(false);
+                handlePlaceBid(bidAmount);
+              }, 2000);
+              return;
+            }
+          }
+          
           throw new Error(errorMsg);
         }
 
-        console.log('Bid placed successfully:', data);
+        console.log('Enhanced bid placed successfully:', data);
 
         // Reset retry count on success
         setRetryCount(0);
 
         toast({
-          title: "Bid Placed",
+          title: "Bid Placed Successfully",
           description: `Your bid of ${numericBidAmount.toLocaleString()} PLN has been placed successfully`,
         });
 
@@ -139,7 +169,7 @@ export const useBidFormActions = ({
         throw new Error('Invalid response from server');
       }
     } catch (error) {
-      console.error('=== BID PLACEMENT ERROR ===');
+      console.error('=== ENHANCED BID PLACEMENT ERROR ===');
       console.error('Error details:', error);
       
       // Check if this is a retryable error
@@ -164,7 +194,7 @@ export const useBidFormActions = ({
       }
       
       toast({
-        title: "Error",
+        title: "Bid Placement Error",
         description: errorMessage || "Failed to place bid",
         variant: "destructive",
       });
