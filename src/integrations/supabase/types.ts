@@ -2448,6 +2448,7 @@ export type Database = {
         | "running"
         | "completed"
         | "cancelled"
+        | "active"
       auction_status:
         | "draft"
         | "scheduled"
@@ -2631,6 +2632,7 @@ export const Constants = {
         "running",
         "completed",
         "cancelled",
+        "active",
       ],
       auction_status: [
         "draft",
