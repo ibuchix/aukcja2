@@ -54,7 +54,7 @@ export const WonVehicles = () => {
       }
 
       console.log("Won vehicles data:", data);
-      return data as WonVehicle[];
+      return (data as unknown as WonVehicle[]) || [];
     },
     enabled: !!dealerProfile?.id,
   });
