@@ -62,8 +62,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         return [];
       }
 
-      console.log('=== FETCHING DEALER BIDS ===');
-      console.log('Fetching bids for dealer:', dealerProfileId);
+      // Fetching bids for dealer
 
       // Get only this dealer's bids (RLS will filter automatically)
       const { data: dealerBids, error: bidsError } = await supabase
@@ -79,7 +78,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         .eq('dealer_id', dealerProfileId)
         .order("created_at", { ascending: false });
 
-      console.log('Bids query result:', { dealerBids, bidsError });
+      // Bids query completed
 
       if (bidsError) {
         console.error('Error fetching bids:', bidsError);
@@ -91,11 +90,11 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         return [] as MyBid[];
       }
 
-      console.log('Found bids:', dealerBids);
+      // Found bids for processing
 
       // Filter to ensure we only have valid bids
       const validBids = safelyFilterData(dealerBids, isValidBidData);
-      console.log('Valid bids after filtering:', validBids);
+      // Valid bids filtered
 
       // Get car details for these bids
       const carIds = validBids.map(bid => bid.car_id).filter(Boolean);
@@ -105,7 +104,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         return [] as MyBid[];
       }
       
-      console.log('Fetching car details for IDs:', carIds);
+      // Fetching car details
 
       // Get cars data - only what we need, no current_bid
       const { data: cars, error: carsError } = await supabase
@@ -123,7 +122,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         `)
         .in("id", carIds);
       
-      console.log('Cars query result:', { cars, carsError });
+      // Cars query completed
       
       if (carsError) {
         console.error('Error fetching cars:', carsError);
@@ -135,7 +134,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
       
       if (cars && Array.isArray(cars)) {
         const validCars = safelyFilterData(cars, isValidCarData);
-        console.log('Valid cars after filtering:', validCars);
+        // Valid cars filtered
         
         validCars.forEach(car => {
           if (car && car.id) {
@@ -195,8 +194,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         })
         .filter((bid): bid is MyBid => bid !== null);
         
-      console.log('Final result bids:', result);
-      console.log('=== END FETCHING DEALER BIDS ===');
+      // Final result processed successfully
       return result;
     },
     enabled: !!dealerProfileId,
@@ -221,7 +219,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
           table: 'bids',
         },
         (payload) => {
-          console.log('Bid changed:', payload);
+          // Bid changed, invalidating cache
           // Invalidate query to trigger a refetch
           queryClient.invalidateQueries({
             queryKey: queryKey,
@@ -244,7 +242,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
             filter: `id=in.(${carIds.join(',')})`,
           },
           (payload) => {
-            console.log('Car status changed:', payload);
+            // Car status changed, invalidating cache
             // Invalidate query to trigger a refetch
             queryClient.invalidateQueries({
               queryKey: queryKey,
