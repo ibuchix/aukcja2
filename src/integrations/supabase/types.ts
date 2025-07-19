@@ -2355,6 +2355,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      test_live_auction_schedules_no_auth: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          car_id: string
+          status: string
+          start_time: string
+          end_time: string
+          is_manually_controlled: boolean
+        }[]
+      }
       transition_car_status: {
         Args: { p_car_id: string; p_new_status: string; p_is_draft?: boolean }
         Returns: Json
