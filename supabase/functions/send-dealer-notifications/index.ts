@@ -49,7 +49,10 @@ const handler = async (req: Request): Promise<Response> => {
     let emailsSent = 0;
     const results = [];
 
-    for (const vehicle of wonVehicles || []) {
+    // Process with rate limiting (3 second delay between emails to respect Resend limits)
+    for (let i = 0; i < (wonVehicles || []).length; i++) {
+      const vehicle = wonVehicles![i];
+      
       try {
         console.log(`Processing vehicle ${vehicle.car_id} for dealer ${vehicle.dealer_id}`);
         
@@ -95,6 +98,12 @@ const handler = async (req: Request): Promise<Response> => {
             error: 'No email address found'
           });
           continue;
+        }
+
+        // Rate limiting: Wait 3 seconds between emails (except for first email)
+        if (i > 0) {
+          console.log("Waiting 3 seconds to respect rate limits...");
+          await new Promise(resolve => setTimeout(resolve, 3000));
         }
 
         // Call the send-dealer-bid-accepted function
