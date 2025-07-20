@@ -33,6 +33,7 @@ export const WonVehicles = () => {
   const { dealerProfile, isLoading: dealerLoading } = useCurrentDealerProfile();
   const { toast } = useToast();
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState<string | null>(null);
 
   const { data: wonVehicles, isLoading, error, refetch } = useQuery({
     queryKey: ["wonVehicles", dealerProfile?.id],
@@ -152,6 +153,44 @@ export const WonVehicles = () => {
 
   const handleCloseDialog = () => {
     setSelectedCarId(null);
+  };
+
+  const handlePayment = async (vehicleId: string, platformFee: number) => {
+    try {
+      setPaymentLoading(vehicleId);
+      
+      const { data, error } = await supabase.functions.invoke('create-platform-fee-payment', {
+        body: {
+          vehicleId,
+          platformFee,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.url) {
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+        
+        toast({
+          title: "Payment Processing",
+          description: "Opening Stripe checkout in a new tab...",
+        });
+      } else {
+        throw new Error('No payment URL received');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast({
+        title: "Payment Error",
+        description: error.message || "Failed to create payment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setPaymentLoading(null);
+    }
   };
 
   if (dealerLoading) {
@@ -343,9 +382,11 @@ export const WonVehicles = () => {
                               <Button 
                                 className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold"
                                 size="lg"
+                                onClick={() => handlePayment(vehicle.id, calculatedPlatformFee)}
+                                disabled={paymentLoading === vehicle.id}
                               >
                                 <span className="mr-2">💳</span>
-                                Pay {formatCurrency(calculatedPlatformFee)}
+                                {paymentLoading === vehicle.id ? 'Processing...' : `Pay ${formatCurrency(calculatedPlatformFee)}`}
                               </Button>
                               
                               <Button 
