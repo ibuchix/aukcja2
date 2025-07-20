@@ -117,16 +117,15 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        // Find highest bid
-        const { data: highestBid, error: bidError } = await supabase
+        // Find all bids for proxy bidding logic (ORDER BY amount DESC, created_at ASC)
+        const { data: allBids, error: bidError } = await supabase
           .from("bids")
           .select("id, dealer_id, amount, created_at")
           .eq("car_id", auction.id)
           .order("amount", { ascending: false })
-          .order("created_at", { ascending: true })
-          .limit(1);
+          .order("created_at", { ascending: true });
 
-        if (bidError || !highestBid || highestBid.length === 0) {
+        if (bidError || !allBids || allBids.length === 0) {
           console.log(`No bids found for auction ${auction.id}`);
           
           // Mark car as ended without bids
@@ -148,29 +147,49 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        const winningBid = highestBid[0];
+        const winningBid = allBids[0]; // Highest bid
+        const secondHighestBid = allBids.length > 1 ? allBids[1] : null;
         const reservePriceMet = winningBid.amount >= auction.reserve_price;
+        
+        console.log(`Auction ${auction.id}: Highest bid ${winningBid.amount}, Second highest: ${secondHighestBid?.amount || 'none'}, Reserve: ${auction.reserve_price}`);
         
         if (reservePriceMet) {
           console.log(`Auction ${auction.id} has winning bid: ${winningBid.amount} >= ${auction.reserve_price}`);
           
-          // Get second highest bid for fee calculation
-          const { data: secondHighestBid } = await supabase
-            .from("bids")
-            .select("amount")
-            .eq("car_id", auction.id)
-            .neq("dealer_id", winningBid.dealer_id)
-            .order("amount", { ascending: false })
-            .limit(1);
+          // PROXY BIDDING LOGIC: Calculate winning amount
+          let winningAmount = winningBid.amount;
+          if (secondHighestBid) {
+            const difference = winningBid.amount - secondHighestBid.amount;
+            if (difference > 250) {
+              // Reduce to 250 ZŁ above second highest
+              winningAmount = secondHighestBid.amount + 250;
+              console.log(`Proxy bidding applied: ${secondHighestBid.amount} + 250 = ${winningAmount}`);
+            } else {
+              // Keep original bid if difference is 250 or less
+              console.log(`Difference (${difference}) <= 250, using original highest bid: ${winningAmount}`);
+            }
+          } else {
+            console.log(`No second highest bid, using original highest bid: ${winningAmount}`);
+          }
 
-          // Mark car as sold
+          // Check if seller has already made a decision
+          const { data: sellerDecision } = await supabase
+            .from("seller_bid_decisions")
+            .select("decision")
+            .eq("car_id", auction.id)
+            .maybeSingle();
+
+          const paymentStatus = sellerDecision?.decision === 'accepted' ? 'payment_required' : 'awaiting_seller_decision';
+
+          // Mark car as sold with proxy calculated amount
           await supabase
             .from("cars")
             .update({ 
               auction_status: "sold",
-              current_bid: winningBid.amount,
+              current_bid: winningAmount, // Use proxy calculated amount
               auction_end_time: now,
-              updated_at: now
+              updated_at: now,
+              awaiting_seller_decision: paymentStatus === 'awaiting_seller_decision'
             })
             .eq("id", auction.id);
 
@@ -186,18 +205,18 @@ const handler = async (req: Request): Promise<Response> => {
             .eq("car_id", auction.id)
             .neq("id", winningBid.id);
 
-          // Create dealer won vehicle record immediately with awaiting seller decision status
+          // Create dealer won vehicle record with proxy bidding logic
           const { error: wonVehicleError } = await supabase
             .from("dealer_won_vehicles")
             .insert({
               dealer_id: winningBid.dealer_id,
               car_id: auction.id,
-              winning_bid_amount: winningBid.amount,
-              original_bid_amount: winningBid.amount,
-              second_highest_bid: secondHighestBid?.[0]?.amount || null,
-              platform_fee: 0, // Will be calculated later
+              winning_bid_amount: winningAmount, // Proxy calculated amount
+              original_bid_amount: winningBid.amount, // Original highest bid
+              second_highest_bid: secondHighestBid?.amount || null,
+              platform_fee: 0, // Will be calculated later based on winning amount
               auction_end_time: now,
-              payment_status: "awaiting_seller_decision",
+              payment_status: paymentStatus,
               seller_details_unlocked: false,
               vehicle_make: auction.make || "",
               vehicle_model: auction.model || "",
@@ -209,14 +228,15 @@ const handler = async (req: Request): Promise<Response> => {
           if (wonVehicleError) {
             console.error(`Error creating won vehicle record for ${auction.id}:`, wonVehicleError);
           } else {
-            console.log(`Created won vehicle record for auction ${auction.id}`);
+            console.log(`Created won vehicle record for auction ${auction.id} with winning amount: ${winningAmount} (original: ${winningBid.amount})`);
             wonVehiclesCreated++;
           }
 
           results.push({
             auction_id: auction.id,
             status: "sold",
-            winning_bid: winningBid.amount,
+            winning_bid: winningAmount, // Show proxy calculated amount
+            original_bid: winningBid.amount,
             dealer_id: winningBid.dealer_id,
             processed: true
           });
