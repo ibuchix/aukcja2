@@ -19,27 +19,30 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // First, get all cars that have already been notified
+    // Get distinct car_ids that have already been notified (limit to prevent large queries)
     const { data: notifiedCars, error: notifiedError } = await supabase
       .from('system_logs')
       .select('details')
       .eq('log_type', 'dealer_bid_accepted_email_sent')
-      .not('details->car_id', 'is', null);
+      .not('details->car_id', 'is', null)
+      .limit(100); // Safety limit
 
     if (notifiedError) {
       console.error("Error fetching notified cars:", notifiedError);
       throw notifiedError;
     }
 
-    // Extract car_ids from the notified cars
-    const notifiedCarIds = notifiedCars
-      ?.map(log => log.details?.car_id)
-      .filter(carId => carId != null) || [];
+    // Extract unique car_ids from the notified cars
+    const notifiedCarIds = [...new Set(
+      notifiedCars
+        ?.map(log => log.details?.car_id)
+        .filter(carId => carId != null) || []
+    )];
 
-    console.log(`Found ${notifiedCarIds.length} cars that were already notified`);
+    console.log(`Found ${notifiedCarIds.length} unique cars that were already notified`);
 
-    // Build the query for pending notifications
-    let query = supabase
+    // Get all pending notifications first
+    const { data: pendingNotifications, error } = await supabase
       .from('dealer_won_vehicles')
       .select(`
         id,
@@ -54,14 +57,8 @@ const handler = async (req: Request): Promise<Response> => {
           user_id
         )
       `)
-      .eq('payment_status', 'payment_required');
-
-    // Exclude cars that were already notified
-    if (notifiedCarIds.length > 0) {
-      query = query.not('car_id', 'in', `(${notifiedCarIds.map(id => `'${id}'`).join(',')})`);
-    }
-
-    const { data: pendingNotifications, error } = await query;
+      .eq('payment_status', 'payment_required')
+      .limit(50); // Safety limit to prevent processing too many at once
 
     if (error) {
       console.error("Error fetching pending notifications:", error);
@@ -76,6 +73,12 @@ const handler = async (req: Request): Promise<Response> => {
     for (const notification of pendingNotifications || []) {
       try {
         console.log(`Processing notification for dealer ${notification.dealer_id}, car ${notification.car_id}`);
+        
+        // Skip if this car was already notified
+        if (notifiedCarIds.includes(notification.car_id)) {
+          console.log(`Skipping car ${notification.car_id} - already notified`);
+          continue;
+        }
         
         // Get dealer's email
         const { data: userData } = await supabase.auth.admin.getUserById(notification.dealers.user_id);
