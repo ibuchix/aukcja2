@@ -242,8 +242,12 @@ export const WonVehicles = () => {
                   <h2 className="text-xl font-bold text-gray-900">
                     {vehicle.vehicle_year} {vehicle.vehicle_make} {vehicle.vehicle_model}
                   </h2>
-                  <div className="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-lg text-sm font-semibold">
-                    Payment Required
+                  <div className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+                    vehicle.payment_status === 'payment_required' 
+                      ? 'bg-yellow-400 text-yellow-900' 
+                      : 'bg-orange-400 text-orange-900'
+                  }`}>
+                    {vehicle.payment_status === 'payment_required' ? 'Payment Required' : 'Awaiting Seller Decision'}
                   </div>
                 </div>
 
@@ -302,37 +306,67 @@ export const WonVehicles = () => {
                       </div>
 
                       {/* Seller Information Section */}
-                      <div className="p-6 bg-green-50">
+                      <div className={`p-6 ${vehicle.payment_status === 'payment_required' ? 'bg-green-50' : 'bg-orange-50'}`}>
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Seller Information</h3>
                         
                         <div className="text-center mb-6">
-                          <div className="flex items-center justify-center gap-2 text-green-600 mb-2">
-                            <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                              <div className="w-2 h-2 bg-white rounded-full"></div>
-                            </div>
-                            <span className="font-semibold">Bid Accepted!</span>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-4">
-                            Seller has accepted your bid - Payment required. You can now pay the platform fee to complete the purchase.
-                          </p>
+                          {vehicle.payment_status === 'payment_required' ? (
+                            <>
+                              <div className="flex items-center justify-center gap-2 text-green-600 mb-2">
+                                <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                                </div>
+                                <span className="font-semibold">Bid Accepted!</span>
+                              </div>
+                              <p className="text-sm text-gray-600 mb-4">
+                                Seller has accepted your bid - Payment required. You can now pay the platform fee to complete the purchase.
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center justify-center gap-2 text-orange-600 mb-2">
+                                <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
+                                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                                </div>
+                                <span className="font-semibold">Awaiting Seller Decision</span>
+                              </div>
+                              <p className="text-sm text-gray-600 mb-4">
+                                We're waiting for the seller to accept your winning bid. You'll be notified once they make their decision.
+                              </p>
+                            </>
+                          )}
                         </div>
 
                         <div className="space-y-3">
-                          <Button 
-                            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold"
-                            size="lg"
-                          >
-                            <span className="mr-2">💳</span>
-                            Pay {formatCurrency(calculatedPlatformFee)}
-                          </Button>
-                          
-                          <Button 
-                            variant="outline" 
-                            className="w-full text-red-600 border-red-200 hover:bg-red-50"
-                            size="sm"
-                          >
-                            Refresh Payment Status
-                          </Button>
+                          {vehicle.payment_status === 'payment_required' ? (
+                            <>
+                              <Button 
+                                className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold"
+                                size="lg"
+                              >
+                                <span className="mr-2">💳</span>
+                                Pay {formatCurrency(calculatedPlatformFee)}
+                              </Button>
+                              
+                              <Button 
+                                variant="outline" 
+                                className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                                size="sm"
+                              >
+                                Refresh Payment Status
+                              </Button>
+                            </>
+                          ) : (
+                            <Button 
+                              variant="outline" 
+                              className="w-full text-orange-600 border-orange-200 hover:bg-orange-50"
+                              size="sm"
+                              onClick={handleRefresh}
+                            >
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                              Check Status
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
