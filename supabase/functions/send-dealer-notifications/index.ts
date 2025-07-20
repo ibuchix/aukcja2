@@ -111,7 +111,7 @@ const handler = async (req: Request): Promise<Response> => {
                 year: vehicle.vehicle_year
               },
               dealershipName: vehicle.dealers.dealership_name,
-              userEmail: userData.user.email
+              dealerEmail: userData.user.email
             }
           }
         );
@@ -127,6 +127,23 @@ const handler = async (req: Request): Promise<Response> => {
         } else {
           console.log(`Email sent successfully for dealer ${vehicle.dealer_id}`);
           emailsSent++;
+          
+          // Log that email was sent to prevent duplicates
+          await supabase
+            .from('system_logs')
+            .insert({
+              log_type: 'dealer_bid_accepted_email_sent',
+              message: 'Email sent to dealer for accepted bid',
+              details: {
+                dealer_id: vehicle.dealer_id,
+                car_id: vehicle.car_id,
+                email: userData.user.email,
+                dealership_name: vehicle.dealers.dealership_name,
+                winning_bid: vehicle.winning_bid_amount,
+                email_id: emailResult?.emailId
+              }
+            });
+          
           results.push({
             dealer_id: vehicle.dealer_id,
             car_id: vehicle.car_id,

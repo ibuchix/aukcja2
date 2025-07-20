@@ -1,16 +1,9 @@
+import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-interface DealerNotificationRequest {
+interface EmailRequest {
   dealerId: string;
   carId: string;
   winningBid: number;
@@ -19,178 +12,158 @@ interface DealerNotificationRequest {
     model: string;
     year: number;
   };
+  dealerEmail: string;
   dealershipName: string;
-  userEmail?: string;
 }
 
-const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const { dealerId, carId, winningBid, vehicleDetails, dealerEmail, dealershipName }: EmailRequest = await req.json();
 
-    const { dealerId, carId, winningBid, vehicleDetails, dealershipName, userEmail } = await req.json() as DealerNotificationRequest;
+    console.log(`Processing bid accepted email for dealer ${dealerId}, car ${carId}`);
 
-    // Check if email was already sent for this dealer/car combination to prevent duplicates
-    const { data: existingEmailLog } = await supabase
-      .from('system_logs')
-      .select('id')
-      .eq('log_type', 'dealer_bid_accepted_email_sent')
-      .eq('details->dealer_id', dealerId)
-      .eq('details->car_id', carId)
-      .limit(1);
-
-    if (existingEmailLog && existingEmailLog.length > 0) {
-      console.log(`Email already sent for dealer ${dealerId} and car ${carId}`);
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: 'Email already sent',
-        sentTo: userEmail || 'unknown'
-      }), {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
+    // Validate required fields
+    if (!dealerId || !carId || !winningBid || !dealerEmail) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Missing required fields' }),
+        { 
+          status: 400, 
+          headers: { "Content-Type": "application/json", ...corsHeaders } 
+        }
+      );
     }
 
-    // Get dealer user email if not provided
-    let dealerEmail = userEmail;
-    if (!dealerEmail) {
-      const { data: dealerData } = await supabase
-        .from('dealers')
-        .select(`
-          user_id,
-          profiles!inner(id)
-        `)
-        .eq('id', dealerId)
-        .single();
-
-      if (dealerData?.user_id) {
-        const { data: userData } = await supabase.auth.admin.getUserById(dealerData.user_id);
-        dealerEmail = userData.user?.email;
-      }
+    if (!RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not configured');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Email service not configured' }),
+        { 
+          status: 500, 
+          headers: { "Content-Type": "application/json", ...corsHeaders } 
+        }
+      );
     }
 
-    if (!dealerEmail) {
-      throw new Error('Could not find dealer email address');
-    }
-
-    // Format the winning bid amount
+    // Prepare email content
+    const vehicleTitle = `${vehicleDetails.year} ${vehicleDetails.make} ${vehicleDetails.model}`;
     const formattedBid = new Intl.NumberFormat('pl-PL', {
       style: 'currency',
-      currency: 'PLN',
-      minimumFractionDigits: 0,
+      currency: 'PLN'
     }).format(winningBid);
 
-    const vehicle = `${vehicleDetails.year} ${vehicleDetails.make} ${vehicleDetails.model}`;
-    const dashboardUrl = `${Deno.env.get("SITE_URL")}/dealer/dashboard/won-vehicles`;
-
-    const emailResponse = await resend.emails.send({
-      from: "Auto-Strada <notifications@auto-strada.pl>", // FIXED: Using verified domain
-      to: [dealerEmail],
-      subject: `🎉 Your bid has been accepted for ${vehicle}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px;">
-          <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #10b981; margin: 0; font-size: 28px;">🎉 Congratulations!</h1>
-              <h2 style="color: #333; margin: 10px 0 0 0; font-size: 24px;">Your bid has been accepted</h2>
-            </div>
+    const emailHtml = `
+      <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
+              🎉 Congratulations! Your Bid Has Been Accepted
+            </h1>
             
-            <div style="background-color: #f0fdf4; border: 2px solid #10b981; border-radius: 8px; padding: 20px; margin: 20px 0;">
-              <h3 style="color: #065f46; margin: 0 0 15px 0; font-size: 20px;">Vehicle Details</h3>
-              <p style="color: #374151; font-size: 18px; margin: 5px 0;"><strong>${vehicle}</strong></p>
-              <p style="color: #374151; font-size: 18px; margin: 5px 0;"><strong>Your winning bid:</strong> ${formattedBid}</p>
-              <p style="color: #374151; font-size: 16px; margin: 5px 0;"><strong>Dealership:</strong> ${dealershipName}</p>
+            <p>Dear ${dealershipName},</p>
+            
+            <p>Great news! The seller has <strong>accepted your winning bid</strong> for the following vehicle:</p>
+            
+            <div style="background-color: #f3f4f6; border-left: 4px solid #2563eb; padding: 20px; margin: 20px 0;">
+              <h3 style="margin: 0 0 10px 0; color: #1f2937;">${vehicleTitle}</h3>
+              <p style="margin: 5px 0; font-size: 18px;"><strong>Your Winning Bid: ${formattedBid}</strong></p>
             </div>
 
-            <div style="background-color: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 20px 0;">
-              <h3 style="color: #92400e; margin: 0 0 15px 0; font-size: 18px;">⏰ Next Steps</h3>
-              <ol style="color: #374151; margin: 0; padding-left: 20px;">
-                <li style="margin: 8px 0;">Complete payment to secure your purchase</li>
-                <li style="margin: 8px 0;">Access seller contact details</li>
-                <li style="margin: 8px 0;">Arrange vehicle collection</li>
-              </ol>
+            <h3 style="color: #1f2937;">Next Steps:</h3>
+            <ol style="padding-left: 20px;">
+              <li><strong>Payment Required:</strong> Please log into your dealer portal to complete the payment process.</li>
+              <li><strong>Platform Fee:</strong> The applicable platform fee will be calculated and displayed during payment.</li>
+              <li><strong>Vehicle Collection:</strong> Once payment is confirmed, you'll receive the seller's contact details for collection arrangements.</li>
+            </ol>
+
+            <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 15px; margin: 20px 0;">
+              <p style="margin: 0; color: #92400e;">
+                <strong>⚠️ Important:</strong> Payment must be completed within 48 hours to secure this vehicle.
+              </p>
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${dashboardUrl}" 
-                 style="background-color: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-size: 18px; font-weight: bold; display: inline-block;">
-                Go to Dashboard →
+              <a href="https://your-dealer-portal.com/won-vehicles" 
+                 style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                Complete Payment Now
               </a>
             </div>
 
-            <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; text-align: center;">
-              <p style="color: #6b7280; font-size: 14px; margin: 0;">
-                Please complete your payment within 48 hours to avoid cancellation.
-              </p>
-              <p style="color: #6b7280; font-size: 12px; margin: 10px 0 0 0;">
-                This is an automated message from Auto-Strada.
-              </p>
-            </div>
+            <p>If you have any questions, please don't hesitate to contact our support team.</p>
+            
+            <p>Best regards,<br>The Auction Team</p>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+            <p style="font-size: 12px; color: #6b7280;">
+              This email was sent to ${dealerEmail} regarding your winning bid for car ID: ${carId}
+            </p>
           </div>
-        </div>
-      `,
+        </body>
+      </html>
+    `;
+
+    // Send email via Resend
+    const emailResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'noreply@your-auction-platform.com',
+        to: [dealerEmail],
+        subject: `🎉 Bid Accepted - ${vehicleTitle} (${formattedBid})`,
+        html: emailHtml,
+      }),
     });
 
-    // Log successful email send with deduplication tracking
-    await supabase.from('system_logs').insert({
-      log_type: 'dealer_bid_accepted_email_sent',
-      message: 'Successfully sent bid accepted email to dealer',
-      details: {
-        dealer_id: dealerId,
-        car_id: carId,
-        email: dealerEmail,
-        vehicle: vehicle,
-        winning_bid: winningBid,
-        resend_response: emailResponse,
-        timestamp: new Date().toISOString()
-      }
-    });
-
-    console.log("Dealer bid accepted email sent successfully:", emailResponse);
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      emailResponse,
-      sentTo: dealerEmail
-    }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
-
-  } catch (error: any) {
-    console.error("Error sending dealer bid accepted email:", error);
-    
-    // Log error to system_logs if possible
-    try {
-      const supabase = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-      );
+    if (!emailResponse.ok) {
+      const errorText = await emailResponse.text();
+      console.error('Resend API error:', errorText);
       
-      await supabase.from('system_logs').insert({
-        log_type: 'dealer_bid_accepted_email_error',
-        message: 'Failed to send bid accepted email to dealer',
-        error_message: error.message,
-        details: { error: error.toString() }
-      });
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Failed to send email: ${emailResponse.status} ${errorText}` 
+        }),
+        { 
+          status: 500, 
+          headers: { "Content-Type": "application/json", ...corsHeaders } 
+        }
+      );
     }
 
-    return new Response(JSON.stringify({ 
-      success: false, 
-      error: error.message 
-    }), {
-      status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
-  }
-};
+    const emailResult = await emailResponse.json();
+    console.log(`Email sent successfully to ${dealerEmail} for car ${carId}, email ID: ${emailResult.id}`);
 
-serve(handler);
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        emailId: emailResult.id,
+        message: `Email sent to ${dealerEmail}` 
+      }),
+      { 
+        status: 200, 
+        headers: { "Content-Type": "application/json", ...corsHeaders } 
+      }
+    );
+
+  } catch (error) {
+    console.error('Error sending dealer bid accepted email:', error);
+    
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      }),
+      { 
+        status: 500, 
+        headers: { "Content-Type": "application/json", ...corsHeaders } 
+      }
+    );
+  }
+});
