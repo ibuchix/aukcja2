@@ -12,6 +12,60 @@ import { useToast } from "@/hooks/use-toast";
 import { calculatePlatformFee } from "@/utils/platformFeeCalculator";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
 
+// Seller Contact Component
+const SellerContactInfo = ({ vehicleId }: { vehicleId: string }) => {
+  const { data: carData } = useQuery({
+    queryKey: ["car-seller-details", vehicleId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cars")
+        .select("seller_name, mobile_number, address")
+        .eq("id", vehicleId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching seller details:", error);
+        return null;
+      }
+      return data;
+    },
+  });
+
+  return (
+    <div className="space-y-4 text-left">
+      <div className="p-4 bg-white rounded-lg border border-blue-200">
+        <h4 className="font-semibold text-gray-900 mb-3">Contact Seller</h4>
+        {carData ? (
+          <div className="space-y-2">
+            <div>
+              <span className="text-sm text-gray-500">Name:</span>
+              <p className="font-medium">{(carData as any)?.seller_name || 'Contact via phone'}</p>
+            </div>
+            <div>
+              <span className="text-sm text-gray-500">Phone:</span>
+              <p className="font-medium">{(carData as any)?.mobile_number || 'Phone not available'}</p>
+            </div>
+            <div>
+              <span className="text-sm text-gray-500">Address:</span>
+              <p className="font-medium">{(carData as any)?.address || 'Address not available'}</p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">Loading seller details...</p>
+        )}
+      </div>
+      <Button 
+        variant="outline" 
+        className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+        size="sm"
+      >
+        <Eye className="h-4 w-4 mr-2" />
+        View Full Vehicle Details
+      </Button>
+    </div>
+  );
+};
+
 interface WonVehicle {
   id: string;
   car_id: string;
@@ -281,13 +335,15 @@ export const WonVehicles = () => {
                   <h2 className="text-xl font-bold text-gray-900">
                     {vehicle.vehicle_year} {vehicle.vehicle_make} {vehicle.vehicle_model}
                   </h2>
-                  <div className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-                    vehicle.payment_status === 'payment_required' 
-                      ? 'bg-yellow-400 text-yellow-900' 
-                      : 'bg-orange-400 text-orange-900'
-                  }`}>
-                    {vehicle.payment_status === 'payment_required' ? 'Payment Required' : 'Awaiting Seller Decision'}
-                  </div>
+                   <div className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+                     vehicle.payment_status === 'paid' ? 'bg-blue-400 text-blue-900' :
+                     vehicle.payment_status === 'payment_required' 
+                       ? 'bg-yellow-400 text-yellow-900' 
+                       : 'bg-orange-400 text-orange-900'
+                   }`}>
+                     {vehicle.payment_status === 'paid' ? 'Payment Complete' :
+                      vehicle.payment_status === 'payment_required' ? 'Payment Required' : 'Awaiting Seller Decision'}
+                   </div>
                 </div>
 
                 {/* Main Card */}
@@ -345,11 +401,26 @@ export const WonVehicles = () => {
                       </div>
 
                       {/* Seller Information Section */}
-                      <div className={`p-6 ${vehicle.payment_status === 'payment_required' ? 'bg-green-50' : 'bg-orange-50'}`}>
+                      <div className={`p-6 ${
+                        vehicle.payment_status === 'paid' ? 'bg-blue-50' : 
+                        vehicle.payment_status === 'payment_required' ? 'bg-green-50' : 'bg-orange-50'
+                      }`}>
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Seller Information</h3>
                         
                         <div className="text-center mb-6">
-                          {vehicle.payment_status === 'payment_required' ? (
+                          {vehicle.payment_status === 'paid' ? (
+                            <>
+                              <div className="flex items-center justify-center gap-2 text-blue-600 mb-2">
+                                <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                                </div>
+                                <span className="font-semibold">Payment Complete!</span>
+                              </div>
+                              <p className="text-sm text-gray-600 mb-4">
+                                Payment successful! You can now contact the seller to arrange pickup.
+                              </p>
+                            </>
+                          ) : vehicle.payment_status === 'payment_required' ? (
                             <>
                               <div className="flex items-center justify-center gap-2 text-green-600 mb-2">
                                 <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
@@ -377,7 +448,10 @@ export const WonVehicles = () => {
                         </div>
 
                         <div className="space-y-3">
-                          {vehicle.payment_status === 'payment_required' ? (
+                          {vehicle.payment_status === 'paid' && vehicle.seller_details_unlocked ? (
+                            <SellerContactInfo vehicleId={vehicle.car_id} />
+                          
+                          ) : vehicle.payment_status === 'payment_required' ? (
                             <>
                               <Button 
                                 className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold"
