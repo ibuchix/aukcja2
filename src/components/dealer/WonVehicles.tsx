@@ -31,15 +31,22 @@ const SellerContactInfo = ({ vehicleId }: { vehicleId: string }) => {
     },
   });
 
+  console.log("SellerContactInfo rendering for vehicle:", vehicleId, "Data:", carData);
+  
   return (
-    <div className="space-y-4 text-left">
-      <div className="p-4 bg-white rounded-lg border border-blue-200">
-        <h4 className="font-semibold text-gray-900 mb-3">Contact Seller</h4>
+    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+        <span className="font-semibold text-green-800">Payment Complete!</span>
+      </div>
+      
+      <div className="mb-4">
+        <h4 className="font-semibold text-gray-800 mb-2">Seller Contact Information</h4>
         {carData ? (
           <div className="space-y-2">
             <div>
               <span className="text-sm text-gray-500">Name:</span>
-              <p className="font-medium">{(carData as any)?.seller_name || 'Contact via phone'}</p>
+              <p className="font-medium">{(carData as any)?.seller_name || 'Name not available'}</p>
             </div>
             <div>
               <span className="text-sm text-gray-500">Phone:</span>
@@ -54,13 +61,19 @@ const SellerContactInfo = ({ vehicleId }: { vehicleId: string }) => {
           <p className="text-sm text-gray-500">Loading seller details...</p>
         )}
       </div>
+      
       <Button 
         variant="outline" 
         className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
         size="sm"
+        onClick={() => {
+          if ((carData as any)?.mobile_number) {
+            window.open(`tel:${(carData as any).mobile_number}`, '_self');
+          }
+        }}
       >
-        <Eye className="h-4 w-4 mr-2" />
-        View Full Vehicle Details
+        <span className="mr-2">📞</span>
+        Call Seller
       </Button>
     </div>
   );
@@ -448,6 +461,16 @@ export const WonVehicles = () => {
                         </div>
 
                         <div className="space-y-3">
+                          {(() => {
+                            console.log("Vehicle payment debug:", {
+                              id: vehicle.id,
+                              payment_status: vehicle.payment_status,
+                              seller_details_unlocked: vehicle.seller_details_unlocked,
+                              car_id: vehicle.car_id
+                            });
+                            return null;
+                          })()}
+                          
                           {vehicle.payment_status === 'paid' && vehicle.seller_details_unlocked ? (
                             <SellerContactInfo vehicleId={vehicle.car_id} />
                           
