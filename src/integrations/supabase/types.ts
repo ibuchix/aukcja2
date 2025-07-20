@@ -2285,6 +2285,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      process_ended_auctions_workflow: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      process_missed_auctions: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       process_pending_proxy_bids: {
         Args: Record<PropertyKey, never>
         Returns: Json
