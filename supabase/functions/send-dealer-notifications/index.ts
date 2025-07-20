@@ -49,25 +49,28 @@ const handler = async (req: Request): Promise<Response> => {
     let emailsSent = 0;
     const results = [];
 
-    // Process with rate limiting (3 second delay between emails to respect Resend limits)
+    // Process with improved rate limiting (10 second delay between emails to respect Resend limits)
+    let consecutiveErrors = 0;
+    
     for (let i = 0; i < (wonVehicles || []).length; i++) {
       const vehicle = wonVehicles![i];
       
       try {
         console.log(`Processing vehicle ${vehicle.car_id} for dealer ${vehicle.dealer_id}`);
         
-        // Check if seller has actually accepted this bid recently
+        // Check if seller has actually accepted this bid recently (within 48 hours)
         const { data: sellerDecision } = await supabase
           .from('seller_bid_decisions')
           .select('decision, decided_at')
           .eq('car_id', vehicle.car_id)
           .eq('decision', 'accepted')
+          .gte('decided_at', new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()) // Only recent decisions
           .order('decided_at', { ascending: false })
           .limit(1)
           .single();
 
         if (!sellerDecision) {
-          console.log(`No accepted seller decision found for car ${vehicle.car_id}`);
+          console.log(`No recent accepted seller decision found for car ${vehicle.car_id}`);
           continue;
         }
 
@@ -100,10 +103,15 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        // Rate limiting: Wait 3 seconds between emails (except for first email)
+        // Improved rate limiting with exponential backoff
+        let delay = 10000; // Base 10 second delay
+        if (consecutiveErrors > 0) {
+          delay = Math.min(delay * Math.pow(2, consecutiveErrors), 60000); // Max 60 seconds
+        }
+        
         if (i > 0) {
-          console.log("Waiting 3 seconds to respect rate limits...");
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          console.log(`Waiting ${delay/1000} seconds to respect rate limits...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
 
         // Call the send-dealer-bid-accepted function
@@ -127,6 +135,24 @@ const handler = async (req: Request): Promise<Response> => {
 
         if (emailError) {
           console.error(`Error sending email for dealer ${vehicle.dealer_id}:`, emailError);
+          
+          // Check for quota exceeded error
+          const isQuotaError = emailError.message?.includes('daily_quota_exceeded') || 
+                               emailError.message?.includes('quota') ||
+                               emailError.message?.includes('rate limit');
+          
+          if (isQuotaError) {
+            console.log("Resend quota exceeded. Stopping email processing until quota resets.");
+            results.push({
+              dealer_id: vehicle.dealer_id,
+              car_id: vehicle.car_id,
+              status: 'quota_exceeded',
+              error: 'Daily email quota exceeded'
+            });
+            break; // Stop processing more emails
+          }
+          
+          consecutiveErrors++;
           results.push({
             dealer_id: vehicle.dealer_id,
             car_id: vehicle.car_id,
@@ -135,6 +161,7 @@ const handler = async (req: Request): Promise<Response> => {
           });
         } else {
           console.log(`Email sent successfully for dealer ${vehicle.dealer_id}`);
+          consecutiveErrors = 0; // Reset error count on success
           emailsSent++;
           
           // Log that email was sent to prevent duplicates
