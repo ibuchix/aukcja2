@@ -34,38 +34,39 @@ const SellerContactInfo = ({ vehicleId }: { vehicleId: string }) => {
   console.log("SellerContactInfo rendering for vehicle:", vehicleId, "Data:", carData);
   
   return (
-    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-        <span className="font-semibold text-green-800">Payment Complete!</span>
+    <div className="p-6 bg-green-100 rounded-lg border-2 border-green-300 shadow-lg">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-4 h-4 bg-green-600 rounded-full"></div>
+        <span className="font-bold text-green-900 text-lg">🎉 Payment Complete!</span>
       </div>
       
-      <div className="mb-4">
-        <h4 className="font-semibold text-gray-800 mb-2">Seller Contact Information</h4>
+      <div className="mb-6 bg-white p-4 rounded-lg border border-green-200">
+        <h4 className="font-bold text-gray-900 mb-3 text-lg">📞 Seller Contact Information</h4>
         {carData ? (
-          <div className="space-y-2">
-            <div>
-              <span className="text-sm text-gray-500">Name:</span>
-              <p className="font-medium">{(carData as any)?.seller_name || 'Name not available'}</p>
+          <div className="space-y-3">
+            <div className="bg-gray-50 p-3 rounded">
+              <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Name:</span>
+              <p className="font-bold text-lg text-gray-900">{(carData as any)?.seller_name || 'Name not available'}</p>
             </div>
-            <div>
-              <span className="text-sm text-gray-500">Phone:</span>
-              <p className="font-medium">{(carData as any)?.mobile_number || 'Phone not available'}</p>
+            <div className="bg-gray-50 p-3 rounded">
+              <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Phone:</span>
+              <p className="font-bold text-lg text-blue-600">{(carData as any)?.mobile_number || 'Phone not available'}</p>
             </div>
-            <div>
-              <span className="text-sm text-gray-500">Address:</span>
-              <p className="font-medium">{(carData as any)?.address || 'Address not available'}</p>
+            <div className="bg-gray-50 p-3 rounded">
+              <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Address:</span>
+              <p className="font-bold text-lg text-gray-900">{(carData as any)?.address || 'Address not available'}</p>
             </div>
           </div>
         ) : (
-          <p className="text-sm text-gray-500">Loading seller details...</p>
+          <div className="flex items-center justify-center p-8">
+            <p className="text-lg text-gray-600 font-semibold">Loading seller details...</p>
+          </div>
         )}
       </div>
       
       <Button 
-        variant="outline" 
-        className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
-        size="sm"
+        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-3"
+        size="lg"
         onClick={() => {
           if ((carData as any)?.mobile_number) {
             window.open(`tel:${(carData as any).mobile_number}`, '_self');
@@ -73,7 +74,7 @@ const SellerContactInfo = ({ vehicleId }: { vehicleId: string }) => {
         }}
       >
         <span className="mr-2">📞</span>
-        Call Seller
+        Call Seller Now
       </Button>
     </div>
   );
