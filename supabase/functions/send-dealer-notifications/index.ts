@@ -19,30 +19,9 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Get distinct car_ids that have already been notified (limit to prevent large queries)
-    const { data: notifiedCars, error: notifiedError } = await supabase
-      .from('system_logs')
-      .select('details')
-      .eq('log_type', 'dealer_bid_accepted_email_sent')
-      .not('details->car_id', 'is', null)
-      .limit(100); // Safety limit
-
-    if (notifiedError) {
-      console.error("Error fetching notified cars:", notifiedError);
-      throw notifiedError;
-    }
-
-    // Extract unique car_ids from the notified cars
-    const notifiedCarIds = [...new Set(
-      notifiedCars
-        ?.map(log => log.details?.car_id)
-        .filter(carId => carId != null) || []
-    )];
-
-    console.log(`Found ${notifiedCarIds.length} unique cars that were already notified`);
-
-    // Get all pending notifications first
-    const { data: pendingNotifications, error } = await supabase
+    // Get dealer_won_vehicles that need email notifications
+    // Only those where seller has accepted the bid and email hasn't been sent yet
+    const { data: wonVehicles, error: wonVehiclesError } = await supabase
       .from('dealer_won_vehicles')
       .select(`
         id,
@@ -58,33 +37,63 @@ const handler = async (req: Request): Promise<Response> => {
         )
       `)
       .eq('payment_status', 'payment_required')
-      .limit(50); // Safety limit to prevent processing too many at once
+      .limit(20); // Process max 20 at a time to avoid issues
 
-    if (error) {
-      console.error("Error fetching pending notifications:", error);
-      throw error;
+    if (wonVehiclesError) {
+      console.error("Error fetching won vehicles:", wonVehiclesError);
+      throw wonVehiclesError;
     }
 
-    console.log(`Found ${pendingNotifications?.length || 0} pending notifications`);
+    console.log(`Found ${wonVehicles?.length || 0} potential notifications to process`);
 
     let emailsSent = 0;
     const results = [];
 
-    for (const notification of pendingNotifications || []) {
+    for (const vehicle of wonVehicles || []) {
       try {
-        console.log(`Processing notification for dealer ${notification.dealer_id}, car ${notification.car_id}`);
+        console.log(`Processing vehicle ${vehicle.car_id} for dealer ${vehicle.dealer_id}`);
         
-        // Skip if this car was already notified
-        if (notifiedCarIds.includes(notification.car_id)) {
-          console.log(`Skipping car ${notification.car_id} - already notified`);
+        // Check if seller has actually accepted this bid recently
+        const { data: sellerDecision } = await supabase
+          .from('seller_bid_decisions')
+          .select('decision, decided_at')
+          .eq('car_id', vehicle.car_id)
+          .eq('decision', 'accepted')
+          .order('decided_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (!sellerDecision) {
+          console.log(`No accepted seller decision found for car ${vehicle.car_id}`);
           continue;
         }
-        
+
+        // Check if we already sent an email for this specific car/dealer combination
+        const { data: existingEmailLog } = await supabase
+          .from('system_logs')
+          .select('id')
+          .eq('log_type', 'dealer_bid_accepted_email_sent')
+          .eq('details->car_id', vehicle.car_id)
+          .eq('details->dealer_id', vehicle.dealer_id)
+          .limit(1)
+          .single();
+
+        if (existingEmailLog) {
+          console.log(`Email already sent for dealer ${vehicle.dealer_id}, car ${vehicle.car_id}`);
+          continue;
+        }
+
         // Get dealer's email
-        const { data: userData } = await supabase.auth.admin.getUserById(notification.dealers.user_id);
+        const { data: userData } = await supabase.auth.admin.getUserById(vehicle.dealers.user_id);
         
         if (!userData.user?.email) {
-          console.log(`No email found for dealer ${notification.dealer_id}`);
+          console.log(`No email found for dealer ${vehicle.dealer_id}`);
+          results.push({
+            dealer_id: vehicle.dealer_id,
+            car_id: vehicle.car_id,
+            status: 'error',
+            error: 'No email address found'
+          });
           continue;
         }
 
@@ -93,43 +102,43 @@ const handler = async (req: Request): Promise<Response> => {
           'send-dealer-bid-accepted',
           {
             body: {
-              dealerId: notification.dealer_id,
-              carId: notification.car_id,
-              winningBid: notification.winning_bid_amount,
+              dealerId: vehicle.dealer_id,
+              carId: vehicle.car_id,
+              winningBid: vehicle.winning_bid_amount,
               vehicleDetails: {
-                make: notification.vehicle_make,
-                model: notification.vehicle_model,
-                year: notification.vehicle_year
+                make: vehicle.vehicle_make,
+                model: vehicle.vehicle_model,
+                year: vehicle.vehicle_year
               },
-              dealershipName: notification.dealers.dealership_name,
+              dealershipName: vehicle.dealers.dealership_name,
               userEmail: userData.user.email
             }
           }
         );
 
         if (emailError) {
-          console.error(`Error sending email for dealer ${notification.dealer_id}:`, emailError);
+          console.error(`Error sending email for dealer ${vehicle.dealer_id}:`, emailError);
           results.push({
-            dealer_id: notification.dealer_id,
-            car_id: notification.car_id,
+            dealer_id: vehicle.dealer_id,
+            car_id: vehicle.car_id,
             status: 'error',
             error: emailError.message
           });
         } else {
-          console.log(`Email sent successfully for dealer ${notification.dealer_id}`);
+          console.log(`Email sent successfully for dealer ${vehicle.dealer_id}`);
           emailsSent++;
           results.push({
-            dealer_id: notification.dealer_id,
-            car_id: notification.car_id,
+            dealer_id: vehicle.dealer_id,
+            car_id: vehicle.car_id,
             status: 'sent',
             email: userData.user.email
           });
         }
       } catch (err) {
-        console.error(`Error processing notification for dealer ${notification.dealer_id}:`, err);
+        console.error(`Error processing vehicle ${vehicle.car_id} for dealer ${vehicle.dealer_id}:`, err);
         results.push({
-          dealer_id: notification.dealer_id,
-          car_id: notification.car_id,
+          dealer_id: vehicle.dealer_id,
+          car_id: vehicle.car_id,
           status: 'error',
           error: err instanceof Error ? err.message : String(err)
         });
