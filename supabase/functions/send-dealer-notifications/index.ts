@@ -19,8 +19,27 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Find dealers who need bid accepted emails (seller accepted their bid but no email sent yet)
-    const { data: pendingNotifications, error } = await supabase
+    // First, get all cars that have already been notified
+    const { data: notifiedCars, error: notifiedError } = await supabase
+      .from('system_logs')
+      .select('details')
+      .eq('log_type', 'dealer_bid_accepted_email_sent')
+      .not('details->car_id', 'is', null);
+
+    if (notifiedError) {
+      console.error("Error fetching notified cars:", notifiedError);
+      throw notifiedError;
+    }
+
+    // Extract car_ids from the notified cars
+    const notifiedCarIds = notifiedCars
+      ?.map(log => log.details?.car_id)
+      .filter(carId => carId != null) || [];
+
+    console.log(`Found ${notifiedCarIds.length} cars that were already notified`);
+
+    // Build the query for pending notifications
+    let query = supabase
       .from('dealer_won_vehicles')
       .select(`
         id,
@@ -35,13 +54,14 @@ const handler = async (req: Request): Promise<Response> => {
           user_id
         )
       `)
-      .eq('payment_status', 'payment_required')
-      .not('id', 'in', `(
-        SELECT details->>'won_vehicle_id' 
-        FROM system_logs 
-        WHERE log_type = 'dealer_bid_accepted_email_sent'
-        AND details->>'won_vehicle_id' IS NOT NULL
-      )`);
+      .eq('payment_status', 'payment_required');
+
+    // Exclude cars that were already notified
+    if (notifiedCarIds.length > 0) {
+      query = query.not('car_id', 'in', `(${notifiedCarIds.map(id => `'${id}'`).join(',')})`);
+    }
+
+    const { data: pendingNotifications, error } = await query;
 
     if (error) {
       console.error("Error fetching pending notifications:", error);
@@ -55,6 +75,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     for (const notification of pendingNotifications || []) {
       try {
+        console.log(`Processing notification for dealer ${notification.dealer_id}, car ${notification.car_id}`);
+        
         // Get dealer's email
         const { data: userData } = await supabase.auth.admin.getUserById(notification.dealers.user_id);
         
