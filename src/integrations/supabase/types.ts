@@ -500,8 +500,6 @@ export type Database = {
           awaiting_seller_decision: boolean
           created_at: string
           current_bid: number | null
-          email_notification_sent: boolean | null
-          email_sent_at: string | null
           features: Json | null
           finance_amount: number | null
           form_metadata: Json | null
@@ -546,8 +544,6 @@ export type Database = {
           awaiting_seller_decision?: boolean
           created_at?: string
           current_bid?: number | null
-          email_notification_sent?: boolean | null
-          email_sent_at?: string | null
           features?: Json | null
           finance_amount?: number | null
           form_metadata?: Json | null
@@ -592,8 +588,6 @@ export type Database = {
           awaiting_seller_decision?: boolean
           created_at?: string
           current_bid?: number | null
-          email_notification_sent?: boolean | null
-          email_sent_at?: string | null
           features?: Json | null
           finance_amount?: number | null
           form_metadata?: Json | null
@@ -1695,8 +1689,6 @@ export type Database = {
           awaiting_seller_decision: boolean
           created_at: string
           current_bid: number | null
-          email_notification_sent: boolean | null
-          email_sent_at: string | null
           features: Json | null
           finance_amount: number | null
           form_metadata: Json | null
@@ -1761,8 +1753,6 @@ export type Database = {
           awaiting_seller_decision: boolean
           created_at: string
           current_bid: number | null
-          email_notification_sent: boolean | null
-          email_sent_at: string | null
           features: Json | null
           finance_amount: number | null
           form_metadata: Json | null
@@ -2090,8 +2080,6 @@ export type Database = {
           awaiting_seller_decision: boolean
           created_at: string
           current_bid: number | null
-          email_notification_sent: boolean | null
-          email_sent_at: string | null
           features: Json | null
           finance_amount: number | null
           form_metadata: Json | null
@@ -2139,8 +2127,6 @@ export type Database = {
           awaiting_seller_decision: boolean
           created_at: string
           current_bid: number | null
-          email_notification_sent: boolean | null
-          email_sent_at: string | null
           features: Json | null
           finance_amount: number | null
           form_metadata: Json | null
@@ -2277,10 +2263,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
-      process_dealer_post_seller_decision: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
       process_ended_auctions: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -2359,10 +2341,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
-      test_dealer_email_notifications: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
       test_live_auction_schedules_no_auth: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2380,10 +2358,6 @@ export type Database = {
       transition_ended_auctions: {
         Args: Record<PropertyKey, never>
         Returns: number
-      }
-      trigger_seller_email_notifications: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
       }
       update_auction_status: {
         Args: Record<PropertyKey, never>
