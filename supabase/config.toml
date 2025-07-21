@@ -1,1 +1,4 @@
 project_id = "sdvakfhmoaoucmhbhwvy"
+
+[functions.test-dealer-email]
+verify_jwt = false
