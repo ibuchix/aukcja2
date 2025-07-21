@@ -28,25 +28,35 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`Testing email trigger with test email: ${testEmail}`);
 
+    // Generate proper UUIDs for test data
+    const testDealerId = crypto.randomUUID();
+    const testUserId = crypto.randomUUID();
+    const testCarId = crypto.randomUUID();
+    const testSellerId = crypto.randomUUID();
+
     // Create a test dealer first (or update existing)
-    const testDealerId = 'test-dealer-id-123';
     await supabase
       .from('dealers')
       .upsert({
         id: testDealerId,
         email: testEmail,
         dealership_name: 'Test Dealership',
-        user_id: 'test-user-id',
-        is_verified: true
+        user_id: testUserId,
+        is_verified: true,
+        supervisor_name: 'Test Supervisor',
+        tax_id: '1234567890',
+        business_registry_number: 'TEST123',
+        license_number: 'LIC123',
+        address: 'Test Address 123',
+        verification_status: 'approved'
       });
 
     // Create a test car
-    const testCarId = 'test-car-id-123';
     await supabase
       .from('cars')
       .upsert({
         id: testCarId,
-        seller_id: 'test-seller-id',
+        seller_id: testSellerId,
         make: 'BMW',
         model: 'X5',
         year: 2022,
