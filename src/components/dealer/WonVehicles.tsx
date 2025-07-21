@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,6 +101,7 @@ export const WonVehicles = () => {
   const { toast } = useToast();
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null);
   const [paymentLoading, setPaymentLoading] = useState<string | null>(null);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
 
   const { data: wonVehicles, isLoading, error, refetch } = useQuery({
     queryKey: ["wonVehicles", dealerProfile?.id],
@@ -129,6 +129,68 @@ export const WonVehicles = () => {
     },
     enabled: !!dealerProfile?.id,
   });
+
+  // Handle payment completion from Stripe redirect
+  useEffect(() => {
+    const handlePaymentCompletion = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paymentSuccess = urlParams.get('payment_success');
+      const sessionId = urlParams.get('session_id');
+      const vehicleId = urlParams.get('vehicle_id');
+
+      console.log('URL parameters:', { paymentSuccess, sessionId, vehicleId });
+
+      if (paymentSuccess === 'true' && vehicleId && !isVerifyingPayment) {
+        setIsVerifyingPayment(true);
+        console.log('Processing payment completion for vehicle:', vehicleId);
+
+        try {
+          const { data, error } = await supabase.functions.invoke('verify-payment-status', {
+            body: {
+              sessionId: sessionId,
+              vehicleId: vehicleId,
+            },
+          });
+
+          console.log('Payment verification response:', data, error);
+
+          if (error) {
+            throw error;
+          }
+
+          if (data?.success && data?.payment_status === 'paid') {
+            toast({
+              title: "Payment Confirmed!",
+              description: "Your payment has been processed successfully. Seller details are now available.",
+            });
+
+            // Refetch the won vehicles data to get updated status
+            await refetch();
+          } else {
+            throw new Error('Payment verification failed');
+          }
+        } catch (error) {
+          console.error('Error verifying payment:', error);
+          toast({
+            title: "Payment Verification Error",
+            description: "There was an issue verifying your payment. Please refresh the page or contact support.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsVerifyingPayment(false);
+          
+          // Clean up URL parameters
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, '', newUrl);
+        }
+      }
+    };
+
+    // Only run if we have dealer profile loaded
+    if (dealerProfile?.id) {
+      handlePaymentCompletion();
+    }
+  }, [dealerProfile?.id, toast, refetch, isVerifyingPayment]);
 
   // Query for car details when showing dialog
   const { data: selectedCarData } = useQuery({
@@ -261,12 +323,19 @@ export const WonVehicles = () => {
     }
   };
 
-  if (dealerLoading) {
+  if (dealerLoading || isVerifyingPayment) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-32 w-full" />
         <Skeleton className="h-32 w-full" />
+        {isVerifyingPayment && (
+          <Alert>
+            <AlertDescription>
+              Verifying your payment... Please wait.
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
     );
   }
