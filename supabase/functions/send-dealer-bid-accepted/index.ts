@@ -87,7 +87,7 @@ serve(async (req) => {
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="https://your-dealer-portal.com/won-vehicles" 
+              <a href="https://auto-strata.pl/dealer/won-vehicles" 
                  style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
                 Complete Payment Now
               </a>
@@ -114,7 +114,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'noreply@your-auction-platform.com',
+        from: 'noreply@auto-strata.pl',
         to: [dealerEmail],
         subject: `🎉 Bid Accepted - ${vehicleTitle} (${formattedBid})`,
         html: emailHtml,
