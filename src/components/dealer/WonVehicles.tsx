@@ -560,6 +560,37 @@ export const WonVehicles = () => {
                                 variant="outline" 
                                 className="w-full text-red-600 border-red-200 hover:bg-red-50"
                                 size="sm"
+                                onClick={async () => {
+                                  try {
+                                    const { data, error } = await supabase.functions.invoke('verify-payment-status', {
+                                      body: {
+                                        vehicleId: vehicle.id,
+                                      },
+                                    });
+
+                                    if (error) throw error;
+
+                                    if (data?.success && data?.payment_status === 'paid') {
+                                      toast({
+                                        title: "Payment Status Updated",
+                                        description: "Payment confirmed! Seller details are now available.",
+                                      });
+                                      await refetch();
+                                    } else {
+                                      toast({
+                                        title: "No Payment Found",
+                                        description: "Payment is still pending or not completed.",
+                                      });
+                                    }
+                                  } catch (error) {
+                                    console.error('Error refreshing payment status:', error);
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to refresh payment status. Please try again.",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }}
                               >
                                 Refresh Payment Status
                               </Button>
