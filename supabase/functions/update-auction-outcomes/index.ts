@@ -98,26 +98,24 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Found ${excludeIds.length} already processed car IDs`);
     
     // Get ALL auctions that have passed their end time, regardless of current status
-    // This catches auctions that should have ended but status wasn't updated properly
-    let endedAuctionsQuery = supabase
+    // We'll filter out processed ones in JavaScript to avoid PostgREST syntax issues
+    const { data: allEndedAuctions, error: auctionError } = await supabase
       .from("cars")
       .select("id, title, current_bid, reserve_price, auction_status, make, model, year, mileage, images, auction_end_time")
       .eq("is_auction", true)
       .not("auction_end_time", "is", null)
       .lt("auction_end_time", now);
     
-    // Only add the filter if there are IDs to exclude
-    if (excludeIds.length > 0) {
-      endedAuctionsQuery = endedAuctionsQuery.not("id", "in", `(${excludeIds.join(",")})`);
-    }
-    
-    const { data: endedAuctions, error: auctionError } = await endedAuctionsQuery;
-
     if (auctionError) {
       console.error("Error finding ended auctions:", auctionError);
       throw auctionError;
     }
-
+    
+    // Filter out already processed auctions in JavaScript
+    const endedAuctions = allEndedAuctions?.filter(auction => 
+      !excludeIds.includes(auction.id)
+    ) || [];
+    
     console.log(`Found ${endedAuctions?.length || 0} ended auctions to process`);
 
     const results = [];
