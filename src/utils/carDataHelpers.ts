@@ -83,6 +83,7 @@ export const processCarData = (rawData: any[]): CarListing[] => {
         requiredPhotos: car.required_photos || {},
         additionalPhotos: car.additional_photos || [],
         transmission: car.transmission || 'Unknown',
+        fuelType: car.fuel_type || '',
         features: car.features || {},
         isAuction: car.is_auction || false,
         auctionEndTime: car.auction_end_time || '',
