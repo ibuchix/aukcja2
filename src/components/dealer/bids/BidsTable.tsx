@@ -166,11 +166,27 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                           </Button>
                         </>
                       ) : (
-                        <Badge variant="secondary" className="text-xs font-medium bg-gray-100 text-gray-700">
-                          {getAuctionTimingStatus(bid) === 'active' ? "Live Auction" 
-                           : getAuctionTimingStatus(bid) === 'ended' ? "Auction Ended" 
-                           : "No Actions"}
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant="secondary" className="text-xs font-medium bg-gray-100 text-gray-700">
+                            {getAuctionTimingStatus(bid) === 'active' ? "Live Auction" 
+                             : getAuctionTimingStatus(bid) === 'ended' ? "Auction Ended" 
+                             : "No Actions"}
+                          </Badge>
+                          
+                          {/* Win/Loss indicator - only show for ended auctions */}
+                          {bid.auctionResult && (
+                            <Badge 
+                              variant={bid.auctionResult === 'won' ? 'default' : 'secondary'}
+                              className={`text-xs font-medium ${
+                                bid.auctionResult === 'won' 
+                                  ? 'bg-green-100 text-green-800 border-green-200' 
+                                  : 'bg-red-100 text-red-800 border-red-200'
+                              }`}
+                            >
+                              {bid.auctionResult === 'won' ? '🎉 Won' : '❌ Lost'}
+                            </Badge>
+                          )}
+                        </div>
                       )}
                     </div>
                   </TableCell>

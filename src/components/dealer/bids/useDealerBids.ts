@@ -78,11 +78,22 @@ export function useDealerBids(dealerProfileId: string | undefined) {
         .eq('dealer_id', dealerProfileId)
         .order("created_at", { ascending: false });
 
+      // Get won vehicles for this dealer to determine win/loss status
+      const { data: wonVehicles, error: wonError } = await supabase
+        .from("dealer_won_vehicles")
+        .select("car_id, dealer_id")
+        .eq('dealer_id', dealerProfileId);
+
       // Bids query completed
 
       if (bidsError) {
         console.error('Error fetching bids:', bidsError);
         throw bidsError;
+      }
+
+      if (wonError) {
+        console.error('Error fetching won vehicles:', wonError);
+        // Don't throw - we can still show bids without win/loss status
       }
       
       if (!dealerBids || dealerBids.length === 0) {
@@ -169,6 +180,18 @@ export function useDealerBids(dealerProfileId: string | undefined) {
               }
             }
           }
+
+          // Determine auction result (won/lost) only for ended auctions
+          let auctionResult: 'won' | 'lost' | null = null;
+          if (auctionTimingStatus === 'ended' && Array.isArray(wonVehicles)) {
+            const wonThisVehicle = wonVehicles.some((won: any) => won.car_id === bid.car_id);
+            if (wonThisVehicle) {
+              auctionResult = 'won';
+            } else {
+              // Only mark as lost if the auction actually ended, not just because we don't have won record
+              auctionResult = 'lost';
+            }
+          }
           
           const myBid: MyBid = {
             id: bid.id,
@@ -177,6 +200,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
             status: bid.status,
             created_at: bid.created_at,
             auctionTimingStatus,
+            auctionResult,
             car: {
               id: car.id,
               title: car.title || `${car.year} ${car.make} ${car.model}`,

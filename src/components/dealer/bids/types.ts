@@ -6,6 +6,7 @@ export interface MyBid {
   status: string;
   created_at: string;
   auctionTimingStatus?: string;
+  auctionResult?: 'won' | 'lost' | null;
   car: {
     id: string;
     title: string;
