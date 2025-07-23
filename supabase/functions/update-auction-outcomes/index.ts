@@ -83,11 +83,32 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Step 3: Find and process ALL ended auctions that haven't been processed
     console.log("Step 3: Finding all ended auctions to process...");
-    const { data: endedAuctions, error: auctionError } = await supabase
+    
+    // First get all car IDs that already have won vehicle records
+    const { data: processedCarIds, error: processedError } = await supabase
+      .from("dealer_won_vehicles")
+      .select("car_id");
+    
+    if (processedError) {
+      console.error("Error getting processed car IDs:", processedError);
+      throw processedError;
+    }
+    
+    const excludeIds = processedCarIds?.map(record => record.car_id) || [];
+    console.log(`Found ${excludeIds.length} already processed car IDs`);
+    
+    // Get ended auctions that haven't been processed
+    let endedAuctionsQuery = supabase
       .from("cars")
       .select("id, title, current_bid, reserve_price, auction_status, make, model, year, mileage, images, auction_end_time")
-      .eq("auction_status", "ended")
-      .not("id", "in", `(SELECT car_id FROM dealer_won_vehicles)`);
+      .eq("auction_status", "ended");
+    
+    // Only add the filter if there are IDs to exclude
+    if (excludeIds.length > 0) {
+      endedAuctionsQuery = endedAuctionsQuery.not("id", "in", excludeIds);
+    }
+    
+    const { data: endedAuctions, error: auctionError } = await endedAuctionsQuery;
 
     if (auctionError) {
       console.error("Error finding ended auctions:", auctionError);
