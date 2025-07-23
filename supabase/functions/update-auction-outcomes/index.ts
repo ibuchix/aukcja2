@@ -108,7 +108,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     // Only add the filter if there are IDs to exclude
     if (excludeIds.length > 0) {
-      endedAuctionsQuery = endedAuctionsQuery.not("id", "in", excludeIds);
+      endedAuctionsQuery = endedAuctionsQuery.not("id", "in", `(${excludeIds.join(",")})`);
     }
     
     const { data: endedAuctions, error: auctionError } = await endedAuctionsQuery;
