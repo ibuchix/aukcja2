@@ -81,8 +81,8 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Step 3: Find and process ALL ended auctions that haven't been processed
-    console.log("Step 3: Finding all ended auctions to process...");
+    // Step 3: Find and process ALL auctions that have ended (regardless of status) and haven't been processed
+    console.log("Step 3: Finding all ended auctions to process (checking by end time, not just status)...");
     
     // First get all car IDs that already have won vehicle records
     const { data: processedCarIds, error: processedError } = await supabase
@@ -97,11 +97,14 @@ const handler = async (req: Request): Promise<Response> => {
     const excludeIds = processedCarIds?.map(record => record.car_id) || [];
     console.log(`Found ${excludeIds.length} already processed car IDs`);
     
-    // Get ended auctions that haven't been processed
+    // Get ALL auctions that have passed their end time, regardless of current status
+    // This catches auctions that should have ended but status wasn't updated properly
     let endedAuctionsQuery = supabase
       .from("cars")
       .select("id, title, current_bid, reserve_price, auction_status, make, model, year, mileage, images, auction_end_time")
-      .eq("auction_status", "ended");
+      .eq("is_auction", true)
+      .not("auction_end_time", "is", null)
+      .lt("auction_end_time", now);
     
     // Only add the filter if there are IDs to exclude
     if (excludeIds.length > 0) {
