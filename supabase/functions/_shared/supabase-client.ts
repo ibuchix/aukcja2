@@ -15,7 +15,7 @@ export function createServiceClient() {
     throw new Error('Missing Supabase environment variables. Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
   }
   
-  // Create client with service role for bypassing RLS with properly formatted headers
+  // Create client with service role for bypassing RLS
   return createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       persistSession: false,
@@ -23,8 +23,7 @@ export function createServiceClient() {
     },
     global: {
       headers: {
-        // Ensure correct case for headers
-        'Authorization': `Bearer ${supabaseServiceKey}`,
+        // Only set apikey header - Authorization is handled automatically by the client
         'apikey': supabaseServiceKey
       }
     }
