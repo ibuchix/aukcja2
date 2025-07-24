@@ -21,42 +21,29 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Current time (UTC): ${now}`);
     
-    // Try service role authentication first, fallback to SECURITY DEFINER function
-    console.log("Testing service role authentication...");
-    const { data: testData, error: testError } = await supabase
-      .from("cars")
-      .select("id")
-      .limit(1);
+    // Use the SECURITY DEFINER function (simplified approach)
+    console.log("Calling secure auction processing function...");
+    const { data: result, error: processError } = await supabase
+      .rpc('process_ended_auctions_securely');
     
-    if (testError) {
-      console.error("Service role authentication failed, using SECURITY DEFINER fallback:", testError);
-      
-      // Use the SECURITY DEFINER function as a fallback
-      console.log("Calling secure auction processing function...");
-      const { data: fallbackResult, error: fallbackError } = await supabase
-        .rpc('process_ended_auctions_securely');
-      
-      if (fallbackError) {
-        console.error("SECURITY DEFINER fallback also failed:", fallbackError);
-        throw new Error(`Both service role and SECURITY DEFINER failed: ${fallbackError.message}`);
-      }
-      
-      console.log("✅ SECURITY DEFINER fallback successful:", fallbackResult);
-      return new Response(
-        JSON.stringify({
-          success: true,
-          method: 'security_definer_fallback',
-          result: fallbackResult,
-          timestamp: now
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        }
-      );
+    if (processError) {
+      console.error("SECURITY DEFINER function failed:", processError);
+      throw new Error(`Auction processing failed: ${processError.message}`);
     }
     
-    console.log("✅ Service role authentication successful");
+    console.log("✅ Auction processing successful:", result);
+    return new Response(
+      JSON.stringify({
+        success: true,
+        method: 'security_definer',
+        result: result,
+        timestamp: now
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      }
+    );
 
     // Step 1: Update auction schedule statuses
     console.log("Step 1: Updating auction schedule statuses...");
