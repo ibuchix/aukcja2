@@ -19,6 +19,25 @@ const handler = async (req: Request): Promise<Response> => {
     const now = new Date().toISOString();
 
     console.log(`Current time (UTC): ${now}`);
+    
+    // Test service role authentication with a simple query first
+    console.log("Testing service role authentication...");
+    try {
+      const { data: testData, error: testError } = await supabase
+        .from("cars")
+        .select("id")
+        .limit(1);
+      
+      if (testError) {
+        console.error("Service role test query failed:", testError);
+        throw new Error(`Service role authentication failed: ${testError.message}`);
+      } else {
+        console.log("Service role authentication test successful");
+      }
+    } catch (authTestError) {
+      console.error("Service role authentication test error:", authTestError);
+      throw authTestError;
+    }
 
     // Step 1: Update auction schedule statuses
     console.log("Step 1: Updating auction schedule statuses...");
@@ -97,14 +116,38 @@ const handler = async (req: Request): Promise<Response> => {
     const excludeIds = processedCarIds?.map(record => record.car_id) || [];
     console.log(`Found ${excludeIds.length} already processed car IDs`);
     
-    // Get ALL auctions that have passed their end time, regardless of current status
-    // We'll filter out processed ones in JavaScript to avoid PostgREST syntax issues
-    const { data: allEndedAuctions, error: auctionError } = await supabase
-      .from("cars")
-      .select("id, title, current_bid, reserve_price, auction_status, make, model, year, mileage, images, auction_end_time")
-      .eq("is_auction", true)
-      .not("auction_end_time", "is", null)
-      .lt("auction_end_time", now);
+    // Get ALL auctions that have passed their end time with simplified query
+    console.log("Executing cars query to find ended auctions...");
+    let allEndedAuctions;
+    let auctionError;
+    
+    try {
+      // Break down the complex query into simpler steps
+      console.log("Step 3a: Querying cars with is_auction = true");
+      const { data: auctionCars, error: step1Error } = await supabase
+        .from("cars")
+        .select("id, title, current_bid, reserve_price, auction_status, make, model, year, mileage, images, auction_end_time")
+        .eq("is_auction", true);
+      
+      if (step1Error) {
+        console.error("Step 3a failed:", step1Error);
+        throw step1Error;
+      }
+      
+      console.log(`Step 3a successful: Found ${auctionCars?.length || 0} auction cars`);
+      
+      // Filter in JavaScript to avoid complex PostgreSQL queries
+      console.log("Step 3b: Filtering ended auctions in JavaScript");
+      allEndedAuctions = auctionCars?.filter(car => 
+        car.auction_end_time && new Date(car.auction_end_time) < new Date(now)
+      ) || [];
+      
+      console.log(`Step 3b successful: Found ${allEndedAuctions.length} ended auctions`);
+      
+    } catch (queryError) {
+      console.error("Cars query failed:", queryError);
+      auctionError = queryError;
+    }
     
     if (auctionError) {
       console.error("Error finding ended auctions:", auctionError);
@@ -150,15 +193,19 @@ const handler = async (req: Request): Promise<Response> => {
         if (bidError || !allBids || allBids.length === 0) {
           console.log(`No bids found for auction ${auction.id}`);
           
-          // Mark car as ended without bids
-          await supabase
+          // Mark car as ended without bids using simple update
+          console.log(`Updating car ${auction.id} status to ended (no bids)`);
+          const { error: carUpdateError } = await supabase
             .from("cars")
             .update({ 
               auction_status: "ended",
-              auction_end_time: now,
               updated_at: now
             })
             .eq("id", auction.id);
+          
+          if (carUpdateError) {
+            console.error(`Failed to update car ${auction.id}:`, carUpdateError);
+          }
 
           results.push({
             auction_id: auction.id,
@@ -203,17 +250,21 @@ const handler = async (req: Request): Promise<Response> => {
 
           const paymentStatus = sellerDecision?.decision === 'accepted' ? 'payment_required' : 'awaiting_seller_decision';
 
-          // Mark car as sold with proxy calculated amount
-          await supabase
+          // Mark car as sold with proxy calculated amount using simple update
+          console.log(`Updating car ${auction.id} status to sold with winning amount: ${winningAmount}`);
+          const { error: soldCarUpdateError } = await supabase
             .from("cars")
             .update({ 
               auction_status: "sold",
-              current_bid: winningAmount, // Use proxy calculated amount
-              auction_end_time: now,
+              current_bid: winningAmount,
               updated_at: now,
               awaiting_seller_decision: paymentStatus === 'awaiting_seller_decision'
             })
             .eq("id", auction.id);
+          
+          if (soldCarUpdateError) {
+            console.error(`Failed to update sold car ${auction.id}:`, soldCarUpdateError);
+          }
 
           // Update bid statuses
           await supabase
@@ -265,16 +316,20 @@ const handler = async (req: Request): Promise<Response> => {
         } else {
           console.log(`Auction ${auction.id} ended without meeting reserve: ${winningBid.amount} < ${auction.reserve_price}`);
           
-          // Mark car as ended
-          await supabase
+          // Mark car as ended (reserve not met) using simple update
+          console.log(`Updating car ${auction.id} status to ended (reserve not met)`);
+          const { error: endedCarUpdateError } = await supabase
             .from("cars")
             .update({ 
               auction_status: "ended",
               current_bid: winningBid.amount,
-              auction_end_time: now,
               updated_at: now
             })
             .eq("id", auction.id);
+          
+          if (endedCarUpdateError) {
+            console.error(`Failed to update ended car ${auction.id}:`, endedCarUpdateError);
+          }
 
           // Mark all bids as ended
           await supabase
