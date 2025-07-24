@@ -15,6 +15,19 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     console.log("Running comprehensive auction processing function");
+    
+    // Debug environment variables
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    console.log("Environment check:");
+    console.log(`SUPABASE_URL: ${supabaseUrl ? 'SET' : 'NOT SET'}`);
+    console.log(`SUPABASE_SERVICE_ROLE_KEY: ${supabaseServiceKey ? `SET (${supabaseServiceKey.substring(0, 20)}...)` : 'NOT SET'}`);
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Missing required environment variables");
+    }
+    
     const supabase = createServiceClient();
     const now = new Date().toISOString();
 
@@ -30,6 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
       
       if (testError) {
         console.error("Service role test query failed:", testError);
+        console.error("Full error details:", JSON.stringify(testError, null, 2));
         throw new Error(`Service role authentication failed: ${testError.message}`);
       } else {
         console.log("Service role authentication test successful");

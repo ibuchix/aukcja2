@@ -7,6 +7,10 @@ export function createServiceClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   
+  console.log('=== Service Client Creation Debug ===');
+  console.log(`SUPABASE_URL in createServiceClient: ${supabaseUrl ? 'SET' : 'NOT SET'}`);
+  console.log(`SUPABASE_SERVICE_ROLE_KEY in createServiceClient: ${supabaseServiceKey ? `SET (${supabaseServiceKey.substring(0, 20)}...)` : 'NOT SET'}`);
+  
   if (!supabaseUrl || !supabaseServiceKey) {
     console.error('Missing Supabase environment variables:', {
       urlPresent: !!supabaseUrl,
@@ -16,18 +20,22 @@ export function createServiceClient() {
   }
   
   // Create client with service role for bypassing RLS
-  return createClient(supabaseUrl, supabaseServiceKey, {
+  const client = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
     },
     global: {
       headers: {
-        // Only set apikey header - Authorization is handled automatically by the client
+        // Set both headers to ensure service role authentication
+        'Authorization': `Bearer ${supabaseServiceKey}`,
         'apikey': supabaseServiceKey
       }
     }
   });
+  
+  console.log('Service client created successfully');
+  return client;
 }
 
 // Edge client that can be created from headers or a request object
