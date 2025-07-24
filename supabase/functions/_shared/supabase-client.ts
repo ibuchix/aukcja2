@@ -8,30 +8,25 @@ export function createServiceClient() {
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   
   console.log('=== Service Client Creation Debug ===');
-  console.log(`SUPABASE_URL in createServiceClient: ${supabaseUrl ? 'SET' : 'NOT SET'}`);
-  console.log(`SUPABASE_SERVICE_ROLE_KEY in createServiceClient: ${supabaseServiceKey ? `SET (${supabaseServiceKey.substring(0, 20)}...)` : 'NOT SET'}`);
+  console.log(`SUPABASE_URL: ${supabaseUrl ? 'SET' : 'NOT SET'}`);
+  console.log(`SUPABASE_SERVICE_ROLE_KEY: ${supabaseServiceKey ? `SET (${supabaseServiceKey.substring(0, 20)}...)` : 'NOT SET'}`);
   
   if (!supabaseUrl || !supabaseServiceKey) {
     console.error('Missing Supabase environment variables:', {
       urlPresent: !!supabaseUrl,
       keyPresent: !!supabaseServiceKey
     });
-    throw new Error('Missing Supabase environment variables. Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+    throw new Error('Missing required environment variables');
   }
   
-  // Create client with service role for bypassing RLS
+  // Create client with service role - DO NOT manually set Authorization header
+  // The Supabase client will handle authentication automatically when using service key
   const client = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
-    },
-    global: {
-      headers: {
-        // Set both headers to ensure service role authentication
-        'Authorization': `Bearer ${supabaseServiceKey}`,
-        'apikey': supabaseServiceKey
-      }
     }
+    // Remove global headers - let Supabase handle authentication internally
   });
   
   console.log('Service client created successfully');

@@ -14,44 +14,26 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log("Running comprehensive auction processing function");
-    
-    // Debug environment variables
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    
-    console.log("Environment check:");
-    console.log(`SUPABASE_URL: ${supabaseUrl ? 'SET' : 'NOT SET'}`);
-    console.log(`SUPABASE_SERVICE_ROLE_KEY: ${supabaseServiceKey ? `SET (${supabaseServiceKey.substring(0, 20)}...)` : 'NOT SET'}`);
-    
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error("Missing required environment variables");
-    }
+    console.log("Starting auction processing function");
     
     const supabase = createServiceClient();
     const now = new Date().toISOString();
 
     console.log(`Current time (UTC): ${now}`);
     
-    // Test service role authentication with a simple query first
+    // Simple test of service role authentication
     console.log("Testing service role authentication...");
-    try {
-      const { data: testData, error: testError } = await supabase
-        .from("cars")
-        .select("id")
-        .limit(1);
-      
-      if (testError) {
-        console.error("Service role test query failed:", testError);
-        console.error("Full error details:", JSON.stringify(testError, null, 2));
-        throw new Error(`Service role authentication failed: ${testError.message}`);
-      } else {
-        console.log("Service role authentication test successful");
-      }
-    } catch (authTestError) {
-      console.error("Service role authentication test error:", authTestError);
-      throw authTestError;
+    const { data: testData, error: testError } = await supabase
+      .from("cars")
+      .select("id")
+      .limit(1);
+    
+    if (testError) {
+      console.error("Service role authentication failed:", testError);
+      throw new Error(`Service role authentication failed: ${testError.message}`);
     }
+    
+    console.log("✅ Service role authentication successful");
 
     // Step 1: Update auction schedule statuses
     console.log("Step 1: Updating auction schedule statuses...");
