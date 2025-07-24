@@ -2267,6 +2267,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      process_ended_auctions_securely: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       process_ended_auctions_workflow: {
         Args: Record<PropertyKey, never>
         Returns: Json

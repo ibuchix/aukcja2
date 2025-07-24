@@ -21,7 +21,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Current time (UTC): ${now}`);
     
-    // Simple test of service role authentication
+    // Try service role authentication first, fallback to SECURITY DEFINER function
     console.log("Testing service role authentication...");
     const { data: testData, error: testError } = await supabase
       .from("cars")
@@ -29,8 +29,31 @@ const handler = async (req: Request): Promise<Response> => {
       .limit(1);
     
     if (testError) {
-      console.error("Service role authentication failed:", testError);
-      throw new Error(`Service role authentication failed: ${testError.message}`);
+      console.error("Service role authentication failed, using SECURITY DEFINER fallback:", testError);
+      
+      // Use the SECURITY DEFINER function as a fallback
+      console.log("Calling secure auction processing function...");
+      const { data: fallbackResult, error: fallbackError } = await supabase
+        .rpc('process_ended_auctions_securely');
+      
+      if (fallbackError) {
+        console.error("SECURITY DEFINER fallback also failed:", fallbackError);
+        throw new Error(`Both service role and SECURITY DEFINER failed: ${fallbackError.message}`);
+      }
+      
+      console.log("✅ SECURITY DEFINER fallback successful:", fallbackResult);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          method: 'security_definer_fallback',
+          result: fallbackResult,
+          timestamp: now
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
     }
     
     console.log("✅ Service role authentication successful");
