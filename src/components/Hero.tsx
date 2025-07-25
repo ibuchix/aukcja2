@@ -16,13 +16,12 @@ const Hero = () => {
             className="space-y-8"
           >
             <h1 className="text-5xl md:text-6xl font-bold text-dark leading-tight">
-              Buy <span className="text-primary">quality cars</span> for your dealership
+              Kupuj <span className="text-primary">Pewnie</span>. Kupuj Opłacalnie.
               <br />
-              directly from private sellers
+              Kupuj na Autaro.pl!
             </h1>
             <p className="text-subtitle-text text-lg max-w-2xl">
-              Discover the fastest growing marketplace for purchasing cars through online
-              auctions, exclusively from a curated selection of private sellers.
+              Autaro.pl to pierwsza w Polsce aukcja samochodowa w formacie C2B. Sprzedawać mogą wyłącznie osoby prywatne, a kupować jedynie zarejestrowane firmy. Wszystkie samochody na naszych codziennych aukcjach są zarejestrowane w Polsce.
             </p>
             <motion.div 
               className="flex gap-4"
@@ -32,10 +31,10 @@ const Hero = () => {
             >
               <a
                 href="#vehicles"
-                className="btn-primary text-lg px-8 py-3 flex items-center gap-2 group"
+                className="btn-primary text-xl px-12 py-4 flex items-center gap-2 group"
               >
-                Start exploring
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                Otwórz Konto Teraz
+                <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
               </a>
             </motion.div>
           </motion.div>
