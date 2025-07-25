@@ -4,30 +4,30 @@ const Services = () => {
   const services = [
     {
       icon: Car,
-      title: "The best stock everyday",
-      description: "Fresh inventory of quality vehicles added daily for your dealership needs.",
+      title: "Tylko prywatni sprzedawcy",
+      description: "Na Autaro.pl możliwość sprzedaży mają wyłącznie prywatni sprzedawcy — dzięki temu masz pewność, że każdy pojazd pochodzi od osoby prywatnej.",
     },
     {
       icon: Shield,
-      title: "Market leading profits",
-      description: "Access competitive pricing that helps maximize your profit margins.",
+      title: "Precyzyjny algorytm wyceny",
+      description: "Algorytm Autaro.pl wykorzystuje aktualne dane rynkowe, aby ustalać opłacalne ceny orientacyjne dla wszystkich aut dostępnych na naszych codziennych aukcjach.",
     },
     {
       icon: Clock,
-      title: "The right price",
-      description: "Transparent pricing with no hidden fees or surprise charges.",
+      title: "Tylko auta z Polski",
+      description: "Na naszych codziennych aukcjach dostępne są wyłącznie auta zarejestrowane w Polsce. Każdego dnia pojawia się nowa selekcja aut do licytacji.",
     },
     {
       icon: Wrench,
-      title: "100% online purchasing",
-      description: "Complete your transactions entirely online with our secure platform.",
+      title: "Bezpieczne zakupy",
+      description: "Wszystkie profile dostępnych aut są przez nas weryfikowane, a dealerzy mają możliwość sprawdzenia auta przy odbiorze — jeszcze przed finalizacją zakupu. Dzięki współpracy z CarVertical i AutoBaza oferujemy również dostęp do szczegółowych raportów historii pojazdu.",
     },
   ];
 
   return (
     <section id="services" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-center mb-4">Why Choose Us</h2>
+        <h2 className="text-3xl font-bold text-center mb-4">Dlaczego warto nas wybrać</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12">
           {services.map((service, index) => (
             <div
