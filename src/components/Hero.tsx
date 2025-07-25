@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import heroDealershipImage from "@/assets/hero-dealership.png";
 
 const Hero = () => {
   return (
@@ -48,8 +47,8 @@ const Hero = () => {
             className="relative rounded-xl overflow-hidden shadow-2xl"
           >
             <img 
-              src={heroDealershipImage}
-              alt="Premium dealership showcasing quality vehicles"
+              src="/lovable-uploads/f35e4444-5c22-4b07-90bf-6ff3aa96ea8d.png"
+              alt="Premium AUTOKOMIS dealership showcasing quality vehicles"
               className="w-full h-auto object-cover"
             />
           </motion.div>
