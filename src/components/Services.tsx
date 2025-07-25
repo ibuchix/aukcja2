@@ -10,17 +10,17 @@ const Services = () => {
     {
       icon: Shield,
       title: "Precyzyjny algorytm wyceny",
-      description: "Algorytm Autaro.pl wykorzystuje aktualne dane rynkowe, aby ustalać opłacalne ceny orientacyjne dla wszystkich aut dostępnych na naszych codziennych aukcjach.",
+      description: "Algorytm wykorzystuje aktualne dane rynkowe, aby ustalać opłacalne ceny orientacyjne dla wszystkich aut na codziennych aukcjach.",
     },
     {
       icon: Clock,
       title: "Tylko auta z Polski",
-      description: "Na naszych codziennych aukcjach dostępne są wyłącznie auta zarejestrowane w Polsce. Każdego dnia pojawia się nowa selekcja aut do licytacji.",
+      description: "Na codziennych aukcjach dostępne są wyłącznie auta zarejestrowane w Polsce. Każdego dnia nowa selekcja do licytacji.",
     },
     {
       icon: Wrench,
       title: "Bezpieczne zakupy",
-      description: "Wszystkie profile dostępnych aut są przez nas weryfikowane, a dealerzy mają możliwość sprawdzenia auta przy odbiorze — jeszcze przed finalizacją zakupu. Dzięki współpracy z CarVertical i AutoBaza oferujemy również dostęp do szczegółowych raportów historii pojazdu.",
+      description: "Weryfikujemy wszystkie profile aut. Dealerzy mogą sprawdzić auto przy odbiorze przed finalizacją zakupu.",
     },
   ];
 
