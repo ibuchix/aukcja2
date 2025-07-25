@@ -102,12 +102,12 @@ export default function Navbar() {
               className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2 font-medium"
             >
               <LayoutDashboard size={18} />
-              Dashboard
+              Panel Dealera
             </Link>
           )}
           
           <Link to="/how-it-works" className="text-gray-700 hover:text-primary transition-colors">
-            How It Works
+            Jak to Działa
           </Link>
           
           {isAuthenticated ? (
@@ -159,7 +159,7 @@ export default function Navbar() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <LayoutDashboard size={18} />
-                  Dashboard
+                  Panel Dealera
                 </Link>
               )}
               
@@ -168,7 +168,7 @@ export default function Navbar() {
                 className="text-gray-700 hover:text-primary transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                How It Works
+                Jak to Działa
               </Link>
               
               {isAuthenticated ? (
