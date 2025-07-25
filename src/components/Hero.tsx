@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import heroDealershipImage from "@/assets/hero-dealership.png";
 
 const Hero = () => {
   return (
@@ -39,29 +40,18 @@ const Hero = () => {
             </motion.div>
           </motion.div>
 
-          {/* Stats Section */}
+          {/* Hero Image */}
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="grid grid-cols-2 gap-8 p-8 bg-white/50 backdrop-blur-sm rounded-lg border border-accent"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+            className="relative rounded-xl overflow-hidden shadow-2xl"
           >
-            <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-              <h3 className="text-4xl font-bold text-primary mb-2">2,500+</h3>
-              <p className="text-subtitle-text">Active Listings</p>
-            </div>
-            <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-              <h3 className="text-4xl font-bold text-primary mb-2">500+</h3>
-              <p className="text-subtitle-text">Verified Dealers</p>
-            </div>
-            <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-              <h3 className="text-4xl font-bold text-primary mb-2">100+</h3>
-              <p className="text-subtitle-text">Live Auctions</p>
-            </div>
-            <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-              <h3 className="text-4xl font-bold text-primary mb-2">98%</h3>
-              <p className="text-subtitle-text">Satisfaction Rate</p>
-            </div>
+            <img 
+              src={heroDealershipImage}
+              alt="Premium dealership showcasing quality vehicles"
+              className="w-full h-auto object-cover"
+            />
           </motion.div>
         </div>
       </div>
