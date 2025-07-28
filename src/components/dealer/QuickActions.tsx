@@ -8,7 +8,7 @@ export function QuickActions() {
 
   return (
     <div className="mb-6">
-      <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+      <h2 className="text-xl font-semibold mb-4 text-body-text">Quick Actions</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <ActionButton
@@ -49,9 +49,9 @@ function ActionButton({ icon, title, description, link, variant }: ActionButtonP
   const navigate = useNavigate();
 
   const variantStyles = {
-    green: "bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200",
-    yellow: "bg-gradient-to-br from-yellow-50 to-yellow-100 border-2 border-yellow-200",
-    blue: "bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200"
+    green: "bg-card border-2 border-green-500/30 shadow-sm",
+    yellow: "bg-card border-2 border-yellow-500/30 shadow-sm",
+    blue: "bg-card border-2 border-blue-500/30 shadow-sm"
   };
 
   const iconColors = {
@@ -68,16 +68,16 @@ function ActionButton({ icon, title, description, link, variant }: ActionButtonP
 
   return (
     <div 
-      className={`${variantStyles[variant]} p-5 rounded-lg cursor-pointer hover:shadow-md transition-all group`}
+      className={`${variantStyles[variant]} p-5 rounded-lg cursor-pointer hover:shadow-lg transition-all group`}
       onClick={() => navigate(link)}
     >
       <div className="flex items-center mb-3">
-        <div className="bg-white p-2 rounded-full shadow-sm mr-3">
+        <div className="bg-background p-2 rounded-full shadow-sm mr-3 border border-border">
           <div className={iconColors[variant]}>
             {icon}
           </div>
         </div>
-        <h3 className="font-medium text-lg">{title}</h3>
+        <h3 className="font-medium text-lg text-body-text">{title}</h3>
       </div>
       <p className="text-subtitle-text mb-3">{description}</p>
       <span className={`${textColors[variant]} font-medium group-hover:underline`}>

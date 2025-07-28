@@ -16,9 +16,9 @@ export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardPr
   else greeting = "Good evening";
 
   return (
-    <Card className="bg-white shadow-sm border-none">
+    <Card className="bg-card shadow-sm border-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-xl font-semibold">
+        <CardTitle className="text-xl font-semibold text-body-text">
           {isLoading ? (
             <Skeleton className="h-7 w-48" />
           ) : (
@@ -35,7 +35,7 @@ export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardPr
             <Skeleton className="h-4 w-3/4" />
           </div>
         ) : (
-          <p className="text-gray-600">
+          <p className="text-subtitle-text">
             Welcome to your dashboard. Here you can manage your auctions, 
             bids, and view important information about your account.
           </p>
