@@ -25,10 +25,10 @@ export const AdditionalDocumentsUpload: React.FC<AdditionalDocumentsUploadProps>
   onUpload
 }) => {
   return (
-    <Card className="mb-8">
+    <Card className="mb-8 bg-secondary border-accent/20">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Upload className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 text-body-text">
+          <Upload className="w-5 h-5 text-iris" />
           Upload Additional Documents
         </CardTitle>
       </CardHeader>
@@ -61,7 +61,7 @@ export const AdditionalDocumentsUpload: React.FC<AdditionalDocumentsUploadProps>
               className="cursor-pointer"
             />
             {file && documentType !== 'utility-bill' && (
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="mt-2 text-sm text-subtitle-text">
                 Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
               </p>
             )}
