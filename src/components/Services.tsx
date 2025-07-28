@@ -25,9 +25,9 @@ const Services = () => {
   ];
 
   return (
-    <section id="services" className="py-20 bg-white">
+    <section id="services" className="py-20 bg-secondary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-center mb-4">Dlaczego warto nas wybrać</h2>
+        <h2 className="text-3xl font-bold text-center mb-4 text-body-text">Dlaczego warto nas wybrać</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12">
           {services.map((service, index) => (
             <div
@@ -37,7 +37,7 @@ const Services = () => {
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                 <service.icon className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold">{service.title}</h3>
+              <h3 className="text-xl font-semibold text-body-text">{service.title}</h3>
               <p className="text-subtitle-text">{service.description}</p>
             </div>
           ))}

@@ -5,7 +5,7 @@ const Hero = () => {
   return (
     <div className="relative min-h-screen">
       {/* Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-iris-light -z-10" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-secondary -z-10" />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -15,7 +15,7 @@ const Hero = () => {
             transition={{ duration: 0.6 }}
             className="space-y-8"
           >
-            <h1 className="text-5xl md:text-6xl font-bold text-dark leading-tight">
+            <h1 className="text-5xl md:text-6xl font-bold text-body-text leading-tight">
               Kupuj <span className="text-primary">Pewnie</span>. Kupuj Opłacalnie.
               <br />
               Kupuj na Autaro.pl!

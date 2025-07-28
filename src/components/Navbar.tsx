@@ -85,7 +85,7 @@ export default function Navbar() {
     <nav
       className={`fixed w-full z-50 transition-all duration-300 ${
         scrolled || location.pathname !== "/"
-          ? "bg-white shadow-md py-2"
+          ? "bg-background/95 backdrop-blur-sm shadow-md py-2"
           : "bg-transparent py-4"
       }`}
     >
@@ -99,14 +99,14 @@ export default function Navbar() {
           {isAuthenticated && (
             <Link 
               to="/dealer/dashboard" 
-              className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2 font-medium"
+              className="text-body-text hover:text-primary transition-colors flex items-center gap-2 font-medium"
             >
               <LayoutDashboard size={18} />
               Panel Dealera
             </Link>
           )}
           
-          <Link to="/how-it-works" className="text-gray-700 hover:text-primary transition-colors">
+          <Link to="/how-it-works" className="text-body-text hover:text-primary transition-colors">
             Jak to Działa
           </Link>
           
@@ -149,13 +149,13 @@ export default function Navbar() {
 
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="absolute top-full left-0 w-full bg-white shadow-md py-4 md:hidden">
+          <div className="absolute top-full left-0 w-full bg-background/95 backdrop-blur-sm shadow-md py-4 md:hidden">
             <div className="flex flex-col space-y-3 px-4">
               {/* Dashboard Link - Mobile */}
               {isAuthenticated && (
                 <Link 
                   to="/dealer/dashboard" 
-                  className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2 font-medium"
+                  className="text-body-text hover:text-primary transition-colors flex items-center gap-2 font-medium"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <LayoutDashboard size={18} />
@@ -165,7 +165,7 @@ export default function Navbar() {
               
               <Link 
                 to="/how-it-works" 
-                className="text-gray-700 hover:text-primary transition-colors"
+                className="text-body-text hover:text-primary transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Jak to Działa
@@ -175,7 +175,7 @@ export default function Navbar() {
                 <>
                   <Link 
                     to="/dealer/profile" 
-                    className="text-gray-700 hover:text-primary transition-colors"
+                    className="text-body-text hover:text-primary transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     My Profile

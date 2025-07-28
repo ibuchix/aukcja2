@@ -36,7 +36,7 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-primary text-white px-4 py-2 rounded-default hover:bg-[#B01031] transition-colors font-kanit;
+    @apply bg-primary text-white px-4 py-2 rounded-default hover:bg-[#B01831] transition-colors font-kanit;
   }
 
   .btn-secondary {
@@ -48,7 +48,7 @@
   }
 
   .section-alt {
-    @apply bg-accent;
+    @apply bg-secondary;
   }
 
   .heading-large {
@@ -68,6 +68,6 @@
   }
 
   .input-field {
-    @apply rounded-default border border-accent px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary;
+    @apply rounded-default border border-accent bg-background text-body-text px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary;
   }
 }

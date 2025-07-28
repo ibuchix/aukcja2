@@ -19,16 +19,16 @@ export default {
     },
     extend: {
       colors: {
-        primary: "#DC143C",
+        primary: "#D81B24",
         secondary: "#383B39",
         iris: "#4B4DED",
         "iris-light": "#EFEFFD",
         dark: "#0E0E2C",
         success: "#21CA6F",
-        accent: "#ECF1F4",
-        background: "#FFFFFF",
-        "body-text": "#222020",
-        "subtitle-text": "#6A6A77",
+        accent: "#6A6A77",
+        background: "#454545",
+        "body-text": "#FCFCFC",
+        "subtitle-text": "#CCCCCC",
       },
       fontFamily: {
         kanit: ["Kanit", "sans-serif"],
