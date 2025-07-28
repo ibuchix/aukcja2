@@ -21,18 +21,18 @@ export const UtilityBillUpload: React.FC<UtilityBillUploadProps> = ({
   onUpload
 }) => {
   return (
-    <Card className="mb-8 border-2 border-primary/30 bg-secondary shadow-lg">
-      <CardHeader className="bg-primary/10 border-b border-primary/20">
-        <CardTitle className="flex items-center gap-2 text-primary">
+    <Card className="mb-8 border-2 border-[#DC143C]/20">
+      <CardHeader className="bg-[#DC143C]/5">
+        <CardTitle className="flex items-center gap-2 text-[#DC143C]">
           <Building2 className="w-6 h-6" />
           Company Verification Required
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
-        <Alert className="mb-6 border-amber-500/30 bg-background border">
-          <AlertCircle className="h-4 w-4 text-amber-400" />
-          <AlertTitle className="text-body-text">Verification Required</AlertTitle>
-          <AlertDescription className="text-subtitle-text">
+        <Alert className="mb-6 border-amber-200 bg-amber-50">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-800">Verification Required</AlertTitle>
+          <AlertDescription className="text-amber-700">
             <strong>Please upload your company's utility bill for verification.</strong>
             <br />
             <span className="text-sm mt-2 block">
