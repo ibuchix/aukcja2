@@ -324,30 +324,30 @@ Wygenerowano: ${new Date().toLocaleString('pl-PL')}
   const isFormValid = formData.buyerName && formData.buyerEmail && formData.sellerName && formData.vinNumber && formData.cancellationReason;
 
   return (
-    <Card>
+    <Card className="bg-secondary shadow-lg border border-accent/20">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileDown className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 text-body-text">
+          <FileDown className="w-5 h-5 text-primary" />
           Generator Umowy Lojalnościowej
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid gap-6">
           {/* Company Information - Read Only */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-lg mb-2">AUTO-STRADA (Tikoo Sp. z o.o.)</h3>
+          <div className="bg-background p-4 rounded-lg border border-accent/20">
+            <h3 className="font-semibold text-lg mb-2 text-body-text">AUTO-STRADA (Tikoo Sp. z o.o.)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-              <p><strong>KRS:</strong> 0000351062</p>
-              <p><strong>NIP:</strong> 5882346564</p>
-              <p><strong>REGON:</strong> 220989555</p>
-              <p><strong>E-mail:</strong> firmy@auto-strada.pl</p>
-              <p className="md:col-span-2"><strong>Adres:</strong> os. Przyjaźni 2/22, 84-200 Wejherowo</p>
+              <p className="text-subtitle-text"><strong className="text-body-text">KRS:</strong> 0000351062</p>
+              <p className="text-subtitle-text"><strong className="text-body-text">NIP:</strong> 5882346564</p>
+              <p className="text-subtitle-text"><strong className="text-body-text">REGON:</strong> 220989555</p>
+              <p className="text-subtitle-text"><strong className="text-body-text">E-mail:</strong> firmy@auto-strada.pl</p>
+              <p className="md:col-span-2 text-subtitle-text"><strong className="text-body-text">Adres:</strong> os. Przyjaźni 2/22, 84-200 Wejherowo</p>
             </div>
           </div>
 
           {/* Buyer Information */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Dane Nabywcy (Zobowiązanego)</h3>
+            <h3 className="font-semibold text-lg mb-4 text-body-text">Dane Nabywcy (Zobowiązanego)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="buyerName">Imię i nazwisko *</Label>
@@ -391,7 +391,7 @@ Wygenerowano: ${new Date().toLocaleString('pl-PL')}
 
           {/* Seller Information */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Dane Sprzedawcy</h3>
+            <h3 className="font-semibold text-lg mb-4 text-body-text">Dane Sprzedawcy</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="sellerName">Imię i nazwisko *</Label>
@@ -435,7 +435,7 @@ Wygenerowano: ${new Date().toLocaleString('pl-PL')}
 
           {/* Contract Details */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Szczegóły Umowy</h3>
+            <h3 className="font-semibold text-lg mb-4 text-body-text">Szczegóły Umowy</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="vinNumber">Numer VIN samochodu *</Label>
