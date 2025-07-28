@@ -32,13 +32,13 @@ const Services = () => {
           {services.map((service, index) => (
             <div
               key={index}
-              className="flex flex-col items-center text-center space-y-4 p-6"
+              className="bg-card border border-border rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-8 flex flex-col items-center text-center space-y-6 h-full"
             >
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                <service.icon className="w-6 h-6 text-primary" />
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center shadow-md">
+                <service.icon className="w-8 h-8 text-primary" />
               </div>
               <h3 className="text-xl font-semibold text-body-text">{service.title}</h3>
-              <p className="text-subtitle-text">{service.description}</p>
+              <p className="text-subtitle-text leading-relaxed flex-grow">{service.description}</p>
             </div>
           ))}
         </div>
