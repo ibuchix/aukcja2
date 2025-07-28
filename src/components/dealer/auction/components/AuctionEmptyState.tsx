@@ -8,7 +8,7 @@ interface AuctionEmptyStateProps {
 
 export const AuctionEmptyState = ({ hasFilters, hasSearch }: AuctionEmptyStateProps) => {
   return (
-    <div className="text-center py-8 text-muted-foreground">
+    <div className="text-center py-8 text-body-text">
       {hasFilters || hasSearch
         ? "No auctions match your filters. Try adjusting your criteria."
         : "No active auctions available at this time."}
