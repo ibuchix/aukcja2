@@ -16,7 +16,7 @@ export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardPr
   else greeting = "Good evening";
 
   return (
-    <Card className="bg-card shadow-sm border-border">
+    <Card className="bg-secondary shadow-lg border border-accent/20">
       <CardHeader className="pb-2">
         <CardTitle className="text-xl font-semibold text-body-text">
           {isLoading ? (

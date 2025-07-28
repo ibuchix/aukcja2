@@ -49,9 +49,9 @@ function ActionButton({ icon, title, description, link, variant }: ActionButtonP
   const navigate = useNavigate();
 
   const variantStyles = {
-    green: "bg-card border-2 border-green-500/30 shadow-sm",
-    yellow: "bg-card border-2 border-yellow-500/30 shadow-sm",
-    blue: "bg-card border-2 border-blue-500/30 shadow-sm"
+    green: "bg-secondary border-2 border-success/40 shadow-lg",
+    yellow: "bg-secondary border-2 border-yellow-500/40 shadow-lg",
+    blue: "bg-secondary border-2 border-iris/40 shadow-lg"
   };
 
   const iconColors = {
@@ -72,7 +72,7 @@ function ActionButton({ icon, title, description, link, variant }: ActionButtonP
       onClick={() => navigate(link)}
     >
       <div className="flex items-center mb-3">
-        <div className="bg-background p-2 rounded-full shadow-sm mr-3 border border-border">
+        <div className="bg-background p-2 rounded-full shadow-sm mr-3 border border-accent/20">
           <div className={iconColors[variant]}>
             {icon}
           </div>
