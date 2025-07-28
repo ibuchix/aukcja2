@@ -20,7 +20,7 @@ const Services = () => {
     {
       icon: Wrench,
       title: "Bezpieczne zakupy",
-      description: "Wszystkie profile dostępnych aut są przez nas weryfikowane, a dealerzy mają możliwość sprawdzenia auta przy odbiorze — jeszcze przed finalizacją zakupu. Dzięki współpracy z CarVertical i AutoBaza oferujemy również dostęp do szczegółowych raportów historii pojazdu.",
+      description: "Wszystkie profile dostępnych aut są przez nas weryfikowane, a dealerzy mają możliwość sprawdzenia auta przy odbiorze — jeszcze przed finalizacją zakupu.",
     },
   ];
 
