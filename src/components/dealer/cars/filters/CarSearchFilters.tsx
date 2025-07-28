@@ -90,14 +90,6 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Debug info in development */}
-        {isDev && (
-          <div className="bg-blue-50 p-2 rounded text-xs">
-            <strong>Debug:</strong> Active filters: {activeFilterCount} | 
-            Current: {Object.keys(filters).join(', ') || 'none'}
-          </div>
-        )}
-
         {/* Make and Model Filter */}
         <MakeModelFilter 
           key="make-model-filter"
