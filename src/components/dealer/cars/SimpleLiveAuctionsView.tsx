@@ -74,13 +74,13 @@ export const SimpleLiveAuctionsView = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Live Auctions</h2>
+        <h2 className="text-2xl font-bold text-body-text">Live Auctions</h2>
         <div className="flex gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={handleRefreshStatuses}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-secondary border-accent/20 text-body-text hover:bg-accent/20"
           >
             <RotateCcw className="h-4 w-4" />
             Update Statuses
@@ -103,10 +103,10 @@ export const SimpleLiveAuctionsView = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="animate-pulse">
-              <div className="bg-gray-200 aspect-video rounded-lg mb-4"></div>
+              <div className="bg-accent/20 aspect-video rounded-lg mb-4"></div>
               <div className="space-y-2">
-                <div className="bg-gray-200 h-4 rounded"></div>
-                <div className="bg-gray-200 h-4 rounded w-3/4"></div>
+                <div className="bg-accent/20 h-4 rounded"></div>
+                <div className="bg-accent/20 h-4 rounded w-3/4"></div>
               </div>
             </div>
           ))}
