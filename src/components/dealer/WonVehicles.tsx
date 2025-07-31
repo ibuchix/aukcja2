@@ -366,10 +366,6 @@ export const WonVehicles = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <span className="text-sm font-medium text-body-text">{wonVehicles?.length || 0} vehicles</span>
-          <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            Real-time updates active
-          </div>
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -382,10 +378,6 @@ export const WonVehicles = () => {
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          <div className="flex items-center gap-2 text-sm text-green-600">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            Auto-refresh ON
-          </div>
         </div>
       </div>
 
@@ -460,23 +452,23 @@ export const WonVehicles = () => {
                         <h4 className="text-lg font-semibold text-body-text mb-4">Pricing Details</h4>
                         
                         <div className="space-y-3">
-                          <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                            <span className="text-gray-700">Final Price</span>
-                            <span className="font-bold text-green-600 text-lg">
+                          <div className="flex justify-between items-center p-3 bg-success/20 rounded-lg">
+                            <span className="text-body-text">Final Price</span>
+                            <span className="font-bold text-success text-lg">
                               {formatCurrency(vehicle.winning_bid_amount)}
                             </span>
                           </div>
                           
-                          <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                            <span className="text-gray-700">Your Original Bid</span>
-                            <span className="font-semibold">
+                          <div className="flex justify-between items-center p-3 bg-secondary/20 rounded-lg">
+                            <span className="text-body-text">Your Original Bid</span>
+                            <span className="font-semibold text-body-text">
                               {formatCurrency(vehicle.winning_bid_amount)}
                             </span>
                           </div>
                           
-                          <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                            <span className="text-gray-700">Platform Fee</span>
-                            <span className="font-bold text-blue-600">
+                          <div className="flex justify-between items-center p-3 bg-iris/20 rounded-lg">
+                            <span className="text-body-text">Platform Fee</span>
+                            <span className="font-bold text-iris">
                               {formatCurrency(calculatedPlatformFee)}
                             </span>
                           </div>
