@@ -6,7 +6,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <h3 className="text-2xl font-bold text-primary mb-4">Auto-Strada</h3>
-            <p className="text-gray-400">Quality cars for the discerning dealer</p>
+            <p className="text-gray-400"></p>
           </div>
           <div>
             <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
