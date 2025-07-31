@@ -365,7 +365,7 @@ export const WonVehicles = () => {
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium">{wonVehicles?.length || 0} vehicles</span>
+          <span className="text-sm font-medium text-body-text">{wonVehicles?.length || 0} vehicles</span>
           <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             Real-time updates active
@@ -415,7 +415,7 @@ export const WonVehicles = () => {
               <div key={vehicle.id} className="space-y-4">
                 {/* Vehicle Title and Payment Badge */}
                 <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-bold text-gray-900">
+                  <h2 className="text-xl font-bold text-body-text">
                     {vehicle.vehicle_year} {vehicle.vehicle_make} {vehicle.vehicle_model}
                   </h2>
                    <div className={`px-3 py-1 rounded-lg text-sm font-semibold ${
@@ -444,20 +444,20 @@ export const WonVehicles = () => {
 
                       {/* Vehicle Details Section */}
                       <div className="p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Vehicle Details</h3>
+                        <h3 className="text-lg font-semibold text-body-text mb-4">Vehicle Details</h3>
                         
                         <div className="grid grid-cols-2 gap-4 mb-6">
                           <div>
-                            <p className="text-sm text-gray-500 uppercase tracking-wide">MILEAGE</p>
-                            <p className="font-semibold">{vehicle.vehicle_mileage?.toLocaleString() || 'N/A'} km</p>
+                            <p className="text-sm text-subtitle-text uppercase tracking-wide">MILEAGE</p>
+                            <p className="font-semibold text-body-text">{vehicle.vehicle_mileage?.toLocaleString() || 'N/A'} km</p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-500 uppercase tracking-wide">WON DATE</p>
-                            <p className="font-semibold">{new Date(vehicle.auction_end_time).toLocaleDateString('en-GB')}</p>
+                            <p className="text-sm text-subtitle-text uppercase tracking-wide">WON DATE</p>
+                            <p className="font-semibold text-body-text">{new Date(vehicle.auction_end_time).toLocaleDateString('en-GB')}</p>
                           </div>
                         </div>
 
-                        <h4 className="text-lg font-semibold text-gray-900 mb-4">Pricing Details</h4>
+                        <h4 className="text-lg font-semibold text-body-text mb-4">Pricing Details</h4>
                         
                         <div className="space-y-3">
                           <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
@@ -488,7 +488,7 @@ export const WonVehicles = () => {
                         vehicle.payment_status === 'paid' ? 'bg-blue-50' : 
                         vehicle.payment_status === 'payment_required' ? 'bg-green-50' : 'bg-orange-50'
                       }`}>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Seller Information</h3>
+                        <h3 className="text-lg font-semibold text-body-text mb-4">Seller Information</h3>
                         
                         <div className="text-center mb-6">
                           {vehicle.payment_status === 'paid' ? (
@@ -634,8 +634,8 @@ export const WonVehicles = () => {
             <div className="h-16 w-16 text-gray-400 mx-auto mb-4 flex items-center justify-center">
               <Eye className="h-8 w-8" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No won vehicles</h3>
-            <p className="text-gray-600">
+            <h3 className="text-lg font-semibold text-body-text mb-2">No won vehicles</h3>
+            <p className="text-subtitle-text">
               You haven't won any auctions yet. Continue bidding on vehicles that interest you!
             </p>
           </CardContent>
