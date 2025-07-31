@@ -8,27 +8,27 @@ export function QuickActions() {
 
   return (
     <div className="mb-6">
-      <h2 className="text-xl font-semibold mb-4 text-body-text">Quick Actions</h2>
+      <h2 className="text-xl font-semibold mb-4 text-body-text">Szybkie działania</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <ActionButton
           icon={<Gavel className="h-5 w-5" />}
-          title="My Bids"
-          description="Track your bidding activity"
+          title="Moje oferty"
+          description="Zobacz swoje aktywne oferty"
           link="/dealer/bids"
           variant="green"
         />
         <ActionButton
           icon={<FileText className="h-5 w-5" />}
-          title="Manage Documents"
-          description="View uploaded files"
+          title="Centrum Dokumentów"
+          description="Zarządzaj dokumentami"
           link="/dealer/documents"
           variant="yellow"
         />
         <ActionButton
           icon={<Trophy className="h-5 w-5" />}
-          title="Won Vehicles"
-          description="View your auction wins"
+          title="Wygrane Auta"
+          description="Zobacz swoje zakupione auta"
           link="/dealer/won-vehicles"
           variant="blue"
         />
@@ -81,9 +81,9 @@ function ActionButton({ icon, title, description, link, variant }: ActionButtonP
       </div>
       <p className="text-subtitle-text mb-3">{description}</p>
       <span className={`${textColors[variant]} font-medium group-hover:underline`}>
-        {title === "My Bids" ? "View My Bids" : 
-         title === "Won Vehicles" ? "View Won Vehicles" : 
-         "Manage Documents"} →
+        {title === "Moje oferty" ? "Wyświetl moje oferty" : 
+         title === "Wygrane Auta" ? "Zobacz wygrane auta" : 
+         "Dokumentami"} →
       </span>
     </div>
   );

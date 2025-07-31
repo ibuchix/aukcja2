@@ -67,7 +67,7 @@ const DashboardContent = () => {
   }, [error, displayProfile, isLoading, toast]);
 
   return (
-    <DashboardLayout title="Dealer Dashboard">
+    <DashboardLayout title="Panel Dealera">
       <div className="space-y-6">
         {/* Show error if profile failed to load */}
         {error && !displayProfile && (
@@ -155,7 +155,7 @@ const DealerDashboard = () => {
 
   if (!user) {
     return (
-      <DashboardLayout title="Dealer Dashboard">
+      <DashboardLayout title="Panel Dealera">
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
