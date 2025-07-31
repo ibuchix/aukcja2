@@ -466,9 +466,9 @@ export const WonVehicles = () => {
                             </span>
                           </div>
                           
-                          <div className="flex justify-between items-center p-3 bg-iris/20 rounded-lg">
-                            <span className="text-body-text">Platform Fee</span>
-                            <span className="font-bold text-iris">
+                          <div className="flex justify-between items-center p-3 bg-primary/20 rounded-lg border border-primary/30">
+                            <span className="text-body-text font-medium">Platform Fee</span>
+                            <span className="font-bold text-primary text-lg">
                               {formatCurrency(calculatedPlatformFee)}
                             </span>
                           </div>
