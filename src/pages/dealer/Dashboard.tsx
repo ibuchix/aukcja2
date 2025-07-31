@@ -117,7 +117,7 @@ const DashboardContent = () => {
         {/* Dashboard Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="auctions">Aukcje na żywo</TabsTrigger>
+            <TabsTrigger value="auctions">Aukcja na żywo</TabsTrigger>
             <TabsTrigger value="overview">Przegląd</TabsTrigger>
             <TabsTrigger value="profile">Profil</TabsTrigger>
           </TabsList>

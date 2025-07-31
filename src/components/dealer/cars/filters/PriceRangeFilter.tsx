@@ -76,7 +76,7 @@ export const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
 
   return (
     <div className="space-y-4">
-      <Label className="text-sm font-medium">Price Range (PLN)</Label>
+      <Label className="text-sm font-medium">Zakres cen (PLN)</Label>
       
       <div className="px-3">
         <Slider
@@ -91,7 +91,7 @@ export const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
       
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label className="text-xs text-muted-foreground">Min Price</Label>
+          <Label className="text-xs text-muted-foreground">Minimalna cena</Label>
           <Input
             type="number"
             value={inputMin}
@@ -102,7 +102,7 @@ export const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
           />
         </div>
         <div>
-          <Label className="text-xs text-muted-foreground">Max Price</Label>
+          <Label className="text-xs text-muted-foreground">Maksymalna cena</Label>
           <Input
             type="number"
             value={inputMax}

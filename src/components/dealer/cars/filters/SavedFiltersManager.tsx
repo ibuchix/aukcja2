@@ -131,21 +131,21 @@ export const SavedFiltersManager: React.FC<SavedFiltersManagerProps> = ({
             disabled={!hasActiveFilters}
           >
             <Save className="w-4 h-4 mr-2" />
-            Save Filters
+            Zapisz filtry
           </Button>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Save Current Filters</DialogTitle>
+            <DialogTitle>Zapisz bieżące filtry</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="filterName">Filter Name</Label>
+              <Label htmlFor="filterName">Nazwa filtra</Label>
               <Input
                 id="filterName"
                 value={filterName}
                 onChange={(e) => setFilterName(e.target.value)}
-                placeholder="Enter a name for this filter set"
+                placeholder="Wprowadź nazwę dla tego zestawu filtrów"
               />
             </div>
             <div className="flex justify-end gap-2">
@@ -153,10 +153,10 @@ export const SavedFiltersManager: React.FC<SavedFiltersManagerProps> = ({
                 variant="outline" 
                 onClick={() => setSaveDialogOpen(false)}
               >
-                Cancel
+                Anuluj
               </Button>
               <Button onClick={handleSaveFilters}>
-                Save Filter
+                Zapisz filtr
               </Button>
             </div>
           </div>
@@ -172,26 +172,26 @@ export const SavedFiltersManager: React.FC<SavedFiltersManagerProps> = ({
             disabled={savedFilters.length === 0}
           >
             <FileText className="w-4 h-4 mr-2" />
-            Load Filters
+            Wczytaj filtry
           </Button>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Load Saved Filters</DialogTitle>
+            <DialogTitle>Wczytaj zapisane filtry</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {savedFilters.length === 0 ? (
-              <p className="text-muted-foreground">No saved filters found.</p>
+              <p className="text-muted-foreground">Nie znaleziono zapisanych filtrów.</p>
             ) : (
               <>
                 <div>
-                  <Label htmlFor="savedFilter">Select a saved filter</Label>
+                  <Label htmlFor="savedFilter">Wybierz zapisany filtr</Label>
                   <Select 
                     value={selectedFilterId} 
                     onValueChange={setSelectedFilterId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose a saved filter" />
+                      <SelectValue placeholder="Wybierz zapisany filtr" />
                     </SelectTrigger>
                     <SelectContent>
                       {savedFilters.map((filter) => (
@@ -217,7 +217,7 @@ export const SavedFiltersManager: React.FC<SavedFiltersManagerProps> = ({
                           {savedFilters.find(f => f.id === selectedFilterId)?.name}
                         </h4>
                         <p className="text-sm text-muted-foreground">
-                          {Object.keys(savedFilters.find(f => f.id === selectedFilterId)?.filters || {}).length} filters
+                          {Object.keys(savedFilters.find(f => f.id === selectedFilterId)?.filters || {}).length} filtrów
                         </p>
                       </div>
                       <Button
@@ -236,13 +236,13 @@ export const SavedFiltersManager: React.FC<SavedFiltersManagerProps> = ({
                     variant="outline" 
                     onClick={() => setLoadDialogOpen(false)}
                   >
-                    Cancel
+                    Anuluj
                   </Button>
                   <Button 
                     onClick={handleLoadFilters}
                     disabled={!selectedFilterId}
                   >
-                    Load Filter
+                    Wczytaj filtr
                   </Button>
                 </div>
               </>

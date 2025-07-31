@@ -76,7 +76,7 @@ export const MileageRangeFilter: React.FC<MileageRangeFilterProps> = ({
 
   return (
     <div className="space-y-4">
-      <Label className="text-sm font-medium">Mileage Range (km)</Label>
+      <Label className="text-sm font-medium">Zakres przebiegu (km)</Label>
       
       <div className="px-3">
         <Slider
@@ -91,7 +91,7 @@ export const MileageRangeFilter: React.FC<MileageRangeFilterProps> = ({
       
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label className="text-xs text-muted-foreground">Min Mileage</Label>
+          <Label className="text-xs text-muted-foreground">Minimalny przebieg</Label>
           <Input
             type="number"
             value={inputMin}
@@ -102,7 +102,7 @@ export const MileageRangeFilter: React.FC<MileageRangeFilterProps> = ({
           />
         </div>
         <div>
-          <Label className="text-xs text-muted-foreground">Max Mileage</Label>
+          <Label className="text-xs text-muted-foreground">Maksymalny przebieg</Label>
           <Input
             type="number"
             value={inputMax}

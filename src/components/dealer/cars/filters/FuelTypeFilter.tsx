@@ -24,7 +24,7 @@ export const FuelTypeFilter: React.FC<FuelTypeFilterProps> = ({
 }) => {
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium">Fuel Type</Label>
+      <Label className="text-sm font-medium">Rodzaj paliwa</Label>
       <Select 
         value={value || "any"} 
         onValueChange={(val) => onChange(val === "any" ? undefined : val)}

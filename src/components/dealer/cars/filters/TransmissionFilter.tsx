@@ -22,7 +22,7 @@ export const TransmissionFilter: React.FC<TransmissionFilterProps> = ({
 }) => {
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium">Transmission</Label>
+      <Label className="text-sm font-medium">Skrzynia biegów</Label>
       <Select 
         value={value || "any"} 
         onValueChange={(val) => onChange(val === "any" ? undefined : val)}

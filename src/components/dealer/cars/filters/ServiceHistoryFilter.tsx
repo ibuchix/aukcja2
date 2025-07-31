@@ -21,7 +21,7 @@ export const ServiceHistoryFilter: React.FC<ServiceHistoryFilterProps> = ({
 }) => {
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium">Service History</Label>
+      <Label className="text-sm font-medium">Historia serwisowa</Label>
       <Select 
         value={value || "any"} 
         onValueChange={(val) => onChange(val === "any" ? undefined : val)}

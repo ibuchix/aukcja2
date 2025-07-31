@@ -9,13 +9,13 @@ import {
 import { SortOption, SortSelectorProps } from "../types";
 
 export const sortOptions: SortOption[] = [
-  { value: "ending-soon", label: "Ending Soon" },
-  { value: "newest", label: "Newest First" },
-  { value: "price-low-high", label: "Price: Low to High" },
-  { value: "price-high-high", label: "Price: High to Low" },
-  { value: "highest-bid", label: "Highest Bid" },
-  { value: "year-new-old", label: "Year: New to Old" },
-  { value: "year-old-new", label: "Year: Old to New" },
+  { value: "ending-soon", label: "Kończące się wkrótce" },
+  { value: "newest", label: "Najnowsze pierwsze" },
+  { value: "price-low-high", label: "Cena: od najniższej" },
+  { value: "price-high-high", label: "Cena: od najwyższej" },
+  { value: "highest-bid", label: "Najwyższa oferta" },
+  { value: "year-new-old", label: "Rok: od najnowszego" },
+  { value: "year-old-new", label: "Rok: od najstarszego" },
 ];
 
 export const SortSelector = ({ sortOption, onSortChange }: SortSelectorProps) => {
@@ -26,7 +26,7 @@ export const SortSelector = ({ sortOption, onSortChange }: SortSelectorProps) =>
         onValueChange={onSortChange}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Sort by" />
+          <SelectValue placeholder="Sortuj według" />
         </SelectTrigger>
         <SelectContent>
           {sortOptions.map((option) => (

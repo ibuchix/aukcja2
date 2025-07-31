@@ -72,9 +72,9 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle className="flex items-center gap-2">
-            Vehicle Filters
+            Filtry pojazdów
             {activeFilterCount > 0 && (
-              <Badge variant="secondary">{activeFilterCount} active</Badge>
+              <Badge variant="secondary">{activeFilterCount} aktywne</Badge>
             )}
           </CardTitle>
           <div className="flex gap-2">
@@ -156,7 +156,7 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
               onClick={handleClearAllFilters}
               className="w-full md:w-auto"
             >
-              Clear All Filters ({activeFilterCount})
+              Wyczyść wszystkie filtry ({activeFilterCount})
             </Button>
           </div>
         )}

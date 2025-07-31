@@ -24,7 +24,7 @@ export const DistanceFilter: React.FC<DistanceFilterProps> = ({
 }) => {
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium">Distance</Label>
+      <Label className="text-sm font-medium">Odległość</Label>
       <Select 
         value={value || "any"} 
         onValueChange={(val) => onChange(val === "any" ? undefined : val)}
