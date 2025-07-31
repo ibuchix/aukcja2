@@ -73,12 +73,12 @@ const DashboardContent = () => {
         {error && !displayProfile && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Profile Loading Error</AlertTitle>
+            <AlertTitle>Błąd ładowania profilu</AlertTitle>
             <AlertDescription className="space-y-4">
               <p>{error}</p>
               <Button onClick={refreshProfile} variant="outline" size="sm">
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Retry Loading Profile
+                Ponów ładowanie profilu
               </Button>
             </AlertDescription>
           </Alert>
@@ -88,10 +88,10 @@ const DashboardContent = () => {
         {displayProfile && !isVerified && (
           <Alert className="border-[#DC143C]/20 bg-[#DC143C]/5">
             <Building2 className="h-4 w-4 text-[#DC143C]" />
-            <AlertTitle className="text-[#DC143C]">Account Verification Required</AlertTitle>
+            <AlertTitle className="text-[#DC143C]">Wymagana weryfikacja konta</AlertTitle>
             <AlertDescription className="text-[#DC143C]/80">
               <p className="mb-3">
-                To access all platform features and start bidding on auctions, please complete your account verification by uploading your company's utility bill.
+                Aby uzyskać dostęp do wszystkich funkcji platformy i rozpocząć licytację na aukcjach, prosimy o dokończenie weryfikacji konta poprzez przesłanie rachunku za media Twojej firmy.
               </p>
               <Button 
                 onClick={() => navigate('/dealer/documents')}
@@ -99,7 +99,7 @@ const DashboardContent = () => {
                 size="sm"
               >
                 <FileText className="w-4 h-4 mr-2" />
-                Go to Documents
+                Przejdź do dokumentów
               </Button>
             </AlertDescription>
           </Alert>
@@ -117,9 +117,9 @@ const DashboardContent = () => {
         {/* Dashboard Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="auctions">Live Auctions</TabsTrigger>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="auctions">Aukcje na żywo</TabsTrigger>
+            <TabsTrigger value="overview">Przegląd</TabsTrigger>
+            <TabsTrigger value="profile">Profil</TabsTrigger>
           </TabsList>
           
           <TabsContent value="auctions">
@@ -130,7 +130,7 @@ const DashboardContent = () => {
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Please complete your dealer profile to view live auctions.
+                    Prosimy o dokończenie profilu dealera, aby wyświetlić aukcje na żywo.
                   </AlertDescription>
                 </Alert>
               )}
@@ -159,7 +159,7 @@ const DealerDashboard = () => {
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Please log in to access your dashboard.
+            Prosimy zalogować się, aby uzyskać dostęp do panelu.
           </AlertDescription>
         </Alert>
       </DashboardLayout>

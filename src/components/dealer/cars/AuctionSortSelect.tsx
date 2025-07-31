@@ -11,16 +11,16 @@ export const AuctionSortSelect: React.FC<AuctionSortSelectProps> = ({ value, onV
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger className="w-48">
-        <SelectValue placeholder="Sort by..." />
+        <SelectValue placeholder="Sortuj według..." />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="ending_soon">Ending Soon</SelectItem>
-        <SelectItem value="newest">Newest First</SelectItem>
-        <SelectItem value="oldest">Oldest First</SelectItem>
-        <SelectItem value="price-high">Price: High to Low</SelectItem>
-        <SelectItem value="price-low">Price: Low to High</SelectItem>
-        <SelectItem value="mileage-low">Mileage: Low to High</SelectItem>
-        <SelectItem value="mileage-high">Mileage: High to Low</SelectItem>
+        <SelectItem value="ending_soon">Kończące się wkrótce</SelectItem>
+        <SelectItem value="newest">Najnowsze pierwsze</SelectItem>
+        <SelectItem value="oldest">Najstarsze pierwsze</SelectItem>
+        <SelectItem value="price-high">Cena: od najwyższej</SelectItem>
+        <SelectItem value="price-low">Cena: od najniższej</SelectItem>
+        <SelectItem value="mileage-low">Przebieg: od najmniejszego</SelectItem>
+        <SelectItem value="mileage-high">Przebieg: od największego</SelectItem>
       </SelectContent>
     </Select>
   );

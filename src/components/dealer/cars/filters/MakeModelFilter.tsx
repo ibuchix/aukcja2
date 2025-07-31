@@ -150,7 +150,7 @@ export const MakeModelFilter: React.FC<MakeModelFilterProps> = ({
               onValueChange={handleMakeChange}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select make" />
+                <SelectValue placeholder="Wybierz markę" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">All Makes</SelectItem>
@@ -170,7 +170,7 @@ export const MakeModelFilter: React.FC<MakeModelFilterProps> = ({
               disabled={!selectedMake || availableModels.length === 0}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select model" />
+                <SelectValue placeholder="Wybierz model" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">All Models</SelectItem>

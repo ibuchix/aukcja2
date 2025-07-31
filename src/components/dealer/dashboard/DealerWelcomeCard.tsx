@@ -10,10 +10,10 @@ interface DealerWelcomeCardProps {
 export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardProps) => {
   const currentHour = new Date().getHours();
   
-  let greeting = "Welcome";
-  if (currentHour < 12) greeting = "Good morning";
-  else if (currentHour < 18) greeting = "Good afternoon";
-  else greeting = "Good evening";
+  let greeting = "Witamy";
+  if (currentHour < 12) greeting = "Dzień dobry";
+  else if (currentHour < 18) greeting = "Dzień dobry";
+  else greeting = "Dobry wieczór";
 
   return (
     <Card className="bg-secondary shadow-lg border border-accent/20">

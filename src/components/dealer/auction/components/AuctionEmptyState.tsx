@@ -10,8 +10,8 @@ export const AuctionEmptyState = ({ hasFilters, hasSearch }: AuctionEmptyStatePr
   return (
     <div className="text-center py-8" style={{ color: '#454545' }}>
       {hasFilters || hasSearch
-        ? "No auctions match your filters. Try adjusting your criteria."
-        : "No active auctions available at this time."}
+        ? "Żadne aukcje nie pasują do Twoich filtrów. Spróbuj dostosować kryteria."
+        : "W tej chwili brak dostępnych aukcji."}
     </div>
   );
 };

@@ -4,11 +4,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const TRANSMISSION_OPTIONS = [
-  { value: "manual", label: "Manual" },
-  { value: "automatic", label: "Automatic" },
+  { value: "manual", label: "Manualna" },
+  { value: "automatic", label: "Automatyczna" },
   { value: "cvt", label: "CVT" },
-  { value: "semi-automatic", label: "Semi-Automatic" },
-  { value: "dual-clutch", label: "Dual Clutch" }
+  { value: "semi-automatic", label: "Półautomatyczna" },
+  { value: "dual-clutch", label: "Dwusprzęgłowa" }
 ];
 
 interface TransmissionFilterProps {
@@ -31,7 +31,7 @@ export const TransmissionFilter: React.FC<TransmissionFilterProps> = ({
           <SelectValue placeholder="Any" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="any">Any Transmission</SelectItem>
+          <SelectItem value="any">Dowolna skrzynia</SelectItem>
           {TRANSMISSION_OPTIONS.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}

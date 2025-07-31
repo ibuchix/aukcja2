@@ -4,11 +4,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const FUEL_TYPE_OPTIONS = [
-  { value: "petrol", label: "Petrol" },
+  { value: "petrol", label: "Benzyna" },
   { value: "diesel", label: "Diesel" },
-  { value: "electric", label: "Electric" },
-  { value: "hybrid", label: "Hybrid" },
-  { value: "plug-in-hybrid", label: "Plug-in Hybrid" },
+  { value: "electric", label: "Elektryczny" },
+  { value: "hybrid", label: "Hybrydowy" },
+  { value: "plug-in-hybrid", label: "Hybrydowy plug-in" },
   { value: "lpg", label: "LPG" },
   { value: "cng", label: "CNG" }
 ];
@@ -33,7 +33,7 @@ export const FuelTypeFilter: React.FC<FuelTypeFilterProps> = ({
           <SelectValue placeholder="Any" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="any">Any Fuel Type</SelectItem>
+          <SelectItem value="any">Dowolne paliwo</SelectItem>
           {FUEL_TYPE_OPTIONS.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}

@@ -8,22 +8,22 @@ export const StatsSection = () => {
 
   const stats = [
     {
-      title: "Active Bids",
+      title: "Aktywne oferty",
       value: loading ? "..." : activeBids.toString(),
       icon: <GavelIcon className="h-5 w-5 text-iris" />,
-      description: "Current active bids"
+      description: "Bieżące aktywne oferty"
     },
     {
-      title: "Won Auctions",
+      title: "Wygrane aukcje",
       value: loading ? "..." : wonAuctions.toString(),
       icon: <ShoppingCart className="h-5 w-5 text-success" />,
-      description: "Successfully won"
+      description: "Pomyślnie wygrane"
     },
     {
-      title: "Available Auctions",
+      title: "Dostępne aukcje",
       value: loading ? "..." : availableAuctions.toString(),
       icon: <Car className="h-5 w-5 text-primary" />,
-      description: "Ready to bid"
+      description: "Gotowe do licytacji"
     },
   ];
 
@@ -33,7 +33,7 @@ export const StatsSection = () => {
         <Card className="bg-secondary shadow-lg border border-accent/20 col-span-full">
           <CardContent className="pt-6">
             <div className="text-center text-primary">
-              <p className="text-body-text">Failed to load statistics</p>
+              <p className="text-body-text">Nie udało się załadować statystyk</p>
               <p className="text-sm text-subtitle-text">{error}</p>
             </div>
           </CardContent>

@@ -27,14 +27,14 @@ export const ProfileInfoSection = () => {
           <p>{error}</p>
           <div className="flex gap-2">
             <Button onClick={refreshProfile} variant="outline" size="sm">
-              Retry
+              Ponów
             </Button>
             <Button 
               onClick={() => navigate('/complete-registration')} 
               variant="outline" 
               size="sm"
             >
-              Complete Registration
+              Dokończ rejestrację
             </Button>
           </div>
         </AlertDescription>
@@ -50,7 +50,7 @@ export const ProfileInfoSection = () => {
       <div className="bg-background px-6 py-4 border-b border-accent/20">
         <h2 className="text-xl font-semibold flex items-center text-body-text">
           <UserIcon className="mr-2 h-5 w-5 text-primary" />
-          Business Profile
+          Profil biznesowy
         </h2>
       </div>
       
@@ -59,7 +59,7 @@ export const ProfileInfoSection = () => {
         <div>
           <h3 className="font-medium text-body-text mb-4 pb-2 border-b border-accent/20 flex items-center">
             <UserIcon className="mr-2 h-4 w-4 text-primary" />
-            Dealer Information
+            Informacje o dealerze
           </h3>
           
           {isLoading ? (
@@ -70,13 +70,13 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-body-text">Name:</span> {displayProfile?.supervisor_name || "Not available"}</p>
-              <p><span className="font-medium text-body-text">Email:</span> {user?.email || "Not available"}</p>
-              <p><span className="font-medium text-body-text">Dealership:</span> {displayProfile?.dealership_name || "Not available"}</p>
+              <p><span className="font-medium text-body-text">Nazwisko:</span> {displayProfile?.supervisor_name || "Niedostępne"}</p>
+              <p><span className="font-medium text-body-text">E-mail:</span> {user?.email || "Niedostępne"}</p>
+              <p><span className="font-medium text-body-text">Dealer:</span> {displayProfile?.dealership_name || "Niedostępne"}</p>
               <p>
                 <span className="font-medium text-body-text">Status:</span> 
                 <span className={`ml-1 ${isVerified ? 'text-success' : 'text-warning'}`}>
-                  {isVerified ? 'Approved' : (displayProfile?.verification_status || 'Pending')}
+                  {isVerified ? 'Zatwierdzony' : (displayProfile?.verification_status || 'Oczekujący')}
                 </span>
               </p>
             </div>
@@ -87,7 +87,7 @@ export const ProfileInfoSection = () => {
         <div>
           <h3 className="font-medium text-body-text mb-4 pb-2 border-b border-accent/20 flex items-center">
             <Building2 className="mr-2 h-4 w-4 text-primary" />
-            Company Information
+            Informacje o firmie
           </h3>
           
           {isLoading ? (
@@ -98,9 +98,9 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-body-text">Address:</span> {displayProfile?.address || "Not available"}</p>
-              <p><span className="font-medium text-body-text">License:</span> {displayProfile?.license_number || "Not available"}</p>
-              <p><span className="font-medium text-body-text">Tax ID:</span> {displayProfile?.tax_id || "Not available"}</p>
+              <p><span className="font-medium text-body-text">Adres:</span> {displayProfile?.address || "Niedostępne"}</p>
+              <p><span className="font-medium text-body-text">Licencja:</span> {displayProfile?.license_number || "Niedostępne"}</p>
+              <p><span className="font-medium text-body-text">NIP:</span> {displayProfile?.tax_id || "Niedostępne"}</p>
             </div>
           )}
         </div>
@@ -109,7 +109,7 @@ export const ProfileInfoSection = () => {
         <div>
           <h3 className="font-medium text-body-text mb-4 pb-2 border-b border-accent/20 flex items-center">
             <FileText className="mr-2 h-4 w-4 text-primary" />
-            Additional Details
+            Dodatkowe szczegóły
           </h3>
           
           {isLoading ? (
@@ -119,8 +119,8 @@ export const ProfileInfoSection = () => {
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-body-text">Business Registry:</span> {displayProfile?.business_registry_number || "Not available"}</p>
-              <p><span className="font-medium text-body-text">Account Status:</span> <span className="text-success font-medium">Active</span></p>
+              <p><span className="font-medium text-body-text">Rejestr działalności:</span> {displayProfile?.business_registry_number || "Niedostępne"}</p>
+              <p><span className="font-medium text-body-text">Status konta:</span> <span className="text-success font-medium">Aktywny</span></p>
             </div>
           )}
         </div>

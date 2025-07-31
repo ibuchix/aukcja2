@@ -65,8 +65,8 @@ export const SimpleLiveAuctionsView = () => {
   if (error) {
     return (
       <div className="p-6 text-center">
-        <p className="text-red-600 mb-4">Error loading auctions: {error.message}</p>
-        <Button onClick={() => refetch()}>Try Again</Button>
+        <p className="text-red-600 mb-4">Błąd ładowania aukcji: {error.message}</p>
+        <Button onClick={() => refetch()}>Spróbuj ponownie</Button>
       </div>
     );
   }
@@ -74,7 +74,7 @@ export const SimpleLiveAuctionsView = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-body-text">Live Auctions</h2>
+        <h2 className="text-2xl font-bold text-body-text">Aukcje na żywo</h2>
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -83,7 +83,7 @@ export const SimpleLiveAuctionsView = () => {
             className="flex items-center gap-2 bg-secondary border-accent/20 text-body-text hover:bg-accent/20"
           >
             <RotateCcw className="h-4 w-4" />
-            Update Statuses
+            Aktualizuj statusy
           </Button>
           <RefreshListingsButton onRefresh={refetch} isLoading={isLoading} />
         </div>
