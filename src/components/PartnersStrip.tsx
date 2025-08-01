@@ -7,20 +7,20 @@ const PartnersStrip = () => {
         {/* Scrolling logos container */}
         <motion.div 
           className="flex items-center whitespace-nowrap"
-          animate={{ x: [-100, -2000] }}
-          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+          animate={{ x: [-200, -3000] }}
+          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
         >
-          {Array.from({ length: 20 }).map((_, index) => (
-            <div key={index} className="flex items-center mx-12">
+          {Array.from({ length: 15 }).map((_, index) => (
+            <div key={index} className="flex items-center">
               <img 
                 src="/lovable-uploads/c422918c-46b1-438f-9883-b8555c740281.png" 
                 alt="CarVertical" 
-                className="h-6 object-contain mx-8"
+                className="h-6 object-contain mx-16"
               />
               <img 
                 src="/lovable-uploads/ca191bd1-dc54-4a7c-8595-2ed24be23c65.png" 
                 alt="Autobaza" 
-                className="h-6 object-contain mx-8"
+                className="h-6 object-contain mx-16"
               />
             </div>
           ))}
