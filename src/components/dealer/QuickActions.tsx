@@ -49,21 +49,21 @@ function ActionButton({ icon, title, description, link, variant }: ActionButtonP
   const navigate = useNavigate();
 
   const variantStyles = {
-    green: "bg-secondary border-2 border-success/40 shadow-lg",
-    yellow: "bg-secondary border-2 border-yellow-500/40 shadow-lg",
-    blue: "bg-secondary border-2 border-iris/40 shadow-lg"
+    green: "bg-secondary border-2 border-[#D81B24]/40 shadow-lg",
+    yellow: "bg-secondary border-2 border-[#D81B24]/40 shadow-lg",
+    blue: "bg-secondary border-2 border-[#D81B24]/40 shadow-lg"
   };
 
   const iconColors = {
-    green: "text-success",
-    yellow: "text-yellow-600",
-    blue: "text-blue-600"
+    green: "text-[#D81B24]",
+    yellow: "text-[#D81B24]",
+    blue: "text-[#D81B24]"
   };
 
   const textColors = {
-    green: "text-success",
-    yellow: "text-yellow-600",
-    blue: "text-blue-600"
+    green: "text-[#D81B24]",
+    yellow: "text-[#D81B24]",
+    blue: "text-[#D81B24]"
   };
 
   return (

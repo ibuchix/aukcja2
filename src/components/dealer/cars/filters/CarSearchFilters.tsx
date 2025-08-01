@@ -1,8 +1,9 @@
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ChevronDown, ChevronUp, SlidersHorizontal } from "lucide-react";
 import { AuctionFilters } from "../../auction/types";
 import { PriceRangeFilter } from "./PriceRangeFilter";
 import { MileageRangeFilter } from "./MileageRangeFilter";
@@ -32,6 +33,7 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
   sortOption
 }) => {
   const isDev = process.env.NODE_ENV === 'development';
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Calculate active filter count
   const activeFilterCount = Object.entries(filters).filter(([_, val]) => {
@@ -71,12 +73,21 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
     <Card>
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle className="flex items-center gap-2">
-            Filtry pojazdów
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center gap-2"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filtry pojazdów
+              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
             {activeFilterCount > 0 && (
               <Badge variant="secondary">{activeFilterCount} aktywne</Badge>
             )}
-          </CardTitle>
+          </div>
           <div className="flex gap-2">
             <SavedFiltersManager 
               currentFilters={filters}
@@ -89,78 +100,81 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Make and Model Filter */}
-        <MakeModelFilter 
-          key="make-model-filter"
-          selectedMake={filters.make}
-          selectedModel={filters.model}
-          onMakeChange={(make) => onFilterChange('make', make)}
-          onModelChange={(model) => onFilterChange('model', model)}
-        />
-
-        {/* Price Range Filter */}
-        <PriceRangeFilter 
-          key="price-range-filter"
-          minPrice={filters.priceMin ? Number(filters.priceMin) : undefined}
-          maxPrice={filters.priceMax ? Number(filters.priceMax) : undefined}
-          onPriceChange={(min, max) => {
-            onFilterChange('priceMin', min?.toString());
-            onFilterChange('priceMax', max?.toString());
-          }}
-        />
-
-        {/* Mileage Range Filter */}
-        <MileageRangeFilter 
-          key="mileage-range-filter"
-          minMileage={filters.mileageMin ? Number(filters.mileageMin) : undefined}
-          maxMileage={filters.mileageMax ? Number(filters.mileageMax) : undefined}
-          onMileageChange={(min, max) => {
-            onFilterChange('mileageMin', min?.toString());
-            onFilterChange('mileageMax', max?.toString());
-          }}
-        />
-
-        {/* Additional Filters Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <TransmissionFilter 
-            key="transmission-filter"
-            value={filters.transmission}
-            onChange={(transmission) => onFilterChange('transmission', transmission)}
-          />
-          
-          <FuelTypeFilter 
-            key="fuel-type-filter"
-            value={filters.fuelType}
-            onChange={(fuelType) => onFilterChange('fuelType', fuelType)}
-          />
-          
-          <ServiceHistoryFilter 
-            key="service-history-filter"
-            value={filters.serviceHistory}
-            onChange={(serviceHistory) => onFilterChange('serviceHistory', serviceHistory)}
+      
+      {isExpanded && (
+        <CardContent className="space-y-6">
+          {/* Make and Model Filter */}
+          <MakeModelFilter 
+            key="make-model-filter"
+            selectedMake={filters.make}
+            selectedModel={filters.model}
+            onMakeChange={(make) => onFilterChange('make', make)}
+            onModelChange={(model) => onFilterChange('model', model)}
           />
 
-          <DistanceFilter 
-            key="distance-filter"
-            value={filters.distance}
-            onChange={(distance) => onFilterChange('distance', distance)}
+          {/* Price Range Filter */}
+          <PriceRangeFilter 
+            key="price-range-filter"
+            minPrice={filters.priceMin ? Number(filters.priceMin) : undefined}
+            maxPrice={filters.priceMax ? Number(filters.priceMax) : undefined}
+            onPriceChange={(min, max) => {
+              onFilterChange('priceMin', min?.toString());
+              onFilterChange('priceMax', max?.toString());
+            }}
           />
-        </div>
 
-        {/* Clear Filters Button */}
-        {activeFilterCount > 0 && (
-          <div className="flex justify-center pt-4">
-            <Button 
-              variant="outline" 
-              onClick={handleClearAllFilters}
-              className="w-full md:w-auto"
-            >
-              Wyczyść wszystkie filtry ({activeFilterCount})
-            </Button>
+          {/* Mileage Range Filter */}
+          <MileageRangeFilter 
+            key="mileage-range-filter"
+            minMileage={filters.mileageMin ? Number(filters.mileageMin) : undefined}
+            maxMileage={filters.mileageMax ? Number(filters.mileageMax) : undefined}
+            onMileageChange={(min, max) => {
+              onFilterChange('mileageMin', min?.toString());
+              onFilterChange('mileageMax', max?.toString());
+            }}
+          />
+
+          {/* Additional Filters Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <TransmissionFilter 
+              key="transmission-filter"
+              value={filters.transmission}
+              onChange={(transmission) => onFilterChange('transmission', transmission)}
+            />
+            
+            <FuelTypeFilter 
+              key="fuel-type-filter"
+              value={filters.fuelType}
+              onChange={(fuelType) => onFilterChange('fuelType', fuelType)}
+            />
+            
+            <ServiceHistoryFilter 
+              key="service-history-filter"
+              value={filters.serviceHistory}
+              onChange={(serviceHistory) => onFilterChange('serviceHistory', serviceHistory)}
+            />
+
+            <DistanceFilter 
+              key="distance-filter"
+              value={filters.distance}
+              onChange={(distance) => onFilterChange('distance', distance)}
+            />
           </div>
-        )}
-      </CardContent>
+
+          {/* Clear Filters Button */}
+          {activeFilterCount > 0 && (
+            <div className="flex justify-center pt-4">
+              <Button 
+                variant="outline" 
+                onClick={handleClearAllFilters}
+                className="w-full md:w-auto"
+              >
+                Wyczyść wszystkie filtry ({activeFilterCount})
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      )}
     </Card>
   );
 };
