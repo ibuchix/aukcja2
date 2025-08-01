@@ -15,7 +15,7 @@ const Hero = () => {
             transition={{ duration: 0.6 }}
             className="space-y-8 mt-8"
           >
-            <h1 className="text-5xl md:text-6xl font-bold text-body-text leading-tight">
+            <h1 className="text-5xl md:text-6xl font-bold text-body-text leading-relaxed">
               Kupuj <span className="text-primary">Pewnie</span>. Kupuj Opłacalnie.
               <br />
               Kupuj na Autaro.pl!
