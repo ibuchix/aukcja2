@@ -15,12 +15,12 @@ const Hero = () => {
             transition={{ duration: 0.6 }}
             className="space-y-8 mt-8"
           >
-            <h1 className="text-5xl md:text-6xl font-bold text-body-text leading-relaxed">
+            <h1 className="text-5xl md:text-6xl font-bold text-body-text leading-loose">
               Kupuj <span className="text-primary">Pewnie</span>. Kupuj Opłacalnie.
               <br />
               Kupuj na Autaro.pl!
             </h1>
-            <p className="text-subtitle-text text-lg max-w-2xl">
+            <p className="text-subtitle-text text-lg max-w-2xl mt-6">
               Autaro.pl to pierwsza w Polsce aukcja samochodowa w formacie C2B. Sprzedawać mogą wyłącznie osoby prywatne, a kupować jedynie zarejestrowane firmy. Wszystkie samochody na naszych codziennych aukcjach są zarejestrowane w Polsce.
             </p>
             <motion.div 
