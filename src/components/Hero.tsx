@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 
 const Hero = () => {
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-[85vh] lg:min-h-[80vh]">
       {/* Gradient Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-secondary -z-10" />
       
