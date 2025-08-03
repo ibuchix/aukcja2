@@ -5,21 +5,21 @@ const HowItWorks = () => {
     {
       id: 1,
       title: "Załóż konto dealera",
-      description: "Zarejestruj się jako dealer w naszym systemie. Proces jest szybki i bezpłatny - wystarczy kilka minut aby rozpocząć.",
+      description: "Na aukcji Autaro licytować mogą wyłącznie dealerzy. Nasz algorytm analizuje aktualne dane rynkowe, aby wyznaczać optymalne ceny dla aut na naszych codziennych aukcjach. Zarejestruj swój komis teraz i odbierz 50% zniżki na pierwszą prowizję oraz powiadomienie o starcie codziennych aukcji!",
       image: "/lovable-uploads/07777f71-e054-4c81-89b9-8cfa9236de87.png",
       alt: "Rejestracja konta dealera na telefonie"
     },
     {
       id: 2,
       title: "Przeglądaj Aukcje i Szukaj Okazji!",
-      description: "Odkryj szeroki wybór pojazdów na aukcjach. Używaj filtrów aby znaleźć dokładnie to, czego szukasz.",
+      description: "Na aukcji Autaro znajdziesz auta różnych marek, roczników i przebiegów – z całej Polski. Dzięki temu każdy dealer znajdzie pojazd, na którym zarobi. Współpraca z CarVertical i AutoBaza umożliwia szybki zakup raportu historii auta, co zapewnia maksymalne bezpieczeństwo transakcji.",
       image: "/lovable-uploads/92128f50-8e2a-4033-a415-a8521467bdd5.png",
       alt: "Przeglądanie aukcji samochodów na laptopie"
     },
     {
       id: 3,
       title: "Wygraj Licytacje i odbierz Samochód!",
-      description: "Licytuj swoje wymarzone pojazdy i finalizuj zakup. Bezpieczne transakcje i sprawny proces odbioru.",
+      description: "Jeżeli Twoja oferta na Samochód była najwyższa, a sprzedawca ją zaakceptował, po opłaceniu prowizji przekażemy ci dane właściciela w celu odbioru pojazdu. Dzięki takiemu rozwiązaniu, możesz sprawdzić jego stan przed ostatecznym zakupem. Jezeli z uzasadnionej przyczyny nie dojdzie do sprzedaży samochodu, po kontakcie z nami będziesz mógł odzyskać zapłaconą prowizje.",
       image: "/lovable-uploads/13cf1931-bc2c-436f-86f2-db48c5f32137.png",
       alt: "Finalizacja zakupu samochodu"
     }
@@ -58,7 +58,7 @@ const HowItWorks = () => {
                 </div>
 
                 {/* Image Container */}
-                <div className="relative overflow-hidden rounded-xl mb-6 aspect-[3/4] bg-secondary/10">
+                <div className="relative overflow-hidden rounded-xl mb-6 aspect-[4/3] bg-secondary/10">
                   <img
                     src={step.image}
                     alt={step.alt}
