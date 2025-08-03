@@ -2,6 +2,7 @@
 import Hero from "@/components/Hero";
 import Services from "@/components/Services";
 import HowItWorks from "@/components/HowItWorks";
+import MoreInfo from "@/components/MoreInfo";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -19,6 +20,9 @@ const Index = () => {
 
       {/* How It Works Section */}
       <HowItWorks />
+
+      {/* More Info Section */}
+      <MoreInfo />
 
       <Footer />
     </div>
