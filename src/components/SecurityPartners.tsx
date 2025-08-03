@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 
 const SecurityPartners = () => {
   return (
-    <section className="pt-8 pb-20" style={{backgroundColor: '#454545'}}>
+    <section className="pt-4 pb-20" style={{backgroundColor: '#454545'}}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
