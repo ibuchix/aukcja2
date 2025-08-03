@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { Shield } from "lucide-react";
 
 const SecurityPartners = () => {
   return (
@@ -11,11 +10,6 @@ const SecurityPartners = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <div className="flex items-center justify-center mb-6">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center shadow-md">
-              <Shield className="w-8 h-8 text-primary" />
-            </div>
-          </div>
           <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{color: '#FCFCFC'}}>
             Zabezpieczenie Kupujących
           </h2>
@@ -30,9 +24,11 @@ const SecurityPartners = () => {
             className="flex justify-center"
           >
             <div className="bg-white rounded-lg p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer">
-              <div className="text-4xl font-bold text-blue-600">
-                CARVERTICAL
-              </div>
+              <img 
+                src="/lovable-uploads/2fdd1e70-bb56-42e3-8cbe-b6a59cbf3260.png" 
+                alt="CarVertical Logo" 
+                className="h-12 w-auto"
+              />
             </div>
           </motion.div>
 
@@ -56,10 +52,11 @@ const SecurityPartners = () => {
             className="flex justify-center"
           >
             <div className="bg-white rounded-lg p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer">
-              <div className="text-2xl font-bold">
-                <span className="text-blue-600">auto</span>
-                <span className="text-red-600">baza</span>
-              </div>
+              <img 
+                src="/lovable-uploads/31af3dfa-1c5d-4e40-95dd-a08a7f5ec71b.png" 
+                alt="AutoBaza Logo" 
+                className="h-12 w-auto"
+              />
             </div>
           </motion.div>
         </div>
