@@ -48,7 +48,7 @@ const MoreInfo = () => {
           </p>
 
           <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            Wiemy, że nie każde ogłoszenie będzie w 100% zgodne ze stanem pojazdu, dlatego ostateczna ocena jest dokonywana przez kupującego już na miejscu.
+            Jako dealer kupujący masz możliwość ostatecznej weryfikacji samochodu pod względem jego profilu podczas odbioru, zanim sfinalizujesz zakup.
           </p>
 
           <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
