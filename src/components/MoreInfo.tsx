@@ -25,7 +25,8 @@ const MoreInfo = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="max-w-4xl mx-auto space-y-6 text-left"
+          className="max-w-4xl mx-auto space-y-6 text-left p-8 rounded-lg"
+          style={{backgroundColor: '#393b39'}}
         >
           <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
            Autaro.pl to pierwsza w Polsce aukcja samochodowa online stworzona jedynie dla dealerów. Codziennie nowe oferty aut tylko od osób prywatnych, dostępne wyłącznie dla zweryfikowanych dealerów.
