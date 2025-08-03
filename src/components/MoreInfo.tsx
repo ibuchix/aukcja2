@@ -56,7 +56,7 @@ const MoreInfo = () => {
           </p>
 
           <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            Jeżeli z pojazdem jest coś nie tak, istnieje możliwość negocjacji ceny lub całkowitego odwołania zakupu. Warunkiem jest niezgodność stanu pojazdu z ogłoszeniem w serwisie www.autaro.pl.
+            Jezeli stan samochodu jest niezgodny z jego profilem, jest mozliwosc negocjacji ceny lub calkowitego odwolania zakupu. 
           </p>
 
           <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
