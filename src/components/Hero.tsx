@@ -21,7 +21,7 @@ const Hero = () => {
               Kupuj na Autaro.pl!
             </h1>
             <p className="text-subtitle-text text-lg max-w-2xl mt-6">
-              Autaro.pl to pierwsza w Polsce aukcja samochodowa w formacie C2B. Sprzedawać mogą wyłącznie osoby prywatne, a kupować jedynie zarejestrowane firmy. Wszystkie samochody na naszych codziennych aukcjach są zarejestrowane w Polsce.
+              Autaro.pl to pierwsza w Polsce aukcja samochodowa online stworzona jedynie dla dealerów. Codziennie nowe oferty aut tylko od osób prywatnych, dostępne wyłącznie dla zweryfikowanych dealerów. Wszystkie pojazdy są zarejestrowane w Polsce, z pełnym profilem i przejrzystym opisem. Start już wkrótce! Zarejestruj swój komis teraz i odbierz 50% zniżki na pierwszą prowizję oraz powiadomienie o starcie codziennych aukcji!
             </p>
             <motion.div 
               className="flex gap-4"
