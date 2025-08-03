@@ -52,7 +52,7 @@ const MoreInfo = () => {
           </p>
 
           <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            Jeżeli stan samochodu jest zgodny z ogłoszeniem, kupujący płaci cenę na miejscu i otrzymuje pełną dokumentację pojazdu.
+            Jeżeli stan samochodu jest zgodny z jego profilem, dealer płaci cenę na miejscu i kupuje samochód.
           </p>
 
           <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
