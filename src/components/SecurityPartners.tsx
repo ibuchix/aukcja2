@@ -23,7 +23,7 @@ const SecurityPartners = () => {
             viewport={{ once: true }}
             className="flex justify-center"
           >
-            <div className="bg-white rounded-lg p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer">
+            <div className="transition-all duration-300 hover:scale-105 cursor-pointer">
               <img 
                 src="/lovable-uploads/2fdd1e70-bb56-42e3-8cbe-b6a59cbf3260.png" 
                 alt="CarVertical Logo" 
@@ -51,7 +51,7 @@ const SecurityPartners = () => {
             viewport={{ once: true }}
             className="flex justify-center"
           >
-            <div className="bg-white rounded-lg p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer">
+            <div className="transition-all duration-300 hover:scale-105 cursor-pointer">
               <img 
                 src="/lovable-uploads/31af3dfa-1c5d-4e40-95dd-a08a7f5ec71b.png" 
                 alt="AutoBaza Logo" 
