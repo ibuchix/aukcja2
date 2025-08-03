@@ -58,7 +58,7 @@ const HowItWorks = () => {
                 </div>
 
                 {/* Image Container */}
-                <div className="relative overflow-hidden rounded-xl mb-6 aspect-[3/2] bg-secondary/10">
+                <div className="relative overflow-hidden rounded-xl mb-6 aspect-[4/3] bg-secondary/10">
                   <img
                     src={step.image}
                     alt={step.alt}
