@@ -10,24 +10,23 @@ interface AuthContainerProps {
 export function AuthContainer({ children }: AuthContainerProps) {
   return (
     <div className="container relative h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-      <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
-        <div className="absolute inset-0 bg-[#DC143C]" />
+      <div className="relative hidden h-full flex-col p-10 text-white lg:flex dark:border-r" style={{backgroundColor: '#393b39'}}>
         <div className="relative z-20 flex items-center justify-center text-lg font-medium w-full">
           <Link to="/">
             <img 
-              src="/lovable-uploads/c184339e-d67f-4d5d-b794-18d39ff5ad58.png" 
-              alt="Autaro Logo" 
-              className="h-12"
+              src="/logo.png" 
+              alt="Auto-Strada Logo" 
+              className="h-16"
             />
           </Link>
         </div>
       </div>
-      <div className="p-4 lg:p-8 h-full flex items-center">
+      <div className="p-4 lg:p-8 h-full flex items-center" style={{backgroundColor: '#454545'}}>
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-          <Card>
+          <Card className="bg-white">
             <CardHeader>
-              <CardTitle className="font-oswald text-[#DC143C]">Dealer Portal</CardTitle>
-              <CardDescription className="font-kanit">
+              <CardTitle className="font-oswald text-[#D81B24]">Dealer Portal</CardTitle>
+              <CardDescription className="font-kanit text-gray-600">
                 Register or login to your dealer account
               </CardDescription>
             </CardHeader>
