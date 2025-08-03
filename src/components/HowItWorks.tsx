@@ -34,7 +34,7 @@ const HowItWorks = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-body-text">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-body-text">
             Jak to Działa
           </h2>
         </motion.div>
@@ -49,7 +49,7 @@ const HowItWorks = () => {
               transition={{ delay: index * 0.2 }}
               className="group"
             >
-              <div className="bg-background rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-primary/10">
+              <div style={{backgroundColor: '#393B39'}} className="rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-primary/10">
                 {/* Step Number */}
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-white font-bold text-lg mb-6 mx-auto">
                   {step.id}
@@ -79,18 +79,6 @@ const HowItWorks = () => {
           ))}
         </div>
 
-        {/* Call to Action */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.8 }}
-          className="text-center mt-16"
-        >
-          <button className="btn-primary text-lg px-8 py-4 rounded-xl hover:scale-105 transition-transform duration-200">
-            Rozpocznij Teraz
-          </button>
-        </motion.div>
       </div>
     </section>
   );
