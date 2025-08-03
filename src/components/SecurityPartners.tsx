@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 
 const SecurityPartners = () => {
   return (
-    <section className="py-20" style={{backgroundColor: '#454545'}}>
+    <section className="pt-8 pb-20" style={{backgroundColor: '#454545'}}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -38,7 +38,7 @@ const SecurityPartners = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-center px-8 py-8 rounded-lg"
-            style={{backgroundColor: '#393b39'}}
+            style={{backgroundColor: '#454545'}}
           >
             <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
               Współpracujemy z platformami CarVertical i AutoBaza, aby dać wam opcje zakupu dokładnego raportu historii pojazdu. Umożliwia to zapoznanie się z historią przebiegu, wykaże kradzież samochodu, historie przeznaczenia i użytkowania, a także uszkodzenia, nawet jeżeli zdarzenie było poza Polską.
