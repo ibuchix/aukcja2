@@ -37,7 +37,8 @@ const SecurityPartners = () => {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center px-4"
+            className="text-center px-8 py-8 rounded-lg"
+            style={{backgroundColor: '#393b39'}}
           >
             <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
               Współpracujemy z platformami CarVertical i AutoBaza, aby dać wam opcje zakupu dokładnego raportu historii pojazdu. Umożliwia to zapoznanie się z historią przebiegu, wykaże kradzież samochodu, historie przeznaczenia i użytkowania, a także uszkodzenia, nawet jeżeli zdarzenie było poza Polską.
