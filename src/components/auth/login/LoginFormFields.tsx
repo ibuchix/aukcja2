@@ -32,14 +32,14 @@ export function LoginFormFields({ register, errors }: LoginFormFieldsProps) {
           })}
         />
         {errors.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
+          <p className="text-sm text-[#D81B24]">{errors.email.message}</p>
         )}
       </div>
       
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Password</Label>
-          <Link to="/password-reset" className="text-sm text-muted-foreground hover:text-primary">
+          <Link to="/password-reset" className="text-sm text-white/70 hover:text-[#D81B24]">
             Forgot password?
           </Link>
         </div>
@@ -50,7 +50,7 @@ export function LoginFormFields({ register, errors }: LoginFormFieldsProps) {
           {...register("password", { required: "Password is required" })}
         />
         {errors.password && (
-          <p className="text-sm text-destructive">{errors.password.message}</p>
+          <p className="text-sm text-[#D81B24]">{errors.password.message}</p>
         )}
       </div>
     </>

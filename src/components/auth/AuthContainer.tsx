@@ -14,7 +14,7 @@ export function AuthContainer({ children }: AuthContainerProps) {
         <div className="relative z-20 flex items-center justify-center text-lg font-medium w-full">
           <Link to="/">
             <img 
-              src="/logo.png" 
+              src="/logo.svg" 
               alt="Auto-Strada Logo" 
               className="h-16"
             />
@@ -23,10 +23,10 @@ export function AuthContainer({ children }: AuthContainerProps) {
       </div>
       <div className="p-4 lg:p-8 h-full flex items-center" style={{backgroundColor: '#454545'}}>
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-          <Card className="bg-white">
+          <Card className="border-white/20" style={{backgroundColor: '#454545'}}>
             <CardHeader>
               <CardTitle className="font-oswald text-[#D81B24]">Dealer Portal</CardTitle>
-              <CardDescription className="font-kanit text-gray-600">
+              <CardDescription className="font-kanit text-[#FCFCFC]">
                 Register or login to your dealer account
               </CardDescription>
             </CardHeader>
