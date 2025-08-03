@@ -26,7 +26,7 @@ const HowItWorks = () => {
   ];
 
   return (
-    <section className="py-20 bg-accent">
+    <section className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -34,12 +34,9 @@ const HowItWorks = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-iris">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-body-text">
             Jak to Działa
           </h2>
-          <p className="text-subtitle-text text-lg md:text-xl max-w-3xl mx-auto">
-            Prosty proces w trzech krokach, który doprowadzi Cię do wymarzonego samochodu
-          </p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
@@ -54,7 +51,7 @@ const HowItWorks = () => {
             >
               <div className="bg-background rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-primary/10">
                 {/* Step Number */}
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-primary to-iris text-white font-bold text-lg mb-6 mx-auto">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-white font-bold text-lg mb-6 mx-auto">
                   {step.id}
                 </div>
 
