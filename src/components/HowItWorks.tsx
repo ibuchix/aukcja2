@@ -51,12 +51,14 @@ const HowItWorks = () => {
             >
               <div style={{backgroundColor: '#393B39'}} className="rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-primary/10">
                 {/* Step Number */}
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-white font-bold text-lg mb-6 mx-auto">
-                  {step.id}
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center shadow-md mb-6 mx-auto">
+                  <span className="w-8 h-8 text-primary font-bold text-lg flex items-center justify-center">
+                    {step.id}
+                  </span>
                 </div>
 
                 {/* Image Container */}
-                <div className="relative overflow-hidden rounded-xl mb-6 aspect-[4/3] bg-secondary/10">
+                <div className="relative overflow-hidden rounded-xl mb-6 aspect-[3/2] bg-secondary/10">
                   <img
                     src={step.image}
                     alt={step.alt}
