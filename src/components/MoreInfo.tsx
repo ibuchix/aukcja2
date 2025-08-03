@@ -36,7 +36,7 @@ const MoreInfo = () => {
           </p>
 
           <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            Nasz algorytm wycenia pojazdy na sprzedaż w taki sposób, aby firmy kupujące mogły zarobić na sprzedaży samochodu w swoich Salonach lub Komisach.
+            Nasz algorytm wycenia samochody w taki sposob, aby byly oplacalne dla dealerow kupujaych na naszych aukcjach.
           </p>
 
           <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
