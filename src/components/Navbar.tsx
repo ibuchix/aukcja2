@@ -102,7 +102,7 @@ export default function Navbar() {
               className="text-body-text hover:text-primary transition-colors flex items-center gap-2 font-medium"
             >
               <LayoutDashboard size={18} />
-              Panel Dealera
+              Aukcja
             </Link>
           )}
           
@@ -159,7 +159,7 @@ export default function Navbar() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <LayoutDashboard size={18} />
-                  Panel Dealera
+                  Aukcja
                 </Link>
               )}
               

@@ -19,7 +19,7 @@ export const NavbarMobileMenu = ({ isOpen, session, isLoading, handleLogout }: N
         {session && (
           <Link to="/dealer/dashboard" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
             <LayoutDashboard size={20} />
-            Panel Dealera
+            Aukcja
           </Link>
         )}
         <Link to="/how-it-works" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
