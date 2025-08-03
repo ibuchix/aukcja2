@@ -49,7 +49,7 @@ const HowItWorks = () => {
               transition={{ delay: index * 0.2 }}
               className="group"
             >
-              <div style={{backgroundColor: '#393B39'}} className="rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-primary/10">
+              <div style={{backgroundColor: '#393B39'}} className="rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-primary/10 h-full flex flex-col">
                 {/* Step Number */}
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center shadow-md mb-6 mx-auto">
                   <span className="w-8 h-8 text-primary font-bold text-lg flex items-center justify-center">
