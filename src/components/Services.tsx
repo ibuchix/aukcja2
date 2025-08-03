@@ -1,14 +1,14 @@
-import { Shield, Wrench, Clock, Car } from "lucide-react";
+import { Shield, Clock, User, TrendingUp } from "lucide-react";
 
 const Services = () => {
   const services = [
     {
-      icon: Car,
+      icon: User,
       title: "Tylko prywatni sprzedawcy",
       description: "Na Autaro.pl możliwość sprzedaży mają wyłącznie prywatni sprzedawcy — dzięki temu masz pewność, że każdy pojazd pochodzi od osoby prywatnej.",
     },
     {
-      icon: Shield,
+      icon: TrendingUp,
       title: "Precyzyjny algorytm wyceny",
       description: "Algorytm Autaro.pl wykorzystuje aktualne dane rynkowe, aby ustalać opłacalne ceny orientacyjne dla wszystkich aut dostępnych na naszych codziennych aukcjach.",
     },
@@ -18,7 +18,7 @@ const Services = () => {
       description: "Na naszych codziennych aukcjach dostępne są wyłącznie auta zarejestrowane w Polsce. Każdego dnia pojawia się nowa selekcja aut do licytacji.",
     },
     {
-      icon: Wrench,
+      icon: Shield,
       title: "Bezpieczne zakupy",
       description: "Wszystkie profile dostępnych aut są przez nas weryfikowane, a dealerzy mają możliwość sprawdzenia auta przy odbiorze — jeszcze przed finalizacją zakupu.",
     },

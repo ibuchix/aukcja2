@@ -15,7 +15,7 @@ export const NavbarDesktopMenu = ({ session, isLoading, handleLogout }: NavbarDe
       {session && (
         <Link to="/dealer/dashboard" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
           <LayoutDashboard size={20} />
-          Panel Dealera
+          Aukcja
         </Link>
       )}
       <Link to="/how-it-works" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
