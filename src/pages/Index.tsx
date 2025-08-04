@@ -6,11 +6,13 @@ import MoreInfo from "@/components/MoreInfo";
 import SecurityPartners from "@/components/SecurityPartners";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PromoBanner from "@/components/PromoBanner";
 
 const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PromoBanner />
       <Navbar />
       
       {/* Hero Section */}
