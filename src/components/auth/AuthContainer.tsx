@@ -14,7 +14,7 @@ export function AuthContainer({ children }: AuthContainerProps) {
         <div className="relative z-20 flex items-center justify-center text-lg font-medium w-full">
           <Link to="/">
             <img 
-              src="/autaro-logo.png" 
+              src="/lovable-uploads/d8a5a005-f005-4fdd-bff5-ea162d51e15d.png" 
               alt="Autaro Logo" 
               className="h-16"
             />
