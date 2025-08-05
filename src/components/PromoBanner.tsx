@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 const PromoBanner = () => {
+  console.log('PromoBanner component is mounting!');
   const { isAuthenticated, isInitialized, isLoading } = useAuth();
   const [isDismissed, setIsDismissed] = useState(false);
 
@@ -33,33 +34,39 @@ const PromoBanner = () => {
     return null;
   }
 
+  // Always show debug element for testing
   return (
-    <div className="bg-red-500 text-white py-3 px-4 relative z-50 hover:bg-red-600 transition-colors cursor-pointer border-2 border-yellow-400">
-      <div className="container mx-auto flex items-center justify-between">
-        <div className="flex-1 text-center">
-          <p className="text-sm md:text-base font-medium text-white">
-            🎉 <span className="font-bold">50% OFF</span> for new dealers who sign up now! 
-            <span className="ml-2 hidden sm:inline">Limited time offer - Don't miss out!</span>
-          </p>
-        </div>
-        <button
-          onClick={() => {
-            window.location.href = '/auth?tab=signup';
-          }}
-          className="bg-white text-red-500 px-4 py-1 rounded text-sm font-medium hover:bg-gray-100 transition-colors mr-4"
-        >
-          Sign Up Now
-        </button>
-        <button
-          onClick={handleDismiss}
-          className="text-white hover:text-gray-200 transition-colors"
-          aria-label="Close banner"
-        >
-          <X size={18} />
-        </button>
+    <>
+      <div style={{backgroundColor: 'lime', color: 'black', padding: '10px', textAlign: 'center'}}>
+        DEBUG: PromoBanner is rendering! Auth: {isAuthenticated ? 'YES' : 'NO'} | Dismissed: {isDismissed ? 'YES' : 'NO'}
       </div>
-    </div>
-  );
+      <div className="bg-red-500 text-white py-3 px-4 relative z-50 hover:bg-red-600 transition-colors cursor-pointer border-2 border-yellow-400">
+        <div className="container mx-auto flex items-center justify-between">
+          <div className="flex-1 text-center">
+            <p className="text-sm md:text-base font-medium text-white">
+              🎉 <span className="font-bold">50% OFF</span> for new dealers who sign up now! 
+              <span className="ml-2 hidden sm:inline">Limited time offer - Don't miss out!</span>
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              window.location.href = '/auth?tab=signup';
+            }}
+            className="bg-white text-red-500 px-4 py-1 rounded text-sm font-medium hover:bg-gray-100 transition-colors mr-4"
+          >
+            Sign Up Now
+          </button>
+          <button
+            onClick={handleDismiss}
+            className="text-white hover:text-gray-200 transition-colors"
+            aria-label="Close banner"
+          >
+            <X size={18} />
+          </button>
+        </div>
+      </div>
+    </>
+  )
 };
 
 export default PromoBanner;
