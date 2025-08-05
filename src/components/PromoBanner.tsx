@@ -9,6 +9,8 @@ const PromoBanner = () => {
   const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
+    // Clear the dismissed state to test - remove this line later
+    localStorage.removeItem('promo-banner-dismissed');
     const dismissed = localStorage.getItem('promo-banner-dismissed');
     if (dismissed === 'true') {
       setIsDismissed(true);
