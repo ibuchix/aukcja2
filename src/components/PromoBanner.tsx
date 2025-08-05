@@ -42,7 +42,7 @@ const PromoBanner = () => {
       <div style={{backgroundColor: 'lime', color: 'black', padding: '10px', textAlign: 'center'}}>
         DEBUG: PromoBanner is rendering! Auth: {isAuthenticated ? 'YES' : 'NO'} | Dismissed: {isDismissed ? 'YES' : 'NO'}
       </div>
-      <div className="bg-red-500 text-white py-3 px-4 relative z-50 hover:bg-red-600 transition-colors cursor-pointer border-2 border-yellow-400">
+      <div className="bg-red-500 text-white py-3 px-4 relative z-40 hover:bg-red-600 transition-colors cursor-pointer border-2 border-yellow-400 mt-0">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex-1 text-center">
             <p className="text-sm md:text-base font-medium text-white">
