@@ -12,8 +12,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PromoBanner />
       <Navbar />
+      <PromoBanner />
       
       {/* Hero Section */}
       <Hero />
