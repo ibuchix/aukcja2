@@ -19,8 +19,17 @@ const PromoBanner = () => {
     localStorage.setItem('promo-banner-dismissed', 'true');
   };
 
-  // Only show if auth is initialized, not loading, user is not authenticated, and banner hasn't been dismissed
-  if (!isInitialized || isLoading || isAuthenticated || isDismissed) {
+  // Debug: Let's see what's happening with auth state
+  console.log('PromoBanner Debug:', { 
+    isInitialized, 
+    isLoading, 
+    isAuthenticated, 
+    isDismissed 
+  });
+
+  // Only show if user is not authenticated and banner hasn't been dismissed
+  // Temporarily removing isInitialized and isLoading checks to debug
+  if (isAuthenticated || isDismissed) {
     return null;
   }
 
