@@ -40,7 +40,7 @@ const SellerContactInfo = ({ vehicleId }: { vehicleId: string }) => {
       </div>
       
       <div className="mb-6 bg-white p-4 rounded-lg border border-green-200">
-        <h4 className="font-bold text-gray-900 mb-3 text-lg">📞 Seller Contact Information</h4>
+        <h4 className="font-bold mb-3 text-lg" style={{ color: '#454545' }}>📞 Dane kontaktowe sprzedawcy</h4>
         {carData ? (
           <div className="space-y-3">
             <div className="bg-gray-50 p-3 rounded">
@@ -416,8 +416,8 @@ export const WonVehicles = () => {
                        ? 'bg-yellow-400 text-yellow-900' 
                        : 'bg-orange-400 text-orange-900'
                    }`}>
-                     {vehicle.payment_status === 'paid' ? 'Payment Complete' :
-                      vehicle.payment_status === 'payment_required' ? 'Payment Required' : 'Awaiting Seller Decision'}
+                      {vehicle.payment_status === 'paid' ? 'Umów odbiór teraz!' :
+                       vehicle.payment_status === 'payment_required' ? 'Payment Required' : 'Awaiting Seller Decision'}
                    </div>
                 </div>
 
@@ -436,7 +436,7 @@ export const WonVehicles = () => {
 
                       {/* Vehicle Details Section */}
                       <div className="p-6">
-                        <h3 className="text-lg font-semibold text-body-text mb-4">Vehicle Details</h3>
+                        <h3 className="text-lg font-semibold text-body-text mb-4">Szczegóły pojazdu</h3>
                         
                         <div className="grid grid-cols-2 gap-4 mb-6">
                           <div>
@@ -492,7 +492,7 @@ export const WonVehicles = () => {
                                 <span className="font-semibold">Payment Complete!</span>
                               </div>
                               <p className="text-sm text-gray-600 mb-4">
-                                Payment successful! You can now contact the seller to arrange pickup.
+                                Płatność została otrzymana. Skontaktuj się ze sprzedawcą, korzystając z poniższych danych, aby umówić odbiór auta.
                               </p>
                             </>
                           ) : vehicle.payment_status === 'payment_required' ? (

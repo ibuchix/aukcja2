@@ -11,7 +11,7 @@ export default function WonVehiclesPage() {
 
   if (!user) {
     return (
-      <DashboardLayout title="Won Vehicles">
+    <DashboardLayout title="Wygrane auta">
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
@@ -23,7 +23,7 @@ export default function WonVehiclesPage() {
   }
 
   return (
-    <DashboardLayout title="Won Vehicles">
+    <DashboardLayout title="Wygrane auta">
       <WonVehicles />
     </DashboardLayout>
   );
