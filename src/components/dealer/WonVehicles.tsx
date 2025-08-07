@@ -376,7 +376,7 @@ export const WonVehicles = () => {
             className="text-red-600 border-red-200 hover:bg-red-50"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
+            Odśwież
           </Button>
         </div>
       </div>
@@ -416,8 +416,8 @@ export const WonVehicles = () => {
                        ? 'bg-yellow-400 text-yellow-900' 
                        : 'bg-orange-400 text-orange-900'
                    }`}>
-                      {vehicle.payment_status === 'paid' ? 'Umów odbiór teraz!' :
-                       vehicle.payment_status === 'payment_required' ? 'Payment Required' : 'Awaiting Seller Decision'}
+                       {vehicle.payment_status === 'paid' ? 'Umów odbiór teraz!' :
+                        vehicle.payment_status === 'payment_required' ? 'Wymagana płatność' : 'Awaiting Seller Decision'}
                    </div>
                 </div>
 
