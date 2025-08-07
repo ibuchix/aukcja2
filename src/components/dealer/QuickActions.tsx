@@ -83,7 +83,7 @@ function ActionButton({ icon, title, description, link, variant }: ActionButtonP
       <span className={`${textColors[variant]} font-medium group-hover:underline`}>
         {title === "Moje oferty" ? "Wyświetl moje oferty" : 
          title === "Wygrane Auta" ? "Zobacz wygrane auta" : 
-         "Dokumentami"} →
+         "Zarządzaj dokumentami"} →
       </span>
     </div>
   );

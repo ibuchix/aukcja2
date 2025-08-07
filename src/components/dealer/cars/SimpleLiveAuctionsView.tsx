@@ -74,7 +74,7 @@ export const SimpleLiveAuctionsView = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-body-text">Aukcje na żywo</h2>
+        <h2 className="text-2xl font-bold text-body-text">Aukcja na żywo</h2>
         <div className="flex gap-2">
           <Button
             variant="outline"
