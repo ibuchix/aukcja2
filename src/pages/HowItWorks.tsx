@@ -9,7 +9,7 @@ import { ProxyBiddingExample } from "@/components/how-it-works/ProxyBiddingExamp
 
 const HowItWorks = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-accent/20">
+    <div className="min-h-screen flex flex-col bg-[#393b39]">
       <Navbar />
       <HeroSection />
       

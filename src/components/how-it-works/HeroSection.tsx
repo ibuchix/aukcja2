@@ -3,17 +3,17 @@ import { motion } from "framer-motion";
 
 export const HeroSection = () => {
   return (
-    <section className="relative bg-gradient-to-br from-accent to-white py-24 overflow-hidden">
+    <section className="relative bg-[#454545] py-24 overflow-hidden">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10"
       >
-        <h1 className="text-4xl md:text-6xl font-bold text-center mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-iris">
-          Your Journey with Auto-Strada
+        <h1 className="text-4xl md:text-6xl font-bold text-center mb-6 text-primary">
+          Autaro.pl to pierwsza w Polsce aukcja samochodowa online, wyłącznie dla dealerów!
         </h1>
-        <p className="text-subtitle-text text-center text-lg md:text-xl max-w-3xl mx-auto">
-          Follow our simple process to start bidding on exclusive vehicles
+        <p className="text-body-text text-center text-lg md:text-xl max-w-3xl mx-auto">
+          Autaro.pl to pierwsza w Polsce aukcja samochodowa online tylko dla dealerów. Zarejestruj firmę za darmo w kilku krokach i kupuj samochody od prywatnych sprzedawców.
         </p>
       </motion.div>
 
