@@ -440,34 +440,34 @@ export const WonVehicles = () => {
                         
                         <div className="grid grid-cols-2 gap-4 mb-6">
                           <div>
-                            <p className="text-sm text-subtitle-text uppercase tracking-wide">MILEAGE</p>
+                            <p className="text-sm text-subtitle-text uppercase tracking-wide">Przebieg</p>
                             <p className="font-semibold text-body-text">{vehicle.vehicle_mileage?.toLocaleString() || 'N/A'} km</p>
                           </div>
                           <div>
-                            <p className="text-sm text-subtitle-text uppercase tracking-wide">WON DATE</p>
+                            <p className="text-sm text-subtitle-text uppercase tracking-wide">Data wygrania aukcji</p>
                             <p className="font-semibold text-body-text">{new Date(vehicle.auction_end_time).toLocaleDateString('en-GB')}</p>
                           </div>
                         </div>
 
-                        <h4 className="text-lg font-semibold text-body-text mb-4">Pricing Details</h4>
+                        <h4 className="text-lg font-semibold text-body-text mb-4">Szczegóły zakupu</h4>
                         
                         <div className="space-y-3">
                           <div className="flex justify-between items-center p-3 bg-success/20 rounded-lg">
-                            <span className="text-body-text">Final Price</span>
+                            <span className="text-body-text">Cena ostateczna</span>
                             <span className="font-bold text-success text-lg">
                               {formatCurrency(vehicle.winning_bid_amount)}
                             </span>
                           </div>
                           
                           <div className="flex justify-between items-center p-3 bg-secondary/20 rounded-lg">
-                            <span className="text-body-text">Your Original Bid</span>
+                            <span className="text-body-text">Oryginalna oferta</span>
                             <span className="font-semibold text-body-text">
                               {formatCurrency(vehicle.winning_bid_amount)}
                             </span>
                           </div>
                           
                           <div className="flex justify-between items-center p-3 bg-primary/20 rounded-lg border border-primary/30">
-                            <span className="text-body-text font-medium">Platform Fee</span>
+                            <span className="text-body-text font-medium">Prowizja Autaro</span>
                             <span className="font-bold text-primary text-lg">
                               {formatCurrency(calculatedPlatformFee)}
                             </span>
@@ -504,7 +504,7 @@ export const WonVehicles = () => {
                                 <span className="font-semibold">Bid Accepted!</span>
                               </div>
                               <p className="text-sm text-gray-600 mb-4">
-                                Seller has accepted your bid - Payment required. You can now pay the platform fee to complete the purchase.
+                                Oferta zaakceptowana. Opłać prowizję Autaro, aby odblokować dane kontaktowe sprzedającego i umówić odbiór pojazdu. ✅
                               </p>
                             </>
                           ) : (
@@ -584,7 +584,7 @@ export const WonVehicles = () => {
                                   }
                                 }}
                               >
-                                Refresh Payment Status
+                                Odśwież status płatności
                               </Button>
                             </>
                           ) : (
@@ -613,7 +613,7 @@ export const WonVehicles = () => {
                     onClick={() => handleViewDetails(vehicle.car_id)}
                   >
                     <Eye className="h-4 w-4 mr-2" />
-                    View Full Details
+                     Zobacz pełny profil pojazdu
                   </Button>
                 </div>
               </div>
