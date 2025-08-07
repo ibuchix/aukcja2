@@ -10,7 +10,7 @@ export const ProxyBiddingExample = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="p-8 rounded-lg shadow-md border border-iris/20"
+          className="p-8 rounded-lg shadow-md border border-white/20"
           style={{ backgroundColor: '#393b39' }}
         >
           <h3 className="text-xl font-semibold mb-4 text-body-text">Jak działa system proxy?</h3>
