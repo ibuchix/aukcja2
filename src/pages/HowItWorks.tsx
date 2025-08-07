@@ -25,15 +25,15 @@ const HowItWorks = () => {
               subtitle="Podaj wymagane informacje, aby otworzyć konto dealera na Autaro.pl"
               icon={UserCheck}
               bulletPoints={[
-                "Complete dealer registration form",
-                "Submit business documents",
-                "24-48 hour verification process"
+                "Wypełnij formularz rejestracji firmy",
+                "Proces weryfikacji danych trwający 24-48 godzin",
+                "Konto firmowe jest dostępne po zakończeniu weryfikacji danych"
               ]}
             />
 
             <TimelineStep 
-              title="Browse Active Auctions"
-              subtitle="New auctions daily at 9:00 AM CET"
+              title="Codzienna aukcja online"
+              subtitle="Aukcja odbywa się codziennie od 19:00 do 15:00 następnego dnia"
               icon={Search}
               bulletPoints={[
                 "Każdy samochód jest dokładnie profilowany",
@@ -45,13 +45,13 @@ const HowItWorks = () => {
             />
 
             <TimelineStep 
-              title="Place Your Maximum Bid"
-              subtitle="Set your maximum bid and let our system work for you"
+              title="Złóż swoją ofertę"
+              subtitle="Ustaw swoją maksymalną ofertę, a nasz system proxy zajmie się resztą"
               icon={Gavel}
               bulletPoints={[
-                "Enter your maximum bid amount",
-                "System bids incrementally on your behalf",
-                "Stay competitive without constant monitoring"
+                "Wprowadź swoją maksymalną ofertę",
+                "System proxy licytuje za Ciebie w stopniach o 250PLN",
+                "Automatycznie podnosi ofertę do twojej maksymalnej kwoty"
               ]}
             />
 
