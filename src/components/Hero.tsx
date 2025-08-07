@@ -15,27 +15,17 @@ const Hero = () => {
             transition={{ duration: 0.6 }}
             className="flex flex-col justify-between"
           >
-            <div className="space-y-8 relative">
-              {/* Promotional Badge */}
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6 }}
-                className="absolute -top-4 -right-4 md:right-0 bg-primary text-white px-4 py-2 rounded-full shadow-lg animate-pulse z-10"
-              >
-                <span className="text-sm font-bold">🎉 50% OFF New Dealers!</span>
-              </motion.div>
-              
+            <div className="space-y-8">
               <h1 className="text-5xl md:text-6xl font-bold text-body-text" style={{ lineHeight: '1.4' }}>
                 Kupuj <span className="text-primary">Pewnie</span>. Kupuj Opłacalnie.
                 <br />
                 Kupuj na Autaro.pl!
               </h1>
               <p className="text-subtitle-text text-lg max-w-2xl">
-                Autaro.pl to pierwsza w Polsce aukcja samochodowa online stworzona jedynie dla dealerów. Codziennie nowe oferty aut tylko od osób prywatnych, dostępne wyłącznie dla zweryfikowanych dealerów. Wszystkie pojazdy są zarejestrowane w Polsce, z pełnym profilem i przejrzystym opisem. Start już wkrótce! Zarejestruj swój komis teraz i odbierz 50% zniżki na pierwszą prowizję oraz powiadomienie o starcie codziennych aukcji!
+                Autaro.pl to pierwsza w Polsce aukcja samochodowa online stworzona dla dealerów. Codziennie nowe oferty aut tylko od osób prywatnych, dostępne wyłącznie dla dealerów. Wszystkie samochody są zarejestrowane w Polsce, z pełnym profilem i przejrzystym opisem.
               </p>
               <p className="text-primary font-semibold text-sm">
-                ⏰ Limited Time Offer - Act Now!
+                Start już wkrótce! Zarejestruj swój komis teraz i odbierz 50% zniżki na pierwszą prowizję oraz powiadomienie o starcie codziennych aukcji!
               </p>
             </div>
             <motion.div 
@@ -48,7 +38,7 @@ const Hero = () => {
                 href="#vehicles"
                 className="btn-primary text-xl px-12 py-4 flex items-center gap-2 group"
               >
-                Claim 50% OFF - Sign Up Now!
+                Załóż konto teraz!
                 <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
               </a>
             </motion.div>
