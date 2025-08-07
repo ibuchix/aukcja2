@@ -14,21 +14,21 @@ export function QuickActions() {
         <ActionButton
           icon={<Gavel className="h-5 w-5" />}
           title="Moje oferty"
-          description="Zobacz swoje aktywne oferty"
+          description=""
           link="/dealer/bids"
           variant="green"
         />
         <ActionButton
           icon={<FileText className="h-5 w-5" />}
           title="Centrum Dokumentów"
-          description="Zarządzaj dokumentami"
+          description=""
           link="/dealer/documents"
           variant="yellow"
         />
         <ActionButton
           icon={<Trophy className="h-5 w-5" />}
           title="Wygrane Auta"
-          description="Zobacz swoje zakupione auta"
+          description=""
           link="/dealer/won-vehicles"
           variant="blue"
         />
