@@ -37,19 +37,11 @@ export const BidCountDisplay = ({ carId }: BidCountDisplayProps) => {
   return (
     <Card className="mb-4 bg-green-50 border-green-200">
       <CardContent className="p-4">
-        <div className="flex items-center gap-4 text-green-700">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            <span className="text-sm font-medium">
-              {bidCount.uniqueBidders} dealer{bidCount.uniqueBidders !== 1 ? 's' : ''} interested
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Gavel className="h-4 w-4" />
-            <span className="text-sm font-medium">
-              {bidCount.count} total bid{bidCount.count !== 1 ? 's' : ''}
-            </span>
-          </div>
+        <div className="flex items-center gap-2 text-green-700">
+          <Gavel className="h-4 w-4" />
+          <span className="text-sm font-medium">
+            Łącznie {bidCount.count} inne oferty
+          </span>
         </div>
       </CardContent>
     </Card>
