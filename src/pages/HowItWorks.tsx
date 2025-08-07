@@ -56,13 +56,13 @@ const HowItWorks = () => {
             />
 
             <TimelineStep 
-              title="Proxy Bidding System"
-              subtitle="Our system works as your personal bidding agent"
+              title="Zdobądź swój kolejny samochód do sprzedaży"
+              subtitle="Jeżeli Twoja oferta jest najwyższa"
               icon={Trophy}
               bulletPoints={[
-                "System places minimum required bid",
-                "Automatically outbids competitors",
-                "Never exceeds your maximum amount"
+                "Opłać prowizje Autaro aby otrzymać dane kontaktowe sprzedającego",
+                "Umów się na odbiór wygranego samochodu",
+                "Możliwość sprawdzenia samochodu przy odbiorze, przed finalizacją zakupu"
               ]}
               isRight
               iconColor="iris"
