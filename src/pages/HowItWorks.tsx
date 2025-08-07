@@ -21,8 +21,8 @@ const HowItWorks = () => {
             <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-primary to-iris" />
 
             <TimelineStep 
-              title="Sign Up & Verification"
-              subtitle="Register as a dealer and provide your credentials"
+              title="Rejestracja I weryfikacja"
+              subtitle="Podaj wymagane informacje, aby otworzyć konto dealera na Autaro.pl"
               icon={UserCheck}
               bulletPoints={[
                 "Complete dealer registration form",
@@ -36,9 +36,9 @@ const HowItWorks = () => {
               subtitle="New auctions daily at 9:00 AM CET"
               icon={Search}
               bulletPoints={[
-                "Browse available vehicles",
-                "View detailed vehicle reports",
-                "Track auction timelines"
+                "Każdy samochód jest dokładnie profilowany",
+                "Codziennie nowe samochody na aukcji",
+                "Możliwość pobrania raportów historii samochodów"
               ]}
               isRight
               iconColor="iris"

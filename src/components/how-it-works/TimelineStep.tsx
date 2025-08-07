@@ -43,14 +43,14 @@ export const TimelineStep = ({
               <Icon className="text-white w-6 h-6" />
             </div>
             <div className="w-1/2 pl-8">
-              <h3 className="text-2xl font-bold text-dark mb-2">{title}</h3>
+              <h3 className="text-2xl font-bold text-body-text mb-2">{title}</h3>
               <p className="text-subtitle-text">{subtitle}</p>
             </div>
           </>
         ) : (
           <>
             <div className="w-1/2 pr-8 text-right">
-              <h3 className="text-2xl font-bold text-dark mb-2">{title}</h3>
+              <h3 className="text-2xl font-bold text-body-text mb-2">{title}</h3>
               <p className="text-subtitle-text">{subtitle}</p>
             </div>
             <div className={`w-12 h-12 bg-${iconColor} rounded-full flex items-center justify-center z-10`}>
