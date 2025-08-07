@@ -36,7 +36,7 @@ const SellerContactInfo = ({ vehicleId }: { vehicleId: string }) => {
     <div className="p-6 bg-green-100 rounded-lg border-2 border-green-300 shadow-lg">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-4 h-4 bg-green-600 rounded-full"></div>
-        <span className="font-bold text-green-900 text-lg">🎉 Payment Complete!</span>
+        <span className="font-bold text-green-900 text-lg">🎉 Umów odbiór teraz!</span>
       </div>
       
       <div className="mb-6 bg-white p-4 rounded-lg border border-green-200">
@@ -44,15 +44,15 @@ const SellerContactInfo = ({ vehicleId }: { vehicleId: string }) => {
         {carData ? (
           <div className="space-y-3">
             <div className="bg-gray-50 p-3 rounded">
-              <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Name:</span>
+              <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Imię sprzedawcy:</span>
               <p className="font-bold text-lg text-gray-900">{(carData as any)?.seller_name || 'Name not available'}</p>
             </div>
             <div className="bg-gray-50 p-3 rounded">
-              <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Phone:</span>
+              <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Numer telefonu:</span>
               <p className="font-bold text-lg text-blue-600">{(carData as any)?.mobile_number || 'Phone not available'}</p>
             </div>
             <div className="bg-gray-50 p-3 rounded">
-              <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Address:</span>
+              <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Adres odbioru:</span>
               <p className="font-bold text-lg text-gray-900">{(carData as any)?.address || 'Address not available'}</p>
             </div>
           </div>
@@ -73,7 +73,7 @@ const SellerContactInfo = ({ vehicleId }: { vehicleId: string }) => {
         }}
       >
         <span className="mr-2">📞</span>
-        Call Seller Now
+        Zadzwoń do sprzedawcy!
       </Button>
     </div>
   );
@@ -489,7 +489,7 @@ export const WonVehicles = () => {
                                 <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
                                   <div className="w-2 h-2 bg-white rounded-full"></div>
                                 </div>
-                                <span className="font-semibold">Payment Complete!</span>
+                                <span className="font-semibold">Płatność dokonana</span>
                               </div>
                               <p className="text-sm text-gray-600 mb-4">
                                 Płatność została otrzymana. Skontaktuj się ze sprzedawcą, korzystając z poniższych danych, aby umówić odbiór auta.
