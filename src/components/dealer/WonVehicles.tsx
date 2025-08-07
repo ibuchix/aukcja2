@@ -480,7 +480,7 @@ export const WonVehicles = () => {
                         vehicle.payment_status === 'paid' ? 'bg-blue-50' : 
                         vehicle.payment_status === 'payment_required' ? 'bg-green-50' : 'bg-orange-50'
                       }`}>
-                        <h3 className="text-lg font-semibold text-body-text mb-4">Seller Information</h3>
+                        <h3 className="text-lg font-semibold mb-4" style={{ color: '#454545' }}>Dane kontaktowe sprzedawcy</h3>
                         
                         <div className="text-center mb-6">
                           {vehicle.payment_status === 'paid' ? (
