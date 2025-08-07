@@ -501,7 +501,7 @@ export const WonVehicles = () => {
                                 <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
                                   <div className="w-2 h-2 bg-white rounded-full"></div>
                                 </div>
-                                <span className="font-semibold">Bid Accepted!</span>
+                                <span className="font-semibold">Oferta zaakceptowana!</span>
                               </div>
                               <p className="text-sm text-gray-600 mb-4">
                                 Oferta zaakceptowana. Opłać prowizję Autaro, aby odblokować dane kontaktowe sprzedającego i umówić odbiór pojazdu. ✅
