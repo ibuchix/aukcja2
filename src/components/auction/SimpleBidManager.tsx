@@ -114,7 +114,7 @@ export const SimpleBidManager = ({
       <CardHeader>
         <CardTitle className="text-heading-sm font-oswald flex items-center gap-2">
           <DollarSign className="h-5 w-5" />
-          Place Your Bid
+          Złóż ofertę
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -124,18 +124,18 @@ export const SimpleBidManager = ({
               Latest bid: <span className="font-semibold">{formatCurrency(currentHighestBid)}</span>
             </p>
             <p className="text-xs text-muted-foreground">
-              Enter any amount you're willing to pay for this vehicle
+              Wprowadź kwotę, którą chcesz zapłacić za ten pojazd. Nasz system licytacji automatycznej będzie podbijał ofertę w krokach co 250 PLN, aż do osiągnięcia tej kwoty.
             </p>
             {reservePrice && (
               <p className="text-xs text-muted-foreground">
-                Reserve price: {formatCurrency(reservePrice)}
+                Cena orientacyjna: {formatCurrency(reservePrice)}
               </p>
             )}
           </div>
           
           <div className="space-y-2">
             <label htmlFor="bidAmount" className="block text-sm font-medium">
-              Your Bid Amount (PLN)
+              Twoja oferta (PLN)
             </label>
             <Input
               id="bidAmount"
@@ -144,7 +144,7 @@ export const SimpleBidManager = ({
               onChange={(e) => setBidAmount(e.target.value)}
               min="1"
               step="1"
-              placeholder="Enter your bid amount (PLN)"
+              placeholder="Wprowadź swoją ofertę"
               disabled={isSubmitting}
             />
           </div>
@@ -154,7 +154,7 @@ export const SimpleBidManager = ({
             disabled={isSubmitting || !bidAmount || parseFloat(bidAmount) <= 0}
             className="w-full"
           >
-            {isSubmitting ? "Placing Bid..." : "Place Bid"}
+            {isSubmitting ? "Składanie oferty..." : "Złóż ofertę"}
           </Button>
         </div>
       </CardContent>

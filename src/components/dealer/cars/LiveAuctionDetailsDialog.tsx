@@ -188,10 +188,10 @@ export const LiveAuctionDetailsDialog = ({
             )}
 
             <div className="p-6 bg-muted rounded-lg">
-              <h3 className="text-xl font-semibold mb-4">Auction Status</h3>
+              <h3 className="text-xl font-semibold mb-4">Status licytacji</h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground font-medium">Reserve Price:</span>
+                  <span className="text-muted-foreground font-medium">Cena orientacyjna:</span>
                   <span className="font-bold text-lg">{formatCurrency(car.reservePrice || car.reserve_price || 0)}</span>
                 </div>
                 {car.current_bid > 0 && (
