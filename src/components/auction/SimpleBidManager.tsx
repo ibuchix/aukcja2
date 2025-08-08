@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,34 @@ export const SimpleBidManager = ({
   const [bidAmount, setBidAmount] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const [myBid, setMyBid] = useState<number | null>(null);
+
+  const fetchMyBid = async () => {
+    if (!isVerified) return;
+    const { data, error } = await supabase
+      .from('bids')
+      .select('amount')
+      .eq('car_id', carId)
+      .eq('dealer_id', dealerId)
+      .order('amount', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!error && data) {
+      const row = data as any;
+      if (row && typeof row.amount !== 'undefined' && row.amount !== null) {
+        setMyBid(Number(row.amount));
+      } else {
+        setMyBid(null);
+      }
+    } else {
+      setMyBid(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyBid();
+  }, [carId, dealerId, isVerified]);
 
   // Early return if dealer is not verified
   if (!isVerified) {
@@ -94,6 +122,7 @@ export const SimpleBidManager = ({
           description: `Your bid of ${formatCurrency(numericBidAmount)} has been placed`,
         });
         setBidAmount("");
+        await fetchMyBid();
         // The parent component should handle refreshing the data
       } else {
         throw new Error(response?.error || "Failed to place bid");
@@ -123,6 +152,11 @@ export const SimpleBidManager = ({
             <p className="text-sm text-muted-foreground mb-2">
               Latest bid: <span className="font-semibold">{formatCurrency(currentHighestBid)}</span>
             </p>
+            {myBid !== null && (
+              <p className="text-sm text-muted-foreground mb-2">
+                Twoja ostatnia oferta: <span className="font-semibold">{formatCurrency(myBid)}</span>
+              </p>
+            )}
             <p className="text-xs text-muted-foreground">
               Wprowadź kwotę, którą chcesz zapłacić za ten pojazd. Nasz system licytacji automatycznej będzie podbijał ofertę w krokach co 250 PLN, aż do osiągnięcia tej kwoty.
             </p>
