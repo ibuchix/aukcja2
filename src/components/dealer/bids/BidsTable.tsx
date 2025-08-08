@@ -99,9 +99,9 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Vehicle</TableHead>
-              <TableHead>Your Bid</TableHead>
-              <TableHead>Auction Ends</TableHead>
+              <TableHead>Auto</TableHead>
+              <TableHead>Twoja oferta</TableHead>
+              <TableHead>Koniec aukcji za</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>

@@ -4,7 +4,7 @@ import { DealerBids } from "@/components/dealer/DealerBids";
 
 export default function Bids() {
   return (
-    <DashboardLayout title="My Bids">
+    <DashboardLayout title="Moje oferty">
       <DealerBids />
     </DashboardLayout>
   );

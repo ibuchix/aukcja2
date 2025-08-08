@@ -19,10 +19,10 @@ export const DealerBids = () => {
           <div>
             <CardTitle className="text-heading-md font-oswald flex items-center gap-2">
               <Gavel className="h-6 w-6" />
-              My Bids
+              Moje oferty
             </CardTitle>
             <CardDescription>
-              Cars you're currently bidding on
+              Auta z Twoimi aktywnymi ofertami
             </CardDescription>
           </div>
           <Button
