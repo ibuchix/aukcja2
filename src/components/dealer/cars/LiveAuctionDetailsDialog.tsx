@@ -113,8 +113,8 @@ export const LiveAuctionDetailsDialog = ({
                     <h4 className="text-xl font-semibold mb-4 text-body-text">Vehicle Features</h4>
                     <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                       {activeFeatures.map((feature, index) => (
-                        <div key={index} className="flex items-center gap-3 p-4 bg-primary/10 rounded-lg border border-primary/20">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        <div key={index} className="flex items-center gap-3 p-4 bg-success/10 rounded-lg border border-success/30">
+                          <div className="w-2 h-2 bg-success rounded-full"></div>
                           <span className="text-sm font-medium text-body-text">{feature}</span>
                         </div>
                       ))}
