@@ -154,7 +154,10 @@ export const SimpleBidManager = ({
             </p>
             {myBid !== null && (
               <p className="text-sm text-muted-foreground mb-2">
-                Twoja ostatnia oferta: <span className="font-semibold">{formatCurrency(myBid)}</span>
+                Twoja ostatnia oferta:
+                <span className="ml-1 inline-flex items-center rounded border border-green-200 bg-green-100 px-2 py-0.5 font-semibold text-green-800">
+                  {formatCurrency(myBid)}
+                </span>
               </p>
             )}
             <p className="text-xs text-muted-foreground">
