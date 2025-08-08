@@ -64,7 +64,7 @@ export const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
           {featureList.map((feature) => (
             <div 
               key={feature.key} 
-              className="flex items-center gap-3 p-3 bg-secondary/20 rounded-lg border border-secondary/30"
+              className="flex items-center gap-3 p-3 bg-success/10 rounded-lg border border-success/30"
             >
               {feature.value ? (
                 <>
