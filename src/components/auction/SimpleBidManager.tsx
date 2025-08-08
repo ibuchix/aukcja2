@@ -222,30 +222,22 @@ export const SimpleBidManager = ({
             {/* Second widget below, resized to 300x300 to match */}
             <div className="mt-4" />
             <a
-              href="https://www.carvertical.com"
+              href="https://www.autobaza.pl/partnerid=80000634"
+              title="Autobaza.pl Historia Pojazdu"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="carvertical VIN check"
+              aria-label="Autobaza.pl Historia Pojazdu"
             >
               <img
-                src="//carvertical.postaffiliatepro.com/accounts/default1/3wboofl3y7q/d7aece8a.jpg"
-                alt="carvertical VIN check"
-                title="carvertical VIN check"
+                src="https://www.autobaza.pl/partners/250x250_autobaza-pp-b-min.jpg"
+                alt="Autobaza.pl Historia Pojazdu"
+                title="Autobaza.pl Historia Pojazdu"
                 width={300}
                 height={300}
                 loading="lazy"
                 decoding="async"
               />
             </a>
-            <img
-              style={{ border: 0 }}
-              src="https://carvertical.postaffiliatepro.com/scripts/3wioofl3y7q?a=66c6155b1b60f&b=d7aece8a"
-              width={1}
-              height={1}
-              alt=""
-              loading="lazy"
-              decoding="async"
-            />
           </div>
         </div>
       </CardContent>
