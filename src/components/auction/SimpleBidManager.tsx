@@ -193,6 +193,33 @@ export const SimpleBidManager = ({
           >
             {isSubmitting ? "Składanie oferty..." : "Złóż ofertę"}
           </Button>
+          <div className="mt-4 flex flex-col items-center">
+            <a
+              href="https://www.carvertical.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="carvertical VIN check"
+            >
+              <img
+                src="//carvertical.postaffiliatepro.com/accounts/default1/3wboofl3y7q/d7aece8a.jpg"
+                alt="carvertical VIN check"
+                title="carvertical VIN check"
+                width={300}
+                height={300}
+                loading="lazy"
+                decoding="async"
+              />
+            </a>
+            <img
+              style={{ border: 0 }}
+              src="https://carvertical.postaffiliatepro.com/scripts/3wioofl3y7q?a=66c6155b1b60f&b=d7aece8a"
+              width={1}
+              height={1}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
         </div>
       </CardContent>
     </Card>
