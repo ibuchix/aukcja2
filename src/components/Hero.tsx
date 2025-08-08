@@ -24,7 +24,7 @@ const Hero = () => {
               <p className="text-subtitle-text text-lg max-w-2xl">
                 Autaro.pl to pierwsza w Polsce aukcja samochodowa online stworzona dla dealerów. Codziennie nowe oferty aut tylko od osób prywatnych, dostępne wyłącznie dla dealerów. Wszystkie samochody są zarejestrowane w Polsce, z pełnym profilem i przejrzystym opisem.
               </p>
-              <p className="text-primary font-bold text-lg md:text-xl">
+              <p className="text-primary font-bold text-base md:text-lg">
                 Start już wkrótce! Zarejestruj swój komis teraz i odbierz 50% zniżki na pierwszą prowizję oraz powiadomienie o starcie codziennych aukcji!
               </p>
             </div>
