@@ -78,9 +78,9 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
     
     switch (timingStatus) {
       case 'active':
-        return { text: 'Live Auction', variant: 'default' as const, icon: Clock, className: 'bg-green-100 text-green-800 border-green-300' };
+        return { text: 'Aukcja na żywo', variant: 'default' as const, icon: Clock, className: 'bg-green-100 text-green-800 border-green-300' };
       case 'ended':
-        return { text: 'Auction Ended', variant: 'secondary' as const, icon: Clock, className: 'bg-gray-100 text-gray-800 border-gray-300' };
+        return { text: 'Aukcja zakończona', variant: 'secondary' as const, icon: Clock, className: 'bg-gray-100 text-gray-800 border-gray-300' };
       case 'scheduled':
         return { text: 'Scheduled', variant: 'outline' as const, icon: Clock, className: 'bg-blue-50 text-blue-700 border-blue-300' };
       default:
@@ -168,8 +168,8 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                       ) : (
                         <div className="flex flex-col gap-1">
                           <Badge variant="secondary" className="text-xs font-medium bg-gray-100 text-gray-700">
-                            {getAuctionTimingStatus(bid) === 'active' ? "Live Auction" 
-                             : getAuctionTimingStatus(bid) === 'ended' ? "Auction Ended" 
+                            {getAuctionTimingStatus(bid) === 'active' ? "Aukcja na żywo" 
+                             : getAuctionTimingStatus(bid) === 'ended' ? "Aukcja zakończona" 
                              : "No Actions"}
                           </Badge>
                           
@@ -183,7 +183,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                                   : 'bg-red-100 text-red-800 border-red-200'
                               }`}
                             >
-                              {bid.auctionResult === 'won' ? '🎉 Won' : '❌ Lost'}
+                              {bid.auctionResult === 'won' ? '🎉 Wygralo' : '❌ Zugbiony'}
                             </Badge>
                           )}
                         </div>
