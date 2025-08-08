@@ -32,7 +32,7 @@ export const DealerBids = () => {
             disabled={isRefreshing || isLoading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
-            Refresh
+            Odswiez
           </Button>
         </div>
       </CardHeader>
