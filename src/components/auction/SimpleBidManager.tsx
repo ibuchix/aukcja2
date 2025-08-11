@@ -1,9 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
-import { DollarSign } from "lucide-react";
+import { DollarSign, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
@@ -168,8 +169,24 @@ export const SimpleBidManager = ({
           </div>
           
           <div className="space-y-2">
-            <label htmlFor="bidAmount" className="block text-sm font-medium">
+            <label htmlFor="bidAmount" className="flex items-center gap-1 text-sm font-medium">
               Twoja oferta (PLN)
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Informacje o maksymalnej ofercie"
+                      className="ml-1 inline-flex items-center text-muted-foreground hover:text-foreground"
+                    >
+                      <Info className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    Ustal maksymalną ofertę, a my będziemy automatycznie licytować w Twoim imieniu, podbijając o 250PLN, aby zapewnić wygraną. Jeśli jesteś jedynym licytującym, Twoja ostateczna oferta zostanie ustalona na poziomie ceny orientacyjnej lub Twojej maksymalnej oferty, jeśli jest ona niższa niż cena orientacyjna.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </label>
             <Input
               id="bidAmount"
