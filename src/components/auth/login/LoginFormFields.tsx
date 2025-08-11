@@ -38,9 +38,9 @@ export function LoginFormFields({ register, errors }: LoginFormFieldsProps) {
       
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">Hasło</Label>
           <Link to="/password-reset" className="text-sm text-white/70 hover:text-[#D81B24]">
-            Forgot password?
+            Nie pamiętasz hasła?
           </Link>
         </div>
         <Input

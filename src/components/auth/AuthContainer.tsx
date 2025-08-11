@@ -25,9 +25,9 @@ export function AuthContainer({ children }: AuthContainerProps) {
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           <Card className="border-white/20" style={{backgroundColor: '#454545'}}>
             <CardHeader>
-              <CardTitle className="font-oswald text-[#D81B24]">Dealer Portal</CardTitle>
+              <CardTitle className="font-oswald text-[#D81B24]">Portal dealera</CardTitle>
               <CardDescription className="font-kanit text-[#FCFCFC]">
-                Register or login to your dealer account
+                Zarejestruj się lub zaloguj do konta dealera
               </CardDescription>
             </CardHeader>
             <CardContent>

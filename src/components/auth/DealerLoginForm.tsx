@@ -52,9 +52,9 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
       <LoginSubmitButton isLoading={isLoading} />
       
       <div className="text-center text-sm mt-4">
-        Don't have an account?{" "}
+        Nie masz konta?{" "}
         <span className="text-primary cursor-pointer hover:underline">
-          Switch to Register tab above
+          Przejdź do zakładki rejestracji powyżej
         </span>
       </div>
     </form>
