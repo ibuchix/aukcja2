@@ -40,7 +40,7 @@ export const BidCountDisplay = ({ carId }: BidCountDisplayProps) => {
         <div className="flex items-center gap-2 text-green-700">
           <Gavel className="h-4 w-4" />
           <span className="text-sm font-medium">
-            Łącznie {bidCount.count} inne oferty
+            Liczba innych ofert: {bidCount.count}
           </span>
         </div>
       </CardContent>

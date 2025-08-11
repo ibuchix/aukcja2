@@ -160,11 +160,8 @@ export const SimpleBidManager = ({
                 </span>
               </p>
             )}
-            <p className="text-xs text-muted-foreground">
-              Wprowadź kwotę, którą chcesz zapłacić za ten pojazd. Nasz system licytacji automatycznej będzie podbijał ofertę w krokach co 250 PLN, aż do osiągnięcia tej kwoty.
-            </p>
             {reservePrice && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Cena orientacyjna: {formatCurrency(reservePrice)}
               </p>
             )}
