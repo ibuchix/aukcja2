@@ -25,12 +25,12 @@ export function PasswordFields({ form }: PasswordFieldsProps) {
         name="password"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Password</FormLabel>
+            <FormLabel>Hasło</FormLabel>
             <FormControl>
               <div className="relative">
                 <Input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Create a secure password"
+                  placeholder="Min. 8 znaków, jedna duża litera, jedna cyfra i jeden znak specjalny."
                   {...field}
                   className="pr-10"
                 />
@@ -58,12 +58,12 @@ export function PasswordFields({ form }: PasswordFieldsProps) {
         name="confirmPassword"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Confirm Password</FormLabel>
+            <FormLabel>Potwierdź hasło</FormLabel>
             <FormControl>
               <div className="relative">
                 <Input
                   type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Confirm your password"
+                  placeholder="Potwierdź hasło"
                   {...field}
                   className="pr-10"
                 />

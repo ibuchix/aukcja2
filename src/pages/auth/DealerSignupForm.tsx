@@ -97,7 +97,7 @@ export function DealerSignupForm({ onRegistrationComplete }: { onRegistrationCom
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Signing up...
                 </>
-              ) : "Sign Up"}
+              ) : "Zarejestruj się"}
             </Button>
           </form>
         </Form>

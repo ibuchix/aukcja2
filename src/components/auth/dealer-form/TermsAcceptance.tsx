@@ -23,7 +23,7 @@ export function TermsAcceptance({ form }: TermsAcceptanceProps) {
           </FormControl>
           <div className="space-y-1 leading-none">
             <FormLabel className="text-sm">
-              I agree to and accept the terms and conditions of the service
+              Zgadzam się i akceptuję warunki korzystania z usługi Autaro.
             </FormLabel>
             <FormMessage />
           </div>

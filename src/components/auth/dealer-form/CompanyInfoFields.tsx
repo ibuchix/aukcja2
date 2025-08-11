@@ -16,7 +16,7 @@ export function CompanyInfoFields({ form }: CompanyInfoFieldsProps) {
         name="companyName"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Company Name</FormLabel>
+            <FormLabel>Nazwa firmy</FormLabel>
             <FormControl>
               <Input 
                 {...field} 
@@ -24,7 +24,7 @@ export function CompanyInfoFields({ form }: CompanyInfoFieldsProps) {
               />
             </FormControl>
             <FormDescription className="text-xs text-muted-foreground">
-              Enter your registered company name
+              Wprowadź nazwę firmy
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -36,7 +36,7 @@ export function CompanyInfoFields({ form }: CompanyInfoFieldsProps) {
         name="taxId"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Tax Identification Number (NIP)</FormLabel>
+            <FormLabel>Numer NIP</FormLabel>
             <FormControl>
               <Input 
                 {...field} 
@@ -65,7 +65,7 @@ export function CompanyInfoFields({ form }: CompanyInfoFieldsProps) {
               />
             </FormControl>
             <FormDescription className="text-xs text-muted-foreground">
-              Must be exactly 10 digits
+              Wprowadź numer NIP
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -77,7 +77,7 @@ export function CompanyInfoFields({ form }: CompanyInfoFieldsProps) {
         name="businessRegistryNumber"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>National Business Registry Number (REGON)</FormLabel>
+            <FormLabel>Numer REGON</FormLabel>
             <FormControl>
               <Input 
                 {...field} 
@@ -105,7 +105,7 @@ export function CompanyInfoFields({ form }: CompanyInfoFieldsProps) {
               />
             </FormControl>
             <FormDescription className="text-xs text-muted-foreground">
-              Must be either 9 or 14 digits
+              Wprowadź numer REGON
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -117,16 +117,13 @@ export function CompanyInfoFields({ form }: CompanyInfoFieldsProps) {
         name="companyAddress"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Company Address</FormLabel>
+            <FormLabel>Adres firmy</FormLabel>
             <FormControl>
               <Input 
                 {...field} 
                 disabled={form.formState.isSubmitting}
               />
             </FormControl>
-            <FormDescription className="text-xs text-muted-foreground">
-              Enter your registered company address
-            </FormDescription>
             <FormMessage />
           </FormItem>
         )}

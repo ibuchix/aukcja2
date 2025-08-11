@@ -70,7 +70,7 @@ export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
   useEffect(() => {
     const currentPhoneNumber = form.getValues("phoneNumber");
     if (!currentPhoneNumber) {
-      form.setValue("phoneNumber", "+");
+      form.setValue("phoneNumber", "+48");
     }
   }, [form]);
 
@@ -80,15 +80,15 @@ export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
         control={form.control}
         name="supervisorName"
         render={({ field }) => (
-          <FormItem>
-            <FormLabel>Full Name of Account Supervisor</FormLabel>
-            <FormControl>
-              <Input {...field} onBlur={field.onBlur} disabled={form.formState.isSubmitting} />
-            </FormControl>
-            <FormDescription className="text-xs text-muted-foreground">
-              Enter your full legal name as it appears on official documents
-            </FormDescription>
-            <FormMessage />
+            <FormItem>
+              <FormLabel>Imię i nazwisko opiekuna konta</FormLabel>
+              <FormControl>
+                <Input {...field} onBlur={field.onBlur} disabled={form.formState.isSubmitting} />
+              </FormControl>
+              <FormDescription className="text-xs text-muted-foreground">
+                Podaj swoje pełne imię i nazwisko zgodnie z danymi w dokumentach tożsamości.
+              </FormDescription>
+              <FormMessage />
           </FormItem>
         )}
       />
@@ -127,7 +127,7 @@ export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
               />
             </FormControl>
             <FormDescription className="text-xs text-muted-foreground" id="email-description">
-              This will be your login email for passwordless authentication
+              Ten adres e-mail będzie służył do logowania
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -139,7 +139,7 @@ export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
         name="phoneNumber"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Phone Number</FormLabel>
+            <FormLabel>Numer telefonu</FormLabel>
             <FormControl>
               <Input 
                 {...field} 
