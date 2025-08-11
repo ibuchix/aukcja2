@@ -25,7 +25,7 @@ export const UtilityBillUpload: React.FC<UtilityBillUploadProps> = ({
       <CardHeader className="bg-primary/5 border-b border-primary/20">
         <CardTitle className="flex items-center gap-2 text-primary">
           <Building2 className="w-6 h-6" />
-          Company Verification Required
+          Wymagana weryfikacja firmly
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
@@ -33,7 +33,7 @@ export const UtilityBillUpload: React.FC<UtilityBillUploadProps> = ({
           <AlertCircle className="h-4 w-4 text-warning" />
           <AlertTitle className="text-body-text">Verification Required</AlertTitle>
           <AlertDescription className="text-subtitle-text">
-            <strong className="text-body-text">Please upload your company's utility bill for verification.</strong>
+            <strong className="text-body-text">Prosze przeslac aktualny rachunek za media wystawiony na firmę w celu weryfikacji</strong>
             <br />
             <span className="text-sm mt-2 block">
               • The utility bill must not be older than 3 months

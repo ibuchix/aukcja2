@@ -90,7 +90,7 @@ export default function DealerDocuments() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-8 pt-24">
-        <h1 className="text-3xl font-bold mb-6 text-body-text">Document Management</h1>
+        <h1 className="text-3xl font-bold mb-6 text-body-text">{!isVerified ? "Zarzadzanie dokumentami" : "Document Management"}</h1>
         
         {/* Show verification success message for verified dealers */}
         {isVerified && <VerificationSuccessCard />}
