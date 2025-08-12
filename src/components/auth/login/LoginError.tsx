@@ -13,13 +13,16 @@ export function LoginError({ error, loginAttempted }: LoginErrorProps) {
 
   // Determine error category to control hint visibility
   const isDealerRestriction = typeof error === "string" && error.toLowerCase().includes("restricted to dealer");
+  const displayMessage = isDealerRestriction
+    ? "Ta aplikacja jest przeznaczona wyłącznie dla dealerów. Zarejestruj się jako dealer."
+    : error;
   const showWhitespaceHint = loginAttempted && !isDealerRestriction;
 
   return (
     <div className="space-y-4">
       <Alert variant="destructive" role="alert" aria-live="polite">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{error}</AlertDescription>
+        <AlertDescription>{displayMessage}</AlertDescription>
       </Alert>
 
       {showWhitespaceHint && (

@@ -20,6 +20,7 @@ export default {
     extend: {
       colors: {
         primary: "#D81B24",
+        destructive: "#D81B24",
         secondary: "#383B39",
         iris: "#4B4DED",
         "iris-light": "#EFEFFD",
