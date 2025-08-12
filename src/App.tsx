@@ -14,6 +14,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/dealer/Profile";
 import HowItWorks from "./pages/HowItWorks";
 import Index from "./pages/Index";
+import Pricing from "./pages/Pricing";
 
 function App() {
   return (
@@ -77,6 +78,7 @@ function App() {
         
         {/* Other pages */}
         <Route path="/how-it-works" element={<HowItWorks />} />
+        <Route path="/pricing" element={<Pricing />} />
         
         {/* Fallback route - redirect to home page */}
         <Route path="*" element={<Navigate to="/" />} />
