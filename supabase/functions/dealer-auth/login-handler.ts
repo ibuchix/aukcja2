@@ -109,7 +109,16 @@ export async function handleDealerLogin(
 
       if (dealerError) {
         logWarning(`Error fetching dealer profile (request ID: ${requestId})`, dealerError);
-        // Continue despite this error - we'll return minimal info
+        // Continue to check restriction based on existence
+      }
+
+      // Enforce dealer-only access: user must have a dealer record
+      if (!dealerData) {
+        logWarning(
+          `Dealer-only restriction: user ${signInData.user.id} (${normalizedEmail}) attempted login without dealer record`,
+          null
+        );
+        return respondError("This app is restricted to dealer accounts. Please register as a dealer.", 403);
       }
 
       // Get user profile info

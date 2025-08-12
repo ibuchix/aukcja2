@@ -82,6 +82,28 @@ export function useAuthStateListener(
             console.log("✅ Auth state updated after sign in");
             AuthDebugger.captureAuthState("Sign In State Updated").catch(console.warn);
             
+            // Dealer-only guard: verify the signed-in user has a dealer profile
+            setTimeout(async () => {
+              try {
+                const { data: dealerId, error: dealerCheckError } = await supabase.rpc('get_dealer_profile_id');
+                if (dealerCheckError) {
+                  console.warn('Dealer check RPC error:', dealerCheckError);
+                }
+                if (!dealerId) {
+                  toast({
+                    title: 'Dealer account required',
+                    description: 'This app is restricted to dealer accounts. Please register as a dealer.',
+                    variant: 'destructive',
+                  });
+                  await supabase.auth.signOut();
+                  navigate('/auth', { replace: true });
+                  return;
+                }
+              } catch (dealerGuardError) {
+                console.error('Dealer guard check failed:', dealerGuardError);
+              }
+            }, 0);
+            
             // Get current location from ref
             const currentLocation = locationRef.current;
             const isOnAuthPage = currentLocation.pathname === '/auth' || currentLocation.pathname.includes('/auth');
