@@ -39,48 +39,19 @@ const Pricing = () => {
 
       <Navbar />
 
-      <main className="container mx-auto px-4 py-10 md:py-14">
+      <main className="container mx-auto px-4 pt-28 md:pt-32 pb-10 md:pb-14">
         <header className="text-center mb-8 md:mb-12">
           <h1 className="font-oswald font-bold text-heading-lg md:text-4xl text-body-text">
             Cennik opłat dla dealerów
           </h1>
-          <p className="mt-3 text-subtitle text-subtitle-text max-w-2xl mx-auto">
+          <div className="mx-auto mt-3 h-1 w-24 bg-primary rounded-full" aria-hidden="true" />
+          <p className="mt-4 text-subtitle text-subtitle-text max-w-2xl mx-auto">
             Przejrzysta, stała opłata platformowa zależna od wysokości wygranej oferty. Wszystkie kwoty w PLN.
           </p>
         </header>
 
-        <section aria-labelledby="fee-table" className="mb-10 md:mb-14">
-          <Card className="bg-background">
-            <CardHeader>
-              <CardTitle id="fee-table" className="text-body-text">
-                Tabela opłat platformowych
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-hidden rounded-default border border-accent">
-                <table className="min-w-full">
-                  <thead className="bg-secondary">
-                    <tr>
-                      <th scope="col" className="px-4 py-3 text-left font-medium text-body-text">Przedział wygranej oferty</th>
-                      <th scope="col" className="px-4 py-3 text-left font-medium text-body-text">Opłata platformy</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {PLATFORM_FEE_TIERS.map((tier, idx) => (
-                      <tr key={tier.label} className={idx % 2 === 0 ? "bg-background" : "bg-secondary/40"}>
-                        <td className="px-4 py-3 text-body-text">{tier.label}</td>
-                        <td className="px-4 py-3 text-body-text">{tier.fee.toLocaleString("pl-PL")} PLN</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section aria-labelledby="calculator">
-          <Card className="bg-background">
+        <section aria-labelledby="calculator" className="mb-10 md:mb-14">
+          <Card className="bg-background ring-1 ring-primary/20">
             <CardHeader>
               <CardTitle id="calculator" className="text-body-text">Kalkulator opłaty</CardTitle>
             </CardHeader>
@@ -102,7 +73,7 @@ const Pricing = () => {
                   <div className="text-subtitle-text mb-2">Szacowana opłata platformy</div>
                   <div className="rounded-default border border-accent bg-secondary px-4 py-3 text-body-text">
                     {fee !== undefined ? (
-                      <span className="font-semibold">{fee.toLocaleString("pl-PL")} PLN</span>
+                      <span className="text-primary font-semibold">{fee.toLocaleString("pl-PL")} PLN</span>
                     ) : (
                       <span className="opacity-70">Wprowadź kwotę wygranej oferty</span>
                     )}
@@ -112,6 +83,36 @@ const Pricing = () => {
               <p className="mt-4 text-subtitle text-subtitle-text">
                 Uwaga: Opłata jest stała w ramach danego przedziału i nie zależy od marki ani modelu pojazdu.
               </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section aria-labelledby="fee-table">
+          <Card className="bg-background ring-1 ring-primary/20">
+            <CardHeader>
+              <CardTitle id="fee-table" className="text-body-text">
+                Tabela opłat platformowych
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-hidden rounded-default border border-accent">
+                <table className="min-w-full">
+                  <thead className="bg-primary/10">
+                    <tr>
+                      <th scope="col" className="px-4 py-3 text-left font-medium text-body-text">Przedział wygranej oferty</th>
+                      <th scope="col" className="px-4 py-3 text-left font-medium text-body-text">Opłata platformy</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {PLATFORM_FEE_TIERS.map((tier, idx) => (
+                      <tr key={tier.label} className={idx % 2 === 0 ? "bg-background" : "bg-secondary/40"}>
+                        <td className="px-4 py-3 text-body-text">{tier.label}</td>
+                        <td className="px-4 py-3 text-primary font-semibold">{tier.fee.toLocaleString("pl-PL")} PLN</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </CardContent>
           </Card>
         </section>
