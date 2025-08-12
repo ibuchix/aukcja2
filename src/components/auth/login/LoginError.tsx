@@ -11,15 +11,19 @@ export function LoginError({ error, loginAttempted }: LoginErrorProps) {
   // If there's no error or login wasn't attempted yet, don't render
   if (!error) return null;
 
+  // Determine error category to control hint visibility
+  const isDealerRestriction = typeof error === "string" && error.toLowerCase().includes("restricted to dealer");
+  const showWhitespaceHint = loginAttempted && !isDealerRestriction;
+
   return (
     <div className="space-y-4">
-      <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
-        {error}
-      </div>
-      
-      {/* Show additional help if login failed */}
-      {loginAttempted && (
-        <Alert variant="destructive" className="mt-4">
+      <Alert variant="destructive" role="alert" aria-live="polite">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+
+      {showWhitespaceHint && (
+        <Alert variant="destructive" className="mt-2">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Your password may have been saved with extra whitespace. Try typing your password manually instead of using autofill.
