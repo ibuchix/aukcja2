@@ -2,7 +2,6 @@ import { useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthState } from "./useAuthState";
 import { AuthContext } from "./context";
-import { defaultContextValue } from "./types";
 import { useSessionManager } from "@/hooks/useSessionManager";
 import { useAuthActions } from "./useAuthActions";
 import { useSignInHandler } from "./useSignInHandler";
@@ -218,10 +217,22 @@ export function AuthProviderWithRouter({ children }: { children: React.ReactNode
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }
 
-// Basic AuthProvider that doesn't depend on Router
+// Basic AuthProvider that doesn't depend on Router (fallback only)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // This should not be used in the actual app - only for tests
+  console.warn("Using fallback AuthProvider without router context");
   return (
-    <AuthContext.Provider value={defaultContextValue}>
+    <AuthContext.Provider value={{
+      session: null,
+      user: null,
+      profile: null,
+      isLoading: false,
+      isInitialized: true,
+      isAuthenticated: false,
+      signIn: async () => ({ success: false, error: "Fallback auth provider" }),
+      signOut: async () => ({ success: false, error: "Fallback auth provider" }),
+      refreshSession: async () => { throw new Error("Fallback auth provider") }
+    }}>
       {children}
     </AuthContext.Provider>
   );
