@@ -18,6 +18,12 @@ export function useCompleteRegistration() {
   const { toast } = useToast();
 
   const handleSubmit = async (values: DealerFormValues): Promise<CompleteRegistrationResult> => {
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+      console.log("Registration already in progress, ignoring duplicate request");
+      return { success: false, error: "Registration already in progress" };
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -162,6 +168,33 @@ export function useCompleteRegistration() {
       const response_data = data;
       
       if (!response_data.success) {
+        // Special handling for "email already exists" error - this might mean registration actually succeeded
+        if (response_data.error?.toLowerCase().includes("already exists")) {
+          console.log("Email already exists error - checking if user can log in (registration may have succeeded)");
+          
+          try {
+            // Try to log in with the provided credentials
+            const signInResult = await signInWithEmail({
+              email: values.email.trim().toLowerCase(),
+              password: values.password
+            });
+            
+            if (!signInResult.error && signInResult.data) {
+              console.log("Login successful after 'already exists' error - registration was actually successful");
+              toast({
+                title: "Welcome back!",
+                description: "You already have an account and we've logged you in.",
+              });
+              return {
+                success: true,
+                loginSuccessful: true
+              };
+            }
+          } catch (loginError) {
+            console.log("Login failed after 'already exists' error:", loginError);
+          }
+        }
+        
         console.error("Registration failed with error:", response_data.error);
         toast({
           title: "Registration Failed",
