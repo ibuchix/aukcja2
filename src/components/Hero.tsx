@@ -17,9 +17,9 @@ const Hero = () => {
           >
             <div className="space-y-8">
               <h1 className="text-5xl md:text-6xl font-bold text-body-text" style={{ lineHeight: '1.4' }}>
-                Kupuj <span className="text-primary">Pewnie</span>. Kupuj Opłacalnie.
+                <span className="text-primary">Aukcja samochodowa online</span>
                 <br />
-                Kupuj na Autaro.pl!
+                Tylko dla dealerów.
               </h1>
               <p className="text-subtitle-text text-lg max-w-2xl">
                 Autaro.pl to pierwsza w Polsce aukcja samochodowa online stworzona dla dealerów. Codziennie nowe oferty aut tylko od osób prywatnych, dostępne wyłącznie dla dealerów. Wszystkie samochody są zarejestrowane w Polsce, z pełnym profilem i przejrzystym opisem.
