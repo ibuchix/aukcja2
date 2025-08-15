@@ -100,10 +100,7 @@ export async function uploadDealerDocument({ file, documentType }: DocumentUploa
     formData.append('token', sessionData.session.access_token);
 
     const response = await supabase.functions.invoke('dealer-profile/upload-document', {
-      body: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+      body: formData
     });
 
     if (response.error) {
