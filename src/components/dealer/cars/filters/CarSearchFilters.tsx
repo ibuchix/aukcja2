@@ -14,6 +14,7 @@ import { ServiceHistoryFilter } from "./ServiceHistoryFilter";
 import { DistanceFilter } from "./DistanceFilter";
 import { SavedFiltersManager } from "./SavedFiltersManager";
 import { SortSelector } from "../../auction/filters/SortSelector";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CarSearchFiltersProps {
   filters: AuctionFilters;
@@ -34,6 +35,7 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
 }) => {
   const isDev = process.env.NODE_ENV === 'development';
   const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useIsMobile();
 
   // Calculate active filter count
   const activeFilterCount = Object.entries(filters).filter(([_, val]) => {
@@ -71,8 +73,8 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
+      <CardHeader className={isMobile ? "p-3" : ""}>
+        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'justify-between items-center'}`}>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -81,14 +83,14 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
               className="flex items-center gap-2"
             >
               <SlidersHorizontal className="h-4 w-4" />
-              Filtry pojazdów
+              {isMobile ? "Filtry" : "Filtry pojazdów"}
               {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </Button>
             {activeFilterCount > 0 && (
               <Badge variant="secondary">{activeFilterCount} aktywne</Badge>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className={`flex gap-2 ${isMobile ? 'w-full' : ''}`}>
             <SavedFiltersManager 
               currentFilters={filters}
               onLoadFilters={handleLoadSavedFilters}
@@ -102,7 +104,7 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
       </CardHeader>
       
       {isExpanded && (
-        <CardContent className="space-y-6">
+        <CardContent className={`space-y-6 ${isMobile ? 'p-3 pt-0' : ''}`}>
           {/* Make and Model Filter */}
           <MakeModelFilter 
             key="make-model-filter"

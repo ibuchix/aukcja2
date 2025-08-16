@@ -11,6 +11,7 @@ import { SimpleLiveAuctionsView } from '@/components/dealer/cars/SimpleLiveAucti
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDashboardTabs } from '@/hooks/useDashboardTabs';
 import { QuickActions } from '@/components/dealer/QuickActions';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ const DashboardContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   // Use our custom hook to sync tab state between components
   const { activeTab, setActiveTab } = useDashboardTabs(activeTabRaw, setActiveTabRaw);
@@ -117,7 +119,9 @@ const DashboardContent = () => {
         {/* Dashboard Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="auctions">Aukcja na żywo</TabsTrigger>
+            <TabsTrigger value="auctions">
+              {isMobile ? "Aukcja" : "Aukcja na żywo"}
+            </TabsTrigger>
             <TabsTrigger value="overview">Przegląd</TabsTrigger>
             <TabsTrigger value="profile">Profil</TabsTrigger>
           </TabsList>
