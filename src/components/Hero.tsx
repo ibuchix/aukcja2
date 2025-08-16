@@ -16,10 +16,10 @@ const Hero = () => {
             className="flex flex-col justify-between"
           >
             <div className="space-y-8">
-              <h1 className="text-5xl md:text-6xl font-bold text-body-text" style={{ lineHeight: '1.4' }}>
+              <h1 className="text-3xl md:text-4xl font-bold text-body-text" style={{ lineHeight: '1.4' }}>
                 Aukcja samochodowa <span className="text-primary">online</span>
               </h1>
-              <h1 className="text-5xl md:text-6xl font-bold text-body-text mt-2" style={{ lineHeight: '1.4' }}>
+              <h1 className="text-3xl md:text-4xl font-bold text-body-text mt-2" style={{ lineHeight: '1.4' }}>
                 Tylko dla <span className="text-primary">dealerów</span>.
               </h1>
               <p className="text-subtitle-text text-lg max-w-2xl">
