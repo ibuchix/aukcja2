@@ -52,7 +52,7 @@ export const dealerFormSchema = z.object({
     }),
   taxId: z.string()
     .length(10, {
-      message: "NIP (Tax ID) must be exactly 10 digits",
+      message: "Wprowadź Numer NIP zawierający 10 cyfr",
     })
     .refine((value) => /^\d+$/.test(value), {
       message: "NIP (Tax ID) must contain only numbers",
