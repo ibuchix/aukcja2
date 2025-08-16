@@ -8,6 +8,7 @@ export interface SignUpResult {
   partialSuccess?: boolean;
   warning?: string;
   needsProfileCreation?: boolean;
+  existingUser?: boolean;
 }
 
 export interface SignInResult {

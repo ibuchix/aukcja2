@@ -34,7 +34,7 @@ type RegistrationMetadata = {
 };
 
 /**
- * Check if an email exists as a dealer
+ * Check if an email exists as a dealer with complete registration handling
  */
 export async function handleCheckDealerEmail(
   body: any,
@@ -49,7 +49,28 @@ export async function handleCheckDealerEmail(
 
     const sanitizedEmail = sanitizeString(email).toLowerCase();
     
-    // Use role-specific check
+    // First check if we have a complete dealer registration
+    const { data: completionCheck, error: completionError } = await supabaseAdmin
+      .from('dealers')
+      .select('id, user_id, verification_status')
+      .eq('user_id', (
+        await supabaseAdmin.auth.admin.listUsers({
+          filter: `email.eq.${sanitizedEmail}`
+        })
+      ).data.users[0]?.id || '')
+      .single();
+    
+    if (!completionError && completionCheck) {
+      // Complete dealer registration exists
+      logInfo(`Complete dealer registration found for ${sanitizedEmail}`);
+      return respondSuccess({ 
+        exists: true, 
+        complete: true,
+        message: "Dealer account already fully registered" 
+      });
+    }
+    
+    // Use role-specific check for partial registrations
     const { data, error } = await supabaseAdmin.rpc(
       "check_email_exists_for_dealer_role",
       { p_email: sanitizedEmail }
@@ -98,10 +119,54 @@ export async function handleDealerRegister(
     // Sanitize and prepare metadata
     const cleanedMetadata = sanitizeMetadata(metadata);
 
-    // Use role-specific email check
+    // Check for complete dealer registration first to handle retries gracefully
+    const sanitizedEmail = sanitizeString(email).toLowerCase();
+    
+    try {
+      // Get user by email first
+      const { data: userList, error: userListError } = await supabaseAdmin.auth.admin.listUsers({
+        filter: `email.eq.${sanitizedEmail}`
+      });
+      
+      if (!userListError && userList?.users?.length > 0) {
+        const existingUser = userList.users[0];
+        
+        // Check if dealer profile exists
+        const { data: dealerProfile, error: dealerError } = await supabaseAdmin
+          .from('dealers')
+          .select('id, verification_status')
+          .eq('user_id', existingUser.id)
+          .single();
+        
+        if (!dealerError && dealerProfile) {
+          // Complete dealer registration already exists - return success for retry scenarios
+          logInfo(`Complete dealer registration found for ${email}, treating as successful retry`);
+          
+          // Create session for existing user
+          const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
+            userId: existingUser.id
+          });
+          
+          return respondSuccess({
+            success: true,
+            userId: existingUser.id,
+            existingUser: true,
+            session: sessionData?.session || null,
+            message: "Registration successful. You can now log in to your account."
+          });
+        }
+        
+        // User exists but no dealer profile - treat as existing user without dealer role
+        logInfo(`User exists without dealer profile: ${email}`);
+      }
+    } catch (checkError) {
+      logWarning("Error during completion check, continuing with normal flow", checkError);
+    }
+
+    // Use role-specific email check for new registrations
     const { data: existsData, error: existsError } = await supabaseAdmin.rpc(
       "check_email_exists_for_dealer_role",
-      { p_email: sanitizeString(email).toLowerCase() }
+      { p_email: sanitizedEmail }
     );
 
     if (existsError) {
@@ -130,7 +195,7 @@ export async function handleDealerRegister(
     // Check if user already exists but doesn't have dealer role
     const { data: userCheck, error: userCheckError } = await supabaseAdmin.rpc(
       "check_email_exists_for_dealer_role",
-      { p_email: sanitizeString(email).toLowerCase() }
+      { p_email: sanitizedEmail }
     );
     
     let userId: string;
@@ -280,12 +345,30 @@ export async function handleDealerRegister(
       if (dealerError) {
         logError("Error creating dealer profile:", dealerError);
         
-        // If dealer creation fails but user was created, return partial success
+        // If dealer creation fails but user was created, check if it's a duplicate key error (registration already complete)
+        if (dealerError.code === '23505' || dealerError.message?.includes('duplicate key')) {
+          logInfo("Dealer profile already exists, treating as successful completion");
+          
+          // Create session for existing user
+          const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
+            userId: userId
+          });
+          
+          return respondSuccess({
+            success: true,
+            userId: userId,
+            existingUser: true,
+            session: sessionData?.session || null,
+            message: "Registration successful. You can now log in to your account."
+          });
+        }
+        
+        // If dealer creation fails for other reasons, return partial success
         return respondSuccess({
           success: true,
           userId: userId,
           existingUser: existingUser,
-          session: sessionData?.session || null,
+          session: null,
           partialSuccess: true,
           warning: "User account created but dealer profile setup incomplete. Please contact support.",
           message: "Registration partially successful. Please log in and complete your profile setup."
@@ -296,12 +379,30 @@ export async function handleDealerRegister(
     } catch (profileError) {
       logError("Exception creating dealer profile:", profileError);
       
-      // Return partial success if dealer profile creation fails
+      // Check if it's actually a duplicate key error (registration already complete)
+      if (profileError.toString().includes('duplicate key') || profileError.toString().includes('23505')) {
+        logInfo("Dealer profile already exists due to duplicate key, treating as successful completion");
+        
+        // Create session for existing user
+        const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
+          userId: userId
+        });
+        
+        return respondSuccess({
+          success: true,
+          userId: userId,
+          existingUser: true,
+          session: sessionData?.session || null,
+          message: "Registration successful. You can now log in to your account."
+        });
+      }
+      
+      // Return partial success if dealer profile creation fails for other reasons
       return respondSuccess({
         success: true,
         userId: userId,
         existingUser: existingUser,
-        session: sessionData?.session || null,
+        session: null,
         partialSuccess: true,
         warning: "User account created but dealer profile setup failed. Please contact support.",
         message: "Registration partially successful. Please log in and complete your profile setup."

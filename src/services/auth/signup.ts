@@ -150,6 +150,19 @@ export const signUpDealerWithEmail = async (
       
       if (!response_data.success) {
         console.error("Registration failed with error:", response_data.error);
+        
+        // Check if this is actually a successful registration scenario (edge function returning success)
+        if (response_data.message?.includes('Registration successful') || 
+            response_data.message?.includes('already fully registered')) {
+          console.log("Detected successful registration despite success=false flag");
+          return {
+            success: true,
+            userId: response_data.userId,
+            message: response_data.message || "Registration successful. You can now log in to your account.",
+            existingUser: true
+          };
+        }
+        
         return {
           success: false,
           error: response_data.error || "Registration failed with an unknown error"

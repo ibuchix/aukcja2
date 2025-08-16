@@ -72,8 +72,18 @@ export function useSignupDealer() {
       }
 
       if (!signUpResult.success) {
-        // Special handling for 409 errors - check if user actually exists
-        if (signUpResult.errorType === 'auth' && signUpResult.error?.includes('already been registered')) {
+        // Special handling for 409 errors - check if user actually exists and registration was completed
+        if (signUpResult.error?.includes('already exists') || signUpResult.error?.includes('already been registered')) {
+          // For duplicate registrations, check if this is a complete registration scenario
+          if (signUpResult.error?.includes('dealer') || signUpResult.error?.includes('Dealer account already fully registered')) {
+            console.log("Complete dealer account already exists, treating as successful login");
+            return {
+              success: true,
+              message: "Your account already exists and is ready to use. Redirecting to dashboard.",
+              existingUser: true
+            };
+          }
+          
           // User was actually created, treat as success but warn about existing account
           console.log("User already exists, attempting login flow");
           return {

@@ -8,6 +8,7 @@ export interface SignupResult {
   partialSuccess?: boolean;
   warning?: string;
   needs_recovery?: boolean;
+  existingUser?: boolean;
 }
 
 export interface SignupOptions {
