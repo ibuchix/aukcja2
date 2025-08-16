@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
@@ -28,7 +29,7 @@ const Hero = () => {
               <div className="w-20 h-1 bg-primary rounded-full"></div>
               
               <p className="text-subtitle-text text-lg lg:text-xl leading-relaxed max-w-2xl">
-                Autaro.pl to pierwsza w Polsce aukcja samochodowa online stworzona dla dealerów. Codziennie nowe oferty aut tylko od osób prywatnych, dostępne wyłącznie dla dealerów. Wszystkie samochody są zarejestrowane w Polsce, z pełnym profilem i przejrzystym opisem.
+                Autaro.pl to pierwsza w Polsce aukcja samochodwa online dla dealerów. Codziennie auta tylko od prywatnych sprzedawców, wyłącznie dla zweryfikowanych dealerów. Wszystkie zarejestrowane w Polsce, z pełnym profilem i opisem.
               </p>
               
               <div className="bg-primary/10 border-l-4 border-primary p-4 rounded-r-lg">
