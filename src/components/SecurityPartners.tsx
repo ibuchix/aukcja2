@@ -24,13 +24,13 @@ const SecurityPartners = () => {
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="flex justify-center"
+            className={`flex ${isMobile ? 'justify-start' : 'justify-center'}`}
           >
             <div className="transition-all duration-300 hover:scale-105 cursor-pointer">
               <img 
                 src="/lovable-uploads/2fdd1e70-bb56-42e3-8cbe-b6a59cbf3260.png" 
                 alt="CarVertical Logo" 
-                className="h-12 w-auto"
+                className={`${isMobile ? 'h-10' : 'h-12'} w-auto`}
               />
             </div>
           </motion.div>
@@ -40,7 +40,7 @@ const SecurityPartners = () => {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className={`text-center ${isMobile ? 'px-4 py-6' : 'px-8 py-8'} rounded-lg ${isMobile ? 'order-last' : ''}`}
+            className={`${isMobile ? 'text-left px-4 py-6' : 'text-center px-8 py-8'} rounded-lg ${isMobile ? 'order-last' : ''}`}
             style={{backgroundColor: '#454545'}}
           >
             <p className={`${isMobile ? 'text-base' : 'text-lg'} leading-relaxed`} style={{color: '#FCFCFC'}}>
@@ -53,13 +53,13 @@ const SecurityPartners = () => {
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="flex justify-center"
+            className={`flex ${isMobile ? 'justify-start' : 'justify-center'}`}
           >
             <div className="transition-all duration-300 hover:scale-105 cursor-pointer">
               <img 
                 src="/lovable-uploads/31af3dfa-1c5d-4e40-95dd-a08a7f5ec71b.png" 
                 alt="AutoBaza Logo" 
-                className="h-12 w-auto"
+                className="h-10 w-auto"
               />
             </div>
           </motion.div>
