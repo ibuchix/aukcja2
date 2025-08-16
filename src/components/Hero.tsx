@@ -2,9 +2,21 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
   const isMobile = useIsMobile();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const handleButtonClick = () => {
+    if (isAuthenticated) {
+      navigate('/dealer/dashboard');
+    } else {
+      navigate('/auth');
+    }
+  };
   
   return (
     <div className={`relative ${isMobile ? 'min-h-[80vh]' : 'min-h-[90vh] lg:min-h-[85vh]'}`}>
@@ -48,13 +60,13 @@ const Hero = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              <a
-                href="#vehicles"
+              <button
+                onClick={handleButtonClick}
                 className={`btn-primary ${isMobile ? 'text-base px-6 py-3' : 'text-lg lg:text-xl px-8 lg:px-12 py-4 lg:py-5'} flex items-center gap-3 group shadow-lg hover:shadow-xl transition-all duration-300`}
               >
-                Załóż konto teraz!
+                {isAuthenticated ? 'Przejdź do aukcji!' : 'Załóż konto teraz!'}
                 <ArrowRight className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5 lg:w-6 lg:h-6'} group-hover:translate-x-1 transition-transform`} />
-              </a>
+              </button>
             </motion.div>
           </motion.div>
 
