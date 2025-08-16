@@ -16,11 +16,11 @@ const Hero = () => {
             className="flex flex-col justify-center space-y-8 lg:pr-8"
           >
             <div className="space-y-6">
-              <div className="space-y-2 max-w-5xl">
-                <h1 className="text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-bold text-body-text leading-tight">
+              <div className="space-y-2 max-w-4xl">
+                <h1 className="text-4xl sm:text-5xl lg:text-4xl xl:text-5xl font-bold text-body-text leading-tight">
                   Aukcja samochodowa <span className="text-primary">online</span>
                 </h1>
-                <h1 className="text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-bold text-body-text leading-tight">
+                <h1 className="text-4xl sm:text-5xl lg:text-4xl xl:text-5xl font-bold text-body-text leading-tight">
                   Tylko dla <span className="text-primary">dealerów</span>.
                 </h1>
               </div>
