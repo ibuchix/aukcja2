@@ -76,19 +76,21 @@ export const SimpleLiveAuctionsView = () => {
   return (
     <div className="space-y-6">
       {isMobile ? (
-        <div className="space-y-3">
-          <h2 className="text-xl font-bold text-body-text">Aukcja na żywo</h2>
-          <div className="flex flex-col gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefreshStatuses}
-              className="flex items-center justify-center gap-2 bg-secondary border-accent/20 text-body-text hover:bg-accent/20"
-            >
-              <RotateCcw className="h-4 w-4" />
-              Aktualizuj statusy
-            </Button>
-            <RefreshListingsButton onRefresh={refetch} isLoading={isLoading} />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-body-text">Aukcja</h2>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefreshStatuses}
+                className="flex items-center gap-1 bg-secondary border-accent/20 text-body-text hover:bg-accent/20 px-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span className="text-xs">Status</span>
+              </Button>
+              <RefreshListingsButton onRefresh={refetch} isLoading={isLoading} />
+            </div>
           </div>
         </div>
       ) : (

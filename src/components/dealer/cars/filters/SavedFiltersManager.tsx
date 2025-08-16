@@ -20,6 +20,7 @@ import {
 import { Save, FileText, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AuctionFilters } from "../../auction/types";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SavedFilter {
   id: string;
@@ -31,12 +32,15 @@ interface SavedFilter {
 interface SavedFiltersManagerProps {
   currentFilters: AuctionFilters;
   onLoadFilters: (filters: AuctionFilters) => void;
+  iconOnly?: boolean;
 }
 
 export const SavedFiltersManager: React.FC<SavedFiltersManagerProps> = ({
   currentFilters,
-  onLoadFilters
+  onLoadFilters,
+  iconOnly = false
 }) => {
+  const isMobile = useIsMobile();
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
@@ -129,9 +133,10 @@ export const SavedFiltersManager: React.FC<SavedFiltersManagerProps> = ({
             variant="outline" 
             size="sm"
             disabled={!hasActiveFilters}
+            className={iconOnly || isMobile ? "px-2" : ""}
           >
-            <Save className="w-4 h-4 mr-2" />
-            Zapisz filtry
+            <Save className="w-4 h-4" />
+            {!iconOnly && !isMobile && <span className="ml-2">Zapisz</span>}
           </Button>
         </DialogTrigger>
         <DialogContent>
@@ -170,9 +175,10 @@ export const SavedFiltersManager: React.FC<SavedFiltersManagerProps> = ({
             variant="outline" 
             size="sm"
             disabled={savedFilters.length === 0}
+            className={iconOnly || isMobile ? "px-2" : ""}
           >
-            <FileText className="w-4 h-4 mr-2" />
-            Wczytaj filtry
+            <FileText className="w-4 h-4" />
+            {!iconOnly && !isMobile && <span className="ml-2">Wczytaj</span>}
           </Button>
         </DialogTrigger>
         <DialogContent>

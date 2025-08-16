@@ -90,15 +90,18 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
               <Badge variant="secondary">{activeFilterCount} aktywne</Badge>
             )}
           </div>
-          <div className={`flex gap-2 ${isMobile ? 'w-full' : ''}`}>
+          <div className={`flex gap-2 ${isMobile ? 'w-full justify-between' : ''}`}>
             <SavedFiltersManager 
               currentFilters={filters}
               onLoadFilters={handleLoadSavedFilters}
+              iconOnly={isMobile}
             />
-            <SortSelector 
-              sortOption={sortOption} 
-              onSortChange={onSortChange} 
-            />
+            <div className={isMobile ? "flex-1 min-w-0" : ""}>
+              <SortSelector 
+                sortOption={sortOption} 
+                onSortChange={onSortChange} 
+              />
+            </div>
           </div>
         </div>
       </CardHeader>
