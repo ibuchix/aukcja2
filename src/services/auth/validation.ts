@@ -32,7 +32,7 @@ export function validateEmail(email: string | null | undefined): ValidationResul
   // Simple regex for basic email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(trimmedEmail)) {
-    return { isValid: false, error: "Please enter a valid email address" };
+    return { isValid: false, error: "Wprowadź poprawny adres email" };
   }
 
   return { isValid: true };

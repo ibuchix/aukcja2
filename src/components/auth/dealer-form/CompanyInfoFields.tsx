@@ -117,11 +117,12 @@ export function CompanyInfoFields({ form }: CompanyInfoFieldsProps) {
         name="companyAddress"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Adres firmy</FormLabel>
+            <FormLabel>Adres firmy (Wpisz adres w formacie: ulica i numer, miejscowość, kod pocztowy)</FormLabel>
             <FormControl>
               <Input 
                 {...field} 
                 disabled={form.formState.isSubmitting}
+                className="min-h-[48px] text-base"
               />
             </FormControl>
             <FormMessage />

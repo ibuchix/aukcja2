@@ -73,7 +73,7 @@ export function useLoginForm() {
           } else if (errorMessage.includes("Email not found")) {
             errorMessage = "No account found with this email. Please check your email or register.";
           } else if (errorMessage.includes("Invalid email")) {
-            errorMessage = "Please enter a valid email address.";
+            errorMessage = "Wprowadź poprawny adres email.";
           }
         }
         
