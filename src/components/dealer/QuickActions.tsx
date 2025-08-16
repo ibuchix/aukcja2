@@ -2,36 +2,75 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Gavel, FileText, Trophy } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function QuickActions() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+
+  const quickActionItems = [
+    {
+      icon: <Gavel className="h-5 w-5" />,
+      title: "Moje oferty",
+      description: "",
+      link: "/dealer/bids",
+      variant: "green" as const
+    },
+    {
+      icon: <FileText className="h-5 w-5" />,
+      title: "Centrum Dokumentów", 
+      description: "",
+      link: "/dealer/documents",
+      variant: "yellow" as const
+    },
+    {
+      icon: <Trophy className="h-5 w-5" />,
+      title: "Wygrane Auta",
+      description: "",
+      link: "/dealer/won-vehicles", 
+      variant: "blue" as const
+    }
+  ];
+
+  if (isMobile) {
+    return (
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-body-text">Szybkie działania</h2>
+        
+        <div className="flex justify-center gap-8">
+          {quickActionItems.map((item) => (
+            <Button
+              key={item.title}
+              variant="outline"
+              size="lg"
+              className="w-16 h-16 rounded-full bg-secondary border-2 border-[#D81B24]/40 hover:bg-[#D81B24]/10 transition-all"
+              onClick={() => navigate(item.link)}
+            >
+              <div className="text-[#D81B24]">
+                {item.icon}
+              </div>
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-6">
       <h2 className="text-xl font-semibold mb-4 text-body-text">Szybkie działania</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <ActionButton
-          icon={<Gavel className="h-5 w-5" />}
-          title="Moje oferty"
-          description=""
-          link="/dealer/bids"
-          variant="green"
-        />
-        <ActionButton
-          icon={<FileText className="h-5 w-5" />}
-          title="Centrum Dokumentów"
-          description=""
-          link="/dealer/documents"
-          variant="yellow"
-        />
-        <ActionButton
-          icon={<Trophy className="h-5 w-5" />}
-          title="Wygrane Auta"
-          description=""
-          link="/dealer/won-vehicles"
-          variant="blue"
-        />
+        {quickActionItems.map((item) => (
+          <ActionButton
+            key={item.title}
+            icon={item.icon}
+            title={item.title}
+            description={item.description}
+            link={item.link}
+            variant={item.variant}
+          />
+        ))}
       </div>
     </div>
   );
