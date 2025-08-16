@@ -87,7 +87,7 @@ export const SimpleLiveAuctionsView = () => {
                 className="flex items-center gap-1 bg-secondary border-accent/20 text-body-text hover:bg-accent/20 px-2"
               >
                 <RotateCcw className="h-4 w-4" />
-                <span className="text-xs">Status</span>
+                <span className="text-xs">Aktualizuj statusy</span>
               </Button>
               <RefreshListingsButton onRefresh={refetch} isLoading={isLoading} />
             </div>
