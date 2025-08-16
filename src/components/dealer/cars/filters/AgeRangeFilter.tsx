@@ -9,8 +9,8 @@ interface AgeRangeFilterProps {
   onAgeChange: (min: number | undefined, max: number | undefined) => void;
 }
 
-const MIN_AGE = 0;
-const MAX_AGE = 30;
+const MIN_YEAR = 2000;
+const MAX_YEAR = new Date().getFullYear();
 
 export const AgeRangeFilter: React.FC<AgeRangeFilterProps> = ({
   minAge,
@@ -18,8 +18,8 @@ export const AgeRangeFilter: React.FC<AgeRangeFilterProps> = ({
   onAgeChange
 }) => {
   // Use props as the source of truth, with defaults
-  const currentMinAge = minAge ?? MIN_AGE;
-  const currentMaxAge = maxAge ?? MAX_AGE;
+  const currentMinAge = minAge ?? MIN_YEAR;
+  const currentMaxAge = maxAge ?? MAX_YEAR;
   
   const [sliderValues, setSliderValues] = useState([currentMinAge, currentMaxAge]);
   const [minInput, setMinInput] = useState(currentMinAge.toString());
@@ -40,8 +40,8 @@ export const AgeRangeFilter: React.FC<AgeRangeFilterProps> = ({
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
           onAgeChange(
-            min === MIN_AGE ? undefined : min,
-            max === MAX_AGE ? undefined : max
+            min === MIN_YEAR ? undefined : min,
+            max === MAX_YEAR ? undefined : max
           );
         }, 300);
       };
@@ -62,7 +62,7 @@ export const AgeRangeFilter: React.FC<AgeRangeFilterProps> = ({
     setMinInput(value);
     
     const numValue = parseInt(value);
-    if (!isNaN(numValue) && numValue >= MIN_AGE && numValue <= sliderValues[1]) {
+    if (!isNaN(numValue) && numValue >= MIN_YEAR && numValue <= sliderValues[1]) {
       const newValues = [numValue, sliderValues[1]];
       setSliderValues(newValues);
       debouncedOnAgeChange(newValues[0], newValues[1]);
@@ -74,7 +74,7 @@ export const AgeRangeFilter: React.FC<AgeRangeFilterProps> = ({
     setMaxInput(value);
     
     const numValue = parseInt(value);
-    if (!isNaN(numValue) && numValue >= sliderValues[0] && numValue <= MAX_AGE) {
+    if (!isNaN(numValue) && numValue >= sliderValues[0] && numValue <= MAX_YEAR) {
       const newValues = [sliderValues[0], numValue];
       setSliderValues(newValues);
       debouncedOnAgeChange(newValues[0], newValues[1]);
@@ -85,14 +85,14 @@ export const AgeRangeFilter: React.FC<AgeRangeFilterProps> = ({
     <div className="space-y-4">
       <div>
         <Label className="text-sm font-medium text-foreground">
-          Wiek pojazdu (lata)
+          Rok produkcji
         </Label>
         <div className="mt-2">
           <Slider
             value={sliderValues}
             onValueChange={handleSliderChange}
-            min={MIN_AGE}
-            max={MAX_AGE}
+            min={MIN_YEAR}
+            max={MAX_YEAR}
             step={1}
             className="w-full"
           />
@@ -101,33 +101,33 @@ export const AgeRangeFilter: React.FC<AgeRangeFilterProps> = ({
       
       <div className="flex gap-2">
         <div className="flex-1">
-          <Label htmlFor="min-age" className="text-xs text-muted-foreground">
-            Min. wiek
+          <Label htmlFor="min-year" className="text-xs text-muted-foreground">
+            Min. rok
           </Label>
           <Input
-            id="min-age"
+            id="min-year"
             type="number"
             value={minInput}
             onChange={handleMinInputChange}
-            min={MIN_AGE}
-            max={MAX_AGE}
+            min={MIN_YEAR}
+            max={MAX_YEAR}
             className="h-8 text-xs"
-            placeholder="0"
+            placeholder="2000"
           />
         </div>
         <div className="flex-1">
-          <Label htmlFor="max-age" className="text-xs text-muted-foreground">
-            Maks. wiek
+          <Label htmlFor="max-year" className="text-xs text-muted-foreground">
+            Maks. rok
           </Label>
           <Input
-            id="max-age"
+            id="max-year"
             type="number"
             value={maxInput}
             onChange={handleMaxInputChange}
-            min={MIN_AGE}
-            max={MAX_AGE}
+            min={MIN_YEAR}
+            max={MAX_YEAR}
             className="h-8 text-xs"
-            placeholder="30"
+            placeholder={MAX_YEAR.toString()}
           />
         </div>
       </div>

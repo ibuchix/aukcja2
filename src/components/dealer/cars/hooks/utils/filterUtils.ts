@@ -74,21 +74,18 @@ export const applyFilters = (query: any, filters: AuctionFilters, searchQuery: s
     }
   }
 
-  // Age filters (convert age to year range)
-  const currentYear = new Date().getFullYear();
+  // Year range filters (direct year filtering from age range component)
   if (filters.ageMin && typeof filters.ageMin === 'string') {
-    const ageValue = parseFloat(filters.ageMin);
-    if (!isNaN(ageValue)) {
-      const maxYear = currentYear - ageValue;
-      filteredQuery = filteredQuery.lte('year', maxYear);
+    const yearValue = parseFloat(filters.ageMin);
+    if (!isNaN(yearValue)) {
+      filteredQuery = filteredQuery.gte('year', yearValue);
     }
   }
   
   if (filters.ageMax && typeof filters.ageMax === 'string') {
-    const ageValue = parseFloat(filters.ageMax);
-    if (!isNaN(ageValue)) {
-      const minYear = currentYear - ageValue;
-      filteredQuery = filteredQuery.gte('year', minYear);
+    const yearValue = parseFloat(filters.ageMax);
+    if (!isNaN(yearValue)) {
+      filteredQuery = filteredQuery.lte('year', yearValue);
     }
   }
 
