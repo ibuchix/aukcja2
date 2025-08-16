@@ -160,7 +160,7 @@ export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
               />
             </FormControl>
             <FormDescription className="text-xs text-muted-foreground">
-              Include country code (e.g., +48 for Poland)
+              Wprowadź numer telefonu wraz z numerem kierunkowym kraju
             </FormDescription>
             <FormMessage />
           </FormItem>
