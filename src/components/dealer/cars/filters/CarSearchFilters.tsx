@@ -7,6 +7,7 @@ import { ChevronDown, ChevronUp, SlidersHorizontal } from "lucide-react";
 import { AuctionFilters } from "../../auction/types";
 import { PriceRangeFilter } from "./PriceRangeFilter";
 import { MileageRangeFilter } from "./MileageRangeFilter";
+import { AgeRangeFilter } from "./AgeRangeFilter";
 import { MakeModelFilter } from "./MakeModelFilter";
 import { TransmissionFilter } from "./TransmissionFilter";
 import { FuelTypeFilter } from "./FuelTypeFilter";
@@ -136,6 +137,17 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
             onMileageChange={(min, max) => {
               onFilterChange('mileageMin', min?.toString());
               onFilterChange('mileageMax', max?.toString());
+            }}
+          />
+
+          {/* Age Range Filter */}
+          <AgeRangeFilter 
+            key="age-range-filter"
+            minAge={filters.ageMin ? Number(filters.ageMin) : undefined}
+            maxAge={filters.ageMax ? Number(filters.ageMax) : undefined}
+            onAgeChange={(min, max) => {
+              onFilterChange('ageMin', min?.toString());
+              onFilterChange('ageMax', max?.toString());
             }}
           />
 

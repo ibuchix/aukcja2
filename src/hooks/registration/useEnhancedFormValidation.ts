@@ -44,8 +44,8 @@ export function useEnhancedFormValidation() {
           return false;
         }
         toast({
-          title: "Terms Accepted ✓",
-          description: "Thank you for accepting our terms and conditions",
+          title: "Regulamin zaakceptowany ✓",
+          description: "Dziękujemy za akceptację regulaminu Autaro",
         });
         return true;
       default:

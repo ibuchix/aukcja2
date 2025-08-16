@@ -74,6 +74,24 @@ export const applyFilters = (query: any, filters: AuctionFilters, searchQuery: s
     }
   }
 
+  // Age filters (convert age to year range)
+  const currentYear = new Date().getFullYear();
+  if (filters.ageMin && typeof filters.ageMin === 'string') {
+    const ageValue = parseFloat(filters.ageMin);
+    if (!isNaN(ageValue)) {
+      const maxYear = currentYear - ageValue;
+      filteredQuery = filteredQuery.lte('year', maxYear);
+    }
+  }
+  
+  if (filters.ageMax && typeof filters.ageMax === 'string') {
+    const ageValue = parseFloat(filters.ageMax);
+    if (!isNaN(ageValue)) {
+      const minYear = currentYear - ageValue;
+      filteredQuery = filteredQuery.gte('year', minYear);
+    }
+  }
+
   // Additional string filters
   if (filters.transmission && typeof filters.transmission === 'string') {
     filteredQuery = filteredQuery.ilike('transmission', `%${filters.transmission}%`);

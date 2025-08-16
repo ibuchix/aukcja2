@@ -16,6 +16,10 @@ export interface AuctionFilters {
   mileageMax?: string;
   mileageFrom?: number;
   mileageTo?: number;
+  ageMin?: string;
+  ageMax?: string;
+  ageFrom?: number;
+  ageTo?: number;
   transmission?: string;
   fuelType?: string;
   bodyType?: string;

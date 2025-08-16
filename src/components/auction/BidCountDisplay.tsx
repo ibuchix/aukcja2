@@ -27,7 +27,7 @@ export const BidCountDisplay = ({ carId }: BidCountDisplayProps) => {
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-blue-700">
             <Users className="h-4 w-4" />
-            <span className="text-sm font-medium">Be the first to bid on this vehicle</span>
+            <span className="text-sm font-medium">Złóż pierwszą ofertę na ten samochód</span>
           </div>
         </CardContent>
       </Card>

@@ -43,7 +43,7 @@ export const MaxBidInterface = ({
     return (
       <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
         <p className="text-amber-800">
-          Bidding functionality is only available to verified dealers.
+          Dostęp do licytacji mają wyłącznie zweryfikowani dealerzy. Zweryfikuj konto, aby kontynuować
         </p>
       </div>
     );
