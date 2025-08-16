@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import { LoyaltyAgreementForm } from "@/components/dealer/documents/LoyaltyAgreementForm";
 import { VerificationSuccessCard } from "@/components/dealer/documents/VerificationSuccessCard";
 import { UtilityBillUpload } from "@/components/dealer/documents/UtilityBillUpload";
+import { UtilityBillPendingStatus } from "@/components/dealer/documents/UtilityBillPendingStatus";
 import { AdditionalDocumentsUpload } from "@/components/dealer/documents/AdditionalDocumentsUpload";
 import { UploadedDocumentsList } from "@/components/dealer/documents/UploadedDocumentsList";
 import { useDocumentUpload } from "@/hooks/useDocumentUpload";
@@ -25,6 +26,9 @@ export default function DealerDocuments() {
   // Get dealer profile and verification status
   const { dealerProfile, isLoading: profileLoading } = useDealerProfileSimple();
   const isVerified = dealerProfile?.verification_status === 'approved' || dealerProfile?.is_verified === true;
+  
+  // Check if utility bill documents have been uploaded
+  const hasUtilityBillUploaded = documents.some(doc => doc.document_type === 'utility-bill');
 
   // Document upload functionality
   const {
@@ -95,25 +99,29 @@ export default function DealerDocuments() {
         {/* Show verification success message for verified dealers */}
         {isVerified && <VerificationSuccessCard />}
         
-        {/* Only show upload sections for unverified dealers */}
+        {/* Show utility bill pending status if uploaded but not verified */}
+        {!isVerified && hasUtilityBillUploaded && <UtilityBillPendingStatus />}
+        
+        {/* Only show upload sections for unverified dealers who haven't uploaded utility bill */}
+        {!isVerified && !hasUtilityBillUploaded && (
+          <UtilityBillUpload
+            file={file}
+            uploadLoading={uploadLoading}
+            onFileChange={handleUtilityBillFileChange}
+            onUpload={() => handleUpload(handleUploadSuccess)}
+          />
+        )}
+        
+        {/* Additional documents upload - shown for all unverified dealers */}
         {!isVerified && (
-          <>
-            <UtilityBillUpload
-              file={file}
-              uploadLoading={uploadLoading}
-              onFileChange={handleUtilityBillFileChange}
-              onUpload={() => handleUpload(handleUploadSuccess)}
-            />
-            
-            <AdditionalDocumentsUpload
-              file={file}
-              documentType={documentType}
-              uploadLoading={uploadLoading}
-              onFileChange={handleFileChange}
-              onDocumentTypeChange={setDocumentType}
-              onUpload={() => handleUpload(handleUploadSuccess)}
-            />
-          </>
+          <AdditionalDocumentsUpload
+            file={file}
+            documentType={documentType}
+            uploadLoading={uploadLoading}
+            onFileChange={handleFileChange}
+            onDocumentTypeChange={setDocumentType}
+            onUpload={() => handleUpload(handleUploadSuccess)}
+          />
         )}
         
         {/* Loyalty Agreement Form Section - shown for all dealers */}
