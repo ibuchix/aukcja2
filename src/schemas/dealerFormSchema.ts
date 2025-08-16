@@ -4,81 +4,81 @@ import * as z from "zod";
 export const dealerFormSchema = z.object({
   supervisorName: z.string()
     .min(2, {
-      message: "Supervisor name must be at least 2 characters",
+      message: "Nazwa nadzorcy musi zawierać co najmniej 2 litery",
     })
     .max(255, {
-      message: "Supervisor name cannot exceed 255 characters",
+      message: "Nazwa nadzorcy nie może przekraczać 255 znaków",
     })
-    .refine((value) => /^[a-zA-Z\s-']+$/.test(value), {
-      message: "Supervisor name can only contain letters, spaces, hyphens, and apostrophes",
+    .refine((value) => /^[a-zA-ZĄąĆćĘęŁłŃńÓóŚśŹźŻż\s-']+$/.test(value), {
+      message: "Nazwa nadzorcy może zawierać tylko litery (polskie i angielskie), spacje, myślniki i apostrofy",
     }),
   email: z.string()
     .email({
-      message: "Please enter a valid email address",
+      message: "Wprowadź poprawny adres email",
     })
     .min(5, {
-      message: "Email must be at least 5 characters",
+      message: "Email musi zawierać co najmniej 5 znaków",
     })
     .max(255, {
-      message: "Email cannot exceed 255 characters",
+      message: "Email nie może przekraczać 255 znaków",
     }),
   password: z.string()
     .min(8, {
-      message: "Password must be at least 8 characters",
+      message: "Hasło musi zawierać co najmniej 8 znaków",
     })
     .max(72, {
-      message: "Password cannot exceed 72 characters",
+      message: "Hasło nie może przekraczać 72 znaków",
     }),
   confirmPassword: z.string(),
   phoneNumber: z.string()
     .min(9, {
-      message: "Please enter a valid phone number",
+      message: "Wprowadź poprawny numer telefonu",
     })
     .max(20, {
-      message: "Phone number cannot exceed 20 characters",
+      message: "Numer telefonu nie może przekraczać 20 znaków",
     })
     .refine((value) => /^\+?[\d\s-()]+$/.test(value), {
-      message: "Please enter a valid phone number format",
+      message: "Wprowadź poprawny format numeru telefonu",
     }),
   companyName: z.string()
     .min(2, {
-      message: "Company name must be at least 2 characters",
+      message: "Nazwa firmy musi zawierać co najmniej 2 litery",
     })
     .max(255, {
-      message: "Company name cannot exceed 255 characters",
+      message: "Nazwa firmy nie może przekraczać 255 znaków",
     })
-    .refine((value) => /^[a-zA-Z0-9\s.,&'-]+$/.test(value), {
-      message: "Company name can only contain letters, numbers, spaces, and basic punctuation",
+    .refine((value) => /^[a-zA-ZĄąĆćĘęŁłŃńÓóŚśŹźŻż0-9\s.,&'-]+$/.test(value), {
+      message: "Nazwa firmy może zawierać tylko litery (polskie i angielskie), cyfry, spacje i podstawowe znaki interpunkcyjne",
     }),
   taxId: z.string()
     .length(10, {
       message: "Wprowadź Numer NIP zawierający 10 cyfr",
     })
     .refine((value) => /^\d+$/.test(value), {
-      message: "NIP (Tax ID) must contain only numbers",
+      message: "NIP może zawierać tylko cyfry",
     }),
   businessRegistryNumber: z.string()
     .refine((val) => val.length === 9 || val.length === 14, {
-      message: "REGON number must be either 9 or 14 digits",
+      message: "Numer REGON musi zawierać 9 lub 14 cyfr",
     })
     .refine((value) => /^\d+$/.test(value), {
-      message: "REGON number must contain only numbers",
+      message: "Numer REGON może zawierać tylko cyfry",
     }),
   companyAddress: z.string()
     .min(5, {
-      message: "Please enter a valid company address",
+      message: "Wprowadź poprawny adres firmy",
     })
     .max(500, {
-      message: "Company address cannot exceed 500 characters",
+      message: "Adres firmy nie może przekraczać 500 znaków",
     })
-    .refine((value) => /^[a-zA-Z0-9\s.,/-]+$/.test(value), {
-      message: "Please enter a valid address format",
+    .refine((value) => /^[a-zA-ZĄąĆćĘęŁłŃńÓóŚśŹźŻż0-9\s.,/-]+$/.test(value), {
+      message: "Adres firmy może zawierać tylko litery (polskie i angielskie), cyfry, spacje i podstawowe znaki interpunkcyjne",
     }),
   acceptTerms: z.boolean().refine((val) => val === true, {
-    message: "You must accept the terms and conditions",
+    message: "Musisz zaakceptować regulamin",
   }),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
+  message: "Hasła nie są identyczne",
   path: ["confirmPassword"],
 });
 
