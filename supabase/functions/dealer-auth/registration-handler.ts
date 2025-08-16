@@ -118,12 +118,12 @@ export async function handleDealerRegister(
 
     // Sanitize and prepare metadata
     const cleanedMetadata = sanitizeMetadata(metadata);
-
-    // Check for complete dealer registration first to handle retries gracefully
     const sanitizedEmail = sanitizeString(email).toLowerCase();
-    
+    const dealershipName = cleanedMetadata.companyName || cleanedMetadata.name;
+
+    // EARLY SUCCESS CHECK: Check if complete dealer registration already exists
     try {
-      // Get user by email first
+      // First, get user by email
       const { data: userList, error: userListError } = await supabaseAdmin.auth.admin.listUsers({
         filter: `email.eq.${sanitizedEmail}`
       });
@@ -131,55 +131,31 @@ export async function handleDealerRegister(
       if (!userListError && userList?.users?.length > 0) {
         const existingUser = userList.users[0];
         
-        // Check if dealer profile exists
+        // Check if dealer profile exists with matching dealership name
         const { data: dealerProfile, error: dealerError } = await supabaseAdmin
           .from('dealers')
-          .select('id, verification_status')
+          .select('id, dealership_name, verification_status')
           .eq('user_id', existingUser.id)
+          .eq('dealership_name', dealershipName)
           .single();
         
         if (!dealerError && dealerProfile) {
-          // Complete dealer registration already exists - return success for retry scenarios
-          logInfo(`Complete dealer registration found for ${email}, treating as successful retry`);
-          
-          // Create session for existing user
-          const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
-            userId: existingUser.id
-          });
+          // Complete dealer registration exists with exact match - immediate success
+          logInfo(`Complete dealer registration found for ${email} with dealership ${dealershipName}, treating as successful retry`);
           
           return respondSuccess({
             success: true,
             userId: existingUser.id,
             existingUser: true,
-            session: sessionData?.session || null,
-            message: "Registration successful. You can now log in to your account."
+            message: "Registration completed successfully. Please log in to your account."
           });
         }
-        
-        // User exists but no dealer profile - treat as existing user without dealer role
-        logInfo(`User exists without dealer profile: ${email}`);
       }
-    } catch (checkError) {
-      logWarning("Error during completion check, continuing with normal flow", checkError);
+    } catch (earlyCheckError) {
+      logWarning("Error during early success check, continuing with normal flow", earlyCheckError);
     }
 
-    // Use role-specific email check for new registrations
-    const { data: existsData, error: existsError } = await supabaseAdmin.rpc(
-      "check_email_exists_for_dealer_role",
-      { p_email: sanitizedEmail }
-    );
-
-    if (existsError) {
-      logError("Error checking if email exists", existsError);
-      // Continue despite this error - the procedure will check again
-    } else if (existsData?.exists) {
-      logInfo(`Complete dealer registration found for ${email}, treating as successful retry`);
-      return respondSuccess("Registration completed successfully. Please log in to your account.", {
-        success: true,
-        message: "Registration completed successfully. Please log in to your account.",
-        existingUser: true
-      });
-    }
+    // Continue with new registration process since no existing complete registration found
 
     // Normalize password with our standardized function
     const normalizedPassword = preparePassword(password);
