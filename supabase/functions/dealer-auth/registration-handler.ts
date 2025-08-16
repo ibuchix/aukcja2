@@ -173,8 +173,12 @@ export async function handleDealerRegister(
       logError("Error checking if email exists", existsError);
       // Continue despite this error - the procedure will check again
     } else if (existsData?.exists) {
-      logWarning(`Email ${email} already exists as a dealer. Rejecting registration attempt.`);
-      return respondError("Email already exists as a dealer", 409);
+      logInfo(`Complete dealer registration found for ${email}, treating as successful retry`);
+      return respondSuccess("Registration completed successfully. Please log in to your account.", {
+        success: true,
+        message: "Registration completed successfully. Please log in to your account.",
+        existingUser: true
+      });
     }
 
     // Normalize password with our standardized function
