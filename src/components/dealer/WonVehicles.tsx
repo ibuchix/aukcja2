@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { calculatePlatformFee } from "@/utils/platformFeeCalculator";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Seller Contact Component
 const SellerContactInfo = ({ vehicleId }: { vehicleId: string }) => {
@@ -99,6 +100,7 @@ interface WonVehicle {
 export const WonVehicles = () => {
   const { dealerProfile, isLoading: dealerLoading } = useCurrentDealerProfile();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null);
   const [paymentLoading, setPaymentLoading] = useState<string | null>(null);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
@@ -363,23 +365,40 @@ export const WonVehicles = () => {
   return (
       <div className="space-y-6">
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-body-text">{wonVehicles?.length || 0} vehicles</span>
+      {isMobile ? (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-body-text">{wonVehicles?.length || 0} pojazdów</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="text-red-600 border-red-200 hover:bg-red-50 px-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className="text-red-600 border-red-200 hover:bg-red-50"
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-            Odśwież
-          </Button>
+      ) : (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-body-text">{wonVehicles?.length || 0} vehicles</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="text-red-600 border-red-200 hover:bg-red-50"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+              Odśwież
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       {isLoading ? (
         <div className="grid gap-4">
@@ -406,11 +425,11 @@ export const WonVehicles = () => {
             return (
               <div key={vehicle.id} className="space-y-4">
                 {/* Vehicle Title and Payment Badge */}
-                <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-bold text-body-text">
+                <div className={`${isMobile ? 'space-y-2' : 'flex justify-between items-center'}`}>
+                  <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-body-text`}>
                     {vehicle.vehicle_year} {vehicle.vehicle_make} {vehicle.vehicle_model}
                   </h2>
-                   <div className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+                   <div className={`${isMobile ? 'inline-block' : ''} px-3 py-1 rounded-lg text-sm font-semibold ${
                      vehicle.payment_status === 'paid' ? 'bg-blue-400 text-blue-900' :
                      vehicle.payment_status === 'payment_required' 
                        ? 'bg-yellow-400 text-yellow-900' 
@@ -424,9 +443,9 @@ export const WonVehicles = () => {
                 {/* Main Card */}
                 <Card className="overflow-hidden">
                   <CardContent className="p-0">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'} gap-0`}>
                       {/* Vehicle Image Section */}
-                      <div className="relative bg-gray-100 flex items-center justify-center h-64">
+                      <div className={`relative bg-gray-100 flex items-center justify-center ${isMobile ? 'h-48' : 'h-64'}`}>
                         <img
                           src={getVehicleImage(vehicle.vehicle_images)}
                           alt={`${vehicle.vehicle_year} ${vehicle.vehicle_make} ${vehicle.vehicle_model}`}
@@ -435,21 +454,21 @@ export const WonVehicles = () => {
                       </div>
 
                       {/* Vehicle Details Section */}
-                      <div className="p-6">
-                        <h3 className="text-lg font-semibold text-body-text mb-4">Szczegóły pojazdu</h3>
+                      <div className={`${isMobile ? 'p-4' : 'p-6'}`}>
+                        <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-body-text ${isMobile ? 'mb-3' : 'mb-4'}`}>Szczegóły pojazdu</h3>
                         
-                        <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-2 gap-4'} ${isMobile ? 'mb-4' : 'mb-6'}`}>
                           <div>
                             <p className="text-sm text-subtitle-text uppercase tracking-wide">Przebieg</p>
-                            <p className="font-semibold text-body-text">{vehicle.vehicle_mileage?.toLocaleString() || 'N/A'} km</p>
+                            <p className={`font-semibold text-body-text ${isMobile ? 'text-sm' : ''}`}>{vehicle.vehicle_mileage?.toLocaleString() || 'N/A'} km</p>
                           </div>
                           <div>
                             <p className="text-sm text-subtitle-text uppercase tracking-wide">Data wygrania aukcji</p>
-                            <p className="font-semibold text-body-text">{new Date(vehicle.auction_end_time).toLocaleDateString('en-GB')}</p>
+                            <p className={`font-semibold text-body-text ${isMobile ? 'text-sm' : ''}`}>{new Date(vehicle.auction_end_time).toLocaleDateString('en-GB')}</p>
                           </div>
                         </div>
 
-                        <h4 className="text-lg font-semibold text-body-text mb-4">Szczegóły zakupu</h4>
+                        <h4 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-body-text ${isMobile ? 'mb-3' : 'mb-4'}`}>Szczegóły zakupu</h4>
                         
                         <div className="space-y-3">
                           <div className="flex justify-between items-center p-3 bg-success/20 rounded-lg">
@@ -476,11 +495,11 @@ export const WonVehicles = () => {
                       </div>
 
                       {/* Seller Information Section */}
-                      <div className={`p-6 ${
+                      <div className={`${isMobile ? 'p-4' : 'p-6'} ${
                         vehicle.payment_status === 'paid' ? 'bg-blue-50' : 
                         vehicle.payment_status === 'payment_required' ? 'bg-green-50' : 'bg-orange-50'
                       }`}>
-                        <h3 className="text-lg font-semibold mb-4" style={{ color: '#454545' }}>Dane kontaktowe sprzedawcy</h3>
+                        <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold ${isMobile ? 'mb-3' : 'mb-4'}`} style={{ color: '#454545' }}>Dane kontaktowe sprzedawcy</h3>
                         
                         <div className="text-center mb-6">
                           {vehicle.payment_status === 'paid' ? (
