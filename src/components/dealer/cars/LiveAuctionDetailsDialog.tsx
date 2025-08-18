@@ -232,7 +232,7 @@ export const LiveAuctionDetailsDialog = ({
             {isLive && !hasEnded && !isVerified && (
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                 <p className="text-amber-800">
-                  Bidding is only available to verified dealers. Please complete your dealer verification to access this feature.
+                  Licytowanie jest dostępne tylko dla zweryfikowanych dealerów. Ukończ weryfikację dealera, aby uzyskać dostęp do tej funkcji.
                 </p>
               </div>
             )}

@@ -12,15 +12,15 @@ interface UploadedDocumentsListProps {
 
 function getDocumentTypeName(type: string): string {
   const types: Record<string, string> = {
-    'utility-bill': 'Company Utility Bill',
-    'license': 'Dealer License',
-    'business-registration': 'Business Registration',
-    'tax-document': 'Tax Document',
-    'identity': 'Identity Document',
-    'other': 'Other Document'
+    'utility-bill': 'Rachunek za media',
+    'license': 'Licencja dealera',
+    'business-registration': 'Rejestracja działalności',
+    'tax-document': 'Dokument podatkowy',
+    'identity': 'Dokument tożsamości',
+    'other': 'Inny dokument'
   };
   
-  return types[type] || 'Document';
+  return types[type] || 'Dokument';
 }
 
 export const UploadedDocumentsList: React.FC<UploadedDocumentsListProps> = ({
@@ -28,12 +28,12 @@ export const UploadedDocumentsList: React.FC<UploadedDocumentsListProps> = ({
 }) => {
   return (
     <>
-      <h2 className="text-2xl font-semibold mb-4">Uploaded Documents</h2>
+      <h2 className="text-2xl font-semibold mb-4">Przesłane dokumenty</h2>
       <div className="grid gap-6">
         {documents.length === 0 ? (
           <Card>
             <CardContent className="p-6">
-              <p className="text-center text-muted-foreground">No documents found</p>
+              <p className="text-center text-muted-foreground">Nie znaleziono dokumentów</p>
             </CardContent>
           </Card>
         ) : (
@@ -45,7 +45,7 @@ export const UploadedDocumentsList: React.FC<UploadedDocumentsListProps> = ({
                   {getDocumentTypeName(doc.document_type)}
                   {doc.document_type === 'utility-bill' && (
                     <span className="ml-2 px-2 py-1 bg-[#DC143C]/10 text-[#DC143C] text-xs rounded-full">
-                      PRIORITY
+                      PRIORYTET
                     </span>
                   )}
                 </CardTitle>
@@ -53,31 +53,31 @@ export const UploadedDocumentsList: React.FC<UploadedDocumentsListProps> = ({
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
                   <div>
-                    <p className="text-sm text-muted-foreground">File Name</p>
+                    <p className="text-sm text-muted-foreground">Nazwa pliku</p>
                     <p className="font-semibold truncate">{doc.file_name}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">File Type</p>
+                    <p className="text-sm text-muted-foreground">Typ pliku</p>
                     <p className="font-semibold capitalize">{doc.file_type.split('/').pop()}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Verification Status</p>
+                    <p className="text-sm text-muted-foreground">Status weryfikacji</p>
                     <div className="flex items-center gap-1">
                       {doc.verified ? (
                         <>
                           <CheckCircle className="w-4 h-4 text-green-600" />
-                          <span className="font-semibold text-green-600">Verified</span>
+                          <span className="font-semibold text-green-600">Zweryfikowany</span>
                         </>
                       ) : (
                         <>
                           <XCircle className="w-4 h-4 text-amber-600" />
-                          <span className="font-semibold text-amber-600">Pending</span>
+                          <span className="font-semibold text-amber-600">Oczekujący</span>
                         </>
                       )}
                     </div>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Upload Date</p>
+                    <p className="text-sm text-muted-foreground">Data przesłania</p>
                     <p className="font-semibold">
                       {format(new Date(doc.uploaded_at), 'PP')}
                     </p>
@@ -94,7 +94,7 @@ export const UploadedDocumentsList: React.FC<UploadedDocumentsListProps> = ({
                       disabled={!doc.signedUrl}
                     >
                       <Download className="w-4 h-4 mr-2" />
-                      View Document
+                      Otwórz dokument
                     </Button>
                   </div>
                 </div>
