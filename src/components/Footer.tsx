@@ -1,5 +1,9 @@
 import { FacebookLogo, InstagramLogo, TwitterLogo, TiktokLogo } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
+
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
 const Footer = () => {
   return <footer className="bg-secondary text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -14,9 +18,9 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Szybkie linki</h4>
             <ul className="space-y-2">
-              <li><Link to="/" className="text-gray-400 hover:text-primary">Strona Główna</Link></li>
-              <li><Link to="/dealer/dashboard" className="text-gray-400 hover:text-primary">Aukcja</Link></li>
-              <li><Link to="/pricing" className="text-gray-400 hover:text-primary">Cennik</Link></li>
+              <li><Link to="/" onClick={scrollToTop} className="text-gray-400 hover:text-primary">Strona Główna</Link></li>
+              <li><Link to="/dealer/dashboard" onClick={scrollToTop} className="text-gray-400 hover:text-primary">Aukcja</Link></li>
+              <li><Link to="/pricing" onClick={scrollToTop} className="text-gray-400 hover:text-primary">Cennik</Link></li>
             </ul>
           </div>
           <div>
