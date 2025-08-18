@@ -97,7 +97,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
 
   const canModifyBid = (bid: MyBid) => {
     const timingStatus = getAuctionTimingStatus(bid);
-    return timingStatus === 'scheduled';
+    return timingStatus === 'scheduled' || timingStatus === 'active';
   };
 
   return (
