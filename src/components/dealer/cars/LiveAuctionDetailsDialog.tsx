@@ -43,7 +43,7 @@ export const LiveAuctionDetailsDialog = ({
               />
               <div className="absolute top-4 right-4">
                 <Badge variant={isLive ? "default" : hasEnded ? "secondary" : "outline"} className="text-sm px-3 py-1">
-                  {isLive ? "Live" : hasEnded ? "Ended" : "Scheduled"}
+                  {isLive ? "Aukcja na żywo" : hasEnded ? "Zakończona" : "Zaplanowana"}
                 </Badge>
               </div>
             </div>

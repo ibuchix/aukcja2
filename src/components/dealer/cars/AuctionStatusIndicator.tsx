@@ -22,7 +22,7 @@ export const AuctionStatusIndicator = ({
         return {
           variant: 'secondary' as const,
           icon: <Clock className="h-3 w-3" />,
-          text: 'Scheduled',
+          text: 'Zaplanowana',
           color: 'text-blue-600',
           bgColor: 'bg-blue-50'
         };
@@ -30,7 +30,7 @@ export const AuctionStatusIndicator = ({
         return {
           variant: 'default' as const,
           icon: <Play className="h-3 w-3" />,
-          text: 'Live',
+          text: 'Aukcja na żywo',
           color: 'text-green-600',
           bgColor: 'bg-green-50'
         };
@@ -39,7 +39,7 @@ export const AuctionStatusIndicator = ({
         return {
           variant: 'outline' as const,
           icon: isSold ? <CheckCircle className="h-3 w-3" /> : <StopCircle className="h-3 w-3" />,
-          text: isSold ? 'Sold' : 'Ended',
+          text: isSold ? 'Sprzedana' : 'Zakończona',
           color: isSold ? 'text-green-600' : 'text-gray-600',
           bgColor: isSold ? 'bg-green-50' : 'bg-gray-50'
         };
@@ -47,7 +47,7 @@ export const AuctionStatusIndicator = ({
         return {
           variant: 'secondary' as const,
           icon: <Clock className="h-3 w-3" />,
-          text: 'Unknown',
+          text: 'Status nieznany',
           color: 'text-gray-600',
           bgColor: 'bg-gray-50'
         };
