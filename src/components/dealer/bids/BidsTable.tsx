@@ -113,7 +113,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-          {bids.map((bid) => {
+              {bids.map((bid) => {
               const auctionStatusDisplay = getAuctionStatusDisplay(bid);
               const canModify = canModifyBid(bid);
               
@@ -126,7 +126,10 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                       </div>
                       {auctionStatusDisplay && (
                         <Badge variant={auctionStatusDisplay.variant} className={`w-fit font-medium ${auctionStatusDisplay.className}`}>
-                          <auctionStatusDisplay.icon className="h-3 w-3 mr-1" />
+                          {auctionStatusDisplay.icon && (() => {
+                            const IconComponent = auctionStatusDisplay.icon;
+                            return <IconComponent className="h-3 w-3 mr-1" />;
+                          })()}
                           {auctionStatusDisplay.text}
                         </Badge>
                       )}
