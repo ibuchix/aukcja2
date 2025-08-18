@@ -30,17 +30,16 @@ export const TimelineStep = ({
         {isRight ? (
           <>
             <div className="w-1/2 pr-8 text-right">
-              <ul className="space-y-2 text-subtitle-text">
+              <div className="space-y-2 text-subtitle-text">
                 {bulletPoints.map((point, index) => (
-                  <li key={index} className="flex items-center justify-end">
-                    <span className={`w-2 h-2 bg-${iconColor} rounded-full ml-2`} />
+                  <p key={index} className="text-right">
                     {point}
-                  </li>
+                  </p>
                 ))}
-              </ul>
+              </div>
             </div>
-            <div className={`w-12 h-12 bg-${iconColor} rounded-full flex items-center justify-center z-10`}>
-              <Icon className="text-white w-6 h-6" />
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center shadow-md z-10">
+              <Icon className="w-8 h-8 text-primary" />
             </div>
             <div className="w-1/2 pl-8">
               <h3 className="text-2xl font-bold text-body-text mb-2">{title}</h3>
@@ -53,18 +52,17 @@ export const TimelineStep = ({
               <h3 className="text-2xl font-bold text-body-text mb-2">{title}</h3>
               <p className="text-subtitle-text">{subtitle}</p>
             </div>
-            <div className={`w-12 h-12 bg-${iconColor} rounded-full flex items-center justify-center z-10`}>
-              <Icon className="text-white w-6 h-6" />
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center shadow-md z-10">
+              <Icon className="w-8 h-8 text-primary" />
             </div>
             <div className="w-1/2 pl-8">
-              <ul className="space-y-2 text-subtitle-text">
+              <div className="space-y-2 text-subtitle-text">
                 {bulletPoints.map((point, index) => (
-                  <li key={index} className="flex items-center">
-                    <span className={`w-2 h-2 bg-${iconColor} rounded-full mr-2`} />
+                  <p key={index}>
                     {point}
-                  </li>
+                  </p>
                 ))}
-              </ul>
+              </div>
             </div>
           </>
         )}
