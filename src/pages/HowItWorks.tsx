@@ -21,7 +21,7 @@ const HowItWorks = () => {
             <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-primary to-iris" />
 
             <TimelineStep 
-              title="Rejestracja I weryfikacja"
+              title="Rejestracja i weryfikacja"
               subtitle="Podaj wymagane informacje, aby otworzyć konto dealera na Autaro.pl"
               icon={UserCheck}
               bulletPoints={[

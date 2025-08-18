@@ -13,7 +13,7 @@ export const HeroSection = () => {
         className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10"
       >
         <h1 className={`${isMobile ? 'text-2xl' : 'text-4xl md:text-6xl'} font-bold text-center mb-6 text-primary`}>
-          Autaro.pl to pierwsza w Polsce aukcja samochodowa online, wyłącznie dla dealerów!
+          Jak działa aukcja Autaro.pl
         </h1>
         <p className={`text-body-text text-center ${isMobile ? 'text-base' : 'text-lg md:text-xl'} max-w-3xl mx-auto`}>
           Autaro.pl to pierwsza w Polsce aukcja samochodowa online tylko dla dealerów. Zarejestruj firmę za darmo w kilku krokach i kupuj samochody od prywatnych sprzedawców.
