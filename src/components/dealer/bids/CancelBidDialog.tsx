@@ -33,26 +33,26 @@ export const CancelBidDialog = ({
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Cancel Bid</AlertDialogTitle>
+          <AlertDialogTitle>Anuluj ofertę</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to cancel your bid of{" "}
-            <strong>{formatCurrency(bid.amount)}</strong> on{" "}
+            Czy na pewno chcesz anulować swoją ofertę w wysokości{" "}
+            <strong>{formatCurrency(bid.amount)}</strong> za samochód{" "}
             <strong>{bid.car?.title || `${bid.car?.year} ${bid.car?.make} ${bid.car?.model}`}</strong>?
             <br />
             <br />
-            This action cannot be undone and you will no longer be participating in this auction.
+            To oznacza, że Twoja oferta nie będzie już aktywna za ten samochód.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isLoading}>
-            Keep Bid
+            Pozostaw ofertę
           </AlertDialogCancel>
           <AlertDialogAction 
             onClick={onConfirm}
             disabled={isLoading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isLoading ? "Cancelling..." : "Cancel Bid"}
+            {isLoading ? "Anulowanie..." : "Anuluj ofertę"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

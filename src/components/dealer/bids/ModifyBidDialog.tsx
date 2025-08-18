@@ -48,24 +48,24 @@ export const ModifyBidDialog = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Modify Bid</DialogTitle>
+          <DialogTitle>Modyfikuj ofertę</DialogTitle>
           <DialogDescription>
-            Update your bid for{" "}
+            Zaktualizuj swoją ofertę za{" "}
             <strong>{bid.car?.title || `${bid.car?.year} ${bid.car?.make} ${bid.car?.model}`}</strong>
           </DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label>Current Information</Label>
+            <Label>Aktualne informacje</Label>
             <div className="text-sm text-muted-foreground space-y-1">
-              <div>Your current bid: {formatCurrency(bid.amount)}</div>
-              <div>Enter the new amount you're willing to pay for this vehicle</div>
+              <div>Twoja aktualna oferta: {formatCurrency(bid.amount)}</div>
+              <div>Wprowadź nową kwotę, którą jesteś gotów zapłacić za ten pojazd</div>
             </div>
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="newAmount">New Bid Amount (PLN)</Label>
+            <Label htmlFor="newAmount">Nowa kwota oferty (PLN)</Label>
             <Input
               id="newAmount"
               type="number"
@@ -73,11 +73,11 @@ export const ModifyBidDialog = ({
               step="1"
               value={newAmount}
               onChange={(e) => setNewAmount(e.target.value)}
-              placeholder="Enter your bid amount (PLN)"
+              placeholder="Wprowadź kwotę swojej oferty (PLN)"
             />
             {newAmount && !isValidBid && (
               <p className="text-sm text-destructive">
-                Bid amount must be greater than 0
+                Kwota oferty musi być większa niż 0
               </p>
             )}
           </div>
@@ -90,14 +90,14 @@ export const ModifyBidDialog = ({
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
           >
-            Cancel
+            Anuluj
           </Button>
           <Button
             type="submit"
             onClick={handleSubmit}
             disabled={!isValidBid || isLoading}
           >
-            {isLoading ? "Updating..." : "Update Bid"}
+            {isLoading ? "Aktualizowanie..." : "Zaktualizuj ofertę"}
           </Button>
         </DialogFooter>
       </DialogContent>
