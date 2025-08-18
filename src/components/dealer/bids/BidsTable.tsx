@@ -121,12 +121,9 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                 <TableRow key={bid.id}>
                   <TableCell className="font-medium">
                     <div className="flex flex-col">
-                      <button 
-                        onClick={() => handleViewDetails(bid)}
-                        className="text-left hover:text-primary hover:underline transition-colors font-semibold text-base mb-1"
-                      >
+                      <div className="font-semibold text-base mb-1">
                         {bid.car?.title || `${bid.car?.year} ${bid.car?.make} ${bid.car?.model}`}
-                      </button>
+                      </div>
                       {auctionStatusDisplay && (
                         <Badge variant={auctionStatusDisplay.variant} className={`w-fit font-medium ${auctionStatusDisplay.className}`}>
                           <auctionStatusDisplay.icon className="h-3 w-3 mr-1" />
@@ -155,7 +152,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                         size="sm"
                         onClick={() => handleViewDetails(bid)}
                         title="Zobacz szczegóły"
-                        className="border-gray-500 text-gray-600 hover:bg-gray-50"
+                        className="border-green-500 text-green-600 hover:bg-green-50 bg-green-50/50"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
