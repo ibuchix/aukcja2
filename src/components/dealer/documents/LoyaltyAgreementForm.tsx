@@ -21,7 +21,6 @@ interface LoyaltyAgreementData {
   sellerAddress: string;
   vinNumber: string;
   cancellationReason: string;
-  refundDays: string;
   buyerSignatureDate: string;
   sellerSignatureDate: string;
 }
@@ -41,7 +40,6 @@ export function LoyaltyAgreementForm() {
     sellerAddress: dealerProfile?.address || '',
     vinNumber: '',
     cancellationReason: '',
-    refundDays: '7',
     buyerSignatureDate: new Date().toLocaleDateString('pl-PL'),
     sellerSignatureDate: new Date().toLocaleDateString('pl-PL')
   });
@@ -133,7 +131,7 @@ export function LoyaltyAgreementForm() {
       yPos += 10;
       doc.setFontSize(9);
       const section3Text = [
-        `1. Prowizja zostanie zwrócona w ciągu ${formData.refundDays} dni roboczych od dnia:`,
+        '1. Prowizja zostanie zwrócona w ciągu 7 dni roboczych od dnia:',
         '- Akceptacji autentyczności tego wniosku, którego skan został przesłany',
         'na firmy@auto-strada.pl, razem ze zdjęciami potwierdzającymi powód na odwołanie sprzedaży',
         '2. Zwrot zostanie dokonany na rachunek bankowy, z którego dokonano pierwotnej płatności.',
@@ -261,7 +259,7 @@ ${formData.cancellationReason}
 
 §3 ZWROT PROWIZJI
 
-1. Prowizja zostanie zwrócona w ciągu ${formData.refundDays} dni roboczych od dnia:
+1. Prowizja zostanie zwrócona w ciągu 7 dni roboczych od dnia:
 - Akceptacji autentyczności tego wniosku, którego skan został przesłany na firmy@auto-strada.pl, razem ze zdjęciami potwierdzającymi powód na odwołanie sprzedaży
 2. Zwrot zostanie dokonany na rachunek bankowy, z którego dokonano pierwotnej płatności.
 3. Zobowiązany nie może domagać się odsetek od prowizji.
@@ -333,6 +331,26 @@ Wygenerowano: ${new Date().toLocaleString('pl-PL')}
       </CardHeader>
       <CardContent>
         <div className="grid gap-6">
+          {/* Instructions Box */}
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-yellow-800">Instrukcja wypełnienia formularza</h3>
+                <div className="mt-2 text-sm text-yellow-700">
+                  <p>
+                    Po wypełnieniu tego formularza, pobierz go jako PDF i wyślij na adres firmy@auto-strada.pl wraz ze zdjęciami potwierdzającymi powód odwołania sprzedaży. 
+                    Upewnij się, że numer VIN jest poprawny, ponieważ służy jako referencja dla anulowania.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Company Information - Read Only */}
           <div className="bg-background p-4 rounded-lg border border-accent/20">
             <h3 className="font-semibold text-lg mb-2 text-body-text">AUTO-STRADA (Tikoo Sp. z o.o.)</h3>
@@ -447,13 +465,6 @@ Wygenerowano: ${new Date().toLocaleString('pl-PL')}
                 />
               </div>
               <div>
-                <Label htmlFor="refundDays">Dni na zwrot prowizji</Label>
-                <Input
-                  id="refundDays"
-                  value={formData.refundDays}
-                  onChange={(e) => handleInputChange('refundDays', e.target.value)}
-                  placeholder="7"
-                />
               </div>
             </div>
             
@@ -477,18 +488,18 @@ Wygenerowano: ${new Date().toLocaleString('pl-PL')}
                 <Label htmlFor="buyerSignatureDate">Data podpisu nabywcy</Label>
                 <Input
                   id="buyerSignatureDate"
-                  type="date"
                   value={formData.buyerSignatureDate}
                   onChange={(e) => handleInputChange('buyerSignatureDate', e.target.value)}
+                  placeholder="dd/mm/rrrr"
                 />
               </div>
               <div>
                 <Label htmlFor="sellerSignatureDate">Data podpisu sprzedawcy</Label>
                 <Input
                   id="sellerSignatureDate"
-                  type="date"
                   value={formData.sellerSignatureDate}
                   onChange={(e) => handleInputChange('sellerSignatureDate', e.target.value)}
+                  placeholder="dd/mm/rrrr"
                 />
               </div>
             </div>
