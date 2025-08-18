@@ -120,15 +120,15 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
               return (
                 <TableRow key={bid.id}>
                   <TableCell className="font-medium">
-                    <div>
+                    <div className="flex flex-col">
                       <button 
                         onClick={() => handleViewDetails(bid)}
-                        className="text-left hover:text-primary hover:underline transition-colors"
+                        className="text-left hover:text-primary hover:underline transition-colors font-semibold text-base mb-1"
                       >
                         {bid.car?.title || `${bid.car?.year} ${bid.car?.make} ${bid.car?.model}`}
                       </button>
                       {auctionStatusDisplay && (
-                        <Badge variant={auctionStatusDisplay.variant} className={`mt-1 font-medium ${auctionStatusDisplay.className}`}>
+                        <Badge variant={auctionStatusDisplay.variant} className={`w-fit font-medium ${auctionStatusDisplay.className}`}>
                           <auctionStatusDisplay.icon className="h-3 w-3 mr-1" />
                           {auctionStatusDisplay.text}
                         </Badge>
@@ -140,16 +140,11 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                   </TableCell>
                   <TableCell>
                     {bid.car?.auction_end_time ? (
-                      <div className="flex flex-col">
-                        <span>{format(new Date(bid.car.auction_end_time), "MMM d, HH:mm")}</span>
-                        {getAuctionTimingStatus(bid) === 'scheduled' && (
-                          <Badge variant="outline" className="text-xs w-fit mt-1 font-medium border-2 bg-blue-50 text-blue-700 border-blue-300">
-                            Zaplanowana
-                          </Badge>
-                        )}
+                      <div className="text-sm font-medium">
+                        {format(new Date(bid.car.auction_end_time), "MMM d, HH:mm")}
                       </div>
                     ) : (
-                      "N/A"
+                      <span className="text-muted-foreground">N/A</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
