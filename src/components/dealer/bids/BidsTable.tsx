@@ -11,11 +11,12 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, X, Clock } from "lucide-react";
+import { Edit, X, Clock, Eye } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { MyBid } from "./types";
 import { CancelBidDialog } from "./CancelBidDialog";
 import { ModifyBidDialog } from "./ModifyBidDialog";
+import { BidCarDetailsDialog } from "./BidCarDetailsDialog";
 import { useBidActions } from "@/hooks/useBidActions";
 import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
 
@@ -29,6 +30,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
   
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [modifyDialogOpen, setModifyDialogOpen] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedBid, setSelectedBid] = useState<MyBid | null>(null);
   const [isModifying, setIsModifying] = useState(false);
 
@@ -40,6 +42,11 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
   const handleModifyBid = (bid: MyBid) => {
     setSelectedBid(bid);
     setModifyDialogOpen(true);
+  };
+
+  const handleViewDetails = (bid: MyBid) => {
+    setSelectedBid(bid);
+    setDetailsDialogOpen(true);
   };
 
   const confirmCancelBid = () => {
@@ -82,7 +89,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
       case 'ended':
         return { text: 'Aukcja zakończona', variant: 'secondary' as const, icon: Clock, className: 'bg-gray-100 text-gray-800 border-gray-300' };
       case 'scheduled':
-        return { text: 'Scheduled', variant: 'outline' as const, icon: Clock, className: 'bg-blue-50 text-blue-700 border-blue-300' };
+        return { text: 'Zaplanowana', variant: 'outline' as const, icon: Clock, className: 'bg-blue-50 text-blue-700 border-blue-300' };
       default:
         return null;
     }
@@ -114,7 +121,12 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                 <TableRow key={bid.id}>
                   <TableCell className="font-medium">
                     <div>
-                      <div>{bid.car?.title || `${bid.car?.year} ${bid.car?.make} ${bid.car?.model}`}</div>
+                      <button 
+                        onClick={() => handleViewDetails(bid)}
+                        className="text-left hover:text-primary hover:underline transition-colors"
+                      >
+                        {bid.car?.title || `${bid.car?.year} ${bid.car?.make} ${bid.car?.model}`}
+                      </button>
                       {auctionStatusDisplay && (
                         <Badge variant={auctionStatusDisplay.variant} className={`mt-1 font-medium ${auctionStatusDisplay.className}`}>
                           <auctionStatusDisplay.icon className="h-3 w-3 mr-1" />
@@ -132,7 +144,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                         <span>{format(new Date(bid.car.auction_end_time), "MMM d, HH:mm")}</span>
                         {getAuctionTimingStatus(bid) === 'scheduled' && (
                           <Badge variant="outline" className="text-xs w-fit mt-1 font-medium border-2 bg-blue-50 text-blue-700 border-blue-300">
-                            Scheduled
+                            Zaplanowana
                           </Badge>
                         )}
                       </div>
@@ -142,6 +154,17 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
+                      {/* View Details Button - Always Available */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewDetails(bid)}
+                        title="Zobacz szczegóły"
+                        className="border-gray-500 text-gray-600 hover:bg-gray-50"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      
                       {canModify ? (
                         <>
                           <Button
@@ -149,7 +172,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                             size="sm"
                             onClick={() => handleModifyBid(bid)}
                             disabled={isModifying}
-                            title="Modify bid"
+                            title="Modyfikuj ofertę"
                             className="border-blue-500 text-blue-600 hover:bg-blue-50"
                           >
                             <Edit className="h-4 w-4" />
@@ -159,7 +182,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                             size="sm"
                             onClick={() => handleCancelBid(bid)}
                             disabled={isCancelling}
-                            title="Cancel bid"
+                            title="Anuluj ofertę"
                             className="border-red-500 text-red-600 hover:bg-red-50"
                           >
                             <X className="h-4 w-4" />
@@ -170,7 +193,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                           <Badge variant="secondary" className="text-xs font-medium bg-gray-100 text-gray-700">
                             {getAuctionTimingStatus(bid) === 'active' ? "Aukcja na żywo" 
                              : getAuctionTimingStatus(bid) === 'ended' ? "Aukcja zakończona" 
-                             : "No Actions"}
+                             : "Brak akcji"}
                           </Badge>
                           
                           {/* Win/Loss indicator - only show for ended auctions */}
@@ -183,7 +206,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                                   : 'bg-red-100 text-red-800 border-red-200'
                               }`}
                             >
-                              {bid.auctionResult === 'won' ? '🎉 Wygralo' : '❌ Zugbiony'}
+                              {bid.auctionResult === 'won' ? '🎉 Wygrałeś' : '❌ Przegrałeś'}
                             </Badge>
                           )}
                         </div>
@@ -211,6 +234,12 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
         bid={selectedBid}
         onConfirm={confirmModifyBid}
         isLoading={isModifying}
+      />
+
+      <BidCarDetailsDialog
+        isOpen={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        bid={selectedBid}
       />
     </>
   );
