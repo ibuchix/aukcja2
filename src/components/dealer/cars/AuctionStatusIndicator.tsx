@@ -47,9 +47,9 @@ export const AuctionStatusIndicator = ({
         return {
           variant: 'secondary' as const,
           icon: <Clock className="h-3 w-3" />,
-          text: 'Status nieznany',
-          color: 'text-gray-600',
-          bgColor: 'bg-gray-50'
+          text: 'W aukcji',
+          color: 'text-orange-600',
+          bgColor: 'bg-orange-50'
         };
     }
   };
