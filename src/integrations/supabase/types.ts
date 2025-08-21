@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -451,10 +451,13 @@ export type Database = {
           car_id: string | null
           category: string | null
           created_at: string | null
+          display_order: number | null
           file_path: string
           file_type: string
           id: string
           image_metadata: Json | null
+          seller_id: string
+          session_id: string | null
           updated_at: string | null
           upload_status: string | null
         }
@@ -462,10 +465,13 @@ export type Database = {
           car_id?: string | null
           category?: string | null
           created_at?: string | null
+          display_order?: number | null
           file_path: string
           file_type: string
           id?: string
           image_metadata?: Json | null
+          seller_id: string
+          session_id?: string | null
           updated_at?: string | null
           upload_status?: string | null
         }
@@ -473,10 +479,13 @@ export type Database = {
           car_id?: string | null
           category?: string | null
           created_at?: string | null
+          display_order?: number | null
           file_path?: string
           file_type?: string
           id?: string
           image_metadata?: Json | null
+          seller_id?: string
+          session_id?: string | null
           updated_at?: string | null
           upload_status?: string | null
         }
@@ -500,6 +509,7 @@ export type Database = {
           awaiting_seller_decision: boolean
           created_at: string
           current_bid: number | null
+          email_notification_sent: boolean
           features: Json | null
           finance_amount: number | null
           form_metadata: Json | null
@@ -522,6 +532,7 @@ export type Database = {
           registration_number: string | null
           required_photos: Json | null
           reserve_price: number
+          rim_photos: Json | null
           seat_material: string | null
           seller_id: string | null
           seller_name: string | null
@@ -544,6 +555,7 @@ export type Database = {
           awaiting_seller_decision?: boolean
           created_at?: string
           current_bid?: number | null
+          email_notification_sent?: boolean
           features?: Json | null
           finance_amount?: number | null
           form_metadata?: Json | null
@@ -566,6 +578,7 @@ export type Database = {
           registration_number?: string | null
           required_photos?: Json | null
           reserve_price?: number
+          rim_photos?: Json | null
           seat_material?: string | null
           seller_id?: string | null
           seller_name?: string | null
@@ -588,6 +601,7 @@ export type Database = {
           awaiting_seller_decision?: boolean
           created_at?: string
           current_bid?: number | null
+          email_notification_sent?: boolean
           features?: Json | null
           finance_amount?: number | null
           form_metadata?: Json | null
@@ -610,6 +624,7 @@ export type Database = {
           registration_number?: string | null
           required_photos?: Json | null
           reserve_price?: number
+          rim_photos?: Json | null
           seat_material?: string | null
           seller_id?: string | null
           seller_name?: string | null
@@ -1126,6 +1141,42 @@ export type Database = {
           },
         ]
       }
+      email_notification_events: {
+        Row: {
+          car_id: string
+          created_at: string
+          dealer_id: string | null
+          id: string
+          message_id: string | null
+          metadata: Json
+          recipient_email: string
+          subject: string
+          type: string
+        }
+        Insert: {
+          car_id: string
+          created_at?: string
+          dealer_id?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json
+          recipient_email: string
+          subject: string
+          type: string
+        }
+        Update: {
+          car_id?: string
+          created_at?: string
+          dealer_id?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json
+          recipient_email?: string
+          subject?: string
+          type?: string
+        }
+        Relationships: []
+      }
       export_history: {
         Row: {
           created_at: string | null
@@ -1374,6 +1425,102 @@ export type Database = {
           title?: string
           type?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      photo_upload_audit_logs: {
+        Row: {
+          action: string
+          car_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          file_size_total: number | null
+          id: string
+          ip_address: string | null
+          photo_count: number | null
+          processing_time_ms: number | null
+          request_id: string
+          security_checks: Json | null
+          session_id: string | null
+          status: string
+          user_agent: string | null
+          user_id: string
+          validation_errors: Json | null
+        }
+        Insert: {
+          action: string
+          car_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          file_size_total?: number | null
+          id?: string
+          ip_address?: string | null
+          photo_count?: number | null
+          processing_time_ms?: number | null
+          request_id: string
+          security_checks?: Json | null
+          session_id?: string | null
+          status: string
+          user_agent?: string | null
+          user_id: string
+          validation_errors?: Json | null
+        }
+        Update: {
+          action?: string
+          car_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          file_size_total?: number | null
+          id?: string
+          ip_address?: string | null
+          photo_count?: number | null
+          processing_time_ms?: number | null
+          request_id?: string
+          security_checks?: Json | null
+          session_id?: string | null
+          status?: string
+          user_agent?: string | null
+          user_id?: string
+          validation_errors?: Json | null
+        }
+        Relationships: []
+      }
+      photo_upload_rate_limits: {
+        Row: {
+          created_at: string | null
+          daily_quota: number | null
+          hourly_quota: number | null
+          id: string
+          last_upload_date: string | null
+          last_upload_hour: string | null
+          updated_at: string | null
+          uploads_count: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          daily_quota?: number | null
+          hourly_quota?: number | null
+          id?: string
+          last_upload_date?: string | null
+          last_upload_hour?: string | null
+          updated_at?: string | null
+          uploads_count?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          daily_quota?: number | null
+          hourly_quota?: number | null
+          id?: string
+          last_upload_date?: string | null
+          last_upload_hour?: string | null
+          updated_at?: string | null
+          uploads_count?: number | null
           user_id?: string
         }
         Relationships: []
@@ -1669,13 +1816,13 @@ export type Database = {
       activate_listing: {
         Args: {
           p_listing_id: string
-          p_user_id: string
           p_reserve_price?: number
+          p_user_id: string
         }
         Returns: Json
       }
       admin_end_auction: {
-        Args: { p_car_id: string; p_admin_id: string; p_sold?: boolean }
+        Args: { p_admin_id: string; p_car_id: string; p_sold?: boolean }
         Returns: Json
       }
       admin_get_active_auctions: {
@@ -1689,6 +1836,7 @@ export type Database = {
           awaiting_seller_decision: boolean
           created_at: string
           current_bid: number | null
+          email_notification_sent: boolean
           features: Json | null
           finance_amount: number | null
           form_metadata: Json | null
@@ -1711,6 +1859,7 @@ export type Database = {
           registration_number: string | null
           required_photos: Json | null
           reserve_price: number
+          rim_photos: Json | null
           seat_material: string | null
           seller_id: string | null
           seller_name: string | null
@@ -1728,18 +1877,18 @@ export type Database = {
       admin_get_all_dealers: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
-          user_id: string
-          supervisor_name: string
-          dealership_name: string
-          tax_id: string
-          business_registry_number: string
           address: string
-          license_number: string
-          verification_status: string
-          is_verified: boolean
+          business_registry_number: string
           created_at: string
+          dealership_name: string
+          id: string
+          is_verified: boolean
+          license_number: string
+          supervisor_name: string
+          tax_id: string
           updated_at: string
+          user_id: string
+          verification_status: string
         }[]
       }
       admin_get_auction_listings: {
@@ -1753,6 +1902,7 @@ export type Database = {
           awaiting_seller_decision: boolean
           created_at: string
           current_bid: number | null
+          email_notification_sent: boolean
           features: Json | null
           finance_amount: number | null
           form_metadata: Json | null
@@ -1775,6 +1925,7 @@ export type Database = {
           registration_number: string | null
           required_photos: Json | null
           reserve_price: number
+          rim_photos: Json | null
           seat_material: string | null
           seller_id: string | null
           seller_name: string | null
@@ -1790,7 +1941,7 @@ export type Database = {
         }[]
       }
       approve_listing: {
-        Args: { p_listing_id: string; p_admin_id: string; p_notes?: string }
+        Args: { p_admin_id: string; p_listing_id: string; p_notes?: string }
         Returns: Json
       }
       associate_temp_uploads_with_car: {
@@ -1810,11 +1961,11 @@ export type Database = {
         Returns: number
       }
       calculate_reserve_price_from_min_med: {
-        Args: { p_price_min: number; p_price_med: number }
+        Args: { p_price_med: number; p_price_min: number }
         Returns: number
       }
       can_perform_action: {
-        Args: { p_action: string; p_entity_type: string; p_entity_id: string }
+        Args: { p_action: string; p_entity_id: string; p_entity_type: string }
         Returns: boolean
       }
       check_auction_system_health: {
@@ -1841,8 +1992,12 @@ export type Database = {
         Args: { tax_id: string }
         Returns: Json
       }
+      check_upload_rate_limit: {
+        Args: { p_upload_count?: number; p_user_id: string }
+        Returns: Json
+      }
       check_vin_reservation: {
-        Args: { p_vin: string; p_user_id: string }
+        Args: { p_user_id: string; p_vin: string }
         Returns: Json
       }
       cleanup_expired_vin_reservations: {
@@ -1858,7 +2013,7 @@ export type Database = {
         Returns: Json
       }
       create_admin_user: {
-        Args: { p_user_id: string; p_full_name?: string }
+        Args: { p_full_name?: string; p_user_id: string }
         Returns: boolean
       }
       create_car_listing: {
@@ -1867,14 +2022,14 @@ export type Database = {
       }
       create_dealer_with_profile: {
         Args: {
+          p_address: string
+          p_business_registry_number: string
+          p_company_name: string
           p_email: string
           p_password: string
-          p_supervisor_name: string
-          p_company_name: string
-          p_tax_id: string
-          p_business_registry_number: string
-          p_address: string
           p_phone_number?: string
+          p_supervisor_name: string
+          p_tax_id: string
         }
         Returns: Json
       }
@@ -1888,10 +2043,10 @@ export type Database = {
       }
       create_vin_reservation: {
         Args: {
-          p_vin: string
+          p_duration_minutes?: number
           p_user_id: string
           p_valuation_data?: Json
-          p_duration_minutes?: number
+          p_vin: string
         }
         Returns: Json
       }
@@ -1910,9 +2065,9 @@ export type Database = {
       debug_dealer_access: {
         Args: { p_user_id: string }
         Returns: {
+          error_message: string
           has_access: boolean
           record_exists: boolean
-          error_message: string
         }[]
       }
       ensure_seller_registration: {
@@ -1944,18 +2099,18 @@ export type Database = {
       fetch_seller_auction_results_complete: {
         Args: { p_seller_id: string }
         Returns: {
-          id: string
+          auction_end_time: string
           car_id: string
-          final_price: number
-          total_bids: number
-          unique_bidders: number
-          sale_status: string
           created_at: string
-          title: string
+          final_price: number
+          id: string
           make: string
           model: string
+          sale_status: string
+          title: string
+          total_bids: number
+          unique_bidders: number
           year: number
-          auction_end_time: string
         }[]
       }
       fetch_seller_performance: {
@@ -1986,8 +2141,8 @@ export type Database = {
       }
       get_auction_timing_status: {
         Args: {
-          schedule_start_time: string
           schedule_end_time: string
+          schedule_start_time: string
           schedule_status: string
         }
         Returns: string
@@ -2004,22 +2159,40 @@ export type Database = {
         Args: { p_car_id: string; p_user_id: string }
         Returns: Json
       }
+      get_car_details_for_ownership: {
+        Args: { p_car_id: string; p_user_id: string }
+        Returns: {
+          car_id: string
+          seller_id: string
+        }[]
+      }
       get_car_ownership_history: {
         Args: { p_car_id: string }
         Returns: {
           change_time: string
           change_type: string
-          previous_status: string
-          new_status: string
-          is_draft: boolean
           changed_by: string
+          is_draft: boolean
+          new_status: string
+          previous_status: string
+        }[]
+      }
+      get_car_summary_for_notifications: {
+        Args: { p_car_id: string }
+        Returns: {
+          auction_end_time: string
+          make: string
+          model: string
+          seller_id: string
+          title: string
+          year: number
         }[]
       }
       get_correct_auction_status: {
         Args: {
-          p_start_time: string
-          p_end_time: string
           p_current_status?: Database["public"]["Enums"]["auction_schedule_status"]
+          p_end_time: string
+          p_start_time: string
         }
         Returns: Database["public"]["Enums"]["auction_schedule_status"]
       }
@@ -2048,14 +2221,26 @@ export type Database = {
         Args: { p_user_id?: string }
         Returns: Json
       }
+      get_dealer_user_id: {
+        Args: { p_dealer_id: string }
+        Returns: string
+      }
+      get_email_notification_counts: {
+        Args: { p_car_ids: string[] }
+        Returns: {
+          car_id: string
+          send_count: number
+          type: string
+        }[]
+      }
       get_live_auction_schedules: {
         Args: Record<PropertyKey, never>
         Returns: {
           car_id: string
-          status: string
-          start_time: string
           end_time: string
           is_manually_controlled: boolean
+          start_time: string
+          status: string
         }[]
       }
       get_profile: {
@@ -2080,6 +2265,7 @@ export type Database = {
           awaiting_seller_decision: boolean
           created_at: string
           current_bid: number | null
+          email_notification_sent: boolean
           features: Json | null
           finance_amount: number | null
           form_metadata: Json | null
@@ -2102,6 +2288,7 @@ export type Database = {
           registration_number: string | null
           required_photos: Json | null
           reserve_price: number
+          rim_photos: Json | null
           seat_material: string | null
           seller_id: string | null
           seller_name: string | null
@@ -2127,6 +2314,7 @@ export type Database = {
           awaiting_seller_decision: boolean
           created_at: string
           current_bid: number | null
+          email_notification_sent: boolean
           features: Json | null
           finance_amount: number | null
           form_metadata: Json | null
@@ -2149,6 +2337,7 @@ export type Database = {
           registration_number: string | null
           required_photos: Json | null
           reserve_price: number
+          rim_photos: Json | null
           seat_material: string | null
           seller_id: string | null
           seller_name: string | null
@@ -2182,6 +2371,14 @@ export type Database = {
           verification_status: string
         }[]
       }
+      get_session_photos: {
+        Args: { p_session_id: string; p_user_id: string }
+        Returns: {
+          category: string
+          file_path: string
+          id: string
+        }[]
+      }
       get_table_columns: {
         Args: { p_table_name: string }
         Returns: {
@@ -2199,7 +2396,7 @@ export type Database = {
         Returns: Json
       }
       get_vin_valuation_cache: {
-        Args: { p_vin: string; p_mileage: number; p_log_id?: string }
+        Args: { p_log_id?: string; p_mileage: number; p_vin: string }
         Returns: Json
       }
       is_admin_user: {
@@ -2214,6 +2411,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      is_service_role: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_verified_seller: {
         Args: { p_user_id?: string }
         Returns: boolean
@@ -2223,16 +2424,16 @@ export type Database = {
         Returns: boolean
       }
       is_vin_available_for_user: {
-        Args: { p_vin: string; p_user_id: string }
+        Args: { p_user_id: string; p_vin: string }
         Returns: boolean
       }
       log_admin_action: {
         Args: {
-          p_admin_id: string
           p_action: Database["public"]["Enums"]["audit_log_type"]
-          p_entity_type: string
-          p_entity_id: string
+          p_admin_id: string
           p_details?: Json
+          p_entity_id: string
+          p_entity_type: string
           p_ip_address?: string
           p_user_agent?: string
         }
@@ -2242,17 +2443,21 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      mark_car_email_notification_sent: {
+        Args: { p_car_id: string }
+        Returns: boolean
+      }
       perform_admin_action: {
         Args: {
           p_action: string
-          p_entity_type: string
-          p_entity_id: string
           p_details?: Json
+          p_entity_id: string
+          p_entity_type: string
         }
         Returns: boolean
       }
       place_bid: {
-        Args: { p_car_id: string; p_dealer_id: string; p_amount: number }
+        Args: { p_amount: number; p_car_id: string; p_dealer_id: string }
         Returns: Json
       }
       process_auction_end: {
@@ -2313,20 +2518,24 @@ export type Database = {
       }
       reject_dealer: {
         Args: {
-          p_dealer_id: string
           p_admin_id: string
-          p_rejection_reason: string
+          p_dealer_id: string
           p_notes?: string
+          p_rejection_reason: string
         }
         Returns: Json
       }
       reject_listing: {
         Args: {
-          p_listing_id: string
           p_admin_id: string
-          p_rejection_reason: string
+          p_listing_id: string
           p_notes?: string
+          p_rejection_reason: string
         }
+        Returns: Json
+      }
+      reset_upload_rate_limits: {
+        Args: { p_user_id?: string }
         Returns: Json
       }
       set_temp_uploads_data: {
@@ -2334,7 +2543,7 @@ export type Database = {
         Returns: boolean
       }
       store_vin_valuation_cache: {
-        Args: { p_vin: string; p_mileage: number; p_valuation_data: Json }
+        Args: { p_mileage: number; p_valuation_data: Json; p_vin: string }
         Returns: undefined
       }
       sync_auction_results_with_seller_decisions: {
@@ -2349,14 +2558,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: {
           car_id: string
-          status: string
-          start_time: string
           end_time: string
           is_manually_controlled: boolean
+          start_time: string
+          status: string
         }[]
       }
       transition_car_status: {
-        Args: { p_car_id: string; p_new_status: string; p_is_draft?: boolean }
+        Args: { p_car_id: string; p_is_draft?: boolean; p_new_status: string }
         Returns: Json
       }
       transition_ended_auctions: {
@@ -2369,25 +2578,34 @@ export type Database = {
       }
       update_dealer_profile: {
         Args: {
-          p_user_id: string
-          p_supervisor_name: string
-          p_dealership_name: string
           p_address: string
+          p_dealership_name: string
           p_phone_number?: string
+          p_supervisor_name: string
+          p_user_id: string
         }
         Returns: Json
       }
       update_system_health: {
         Args: {
           p_component_name: string
-          p_status: Database["public"]["Enums"]["system_component_health"]
           p_details?: Json
+          p_status: Database["public"]["Enums"]["system_component_health"]
         }
         Returns: undefined
       }
       update_won_vehicle_payment_status: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      upload_car_photo: {
+        Args: {
+          p_car_id: string
+          p_category: string
+          p_file_path: string
+          p_file_type?: string
+        }
+        Returns: Json
       }
       upsert_car_listing: {
         Args: { car_data: Json; is_draft?: boolean }
@@ -2397,6 +2615,14 @@ export type Database = {
         Args: { phone_number: string }
         Returns: Json
       }
+      validate_car_photos: {
+        Args: { p_car_id: string }
+        Returns: Json
+      }
+      validate_image_category: {
+        Args: { category_value: string }
+        Returns: boolean
+      }
       validate_polish_nip: {
         Args: { nip_number: string }
         Returns: Json
@@ -2404,10 +2630,10 @@ export type Database = {
       validate_seller_decision_consistency: {
         Args: Record<PropertyKey, never>
         Returns: {
-          car_id: string
           auction_result_decision: string
-          seller_bid_decision: string
+          car_id: string
           is_consistent: boolean
+          seller_bid_decision: string
         }[]
       }
       validate_vin: {
@@ -2419,11 +2645,11 @@ export type Database = {
         Returns: Json
       }
       verify_dealer: {
-        Args: { p_dealer_id: string; p_admin_id: string; p_notes?: string }
+        Args: { p_admin_id: string; p_dealer_id: string; p_notes?: string }
         Returns: Json
       }
       verify_password: {
-        Args: { uuid: string; plain_text: string }
+        Args: { plain_text: string; uuid: string }
         Returns: boolean
       }
       withdraw_car_listing: {

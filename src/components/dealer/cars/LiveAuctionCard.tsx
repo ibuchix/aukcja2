@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin } from "lucide-react";
 import { AuctionTimer } from "@/components/auction/AuctionTimer";
 import { AuctionStatusIndicator } from "./AuctionStatusIndicator";
+import { getPrimaryImage } from "@/utils/imageUtils";
 
 interface LiveAuctionCardProps {
   car: any;
@@ -33,12 +34,6 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
     }).format(numPrice);
   };
 
-  const getImageUrl = (images: string[] | string) => {
-    if (Array.isArray(images) && images.length > 0) {
-      return images[0];
-    }
-    return '/placeholder.svg';
-  };
 
   // Get auction end time from schedule data or fallback
   const auctionEndTime = car.scheduleEndTime || car.auction_end_time;
@@ -135,7 +130,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
     >
       <div className="aspect-video relative">
         <img 
-          src={getImageUrl(car.images)} 
+          src={getPrimaryImage(car)} 
           alt={`${car.make} ${car.model}`}
           className="w-full h-full object-cover"
         />

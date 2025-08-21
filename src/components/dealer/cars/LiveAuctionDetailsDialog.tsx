@@ -6,6 +6,7 @@ import { SimpleBidManager } from "@/components/auction/SimpleBidManager";
 import { BidCountDisplay } from "@/components/auction/BidCountDisplay";
 import { AuctionTimer } from "@/components/auction/AuctionTimer";
 import { formatCurrency } from "@/lib/utils";
+import { getPrimaryImage } from "@/utils/imageUtils";
 
 interface LiveAuctionDetailsDialogProps {
   car: any;
@@ -37,7 +38,7 @@ export const LiveAuctionDetailsDialog = ({
           <div className="xl:col-span-2 space-y-6">
             <div className="aspect-video relative max-w-2xl">
               <img 
-                src={Array.isArray(car.images) && car.images.length > 0 ? car.images[0] : '/placeholder.svg'}
+                src={getPrimaryImage(car)}
                 alt={`${car.make} ${car.model}`}
                 className="w-full h-full object-cover rounded-lg shadow-md"
               />
