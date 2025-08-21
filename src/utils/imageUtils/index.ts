@@ -10,3 +10,13 @@ export {
 } from "./fetchers";
 export { uploadCarImageToStorage } from "./upload";
 export { debugCarImages } from "./debug";
+export { 
+  fetchCarFileUploads, 
+  fetchCarFileUploadsById, 
+  getStorageImageUrl,
+  organizeImagesByCategory,
+  getPrimaryImageFromUploads,
+  getAllImagesFromUploads,
+  getImageCountFromUploads,
+  type CarFileUpload
+} from "./carFileUploads";

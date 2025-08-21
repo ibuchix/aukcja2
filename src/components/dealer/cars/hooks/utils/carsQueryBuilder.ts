@@ -4,6 +4,7 @@ import { AuctionFilters } from "../../../auction/types";
 import { applyFilters } from "./filterUtils";
 import { applySorting } from "./sortUtils";
 import { applyPagination } from "./paginationUtils";
+import { fetchCarFileUploads, type CarFileUpload } from "@/utils/imageUtils/carFileUploads";
 
 // Enhanced type guard for car objects with proper validation and debugging
 const isValidCarObject = (car: any): car is Record<string, any> => {
@@ -105,7 +106,7 @@ export const fetchCarsForSchedules = async (
   });
 
   // Execute the query
-  const { data, error } = await query;
+  const { data: queryData, error } = await query;
 
   if (error) {
     console.error('❌ [CARS QUERY ERROR] [ALWAYS SHOWN]', {
@@ -118,17 +119,17 @@ export const fetchCarsForSchedules = async (
   }
 
   // Enhanced validation and debugging
-  if (!Array.isArray(data)) {
+  if (!Array.isArray(queryData)) {
     console.log('❌ [CARS QUERY DATA ERROR] [ALWAYS SHOWN]', {
       timestamp: new Date().toISOString(),
       error: 'Data is not an array',
-      dataType: typeof data,
-      data: data
+      dataType: typeof queryData,
+      data: queryData
     });
     return [];
   }
 
-  if (data.length === 0) {
+  if (queryData.length === 0) {
     console.log('⚠️ [CARS QUERY EMPTY] [ALWAYS SHOWN]', {
       timestamp: new Date().toISOString(),
       message: 'Query returned empty array',
@@ -138,8 +139,51 @@ export const fetchCarsForSchedules = async (
     return [];
   }
 
+  // Fetch car file uploads for all retrieved cars
+  let carsWithImages = queryData;
+  try {
+    const carIdsArray = queryData.map((car: any) => car?.id).filter(Boolean);
+    const fileUploads = await fetchCarFileUploads(carIdsArray);
+    
+    console.log('📸 [CAR FILE UPLOADS] [ALWAYS SHOWN]', {
+      timestamp: new Date().toISOString(),
+      carsCount: carIdsArray.length,
+      uploadsCount: fileUploads.length,
+      message: 'Fetched car file uploads'
+    });
+
+    // Organize uploads by car ID
+    const uploadsByCarId = fileUploads.reduce((acc, upload) => {
+      if (!acc[upload.car_id]) {
+        acc[upload.car_id] = [];
+      }
+      acc[upload.car_id].push(upload);
+      return acc;
+    }, {} as Record<string, CarFileUpload[]>);
+
+    // Attach file uploads to each car
+    carsWithImages = queryData.map((car: any) => ({
+      ...car,
+      fileUploads: uploadsByCarId[car?.id] || []
+    }));
+    
+    console.log('🚗 [CARS WITH IMAGES] [ALWAYS SHOWN]', {
+      timestamp: new Date().toISOString(),
+      carsWithImagesCount: carsWithImages.filter((car: any) => car.fileUploads?.length > 0).length,
+      totalCarsCount: carsWithImages.length
+    });
+
+  } catch (uploadError) {
+    console.error('❌ [CAR FILE UPLOADS ERROR] [ALWAYS SHOWN]', {
+      timestamp: new Date().toISOString(),
+      error: uploadError,
+      message: 'Failed to fetch car file uploads, continuing without images'
+    });
+    // Continue with cars but without file uploads
+  }
+
   // Filter out invalid entries and log detailed info
-  const validCarsForSample = data.filter(isValidCarObject);
+  const validCarsForSample = carsWithImages.filter(isValidCarObject);
   
   // Safe sample results mapping
   const sampleResults = validCarsForSample
@@ -155,12 +199,12 @@ export const fetchCarsForSchedules = async (
   
   console.log('✅ [CARS QUERY SUCCESS] [ALWAYS SHOWN]', {
     timestamp: new Date().toISOString(),
-    resultCount: data.length,
+    resultCount: carsWithImages.length,
     validCarsCount: validCarsForSample.length,
-    invalidCarsCount: data.length - validCarsForSample.length,
+    invalidCarsCount: carsWithImages.length - validCarsForSample.length,
     filters,
     sampleResults
   });
 
-  return data || [];
+  return carsWithImages || [];
 };

@@ -69,6 +69,18 @@ export interface CarListing {
   scheduleEndTime?: string;
   isManuallyControlled?: boolean;
   auctionTimingStatus?: 'scheduled' | 'active' | 'ended' | 'unknown';
+  // New image architecture fields
+  fileUploads?: Array<{
+    id: string;
+    car_id: string;
+    file_path: string;
+    category: string;
+    display_order: number;
+    file_type: string;
+    upload_status: string;
+    created_at: string;
+  }>;
+  requiredPhotos?: Record<string, any>;
   [key: string]: any;
 }
 

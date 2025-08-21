@@ -3,6 +3,13 @@ import { CarListing } from "@/types/cars";
 import { listCarImages } from "../storage/carImageStorage";
 import { isValidImageUrl } from "./validation";
 import { transformImageUrl } from "./transformation";
+import { 
+  fetchCarFileUploadsById, 
+  getPrimaryImageFromUploads, 
+  getAllImagesFromUploads, 
+  getImageCountFromUploads,
+  CarFileUpload 
+} from "./carFileUploads";
 
 /**
  * Car image fetching utilities
@@ -23,9 +30,15 @@ export const fetchImagesFromStorage = async (carId: string): Promise<string[]> =
 };
 
 /**
- * Gets the primary image for a car listing with automatic storage fallback
+ * Gets the primary image for a car listing using car_file_uploads with fallback
  */
 export const getPrimaryImage = (car: CarListing): string => {
+  // First check if car has file uploads data
+  if (car.fileUploads && Array.isArray(car.fileUploads) && car.fileUploads.length > 0) {
+    return getPrimaryImageFromUploads(car.fileUploads);
+  }
+  
+  // Fallback to old system for backward compatibility
   // First check requiredPhotos for exterior front
   if (car.requiredPhotos && typeof car.requiredPhotos === 'object') {
     const photos = car.requiredPhotos as Record<string, string | null>;
@@ -76,9 +89,15 @@ export const getPrimaryImage = (car: CarListing): string => {
 };
 
 /**
- * Gets all available images from a car listing with automatic storage fallback
+ * Gets all available images from a car listing using car_file_uploads with fallback
  */
 export const getAllCarImages = (car: CarListing): { src: string; label: string }[] => {
+  // First check if car has file uploads data
+  if (car.fileUploads && Array.isArray(car.fileUploads) && car.fileUploads.length > 0) {
+    return getAllImagesFromUploads(car.fileUploads);
+  }
+  
+  // Fallback to old system for backward compatibility
   const allImages: { src: string; label: string }[] = [];
 
   // Add images from requiredPhotos with proper labeling
@@ -113,9 +132,15 @@ export const getAllCarImages = (car: CarListing): { src: string; label: string }
 };
 
 /**
- * Get the count of valid images for a car
+ * Get the count of valid images for a car using car_file_uploads with fallback
  */
 export const getImageCount = (car: CarListing): number => {
+  // First check if car has file uploads data
+  if (car.fileUploads && Array.isArray(car.fileUploads) && car.fileUploads.length > 0) {
+    return getImageCountFromUploads(car.fileUploads);
+  }
+  
+  // Fallback to old system for backward compatibility
   let count = 0;
   
   // Count images from requiredPhotos
