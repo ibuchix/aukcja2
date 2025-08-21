@@ -67,6 +67,8 @@ export interface Auction {
   auctionTimingStatus?: 'scheduled' | 'active' | 'ended' | 'unknown'; // Add camelCase version for consistency
   biddingAllowed?: boolean; // Whether bidding is currently allowed
   timeDisplay?: string; // Human-readable time until start/end
+  // Car file uploads for images
+  fileUploads?: any[]; // File upload data for images
 }
 
 export interface DealerAuctionBrowserProps {

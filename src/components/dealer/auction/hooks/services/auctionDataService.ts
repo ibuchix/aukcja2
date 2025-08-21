@@ -4,6 +4,7 @@ import { isValidRecord, isSelectQueryError, isValidBid, safelyFilterData } from 
 import { decodeCursor, getCursorOperator } from "@/utils/cursorPagination";
 import { calculateAuctionTimingStatus } from "../utils/auctionTimingUtils";
 import { CarData, BidData } from "../types/auctionBrowserTypes";
+import { fetchCarFileUploads, type CarFileUpload } from "@/utils/imageUtils/carFileUploads";
 
 const PAGE_SIZE = 10;
 
@@ -177,7 +178,31 @@ export const processAuctionData = (auctionData: any[]): CarData[] => {
     .filter(item => isValidRecord<CarData>(item) && !isSelectQueryError(item)) as CarData[];
 };
 
-export const formatAuctionData = (auctionData: CarData[], dealerBids: BidData[]): Auction[] => {
+export const formatAuctionData = async (auctionData: CarData[], dealerBids: BidData[]): Promise<Auction[]> => {
+  console.log('🖼️ formatAuctionData starting to fetch file uploads for', auctionData.length, 'auctions');
+  
+  // Fetch car file uploads for all auction cars
+  const carIds = auctionData.map(auction => auction.id).filter(Boolean);
+  const carFileUploads = await fetchCarFileUploads(carIds);
+  
+  console.log('📸 Retrieved file uploads:', {
+    totalUploads: carFileUploads.length,
+    carIdsRequested: carIds.length,
+    uploadsByCar: carFileUploads.reduce((acc, upload) => {
+      acc[upload.car_id] = (acc[upload.car_id] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>)
+  });
+  
+  // Organize uploads by car_id
+  const uploadsByCarId = carFileUploads.reduce((acc, upload) => {
+    if (!acc[upload.car_id]) {
+      acc[upload.car_id] = [];
+    }
+    acc[upload.car_id].push(upload);
+    return acc;
+  }, {} as Record<string, CarFileUpload[]>);
+  
   const now = new Date();
   
   return auctionData
@@ -230,6 +255,15 @@ export const formatAuctionData = (auctionData: CarData[], dealerBids: BidData[])
         scheduleStatus: auction.schedule_status
       });
       
+      // Get file uploads for this car
+      const fileUploads = uploadsByCarId[auction.id] || [];
+      
+      console.log('🖼️ Car file uploads for', auction.make, auction.model, ':', {
+        carId: auction.id,
+        uploadsFound: fileUploads.length,
+        uploads: fileUploads.map(u => ({ category: u.category, file_path: u.file_path }))
+      });
+      
       return {
         id: auction.id,
         title: auction.title || '',
@@ -260,7 +294,9 @@ export const formatAuctionData = (auctionData: CarData[], dealerBids: BidData[])
         auctionTimingStatus: auctionTimingStatus,
         auction_timing_status: auctionTimingStatus,
         biddingAllowed,
-        timeDisplay
+        timeDisplay,
+        // Add file uploads for images
+        fileUploads: fileUploads
       } as Auction;
     })
     .filter((item): item is Auction => item !== null)
