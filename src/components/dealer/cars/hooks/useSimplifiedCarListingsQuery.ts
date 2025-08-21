@@ -5,6 +5,7 @@ import { processCarData } from "@/utils/carDataHelpers";
 import { mergeCarDataWithSchedules, AuctionScheduleData } from "./utils/dataHelpers";
 import { fetchLiveAuctionSchedules } from "./utils/liveAuctionSchedulesQuery";
 import { fetchCarsForSchedules } from "./utils/carsQueryBuilder";
+import { fetchCarFileUploads, type CarFileUpload } from "@/utils/imageUtils/carFileUploads";
 
 interface UseSimplifiedCarListingsQueryProps {
   filters: AuctionFilters;
@@ -103,16 +104,16 @@ export const useSimplifiedCarListingsQuery = ({
         }
         
         // Extract car IDs from schedules
-        const carIds = schedules.map((schedule) => schedule.car_id);
+        const scheduleCarIds = schedules.map((schedule) => schedule.car_id);
         
         console.log('🔢 [CAR IDS FROM SCHEDULES] [ALWAYS SHOWN]', {
-          carIdsCount: carIds.length,
-          carIds: carIds.slice(0, 5) // Show first 5 for debugging
+          carIdsCount: scheduleCarIds.length,
+          carIds: scheduleCarIds.slice(0, 5) // Show first 5 for debugging
         });
         
         // STEP 2: Get cars for these schedules
         const rawCars = await fetchCarsForSchedules(
-          carIds,
+          scheduleCarIds,
           filters,
           sortOption,
           searchQuery,
@@ -178,21 +179,63 @@ export const useSimplifiedCarListingsQuery = ({
         // Process the merged results
         const validCars = processCarData(mergedData);
         
+        // STEP 4: Fetch car file uploads for all cars
+        console.log('🖼️ [FETCHING FILE UPLOADS] [ALWAYS SHOWN] Starting to fetch file uploads for', validCars.length, 'cars');
+        
+        const carIds = validCars.map(car => car.id).filter(Boolean);
+        const carFileUploads = await fetchCarFileUploads(carIds);
+        
+        console.log('📸 [FILE UPLOADS RESULT] [ALWAYS SHOWN]', {
+          totalUploads: carFileUploads.length,
+          carIdsRequested: carIds.length,
+          uploadsByCar: carFileUploads.reduce((acc, upload) => {
+            acc[upload.car_id] = (acc[upload.car_id] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>)
+        });
+        
+        // Organize uploads by car_id
+        const uploadsByCarId = carFileUploads.reduce((acc, upload) => {
+          if (!acc[upload.car_id]) {
+            acc[upload.car_id] = [];
+          }
+          acc[upload.car_id].push(upload);
+          return acc;
+        }, {} as Record<string, CarFileUpload[]>);
+        
+        // Attach file uploads to each car
+        const carsWithUploads = validCars.map(car => {
+          const fileUploads = uploadsByCarId[car.id] || [];
+          console.log('🖼️ [CAR FILE UPLOADS] [ALWAYS SHOWN]', {
+            carId: car.id,
+            make: car.make,
+            model: car.model,
+            uploadsFound: fileUploads.length,
+            uploads: fileUploads.map(u => ({ category: u.category, file_path: u.file_path }))
+          });
+          
+          return {
+            ...car,
+            fileUploads: fileUploads
+          };
+        });
+        
         console.log('✅ [FINAL RESULT] [ALWAYS SHOWN]', {
-          validCarsCount: validCars.length,
-          finalCarsPreview: validCars.slice(0, 2).map(car => ({
+          validCarsCount: carsWithUploads.length,
+          finalCarsPreview: carsWithUploads.slice(0, 2).map(car => ({
             id: car.id,
             make: car.make,
             model: car.model,
             title: car.title,
-            reserve_price: car.reserve_price,
-            auctionTimingStatus: car.auctionTimingStatus
+            reserve_price: car.reservePrice,
+            auctionTimingStatus: car.auctionTimingStatus,
+            fileUploadsCount: car.fileUploads?.length || 0
           }))
         });
         
         return {
-          cars: validCars,
-          total: validCars.length
+          cars: carsWithUploads,
+          total: carsWithUploads.length
         };
       } catch (err: any) {
         const errorMessage = err.message || 'Unknown error occurred';
