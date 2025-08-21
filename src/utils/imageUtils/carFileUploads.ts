@@ -19,24 +19,44 @@ export interface CarFileUpload {
  * Convert file path to Supabase Storage public URL
  */
 export const getStorageImageUrl = (filePath: string): string => {
-  if (!filePath) return "/placeholder.svg";
+  console.log('🔗 getStorageImageUrl called with filePath:', filePath);
+  
+  if (!filePath) {
+    console.error('❌ Empty file path provided to getStorageImageUrl');
+    return "";
+  }
   
   // If already a full URL, return as is
-  if (filePath.startsWith('http')) return filePath;
+  if (filePath.startsWith('http')) {
+    console.log('✅ Already a full URL, returning as-is:', filePath);
+    return filePath;
+  }
   
   // Get public URL from Supabase Storage
   const { data } = supabase.storage
     .from('car-images')
     .getPublicUrl(filePath);
     
-  return data?.publicUrl || "/placeholder.svg";
+  const publicUrl = data?.publicUrl || "";
+  console.log('🔗 Generated Supabase storage URL:', {
+    filePath,
+    publicUrl,
+    hasData: !!data
+  });
+    
+  return publicUrl;
 };
 
 /**
  * Fetch car file uploads for multiple car IDs
  */
 export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUpload[]> => {
-  if (!carIds.length) return [];
+  console.log('📥 fetchCarFileUploads called with carIds:', carIds);
+  
+  if (!carIds.length) {
+    console.log('⚠️ No car IDs provided to fetchCarFileUploads');
+    return [];
+  }
   
   try {
     const { data, error } = await supabase
@@ -46,14 +66,24 @@ export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUplo
       .eq('upload_status', 'completed')
       .order('display_order', { ascending: true });
 
+    console.log('📥 Supabase query result:', {
+      carIds,
+      hasError: !!error,
+      error,
+      dataCount: data?.length || 0,
+      data: data
+    });
+
     if (error) {
-      console.error('Error fetching car file uploads:', error);
+      console.error('❌ Error fetching car file uploads:', error);
       return [];
     }
 
-    return (data as unknown as CarFileUpload[]) || [];
+    const result = (data as unknown as CarFileUpload[]) || [];
+    console.log('✅ fetchCarFileUploads returning:', result.length, 'uploads');
+    return result;
   } catch (error) {
-    console.error('Error in fetchCarFileUploads:', error);
+    console.error('❌ Exception in fetchCarFileUploads:', error);
     return [];
   }
 };
@@ -91,7 +121,20 @@ export const organizeImagesByCategory = (uploads: CarFileUpload[]): Record<strin
  * Get primary image from car file uploads (prioritize exterior photos)
  */
 export const getPrimaryImageFromUploads = (uploads: CarFileUpload[]): string => {
-  if (!uploads.length) return "/placeholder.svg";
+  console.log('📸 getPrimaryImageFromUploads called with uploads:', {
+    uploadsCount: uploads.length,
+    uploads: uploads.map(u => ({ 
+      id: u.id, 
+      category: u.category, 
+      file_path: u.file_path,
+      upload_status: u.upload_status 
+    }))
+  });
+
+  if (!uploads.length) {
+    console.error('❌ No uploads provided to getPrimaryImageFromUploads');
+    return "";
+  }
   
   // Priority order for categories
   const categoryPriority = [
@@ -109,12 +152,14 @@ export const getPrimaryImageFromUploads = (uploads: CarFileUpload[]): string => 
   for (const category of categoryPriority) {
     const categoryImage = uploads.find(upload => upload.category === category);
     if (categoryImage) {
+      console.log('✅ Found image in priority category:', category, categoryImage);
       return getStorageImageUrl(categoryImage.file_path);
     }
   }
   
   // If no priority category found, use first available image
   const firstImage = uploads[0];
+  console.log('⚠️ No priority category found, using first image:', firstImage);
   return getStorageImageUrl(firstImage.file_path);
 };
 
