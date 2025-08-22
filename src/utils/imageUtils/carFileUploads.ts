@@ -48,7 +48,8 @@ export const getStorageImageUrl = (filePath: string): string => {
 };
 
 /**
- * Fetch car file uploads for multiple car IDs with authentication debugging
+ * Fetch car file uploads for multiple car IDs using RPC function
+ * This bypasses RLS authentication issues by using server-side authorization
  */
 export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUpload[]> => {
   console.log('📥 fetchCarFileUploads called with carIds:', carIds);
@@ -59,69 +60,37 @@ export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUplo
   }
   
   try {
-    // Ensure we have a fresh session and refresh if needed
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    console.log('🔐 Authentication state during fetchCarFileUploads:', {
-      hasSession: !!sessionData.session,
-      userId: sessionData.session?.user?.id,
-      userRole: sessionData.session?.user?.user_metadata?.role,
-      sessionError: sessionError?.message,
-      accessToken: sessionData.session?.access_token ? `${sessionData.session.access_token.substring(0, 20)}...` : 'none',
-      expiresAt: sessionData.session?.expires_at ? new Date(sessionData.session.expires_at * 1000).toISOString() : 'unknown'
+    console.log('📸 Fetching car images via RPC function for car IDs:', {
+      carIds: carIds.length,
+      firstFew: carIds.slice(0, 3)
     });
 
-    if (!sessionData.session) {
-      console.error('❌ No authentication session found when fetching car file uploads');
-      return [];
-    }
-
-    // Check if session is about to expire and refresh if needed
-    const now = Math.floor(Date.now() / 1000);
-    const expiresAt = sessionData.session.expires_at || 0;
-    const timeUntilExpiry = expiresAt - now;
-    
-    if (timeUntilExpiry < 300) { // Less than 5 minutes
-      console.log('🔄 Session expires soon, refreshing...', { timeUntilExpiry });
-      const { data: refreshedSession } = await supabase.auth.refreshSession();
-      if (!refreshedSession.session) {
-        console.error('❌ Failed to refresh session');
-        return [];
-      }
-    }
-
-    // Make the query with proper error handling
+    // Use the new RPC function that handles authentication server-side
     const { data, error } = await supabase
-      .from('car_file_uploads')
-      .select('*')
-      .in('car_id', carIds)
-      .eq('upload_status', 'completed')
-      .order('display_order', { ascending: true });
+      .rpc('get_car_images_for_dealers', { 
+        p_car_ids: carIds 
+      });
 
-    console.log('📥 Supabase query result:', {
-      carIds,
+    console.log('📸 Car file uploads RPC result:', {
+      carIds: carIds.length,
+      resultCount: data?.length || 0,
       hasError: !!error,
       errorMessage: error?.message,
-      errorDetails: error?.details,
-      errorHint: error?.hint,
       errorCode: error?.code,
-      dataCount: data?.length || 0,
+      errorHint: error?.hint,
       sampleData: data?.slice(0, 2)
     });
 
     if (error) {
-      console.error('❌ Error fetching car file uploads:', error);
-      // Check if it's an RLS error
-      if (error.message?.includes('row-level security') || error.code === 'PGRST116') {
-        console.error('🚫 RLS Policy blocked access - authentication context not properly passed');
-      }
+      console.error('❌ Error fetching car file uploads via RPC:', error);
       return [];
     }
 
     const result = (data as unknown as CarFileUpload[]) || [];
-    console.log('✅ fetchCarFileUploads returning:', result.length, 'uploads');
+    console.log('✅ fetchCarFileUploads (RPC) returning:', result.length, 'uploads');
     return result;
   } catch (error) {
-    console.error('❌ Exception in fetchCarFileUploads:', error);
+    console.error('❌ Exception in fetchCarFileUploads (RPC):', error);
     return [];
   }
 };
