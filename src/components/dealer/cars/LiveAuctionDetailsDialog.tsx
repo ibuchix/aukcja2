@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { SimpleBidManager } from "@/components/auction/SimpleBidManager";
 import { BidCountDisplay } from "@/components/auction/BidCountDisplay";
 import { AuctionTimer } from "@/components/auction/AuctionTimer";
+import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
 import { formatCurrency } from "@/lib/utils";
-import { getPrimaryImage } from "@/utils/imageUtils";
 
 interface LiveAuctionDetailsDialogProps {
   car: any;
@@ -36,13 +36,9 @@ export const LiveAuctionDetailsDialog = ({
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Car Details - Takes up 2 columns on xl screens */}
           <div className="xl:col-span-2 space-y-6">
-            <div className="aspect-video relative max-w-2xl">
-              <img 
-                src={getPrimaryImage(car)}
-                alt={`${car.make} ${car.model}`}
-                className="w-full h-full object-cover rounded-lg shadow-md"
-              />
-              <div className="absolute top-4 right-4">
+            <div className="relative">
+              <VehiclePhotos car={car} />
+              <div className="absolute top-4 right-4 z-10">
                 <Badge variant={isLive ? "default" : hasEnded ? "secondary" : "outline"} className="text-sm px-3 py-1">
                   {isLive ? "Aukcja na żywo" : hasEnded ? "Zakończona" : "Zaplanowana"}
                 </Badge>
