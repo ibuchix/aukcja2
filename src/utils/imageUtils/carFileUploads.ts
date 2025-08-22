@@ -59,14 +59,15 @@ export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUplo
   }
   
   try {
-    // Debug authentication state
+    // Ensure we have a fresh session and refresh if needed
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     console.log('🔐 Authentication state during fetchCarFileUploads:', {
       hasSession: !!sessionData.session,
       userId: sessionData.session?.user?.id,
       userRole: sessionData.session?.user?.user_metadata?.role,
       sessionError: sessionError?.message,
-      accessToken: sessionData.session?.access_token ? `${sessionData.session.access_token.substring(0, 20)}...` : 'none'
+      accessToken: sessionData.session?.access_token ? `${sessionData.session.access_token.substring(0, 20)}...` : 'none',
+      expiresAt: sessionData.session?.expires_at ? new Date(sessionData.session.expires_at * 1000).toISOString() : 'unknown'
     });
 
     if (!sessionData.session) {
@@ -74,6 +75,21 @@ export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUplo
       return [];
     }
 
+    // Check if session is about to expire and refresh if needed
+    const now = Math.floor(Date.now() / 1000);
+    const expiresAt = sessionData.session.expires_at || 0;
+    const timeUntilExpiry = expiresAt - now;
+    
+    if (timeUntilExpiry < 300) { // Less than 5 minutes
+      console.log('🔄 Session expires soon, refreshing...', { timeUntilExpiry });
+      const { data: refreshedSession } = await supabase.auth.refreshSession();
+      if (!refreshedSession.session) {
+        console.error('❌ Failed to refresh session');
+        return [];
+      }
+    }
+
+    // Make the query with proper error handling
     const { data, error } = await supabase
       .from('car_file_uploads')
       .select('*')
@@ -94,6 +110,10 @@ export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUplo
 
     if (error) {
       console.error('❌ Error fetching car file uploads:', error);
+      // Check if it's an RLS error
+      if (error.message?.includes('row-level security') || error.code === 'PGRST116') {
+        console.error('🚫 RLS Policy blocked access - authentication context not properly passed');
+      }
       return [];
     }
 
