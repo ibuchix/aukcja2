@@ -48,7 +48,7 @@ export const getStorageImageUrl = (filePath: string): string => {
 };
 
 /**
- * Fetch car file uploads for multiple car IDs
+ * Fetch car file uploads for multiple car IDs with authentication debugging
  */
 export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUpload[]> => {
   console.log('📥 fetchCarFileUploads called with carIds:', carIds);
@@ -59,6 +59,21 @@ export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUplo
   }
   
   try {
+    // Debug authentication state
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    console.log('🔐 Authentication state during fetchCarFileUploads:', {
+      hasSession: !!sessionData.session,
+      userId: sessionData.session?.user?.id,
+      userRole: sessionData.session?.user?.user_metadata?.role,
+      sessionError: sessionError?.message,
+      accessToken: sessionData.session?.access_token ? `${sessionData.session.access_token.substring(0, 20)}...` : 'none'
+    });
+
+    if (!sessionData.session) {
+      console.error('❌ No authentication session found when fetching car file uploads');
+      return [];
+    }
+
     const { data, error } = await supabase
       .from('car_file_uploads')
       .select('*')
@@ -69,9 +84,12 @@ export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUplo
     console.log('📥 Supabase query result:', {
       carIds,
       hasError: !!error,
-      error,
+      errorMessage: error?.message,
+      errorDetails: error?.details,
+      errorHint: error?.hint,
+      errorCode: error?.code,
       dataCount: data?.length || 0,
-      data: data
+      sampleData: data?.slice(0, 2)
     });
 
     if (error) {

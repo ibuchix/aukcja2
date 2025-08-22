@@ -179,10 +179,12 @@ export const useSimplifiedCarListingsQuery = ({
         // Process the merged results
         const validCars = processCarData(mergedData);
         
-        // STEP 4: Fetch car file uploads for all cars
-        console.log('🖼️ [FETCHING FILE UPLOADS] [ALWAYS SHOWN] Starting to fetch file uploads for', validCars.length, 'cars');
+        // STEP 4: Ensure authentication before fetching file uploads
+        console.log('🔐 [AUTH CHECK] [ALWAYS SHOWN] Checking authentication before fetching file uploads');
         
         const carIds = validCars.map(car => car.id).filter(Boolean);
+        console.log('🖼️ [FETCHING FILE UPLOADS] [ALWAYS SHOWN] Starting to fetch file uploads for', validCars.length, 'cars with IDs:', carIds);
+        
         const carFileUploads = await fetchCarFileUploads(carIds);
         
         console.log('📸 [FILE UPLOADS RESULT] [ALWAYS SHOWN]', {
