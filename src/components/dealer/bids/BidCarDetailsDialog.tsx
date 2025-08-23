@@ -13,6 +13,7 @@ import { translateTransmission } from "@/lib/transmissionUtils";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
 import { Clock, Car, Calendar, Gauge, Settings, Fuel } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchCarFileUploadsById } from "@/utils/imageUtils/carFileUploads";
 
 interface BidCarDetailsDialogProps {
   isOpen: boolean;
@@ -42,17 +43,8 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
       
       if (carError) throw carError;
 
-      // Fetch car file uploads for images
-      const { data: fileUploads, error: uploadsError } = await supabase
-        .from('car_file_uploads')
-        .select('*')
-        .eq('car_id', bid.car_id)
-        .eq('upload_status', 'completed')
-        .order('display_order', { ascending: true });
-
-      if (uploadsError) {
-        console.error('Error fetching car images:', uploadsError);
-      }
+      // Fetch car file uploads using the utility that works with dealer permissions
+      const fileUploads = await fetchCarFileUploadsById(bid.car_id);
 
       // Combine car data with file uploads
       if (!carData) return null;
