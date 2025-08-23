@@ -1,6 +1,7 @@
 
 import { Info } from "lucide-react";
 import { CarListing } from "@/types/cars";
+import { translateTransmission } from "@/lib/transmissionUtils";
 
 interface BasicSpecificationsProps {
   car: CarListing;
@@ -32,7 +33,7 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
         </div>
         <div>
           <p className="text-subtitle-text">Transmission</p>
-          <p className="font-medium">{car.transmission || "N/A"}</p>
+          <p className="font-medium">{translateTransmission(car.transmission)}</p>
         </div>
         <div>
           <p className="text-subtitle-text">Fuel Type</p>

@@ -6,6 +6,7 @@ import { Clock, MapPin } from "lucide-react";
 import { AuctionTimer } from "@/components/auction/AuctionTimer";
 import { AuctionStatusIndicator } from "./AuctionStatusIndicator";
 import { getPrimaryImage } from "@/utils/imageUtils";
+import { translateTransmission } from "@/lib/transmissionUtils";
 
 interface LiveAuctionCardProps {
   car: any;
@@ -167,7 +168,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
           
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>{car.mileage?.toLocaleString()} miles</span>
-            <span>{car.transmission}</span>
+            <span>{translateTransmission(car.transmission)}</span>
           </div>
           
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

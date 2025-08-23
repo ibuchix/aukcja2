@@ -2,6 +2,7 @@
 import { Shield, Check, X } from "lucide-react";
 import { CarListing } from "@/types/cars";
 import { Badge } from "@/components/ui/badge";
+import { translateTransmission } from "@/lib/transmissionUtils";
 
 interface ConditionAndFeaturesProps {
   car: CarListing;
@@ -37,7 +38,7 @@ export const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
           {car.transmission && (
             <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg border border-secondary/30">
               <span className="font-medium text-body-text">Transmission</span>
-              <Badge variant="outline">{car.transmission}</Badge>
+              <Badge variant="outline">{translateTransmission(car.transmission)}</Badge>
             </div>
           )}
           

@@ -7,6 +7,7 @@ import { BidCountDisplay } from "@/components/auction/BidCountDisplay";
 import { AuctionTimer } from "@/components/auction/AuctionTimer";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
 import { formatCurrency } from "@/lib/utils";
+import { translateTransmission } from "@/lib/transmissionUtils";
 
 interface LiveAuctionDetailsDialogProps {
   car: any;
@@ -60,7 +61,7 @@ export const LiveAuctionDetailsDialog = ({
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                       <span className="text-body-text font-medium">Transmission</span>
-                      <span className="font-semibold text-lg capitalize text-body-text">{car.transmission || 'Not specified'}</span>
+                      <span className="font-semibold text-lg text-body-text">{translateTransmission(car.transmission)}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                       <span className="text-body-text font-medium">Fuel Type</span>
@@ -190,12 +191,6 @@ export const LiveAuctionDetailsDialog = ({
                   <span className="text-muted-foreground font-medium">Cena orientacyjna:</span>
                   <span className="font-bold text-lg">{formatCurrency(car.reservePrice || car.reserve_price || 0)}</span>
                 </div>
-                {car.current_bid > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground font-medium">Latest bid:</span>
-                    <span className="font-bold text-lg text-green-600">{formatCurrency(car.current_bid)}</span>
-                  </div>
-                )}
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground font-medium">Time Remaining:</span>
                   <span className="font-medium">

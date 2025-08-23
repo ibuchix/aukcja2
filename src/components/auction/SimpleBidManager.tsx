@@ -150,9 +150,6 @@ export const SimpleBidManager = ({
       <CardContent>
         <div className="space-y-4">
           <div>
-            <p className="text-sm text-muted-foreground mb-2">
-              Latest bid: <span className="font-semibold">{formatCurrency(currentHighestBid)}</span>
-            </p>
             {myBid !== null && (
               <p className="text-sm text-muted-foreground mb-2">
                 Twoja ostatnia oferta:

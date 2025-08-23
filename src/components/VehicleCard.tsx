@@ -1,4 +1,5 @@
 import { formatCurrency } from "@/lib/utils";
+import { translateTransmission } from "@/lib/transmissionUtils";
 
 interface VehicleCardProps {
   image: string;
@@ -33,7 +34,7 @@ const VehicleCard = ({ image, name, price, mileage, transmission, year }: Vehicl
           </div>
           <div className="col-span-2">
             <p className="font-semibold">Transmission</p>
-            <p>{transmission || "N/A"}</p>
+            <p>{translateTransmission(transmission)}</p>
           </div>
         </div>
       </div>
