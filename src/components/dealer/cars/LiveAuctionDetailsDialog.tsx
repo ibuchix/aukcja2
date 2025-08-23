@@ -195,7 +195,7 @@ export const LiveAuctionDetailsDialog = ({
                   <span className="text-muted-foreground font-medium">Pozostały czas:</span>
                   <span className="font-medium">
                     <AuctionTimer 
-                      auctionEndTime={car.auction_end_time || car.end_time} 
+                      auctionEndTime={car.auction_end_time} 
                     />
                   </span>
                 </div>
