@@ -25,10 +25,6 @@ export const LiveAuctionDetailsDialog = ({
   const isLive = car.auctionTimingStatus === 'active' || car.auctionTimingStatus === 'unknown';
   const hasEnded = car.auctionTimingStatus === 'ended';
 
-  // Debug: Let's see what the car object contains
-  console.log("LiveAuctionDetailsDialog car object:", car);
-  console.log("car.auctionEndTime:", car.auctionEndTime);
-
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">

@@ -143,21 +143,6 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
             auctionStatus={car.auction_status}
           />
         </div>
-        {isLive && (
-          <Badge className="absolute top-2 left-2 bg-red-500">
-            Aukcja na żywo
-          </Badge>
-        )}
-        {isStartingSoon && (
-          <Badge className="absolute top-2 left-2 bg-orange-500">
-            Wkrótce rozpocznie się
-          </Badge>
-        )}
-        {displayStatus.status === 'scheduled' && (
-          <Badge className="absolute top-2 left-2 bg-blue-500">
-            Zaplanowana
-          </Badge>
-        )}
       </div>
       
       <CardContent className="p-4">

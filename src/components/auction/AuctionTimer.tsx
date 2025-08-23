@@ -9,13 +9,8 @@ export const AuctionTimer = ({ auctionEndTime }: AuctionTimerProps) => {
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
   useEffect(() => {
-    // Debug: Let's see what we're getting
-    console.log("AuctionTimer received auctionEndTime:", auctionEndTime);
-    console.log("Type of auctionEndTime:", typeof auctionEndTime);
-    
     // If no end time provided, show unavailable
     if (!auctionEndTime) {
-      console.log("No auctionEndTime provided - showing unavailable");
       setTimeRemaining("Czas niedostępny");
       return;
     }
