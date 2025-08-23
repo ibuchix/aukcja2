@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -16,7 +17,6 @@ import { formatCurrency } from "@/lib/utils";
 import { MyBid } from "./types";
 import { CancelBidDialog } from "./CancelBidDialog";
 import { ModifyBidDialog } from "./ModifyBidDialog";
-import { BidCarDetailsDialog } from "./BidCarDetailsDialog";
 import { useBidActions } from "@/hooks/useBidActions";
 import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
 
@@ -27,10 +27,10 @@ interface BidsTableProps {
 export const BidsTable = ({ bids }: BidsTableProps) => {
   const { dealerProfile } = useCurrentDealerProfile();
   const { cancelBid, isCancelling } = useBidActions(dealerProfile?.id);
+  const navigate = useNavigate();
   
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [modifyDialogOpen, setModifyDialogOpen] = useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedBid, setSelectedBid] = useState<MyBid | null>(null);
   const [isModifying, setIsModifying] = useState(false);
 
@@ -45,8 +45,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
   };
 
   const handleViewDetails = (bid: MyBid) => {
-    setSelectedBid(bid);
-    setDetailsDialogOpen(true);
+    navigate(`/dealer/dashboard?car=${bid.car_id}&returnTo=bids`);
   };
 
   const confirmCancelBid = () => {
@@ -229,12 +228,6 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
         bid={selectedBid}
         onConfirm={confirmModifyBid}
         isLoading={isModifying}
-      />
-
-      <BidCarDetailsDialog
-        isOpen={detailsDialogOpen}
-        onOpenChange={setDetailsDialogOpen}
-        bid={selectedBid}
       />
     </>
   );

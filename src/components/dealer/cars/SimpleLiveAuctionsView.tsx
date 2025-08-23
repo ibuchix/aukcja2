@@ -1,5 +1,5 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useSimplifiedCarListingsQuery } from "./hooks/useSimplifiedCarListingsQuery";
 import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 import { LiveAuctionCard } from "./LiveAuctionCard";
@@ -11,14 +11,19 @@ import { RefreshListingsButton } from "./actions/RefreshListingsButton";
 import { useAuctionStatusMonitor } from "@/hooks/useAuctionStatusMonitor";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, ArrowLeft } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const SimpleLiveAuctionsView = () => {
   const [selectedCar, setSelectedCar] = useState<any>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { dealerProfile } = useDealerProfileSimple();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  
+  const autoOpenCarId = searchParams.get('car');
+  const returnTo = searchParams.get('returnTo');
 
   const {
     filters,
@@ -40,6 +45,31 @@ export const SimpleLiveAuctionsView = () => {
     dealerId: dealerProfile?.id,
   });
 
+  const cars = data?.cars || [];
+
+  // Auto-open car details if carId is provided in URL
+  useEffect(() => {
+    if (autoOpenCarId && cars?.length) {
+      const carToOpen = cars.find((car: any) => car.id === autoOpenCarId);
+      if (carToOpen) {
+        setSelectedCar(carToOpen);
+      }
+    }
+  }, [autoOpenCarId, cars]);
+
+  const handleCloseCarDetails = () => {
+    setSelectedCar(null);
+    // Remove car parameter from URL
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete('car');
+    newSearchParams.delete('returnTo');
+    setSearchParams(newSearchParams);
+  };
+
+  const handleReturnToBids = () => {
+    navigate('/dealer/bids');
+  };
+
   // Monitor auction status changes and refresh data when needed
   const { triggerStatusUpdate } = useAuctionStatusMonitor({
     onAuctionEnded: (carId, finalStatus) => {
@@ -53,8 +83,6 @@ export const SimpleLiveAuctionsView = () => {
       queryClient.invalidateQueries({ queryKey: ["simplifiedCarListings"] });
     },
   });
-
-  const cars = data?.cars || [];
 
   const handleRefreshStatuses = async () => {
     await triggerStatusUpdate();
@@ -74,42 +102,45 @@ export const SimpleLiveAuctionsView = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {isMobile ? (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-body-text">Aukcja</h2>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefreshStatuses}
-                className="flex items-center gap-1 bg-secondary border-accent/20 text-body-text hover:bg-accent/20 px-2"
-              >
-                <RotateCcw className="h-4 w-4" />
-                <span className="text-xs">Aktualizuj statusy</span>
-              </Button>
-              <RefreshListingsButton onRefresh={refetch} isLoading={isLoading} />
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-body-text">Aukcja na żywo</h2>
-          <div className="flex gap-2">
+    <div className="container mx-auto space-y-6">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          {returnTo === 'bids' && (
             <Button
               variant="outline"
               size="sm"
-              onClick={handleRefreshStatuses}
-              className="flex items-center gap-2 bg-secondary border-accent/20 text-body-text hover:bg-accent/20"
+              onClick={handleReturnToBids}
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
             >
-              <RotateCcw className="h-4 w-4" />
-              Aktualizuj statusy
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Powrót do ofert
             </Button>
-            <RefreshListingsButton onRefresh={refetch} isLoading={isLoading} />
+          )}
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              {returnTo === 'bids' ? 'Szczegóły aukcji' : 'Aukcje na żywo'}
+            </h2>
+            <p className="text-gray-300">
+              {returnTo === 'bids' 
+                ? 'Sprawdź szczegóły aukcji i złóż ofertę' 
+                : 'Sprawdź dostępne pojazdy i złóż swoją ofertę'
+              }
+            </p>
           </div>
         </div>
-      )}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefreshStatuses}
+            className="flex items-center gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Aktualizuj statusy
+          </Button>
+          <RefreshListingsButton onRefresh={refetch} isLoading={isLoading} />
+        </div>
+      </div>
 
       <CarSearchFilters
         filters={filters}
@@ -156,7 +187,7 @@ export const SimpleLiveAuctionsView = () => {
           car={selectedCar}
           dealerId={dealerProfile?.id || ""}
           isVerified={isVerified}
-          onClose={() => setSelectedCar(null)}
+          onClose={handleCloseCarDetails}
         />
       )}
     </div>
