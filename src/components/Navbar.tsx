@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDealerProfile } from "@/contexts/dealer-profile";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,9 +21,18 @@ export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, user, signOut } = useAuth();
+  const { displayProfile } = useDealerProfile();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { toast } = useToast();
+
+  // Get display name - prioritize dealership name for dealers
+  const getDisplayName = () => {
+    if (displayProfile?.dealership_name) {
+      return displayProfile.dealership_name;
+    }
+    return user?.email?.split('@')[0] || 'Account';
+  };
 
   // Handle scroll events to change navbar appearance
   useEffect(() => {
@@ -115,7 +125,7 @@ export default function Navbar() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
                   <UserCircle size={18} />
-                  {user?.email?.split('@')[0] || 'Account'}
+                  {getDisplayName()}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
