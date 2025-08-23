@@ -36,14 +36,13 @@ export const LiveAuctionDetailsDialog = ({
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Car Details - Takes up 2 columns on xl screens */}
           <div className="xl:col-span-2 space-y-6">
-            <div className="relative">
-              <VehiclePhotos car={car} />
-              <div className="absolute top-4 right-4 z-10 flex justify-end">
-                <Badge variant={isLive ? "default" : hasEnded ? "secondary" : "outline"} className="text-sm px-3 py-1 text-center">
-                  {isLive ? "Aukcja na żywo" : hasEnded ? "Zakończona" : "Zaplanowana"}
-                </Badge>
-              </div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Zdjęcia Pojazdu</h3>
+              <Badge variant={isLive ? "default" : hasEnded ? "secondary" : "outline"} className="text-sm px-3 py-1">
+                {isLive ? "Aukcja na żywo" : hasEnded ? "Zakończona" : "Zaplanowana"}
+              </Badge>
             </div>
+            <VehiclePhotos car={car} showHeader={false} />
             
             {/* Vehicle Specifications */}
             <div className="space-y-6">

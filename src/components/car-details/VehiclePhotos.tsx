@@ -10,9 +10,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface VehiclePhotosProps {
   car: CarListing;
+  showHeader?: boolean;
 }
 
-export const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
+export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [imageLoadErrors, setImageLoadErrors] = useState<Set<string>>(new Set());
@@ -70,13 +71,15 @@ export const VehiclePhotos = ({ car }: VehiclePhotosProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Vehicle Photos</h3>
-        <span className="text-sm text-gray-600 flex items-center gap-1">
-          <Camera className="h-4 w-4" />
-          {imageCount} photo{imageCount !== 1 ? 's' : ''}
-        </span>
-      </div>
+      {showHeader && (
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Zdjęcia Pojazdu</h3>
+          <span className="text-sm text-gray-600 flex items-center gap-1">
+            <Camera className="h-4 w-4" />
+            {imageCount} photo{imageCount !== 1 ? 's' : ''}
+          </span>
+        </div>
+      )}
       
       {/* Main image */}
       <div className="relative">
