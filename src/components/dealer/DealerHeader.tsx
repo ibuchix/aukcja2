@@ -52,7 +52,7 @@ export function DealerHeader({ profile, isLoading, error }: DealerHeaderProps) {
         )}
         <div className="flex items-center">
           <Phone className="h-4 w-4 mr-1" />
-          <span>License: {profile.license_number}</span>
+          <span>Regon: {profile.license_number}</span>
         </div>
       </div>
     </div>

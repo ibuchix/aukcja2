@@ -12,7 +12,7 @@ import { MakeModelFilter } from "./MakeModelFilter";
 import { TransmissionFilter } from "./TransmissionFilter";
 import { FuelTypeFilter } from "./FuelTypeFilter";
 import { ServiceHistoryFilter } from "./ServiceHistoryFilter";
-import { DistanceFilter } from "./DistanceFilter";
+
 import { SavedFiltersManager } from "./SavedFiltersManager";
 import { SortSelector } from "../../auction/filters/SortSelector";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -171,11 +171,6 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
               onChange={(serviceHistory) => onFilterChange('serviceHistory', serviceHistory)}
             />
 
-            <DistanceFilter 
-              key="distance-filter"
-              value={filters.distance}
-              onChange={(distance) => onFilterChange('distance', distance)}
-            />
           </div>
 
           {/* Clear Filters Button */}

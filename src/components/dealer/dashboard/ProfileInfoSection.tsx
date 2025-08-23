@@ -99,7 +99,7 @@ export const ProfileInfoSection = () => {
           ) : (
             <div className="space-y-3 text-subtitle-text">
               <p><span className="font-medium text-body-text">Adres:</span> {displayProfile?.address || "Niedostępne"}</p>
-              <p><span className="font-medium text-body-text">Licencja:</span> {displayProfile?.license_number || "Niedostępne"}</p>
+              <p><span className="font-medium text-body-text">Regon:</span> {displayProfile?.license_number || "Niedostępne"}</p>
               <p><span className="font-medium text-body-text">NIP:</span> {displayProfile?.tax_id || "Niedostępne"}</p>
             </div>
           )}
