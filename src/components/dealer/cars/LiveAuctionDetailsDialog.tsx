@@ -192,16 +192,12 @@ export const LiveAuctionDetailsDialog = ({
                   <span className="font-bold text-lg">{formatCurrency(car.reservePrice || car.reserve_price || 0)}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground font-medium">Time Remaining:</span>
+                  <span className="text-muted-foreground font-medium">Pozostały czas:</span>
                   <span className="font-medium">
-                    {hasEnded ? (
-                      <span className="text-red-600">Time not available</span>
-                    ) : (
-                      <AuctionTimer 
-                        auctionEndTime={car.scheduleEndTime || car.auction_end_time} 
-                        auctionTimingStatus={car.auctionTimingStatus || 'active'} 
-                      />
-                    )}
+                    <AuctionTimer 
+                      auctionEndTime={car.scheduleEndTime || car.auction_end_time} 
+                      auctionTimingStatus={car.auctionTimingStatus || 'active'} 
+                    />
                   </span>
                 </div>
               </div>
