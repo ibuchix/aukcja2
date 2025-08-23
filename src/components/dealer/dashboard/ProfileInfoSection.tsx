@@ -54,7 +54,7 @@ export const ProfileInfoSection = () => {
         </h2>
       </div>
       
-      <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-none">
         {/* Dealer Information */}
         <div>
           <h3 className="font-medium text-body-text mb-4 pb-2 border-b border-accent/20 flex items-center">
