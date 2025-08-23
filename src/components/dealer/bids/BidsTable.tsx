@@ -16,7 +16,7 @@ import { formatCurrency } from "@/lib/utils";
 import { MyBid } from "./types";
 import { CancelBidDialog } from "./CancelBidDialog";
 import { ModifyBidDialog } from "./ModifyBidDialog";
-import { LiveAuctionDetailsDialog } from "@/components/dealer/cars/LiveAuctionDetailsDialog";
+import { BidCarDetailsDialog } from "./BidCarDetailsDialog";
 import { useBidActions } from "@/hooks/useBidActions";
 import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
 
@@ -33,7 +33,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
   const [selectedBid, setSelectedBid] = useState<MyBid | null>(null);
   const [isModifying, setIsModifying] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const [selectedCarForDetails, setSelectedCarForDetails] = useState<any>(null);
+  const [selectedBidForDetails, setSelectedBidForDetails] = useState<MyBid | null>(null);
 
   const handleCancelBid = (bid: MyBid) => {
     setSelectedBid(bid);
@@ -46,7 +46,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
   };
 
   const handleViewDetails = (bid: MyBid) => {
-    setSelectedCarForDetails(bid.car);
+    setSelectedBidForDetails(bid);
     setDetailsDialogOpen(true);
   };
 
@@ -232,17 +232,11 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
         isLoading={isModifying}
       />
 
-      {selectedCarForDetails && (
-        <LiveAuctionDetailsDialog
-          car={selectedCarForDetails}
-          dealerId={dealerProfile?.id || ""}
-          isVerified={dealerProfile?.verification_status === 'approved' || dealerProfile?.is_verified === true}
-          onClose={() => {
-            setDetailsDialogOpen(false);
-            setSelectedCarForDetails(null);
-          }}
-        />
-      )}
+      <BidCarDetailsDialog
+        isOpen={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        bid={selectedBidForDetails}
+      />
     </>
   );
 };
