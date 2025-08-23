@@ -47,7 +47,7 @@ export const AuctionStatusIndicator = ({
         return {
           variant: 'secondary' as const,
           icon: <Clock className="h-3 w-3" />,
-          text: 'W aukcji',
+          text: 'Aukcja na żywo',
           color: 'text-orange-600',
           bgColor: 'bg-orange-50'
         };

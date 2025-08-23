@@ -17,8 +17,8 @@ const HowItWorks = () => {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative">
-            {/* Connecting Line */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-primary to-iris" />
+            {/* Connecting Line - positioned behind icons */}
+            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-primary to-iris z-0" />
 
             <TimelineStep 
               title="Rejestracja i weryfikacja"

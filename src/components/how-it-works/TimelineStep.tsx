@@ -38,7 +38,7 @@ export const TimelineStep = ({
                 ))}
               </div>
             </div>
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center shadow-md z-10">
+            <div className="relative w-16 h-16 rounded-full bg-background flex items-center justify-center shadow-md z-20 border-2 border-primary/20">
               <Icon className="w-8 h-8 text-primary" />
             </div>
             <div className="w-1/2 pl-8">
@@ -52,7 +52,7 @@ export const TimelineStep = ({
               <h3 className="text-2xl font-bold text-body-text mb-2">{title}</h3>
               <p className="text-subtitle-text">{subtitle}</p>
             </div>
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center shadow-md z-10">
+            <div className="relative w-16 h-16 rounded-full bg-background flex items-center justify-center shadow-md z-20 border-2 border-primary/20">
               <Icon className="w-8 h-8 text-primary" />
             </div>
             <div className="w-1/2 pl-8">

@@ -38,8 +38,8 @@ export const LiveAuctionDetailsDialog = ({
           <div className="xl:col-span-2 space-y-6">
             <div className="relative">
               <VehiclePhotos car={car} />
-              <div className="absolute top-4 right-4 z-10">
-                <Badge variant={isLive ? "default" : hasEnded ? "secondary" : "outline"} className="text-sm px-3 py-1">
+              <div className="absolute top-4 right-4 z-10 flex justify-end">
+                <Badge variant={isLive ? "default" : hasEnded ? "secondary" : "outline"} className="text-sm px-3 py-1 text-center">
                   {isLive ? "Aukcja na żywo" : hasEnded ? "Zakończona" : "Zaplanowana"}
                 </Badge>
               </div>
