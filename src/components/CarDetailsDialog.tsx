@@ -206,7 +206,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-gray-400" />
                       <AuctionTimer 
-                        auctionEndTime={scheduleInfo?.endTime || car.scheduleEndTime} 
+                        auctionEndTime={scheduleInfo?.endTime || car.auction_end_time} 
                       />
                     </div>
                   )}
