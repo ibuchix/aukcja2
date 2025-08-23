@@ -19,16 +19,12 @@ export interface CarFileUpload {
  * Convert file path to Supabase Storage public URL
  */
 export const getStorageImageUrl = (filePath: string): string => {
-  console.log('🔗 getStorageImageUrl called with filePath:', filePath);
-  
   if (!filePath) {
-    console.error('❌ Empty file path provided to getStorageImageUrl');
     return "";
   }
   
   // If already a full URL, return as is
   if (filePath.startsWith('http')) {
-    console.log('✅ Already a full URL, returning as-is:', filePath);
     return filePath;
   }
   
@@ -38,12 +34,7 @@ export const getStorageImageUrl = (filePath: string): string => {
     .getPublicUrl(filePath);
     
   const publicUrl = data?.publicUrl || "";
-  console.log('🔗 Generated Supabase storage URL:', {
-    filePath,
-    publicUrl,
-    hasData: !!data
-  });
-    
+     
   return publicUrl;
 };
 
@@ -52,34 +43,16 @@ export const getStorageImageUrl = (filePath: string): string => {
  * This bypasses RLS authentication issues by using server-side authorization
  */
 export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUpload[]> => {
-  console.log('📥 fetchCarFileUploads called with carIds:', carIds);
-  
   if (!carIds.length) {
-    console.log('⚠️ No car IDs provided to fetchCarFileUploads');
     return [];
   }
   
   try {
-    console.log('📸 Fetching car images via RPC function for car IDs:', {
-      carIds: carIds.length,
-      firstFew: carIds.slice(0, 3)
-    });
-
     // Use the new RPC function that handles authentication server-side
     const { data, error } = await supabase
       .rpc('get_car_images_for_dealers', { 
         p_car_ids: carIds 
       });
-
-    console.log('📸 Car file uploads RPC result:', {
-      carIds: carIds.length,
-      resultCount: data?.length || 0,
-      hasError: !!error,
-      errorMessage: error?.message,
-      errorCode: error?.code,
-      errorHint: error?.hint,
-      sampleData: data?.slice(0, 2)
-    });
 
     if (error) {
       console.error('❌ Error fetching car file uploads via RPC:', error);
@@ -87,7 +60,6 @@ export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUplo
     }
 
     const result = (data as unknown as CarFileUpload[]) || [];
-    console.log('✅ fetchCarFileUploads (RPC) returning:', result.length, 'uploads');
     return result;
   } catch (error) {
     console.error('❌ Exception in fetchCarFileUploads (RPC):', error);
@@ -128,18 +100,7 @@ export const organizeImagesByCategory = (uploads: CarFileUpload[]): Record<strin
  * Get primary image from car file uploads (prioritize exterior photos)
  */
 export const getPrimaryImageFromUploads = (uploads: CarFileUpload[]): string => {
-  console.log('📸 getPrimaryImageFromUploads called with uploads:', {
-    uploadsCount: uploads.length,
-    uploads: uploads.map(u => ({ 
-      id: u.id, 
-      category: u.category, 
-      file_path: u.file_path,
-      upload_status: u.upload_status 
-    }))
-  });
-
   if (!uploads.length) {
-    console.error('❌ No uploads provided to getPrimaryImageFromUploads');
     return "";
   }
   
@@ -159,14 +120,12 @@ export const getPrimaryImageFromUploads = (uploads: CarFileUpload[]): string => 
   for (const category of categoryPriority) {
     const categoryImage = uploads.find(upload => upload.category === category);
     if (categoryImage) {
-      console.log('✅ Found image in priority category:', category, categoryImage);
       return getStorageImageUrl(categoryImage.file_path);
     }
   }
   
   // If no priority category found, use first available image
   const firstImage = uploads[0];
-  console.log('⚠️ No priority category found, using first image:', firstImage);
   return getStorageImageUrl(firstImage.file_path);
 };
 

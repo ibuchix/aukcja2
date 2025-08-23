@@ -241,28 +241,7 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
                 </div>
               </div>
 
-              {/* Location */}
-              {displayCar?.address && (
-                <div className="p-4 bg-accent/50 rounded-lg">
-                  <h4 className="font-medium text-base mb-3">Lokalizacja</h4>
-                  <p className="text-sm font-medium">{displayCar.address}</p>
-                </div>
-              )}
-
-              {/* Seller Contact */}
-              {displayCar?.seller_name && (
-                <div className="p-4 bg-accent/50 rounded-lg">
-                  <h4 className="font-medium text-base mb-3">Informacje o sprzedawcy</h4>
-                  <div className="text-sm space-y-2">
-                    <p><span className="text-muted-foreground">Nazwa:</span> <span className="font-medium">{displayCar.seller_name}</span></p>
-                    {displayCar?.mobile_number && (
-                      <p><span className="text-muted-foreground">Kontakt:</span> <span className="font-medium">{displayCar.mobile_number}</span></p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Seller Notes */}
+              {/* Seller Notes - Only show if available */}
               {displayCar?.seller_notes && (
                 <div className="p-4 bg-accent/50 rounded-lg">
                   <h4 className="font-medium text-base mb-3">Uwagi sprzedawcy</h4>
