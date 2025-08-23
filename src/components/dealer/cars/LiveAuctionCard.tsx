@@ -37,7 +37,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
 
 
   // Get auction end time from schedule data
-  const auctionEndTime = car.auction_end_time;
+  const auctionEndTime = car.auctionEndTime;
   const auctionStartTime = car.scheduleStartTime;
 
   // Use the correctly mapped reservePrice field from the processed data

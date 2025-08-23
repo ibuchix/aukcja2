@@ -27,7 +27,7 @@ export const LiveAuctionDetailsDialog = ({
 
   // Debug: Let's see what the car object contains
   console.log("LiveAuctionDetailsDialog car object:", car);
-  console.log("car.auction_end_time:", car.auction_end_time);
+  console.log("car.auctionEndTime:", car.auctionEndTime);
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -199,7 +199,7 @@ export const LiveAuctionDetailsDialog = ({
                   <span className="text-muted-foreground font-medium">Pozostały czas:</span>
                   <span className="font-medium">
                     <AuctionTimer 
-                      auctionEndTime={car.auction_end_time} 
+                      auctionEndTime={car.auctionEndTime} 
                     />
                   </span>
                 </div>
