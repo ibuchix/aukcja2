@@ -54,7 +54,7 @@ export const ProfileInfoSection = () => {
         </h2>
       </div>
       
-      <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Dealer Information */}
         <div>
           <h3 className="font-medium text-body-text mb-4 pb-2 border-b border-accent/20 flex items-center">
@@ -95,31 +95,13 @@ export const ProfileInfoSection = () => {
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-2/3" />
             </div>
           ) : (
             <div className="space-y-3 text-subtitle-text">
               <p><span className="font-medium text-body-text">Adres:</span> {displayProfile?.address || "Niedostępne"}</p>
               <p><span className="font-medium text-body-text">Regon:</span> {displayProfile?.license_number || "Niedostępne"}</p>
               <p><span className="font-medium text-body-text">NIP:</span> {displayProfile?.tax_id || "Niedostępne"}</p>
-            </div>
-          )}
-        </div>
-        
-        {/* Additional Details */}
-        <div>
-          <h3 className="font-medium text-body-text mb-4 pb-2 border-b border-accent/20 flex items-center">
-            <FileText className="mr-2 h-4 w-4 text-primary" />
-            Dodatkowe szczegóły
-          </h3>
-          
-          {isLoading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-            </div>
-          ) : (
-            <div className="space-y-3 text-subtitle-text">
-              <p><span className="font-medium text-body-text">Rejestr działalności:</span> {displayProfile?.business_registry_number || "Niedostępne"}</p>
               <p><span className="font-medium text-body-text">Status konta:</span> <span className="text-success font-medium">Aktywny</span></p>
             </div>
           )}
