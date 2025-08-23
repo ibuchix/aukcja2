@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -17,6 +16,7 @@ import { formatCurrency } from "@/lib/utils";
 import { MyBid } from "./types";
 import { CancelBidDialog } from "./CancelBidDialog";
 import { ModifyBidDialog } from "./ModifyBidDialog";
+import { LiveAuctionDetailsDialog } from "@/components/dealer/cars/LiveAuctionDetailsDialog";
 import { useBidActions } from "@/hooks/useBidActions";
 import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
 
@@ -27,12 +27,13 @@ interface BidsTableProps {
 export const BidsTable = ({ bids }: BidsTableProps) => {
   const { dealerProfile } = useCurrentDealerProfile();
   const { cancelBid, isCancelling } = useBidActions(dealerProfile?.id);
-  const navigate = useNavigate();
   
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [modifyDialogOpen, setModifyDialogOpen] = useState(false);
   const [selectedBid, setSelectedBid] = useState<MyBid | null>(null);
   const [isModifying, setIsModifying] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedCarForDetails, setSelectedCarForDetails] = useState<any>(null);
 
   const handleCancelBid = (bid: MyBid) => {
     setSelectedBid(bid);
@@ -45,7 +46,8 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
   };
 
   const handleViewDetails = (bid: MyBid) => {
-    navigate(`/dealer/dashboard?car=${bid.car_id}&returnTo=bids`);
+    setSelectedCarForDetails(bid.car);
+    setDetailsDialogOpen(true);
   };
 
   const confirmCancelBid = () => {
@@ -229,6 +231,18 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
         onConfirm={confirmModifyBid}
         isLoading={isModifying}
       />
+
+      {selectedCarForDetails && (
+        <LiveAuctionDetailsDialog
+          car={selectedCarForDetails}
+          dealerId={dealerProfile?.id || ""}
+          isVerified={dealerProfile?.verification_status === 'approved' || dealerProfile?.is_verified === true}
+          onClose={() => {
+            setDetailsDialogOpen(false);
+            setSelectedCarForDetails(null);
+          }}
+        />
+      )}
     </>
   );
 };
