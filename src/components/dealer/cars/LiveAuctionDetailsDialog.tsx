@@ -196,7 +196,6 @@ export const LiveAuctionDetailsDialog = ({
                   <span className="font-medium">
                     <AuctionTimer 
                       auctionEndTime={car.scheduleEndTime || car.auction_end_time} 
-                      auctionTimingStatus={car.auctionTimingStatus || 'active'} 
                     />
                   </span>
                 </div>

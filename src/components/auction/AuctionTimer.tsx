@@ -1,63 +1,45 @@
 
 import { useState, useEffect } from "react";
-import { Clock } from "lucide-react";
-import { isCurrentlyAfter } from "@/utils/ukTimeUtils";
 
 interface AuctionTimerProps {
   auctionEndTime: string;
-  auctionTimingStatus?: 'scheduled' | 'active' | 'ended' | 'unknown';
 }
 
-export const AuctionTimer = ({ auctionEndTime, auctionTimingStatus }: AuctionTimerProps) => {
+export const AuctionTimer = ({ auctionEndTime }: AuctionTimerProps) => {
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
   useEffect(() => {
-    // Handle different auction states with Polish translations
-    if (auctionTimingStatus === 'ended') {
-      setTimeRemaining("Aukcja zakończona");
-      return;
-    } else if (auctionTimingStatus === 'scheduled') {
-      setTimeRemaining("Aukcja nie rozpoczęta");
-      return;
-    }
-    
-    // For 'active' or 'unknown' status, show the countdown if we have an end time
+    // If no end time provided, show unavailable
     if (!auctionEndTime) {
       setTimeRemaining("Czas niedostępny");
       return;
     }
 
     const updateTimer = () => {
-      // Use consistent UTC time calculation like in the timing utilities
       const now = new Date();
       const end = new Date(auctionEndTime);
       const distance = end.getTime() - now.getTime();
 
-      if (distance < 0 || isCurrentlyAfter(auctionEndTime)) {
+      // If auction has ended
+      if (distance < 0) {
         setTimeRemaining("Aukcja zakończona");
         return false; // Stop the timer
-      } else {
-        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-        // Format display based on time remaining
-        if (days > 0) {
-          setTimeRemaining(`${days} dni ${hours} godzin`);
-        } else if (hours > 0) {
-          setTimeRemaining(`${hours} godzin ${minutes} minut`);
-        } else if (minutes > 0) {
-          setTimeRemaining(`${minutes} minut ${seconds} sekund`);
-        } else {
-          setTimeRemaining(`${seconds} sekund`);
-        }
-        return true; // Continue the timer
       }
+
+      // Calculate hours, minutes, seconds
+      const hours = Math.floor(distance / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      // Format as HH:MM:SS
+      const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      setTimeRemaining(formattedTime);
+      
+      return true; // Continue the timer
     };
 
     // Initial update
-    if (!updateTimer()) return;
+    updateTimer();
 
     const timer = setInterval(() => {
       if (!updateTimer()) {
@@ -66,7 +48,7 @@ export const AuctionTimer = ({ auctionEndTime, auctionTimingStatus }: AuctionTim
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [auctionEndTime, auctionTimingStatus]);
+  }, [auctionEndTime]);
 
   return (
     <span className="font-medium">

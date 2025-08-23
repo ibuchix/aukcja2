@@ -181,7 +181,6 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
             {auctionEndTime && !hasEnded ? (
               <AuctionTimer 
                 auctionEndTime={auctionEndTime} 
-                auctionTimingStatus={getTimerStatus()} 
               />
             ) : hasEnded ? (
               <span>Auction ended</span>
@@ -189,7 +188,6 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
               // Show countdown even if status calculation failed
               <AuctionTimer 
                 auctionEndTime={auctionEndTime} 
-                auctionTimingStatus="active" 
               />
             ) : (
               <span>{displayStatus.label}</span>
