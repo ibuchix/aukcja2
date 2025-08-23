@@ -1,4 +1,5 @@
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,7 @@ import { formatCurrency } from "@/lib/utils";
 import { translateTransmission } from "@/lib/transmissionUtils";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
 import { Clock, Car, Calendar, Gauge, Settings, Fuel } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BidCarDetailsDialogProps {
   isOpen: boolean;
@@ -21,7 +23,30 @@ interface BidCarDetailsDialogProps {
 export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetailsDialogProps) => {
   if (!bid || !bid.car) return null;
 
+  // Fetch full car details when dialog opens
+  const { data: fullCarData, isLoading } = useQuery({
+    queryKey: ['car-details', bid.car_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cars')
+        .select(`
+          *,
+          images,
+          required_photos,
+          additional_photos,
+          features
+        `)
+        .eq('id', bid.car_id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: isOpen && !!bid.car_id
+  });
+
   const { car } = bid;
+  const displayCar = fullCarData || car as any;
 
   const getAuctionStatusDisplay = () => {
     switch (bid.auctionTimingStatus) {
@@ -37,6 +62,26 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
   };
 
   const statusDisplay = getAuctionStatusDisplay();
+
+  if (isLoading) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">
+              Szczegóły pojazdu
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p>Ładowanie szczegółów pojazdu...</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -54,7 +99,7 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
             {/* Car Header */}
             <div className="border-b pb-4">
               <h2 className="text-2xl font-bold text-foreground">
-                {car.title || `${car.year} ${car.make} ${car.model}`}
+                {displayCar?.title || `${displayCar?.year || ''} ${displayCar?.make || ''} ${displayCar?.model || ''}`.trim() || 'Pojazd'}
               </h2>
               <div className="flex items-center gap-2 mt-2">
                 <Badge variant={statusDisplay.variant} className={statusDisplay.className}>
@@ -79,7 +124,7 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
             {/* Vehicle Photos */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Zdjęcia Pojazdu</h3>
-              <VehiclePhotos car={car as any} showHeader={false} />
+              <VehiclePhotos car={displayCar as any} showHeader={false} />
             </div>
             
             {/* Vehicle Specifications */}
@@ -90,46 +135,46 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                       <span className="text-body-text font-medium">Rok</span>
-                      <span className="font-semibold text-lg text-body-text">{car.year || 'Brak danych'}</span>
+                      <span className="font-semibold text-lg text-body-text">{displayCar?.year || 'Brak danych'}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                       <span className="text-body-text font-medium">Przebieg</span>
-                      <span className="font-semibold text-lg text-body-text">{(car as any)?.mileage?.toLocaleString() || 'Brak danych'} km</span>
+                      <span className="font-semibold text-lg text-body-text">{displayCar?.mileage?.toLocaleString() || 'Brak danych'} km</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                       <span className="text-body-text font-medium">Skrzynia biegów</span>
-                      <span className="font-semibold text-lg text-body-text">{(car as any)?.transmission ? translateTransmission((car as any).transmission) : 'Brak danych'}</span>
+                      <span className="font-semibold text-lg text-body-text">{displayCar?.transmission ? translateTransmission(displayCar.transmission) : 'Brak danych'}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                       <span className="text-body-text font-medium">Rodzaj paliwa</span>
-                      <span className="font-semibold text-lg capitalize text-body-text">{(car as any)?.fuel_type || (car as any)?.fuelType || 'Brak danych'}</span>
+                      <span className="font-semibold text-lg capitalize text-body-text">{displayCar?.fuel_type || displayCar?.fuelType || 'Brak danych'}</span>
                     </div>
                   </div>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                       <span className="text-body-text font-medium">VIN</span>
-                      <span className="font-semibold font-mono text-sm break-all text-body-text">{(car as any)?.vin || 'Brak danych'}</span>
+                      <span className="font-semibold font-mono text-sm break-all text-body-text">{displayCar?.vin || 'Brak danych'}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                       <span className="text-body-text font-medium">Numer rejestracyjny</span>
-                      <span className="font-semibold text-lg text-body-text">{(car as any)?.registration_number || 'Brak danych'}</span>
+                      <span className="font-semibold text-lg text-body-text">{displayCar?.registration_number || 'Brak danych'}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                       <span className="text-body-text font-medium">Liczba kluczyków</span>
-                      <span className="font-semibold text-lg text-body-text">{((car as any)?.numberOfKeys || (car as any)?.number_of_keys) || 'Brak danych'}</span>
+                      <span className="font-semibold text-lg text-body-text">{displayCar?.numberOfKeys || displayCar?.number_of_keys || 'Brak danych'}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                       <span className="text-body-text font-medium">Materiał siedzeń</span>
-                      <span className="font-semibold text-lg capitalize text-body-text">{(car as any)?.seat_material || (car as any)?.seatMaterial || 'Brak danych'}</span>
+                      <span className="font-semibold text-lg capitalize text-body-text">{displayCar?.seat_material || displayCar?.seatMaterial || 'Brak danych'}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Vehicle Features */}
-              {(car as any)?.features && Object.keys((car as any).features).length > 0 && (() => {
+              {displayCar?.features && Object.keys(displayCar.features).length > 0 && (() => {
                 // Filter features to only show ones that are true
-                const activeFeatures = Object.entries((car as any).features)
+                const activeFeatures = Object.entries(displayCar.features)
                   .filter(([_, value]) => value === true)
                   .map(([key, _]) => {
                     // Convert camelCase to readable format
@@ -158,14 +203,14 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
               })()}
 
               {/* Service History */}
-              {((car as any)?.service_history_type || (car as any)?.has_service_history) && (
+              {(displayCar?.service_history_type || displayCar?.has_service_history) && (
                 <div className="p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                   <h4 className="font-medium text-base mb-3 text-body-text">Historia serwisowa</h4>
                   <div className="text-sm space-y-2">
-                    {(car as any)?.service_history_type && (
-                      <p><span className="text-subtitle-text">Typ:</span> <span className="font-medium text-body-text">{(car as any).service_history_type}</span></p>
+                    {displayCar?.service_history_type && (
+                      <p><span className="text-subtitle-text">Typ:</span> <span className="font-medium text-body-text">{displayCar.service_history_type}</span></p>
                     )}
-                    {(car as any)?.has_service_history && (
+                    {displayCar?.has_service_history && (
                       <p className="text-green-600 font-medium">✓ Dostępna dokumentacja serwisowa</p>
                     )}
                   </div>
@@ -176,41 +221,41 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
               <div className="p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                 <h4 className="font-medium text-base mb-3 text-body-text">Stan pojazdu</h4>
                 <div className="text-sm space-y-2">
-                  <p><span className="text-subtitle-text">Uszkodzony:</span> <span className="font-medium text-body-text">{(car as any)?.is_damaged ? 'Tak' : 'Nie'}</span></p>
-                  <p><span className="text-subtitle-text">Zarejestrowany w Polsce:</span> <span className="font-medium text-body-text">{((car as any)?.isRegisteredInPoland || (car as any)?.is_registered_in_poland) ? 'Tak' : 'Nie'}</span></p>
-                  <p><span className="text-subtitle-text">Tablice prywatne:</span> <span className="font-medium text-body-text">{(car as any)?.has_private_plate ? 'Tak' : 'Nie'}</span></p>
-                  {(car as any)?.finance_amount && (
-                    <p><span className="text-subtitle-text">Zadłużenie finansowe:</span> <span className="font-medium text-body-text">{formatCurrency((car as any).finance_amount)}</span></p>
+                  <p><span className="text-subtitle-text">Uszkodzony:</span> <span className="font-medium text-body-text">{displayCar?.is_damaged ? 'Tak' : 'Nie'}</span></p>
+                  <p><span className="text-subtitle-text">Zarejestrowany w Polsce:</span> <span className="font-medium text-body-text">{(displayCar?.isRegisteredInPoland || displayCar?.is_registered_in_poland) ? 'Tak' : 'Nie'}</span></p>
+                  <p><span className="text-subtitle-text">Tablice prywatne:</span> <span className="font-medium text-body-text">{displayCar?.has_private_plate ? 'Tak' : 'Nie'}</span></p>
+                  {displayCar?.finance_amount && (
+                    <p><span className="text-subtitle-text">Zadłużenie finansowe:</span> <span className="font-medium text-body-text">{formatCurrency(displayCar.finance_amount)}</span></p>
                   )}
                 </div>
               </div>
 
               {/* Location */}
-              {(car as any)?.address && (
+              {displayCar?.address && (
                 <div className="p-4 bg-accent/50 rounded-lg">
                   <h4 className="font-medium text-base mb-3">Lokalizacja</h4>
-                  <p className="text-sm font-medium">{(car as any).address}</p>
+                  <p className="text-sm font-medium">{displayCar.address}</p>
                 </div>
               )}
 
               {/* Seller Contact */}
-              {(car as any)?.seller_name && (
+              {displayCar?.seller_name && (
                 <div className="p-4 bg-accent/50 rounded-lg">
                   <h4 className="font-medium text-base mb-3">Informacje o sprzedawcy</h4>
                   <div className="text-sm space-y-2">
-                    <p><span className="text-muted-foreground">Nazwa:</span> <span className="font-medium">{(car as any).seller_name}</span></p>
-                    {(car as any)?.mobile_number && (
-                      <p><span className="text-muted-foreground">Kontakt:</span> <span className="font-medium">{(car as any).mobile_number}</span></p>
+                    <p><span className="text-muted-foreground">Nazwa:</span> <span className="font-medium">{displayCar.seller_name}</span></p>
+                    {displayCar?.mobile_number && (
+                      <p><span className="text-muted-foreground">Kontakt:</span> <span className="font-medium">{displayCar.mobile_number}</span></p>
                     )}
                   </div>
                 </div>
               )}
 
               {/* Seller Notes */}
-              {(car as any)?.seller_notes && (
+              {displayCar?.seller_notes && (
                 <div className="p-4 bg-accent/50 rounded-lg">
                   <h4 className="font-medium text-base mb-3">Uwagi sprzedawcy</h4>
-                  <p className="text-sm leading-relaxed">{(car as any).seller_notes}</p>
+                  <p className="text-sm leading-relaxed">{displayCar.seller_notes}</p>
                 </div>
               )}
             </div>
