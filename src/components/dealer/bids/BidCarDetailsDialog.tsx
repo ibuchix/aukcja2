@@ -23,11 +23,12 @@ interface BidCarDetailsDialogProps {
 export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetailsDialogProps) => {
   if (!bid || !bid.car) return null;
 
-  // Fetch full car details when dialog opens
+  // Fetch full car details and images when dialog opens
   const { data: fullCarData, isLoading } = useQuery({
     queryKey: ['car-details', bid.car_id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch car data
+      const { data: carData, error: carError } = await supabase
         .from('cars')
         .select(`
           *,
@@ -39,8 +40,26 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
         .eq('id', bid.car_id)
         .single();
       
-      if (error) throw error;
-      return data;
+      if (carError) throw carError;
+
+      // Fetch car file uploads for images
+      const { data: fileUploads, error: uploadsError } = await supabase
+        .from('car_file_uploads')
+        .select('*')
+        .eq('car_id', bid.car_id)
+        .eq('upload_status', 'completed')
+        .order('display_order', { ascending: true });
+
+      if (uploadsError) {
+        console.error('Error fetching car images:', uploadsError);
+      }
+
+      // Combine car data with file uploads
+      if (!carData) return null;
+      
+      return Object.assign({}, carData, {
+        fileUploads: fileUploads || []
+      });
     },
     enabled: isOpen && !!bid.car_id
   });
