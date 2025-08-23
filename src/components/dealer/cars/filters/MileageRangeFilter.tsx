@@ -11,7 +11,7 @@ interface MileageRangeFilterProps {
 }
 
 const MIN_MILEAGE = 0;
-const MAX_MILEAGE = 300000;
+const MAX_MILEAGE = 500000;
 
 export const MileageRangeFilter: React.FC<MileageRangeFilterProps> = ({
   minMileage,
@@ -107,7 +107,7 @@ export const MileageRangeFilter: React.FC<MileageRangeFilterProps> = ({
             type="number"
             value={inputMax}
             onChange={(e) => handleInputChange('max', e.target.value)}
-            placeholder="300000"
+            placeholder="500000"
             min={MIN_MILEAGE}
             max={MAX_MILEAGE}
           />
