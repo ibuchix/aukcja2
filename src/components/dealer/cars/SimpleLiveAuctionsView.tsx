@@ -78,20 +78,24 @@ export const SimpleLiveAuctionsView = () => {
 
   return (
     <div className="container mx-auto space-y-6">
-      <div className="flex justify-between items-center">
+      <div className={`${isMobile ? 'space-y-4' : 'flex justify-between items-center'}`}>
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Aukcje na żywo</h2>
-          <p className="text-gray-300">Sprawdź dostępne pojazdy i złóż swoją ofertę</p>
+          <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-white mb-2`}>
+            Aukcje na żywo
+          </h2>
+          <p className={`text-gray-300 ${isMobile ? 'text-sm' : ''}`}>
+            Sprawdź dostępne pojazdy i złóż swoją ofertę
+          </p>
         </div>
-        <div className="flex gap-2">
+        <div className={`${isMobile ? 'flex flex-col gap-2' : 'flex gap-2'}`}>
           <Button
             variant="outline"
-            size="sm"
+            size={isMobile ? "default" : "sm"}
             onClick={handleRefreshStatuses}
             className="flex items-center gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20"
           >
             <RotateCcw className="h-4 w-4" />
-            Aktualizuj statusy
+            {isMobile ? 'Aktualizuj' : 'Aktualizuj statusy'}
           </Button>
           <RefreshListingsButton onRefresh={refetch} isLoading={isLoading} />
         </div>
