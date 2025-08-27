@@ -97,47 +97,47 @@ export const organizeImagesByCategory = (uploads: CarFileUpload[]): Record<strin
 };
 
 /**
- * Get primary image from car file uploads (prioritize exterior photos)
+ * Get primary image from car file uploads (ordered by upload sequence)
  */
 export const getPrimaryImageFromUploads = (uploads: CarFileUpload[]): string => {
   if (!uploads.length) {
     return "";
   }
   
-  // Priority order for categories
-  const categoryPriority = [
-    'exterior_front',
-    'exterior_rear', 
-    'exterior_left',
-    'exterior_right',
-    'interior_front',
-    'interior_rear',
-    'engine_bay',
-    'dashboard'
-  ];
-  
-  // Find first image in priority order
-  for (const category of categoryPriority) {
-    const categoryImage = uploads.find(upload => upload.category === category);
-    if (categoryImage) {
-      return getStorageImageUrl(categoryImage.file_path);
+  // Sort by upload order: first by display_order, then by created_at as fallback
+  const sortedUploads = [...uploads].sort((a, b) => {
+    // First sort by display_order (lower numbers first)
+    if (a.display_order !== b.display_order) {
+      return (a.display_order || 0) - (b.display_order || 0);
     }
-  }
+    // Fallback to created_at timestamp (earlier uploads first)
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+  });
   
-  // If no priority category found, use first available image
-  const firstImage = uploads[0];
+  // Return the first image in upload order
+  const firstImage = sortedUploads[0];
   return getStorageImageUrl(firstImage.file_path);
 };
 
 /**
- * Get all images from car file uploads with proper labeling
+ * Get all images from car file uploads with proper labeling (ordered by upload sequence)
  */
 export const getAllImagesFromUploads = (uploads: CarFileUpload[]): { src: string; label: string }[] => {
   if (!uploads.length) return [];
   
-  return uploads.map(upload => ({
+  // Sort by upload order: first by display_order, then by created_at as fallback
+  const sortedUploads = [...uploads].sort((a, b) => {
+    // First sort by display_order (lower numbers first)
+    if (a.display_order !== b.display_order) {
+      return (a.display_order || 0) - (b.display_order || 0);
+    }
+    // Fallback to created_at timestamp (earlier uploads first)
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+  });
+  
+  return sortedUploads.map((upload, index) => ({
     src: getStorageImageUrl(upload.file_path),
-    label: (upload.category || 'additional').replace(/_/g, ' ').toUpperCase()
+    label: `IMAGE ${index + 1}` // Simple sequential numbering based on upload order
   }));
 };
 
