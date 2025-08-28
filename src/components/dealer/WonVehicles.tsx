@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { calculatePlatformFee } from "@/utils/platformFeeCalculator";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { fetchCarFileUploads, getPrimaryImageFromUploads } from "@/utils/imageUtils/carFileUploads";
 
 // Seller Contact Component
 const SellerContactInfo = ({ vehicleId }: { vehicleId: string }) => {
@@ -130,6 +131,30 @@ export const WonVehicles = () => {
       return (data as unknown as WonVehicle[]) || [];
     },
     enabled: !!dealerProfile?.id,
+  });
+
+  // Fetch car images using RPC for all won vehicles
+  const { data: carImages } = useQuery({
+    queryKey: ["wonVehicleImages", wonVehicles?.map(v => v.car_id)],
+    queryFn: async () => {
+      if (!wonVehicles || wonVehicles.length === 0) return {};
+      
+      const carIds = wonVehicles.map(v => v.car_id);
+      console.log("Fetching car images for won vehicles:", carIds);
+      
+      const fileUploads = await fetchCarFileUploads(carIds);
+      console.log("Fetched car file uploads:", fileUploads);
+      
+      // Group images by car_id
+      const imagesByCarId: Record<string, string> = {};
+      carIds.forEach(carId => {
+        const carFileUploads = fileUploads.filter(upload => upload.car_id === carId);
+        imagesByCarId[carId] = getPrimaryImageFromUploads(carFileUploads);
+      });
+      
+      return imagesByCarId;
+    },
+    enabled: !!wonVehicles && wonVehicles.length > 0,
   });
 
   // Handle payment completion from Stripe redirect
@@ -264,19 +289,8 @@ export const WonVehicles = () => {
     }).format(amount);
   };
 
-  const getVehicleImage = (images: any) => {
-    if (typeof images === 'string') {
-      try {
-        const parsed = JSON.parse(images);
-        return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : '/placeholder.svg';
-      } catch {
-        return '/placeholder.svg';
-      }
-    }
-    if (Array.isArray(images) && images.length > 0) {
-      return images[0];
-    }
-    return '/placeholder.svg';
+  const getVehicleImage = (carId: string) => {
+    return carImages?.[carId] || '/placeholder.svg';
   };
 
   const handleViewDetails = (carId: string) => {
@@ -444,14 +458,14 @@ export const WonVehicles = () => {
                 <Card className="overflow-hidden">
                   <CardContent className="p-0">
                     <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'} gap-0`}>
-                      {/* Vehicle Image Section */}
-                      <div className={`relative bg-gray-100 flex items-center justify-center ${isMobile ? 'h-48' : 'h-64'}`}>
-                        <img
-                          src={getVehicleImage(vehicle.vehicle_images)}
-                          alt={`${vehicle.vehicle_year} ${vehicle.vehicle_make} ${vehicle.vehicle_model}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                       {/* Vehicle Image Section */}
+                       <div className={`relative bg-gray-100 flex items-center justify-center ${isMobile ? 'h-48' : 'h-64'}`}>
+                         <img
+                           src={getVehicleImage(vehicle.car_id)}
+                           alt={`${vehicle.vehicle_year} ${vehicle.vehicle_make} ${vehicle.vehicle_model}`}
+                           className="w-full h-full object-cover"
+                         />
+                       </div>
 
                       {/* Vehicle Details Section */}
                       <div className={`${isMobile ? 'p-4' : 'p-6'}`}>
