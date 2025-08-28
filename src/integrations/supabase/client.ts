@@ -16,11 +16,6 @@ export const rawSupabaseClient = createClient<Database>(supabaseUrl, supabaseAno
     flowType: 'pkce',
     storageKey: 'sb-auth-token'
   },
-  realtime: {
-    params: {
-      eventsPerSecond: 10
-    }
-  },
   global: {
     headers: {
       'x-client-info': 'dealer-portal@1.0.0'
