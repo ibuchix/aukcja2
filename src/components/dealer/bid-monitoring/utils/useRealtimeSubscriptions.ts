@@ -2,7 +2,6 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { BidActivity, BidMetrics } from "../types";
-import { createSafeRealtimeSubscription } from "@/utils/realtimeConfig";
 
 export function useRealtimeSubscriptions(
   dealerId: string | undefined,
@@ -12,15 +11,16 @@ export function useRealtimeSubscriptions(
   useEffect(() => {
     if (!dealerId) return;
 
-    const subscriptions: Array<{ unsubscribe: () => void }> = [];
+    const subscriptions: Array<any> = [];
 
-    // Subscribe to new bids with safe realtime
-    const bidsSubscription = createSafeRealtimeSubscription({
-      channelName: 'bid-monitoring-bids',
-      event: '*',
-      schema: 'public',
-      table: 'bids',
-      onEvent: (payload) => {
+    // Subscribe to new bids 
+    const bidsChannel = supabase
+      .channel('bid-monitoring-bids')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'bids'
+      }, (payload) => {
         console.log('Bid change received:', payload);
         
         // Handle different types of bid changes
@@ -98,23 +98,19 @@ export function useRealtimeSubscriptions(
             }
           }
         }
-      },
-      onError: (error) => {
-        console.error('Bid monitoring subscription error:', error);
-      }
-    });
+      })
+      .subscribe();
 
-    if (bidsSubscription) {
-      subscriptions.push(bidsSubscription);
-    }
+    subscriptions.push(bidsChannel);
 
-    // Subscribe to auction status changes with safe realtime
-    const carsSubscription = createSafeRealtimeSubscription({
-      channelName: 'bid-monitoring-cars',
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'cars',
-      onEvent: (payload) => {
+    // Subscribe to auction status changes
+    const carsChannel = supabase
+      .channel('bid-monitoring-cars')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'cars'
+      }, (payload) => {
         console.log('Car update received:', payload);
         
         const newData = payload.new as any;
@@ -135,19 +131,14 @@ export function useRealtimeSubscriptions(
           
           addActivity(newActivity);
         }
-      },
-      onError: (error) => {
-        console.error('Car monitoring subscription error:', error);
-      }
-    });
+      })
+      .subscribe();
 
-    if (carsSubscription) {
-      subscriptions.push(carsSubscription);
-    }
+    subscriptions.push(carsChannel);
 
     // Cleanup subscriptions on unmount
     return () => {
-      subscriptions.forEach(sub => sub.unsubscribe());
+      subscriptions.forEach(channel => supabase.removeChannel(channel));
     };
   }, [dealerId, addActivity, updateMetrics]);
 }

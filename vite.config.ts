@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => ({
     host: true, // Changed from "::" to true for better compatibility
     port: 8080,
     strictPort: true,
+    headers: {
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://sdvakfhmoaoucmhbhwvy.supabase.co wss://sdvakfhmoaoucmhbhwvy.supabase.co; worker-src 'self' blob:;"
+    }
   },
   plugins: [
     react(),
