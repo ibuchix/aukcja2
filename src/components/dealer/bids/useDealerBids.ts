@@ -76,6 +76,7 @@ export function useDealerBids(dealerProfileId: string | undefined) {
           dealer_id
         `)
         .eq('dealer_id', dealerProfileId)
+        .eq('status', 'active')
         .order("created_at", { ascending: false });
 
       // Get won vehicles for this dealer to determine win/loss status
