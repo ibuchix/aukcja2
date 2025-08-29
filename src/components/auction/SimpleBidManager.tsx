@@ -38,7 +38,8 @@ export const SimpleBidManager = ({
       .select('amount')
       .eq('car_id', carId)
       .eq('dealer_id', dealerId)
-      .order('amount', { ascending: false })
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
