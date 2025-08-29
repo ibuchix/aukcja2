@@ -8,6 +8,7 @@ import { AuctionTimer } from "@/components/auction/AuctionTimer";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
 import { formatCurrency } from "@/lib/utils";
 import { translateTransmission } from "@/lib/transmissionUtils";
+import { translateSpecificationLabel, translateVehicleFeature, translateFuelType, translateSeatMaterial } from "@/lib/vehicleTranslations";
 
 interface LiveAuctionDetailsDialogProps {
   car: any;
@@ -48,42 +49,42 @@ export const LiveAuctionDetailsDialog = ({
             {/* Vehicle Specifications */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-xl font-semibold mb-6 text-body-text">Vehicle Specifications</h3>
+                <h3 className="text-xl font-semibold mb-6 text-body-text">{translateSpecificationLabel('Vehicle Specifications')}</h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">Year</span>
+                      <span className="text-body-text font-medium">{translateSpecificationLabel('Year')}</span>
                       <span className="font-semibold text-lg text-body-text">{car.year}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">Mileage</span>
-                      <span className="font-semibold text-lg text-body-text">{car.mileage?.toLocaleString()} miles</span>
+                      <span className="text-body-text font-medium">{translateSpecificationLabel('Mileage')}</span>
+                      <span className="font-semibold text-lg text-body-text">{car.mileage?.toLocaleString()} km</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">Transmission</span>
+                      <span className="text-body-text font-medium">{translateSpecificationLabel('Transmission')}</span>
                       <span className="font-semibold text-lg text-body-text">{translateTransmission(car.transmission)}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">Fuel Type</span>
-                      <span className="font-semibold text-lg capitalize text-body-text">{car.fuel_type || car.fuelType || 'Not specified'}</span>
+                      <span className="text-body-text font-medium">{translateSpecificationLabel('Fuel Type')}</span>
+                      <span className="font-semibold text-lg capitalize text-body-text">{translateFuelType(car.fuel_type || car.fuelType)}</span>
                     </div>
                   </div>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">VIN</span>
-                      <span className="font-semibold font-mono text-sm break-all text-body-text">{car.vin || 'Not available'}</span>
+                      <span className="text-body-text font-medium">{translateSpecificationLabel('VIN')}</span>
+                      <span className="font-semibold font-mono text-sm break-all text-body-text">{car.vin || translateSpecificationLabel('Not available')}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">Registration</span>
-                      <span className="font-semibold text-lg text-body-text">{car.registration_number || 'Not specified'}</span>
+                      <span className="text-body-text font-medium">{translateSpecificationLabel('Registration')}</span>
+                      <span className="font-semibold text-lg text-body-text">{car.registration_number || translateSpecificationLabel('Not specified')}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">Number of Keys</span>
-                      <span className="font-semibold text-lg text-body-text">{(car.numberOfKeys || car.number_of_keys) || 'Not specified'}</span>
+                      <span className="text-body-text font-medium">{translateSpecificationLabel('Number of Keys')}</span>
+                      <span className="font-semibold text-lg text-body-text">{(car.numberOfKeys || car.number_of_keys) || translateSpecificationLabel('Not specified')}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">Seat Material</span>
-                      <span className="font-semibold text-lg capitalize text-body-text">{car.seat_material || car.seatMaterial || 'Not specified'}</span>
+                      <span className="text-body-text font-medium">{translateSpecificationLabel('Seat Material')}</span>
+                      <span className="font-semibold text-lg capitalize text-body-text">{translateSeatMaterial(car.seat_material || car.seatMaterial)}</span>
                     </div>
                   </div>
                 </div>
@@ -107,12 +108,12 @@ export const LiveAuctionDetailsDialog = ({
 
                 return (
                   <div>
-                    <h4 className="text-xl font-semibold mb-4 text-body-text">Vehicle Features</h4>
+                    <h4 className="text-xl font-semibold mb-4 text-body-text">{translateSpecificationLabel('Vehicle Features')}</h4>
                     <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                       {activeFeatures.map((feature, index) => (
                         <div key={index} className="flex items-center gap-3 p-4 bg-success/10 rounded-lg border border-success/30">
                           <div className="w-2 h-2 bg-success rounded-full"></div>
-                          <span className="text-sm font-medium text-body-text">{feature}</span>
+                          <span className="text-sm font-medium text-body-text">{translateVehicleFeature(feature)}</span>
                         </div>
                       ))}
                     </div>
@@ -123,7 +124,7 @@ export const LiveAuctionDetailsDialog = ({
               {/* Service History */}
               {(car.service_history_type || car.has_service_history) && (
                 <div className="p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                  <h4 className="font-medium text-base mb-3 text-body-text">Service History</h4>
+                  <h4 className="font-medium text-base mb-3 text-body-text">{translateSpecificationLabel('Service History')}</h4>
                   <div className="text-sm space-y-2">
                     {car.service_history_type && (
                       <p><span className="text-subtitle-text">Type:</span> <span className="font-medium text-body-text">{car.service_history_type}</span></p>
@@ -137,11 +138,11 @@ export const LiveAuctionDetailsDialog = ({
 
               {/* Vehicle Condition */}
               <div className="p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                <h4 className="font-medium text-base mb-3 text-body-text">Vehicle Condition</h4>
+                <h4 className="font-medium text-base mb-3 text-body-text">{translateSpecificationLabel('Vehicle Condition')}</h4>
                 <div className="text-sm space-y-2">
-                  <p><span className="text-subtitle-text">Damaged:</span> <span className="font-medium text-body-text">{car.is_damaged ? 'Yes' : 'No'}</span></p>
-                  <p><span className="text-subtitle-text">Registered in Poland:</span> <span className="font-medium text-body-text">{(car.isRegisteredInPoland || car.is_registered_in_poland) ? 'Yes' : 'No'}</span></p>
-                  <p><span className="text-subtitle-text">Private Plate:</span> <span className="font-medium text-body-text">{car.has_private_plate ? 'Yes' : 'No'}</span></p>
+                  <p><span className="text-subtitle-text">{translateSpecificationLabel('Damaged')}:</span> <span className="font-medium text-body-text">{car.is_damaged ? translateSpecificationLabel('Yes') : translateSpecificationLabel('No')}</span></p>
+                  <p><span className="text-subtitle-text">{translateSpecificationLabel('Registered in Poland')}:</span> <span className="font-medium text-body-text">{(car.isRegisteredInPoland || car.is_registered_in_poland) ? translateSpecificationLabel('Yes') : translateSpecificationLabel('No')}</span></p>
+                  <p><span className="text-subtitle-text">{translateSpecificationLabel('Private Plate')}:</span> <span className="font-medium text-body-text">{car.has_private_plate ? translateSpecificationLabel('Yes') : translateSpecificationLabel('No')}</span></p>
                   {car.finance_amount && (
                     <p><span className="text-subtitle-text">Finance Outstanding:</span> <span className="font-medium text-body-text">{formatCurrency(car.finance_amount)}</span></p>
                   )}
@@ -150,8 +151,8 @@ export const LiveAuctionDetailsDialog = ({
 
               {/* Location */}
               <div className="p-4 bg-accent/50 rounded-lg">
-                <h4 className="font-medium text-base mb-3">Location</h4>
-                <p className="text-sm font-medium">{car.address || 'Location not specified'}</p>
+                <h4 className="font-medium text-base mb-3">{translateSpecificationLabel('Location')}</h4>
+                <p className="text-sm font-medium">{car.address || translateSpecificationLabel('Location not specified')}</p>
               </div>
 
               {/* Seller Contact */}

@@ -170,7 +170,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
                       {formatPricePLN(car.currentBid)}
                     </div>
                     <div className="text-sm text-gray-500">
-                      Current Bid
+                      {translateSpecificationLabel('Current Bid')}
                     </div>
                   </div>
                 )}

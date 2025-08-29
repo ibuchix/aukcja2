@@ -41,7 +41,11 @@ export const translateVehicleFeature = (feature: string): string => {
     'Folding Mirrors': 'Składane lusterka',
     'Tinted Windows': 'Przyciemniane szyby',
     'Roof Rails': 'Relingi dachowe',
-    'Towbar': 'Hak holowniczy'
+    'Towbar': 'Hak holowniczy',
+    
+    // CamelCase converted features
+    'Sat Nav': 'Nawigacja',
+    'Upgraded Sound': 'Ulepszone audio'
   };
 
   return featureTranslations[feature] || feature;
@@ -59,6 +63,7 @@ export const translateSpecificationLabel = (label: string): string => {
     'Make': 'Marka',
     'Model': 'Model',
     'VIN Number': 'Numer VIN',
+    'VIN': 'Numer VIN',
     'Engine': 'Silnik',
     'Power': 'Moc',
     'Color': 'Kolor',
@@ -80,7 +85,16 @@ export const translateSpecificationLabel = (label: string): string => {
     'Current Bid': 'Aktualna oferta',
     'Actions': 'Akcje',
     'View All': 'Zobacz wszystkie zdjęcia',
-    'Basic Specifications': 'Specyfikacja podstawowa'
+    'Basic Specifications': 'Specyfikacja podstawowa',
+    'Not Specified': 'Nie podano',
+    'Not specified': 'Nie podano',
+    'Not available': 'Nie dostępne',
+    'Location': 'Lokalizacja',
+    'Registration': 'Rejestracja',
+    'Vehicle Specifications': 'Specyfikacja pojazdu',
+    'Damaged': 'Uszkodzony',
+    'Yes': 'Tak',
+    'No': 'Nie'
   };
 
   return labelTranslations[label] || label;
