@@ -197,7 +197,7 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
             
             {/* Image label */}
             <div className="absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded">
-              {allImages[selectedImageIndex]?.label}
+              Zdjęcie {selectedImageIndex + 1}
             </div>
           </div>
         </DialogContent>
