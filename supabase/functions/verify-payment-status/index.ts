@@ -42,10 +42,10 @@ serve(async (req) => {
       paymentStatus = session.payment_status;
       console.log('Payment session status:', paymentStatus, 'for vehicle:', vehicleId);
   } else {
-    // Look up payment intent from database
+    // Look up current payment status from database - DO NOT MODIFY without Stripe confirmation
     const { data: vehicle, error: vehicleError } = await supabaseService
       .from('dealer_won_vehicles')
-      .select('stripe_payment_intent_id')
+      .select('stripe_payment_intent_id, payment_status, seller_details_unlocked')
       .eq('id', vehicleId)
       .single();
 
@@ -54,14 +54,27 @@ serve(async (req) => {
     }
 
     if (!vehicle.stripe_payment_intent_id) {
-      // No payment intent stored - assume payment was successful externally
-      console.log('No payment intent stored for vehicle:', vehicleId, '- assuming external payment success');
-      paymentStatus = 'paid';
+      // No payment intent stored - return current database status without modification
+      console.log('No payment intent found for vehicle:', vehicleId, '- returning current DB status:', vehicle.payment_status);
+      
+      // SECURITY: Do not assume payment success - return current status from DB
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          payment_status: vehicle.payment_status || 'payment_required',
+          seller_details_unlocked: vehicle.seller_details_unlocked || false,
+          message: 'Current status returned - no payment verification performed'
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
     } else {
-      // Retrieve payment intent from Stripe
+      // Retrieve payment intent from Stripe for verification
       const paymentIntent = await stripe.paymentIntents.retrieve(vehicle.stripe_payment_intent_id);
       paymentStatus = paymentIntent.status === 'succeeded' ? 'paid' : paymentIntent.status;
-      console.log('Payment intent status:', paymentStatus, 'for vehicle:', vehicleId);
+      console.log('Stripe payment intent status:', paymentStatus, 'for vehicle:', vehicleId);
     }
   }
 
