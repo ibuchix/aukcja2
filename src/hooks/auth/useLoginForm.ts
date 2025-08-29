@@ -86,8 +86,8 @@ export function useLoginForm() {
       
       // Show success toast
       toast({
-        title: "Login successful",
-        description: "Welcome back!",
+        title: "Logowanie pomyślne",
+        description: "Witamy ponownie!",
       });
       
       // Clear URL query parameters if present

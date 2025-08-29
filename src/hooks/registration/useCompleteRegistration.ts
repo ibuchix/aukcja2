@@ -182,8 +182,8 @@ export function useCompleteRegistration() {
             if (!signInResult.error && signInResult.data) {
               console.log("Login successful after 'already exists' error - registration was actually successful");
               toast({
-                title: "Welcome back!",
-                description: "You already have an account and we've logged you in.",
+                title: "Witamy ponownie!",
+                description: "Masz już konto i zostałeś zalogowany.",
               });
               return {
                 success: true,
