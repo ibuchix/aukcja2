@@ -7,6 +7,7 @@ import { CarListing } from "@/types/cars";
 import { getAllCarImages, getImageCount, debugCarImages } from "@/utils/imageUtils";
 import { useCarImagesFallback } from "@/hooks/useCarImagesFallback";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { translateSpecificationLabel } from "@/lib/vehicleTranslations";
 
 interface VehiclePhotosProps {
   car: CarListing;
@@ -107,7 +108,7 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
             className="absolute bottom-2 right-2"
             onClick={() => setIsGalleryOpen(true)}
           >
-            View All {imageCount}
+            {translateSpecificationLabel('View All')} {imageCount}
           </Button>
         )}
       </div>

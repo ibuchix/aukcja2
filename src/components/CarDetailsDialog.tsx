@@ -16,6 +16,7 @@ import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
 import BasicSpecifications from "@/components/car-details/BasicSpecifications";
 import { ConditionAndFeatures } from "@/components/car-details/ConditionAndFeatures";
+import { translateSpecificationLabel } from "@/lib/vehicleTranslations";
 
 interface CarDetailsDialogProps {
   car: CarListing | null;
@@ -161,7 +162,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
                   {formattedReservePrice}
                 </div>
                 <div className="text-sm text-gray-500">
-                  Reserve Price
+                  {translateSpecificationLabel('Reserve Price')}
                 </div>
                 {car.currentBid && car.currentBid > 0 && (
                   <div className="mt-1">

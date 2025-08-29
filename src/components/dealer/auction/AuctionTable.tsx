@@ -12,6 +12,7 @@ import { AuctionTableProps } from "./types";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Eye } from "lucide-react";
+import { translateSpecificationLabel } from "@/lib/vehicleTranslations";
 
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { AuctionScheduleInfo } from "@/components/auction/AuctionScheduleInfo";
@@ -43,7 +44,7 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
               </div>
               
               <div>
-                <div className="text-muted-foreground">Reserve Price</div>
+                <div className="text-muted-foreground">{translateSpecificationLabel('Reserve Price')}</div>
                 <div>${auction.reserve_price.toLocaleString()}</div>
               </div>
               
@@ -105,11 +106,11 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
         <TableRow>
           <TableHead>Vehicle</TableHead>
           <TableHead>End Time</TableHead>
-          <TableHead>Reserve Price</TableHead>
+          <TableHead>{translateSpecificationLabel('Reserve Price')}</TableHead>
           <TableHead>Highest Bid</TableHead>
           <TableHead>My Bid</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead>Actions</TableHead>
+          <TableHead>{translateSpecificationLabel('Actions')}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

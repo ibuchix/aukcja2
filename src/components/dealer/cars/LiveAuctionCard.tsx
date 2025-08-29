@@ -7,6 +7,7 @@ import { AuctionTimer } from "@/components/auction/AuctionTimer";
 import { AuctionStatusIndicator } from "./AuctionStatusIndicator";
 import { getPrimaryImage } from "@/utils/imageUtils";
 import { translateTransmission } from "@/lib/transmissionUtils";
+import { translateSpecificationLabel } from "@/lib/vehicleTranslations";
 
 interface LiveAuctionCardProps {
   car: any;
@@ -181,7 +182,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
           
           <div className="pt-2 border-t">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Reserve Price</span>
+              <span className="text-sm text-muted-foreground">{translateSpecificationLabel('Reserve Price')}</span>
               <span className="font-semibold text-lg">
                 {formatPrice(reservePrice)}
               </span>

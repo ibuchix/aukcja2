@@ -19,6 +19,7 @@ import { ModifyBidDialog } from "./ModifyBidDialog";
 import { BidCarDetailsDialog } from "./BidCarDetailsDialog";
 import { useBidActions } from "@/hooks/useBidActions";
 import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
+import { translateSpecificationLabel } from "@/lib/vehicleTranslations";
 
 interface BidsTableProps {
   bids: MyBid[];
@@ -110,7 +111,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
               <TableHead>Auto</TableHead>
               <TableHead>Twoja oferta</TableHead>
               <TableHead>Koniec aukcji za</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">{translateSpecificationLabel('Actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

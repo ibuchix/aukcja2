@@ -1,5 +1,6 @@
 import { formatCurrency } from "@/lib/utils";
 import { translateTransmission } from "@/lib/transmissionUtils";
+import { translateSpecificationLabel } from "@/lib/vehicleTranslations";
 
 interface VehicleCardProps {
   image: string;
@@ -25,15 +26,15 @@ const VehicleCard = ({ image, name, price, mileage, transmission, year }: Vehicl
         <p className="text-primary text-lg font-bold mb-4">{formatCurrency(price)}</p>
         <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
           <div>
-            <p className="font-semibold">Year</p>
+            <p className="font-semibold">{translateSpecificationLabel('Year')}</p>
             <p>{year || "N/A"}</p>
           </div>
           <div>
-            <p className="font-semibold">Mileage</p>
+            <p className="font-semibold">{translateSpecificationLabel('Mileage')}</p>
             <p>{mileage.toLocaleString()} km</p>
           </div>
           <div className="col-span-2">
-            <p className="font-semibold">Transmission</p>
+            <p className="font-semibold">{translateSpecificationLabel('Transmission')}</p>
             <p>{translateTransmission(transmission)}</p>
           </div>
         </div>

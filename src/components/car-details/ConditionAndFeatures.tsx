@@ -3,6 +3,7 @@ import { Shield, Check, X } from "lucide-react";
 import { CarListing } from "@/types/cars";
 import { Badge } from "@/components/ui/badge";
 import { translateTransmission } from "@/lib/transmissionUtils";
+import { translateVehicleFeature, translateSpecificationLabel, translateSeatMaterial } from "@/lib/vehicleTranslations";
 
 interface ConditionAndFeaturesProps {
   car: CarListing;
@@ -25,33 +26,33 @@ export const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
       <div>
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-body-text">
           <Shield className="h-5 w-5 text-body-text" />
-          Vehicle Condition
+          {translateSpecificationLabel('Vehicle Condition')}
         </h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg border border-secondary/30">
-            <span className="font-medium text-body-text">Damage Status</span>
+            <span className="font-medium text-body-text">{translateSpecificationLabel('Damage Status')}</span>
             <Badge variant={car.isDamaged ? "destructive" : "default"}>
-              {car.isDamaged ? "Has Damage" : "No Known Damage"}
+              {car.isDamaged ? "Uszkodzony" : "Bez uszkodzeń"}
             </Badge>
           </div>
           
           {car.transmission && (
             <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg border border-secondary/30">
-              <span className="font-medium text-body-text">Transmission</span>
+              <span className="font-medium text-body-text">{translateSpecificationLabel('Transmission')}</span>
               <Badge variant="outline">{translateTransmission(car.transmission)}</Badge>
             </div>
           )}
           
           {car.seatMaterial && (
             <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg border border-secondary/30">
-              <span className="font-medium text-body-text">Seat Material</span>
-              <Badge variant="outline">{car.seatMaterial}</Badge>
+              <span className="font-medium text-body-text">{translateSpecificationLabel('Seat Material')}</span>
+              <Badge variant="outline">{translateSeatMaterial(car.seatMaterial)}</Badge>
             </div>
           )}
           
           {car.numberOfKeys && (
             <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg border border-secondary/30">
-              <span className="font-medium text-body-text">Number of Keys</span>
+              <span className="font-medium text-body-text">{translateSpecificationLabel('Number of Keys')}</span>
               <Badge variant="outline">{car.numberOfKeys}</Badge>
             </div>
           )}
@@ -60,7 +61,7 @@ export const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
 
       {/* Features Section */}
       <div>
-        <h3 className="text-lg font-semibold mb-4 text-body-text">Vehicle Features</h3>
+        <h3 className="text-lg font-semibold mb-4 text-body-text">{translateSpecificationLabel('Vehicle Features')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {featureList.map((feature) => (
             <div 
@@ -74,13 +75,13 @@ export const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
                     variant="default" 
                     className="bg-green-100 text-green-800 hover:bg-green-200 border-green-300"
                   >
-                    {feature.label}
+                    {translateVehicleFeature(feature.label)}
                   </Badge>
                 </>
               ) : (
                 <>
                   <X className="h-5 w-5 text-gray-400" />
-                  <span className="text-subtitle-text">{feature.label}</span>
+                  <span className="text-subtitle-text">{translateVehicleFeature(feature.label)}</span>
                 </>
               )}
             </div>
@@ -91,38 +92,38 @@ export const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
       {/* Additional Information */}
       {(car.serviceHistoryType || car.hasServiceHistory !== undefined || car.isRegisteredInPoland !== undefined) && (
         <div>
-          <h3 className="text-lg font-semibold mb-4 text-body-text">Additional Information</h3>
+          <h3 className="text-lg font-semibold mb-4 text-body-text">{translateSpecificationLabel('Additional Information')}</h3>
           <div className="space-y-3">
             {car.serviceHistoryType && (
               <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg border border-secondary/30">
-                <span className="font-medium text-body-text">Service History</span>
+                <span className="font-medium text-body-text">{translateSpecificationLabel('Service History')}</span>
                 <Badge variant="outline">{car.serviceHistoryType}</Badge>
               </div>
             )}
             
             {car.hasServiceHistory !== undefined && (
               <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg border border-secondary/30">
-                <span className="font-medium text-body-text">Service History Available</span>
+                <span className="font-medium text-body-text">Historia serwisowa dostępna</span>
                 <Badge variant={car.hasServiceHistory ? "default" : "secondary"}>
-                  {car.hasServiceHistory ? "Yes" : "No"}
+                  {car.hasServiceHistory ? "Tak" : "Nie"}
                 </Badge>
               </div>
             )}
             
             {car.isRegisteredInPoland !== undefined && (
               <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg border border-secondary/30">
-                <span className="font-medium text-body-text">Registered in Poland</span>
+                <span className="font-medium text-body-text">{translateSpecificationLabel('Registered in Poland')}</span>
                 <Badge variant={car.isRegisteredInPoland ? "default" : "secondary"}>
-                  {car.isRegisteredInPoland ? "Yes" : "No"}
+                  {car.isRegisteredInPoland ? "Tak" : "Nie"}
                 </Badge>
               </div>
             )}
             
             {car.hasPrivatePlate !== undefined && (
               <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg border border-secondary/30">
-                <span className="font-medium text-body-text">Private Plate</span>
+                <span className="font-medium text-body-text">{translateSpecificationLabel('Private Plate')}</span>
                 <Badge variant={car.hasPrivatePlate ? "default" : "secondary"}>
-                  {car.hasPrivatePlate ? "Yes" : "No"}
+                  {car.hasPrivatePlate ? "Tak" : "Nie"}
                 </Badge>
               </div>
             )}
@@ -133,7 +134,7 @@ export const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
       {/* Seller Notes */}
       {car.sellerNotes && (
         <div>
-          <h3 className="text-lg font-semibold mb-4 text-body-text">Seller Notes</h3>
+          <h3 className="text-lg font-semibold mb-4 text-body-text">{translateSpecificationLabel('Seller Notes')}</h3>
           <div className="p-4 bg-iris/20 border-l-4 border-iris rounded-lg">
             <p className="text-body-text">{car.sellerNotes}</p>
           </div>

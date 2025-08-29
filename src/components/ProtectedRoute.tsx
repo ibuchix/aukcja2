@@ -71,7 +71,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <Loader className="h-8 w-8 text-primary mb-4" />
-        <p className="text-muted-foreground">Loading your session...</p>
+        <p className="text-muted-foreground">Ładowanie sesji</p>
       </div>
     );
   }
