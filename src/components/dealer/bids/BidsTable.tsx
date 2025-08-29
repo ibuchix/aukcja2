@@ -27,7 +27,7 @@ interface BidsTableProps {
 
 export const BidsTable = ({ bids }: BidsTableProps) => {
   const { dealerProfile } = useCurrentDealerProfile();
-  const { cancelBid, isCancelling } = useBidActions(dealerProfile?.id);
+  const { placeBid, cancelBid, isSubmitting, isCancelling } = useBidActions(dealerProfile?.id);
   
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [modifyDialogOpen, setModifyDialogOpen] = useState(false);
@@ -63,18 +63,21 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
   };
 
   const confirmModifyBid = async (newAmount: number) => {
-    if (selectedBid) {
-      setIsModifying(true);
-      try {
-        // For now, we'll implement a simple modify by canceling and re-placing
-        // This would need to be implemented as a proper modify function
-        console.log('Modifying bid to:', newAmount);
-        // TODO: Implement proper bid modification
-      } catch (error) {
-        console.error('Error modifying bid:', error);
-      } finally {
-        setIsModifying(false);
+    if (!selectedBid || !dealerProfile?.id) return;
+    
+    setIsModifying(true);
+    try {
+      const result = await placeBid(selectedBid.car_id, dealerProfile.id, newAmount);
+      
+      if (result.success) {
+        setModifyDialogOpen(false);
+        setSelectedBid(null);
+        // The bid data will refresh automatically via the query
       }
+    } catch (error) {
+      console.error('Error modifying bid:', error);
+    } finally {
+      setIsModifying(false);
     }
   };
 
@@ -168,7 +171,7 @@ export const BidsTable = ({ bids }: BidsTableProps) => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleModifyBid(bid)}
-                            disabled={isModifying}
+                            disabled={isModifying || isSubmitting}
                             title="Modyfikuj ofertę"
                             className="border-blue-500 text-blue-600 hover:bg-blue-50"
                           >
