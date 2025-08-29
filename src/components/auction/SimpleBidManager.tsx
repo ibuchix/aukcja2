@@ -179,7 +179,14 @@ export const SimpleBidManager = ({
                       <Info className="h-4 w-4" />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent className="max-w-xs bg-[#393b39] text-body-text">
+                  <TooltipContent 
+                    side="left" 
+                    sideOffset={12} 
+                    avoidCollisions={true} 
+                    collisionPadding={16} 
+                    align="center"
+                    className="max-w-sm bg-[#393b39] text-body-text"
+                  >
                     <div className="text-left leading-relaxed">
                       Ustal maksymalną ofertę, a my będziemy automatycznie licytować w Twoim imieniu, podbijając o 250PLN, aby zapewnić 
                       <br />
