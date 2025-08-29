@@ -180,7 +180,14 @@ export const SimpleBidManager = ({
                     </button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs bg-[#393b39] text-body-text">
-                    Ustal maksymalną ofertę, a my będziemy automatycznie licytować w Twoim imieniu, podbijając o 250PLN, aby zapewnić wygraną. Jeśli jesteś jedynym licytującym, Twoja ostateczna oferta zostanie ustalona na poziomie ceny orientacyjnej lub Twojej maksymalnej oferty, jeśli jest ona niższa niż cena orientacyjna.
+                    <div className="text-left leading-relaxed">
+                      Ustal maksymalną ofertę, a my będziemy automatycznie licytować w Twoim imieniu, podbijając o 250PLN, aby zapewnić 
+                      <br />
+                      <strong>WYGRANĄ</strong>
+                      <br />
+                      <br />
+                      Jeśli jesteś jedynym licytującym, Twoja ostateczna oferta zostanie ustalona na poziomie ceny orientacyjnej lub Twojej maksymalnej oferty, jeśli jest ona niższa niż cena orientacyjna.
+                    </div>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

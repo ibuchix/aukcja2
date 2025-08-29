@@ -75,10 +75,6 @@ export const LiveAuctionDetailsDialog = ({
                       <span className="font-semibold font-mono text-sm break-all text-body-text">{car.vin || translateSpecificationLabel('Not available')}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">{translateSpecificationLabel('Registration')}</span>
-                      <span className="font-semibold text-lg text-body-text">{car.registration_number || translateSpecificationLabel('Not specified')}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                       <span className="text-body-text font-medium">{translateSpecificationLabel('Number of Keys')}</span>
                       <span className="font-semibold text-lg text-body-text">{(car.numberOfKeys || car.number_of_keys) || translateSpecificationLabel('Not specified')}</span>
                     </div>

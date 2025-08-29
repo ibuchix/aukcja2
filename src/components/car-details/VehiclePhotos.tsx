@@ -192,7 +192,7 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
             
             {/* Image counter */}
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded">
-              {selectedImageIndex + 1} of {allImages.length}
+              Zdjęcie {selectedImageIndex + 1} z {allImages.length}
             </div>
             
             {/* Image label */}
