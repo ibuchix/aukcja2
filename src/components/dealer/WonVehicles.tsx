@@ -450,7 +450,7 @@ export const WonVehicles = () => {
                        : 'bg-orange-400 text-orange-900'
                    }`}>
                        {vehicle.payment_status === 'paid' ? 'Umów odbiór teraz!' :
-                        vehicle.payment_status === 'payment_required' ? 'Wymagana płatność' : 'Awaiting Seller Decision'}
+                        vehicle.payment_status === 'payment_required' ? 'Wymagana płatność' : 'Oczekiwanie na decyzję sprzedającego'}
                    </div>
                 </div>
 
@@ -546,10 +546,10 @@ export const WonVehicles = () => {
                                 <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
                                   <div className="w-2 h-2 bg-white rounded-full"></div>
                                 </div>
-                                <span className="font-semibold">Awaiting Seller Decision</span>
-                              </div>
-                              <p className="text-sm text-gray-600 mb-4">
-                                We're waiting for the seller to accept your winning bid. You'll be notified once they make their decision.
+                                 <span className="font-semibold">Oczekiwanie na decyzję sprzedającego</span>
+                               </div>
+                               <p className="text-sm text-gray-600 mb-4">
+                                 Czekamy na akceptację Twojej wygrywającej oferty przez sprzedającego. Powiadomimy Cię, gdy podejmie decyzję.
                               </p>
                             </>
                           )}
@@ -628,7 +628,7 @@ export const WonVehicles = () => {
                               onClick={handleRefresh}
                             >
                               <RefreshCw className="h-4 w-4 mr-2" />
-                              Check Status
+                              Odśwież status
                             </Button>
                           )}
                         </div>

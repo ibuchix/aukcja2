@@ -183,7 +183,7 @@ export const SimpleBidManager = ({
                     <div className="text-left leading-relaxed">
                       Ustal maksymalną ofertę, a my będziemy automatycznie licytować w Twoim imieniu, podbijając o 250PLN, aby zapewnić 
                       <br />
-                      <strong>WYGRANĄ</strong>
+                      WYGRANĄ
                       <br />
                       <br />
                       Jeśli jesteś jedynym licytującym, Twoja ostateczna oferta zostanie ustalona na poziomie ceny orientacyjnej lub Twojej maksymalnej oferty, jeśli jest ona niższa niż cena orientacyjna.
