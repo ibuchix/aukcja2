@@ -578,7 +578,7 @@ export const WonVehicles = () => {
                                 disabled={paymentLoading === vehicle.id}
                               >
                                 <span className="mr-2">💳</span>
-                                {paymentLoading === vehicle.id ? 'Processing...' : `Opłać prowizje Autaro ${formatCurrency(calculatedPlatformFee)}`}
+                                {paymentLoading === vehicle.id ? 'Processing...' : `Opłać prowizje Autaro - ${formatCurrency(calculatedPlatformFee)}`}
                               </Button>
                               
                               <Button 
