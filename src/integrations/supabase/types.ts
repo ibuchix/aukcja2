@@ -736,6 +736,36 @@ export type Database = {
           },
         ]
       }
+      dealer_bid_rate_limits: {
+        Row: {
+          bid_count: number
+          bid_date: string
+          created_at: string | null
+          dealer_id: string
+          id: string
+          last_bid_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bid_count?: number
+          bid_date?: string
+          created_at?: string | null
+          dealer_id: string
+          id?: string
+          last_bid_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bid_count?: number
+          bid_date?: string
+          created_at?: string | null
+          dealer_id?: string
+          id?: string
+          last_bid_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       dealer_documents: {
         Row: {
           created_at: string
@@ -1974,6 +2004,10 @@ export type Database = {
       }
       check_business_registry_exists: {
         Args: { registry_number: string }
+        Returns: Json
+      }
+      check_dealer_bid_rate_limit: {
+        Args: { p_dealer_id: string }
         Returns: Json
       }
       check_email_exists: {
