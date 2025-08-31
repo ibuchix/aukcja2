@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { signInWithEmail } from "@/services/auth/signin";
 import { preparePassword } from "@/utils/auth-utils";
 import { useToast } from "@/hooks/use-toast";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/config/supabase';
 
 interface CompleteRegistrationResult {
   success: boolean;
@@ -66,12 +67,8 @@ export function useCompleteRegistration() {
         timestamp: new Date().toISOString()
       };
       
-      // Get Supabase URL and anon key for the fetch request
-      const supabaseUrl = "https://sdvakfhmoaoucmhbhwvy.supabase.co";
-      const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M";
-      
-      // Build the full URL
-      const url = `${supabaseUrl}/functions/v1/dealer-auth`;
+      // Use centralized Supabase configuration
+      const url = `${SUPABASE_URL}/functions/v1/dealer-auth`;
       
       console.log("Direct fetch URL:", url);
       
@@ -93,8 +90,8 @@ export function useCompleteRegistration() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${supabaseAnonKey}`,
-          "apikey": supabaseAnonKey,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "apikey": SUPABASE_ANON_KEY,
           "Cache-Control": "no-cache"
         },
         body: JSON.stringify(requestBody)

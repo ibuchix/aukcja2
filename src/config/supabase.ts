@@ -17,14 +17,22 @@ function getSupabaseConfig(): SupabaseConfig {
   const envUrl = import.meta.env.VITE_SUPABASE_URL;
   const envAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
   
-  // Fallback values for development (matches current hardcoded values)
-  const fallbackUrl = "https://sdvakfhmoaoucmhbhwvy.supabase.co";
-  const fallbackAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M";
+  // Validate that environment variables are present - no fallbacks for security
+  if (!envUrl || !envAnonKey) {
+    const missing = [];
+    if (!envUrl) missing.push('VITE_SUPABASE_URL');
+    if (!envAnonKey) missing.push('VITE_SUPABASE_ANON_KEY');
+    
+    throw new Error(
+      `Missing required Supabase environment variables: ${missing.join(', ')}. ` +
+      'Please check your .env file and ensure all required variables are set.'
+    );
+  }
   
-  // Use environment variables if available, otherwise fallback
+  // Use environment variables only - no hardcoded fallbacks
   const config: SupabaseConfig = {
-    url: envUrl || fallbackUrl,
-    anonKey: envAnonKey || fallbackAnonKey
+    url: envUrl,
+    anonKey: envAnonKey
   };
   
   // Validate configuration
@@ -36,8 +44,9 @@ function getSupabaseConfig(): SupabaseConfig {
   if (import.meta.env.DEV) {
     console.log('🔧 Supabase Config:', {
       url: config.url,
-      anonKeySource: envAnonKey ? 'environment' : 'fallback',
-      urlSource: envUrl ? 'environment' : 'fallback'
+      anonKeySource: 'environment',
+      urlSource: 'environment',
+      configurationValid: true
     });
   }
   

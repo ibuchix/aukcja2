@@ -53,11 +53,11 @@ export const checkAccountExists = async (email: string, isRegistration: boolean 
   try {
     // For dealer registration, use the correct RPC function
     if (isRegistration) {
-      const { data, error } = await fetch(`https://sdvakfhmoaoucmhbhwvy.supabase.co/functions/v1/dealer-auth`, {
+      const { data, error } = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dealer-auth`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({
           action: 'check_dealer_email',
@@ -95,11 +95,11 @@ export const checkAccountExists = async (email: string, isRegistration: boolean 
       }
     } else {
       // For login or other scenarios, use general email exists check
-      const { data, error } = await fetch(`https://sdvakfhmoaoucmhbhwvy.supabase.co/auth/v1/user-exists`, {
+      const { data, error } = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/user-exists`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({ email: normalizedEmail })
       }).then(res => res.json());
