@@ -16,12 +16,53 @@ function getTimestamp(): string {
   return new Date().toISOString();
 }
 
-// Safely stringify an object for logging
+// Comprehensive list of sensitive field patterns to redact
+const SENSITIVE_FIELD_PATTERNS = [
+  // Password-related fields
+  /password/i,
+  /passwd/i,
+  /pwd/i,
+  /secret/i,
+  /key$/i,
+  /token/i,
+  /auth/i,
+  /credential/i,
+  
+  // Personal information
+  /ssn/i,
+  /social/i,
+  /tax.*id/i,
+  /license/i,
+  
+  // Character codes and length patterns (security-sensitive)
+  /char.*code/i,
+  /length/i,
+  /size/i,
+  
+  // API keys and tokens
+  /api.*key/i,
+  /access.*token/i,
+  /refresh.*token/i,
+  /bearer/i
+];
+
+// Check if a field name matches sensitive patterns
+function isSensitiveField(fieldName: string): boolean {
+  return SENSITIVE_FIELD_PATTERNS.some(pattern => pattern.test(fieldName));
+}
+
+// Safely stringify an object for logging with comprehensive redaction
 function safeStringify(obj: any): string {
   try {
     // Handle circular references and big objects
     return JSON.stringify(obj, (key, value) => {
-      if (key === "password" || key.includes("password")) {
+      // Redact sensitive fields by pattern matching
+      if (isSensitiveField(key)) {
+        return "[REDACTED]";
+      }
+      
+      // Redact specific problematic values
+      if (typeof value === "number" && key.toLowerCase().includes("code")) {
         return "[REDACTED]";
       }
       
@@ -86,12 +127,75 @@ export function logError(message: string, error?: any): void {
 }
 
 /**
- * Log an incoming request
+ * Log an incoming request with secure header filtering
  */
 export function logRequest(req: Request): void {
   const url = new URL(req.url);
+  const secureHeaders = Object.fromEntries(
+    Array.from(req.headers.entries()).filter(([key]) => 
+      !isSensitiveField(key)
+    )
+  );
+  
   logInfo(`Received ${req.method} request to ${url.pathname}`, {
-    headers: Object.fromEntries(req.headers),
+    headers: secureHeaders,
     query: Object.fromEntries(url.searchParams),
+    timestamp: new Date().toISOString(),
+    userAgent: req.headers.get('user-agent')?.substring(0, 100) || 'unknown'
   });
+}
+
+/**
+ * Log authentication attempt with secure audit trail
+ */
+export function logAuthAttempt(
+  action: "login" | "register" | "logout",
+  email: string,
+  success: boolean,
+  context?: Record<string, any>
+): void {
+  const auditData = {
+    action,
+    email: email?.toLowerCase(),
+    success,
+    timestamp: new Date().toISOString(),
+    ip: context?.ip || 'unknown',
+    userAgent: context?.userAgent?.substring(0, 100) || 'unknown',
+    requestId: context?.requestId || 'unknown'
+  };
+  
+  logInfo(`Auth ${action} ${success ? 'succeeded' : 'failed'} for user`, auditData);
+}
+
+/**
+ * Log security event for monitoring
+ */
+export function logSecurityEvent(
+  eventType: "suspicious_access" | "rate_limit" | "validation_failure" | "unauthorized_attempt",
+  details: Record<string, any>
+): void {
+  const securityData = {
+    eventType,
+    timestamp: new Date().toISOString(),
+    severity: eventType === "unauthorized_attempt" ? "HIGH" : "MEDIUM",
+    ...details
+  };
+  
+  logWarning(`Security event detected: ${eventType}`, securityData);
+}
+
+/**
+ * Validate that no sensitive data appears in log message
+ */
+export function validateLogSecurity(message: string, data?: any): boolean {
+  const combinedText = `${message} ${JSON.stringify(data || {})}`.toLowerCase();
+  
+  // Check for password patterns
+  const dangerousPatterns = [
+    /password[\s]*[:=][\s]*[^\s]+/i,
+    /\d{4,}/g, // Potential character codes
+    /[a-f0-9]{32,}/i // Potential hashes or tokens
+  ];
+  
+  return !dangerousPatterns.some(pattern => pattern.test(combinedText));
 }

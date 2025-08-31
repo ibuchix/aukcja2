@@ -1,9 +1,10 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { respondSuccess, respondError } from "./response-utils.ts";
-import { logInfo, logError, logWarning, logDebug } from "./logging.ts";
+import { logInfo, logError, logWarning, logDebug, logAuthAttempt } from "./logging.ts";
 import { preparePassword } from "./password-utils.ts";
 import { sanitizeMetadata, sanitizeString } from "./sanitization-utils.ts";
+import { createSecureAuthAudit } from "./security-validator.ts";
 
 // Initialize the Supabase client with service role for admin operations
 const supabaseAdmin = createClient(
@@ -159,12 +160,10 @@ export async function handleDealerRegister(
 
     // Normalize password with our standardized function
     const normalizedPassword = preparePassword(password);
-    logDebug("Password normalization complete", { 
-      originalLength: password.length, 
-      normalizedLength: normalizedPassword.length,
-      // Log first and last character code for debugging (without revealing the actual password)
-      firstCharCode: normalizedPassword.charCodeAt(0),
-      lastCharCode: normalizedPassword.charCodeAt(normalizedPassword.length - 1)
+    logDebug("Registration credentials prepared", { 
+      email: sanitizedEmail,
+      hasPassword: !!normalizedPassword,
+      timestamp: new Date().toISOString()
     });
 
     // Normalize phone number by removing spaces and ensuring it starts with +
@@ -399,8 +398,19 @@ export async function handleDealerRegister(
       // Continue despite error - login will still work manually
     }
 
-    // Successfully created/updated user
-    logInfo(`User registered successfully (request ID: ${requestId}): ${userId}, existingUser: ${existingUser}`);
+    // Successfully created/updated user with secure audit trail
+    const auditLog = createSecureAuthAudit(
+      "register", 
+      sanitizedEmail, 
+      true, 
+      requestId
+    );
+    logInfo(`User registered successfully (request ID: ${requestId})`, {
+      userId,
+      existingUser,
+      timestamp: auditLog.timestamp,
+      requestId
+    });
     
     // Return success with session if available
     return respondSuccess({

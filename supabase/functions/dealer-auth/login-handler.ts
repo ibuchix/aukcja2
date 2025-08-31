@@ -1,9 +1,10 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { respondSuccess, respondError } from "./response-utils.ts";
-import { logInfo, logError, logWarning, logDebug } from "./logging.ts";
+import { logInfo, logError, logWarning, logDebug, logAuthAttempt } from "./logging.ts";
 import { preparePassword } from "./password-utils.ts";
 import { sanitizeString } from "./sanitization-utils.ts";
+import { createSecureAuthAudit } from "./security-validator.ts";
 
 // Initialize the Supabase client with service role for admin operations
 const supabaseAdmin = createClient(
@@ -68,11 +69,9 @@ export async function handleDealerLogin(
     
     // Normalize password with our standardized function
     const normalizedPassword = preparePassword(password);
-    logDebug("Login password normalization complete", { 
-      originalLength: password.length, 
-      normalizedLength: normalizedPassword.length,
-      firstCharCode: normalizedPassword.charCodeAt(0),
-      lastCharCode: normalizedPassword.charCodeAt(normalizedPassword.length - 1)
+    logDebug("Login credentials prepared for authentication", { 
+      email: normalizedEmail,
+      timestamp: new Date().toISOString()
     });
 
     try {
@@ -91,7 +90,22 @@ export async function handleDealerLogin(
       });
 
       if (signInError) {
-        logError(`Login authentication error: ${signInError.message}`, signInError);
+        // Create secure audit log for failed login
+        const auditLog = createSecureAuthAudit(
+          "login", 
+          normalizedEmail, 
+          false, 
+          requestId
+        );
+        logAuthAttempt("login", normalizedEmail, false, { 
+          requestId, 
+          error: signInError.message 
+        });
+        logError(`Login authentication error: ${signInError.message}`, { 
+          requestId,
+          email: normalizedEmail,
+          errorCode: signInError.code || 'unknown'
+        });
         return respondError("Invalid login credentials", 401);
       }
 
@@ -133,8 +147,19 @@ export async function handleDealerLogin(
         // Continue despite this error - we'll return minimal info
       }
 
-      // Log successful login
-      logInfo(`Login successful for user: ${signInData.user.id}, email: ${normalizedEmail}`);
+      // Log successful login with secure audit trail
+      const auditLog = createSecureAuthAudit(
+        "login", 
+        normalizedEmail, 
+        true, 
+        requestId
+      );
+      logInfo(`Login successful for user: ${signInData.user.id}`, {
+        userId: signInData.user.id,
+        email: normalizedEmail,
+        timestamp: auditLog.timestamp,
+        requestId
+      });
 
       // Return success with session and user data
       return respondSuccess({
