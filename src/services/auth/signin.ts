@@ -1,5 +1,8 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
+import { validateEmail, validatePassword } from '@/utils/authValidation';
+import { withAuthGuard } from '@/utils/authGuard';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/config/supabase';
 import { preparePassword } from "@/utils/auth-utils";
 
 interface SignInParams {
@@ -27,8 +30,8 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
     };
     
     // Get Supabase URL and anon key for the fetch request
-    const supabaseUrl = "https://sdvakfhmoaoucmhbhwvy.supabase.co";
-    const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M";
+    const supabaseUrl = SUPABASE_URL;
+    const supabaseAnonKey = SUPABASE_ANON_KEY;
     
     // Log the request we're about to send (sanitized)
     console.log("📤 Sending login request:", {
@@ -255,8 +258,8 @@ export const signInWithEmailDirect = async ({ email, password }: SignInParams) =
     });
     
     // Get Supabase URL and anon key for the fetch request
-    const supabaseUrl = "https://sdvakfhmoaoucmhbhwvy.supabase.co";
-    const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M";
+    const supabaseUrl = SUPABASE_URL;
+    const supabaseAnonKey = SUPABASE_ANON_KEY;
     
     // Build the full URL
     const url = `${supabaseUrl}/functions/v1/dealer-auth`;

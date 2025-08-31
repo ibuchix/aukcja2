@@ -1,4 +1,5 @@
 
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/config/supabase';
 import { validateEmail, safeTrim } from "./validation";
 import { 
   SignUpResult, 
@@ -67,8 +68,8 @@ export const signUpDealerWithEmail = async (
       };
       
       // Get Supabase URL and anon key for the fetch request
-      const supabaseUrl = "https://sdvakfhmoaoucmhbhwvy.supabase.co";
-      const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmFrZmhtb2FvdWNtaGJod3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3OTI1OTEsImV4cCI6MjA1MDM2ODU5MX0.wvvxbqF3Hg_fmQ_4aJCqISQvcFXhm-2BngjvO6EHL0M";
+      const supabaseUrl = SUPABASE_URL;
+      const supabaseAnonKey = SUPABASE_ANON_KEY;
       
       // Create sanitized body for logging
       const sanitizedBody = {
