@@ -2070,6 +2070,10 @@ export type Database = {
           record_exists: boolean
         }[]
       }
+      detect_suspicious_stats_access: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       ensure_seller_registration: {
         Args: Record<PropertyKey, never> | { p_user_id?: string }
         Returns: Json
@@ -2120,6 +2124,16 @@ export type Database = {
       get_auction_activity_metrics: {
         Args: { p_car_id: string }
         Returns: Json
+      }
+      get_auction_activity_stats_secure: {
+        Args: { p_car_id?: string }
+        Returns: {
+          car_id: string
+          highest_bid: number
+          lowest_bid: number
+          total_bids: number
+          unique_bidders: number
+        }[]
       }
       get_auction_results_for_seller: {
         Args: { p_seller_id: string }
