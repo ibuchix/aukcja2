@@ -143,7 +143,7 @@ export default function Navbar() {
             </DropdownMenu>
           ) : (
             <Link to="/auth">
-              <Button>Sign In</Button>
+              <Button>Zaloguj się</Button>
             </Link>
           )}
         </div>
@@ -207,7 +207,7 @@ export default function Navbar() {
                   to="/auth" 
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  <Button>Sign In</Button>
+                  <Button>Zaloguj się</Button>
                 </Link>
               )}
             </div>
