@@ -17,9 +17,6 @@ const VideoDemo = () => {
           <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-6 text-body-text`}>
             Zobacz Autaro.pl w Akcji
           </h2>
-          <p className={`text-subtitle-text ${isMobile ? 'text-base' : 'text-lg'} max-w-3xl mx-auto`}>
-            Odkryj jak łatwo i szybko możesz kupować samochody na naszej platformie aukcyjnej
-          </p>
         </motion.div>
 
         <motion.div
