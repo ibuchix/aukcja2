@@ -2159,6 +2159,16 @@ export type Database = {
         Args: { p_car_id: string }
         Returns: Json
       }
+      get_auction_activity_stats: {
+        Args: { p_car_id?: string }
+        Returns: {
+          car_id: string
+          highest_bid: number
+          lowest_bid: number
+          total_bids: number
+          unique_bidders: number
+        }[]
+      }
       get_auction_activity_stats_secure: {
         Args: { p_car_id?: string }
         Returns: {
