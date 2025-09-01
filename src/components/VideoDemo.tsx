@@ -53,6 +53,10 @@ const VideoDemo = () => {
                   height: '100%',
                   borderRadius: '8px'
                 }}
+                {...({
+                  webkitallowfullscreen: "true",
+                  mozallowfullscreen: "true"
+                } as any)}
               />
             </div>
           </div>
