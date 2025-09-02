@@ -129,15 +129,15 @@ export default function Navbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel>Moje Konto</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/dealer/profile" className="cursor-pointer w-full">My Profile</Link>
+                  <Link to="/dealer/profile" className="cursor-pointer w-full text-gray-400 hover:text-primary">Mój Profil</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
+                  <span>Wyloguj</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -185,10 +185,10 @@ export default function Navbar() {
                 <>
                   <Link 
                     to="/dealer/profile" 
-                    className="text-body-text hover:text-primary transition-colors"
+                    className="text-gray-400 hover:text-primary transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    My Profile
+                    Mój Profil
                   </Link>
                   <Button 
                     variant="ghost" 
@@ -199,7 +199,7 @@ export default function Navbar() {
                     className="justify-start text-red-500 hover:text-red-600 hover:bg-red-50 px-0"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
+                    <span>Wyloguj</span>
                   </Button>
                 </>
               ) : (
