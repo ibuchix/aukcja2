@@ -28,7 +28,7 @@ export default function Profile() {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-          Loading profile...
+          Ładowanie profilu...
         </div>
       </div>
     );
@@ -38,100 +38,100 @@ export default function Profile() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Dealer Profile</h1>
+        <h1 className="text-3xl font-bold mb-6">Profil Dealera</h1>
         
         {/* Contact Notice */}
         <Alert className="mb-6">
           <Info className="h-4 w-4" />
           <AlertDescription>
-            <strong>Profile Changes:</strong> To update any profile information, please contact our support team at{" "}
-            <a href="mailto:support@example.com" className="inline-flex items-center text-primary hover:underline">
+            <strong>Zmiany Profilu:</strong> Aby zaktualizować informacje w profilu, skontaktuj się z naszym zespołem wsparcia pod adresem{" "}
+            <a href="mailto:dealerzy@autaro.pl" className="inline-flex items-center text-primary hover:underline">
               <Mail className="h-3 w-3 mr-1" />
-              support@example.com
+              dealerzy@autaro.pl
             </a>
-            {" "}or call us at +1 (555) 123-4567. All changes require verification and approval.
+            {" "}lub zadzwoń pod numer +1 (555) 123-4567. Wszystkie zmiany wymagają weryfikacji i zatwierdzenia.
           </AlertDescription>
         </Alert>
 
         {/* Profile Information - Read Only */}
         <Card>
           <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
+            <CardTitle>Informacje o Profilu</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Supervisor Name
+                    Imię i Nazwisko Kierownika
                   </label>
                   <div className="p-3 bg-gray-50 rounded-md text-gray-900">
-                    {dealerProfile?.supervisor_name || 'Not provided'}
+                    {dealerProfile?.supervisor_name || 'Nie podano'}
                   </div>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Dealership Name
+                    Nazwa Dealera
                   </label>
                   <div className="p-3 bg-gray-50 rounded-md text-gray-900">
-                    {dealerProfile?.dealership_name || 'Not provided'}
+                    {dealerProfile?.dealership_name || 'Nie podano'}
                   </div>
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Address
+                  Adres Firmy
                 </label>
                 <div className="p-3 bg-gray-50 rounded-md text-gray-900">
-                  {dealerProfile?.address || 'Not provided'}
+                  {dealerProfile?.address || 'Nie podano'}
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tax ID
+                  NIP
                 </label>
                 <div className="p-3 bg-gray-50 rounded-md text-gray-900">
-                  {dealerProfile?.tax_id || 'Not provided'}
+                  {dealerProfile?.tax_id || 'Nie podano'}
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Registry Number
+                  Numer Rejestru Handlowego
                 </label>
                 <div className="p-3 bg-gray-50 rounded-md text-gray-900">
-                  {dealerProfile?.business_registry_number || 'Not provided'}
+                  {dealerProfile?.business_registry_number || 'Nie podano'}
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  License Number
+                  Numer Licencji
                 </label>
                 <div className="p-3 bg-gray-50 rounded-md text-gray-900">
-                  {dealerProfile?.license_number || 'Not provided'}
+                  {dealerProfile?.license_number || 'Nie podano'}
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Registration Date
+                  Data Rejestracji
                 </label>
                 <div className="p-3 bg-gray-50 rounded-md text-gray-900">
-                  {dealerProfile?.created_at ? new Date(dealerProfile.created_at).toLocaleDateString() : 'Not available'}
+                  {dealerProfile?.created_at ? new Date(dealerProfile.created_at).toLocaleDateString() : 'Niedostępne'}
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Verification Status
+                  Status Weryfikacji
                 </label>
                 <div className="p-3 bg-gray-50 rounded-md">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    {dealerProfile?.verification_status || 'Pending'}
+                    {dealerProfile?.verification_status || 'Oczekujący'}
                   </span>
                 </div>
               </div>
