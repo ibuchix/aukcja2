@@ -10,6 +10,7 @@ import { TourProvider } from "./providers/TourProvider";
 import { OnlineStatusProvider } from "./contexts/OnlineStatusContext";
 import { AuthProviderWithRouter } from "./contexts/auth/AuthProvider";
 import { DealerProfileProvider } from "./contexts/dealer-profile";
+import { CookieConsentProvider } from "./contexts/CookieConsentContext";
 
 // Create a query client
 const queryClient = new QueryClient({
@@ -31,16 +32,18 @@ export default function Root() {
       <ThemeProvider attribute="class" defaultTheme="light">
         <PersistQueryClientProvider>
           <OnlineStatusProvider>
-            <AuthProviderWithRouter>
-              <DealerProfileProvider>
-                <TourProvider>
-                  <Suspense fallback={<div>Loading...</div>}>
-                    <App />
-                    <Toaster />
-                  </Suspense>
-                </TourProvider>
-              </DealerProfileProvider>
-            </AuthProviderWithRouter>
+            <CookieConsentProvider>
+              <AuthProviderWithRouter>
+                <DealerProfileProvider>
+                  <TourProvider>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <App />
+                      <Toaster />
+                    </Suspense>
+                  </TourProvider>
+                </DealerProfileProvider>
+              </AuthProviderWithRouter>
+            </CookieConsentProvider>
           </OnlineStatusProvider>
         </PersistQueryClientProvider>
       </ThemeProvider>

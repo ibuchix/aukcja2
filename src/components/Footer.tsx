@@ -51,6 +51,11 @@ const Footer = () => {
           </div>
         </div>
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-4">
+            <Link to="/cookie-policy" onClick={scrollToTop} className="text-gray-400 hover:text-primary text-sm">
+              Polityka plików cookie
+            </Link>
+          </div>
           <p>&copy; {new Date().getFullYear()} Autaro. All rights reserved.</p>
         </div>
       </div>

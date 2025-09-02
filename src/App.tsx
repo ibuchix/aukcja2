@@ -15,10 +15,13 @@ import Profile from "./pages/dealer/Profile";
 import HowItWorks from "./pages/HowItWorks";
 import Index from "./pages/Index";
 import Pricing from "./pages/Pricing";
+import CookiePolicyPage from "./pages/CookiePolicyPage";
+import { CookieConsentBanner } from "./components/cookies/CookieConsentBanner";
 
 function App() {
   return (
     <>
+      <CookieConsentBanner />
       <Routes>
         {/* Default route now points to the Index page */}
         <Route path="/" element={<Index />} />
@@ -79,6 +82,7 @@ function App() {
         {/* Other pages */}
         <Route path="/how-it-works" element={<HowItWorks />} />
         <Route path="/pricing" element={<Pricing />} />
+        <Route path="/cookie-policy" element={<CookiePolicyPage />} />
         
         {/* Fallback route - redirect to home page */}
         <Route path="*" element={<Navigate to="/" />} />
