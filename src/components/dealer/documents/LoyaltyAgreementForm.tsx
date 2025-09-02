@@ -68,7 +68,7 @@ export function LoyaltyAgreementForm() {
       doc.text('KRS: 0000351062', 20, 52);
       doc.text('Adres: os. Przyjaźni 2/22, 84-200 Wejherowo', 20, 59);
       doc.text('NIP: 5882346564 | REGON: 220989555', 20, 66);
-      doc.text('E-mail: firmy@auto-strada.pl', 20, 73);
+      doc.text('E-mail: dealerzy@autaro.pl', 20, 73);
       
       // Buyer data section
       doc.setFontSize(12);
@@ -133,7 +133,7 @@ export function LoyaltyAgreementForm() {
       const section3Text = [
         '1. Prowizja zostanie zwrócona w ciągu 7 dni roboczych od dnia:',
         '- Akceptacji autentyczności tego wniosku, którego skan został przesłany',
-        'na firmy@auto-strada.pl, razem ze zdjęciami potwierdzającymi powód na odwołanie sprzedaży',
+        'na dealerzy@autaro.pl, razem ze zdjęciami potwierdzającymi powód na odwołanie sprzedaży',
         '2. Zwrot zostanie dokonany na rachunek bankowy, z którego dokonano pierwotnej płatności.',
         '3. Zobowiązany nie może domagać się odsetek od prowizji.'
       ];
@@ -230,7 +230,7 @@ AUTO-STRADA (Tikoo Sp. z o.o.)
 KRS: 0000351062
 Adres: os. Przyjaźni 2/22, 84-200 Wejherowo
 NIP: 5882346564 | REGON: 220989555
-E-mail: firmy@auto-strada.pl
+E-mail: dealerzy@autaro.pl
 
 DANE NABYWCY (Zobowiązanego):
 Imię i nazwisko: ${formData.buyerName}
@@ -260,7 +260,7 @@ ${formData.cancellationReason}
 §3 ZWROT PROWIZJI
 
 1. Prowizja zostanie zwrócona w ciągu 7 dni roboczych od dnia:
-- Akceptacji autentyczności tego wniosku, którego skan został przesłany na firmy@auto-strada.pl, razem ze zdjęciami potwierdzającymi powód na odwołanie sprzedaży
+- Akceptacji autentyczności tego wniosku, którego skan został przesłany na dealerzy@autaro.pl, razem ze zdjęciami potwierdzającymi powód na odwołanie sprzedaży
 2. Zwrot zostanie dokonany na rachunek bankowy, z którego dokonano pierwotnej płatności.
 3. Zobowiązany nie może domagać się odsetek od prowizji.
 
@@ -343,7 +343,7 @@ Wygenerowano: ${new Date().toLocaleString('pl-PL')}
                 <h3 className="text-sm font-medium text-yellow-800">Instrukcja wypełnienia formularza</h3>
                 <div className="mt-2 text-sm text-yellow-700">
                   <p>
-                    Po wypełnieniu tego formularza, pobierz go jako PDF i wyślij na adres firmy@auto-strada.pl wraz ze zdjęciami potwierdzającymi powód odwołania sprzedaży. 
+                    Po wypełnieniu tego formularza, pobierz go jako PDF i wyślij na adres dealerzy@autaro.pl wraz ze zdjęciami potwierdzającymi powód odwołania sprzedaży. 
                     Upewnij się, że numer VIN jest poprawny, ponieważ służy jako referencja dla anulowania.
                   </p>
                 </div>
@@ -358,7 +358,7 @@ Wygenerowano: ${new Date().toLocaleString('pl-PL')}
               <p><strong className="text-body-text">KRS:</strong> 0000351062</p>
               <p><strong className="text-body-text">NIP:</strong> 5882346564</p>
               <p><strong className="text-body-text">REGON:</strong> 220989555</p>
-              <p><strong className="text-body-text">E-mail:</strong> firmy@auto-strada.pl</p>
+              <p><strong className="text-body-text">E-mail:</strong> dealerzy@autaro.pl</p>
               <p className="md:col-span-2"><strong className="text-body-text">Adres:</strong> os. Przyjaźni 2/22, 84-200 Wejherowo</p>
             </div>
           </div>
