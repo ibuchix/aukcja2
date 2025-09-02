@@ -29,31 +29,31 @@ export const AdditionalDocumentsUpload: React.FC<AdditionalDocumentsUploadProps>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-body-text">
           <Upload className="w-5 h-5 text-iris" />
-          Upload Additional Documents
+          Prześlij dodatkowe dokumenty
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid gap-4">
           <div>
-            <Label htmlFor="documentType">Document Type</Label>
+            <Label htmlFor="documentType">Typ dokumentu</Label>
             <Select 
               value={documentType} 
               onValueChange={onDocumentTypeChange}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select document type" />
+                <SelectValue placeholder="Wybierz typ dokumentu" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="license">Dealer License</SelectItem>
-                <SelectItem value="business-registration">Business Registration</SelectItem>
-                <SelectItem value="tax-document">Tax Document</SelectItem>
-                <SelectItem value="identity">Identity Document</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="license">Licencja dealera</SelectItem>
+                <SelectItem value="business-registration">Rejestracja działalności</SelectItem>
+                <SelectItem value="tax-document">Dokument podatkowy</SelectItem>
+                <SelectItem value="identity">Dokument tożsamości</SelectItem>
+                <SelectItem value="other">Inne</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label htmlFor="file">Select File</Label>
+            <Label htmlFor="file">Wybierz plik</Label>
             <Input 
               id="file" 
               type="file" 
@@ -62,7 +62,7 @@ export const AdditionalDocumentsUpload: React.FC<AdditionalDocumentsUploadProps>
             />
             {file && documentType !== 'utility-bill' && (
               <p className="mt-2 text-sm text-subtitle-text">
-                Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
+                Wybrano: {file.name} ({(file.size / 1024).toFixed(2)} KB)
               </p>
             )}
           </div>
@@ -74,7 +74,7 @@ export const AdditionalDocumentsUpload: React.FC<AdditionalDocumentsUploadProps>
           disabled={!file || !documentType || documentType === 'utility-bill' || uploadLoading}
           variant="outline"
         >
-          {uploadLoading ? "Uploading..." : "Upload Document"}
+          {uploadLoading ? "Przesyłanie..." : "Prześlij dokument"}
         </Button>
       </CardFooter>
     </Card>

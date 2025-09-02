@@ -35,10 +35,10 @@ export function useFormSubmission({
         console.log("Registration successful", result.loginSuccessful ? "and user automatically logged in" : "but automatic login failed");
         
         toast({
-          title: "Registration successful",
+          title: "Rejestracja pomyślna",
           description: result.loginSuccessful 
-            ? "Your account has been created and you've been logged in. Welcome!"
-            : "Your account has been created. You can now log in with your credentials.",
+            ? "Twoje konto zostało utworzone i zostałeś zalogowany. Witamy!"
+            : "Twoje konto zostało utworzone. Możesz teraz zalogować się swoimi danymi.",
           duration: 6000,
         });
         

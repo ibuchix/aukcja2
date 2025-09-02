@@ -31,18 +31,18 @@ export const UtilityBillUpload: React.FC<UtilityBillUploadProps> = ({
       <CardContent className="p-6">
         <Alert className="mb-6 border-warning/30 bg-warning/10">
           <AlertCircle className="h-4 w-4 text-warning" />
-          <AlertTitle className="text-body-text">Verification Required</AlertTitle>
+          <AlertTitle className="text-body-text">Wymagana weryfikacja</AlertTitle>
           <AlertDescription className="text-subtitle-text">
             <strong className="text-body-text">Prosze przeslac aktualny rachunek za media wystawiony na firmę w celu weryfikacji</strong>
             <br />
             <span className="text-sm mt-2 block">
-              • The utility bill must not be older than 3 months
+              • Rachunek za media nie może być starszy niż 3 miesiące
               <br />
-              • Accepted formats: PDF, JPG, PNG
+              • Akceptowane formaty: PDF, JPG, PNG
               <br />
-              • Maximum file size: 10MB
+              • Maksymalny rozmiar pliku: 10MB
               <br />
-              • The bill must clearly show your company name and address
+              • Rachunek musi wyraźnie pokazywać nazwę Twojej firmy i adres
             </span>
           </AlertDescription>
         </Alert>
@@ -50,7 +50,7 @@ export const UtilityBillUpload: React.FC<UtilityBillUploadProps> = ({
         <div className="grid gap-4">
           <div>
             <Label htmlFor="utilityBill" className="text-base font-semibold">
-              Upload Company Utility Bill *
+              Prześlij rachunek za media firmowy *
             </Label>
             <Input 
               id="utilityBill" 
@@ -61,10 +61,10 @@ export const UtilityBillUpload: React.FC<UtilityBillUploadProps> = ({
             />
             {file && (
               <div className="mt-2 p-3 bg-success/10 border border-success/30 rounded-md">
-                <p className="text-sm text-success">
-                  <CheckCircle className="w-4 h-4 inline mr-1" />
-                  Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                </p>
+                 <p className="text-sm text-success">
+                   <CheckCircle className="w-4 h-4 inline mr-1" />
+                   Wybrano: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                 </p>
               </div>
             )}
           </div>
@@ -76,7 +76,7 @@ export const UtilityBillUpload: React.FC<UtilityBillUploadProps> = ({
             disabled={!file || uploadLoading}
             className="bg-primary hover:bg-primary/90"
           >
-            {uploadLoading ? "Uploading..." : "Upload Utility Bill"}
+            {uploadLoading ? "Przesyłanie..." : "Prześlij rachunek za media"}
           </Button>
         </div>
       </CardContent>

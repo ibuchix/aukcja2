@@ -63,8 +63,8 @@ export default function Navbar() {
         
         // Show success toast
         toast({
-          title: "Logged out successfully",
-          description: "You have been signed out",
+          title: "Wylogowano pomyślnie",
+          description: "Zostałeś wylogowany",
         });
         
         // Navigate to auth page
