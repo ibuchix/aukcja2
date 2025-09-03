@@ -28,7 +28,7 @@ const Footer = () => {
             <ul className="space-y-2 text-gray-400">
               <li>Aleje Jerozolimskie 123</li>
               <li>Warsaw, Poland 00-001</li>
-              <li>+48 123 456 789</li>
+              <li>+48 73 2084050</li>
               <li>dealerzy@autaro.pl</li>
             </ul>
           </div>
@@ -38,7 +38,7 @@ const Footer = () => {
               <Link to="#" className="text-gray-400 hover:text-primary">
                 <FacebookLogo size={24} weight="bold" />
               </Link>
-              <Link to="#" className="text-gray-400 hover:text-primary">
+              <Link to="https://www.instagram.com/autaro.pl/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary">
                 <InstagramLogo size={24} weight="bold" />
               </Link>
               <Link to="#" className="text-gray-400 hover:text-primary">
