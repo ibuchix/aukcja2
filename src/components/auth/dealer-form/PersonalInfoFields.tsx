@@ -1,6 +1,6 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { SecureInput } from "@/components/ui/secure-input";
 import { UseFormReturn } from "react-hook-form";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { useState, useEffect } from "react";
@@ -83,7 +83,13 @@ export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
             <FormItem>
               <FormLabel>Imię i nazwisko opiekuna konta</FormLabel>
               <FormControl>
-                <Input {...field} onBlur={field.onBlur} disabled={form.formState.isSubmitting} />
+                <SecureInput 
+                  fieldType="name"
+                  {...field} 
+                  placeholder="Jan Kowalski"
+                  onBlur={field.onBlur} 
+                  disabled={form.formState.isSubmitting} 
+                />
               </FormControl>
               <FormDescription className="text-xs text-muted-foreground">
                 Podaj swoje pełne imię i nazwisko zgodnie z danymi w dokumentach tożsamości.
@@ -112,7 +118,8 @@ export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
               </TooltipProvider>
             </FormLabel>
             <FormControl>
-              <Input 
+              <SecureInput 
+                fieldType="email"
                 type="email" 
                 {...field} 
                 onChange={(e) => field.onChange(e.target.value.toLowerCase())}
@@ -141,7 +148,8 @@ export function PersonalInfoFields({ form }: PersonalInfoFieldsProps) {
           <FormItem>
             <FormLabel>Numer telefonu</FormLabel>
             <FormControl>
-              <Input 
+              <SecureInput 
+                fieldType="phone"
                 {...field} 
                 placeholder="+48 XXX XXX XXX" 
                 disabled={form.formState.isSubmitting}

@@ -6,11 +6,15 @@ export const dealerFormSchema = z.object({
     .min(2, {
       message: "Nazwa nadzorcy musi zawierać co najmniej 2 litery",
     })
-    .max(255, {
-      message: "Nazwa nadzorcy nie może przekraczać 255 znaków",
+    .max(100, {
+      message: "Nazwa nadzorcy nie może przekraczać 100 znaków",
     })
-    .refine((value) => /^[a-zA-ZĄąĆćĘęŁłŃńÓóŚśŹźŻż\s-']+$/.test(value), {
+    .transform((value) => value.trim())
+    .refine((value) => /^[a-zA-ZĄąĆćĘęŁłŃńÓóŚśŹźŻż\s\-']+$/.test(value), {
       message: "Nazwa nadzorcy może zawierać tylko litery (polskie i angielskie), spacje, myślniki i apostrofy",
+    })
+    .refine((value) => !/(<script|javascript:|on\w+\s*=|<iframe)/gi.test(value), {
+      message: "Nieprawidłowe znaki w nazwie nadzorcy",
     }),
   email: z.string()
     .email({
@@ -21,6 +25,13 @@ export const dealerFormSchema = z.object({
     })
     .max(255, {
       message: "Email nie może przekraczać 255 znaków",
+    })
+    .transform((value) => value.trim().toLowerCase())
+    .refine((value) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value), {
+      message: "Nieprawidłowy format adresu email",
+    })
+    .refine((value) => !/(<script|javascript:|on\w+\s*=)/gi.test(value), {
+      message: "Nieprawidłowe znaki w adresie email",
     }),
   password: z.string()
     .min(8, {
@@ -28,6 +39,12 @@ export const dealerFormSchema = z.object({
     })
     .max(72, {
       message: "Hasło nie może przekraczać 72 znaków",
+    })
+    .refine((value) => /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]+$/.test(value), {
+      message: "Hasło zawiera niedozwolone znaki",
+    })
+    .refine((value) => !/(<script|javascript:|on\w+\s*=)/gi.test(value), {
+      message: "Nieprawidłowe znaki w haśle",
     }),
   confirmPassword: z.string(),
   phoneNumber: z.string()
@@ -44,11 +61,15 @@ export const dealerFormSchema = z.object({
     .min(2, {
       message: "Nazwa firmy musi zawierać co najmniej 2 litery",
     })
-    .max(255, {
-      message: "Nazwa firmy nie może przekraczać 255 znaków",
+    .max(100, {
+      message: "Nazwa firmy nie może przekraczać 100 znaków",
     })
-    .refine((value) => /^[a-zA-ZĄąĆćĘęŁłŃńÓóŚśŹźŻż0-9\s.,&'-]+$/.test(value), {
+    .transform((value) => value.trim())
+    .refine((value) => /^[a-zA-ZĄąĆćĘęŁłŃńÓóŚśŹźŻż0-9\s.,&'\-]+$/.test(value), {
       message: "Nazwa firmy może zawierać tylko litery (polskie i angielskie), cyfry, spacje i podstawowe znaki interpunkcyjne",
+    })
+    .refine((value) => !/(<script|javascript:|on\w+\s*=|<iframe)/gi.test(value), {
+      message: "Nieprawidłowe znaki w nazwie firmy",
     }),
   taxId: z.string()
     .length(10, {
@@ -68,11 +89,15 @@ export const dealerFormSchema = z.object({
     .min(5, {
       message: "Wprowadź poprawny adres firmy",
     })
-    .max(500, {
-      message: "Adres firmy nie może przekraczać 500 znaków",
+    .max(200, {
+      message: "Adres firmy nie może przekraczać 200 znaków",
     })
-    .refine((value) => /^[a-zA-ZĄąĆćĘęŁłŃńÓóŚśŹźŻż0-9\s.,/-]+$/.test(value), {
+    .transform((value) => value.trim().replace(/\s+/g, ' '))
+    .refine((value) => /^[a-zA-ZĄąĆćĘęŁłŃńÓóŚśŹźŻż0-9\s.,\-/]+$/.test(value), {
       message: "Adres firmy może zawierać tylko litery (polskie i angielskie), cyfry, spacje i podstawowe znaki interpunkcyjne",
+    })
+    .refine((value) => !/(<script|javascript:|on\w+\s*=|<iframe)/gi.test(value), {
+      message: "Nieprawidłowe znaki w adresie firmy",
     }),
   acceptTerms: z.boolean().refine((val) => val === true, {
     message: "Musisz zaakceptować regulamin",

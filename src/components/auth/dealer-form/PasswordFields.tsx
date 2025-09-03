@@ -1,6 +1,6 @@
 
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { SecureInput } from "@/components/ui/secure-input";
 import { UseFormReturn } from "react-hook-form";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { useState } from "react";
@@ -28,7 +28,8 @@ export function PasswordFields({ form }: PasswordFieldsProps) {
             <FormLabel>Hasło</FormLabel>
             <FormControl>
               <div className="relative">
-                <Input
+                <SecureInput
+                  fieldType="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Min. 8 znaków, jedna duża litera, jedna cyfra i jeden znak specjalny."
                   {...field}
@@ -61,7 +62,8 @@ export function PasswordFields({ form }: PasswordFieldsProps) {
             <FormLabel>Potwierdź hasło</FormLabel>
             <FormControl>
               <div className="relative">
-                <Input
+                <SecureInput
+                  fieldType="password"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Potwierdź hasło"
                   {...field}

@@ -1,5 +1,5 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { SecureInput } from "@/components/ui/secure-input";
 import { UseFormReturn } from "react-hook-form";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { formatTaxIdForDisplay, formatBusinessRegistryForDisplay } from "@/utils/dealer-profile-utils";
@@ -18,7 +18,9 @@ export function CompanyInfoFields({ form }: CompanyInfoFieldsProps) {
           <FormItem>
             <FormLabel>Nazwa firmy</FormLabel>
             <FormControl>
-              <Input 
+              <SecureInput 
+                fieldType="companyName"
+                placeholder="AutoDealer Sp. z o.o."
                 {...field} 
                 disabled={form.formState.isSubmitting}
               />
@@ -38,7 +40,9 @@ export function CompanyInfoFields({ form }: CompanyInfoFieldsProps) {
           <FormItem>
             <FormLabel>Numer NIP</FormLabel>
             <FormControl>
-              <Input 
+              <SecureInput 
+                fieldType="digits"
+                placeholder="1234567890"
                 {...field} 
                 maxLength={13} // Allow for formatted input with dashes
                 onChange={(e) => {
@@ -79,7 +83,9 @@ export function CompanyInfoFields({ form }: CompanyInfoFieldsProps) {
           <FormItem>
             <FormLabel>Numer REGON</FormLabel>
             <FormControl>
-              <Input 
+              <SecureInput 
+                fieldType="digits"
+                placeholder="123456789"
                 {...field} 
                 maxLength={16} // Allow for formatting with dashes
                 onChange={(e) => {
@@ -119,7 +125,9 @@ export function CompanyInfoFields({ form }: CompanyInfoFieldsProps) {
           <FormItem>
             <FormLabel>Adres firmy (Wpisz adres w formacie: ulica i numer, miejscowość, kod pocztowy)</FormLabel>
             <FormControl>
-              <Input 
+              <SecureInput 
+                fieldType="address"
+                placeholder="ul. Przykładowa 123, 00-001 Warszawa"
                 {...field} 
                 disabled={form.formState.isSubmitting}
                 className="min-h-[48px] text-base"
