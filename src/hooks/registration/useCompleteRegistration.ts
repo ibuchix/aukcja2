@@ -81,8 +81,8 @@ export function useCompleteRegistration() {
       
       // Show backend processing toast
       toast({
-        title: "Processing Registration",
-        description: "Creating your dealer profile and verifying information...",
+        title: "Przetwarzanie rejestracji",
+        description: "Tworzenie profilu dealera i weryfikacja danych...",
       });
       
       // Send the direct fetch request
@@ -229,8 +229,8 @@ export function useCompleteRegistration() {
       try {
         console.log("Registration successful, attempting immediate login");
         toast({
-          title: "Completing Setup",
-          description: "Logging you into your new account...",
+          title: "Kończenie konfiguracji",
+          description: "Logowanie do Twojego nowego konta...",
         });
         
         const signInResult = await signInWithEmail({
