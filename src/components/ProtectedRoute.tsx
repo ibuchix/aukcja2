@@ -54,6 +54,17 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
   }, [authCheckComplete, session]);
 
+  // Show toast when dealer check is complete and user is not a dealer
+  useEffect(() => {
+    if (dealerCheckComplete && isAuthenticated && session && isDealer === false) {
+      toast({
+        title: 'Dealer account required',
+        description: 'This app is restricted to dealer accounts. Please register as a dealer.',
+        variant: 'destructive',
+      });
+    }
+  }, [dealerCheckComplete, isAuthenticated, session, isDealer, toast]);
+
   // Safety timeout to prevent infinite loading
   useEffect(() => {
     const safetyTimeout = setTimeout(() => {
@@ -84,11 +95,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Enforce dealer-only access
   if (dealerCheckComplete && isAuthenticated && session && isDealer === false) {
-    toast({
-      title: 'Dealer account required',
-      description: 'This app is restricted to dealer accounts. Please register as a dealer.',
-      variant: 'destructive',
-    });
     return <Navigate to="/auth" replace state={{ returnUrl: location.pathname }} />;
   }
 
