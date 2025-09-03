@@ -1,4 +1,4 @@
-import { FacebookLogo, InstagramLogo, TwitterLogo, TiktokLogo } from "@phosphor-icons/react";
+import { FacebookLogo, InstagramLogo, WhatsappLogo } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
 
 const scrollToTop = () => {
@@ -26,8 +26,6 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Kontakt</h4>
             <ul className="space-y-2 text-gray-400">
-              <li>Aleje Jerozolimskie 123</li>
-              <li>Warsaw, Poland 00-001</li>
               <li>+48 73 2084050</li>
               <li>dealerzy@autaro.pl</li>
             </ul>
@@ -41,12 +39,9 @@ const Footer = () => {
               <a href="https://www.instagram.com/autaro.pl/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary">
                 <InstagramLogo size={24} weight="bold" />
               </a>
-              <Link to="#" className="text-gray-400 hover:text-primary">
-                <TwitterLogo size={24} weight="bold" />
-              </Link>
-              <Link to="#" className="text-gray-400 hover:text-primary">
-                <TiktokLogo size={24} weight="bold" />
-              </Link>
+              <a href="https://whatsapp.com/channel/0029VbBcyG8ICVfnDPoIbr3Z" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary">
+                <WhatsappLogo size={24} weight="bold" />
+              </a>
             </div>
           </div>
         </div>
