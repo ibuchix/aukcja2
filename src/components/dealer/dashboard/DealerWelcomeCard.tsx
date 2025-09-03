@@ -36,7 +36,7 @@ export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardPr
           </div>
         ) : (
           <p className="text-subtitle-text">
-            Witamy w Panelu Dealera. Tutaj możesz przeglądać auta wystawione na naszych codziennych aukcjach, zarządzać swoimi ofertami i zakupami oraz przeglądać ważne informacje dotyczące Twojego konta.
+            Witamy w panelu dealera 👋. Tutaj możesz przeglądać samochody dostępne w naszych codziennych aukcjach, a także zarządzać swoimi ofertami, zakupami i danymi konta.
           </p>
         )}
       </CardContent>
