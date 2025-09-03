@@ -78,7 +78,7 @@ const Hero = () => {
             className="relative rounded-xl overflow-hidden shadow-2xl"
           >
             <img 
-              src="/lovable-uploads/b8202f93-8aa1-47db-ade9-bc573bedfc87.png"
+              src="/lovable-uploads/29e568eb-5302-4017-8486-ddfd706bfc35.png"
               alt="Premium AUTOKOMIS dealership showcasing quality vehicles"
               className="w-full h-auto object-cover"
             />
