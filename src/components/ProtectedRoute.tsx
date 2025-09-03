@@ -58,8 +58,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   useEffect(() => {
     if (dealerCheckComplete && isAuthenticated && session && isDealer === false) {
       toast({
-        title: 'Dealer account required',
-        description: 'This app is restricted to dealer accounts. Please register as a dealer.',
+        title: 'Wymagane konto dealera',
+        description: 'Ta aplikacja jest ograniczona do kont dealerów. Proszę zarejestrować się jako dealer.',
         variant: 'destructive',
       });
     }
