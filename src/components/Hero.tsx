@@ -49,7 +49,7 @@ const Hero = () => {
               
               <div className={`bg-primary/10 border-l-4 border-primary ${isMobile ? 'p-3' : 'p-4'} rounded-r-lg`}>
                 <p className={`text-primary font-semibold ${isMobile ? 'text-base' : 'text-lg lg:text-xl'} leading-relaxed`}>
-                  Start już wkrótce! Zarejestruj swój komis teraz i odbierz 50% zniżki na pierwszą prowizję oraz powiadomienie o starcie codziennych aukcji!
+                  Start już wkrótce! Zarejestruj swój komis teraz i odbierz 50% zniżki na pierwsze dwie prowizje oraz powiadomienie o starcie codziennych aukcji!
                 </p>
               </div>
             </div>
