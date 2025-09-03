@@ -38,9 +38,9 @@ const Footer = () => {
               <Link to="#" className="text-gray-400 hover:text-primary">
                 <FacebookLogo size={24} weight="bold" />
               </Link>
-              <Link to="https://www.instagram.com/autaro.pl/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary">
+              <a href="https://www.instagram.com/autaro.pl/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary">
                 <InstagramLogo size={24} weight="bold" />
-              </Link>
+              </a>
               <Link to="#" className="text-gray-400 hover:text-primary">
                 <TwitterLogo size={24} weight="bold" />
               </Link>
