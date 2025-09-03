@@ -62,8 +62,8 @@ export function useDocumentUpload() {
       }
 
       toast({
-        title: "Success",
-        description: "Document uploaded successfully",
+        title: "Sukces",
+        description: "Dokument został przesłany pomyślnie",
         variant: "default"
       });
       
