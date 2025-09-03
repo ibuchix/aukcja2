@@ -22,7 +22,7 @@ export function LoginFormFields({ register, errors }: LoginFormFieldsProps) {
         <Input
           id="email"
           type="email" 
-          placeholder="you@example.com"
+          placeholder="użytkownik@email.com"
           {...register("email", { 
             required: "Email is required",
             pattern: {
