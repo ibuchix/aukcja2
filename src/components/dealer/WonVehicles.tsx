@@ -659,9 +659,9 @@ export const WonVehicles = () => {
             <div className="h-16 w-16 text-gray-400 mx-auto mb-4 flex items-center justify-center">
               <Eye className="h-8 w-8" />
             </div>
-            <h3 className="text-lg font-semibold text-body-text mb-2">No won vehicles</h3>
+            <h3 className="text-lg font-semibold text-body-text mb-2">Brak wygranych samochodów</h3>
             <p className="text-subtitle-text">
-              You haven't won any auctions yet. Continue bidding on vehicles that interest you!
+              Nie wygrałeś jeszcze żadnej aukcji. Kontynuuj licytację samochodów w naszych codziennych aukcjach!
             </p>
           </CardContent>
         </Card>
