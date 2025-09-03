@@ -24,6 +24,7 @@ export function useAuthStateListener(
   // Use refs to capture location data to avoid dependency cycles
   const locationRef = useRef(location);
   const isListenerActiveRef = useRef(false);
+  const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update location ref when location changes
   useEffect(() => {
@@ -65,7 +66,13 @@ export function useAuthStateListener(
             
             // Navigate to auth page with replace to prevent back navigation
             console.log("🚀 Navigating to auth page after logout");
-            navigate("/auth", { replace: true });
+            // Clear any pending navigation
+            if (navigationTimeoutRef.current) {
+              clearTimeout(navigationTimeoutRef.current);
+            }
+            navigationTimeoutRef.current = setTimeout(() => {
+              navigate("/auth", { replace: true });
+            }, 50);
             
           } else if (event === "SIGNED_IN" && currentSession?.user) {
             console.log("✅ SIGNED_IN event - processing...");
@@ -117,7 +124,13 @@ export function useAuthStateListener(
             // Navigate to dashboard if we're on the auth page
             if (isOnAuthPage) {
               console.log("🚀 Navigating from auth page to:", targetUrl);
-              navigate(targetUrl, { replace: true });
+              // Clear any pending navigation
+              if (navigationTimeoutRef.current) {
+                clearTimeout(navigationTimeoutRef.current);
+              }
+              navigationTimeoutRef.current = setTimeout(() => {
+                navigate(targetUrl, { replace: true });
+              }, 50);
             } else {
               console.log("ℹ️ Not on auth page, staying on current page:", currentLocation.pathname);
             }
@@ -184,6 +197,10 @@ export function useAuthStateListener(
       console.log("🧹 Cleaning up auth state listener");
       subscription.unsubscribe();
       isListenerActiveRef.current = false;
+      // Clear any pending navigation
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
     };
   }, [setSession, setUser, setProfile, setIsLoading, toast, navigate]);
 }

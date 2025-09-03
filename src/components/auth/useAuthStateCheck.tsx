@@ -10,6 +10,7 @@ export function useAuthStateCheck(returnUrl: string) {
   // Use ref to prevent immediate redirect checks
   const initialLoadCompleted = useRef(false);
   const redirectAttemptedRef = useRef(false);
+  const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Remove the auth check delay to allow faster navigation
   const [authCheckDelay, setAuthCheckDelay] = useState(false);
@@ -69,8 +70,13 @@ export function useAuthStateCheck(returnUrl: string) {
       redirectAttemptedRef.current = true;
       setRedirectAttempted(true);
       
-      // Navigate immediately
-      navigate(returnUrl, { replace: true });
+      // Navigate with debounce to prevent loops
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
+      navigationTimeoutRef.current = setTimeout(() => {
+        navigate(returnUrl, { replace: true });
+      }, 100);
     } else if (isInitialized && !isLoading && !isAuthenticated) {
       console.log("ℹ️ User not authenticated - staying on auth page");
     }
@@ -83,6 +89,15 @@ export function useAuthStateCheck(returnUrl: string) {
     newParams.set("tab", "login");
     window.location.href = `/auth?${newParams.toString()}`;
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return {
     authError,
