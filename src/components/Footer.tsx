@@ -26,7 +26,7 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Kontakt</h4>
             <ul className="space-y-2 text-gray-400">
-              <li>+48 73 2084050</li>
+              <li>+48 45 9567877</li>
               <li>dealerzy@autaro.pl</li>
             </ul>
           </div>
