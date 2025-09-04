@@ -278,10 +278,10 @@ export const useDDoSProtection = (config: DDoSProtectionConfig = {
     
     // Status helpers
     isEmergencyActive: !!emergencyMode?.is_active,
-    threatLevel: recentThreats.length >= 5 ? 'high' : recentThreats.length >= 2 ? 'medium' : 'low',
-    systemStatus: systemHealth ? 
+    threatLevel: (recentThreats.length >= 5 ? 'high' : recentThreats.length >= 2 ? 'medium' : 'low') as 'low' | 'medium' | 'high',
+    systemStatus: (systemHealth ? 
       Object.values(systemHealth).some((metrics: any) => 
-        metrics.some((m: any) => m.status === 'critical')) ? 'critical' : 'healthy' : 'unknown'
+        metrics.some((m: any) => m.status === 'critical')) ? 'critical' : 'healthy' : 'unknown') as 'healthy' | 'warning' | 'critical' | 'unknown'
   };
 };
 
