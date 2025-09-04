@@ -31,12 +31,19 @@ export async function applyEnhancedRateLimit(
     const url = new URL(req.url);
     const identifier = `${limitKey}:${clientIP}`;
     
+    // Get service role key from environment for authorization
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!serviceRoleKey) {
+      console.warn('SUPABASE_SERVICE_ROLE_KEY not found, falling back to legacy rate limiting');
+      return await applyRateLimit(req, limitKey, clientIP, config.requests_per_minute || 30);
+    }
+    
     // Call enhanced rate limiter edge function
     const response = await fetch(`https://sdvakfhmoaoucmhbhwvy.supabase.co/functions/v1/enhanced-rate-limiter`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseClient.supabaseKey}`,
+        'Authorization': `Bearer ${serviceRoleKey}`,
         'X-Forwarded-For': clientIP,
         'User-Agent': req.headers.get('user-agent') || 'unknown'
       },

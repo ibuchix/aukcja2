@@ -6,6 +6,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { applyRateLimit, createRateLimitedResponse } from "../_shared/rate-limiting/index.ts";
 import { handleDealerAuthRequest } from "./route-handler.ts";
 import { environmentValid } from "./environment.ts";
+import { createServiceClient } from "../_shared/supabase-client.ts";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -26,7 +27,7 @@ serve(async (req) => {
     // Apply enhanced rate limiting to dealer auth requests
     const clientIP = req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for') || 'unknown';
     const { applyEnhancedRateLimit } = await import("../_shared/rate-limiting/index.ts");
-    const rateLimitResult = await applyEnhancedRateLimit(req, supabase, 'dealer-authentication', clientIP, {
+    const rateLimitResult = await applyEnhancedRateLimit(req, null, 'dealer-authentication', clientIP, {
       requests_per_minute: 5, // Stricter for auth
       burst_limit: 2,
       user_type: 'anonymous'
