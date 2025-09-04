@@ -23,12 +23,17 @@ serve(async (req) => {
     // Debug environment vars (without revealing actual values)
     logInfo(`Environment check: SUPABASE_URL exists: ${!!Deno.env.get("SUPABASE_URL")}, SERVICE_ROLE_KEY exists: ${!!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`);
 
-    // Apply rate limiting to dealer auth requests
+    // Apply enhanced rate limiting to dealer auth requests
     const clientIP = req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for') || 'unknown';
-    const rateLimitResult = await applyRateLimit(req, 'dealer-authentication', clientIP);
+    const { applyEnhancedRateLimit } = await import("../_shared/rate-limiting/index.ts");
+    const rateLimitResult = await applyEnhancedRateLimit(req, supabase, 'dealer-authentication', clientIP, {
+      requests_per_minute: 5, // Stricter for auth
+      burst_limit: 2,
+      user_type: 'anonymous'
+    });
     
     if (rateLimitResult.limited) {
-      logInfo(`Rate limit exceeded for IP: ${clientIP}`);
+      logInfo(`Enhanced rate limit exceeded for IP: ${clientIP}, suspicion: ${rateLimitResult.suspicion_score}`);
       return createRateLimitedResponse(rateLimitResult.result, corsHeaders);
     }
 

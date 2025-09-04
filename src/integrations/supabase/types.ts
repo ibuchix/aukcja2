@@ -1709,31 +1709,31 @@ export type Database = {
       }
       system_health: {
         Row: {
-          component_name: string
           created_at: string
           details: Json | null
           id: string
-          last_check_time: string
-          status: Database["public"]["Enums"]["system_component_health"]
-          updated_at: string
+          metric_name: string
+          metric_value: number
+          status: string
+          threshold_value: number | null
         }
         Insert: {
-          component_name: string
           created_at?: string
           details?: Json | null
           id?: string
-          last_check_time?: string
-          status?: Database["public"]["Enums"]["system_component_health"]
-          updated_at?: string
+          metric_name: string
+          metric_value: number
+          status: string
+          threshold_value?: number | null
         }
         Update: {
-          component_name?: string
           created_at?: string
           details?: Json | null
           id?: string
-          last_check_time?: string
-          status?: Database["public"]["Enums"]["system_component_health"]
-          updated_at?: string
+          metric_name?: string
+          metric_value?: number
+          status?: string
+          threshold_value?: number | null
         }
         Relationships: []
       }
@@ -2582,6 +2582,14 @@ export type Database = {
       publish_car_listing: {
         Args: { p_car_id: string }
         Returns: Json
+      }
+      record_system_health_metric: {
+        Args: {
+          p_metric_name: string
+          p_metric_value: number
+          p_threshold_value?: number
+        }
+        Returns: undefined
       }
       recover_missed_auctions: {
         Args: Record<PropertyKey, never>
