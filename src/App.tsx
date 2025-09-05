@@ -16,6 +16,7 @@ import HowItWorks from "./pages/HowItWorks";
 import Index from "./pages/Index";
 import Pricing from "./pages/Pricing";
 import CookiePolicyPage from "./pages/CookiePolicyPage";
+import PasswordReset from "./pages/PasswordReset";
 import { CookieConsentBanner } from "./components/cookies/CookieConsentBanner";
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
         
         {/* Authentication routes */}
         <Route path="/auth" element={<Auth />} />
+        <Route path="/password-reset" element={<PasswordReset />} />
         <Route
           path="/complete-registration"
           element={
