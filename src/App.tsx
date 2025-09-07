@@ -17,6 +17,7 @@ import Index from "./pages/Index";
 import Pricing from "./pages/Pricing";
 import CookiePolicyPage from "./pages/CookiePolicyPage";
 import PasswordReset from "./pages/PasswordReset";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import { CookieConsentBanner } from "./components/cookies/CookieConsentBanner";
 
 function App() {
@@ -85,6 +86,7 @@ function App() {
         <Route path="/how-it-works" element={<HowItWorks />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/cookie-policy" element={<CookiePolicyPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         
         {/* Fallback route - redirect to home page */}
         <Route path="*" element={<Navigate to="/" />} />

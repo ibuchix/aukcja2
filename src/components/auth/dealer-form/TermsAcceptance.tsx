@@ -2,6 +2,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Checkbox } from "@/components/ui/checkbox";
 import { UseFormReturn } from "react-hook-form";
 import { DealerFormValues } from "@/schemas/dealerFormSchema";
+import { Link } from "react-router-dom";
 
 interface TermsAcceptanceProps {
   form: UseFormReturn<DealerFormValues>;
@@ -23,7 +24,15 @@ export function TermsAcceptance({ form }: TermsAcceptanceProps) {
           </FormControl>
           <div className="space-y-1 leading-none">
             <FormLabel className="text-sm">
-              Zgadzam się i akceptuję warunki korzystania z usługi Autaro.
+              Zgadzam się i akceptuję{" "}
+              <Link 
+                to="/privacy-policy" 
+                target="_blank" 
+                className="text-primary hover:underline"
+              >
+                warunki korzystania z usługi Autaro
+              </Link>
+              .
             </FormLabel>
             <FormMessage />
           </div>
