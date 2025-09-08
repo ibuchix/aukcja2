@@ -1,4 +1,4 @@
-import { FacebookLogo, InstagramLogo, WhatsappLogo } from "@phosphor-icons/react";
+import { FacebookLogo, InstagramLogo, WhatsappLogo, TiktokLogo } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
 
 const scrollToTop = () => {
@@ -41,6 +41,9 @@ const Footer = () => {
               </a>
               <a href="https://whatsapp.com/channel/0029VbBcyG8ICVfnDPoIbr3Z" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary">
                 <WhatsappLogo size={24} weight="bold" />
+              </a>
+              <a href="https://www.tiktok.com/@autaro.pl_?_t=ZN-8zYb25SoW06&_r=1" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary">
+                <TiktokLogo size={24} weight="bold" />
               </a>
             </div>
           </div>
