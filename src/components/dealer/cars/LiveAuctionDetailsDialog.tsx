@@ -148,7 +148,11 @@ export const LiveAuctionDetailsDialog = ({
               {/* Location */}
               <div className="p-4 bg-accent/50 rounded-lg">
                 <h4 className="font-medium text-base mb-3">{translateSpecificationLabel('Location')}</h4>
-                <p className="text-sm font-medium">{car.address || translateSpecificationLabel('Location not specified')}</p>
+                <p className="text-sm font-medium">
+                  {car.town && car.county 
+                    ? `${car.town}, ${car.county}` 
+                    : car.town || car.county || translateSpecificationLabel('Location not specified')}
+                </p>
               </div>
 
               {/* Seller Contact */}

@@ -12,6 +12,8 @@ export interface CarData {
   reserve_price?: number;
   is_auction?: boolean;
   auction_status?: string;
+  town?: string;
+  county?: string;
   // Auction schedule fields
   schedule_status?: string;
   schedule_start_time?: string;

@@ -44,7 +44,8 @@ export const buildAuctionQuery = (
       is_registered_in_poland,
       has_private_plate,
       finance_amount,
-      address,
+      town,
+      county,
       seller_name,
       mobile_number,
       seller_notes,
@@ -276,6 +277,8 @@ export const formatAuctionData = async (auctionData: CarData[], dealerBids: BidD
         auction_status: auctionTimingStatus === 'active' ? 'active' : auctionTimingStatus === 'ended' ? 'ended' : 'scheduled',
         current_bid: currentBid,
         reserve_price: reservePrice,
+        town: auction.town,
+        county: auction.county,
         my_bid: dealerBid ? {
           amount: dealerBid.amount || 0,
           status: isOutbid ? 'outbid' : 'active',

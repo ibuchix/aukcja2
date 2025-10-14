@@ -124,6 +124,13 @@ export const AuctionTable = ({ auctions, isLoading, dealerId }: AuctionTableProp
                 <div className="text-sm text-muted-foreground">
                   {auction.title}
                 </div>
+                {(auction.town || auction.county) && (
+                  <div className="text-xs text-muted-foreground">
+                    {auction.town && auction.county 
+                      ? `${auction.town}, ${auction.county}` 
+                      : auction.town || auction.county}
+                  </div>
+                )}
                 <div className="space-y-1">
                   <AuctionScheduleInfo
                     scheduleStatus={auction.schedule_status}

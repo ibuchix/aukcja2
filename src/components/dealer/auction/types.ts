@@ -48,6 +48,8 @@ export interface Auction {
   current_bid: number;
   reserve_price: number;
   reserve_met: boolean;
+  town?: string;
+  county?: string;
   lost_by?: number; // Add missing property
   my_bid?: {
     amount: number;
