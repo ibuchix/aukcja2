@@ -91,6 +91,8 @@ export const processCarData = (rawData: any[]): CarListing[] => {
         auctionStatus: car.auction_status || 'inactive',
         isDamaged: car.is_damaged || false,
         address: car.address || '',
+        town: car.town || '',
+        county: car.county || '',
         sellerNotes: car.seller_notes || '',
         serviceHistoryType: car.service_history_type || '',
         hasServiceHistory: car.has_service_history || false,

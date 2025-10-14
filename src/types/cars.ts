@@ -60,6 +60,8 @@ export interface CarListing {
   bodyType?: string;
   color?: string;
   location?: string;
+  town?: string;
+  county?: string;
   condition?: string;
   serviceHistory?: string;
   features?: CarFeatures;
