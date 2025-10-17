@@ -48,23 +48,22 @@ export const BidNotificationHandler = ({
         case 'new_bid':
           // If this is our bid, show a success message
           if (latestActivity.dealerId === dealerId) {
+            // Toast: Bid Placed Successfully - User's bid was placed
             toast({
-              title: "Bid Placed Successfully",
               description: `Twoja oferta w wysokości ${latestActivity.bidAmount} zł została złożona`,
               variant: "default",
             });
           } else {
             // If we had the previous highest bid, notify that we've been outbid
             if (currentBid && dealerId && latestActivity.bidAmount && latestActivity.bidAmount > currentBid) {
+              // Toast: You've Been Outbid - Someone placed a higher bid
               toast({
-                title: "You've Been Outbid!",
                 description: `Nowa najwyższa oferta wynosi ${latestActivity.bidAmount} zł`,
                 variant: "destructive",
               });
             } else {
-              // General notification for other users
+              // Toast: New Bid Placed - Another dealer placed a bid
               toast({
-                title: "New Bid Placed",
                 description: `Złożono nową ofertę w wysokości ${latestActivity.bidAmount} zł`,
               });
             }
@@ -73,8 +72,8 @@ export const BidNotificationHandler = ({
           
         case 'outbid':
           if (latestActivity.isOwnActivity) {
+            // Toast: You've Been Outbid - User's bid was outbid on a specific car
             toast({
-              title: "You've Been Outbid!",
               description: `Twoja oferta na ${latestActivity.carTitle} została przebita`,
               variant: "destructive",
             });
@@ -83,8 +82,8 @@ export const BidNotificationHandler = ({
           
         case 'won':
           if (latestActivity.isOwnActivity) {
+            // Toast: Auction Won - User won the auction
             toast({
-              title: "Auction Won!",
               description: `Gratulacje! Wygrałeś aukcję ${latestActivity.carTitle}`,
               variant: "default",
             });
@@ -93,8 +92,8 @@ export const BidNotificationHandler = ({
           
         case 'lost':
           if (latestActivity.isOwnActivity) {
+            // Toast: Auction Lost - User did not win the auction
             toast({
-              title: "Auction Lost",
               description: `Nie wygrałeś aukcji ${latestActivity.carTitle}`,
               variant: "destructive",
             });
@@ -102,8 +101,8 @@ export const BidNotificationHandler = ({
           break;
           
         case 'auction_ended':
+          // Toast: Auction Ended - Auction has ended
           toast({
-            title: "Auction Ended",
             description: `Aukcja ${latestActivity.carTitle} została zakończona`,
           });
           break;

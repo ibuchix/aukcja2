@@ -186,8 +186,8 @@ export const WonVehicles = () => {
           }
 
           if (data?.success && data?.payment_status === 'paid') {
+            // Toast: Payment Confirmed - Payment processed successfully, seller details available
             toast({
-              title: "Payment Confirmed!",
               description: "Twoja płatność została przetworzona pomyślnie. Dane sprzedawcy są teraz dostępne.",
             });
 
@@ -198,11 +198,11 @@ export const WonVehicles = () => {
           }
         } catch (error) {
           console.error('Error verifying payment:', error);
-          toast({
-            title: "Payment Verification Error",
-            description: "Wystąpił problem z weryfikacją płatności. Odśwież stronę lub skontaktuj się z pomocą techniczną.",
-            variant: "destructive",
-          });
+            // Toast: Payment Verification Error - Issue verifying payment
+            toast({
+              description: "Wystąpił problem z weryfikacją płatności. Odśwież stronę lub skontaktuj się z pomocą techniczną.",
+              variant: "destructive",
+            });
         } finally {
           setIsVerifyingPayment(false);
           
@@ -268,13 +268,13 @@ export const WonVehicles = () => {
   const handleRefresh = async () => {
     try {
       await refetch();
+      // Toast: Refreshed - Won vehicles list updated successfully
       toast({
-        title: "Refreshed",
         description: "Lista wygranych aut została zaktualizowana",
       });
     } catch (error) {
+      // Toast: Error - Failed to refresh won vehicles list
       toast({
-        title: "Error",
         description: "Nie udało się odświeżyć listy wygranych aut",
         variant: "destructive",
       });
@@ -320,17 +320,17 @@ export const WonVehicles = () => {
         // Open Stripe checkout in a new tab
         window.open(data.url, '_blank');
         
-        toast({
-          title: "Payment Processing",
-          description: "Otwieranie strony płatności Stripe w nowej karcie...",
-        });
+      // Toast: Payment Processing - Opening Stripe checkout in new tab
+      toast({
+        description: "Otwieranie strony płatności Stripe w nowej karcie...",
+      });
       } else {
         throw new Error('No payment URL received');
       }
     } catch (error) {
       console.error('Payment error:', error);
+      // Toast: Payment Error - Failed to create payment
       toast({
-        title: "Payment Error",
         description: error.message || "Nie udało się utworzyć płatności. Spróbuj ponownie.",
         variant: "destructive",
       });
@@ -596,24 +596,24 @@ export const WonVehicles = () => {
                                     if (error) throw error;
 
                                     if (data?.success && data?.payment_status === 'paid') {
-                                      toast({
-                                        title: "Payment Status Updated",
-                                        description: "Płatność potwierdzona! Dane sprzedawcy są teraz dostępne.",
-                                      });
+        // Toast: Payment Status Updated - Payment confirmed, seller details available
+        toast({
+          description: "Płatność potwierdzona! Dane sprzedawcy są teraz dostępne.",
+        });
                                       await refetch();
                                     } else {
-                                      toast({
-                                        title: "No Payment Found",
-                                        description: "Płatność jest nadal w toku lub nie została ukończona.",
-                                      });
+        // Toast: No Payment Found - Payment still pending or not completed
+        toast({
+          description: "Płatność jest nadal w toku lub nie została ukończona.",
+        });
                                     }
                                   } catch (error) {
                                     console.error('Error refreshing payment status:', error);
-                                    toast({
-                                      title: "Error",
-                                      description: "Nie udało się odświeżyć statusu płatności. Spróbuj ponownie.",
-                                      variant: "destructive",
-                                    });
+      // Toast: Error - Failed to refresh payment status
+      toast({
+        description: "Nie udało się odświeżyć statusu płatności. Spróbuj ponownie.",
+        variant: "destructive",
+      });
                                   }
                                 }}
                               >

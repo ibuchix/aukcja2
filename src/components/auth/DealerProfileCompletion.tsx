@@ -36,8 +36,8 @@ export function DealerProfileCompletion({ userId, email }: { userId: string, ema
 
   const onSubmit = async (values: DealerFormValues) => {
     if (!userId) {
+      // Toast: Authentication Error - User ID missing
       toast({
-        title: "Authentication Error",
         description: "Nie znaleziono ID użytkownika. Spróbuj zalogować się ponownie.",
         variant: "destructive",
       });
@@ -80,8 +80,8 @@ export function DealerProfileCompletion({ userId, email }: { userId: string, ema
         }
       }
 
+      // Toast: Profile Completed - Dealer profile created successfully
       toast({
-        title: "Profile Completed",
         description: "Twój profil dealera został pomyślnie utworzony. Możesz teraz uzyskać dostęp do panelu dealera.",
       });
 
@@ -92,8 +92,8 @@ export function DealerProfileCompletion({ userId, email }: { userId: string, ema
       const errorMessage = error instanceof Error ? error.message : "Failed to complete profile";
       
       setFormErrors([errorMessage]);
+      // Toast: Profile Creation Failed - Error creating profile
       toast({
-        title: "Profile Creation Failed",
         description: errorMessage,
         variant: "destructive",
       });

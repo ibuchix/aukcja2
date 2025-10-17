@@ -77,11 +77,11 @@ export const useAuctionBrowser = (
         } as AuctionPaginationResult<Auction>;
       } catch (err: any) {
         console.error("Error fetching auctions:", err);
-        toast({
-          title: "Error Fetching Auctions",
-          description: err.message,
-          variant: "destructive"
-        });
+      // Toast: Error Fetching Auctions - Failed to load auctions
+      toast({
+        description: err.message,
+        variant: "destructive"
+      });
         return { 
           auctions: [], 
           hasMore: false,

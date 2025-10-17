@@ -61,10 +61,9 @@ export default function Navbar() {
       if (result.success) {
         console.log("✅ Context signOut successful");
         
-        // Show success toast
+        // Toast: Logged Out Successfully - User successfully logged out
         toast({
-          title: "Wylogowano pomyślnie",
-          description: "Zostałeś wylogowany",
+          description: "Zostałeś wylogowano pomyślnie",
         });
         
         // Navigate to auth page
@@ -72,8 +71,8 @@ export default function Navbar() {
         navigate("/auth", { replace: true });
       } else {
         console.error("❌ Context signOut failed:", result.error);
+        // Toast: Logout Failed - Error during logout
         toast({
-          title: "Logout Failed",
           description: result.error || "Nie udało się wylogować",
           variant: "destructive",
         });
@@ -83,8 +82,8 @@ export default function Navbar() {
       console.error("❌ Logout exception:", error);
       
       // Even on error, try to navigate to auth page for safety
+      // Toast: Logout Completed - User logged out with auth cleanup
       toast({
-        title: "Logout Completed",
         description: "Zostałeś wylogowany (z wyczyszczeniem danych)",
       });
       navigate("/auth", { replace: true });

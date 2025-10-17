@@ -37,10 +37,9 @@ export const useRealtimeWonVehicles = (onNewWonVehicle?: (vehicle: WonVehicle) =
           
           const newWonVehicle = payload.new as WonVehicle;
           
-          // Show notification to dealer
+          // Toast: Congratulations - Dealer won an auction
           toast({
-            title: "Congratulations! 🎉",
-            description: `Wygrałeś aukcję ${newWonVehicle.vehicle_year} ${newWonVehicle.vehicle_make} ${newWonVehicle.vehicle_model}!`,
+            description: `Wygrałeś aukcję ${newWonVehicle.vehicle_year} ${newWonVehicle.vehicle_make} ${newWonVehicle.vehicle_model}! 🎉`,
             variant: "default",
             duration: 8000,
           });
@@ -67,8 +66,8 @@ export const useRealtimeWonVehicles = (onNewWonVehicle?: (vehicle: WonVehicle) =
           // Check if payment status changed
           if (oldVehicle.payment_status !== updatedVehicle.payment_status) {
             if (updatedVehicle.payment_status === 'payment_required') {
+              // Toast: Seller Decision Update - Seller accepted bid, payment now required
               toast({
-                title: "Seller Decision Update",
                 description: `Sprzedawca zaakceptował Twoją ofertę na ${updatedVehicle.vehicle_year} ${updatedVehicle.vehicle_make} ${updatedVehicle.vehicle_model}. Możesz teraz przejść do płatności.`,
                 variant: "default",
                 duration: 8000,

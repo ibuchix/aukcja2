@@ -10,8 +10,8 @@ export function ClearAuthStateButton() {
   const handleClearAuthStorage = () => {
     clearAuthStorage();
     
+    // Toast: Auth Storage Cleared - All auth data removed from browser
     toast({
-      title: "Auth Storage Cleared",
       description: "Wszystkie dane uwierzytelniania zostały usunięte z przeglądarki.",
     });
   };
