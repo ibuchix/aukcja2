@@ -146,38 +146,38 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">Rok</span>
-                      <span className="font-semibold text-lg text-body-text">{displayCar?.year || 'Brak danych'}</span>
+                      <span className="text-body-text font-semibold">Rok</span>
+                      <span className="font-medium text-lg text-body-text">{displayCar?.year || 'Brak danych'}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">Przebieg</span>
-                      <span className="font-semibold text-lg text-body-text">{displayCar?.mileage?.toLocaleString() || 'Brak danych'} km</span>
+                      <span className="text-body-text font-semibold">Przebieg</span>
+                      <span className="font-medium text-lg text-body-text">{displayCar?.mileage?.toLocaleString() || 'Brak danych'} km</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">Skrzynia biegów</span>
-                      <span className="font-semibold text-lg text-body-text">{displayCar?.transmission ? translateTransmission(displayCar.transmission) : 'Brak danych'}</span>
+                      <span className="text-body-text font-semibold">Skrzynia biegów</span>
+                      <span className="font-medium text-lg text-body-text">{displayCar?.transmission ? translateTransmission(displayCar.transmission) : 'Brak danych'}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">Rodzaj paliwa</span>
-                      <span className="font-semibold text-lg capitalize text-body-text">{displayCar?.fuel_type || displayCar?.fuelType || 'Brak danych'}</span>
+                      <span className="text-body-text font-semibold">Rodzaj paliwa</span>
+                      <span className="font-medium text-lg capitalize text-body-text">{displayCar?.fuel_type || displayCar?.fuelType || 'Brak danych'}</span>
                     </div>
                   </div>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">VIN</span>
-                      <span className="font-semibold font-mono text-sm break-all text-body-text">{displayCar?.vin || 'Brak danych'}</span>
+                      <span className="text-body-text font-semibold">VIN</span>
+                      <span className="font-medium font-mono text-sm break-all text-body-text">{displayCar?.vin || 'Brak danych'}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">Numer rejestracyjny</span>
-                      <span className="font-semibold text-lg text-body-text">{displayCar?.registration_number || 'Brak danych'}</span>
+                      <span className="text-body-text font-semibold">Numer rejestracyjny</span>
+                      <span className="font-medium text-lg text-body-text">{displayCar?.registration_number || 'Brak danych'}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">Liczba kluczyków</span>
-                      <span className="font-semibold text-lg text-body-text">{displayCar?.numberOfKeys || displayCar?.number_of_keys || 'Brak danych'}</span>
+                      <span className="text-body-text font-semibold">Liczba kluczyków</span>
+                      <span className="font-medium text-lg text-body-text">{displayCar?.numberOfKeys || displayCar?.number_of_keys || 'Brak danych'}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">Materiał siedzeń</span>
-                      <span className="font-semibold text-lg capitalize text-body-text">{displayCar?.seat_material || displayCar?.seatMaterial || 'Brak danych'}</span>
+                      <span className="text-body-text font-semibold">Materiał siedzeń</span>
+                      <span className="font-medium text-lg capitalize text-body-text">{displayCar?.seat_material || displayCar?.seatMaterial || 'Brak danych'}</span>
                     </div>
                   </div>
                 </div>
@@ -242,24 +242,11 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
                 </div>
               </div>
 
-              {/* Notes Section - Show both seller and admin notes */}
-              {(displayCar?.seller_notes || displayCar?.admin_notes) && (
+              {/* Notes Section */}
+              {displayCar?.seller_notes && (
                 <div className="p-4 bg-accent/50 rounded-lg">
                   <h4 className="font-medium text-base mb-3">Uwagi</h4>
-                  <div className="space-y-3">
-                    {displayCar.seller_notes && (
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Sprzedawca:</p>
-                        <p className="text-sm leading-relaxed">{displayCar.seller_notes}</p>
-                      </div>
-                    )}
-                    {displayCar.admin_notes && (
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Administrator:</p>
-                        <p className="text-sm leading-relaxed">{displayCar.admin_notes}</p>
-                      </div>
-                    )}
-                  </div>
+                  <p className="text-sm leading-relaxed">{displayCar.seller_notes}</p>
                 </div>
               )}
             </div>

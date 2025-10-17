@@ -53,34 +53,34 @@ export const LiveAuctionDetailsDialog = ({
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">{translateSpecificationLabel('Year')}</span>
-                      <span className="font-semibold text-lg text-body-text">{car.year}</span>
+                      <span className="text-body-text font-semibold">{translateSpecificationLabel('Year')}</span>
+                      <span className="font-medium text-lg text-body-text">{car.year}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">{translateSpecificationLabel('Mileage')}</span>
-                      <span className="font-semibold text-lg text-body-text">{car.mileage?.toLocaleString()} km</span>
+                      <span className="text-body-text font-semibold">{translateSpecificationLabel('Mileage')}</span>
+                      <span className="font-medium text-lg text-body-text">{car.mileage?.toLocaleString()} km</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">{translateSpecificationLabel('Transmission')}</span>
-                      <span className="font-semibold text-lg text-body-text">{translateTransmission(car.transmission)}</span>
+                      <span className="text-body-text font-semibold">{translateSpecificationLabel('Transmission')}</span>
+                      <span className="font-medium text-lg text-body-text">{translateTransmission(car.transmission)}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">{translateSpecificationLabel('Fuel Type')}</span>
-                      <span className="font-semibold text-lg capitalize text-body-text">{translateFuelType(car.fuel_type || car.fuelType)}</span>
+                      <span className="text-body-text font-semibold">{translateSpecificationLabel('Fuel Type')}</span>
+                      <span className="font-medium text-lg capitalize text-body-text">{translateFuelType(car.fuel_type || car.fuelType)}</span>
                     </div>
                   </div>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">{translateSpecificationLabel('VIN')}</span>
-                      <span className="font-semibold font-mono text-sm break-all text-body-text">{car.vin || translateSpecificationLabel('Not available')}</span>
+                      <span className="text-body-text font-semibold">{translateSpecificationLabel('VIN')}</span>
+                      <span className="font-medium font-mono text-sm break-all text-body-text">{car.vin || translateSpecificationLabel('Not available')}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">{translateSpecificationLabel('Number of Keys')}</span>
-                      <span className="font-semibold text-lg text-body-text">{(car.numberOfKeys || car.number_of_keys) || translateSpecificationLabel('Not specified')}</span>
+                      <span className="text-body-text font-semibold">{translateSpecificationLabel('Number of Keys')}</span>
+                      <span className="font-medium text-lg text-body-text">{(car.numberOfKeys || car.number_of_keys) || translateSpecificationLabel('Not specified')}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-medium">{translateSpecificationLabel('Seat Material')}</span>
-                      <span className="font-semibold text-lg capitalize text-body-text">{translateSeatMaterial(car.seat_material || car.seatMaterial)}</span>
+                      <span className="text-body-text font-semibold">{translateSpecificationLabel('Seat Material')}</span>
+                      <span className="font-medium text-lg capitalize text-body-text">{translateSeatMaterial(car.seat_material || car.seatMaterial)}</span>
                     </div>
                   </div>
                 </div>
@@ -168,24 +168,11 @@ export const LiveAuctionDetailsDialog = ({
                 </div>
               )}
 
-              {/* Notes Section - Show both seller and admin notes */}
-              {(car.seller_notes || car.admin_notes) && (
+              {/* Notes Section */}
+              {car.seller_notes && (
                 <div className="p-4 bg-accent/50 rounded-lg">
                   <h4 className="font-medium text-base mb-3">Uwagi</h4>
-                  <div className="space-y-3">
-                    {car.seller_notes && (
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Sprzedawca:</p>
-                        <p className="text-sm leading-relaxed">{car.seller_notes}</p>
-                      </div>
-                    )}
-                    {car.admin_notes && (
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Administrator:</p>
-                        <p className="text-sm leading-relaxed">{car.admin_notes}</p>
-                      </div>
-                    )}
-                  </div>
+                  <p className="text-sm leading-relaxed">{car.seller_notes}</p>
                 </div>
               )}
             </div>
