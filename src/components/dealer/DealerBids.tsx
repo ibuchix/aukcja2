@@ -55,7 +55,7 @@ export const DealerBids = () => {
               Moje oferty
             </CardTitle>
             <CardDescription>
-              Auta z Twoimi aktywnymi ofertami
+              Auta z Twoimi aktywnymi ofertami. Po zakończeniu aukcji statusy się zaktualizują, a wygrane auta znajdziesz w sekcji „Wygrane auta".
             </CardDescription>
           </div>
           <Button
