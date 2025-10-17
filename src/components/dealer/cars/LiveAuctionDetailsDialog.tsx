@@ -168,11 +168,24 @@ export const LiveAuctionDetailsDialog = ({
                 </div>
               )}
 
-              {/* Seller Notes */}
-              {car.seller_notes && (
+              {/* Notes Section - Show both seller and admin notes */}
+              {(car.seller_notes || car.admin_notes) && (
                 <div className="p-4 bg-accent/50 rounded-lg">
-                  <h4 className="font-medium text-base mb-3">Seller Notes</h4>
-                  <p className="text-sm leading-relaxed">{car.seller_notes}</p>
+                  <h4 className="font-medium text-base mb-3">Uwagi</h4>
+                  <div className="space-y-3">
+                    {car.seller_notes && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Sprzedawca:</p>
+                        <p className="text-sm leading-relaxed">{car.seller_notes}</p>
+                      </div>
+                    )}
+                    {car.admin_notes && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Administrator:</p>
+                        <p className="text-sm leading-relaxed">{car.admin_notes}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

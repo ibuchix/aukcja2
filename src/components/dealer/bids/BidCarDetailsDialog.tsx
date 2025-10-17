@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { MyBid } from "./types";
 import { formatCurrency } from "@/lib/utils";
 import { translateTransmission } from "@/lib/transmissionUtils";
+import { translateVehicleFeature } from "@/lib/vehicleTranslations";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
 import { Clock, Car, Calendar, Gauge, Settings, Fuel } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -205,7 +206,7 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
                       {activeFeatures.map((feature, index) => (
                         <div key={index} className="flex items-center gap-3 p-4 bg-success/10 rounded-lg border border-success/30">
                           <div className="w-2 h-2 bg-success rounded-full"></div>
-                          <span className="text-sm font-medium text-body-text">{feature}</span>
+                          <span className="text-sm font-medium text-body-text">{translateVehicleFeature(feature)}</span>
                         </div>
                       ))}
                     </div>
@@ -241,11 +242,24 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
                 </div>
               </div>
 
-              {/* Seller Notes - Only show if available */}
-              {displayCar?.seller_notes && (
+              {/* Notes Section - Show both seller and admin notes */}
+              {(displayCar?.seller_notes || displayCar?.admin_notes) && (
                 <div className="p-4 bg-accent/50 rounded-lg">
-                  <h4 className="font-medium text-base mb-3">Uwagi sprzedawcy</h4>
-                  <p className="text-sm leading-relaxed">{displayCar.seller_notes}</p>
+                  <h4 className="font-medium text-base mb-3">Uwagi</h4>
+                  <div className="space-y-3">
+                    {displayCar.seller_notes && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Sprzedawca:</p>
+                        <p className="text-sm leading-relaxed">{displayCar.seller_notes}</p>
+                      </div>
+                    )}
+                    {displayCar.admin_notes && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Administrator:</p>
+                        <p className="text-sm leading-relaxed">{displayCar.admin_notes}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

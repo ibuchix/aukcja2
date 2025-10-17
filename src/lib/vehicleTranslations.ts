@@ -45,7 +45,40 @@ export const translateVehicleFeature = (feature: string): string => {
     
     // CamelCase converted features
     'Sat Nav': 'Nawigacja',
-    'Upgraded Sound': 'Ulepszone audio'
+    'Upgraded Sound': 'Ulepszone audio',
+    
+    // Underscore-separated features (database format)
+    'Air_Conditioning': 'Klimatyzacja',
+    'Navigation_System': 'Nawigacja',
+    'Satellite_Navigation': 'Nawigacja',
+    'Alloy_Wheels': 'Alufelgi',
+    'Keyless_Entry': 'System bezkluczykowy',
+    'Parking_Sensors': 'Czujniki parkowania',
+    'Heated_Seats': 'Podgrzewane fotele',
+    'Adaptive_Cruise_Control': 'Tempomat',
+    'Cruise_Control': 'Tempomat',
+    'Reverse_Camera': 'Kamera cofania',
+    'Leather_Seats': 'Skórzana tapicerka',
+    'Upgraded_Sound_System': 'Ulepszone audio',
+    'Electric_Windows': 'Elektryczne szyby',
+    'Central_Locking': 'Centralne zamki',
+    'Power_Steering': 'Wspomaganie kierownicy',
+    'Fog_Lights': 'Światła przeciwmgielne',
+    'Xenon_Lights': 'Światła ksenonowe',
+    'LED_Lights': 'Światła LED',
+    'Automatic_Lights': 'Automatyczne światła',
+    'Rain_Sensor': 'Czujnik deszczu',
+    'Parking_Assistant': 'Asystent parkowania',
+    'Lane_Assist': 'Asystent pasa ruchu',
+    'Collision_Warning': 'Ostrzeganie o kolizji',
+    'Blind_Spot_Monitor': 'Monitor martwego pola',
+    'Start_Stop_System': 'System Start/Stop',
+    'Dual_Zone_Climate': 'Klimatyzacja dwustrefowa',
+    'Heated_Mirrors': 'Podgrzewane lusterka',
+    'Electric_Mirrors': 'Elektryczne lusterka',
+    'Folding_Mirrors': 'Składane lusterka',
+    'Tinted_Windows': 'Przyciemniane szyby',
+    'Roof_Rails': 'Relingi dachowe'
   };
 
   return featureTranslations[feature] || feature;
