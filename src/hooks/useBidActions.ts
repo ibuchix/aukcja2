@@ -30,9 +30,9 @@ export const useBidActions = (dealerId?: string) => {
         const errorMessage = response.error ? String(response.error) : null;
 
         if (success) {
+          // Toast: Bid Placed - Dealer successfully placed/modified a bid
           toast({
-            title: "Bid Placed",
-            description: `Your bid of ${amount.toLocaleString()} PLN has been placed successfully`,
+            description: `Twoja oferta w wysokości ${amount.toLocaleString()} PLN została złożona.`,
           });
           return { success: true };
         } else {
@@ -43,8 +43,8 @@ export const useBidActions = (dealerId?: string) => {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to place bid';
+      // Toast: Error - Failed to place bid
       toast({
-        title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
@@ -68,14 +68,14 @@ export const useBidActions = (dealerId?: string) => {
 
       if (error) throw error;
 
+      // Toast: Bid Cancelled - Dealer successfully cancelled their bid
       toast({
-        title: "Bid Cancelled",
-        description: "Your bid has been cancelled successfully",
+        description: "Twoja oferta została pomyślnie anulowana",
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to cancel bid';
+      // Toast: Error - Failed to cancel bid
       toast({
-        title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
