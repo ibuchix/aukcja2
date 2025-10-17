@@ -78,7 +78,7 @@ export const useAuctionBrowser = (
       } catch (err: any) {
         console.error("Error fetching auctions:", err);
         toast({
-          title: "Error fetching auctions",
+          title: "Error Fetching Auctions",
           description: err.message,
           variant: "destructive"
         });

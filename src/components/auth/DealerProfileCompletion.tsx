@@ -38,7 +38,7 @@ export function DealerProfileCompletion({ userId, email }: { userId: string, ema
     if (!userId) {
       toast({
         title: "Authentication Error",
-        description: "User ID not found. Please try logging in again.",
+        description: "Nie znaleziono ID użytkownika. Spróbuj zalogować się ponownie.",
         variant: "destructive",
       });
       return;
@@ -82,7 +82,7 @@ export function DealerProfileCompletion({ userId, email }: { userId: string, ema
 
       toast({
         title: "Profile Completed",
-        description: "Your dealer profile has been created successfully. You can now access the dealer dashboard.",
+        description: "Twój profil dealera został pomyślnie utworzony. Możesz teraz uzyskać dostęp do panelu dealera.",
       });
 
       navigate('/dealer/dashboard');

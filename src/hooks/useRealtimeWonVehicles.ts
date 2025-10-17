@@ -40,7 +40,7 @@ export const useRealtimeWonVehicles = (onNewWonVehicle?: (vehicle: WonVehicle) =
           // Show notification to dealer
           toast({
             title: "Congratulations! 🎉",
-            description: `You won the ${newWonVehicle.vehicle_year} ${newWonVehicle.vehicle_make} ${newWonVehicle.vehicle_model} auction!`,
+            description: `Wygrałeś aukcję ${newWonVehicle.vehicle_year} ${newWonVehicle.vehicle_make} ${newWonVehicle.vehicle_model}!`,
             variant: "default",
             duration: 8000,
           });
@@ -69,7 +69,7 @@ export const useRealtimeWonVehicles = (onNewWonVehicle?: (vehicle: WonVehicle) =
             if (updatedVehicle.payment_status === 'payment_required') {
               toast({
                 title: "Seller Decision Update",
-                description: `The seller has accepted your bid for the ${updatedVehicle.vehicle_year} ${updatedVehicle.vehicle_make} ${updatedVehicle.vehicle_model}. You can now proceed with payment.`,
+                description: `Sprzedawca zaakceptował Twoją ofertę na ${updatedVehicle.vehicle_year} ${updatedVehicle.vehicle_make} ${updatedVehicle.vehicle_model}. Możesz teraz przejść do płatności.`,
                 variant: "default",
                 duration: 8000,
               });

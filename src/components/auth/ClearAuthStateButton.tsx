@@ -12,7 +12,7 @@ export function ClearAuthStateButton() {
     
     toast({
       title: "Auth Storage Cleared",
-      description: "All authentication data has been removed from your browser.",
+      description: "Wszystkie dane uwierzytelniania zostały usunięte z przeglądarki.",
     });
   };
   

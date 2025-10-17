@@ -188,7 +188,7 @@ export const WonVehicles = () => {
           if (data?.success && data?.payment_status === 'paid') {
             toast({
               title: "Payment Confirmed!",
-              description: "Your payment has been processed successfully. Seller details are now available.",
+              description: "Twoja płatność została przetworzona pomyślnie. Dane sprzedawcy są teraz dostępne.",
             });
 
             // Refetch the won vehicles data to get updated status
@@ -200,7 +200,7 @@ export const WonVehicles = () => {
           console.error('Error verifying payment:', error);
           toast({
             title: "Payment Verification Error",
-            description: "There was an issue verifying your payment. Please refresh the page or contact support.",
+            description: "Wystąpił problem z weryfikacją płatności. Odśwież stronę lub skontaktuj się z pomocą techniczną.",
             variant: "destructive",
           });
         } finally {
@@ -270,12 +270,12 @@ export const WonVehicles = () => {
       await refetch();
       toast({
         title: "Refreshed",
-        description: "Won vehicles list has been updated",
+        description: "Lista wygranych aut została zaktualizowana",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to refresh won vehicles list",
+        description: "Nie udało się odświeżyć listy wygranych aut",
         variant: "destructive",
       });
     }
@@ -322,7 +322,7 @@ export const WonVehicles = () => {
         
         toast({
           title: "Payment Processing",
-          description: "Opening Stripe checkout in a new tab...",
+          description: "Otwieranie strony płatności Stripe w nowej karcie...",
         });
       } else {
         throw new Error('No payment URL received');
@@ -331,7 +331,7 @@ export const WonVehicles = () => {
       console.error('Payment error:', error);
       toast({
         title: "Payment Error",
-        description: error.message || "Failed to create payment. Please try again.",
+        description: error.message || "Nie udało się utworzyć płatności. Spróbuj ponownie.",
         variant: "destructive",
       });
     } finally {
@@ -598,20 +598,20 @@ export const WonVehicles = () => {
                                     if (data?.success && data?.payment_status === 'paid') {
                                       toast({
                                         title: "Payment Status Updated",
-                                        description: "Payment confirmed! Seller details are now available.",
+                                        description: "Płatność potwierdzona! Dane sprzedawcy są teraz dostępne.",
                                       });
                                       await refetch();
                                     } else {
                                       toast({
                                         title: "No Payment Found",
-                                        description: "Payment is still pending or not completed.",
+                                        description: "Płatność jest nadal w toku lub nie została ukończona.",
                                       });
                                     }
                                   } catch (error) {
                                     console.error('Error refreshing payment status:', error);
                                     toast({
                                       title: "Error",
-                                      description: "Failed to refresh payment status. Please try again.",
+                                      description: "Nie udało się odświeżyć statusu płatności. Spróbuj ponownie.",
                                       variant: "destructive",
                                     });
                                   }

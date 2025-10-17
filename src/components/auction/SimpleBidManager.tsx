@@ -87,8 +87,8 @@ export const SimpleBidManager = ({
     
     if (isNaN(numericBidAmount)) {
       toast({
-        title: "Invalid bid amount",
-        description: "Please enter a valid number",
+        title: "Invalid Bid Amount",
+        description: "Wprowadź prawidłową liczbę",
         variant: "destructive",
       });
       return;
@@ -96,8 +96,8 @@ export const SimpleBidManager = ({
 
     if (numericBidAmount <= 0) {
       toast({
-        title: "Invalid bid amount",
-        description: "Bid amount must be greater than 0",
+        title: "Invalid Bid Amount",
+        description: "Kwota oferty musi być większa niż 0",
         variant: "destructive",
       });
       return;
@@ -120,8 +120,8 @@ export const SimpleBidManager = ({
       const response = data as any;
       if (response?.success) {
         toast({
-          title: "Bid placed successfully",
-          description: `Your bid of ${formatCurrency(numericBidAmount)} has been placed`,
+          title: "Bid Placed Successfully",
+          description: `Twoja oferta w wysokości ${formatCurrency(numericBidAmount)} została złożona`,
         });
         setBidAmount("");
         await fetchMyBid();
@@ -131,8 +131,8 @@ export const SimpleBidManager = ({
       }
     } catch (error) {
       toast({
-        title: "Failed to place bid",
-        description: error instanceof Error ? error.message : "Please try again",
+        title: "Failed to Place Bid",
+        description: error instanceof Error ? error.message : "Spróbuj ponownie",
         variant: "destructive",
       });
     } finally {
