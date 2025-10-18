@@ -17,6 +17,7 @@ export interface CarFileUpload {
 
 /**
  * Convert file path to Supabase Storage public URL
+ * Supports both 'car-images' and 'manual-valuations' buckets
  */
 export const getStorageImageUrl = (filePath: string): string => {
   if (!filePath) {
@@ -28,12 +29,37 @@ export const getStorageImageUrl = (filePath: string): string => {
     return filePath;
   }
   
-  // Get public URL from Supabase Storage
+  // Known Supabase storage buckets (only the two we're using)
+  const knownBuckets = ['manual-valuations', 'car-images'];
+  
+  // Extract potential bucket name from file path (first segment)
+  const pathSegments = filePath.split('/');
+  const potentialBucket = pathSegments[0];
+  
+  let bucketName = 'car-images'; // Default fallback
+  let actualFilePath = filePath;
+  
+  // If the first segment matches a known bucket, extract it
+  if (knownBuckets.includes(potentialBucket)) {
+    bucketName = potentialBucket;
+    // Remove bucket name from file path (Supabase doesn't include it in the path parameter)
+    actualFilePath = pathSegments.slice(1).join('/');
+  }
+  
+  console.log('🪣 Bucket detection:', { 
+    originalPath: filePath, 
+    detectedBucket: bucketName, 
+    actualFilePath 
+  });
+  
+  // Get public URL from Supabase Storage with detected bucket
   const { data } = supabase.storage
-    .from('car-images')
-    .getPublicUrl(filePath);
-    
+    .from(bucketName)
+    .getPublicUrl(actualFilePath);
+     
   const publicUrl = data?.publicUrl || "";
+  
+  console.log('🖼️ Generated public URL:', publicUrl);
      
   return publicUrl;
 };

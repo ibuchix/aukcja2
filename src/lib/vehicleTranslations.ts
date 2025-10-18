@@ -4,6 +4,7 @@ export const translateVehicleFeature = (feature: string): string => {
     // Main features
     'Air Conditioning': 'Klimatyzacja',
     'Navigation System': 'Nawigacja',
+    'Navigation': 'Nawigacja',
     'Satellite Navigation': 'Nawigacja',
     'Alloy Wheels': 'Alufelgi',
     'Keyless Entry': 'System bezkluczykowy',
