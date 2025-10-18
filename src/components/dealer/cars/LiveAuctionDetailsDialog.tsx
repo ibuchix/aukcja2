@@ -25,6 +25,17 @@ export const LiveAuctionDetailsDialog = ({
 }: LiveAuctionDetailsDialogProps) => {
   const isLive = car.auctionTimingStatus === 'active' || car.auctionTimingStatus === 'unknown';
   const hasEnded = car.auctionTimingStatus === 'ended';
+  
+  // Debug: Log seller_notes to console
+  console.log('🔍 [DIALOG CAR DATA]', {
+    carId: car.id,
+    make: car.make,
+    model: car.model,
+    seller_notes: car.seller_notes,
+    hasSellerNotes: !!car.seller_notes,
+    sellerNotesType: typeof car.seller_notes,
+    allKeys: Object.keys(car)
+  });
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
