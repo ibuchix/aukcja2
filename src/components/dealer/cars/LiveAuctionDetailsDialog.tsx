@@ -31,9 +31,9 @@ export const LiveAuctionDetailsDialog = ({
     carId: car.id,
     make: car.make,
     model: car.model,
-    seller_notes: car.seller_notes,
-    hasSellerNotes: !!car.seller_notes,
-    sellerNotesType: typeof car.seller_notes,
+    sellerNotes: car.sellerNotes,
+    hasSellerNotes: !!car.sellerNotes,
+    sellerNotesType: typeof car.sellerNotes,
     allKeys: Object.keys(car)
   });
 
@@ -180,10 +180,10 @@ export const LiveAuctionDetailsDialog = ({
               )}
 
               {/* Notes Section */}
-              {car.seller_notes && (
+              {car.sellerNotes && (
                 <div className="p-4 bg-accent/50 rounded-lg">
                   <h4 className="font-medium text-base mb-3">Uwagi</h4>
-                  <p className="text-sm leading-relaxed">{car.seller_notes}</p>
+                  <p className="text-sm leading-relaxed">{car.sellerNotes}</p>
                 </div>
               )}
             </div>
