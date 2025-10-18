@@ -189,11 +189,23 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
                 const activeFeatures = Object.entries(displayCar.features)
                   .filter(([_, value]) => value === true)
                   .map(([key, _]) => {
-                    // Convert camelCase to readable format
-                    const readableKey = key
-                      .replace(/([A-Z])/g, ' $1')
-                      .replace(/^./, str => str.toUpperCase())
-                      .trim();
+                    // Handle both camelCase and underscore_case formats
+                    let readableKey = key;
+                    
+                    // If it has underscores, convert them to spaces
+                    if (key.includes('_')) {
+                      readableKey = key
+                        .split('_')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                        .join(' ');
+                    } else {
+                      // Handle camelCase: add space before capitals, then title case
+                      readableKey = key
+                        .replace(/([A-Z])/g, ' $1')
+                        .replace(/^./, str => str.toUpperCase())
+                        .trim();
+                    }
+                    
                     return readableKey;
                   });
 
