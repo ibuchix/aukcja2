@@ -20,7 +20,7 @@ const SellerContactInfo = ({ vehicleId }: { vehicleId: string }) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cars")
-        .select("seller_name, mobile_number, address")
+        .select("seller_name, mobile_number, street_address, town, county, postcode")
         .eq("id", vehicleId)
         .single();
 
@@ -31,6 +31,17 @@ const SellerContactInfo = ({ vehicleId }: { vehicleId: string }) => {
       return data;
     },
   });
+
+  const formatAddress = (data: any) => {
+    const parts = [
+      data?.street_address,
+      data?.town,
+      data?.county,
+      data?.postcode
+    ].filter(Boolean);
+    
+    return parts.length > 0 ? parts.join(', ') : 'Address not available';
+  };
 
   console.log("SellerContactInfo rendering for vehicle:", vehicleId, "Data:", carData);
   
@@ -55,7 +66,7 @@ const SellerContactInfo = ({ vehicleId }: { vehicleId: string }) => {
             </div>
             <div className="bg-gray-50 p-3 rounded">
               <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Adres odbioru:</span>
-              <p className="font-bold text-lg text-gray-900">{(carData as any)?.address || 'Address not available'}</p>
+              <p className="font-bold text-lg text-gray-900">{carData ? formatAddress(carData) : 'Address not available'}</p>
             </div>
           </div>
         ) : (
