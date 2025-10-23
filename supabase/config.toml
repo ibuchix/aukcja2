@@ -3,8 +3,5 @@ project_id = "sdvakfhmoaoucmhbhwvy"
 [functions.test-dealer-email]
 verify_jwt = false
 
-[functions.password-recovery]
-verify_jwt = false
-
 [functions.send-password-reset]
 verify_jwt = false

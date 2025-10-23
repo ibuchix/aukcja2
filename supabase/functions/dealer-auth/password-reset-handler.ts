@@ -193,8 +193,12 @@ export async function handlePasswordResetRequest(
       message: "If the account exists, a password reset email will be sent"
     }, requestId);
 
-  } catch (error) {
-    logError("Password reset request error", error, requestId);
+  } catch (error: any) {
+    logError(`Password reset request error: ${error.message}`, requestId, { 
+      error: error.message,
+      stack: error.stack,
+      email: trimmedEmail 
+    });
     return respondError("An unexpected error occurred", 500, requestId);
   }
 }

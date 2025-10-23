@@ -51,6 +51,15 @@ export function DealerLoginForm({ returnUrl = "/dealer/dashboard" }: { returnUrl
       
       <LoginSubmitButton isLoading={isLoading} />
       
+      <div className="text-center text-sm mt-2">
+        <a 
+          href="/request-password-reset" 
+          className="text-primary hover:underline"
+        >
+          Zapomniałeś hasła?
+        </a>
+      </div>
+      
       <div className="text-center text-sm mt-4">
         Nie masz konta?{" "}
         <span className="text-primary cursor-pointer hover:underline">

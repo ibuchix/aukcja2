@@ -79,8 +79,3 @@ export async function confirmPasswordReset(token: string, newPassword: string): 
     };
   }
 }
-
-// Legacy function for backward compatibility
-export async function resetPassword(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {
-  return requestPasswordReset(data);
-}

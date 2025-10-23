@@ -31,8 +31,8 @@ function App() {
         
         {/* Authentication routes */}
         <Route path="/auth" element={<Auth />} />
-        <Route path="/password-reset" element={<PasswordResetWithToken />} />
         <Route path="/request-password-reset" element={<PasswordReset />} />
+        <Route path="/reset-password" element={<PasswordResetWithToken />} />
         <Route
           path="/complete-registration"
           element={
