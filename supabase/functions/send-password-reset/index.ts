@@ -32,7 +32,7 @@ const handler = async (req: Request): Promise<Response> => {
     const resetUrl = `${Deno.env.get("APP_URL") || "http://localhost:8080"}/password-reset?token=${token}`;
 
     const emailResponse = await resend.emails.send({
-      from: "Auto Trader <noreply@resend.dev>",
+      from: "Auto Trader <powiadomienia@autaro.pl>",
       to: [email],
       subject: "Reset Your Password",
       html: `
