@@ -17,6 +17,7 @@ import Index from "./pages/Index";
 import Pricing from "./pages/Pricing";
 import CookiePolicyPage from "./pages/CookiePolicyPage";
 import PasswordReset from "./pages/PasswordReset";
+import PasswordResetWithToken from "./pages/PasswordResetWithToken";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import { CookieConsentBanner } from "./components/cookies/CookieConsentBanner";
 
@@ -30,7 +31,8 @@ function App() {
         
         {/* Authentication routes */}
         <Route path="/auth" element={<Auth />} />
-        <Route path="/password-reset" element={<PasswordReset />} />
+        <Route path="/password-reset" element={<PasswordResetWithToken />} />
+        <Route path="/request-password-reset" element={<PasswordReset />} />
         <Route
           path="/complete-registration"
           element={

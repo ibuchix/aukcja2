@@ -1,5 +1,5 @@
 
-import { handleDealerRegister, handleDealerLogin, handleCheckDealerEmail } from "./handlers.ts";
+import { handleDealerRegister, handleDealerLogin, handleCheckDealerEmail, handlePasswordResetRequest, handlePasswordResetConfirm } from "./handlers.ts";
 import { respondSuccess, respondError } from "./response-utils.ts";
 import { logInfo, logError, logWarning } from "./logging.ts";
 import { processWithRetry } from "./retry-handler.ts";
@@ -48,6 +48,18 @@ export async function handleDealerAuthRequest(req: Request, startTime: number): 
       case "check_dealer_email":
         return await processWithRetry(
           () => handleCheckDealerEmail(body, trackingId),
+          trackingId,
+          startTime
+        );
+      case "password_reset_request":
+        return await processWithRetry(
+          () => handlePasswordResetRequest(body, trackingId),
+          trackingId,
+          startTime
+        );
+      case "password_reset_confirm":
+        return await processWithRetry(
+          () => handlePasswordResetConfirm(body, trackingId),
           trackingId,
           startTime
         );
