@@ -181,8 +181,13 @@ export async function handlePasswordResetRequest(
         } else {
           logInfo("Password reset email sent successfully", { requestId, userId: user.id });
         }
-      } catch (emailError) {
-        logError("Exception sending reset email", emailError, requestId);
+      } catch (emailError: any) {
+        logError(`Exception sending reset email: ${emailError.message}`, requestId, {
+          error: emailError.message,
+          stack: emailError.stack,
+          token: token.substring(0, 8) + "...",
+          dealershipName: dealer.dealership_name
+        });
         // Don't fail the request if email fails - token is still valid
       }
     } else {

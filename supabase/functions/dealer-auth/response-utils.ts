@@ -4,14 +4,15 @@ import { corsHeaders } from "../_shared/cors.ts";
 /**
  * Create a successful response with proper CORS headers
  */
-export function respondSuccess(body: any, status = 200): Response {
+export function respondSuccess(body: any, requestId?: string): Response {
   return new Response(
     JSON.stringify(body),
     {
-      status,
+      status: 200,
       headers: {
         "Content-Type": "application/json",
-        ...corsHeaders
+        ...corsHeaders,
+        ...(requestId ? { "X-Request-ID": requestId } : {})
       }
     }
   );
@@ -20,7 +21,7 @@ export function respondSuccess(body: any, status = 200): Response {
 /**
  * Create an error response with proper CORS headers
  */
-export function respondError(message: string, status = 400): Response {
+export function respondError(message: string, status = 400, requestId?: string): Response {
   return new Response(
     JSON.stringify({
       success: false,
@@ -30,7 +31,8 @@ export function respondError(message: string, status = 400): Response {
       status,
       headers: {
         "Content-Type": "application/json",
-        ...corsHeaders
+        ...corsHeaders,
+        ...(requestId ? { "X-Request-ID": requestId } : {})
       }
     }
   );
