@@ -52,11 +52,8 @@ export async function handleDealerAuthRequest(req: Request, startTime: number): 
           startTime
         );
       case "password_reset_request":
-        return await processWithRetry(
-          () => handlePasswordResetRequest(body, trackingId),
-          trackingId,
-          startTime
-        );
+        // Don't retry password reset requests - verification failures shouldn't be retried
+        return await handlePasswordResetRequest(body, trackingId);
       case "password_reset_confirm":
         return await processWithRetry(
           () => handlePasswordResetConfirm(body, trackingId),

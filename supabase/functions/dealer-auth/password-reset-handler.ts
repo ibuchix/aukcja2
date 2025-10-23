@@ -52,10 +52,16 @@ export async function handlePasswordResetRequest(
 ): Promise<Response> {
   const { email, taxId, businessRegistryNumber, supervisorName } = body;
 
-  logInfo("Password reset request", { requestId, email: email?.substring(0, 3) + "***" });
+  // Trim all input values to handle whitespace
+  const trimmedEmail = email?.trim();
+  const trimmedTaxId = taxId?.trim();
+  const trimmedBusinessRegistryNumber = businessRegistryNumber?.trim();
+  const trimmedSupervisorName = supervisorName?.trim();
+
+  logInfo("Password reset request", { requestId, email: trimmedEmail?.substring(0, 3) + "***" });
 
   // Validate input
-  if (!email || !taxId || !businessRegistryNumber || !supervisorName) {
+  if (!trimmedEmail || !trimmedTaxId || !trimmedBusinessRegistryNumber || !trimmedSupervisorName) {
     return respondError("All fields are required for password reset", 400, requestId);
   }
 
@@ -68,7 +74,7 @@ export async function handlePasswordResetRequest(
       return respondError("Unable to process request", 500, requestId);
     }
 
-    const user = userData.users.find(u => u.email === email);
+    const user = userData.users.find(u => u.email === trimmedEmail);
     
     if (!user) {
       // Don't reveal if user exists - security best practice
@@ -90,9 +96,9 @@ export async function handlePasswordResetRequest(
 
     // Verify all details match
     const detailsMatch = 
-      dealer.tax_id === taxId &&
-      dealer.business_registry_number === businessRegistryNumber &&
-      dealer.supervisor_name === supervisorName;
+      dealer.tax_id === trimmedTaxId &&
+      dealer.business_registry_number === trimmedBusinessRegistryNumber &&
+      dealer.supervisor_name === trimmedSupervisorName;
 
     if (!detailsMatch) {
       logInfo("Password reset details don't match", { requestId });
@@ -155,7 +161,7 @@ export async function handlePasswordResetRequest(
     await supabaseAdmin.from("audit_logs").insert({
       user_id: user.id,
       action: "password_reset_requested",
-      details: { email }
+      details: { email: trimmedEmail }
     });
 
     // Call email function to send reset link (only if we created a new token or this is first attempt)
@@ -163,7 +169,7 @@ export async function handlePasswordResetRequest(
       try {
         const emailResponse = await supabaseAdmin.functions.invoke("send-password-reset", {
           body: {
-            email,
+            email: trimmedEmail,
             token,
             dealershipName: dealer.dealership_name
           }

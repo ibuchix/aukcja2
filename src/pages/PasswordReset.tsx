@@ -30,10 +30,10 @@ export default function PasswordReset() {
 
     try {
       const result = await requestPasswordReset({
-        email: data.email,
-        taxId: data.taxId,
-        businessRegistryNumber: data.businessRegistryNumber,
-        supervisorName: data.supervisorName
+        email: data.email.trim(),
+        taxId: data.taxId.trim(),
+        businessRegistryNumber: data.businessRegistryNumber.trim(),
+        supervisorName: data.supervisorName.trim()
       });
 
       if (result.success) {
