@@ -29,7 +29,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const resetUrl = `${Deno.env.get("APP_URL") || "http://localhost:8080"}/password-reset?token=${token}`;
+    const resetUrl = `https://autaro.pl/password-reset?token=${token}`;
 
     const emailResponse = await resend.emails.send({
       from: "Auto Trader <powiadomienia@autaro.pl>",

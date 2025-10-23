@@ -107,23 +107,48 @@ export async function handlePasswordResetRequest(
       return respondSuccess({ message: "If the account exists, a password reset email will be sent" }, requestId);
     }
 
-    // Generate reset token
-    const token = generateResetToken();
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + RESET_TOKEN_EXPIRY_HOURS);
-
-    // Store token in database
-    const { error: tokenError } = await supabaseAdmin
+    // Check if a recent token exists (within last 2 minutes) to prevent duplicates
+    const twoMinutesAgo = new Date();
+    twoMinutesAgo.setMinutes(twoMinutesAgo.getMinutes() - 2);
+    
+    const { data: existingToken } = await supabaseAdmin
       .from("password_reset_tokens")
-      .insert({
-        user_id: user.id,
-        token,
-        expires_at: expiresAt.toISOString()
-      });
+      .select("token, created_at")
+      .eq("user_id", user.id)
+      .is("used_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .gt("created_at", twoMinutesAgo.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (tokenError) {
-      logError("Error creating reset token", tokenError, requestId);
-      return respondError("Unable to process request", 500, requestId);
+    let token: string;
+    
+    if (existingToken) {
+      // Use existing recent token instead of creating a new one
+      token = existingToken.token;
+      logInfo("Using existing recent reset token", { requestId, userId: user.id });
+    } else {
+      // Generate new reset token
+      token = generateResetToken();
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + RESET_TOKEN_EXPIRY_HOURS);
+
+      // Store token in database
+      const { error: tokenError } = await supabaseAdmin
+        .from("password_reset_tokens")
+        .insert({
+          user_id: user.id,
+          token,
+          expires_at: expiresAt.toISOString()
+        });
+
+      if (tokenError) {
+        logError("Error creating reset token", tokenError, requestId);
+        return respondError("Unable to process request", 500, requestId);
+      }
+      
+      logInfo("New password reset token created", { requestId, userId: user.id });
     }
 
     // Log audit event
@@ -133,25 +158,33 @@ export async function handlePasswordResetRequest(
       details: { email }
     });
 
-    // Call email function to send reset link
-    const { error: emailError } = await supabaseAdmin.functions.invoke("send-password-reset", {
-      body: {
-        email,
-        token,
-        dealershipName: dealer.dealership_name
-      }
-    });
+    // Call email function to send reset link (only if we created a new token or this is first attempt)
+    if (!existingToken) {
+      try {
+        const emailResponse = await supabaseAdmin.functions.invoke("send-password-reset", {
+          body: {
+            email,
+            token,
+            dealershipName: dealer.dealership_name
+          }
+        });
 
-    if (emailError) {
-      logError("Error sending reset email", emailError, requestId);
-      // Don't fail the request if email fails
+        if (emailResponse.error) {
+          logError("Error sending reset email", emailResponse.error, requestId);
+          // Don't fail the request if email fails - token is still valid
+        } else {
+          logInfo("Password reset email sent successfully", { requestId, userId: user.id });
+        }
+      } catch (emailError) {
+        logError("Exception sending reset email", emailError, requestId);
+        // Don't fail the request if email fails - token is still valid
+      }
+    } else {
+      logInfo("Skipped email send - using existing token", { requestId, userId: user.id });
     }
 
-    logInfo("Password reset token created", { requestId, userId: user.id });
-
     return respondSuccess({ 
-      message: "If the account exists, a password reset email will be sent",
-      tokenForDev: token // TODO: Remove in production
+      message: "If the account exists, a password reset email will be sent"
     }, requestId);
 
   } catch (error) {
