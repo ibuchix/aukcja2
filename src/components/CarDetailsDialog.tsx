@@ -227,6 +227,68 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
           <ConditionAndFeatures car={car} />
         </div>
 
+        {/* Additional Seller Information */}
+        <div className="mt-6 space-y-4">
+          <h3 className="text-lg font-semibold">Informacje sprzedawcy</h3>
+          
+          {car.sellerNotes && (
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-semibold mb-2">Notatki sprzedawcy</h4>
+              <p className="text-sm">{car.sellerNotes}</p>
+            </div>
+          )}
+          
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            {car.serviceHistoryType && (
+              <div>
+                <span className="font-medium">Historia serwisowa:</span> {car.serviceHistoryType}
+              </div>
+            )}
+            {car.numberOfKeys && (
+              <div>
+                <span className="font-medium">Liczba kluczy:</span> {car.numberOfKeys}
+              </div>
+            )}
+            {car.seatMaterial && (
+              <div>
+                <span className="font-medium">Materiał siedzeń:</span> {car.seatMaterial}
+              </div>
+            )}
+            {car.registrationNumber && (
+              <div>
+                <span className="font-medium">Numer rejestracyjny:</span> {car.registrationNumber}
+              </div>
+            )}
+            {car.isRegisteredInPoland !== undefined && (
+              <div>
+                <span className="font-medium">Zarejestrowany w Polsce:</span> {car.isRegisteredInPoland ? 'Tak' : 'Nie'}
+              </div>
+            )}
+            {car.hasPrivatePlate !== undefined && (
+              <div>
+                <span className="font-medium">Tablica prywatna:</span> {car.hasPrivatePlate ? 'Tak' : 'Nie'}
+              </div>
+            )}
+          </div>
+          
+          {car.isDamaged && (
+            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+              <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Informacja o uszkodzeniach</h4>
+              <p className="text-sm text-yellow-700">Ten pojazd ma zgłoszone uszkodzenia</p>
+            </div>
+          )}
+          
+          {car.hasOutstandingFinance && (
+            <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg">
+              <h4 className="font-semibold text-orange-800 mb-2">💰 Informacja finansowa</h4>
+              <p className="text-sm text-orange-700">
+                Pojazd ma niespłacone finansowanie
+                {car.financeAmount && `: ${formatPricePLN(car.financeAmount)}`}
+              </p>
+            </div>
+          )}
+        </div>
+
         {/* Bidding Interface for Live Auctions */}
         {isLiveAuction && dealerProfile?.id && (
           <div className="mt-6 pt-6 border-t">

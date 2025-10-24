@@ -236,18 +236,25 @@ export const WonVehicles = () => {
     queryFn: async () => {
       if (!selectedCarId) return null;
       
-      const { data, error } = await supabase
+      // Fetch car details
+      const { data: carData, error: carError } = await supabase
         .from("cars")
         .select("*")
         .eq("id", selectedCarId)
         .single();
 
-      if (error) {
-        console.error("Error fetching car details:", error);
+      if (carError || !carData) {
+        console.error("Error fetching car details:", carError);
         return null;
       }
 
-      return data;
+      // Fetch car file uploads (images)
+      const fileUploads = await fetchCarFileUploads([selectedCarId]);
+      
+      return {
+        ...(carData as Record<string, any>),
+        fileUploads: fileUploads
+      };
     },
     enabled: !!selectedCarId,
   });
@@ -271,9 +278,28 @@ export const WonVehicles = () => {
     transmission: (selectedCarData as any).transmission,
     location: (selectedCarData as any).address,
     vin: (selectedCarData as any).vin,
+    registrationNumber: (selectedCarData as any).registration_number,
     features: (selectedCarData as any).features || {},
     additional_photos: (selectedCarData as any).additional_photos,
-    required_photos: (selectedCarData as any).required_photos
+    required_photos: (selectedCarData as any).required_photos,
+    // File uploads for proper image loading
+    fileUploads: (selectedCarData as any).fileUploads || [],
+    // Seller information fields
+    sellerName: (selectedCarData as any).seller_name,
+    sellerNotes: (selectedCarData as any).seller_notes,
+    serviceHistoryType: (selectedCarData as any).service_history_type,
+    numberOfKeys: (selectedCarData as any).number_of_keys,
+    seatMaterial: (selectedCarData as any).seat_material,
+    isDamaged: (selectedCarData as any).is_damaged,
+    isRegisteredInPoland: (selectedCarData as any).is_registered_in_poland,
+    hasPrivatePlate: (selectedCarData as any).has_private_plate,
+    financeAmount: (selectedCarData as any).finance_amount,
+    hasOutstandingFinance: (selectedCarData as any).has_outstanding_finance,
+    // Location details
+    streetAddress: (selectedCarData as any).street_address,
+    town: (selectedCarData as any).town,
+    county: (selectedCarData as any).county,
+    postcode: (selectedCarData as any).postcode,
   } : null;
 
   const handleRefresh = async () => {
