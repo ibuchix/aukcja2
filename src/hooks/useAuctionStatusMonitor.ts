@@ -35,18 +35,8 @@ export const useAuctionStatusMonitor = ({
           
           if (oldStatus !== newStatus && carId) {
             if (newStatus === 'active' && oldStatus === 'scheduled') {
-              toast({
-                title: "Auction Started",
-                description: "An auction you're watching has just started!",
-                duration: 5000,
-              });
               onAuctionStarted?.(carId);
             } else if (newStatus === 'completed' && oldStatus === 'active') {
-              toast({
-                title: "Auction Ended",
-                description: "An auction has ended. Check the results!",
-                duration: 5000,
-              });
               onAuctionEnded?.(carId, 'ended');
             }
           }
@@ -68,18 +58,8 @@ export const useAuctionStatusMonitor = ({
           
           if (oldAuctionStatus !== newAuctionStatus && carId) {
             if (newAuctionStatus === 'sold') {
-              toast({
-                title: "Auction Sold!",
-                description: "A vehicle has been sold at auction.",
-                duration: 5000,
-              });
               onAuctionEnded?.(carId, 'sold');
             } else if (newAuctionStatus === 'ended') {
-              toast({
-                title: "Auction Ended",
-                description: "An auction has ended without sale.",
-                duration: 5000,
-              });
               onAuctionEnded?.(carId, 'ended');
             }
           }
@@ -103,8 +83,8 @@ export const useAuctionStatusMonitor = ({
       if (error) {
         console.error('Error triggering status update:', error);
         toast({
-          title: "Error",
-          description: "Failed to update auction statuses",
+          title: "Błąd",
+          description: "Nie udało się zaktualizować statusów aukcji",
           variant: "destructive",
         });
         return;
@@ -115,16 +95,16 @@ export const useAuctionStatusMonitor = ({
       // Type-safe access to response data
       const response = data as any;
       toast({
-        title: "Status Updated",
-        description: `Processed ${response?.processed_count || 0} auctions`,
+        title: "Status zaktualizowany",
+        description: `Przetworzono ${response?.processed_count || 0} aukcji`,
       });
       
       return data;
     } catch (error) {
       console.error('Error in manual status update:', error);
       toast({
-        title: "Error",
-        description: "Failed to update auction statuses",
+        title: "Błąd",
+        description: "Nie udało się zaktualizować statusów aukcji",
         variant: "destructive",
       });
     }

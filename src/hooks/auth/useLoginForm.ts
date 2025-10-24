@@ -114,7 +114,7 @@ export function useLoginForm() {
       setIsLoading(false);
       
       toast({
-        title: "Login failed",
+        title: "Logowanie nie powiodło się",
         description: errorMessage,
         variant: "destructive",
       });

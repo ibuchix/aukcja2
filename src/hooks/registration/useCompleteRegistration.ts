@@ -30,8 +30,8 @@ export function useCompleteRegistration() {
     try {
       // Show initial progress toast
       toast({
-        title: "Starting Registration Process",
-        description: "Preparing your account details...",
+        title: "Rozpoczynanie procesu rejestracji",
+        description: "Przygotowywanie szczegółów Twojego konta...",
       });
       
       console.log("Creating dealer account with dealer-auth edge function");
@@ -46,8 +46,8 @@ export function useCompleteRegistration() {
       
       // Show account creation progress
       toast({
-        title: "Creating Account",
-        description: "Setting up your authentication credentials...",
+        title: "Tworzenie konta",
+        description: "Konfigurowanie danych uwierzytelniających...",
       });
       
       // Create request body 
@@ -120,7 +120,7 @@ export function useCompleteRegistration() {
         }
         
         toast({
-          title: "Registration Failed",
+          title: "Rejestracja nie powiodła się",
           description: errorMsg,
           variant: "destructive",
         });
@@ -139,8 +139,8 @@ export function useCompleteRegistration() {
         console.error("Error parsing registration response:", e);
         // Be tolerant: registration likely succeeded even if response isn't JSON
         toast({
-          title: "Registration Successful",
-          description: "Account created. Please log in with your credentials.",
+          title: "Rejestracja pomyślna",
+          description: "Konto utworzone. Zaloguj się swoimi danymi.",
         });
         return {
           success: true,
@@ -152,8 +152,8 @@ export function useCompleteRegistration() {
         console.error("Empty response from registration service");
         // Assume success if HTTP was OK but body is empty
         toast({
-          title: "Registration Successful",
-          description: "Account created. Please log in with your credentials.",
+          title: "Rejestracja pomyślna",
+          description: "Konto utworzone. Zaloguj się swoimi danymi.",
         });
         return {
           success: true,
@@ -194,8 +194,8 @@ export function useCompleteRegistration() {
         
         console.error("Registration failed with error:", response_data.error);
         toast({
-          title: "Registration Failed",
-          description: response_data.error || "Registration failed with an unknown error",
+          title: "Rejestracja nie powiodła się",
+          description: response_data.error || "Rejestracja nie powiodła się z nieznanego powodu",
           variant: "destructive",
         });
         return {
@@ -206,16 +206,16 @@ export function useCompleteRegistration() {
 
       // Show success progress
       toast({
-        title: "Account Created Successfully! ✓",
-        description: "Your dealer account has been set up. Attempting automatic login...",
+        title: "Konto utworzone pomyślnie! ✓",
+        description: "Twoje konto dealera zostało skonfigurowane. Próba automatycznego logowania...",
       });
 
       // Check for auto-generated session
       if (response_data.session) {
         console.log("Registration successful with automatic session, user is now logged in");
         toast({
-          title: "Welcome to Your Dashboard! 🎉",
-          description: "Registration complete and you're now logged in",
+          title: "Witamy w Twoim panelu! 🎉",
+          description: "Rejestracja zakończona, jesteś teraz zalogowany",
         });
         return {
           success: true,
@@ -243,13 +243,13 @@ export function useCompleteRegistration() {
         
         if (loginSuccessful) {
           toast({
-            title: "Welcome to Your Dashboard! 🎉",
-            description: "Registration complete and you're now logged in",
+            title: "Witamy w Twoim panelu! 🎉",
+            description: "Rejestracja zakończona, jesteś teraz zalogowany",
           });
         } else {
           toast({
-            title: "Registration Successful",
-            description: "Account created successfully. Please log in with your credentials.",
+            title: "Rejestracja pomyślna",
+            description: "Konto utworzone pomyślnie. Zaloguj się swoimi danymi.",
           });
         }
         
@@ -262,8 +262,8 @@ export function useCompleteRegistration() {
         console.warn("Could not automatically log in after registration:", loginError);
         
         toast({
-          title: "Registration Successful",
-          description: "Account created successfully. Please log in with your credentials.",
+          title: "Rejestracja pomyślna",
+          description: "Konto utworzone pomyślnie. Zaloguj się swoimi danymi.",
         });
         
         return {
@@ -275,8 +275,8 @@ export function useCompleteRegistration() {
     } catch (error) {
       console.error("Unexpected error during registration:", error);
       toast({
-        title: "Registration Error",
-        description: error instanceof Error ? error.message : "An unexpected error occurred during registration",
+        title: "Błąd rejestracji",
+        description: error instanceof Error ? error.message : "Wystąpił nieoczekiwany błąd podczas rejestracji",
         variant: "destructive",
       });
       return {

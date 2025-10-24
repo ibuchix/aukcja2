@@ -26,13 +26,13 @@ export function OnlineStatusProvider({ children }: PropsWithChildren) {
     if (prevOnlineStatus !== isOnline) {
       if (isOnline) {
         toast({
-          title: "You're back online",
-          description: "Your connection has been restored.",
+          title: "Wróciłeś online",
+          description: "Twoje połączenie zostało przywrócone.",
         });
       } else {
         toast({
-          title: "You're offline",
-          description: "Don't worry, proxy bids will still be processed when connectivity returns.",
+          title: "Jesteś offline",
+          description: "Nie martw się, oferty proxy będą nadal przetwarzane po przywróceniu połączenia.",
           variant: "destructive",
         });
       }
