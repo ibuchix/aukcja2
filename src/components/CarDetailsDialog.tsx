@@ -232,13 +232,13 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
           <h3 className="text-lg font-semibold">Informacje sprzedawcy</h3>
           
           {car.sellerNotes && (
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="bg-gray-700 text-white p-4 rounded-lg border border-gray-600">
               <h4 className="font-semibold mb-2">Notatki sprzedawcy</h4>
               <p className="text-sm">{car.sellerNotes}</p>
             </div>
           )}
           
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-2 gap-4 text-sm bg-gray-700 p-4 rounded-lg border border-gray-600">
             {car.serviceHistoryType && (
               <div>
                 <span className="font-medium">Historia serwisowa:</span> {car.serviceHistoryType}
@@ -271,17 +271,10 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
             )}
           </div>
           
-          {car.isDamaged && (
-            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-              <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Informacja o uszkodzeniach</h4>
-              <p className="text-sm text-yellow-700">Ten pojazd ma zgłoszone uszkodzenia</p>
-            </div>
-          )}
-          
           {car.hasOutstandingFinance && (
-            <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg">
-              <h4 className="font-semibold text-orange-800 mb-2">💰 Informacja finansowa</h4>
-              <p className="text-sm text-orange-700">
+            <div className="bg-orange-200 border border-orange-400 p-4 rounded-lg">
+              <h4 className="font-semibold text-orange-900 mb-2">💰 Informacja finansowa</h4>
+              <p className="text-sm text-gray-900">
                 Pojazd ma niespłacone finansowanie
                 {car.financeAmount && `: ${formatPricePLN(car.financeAmount)}`}
               </p>
