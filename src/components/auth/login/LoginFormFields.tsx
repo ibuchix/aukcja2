@@ -1,7 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { UseFormRegister, FieldErrors } from "react-hook-form";
-import { Input } from "@/components/ui/input";
+import { SecureInput } from "@/components/ui/secure-input";
 import { Label } from "@/components/ui/label";
 
 interface LoginFormValues {
@@ -19,9 +19,11 @@ export function LoginFormFields({ register, errors }: LoginFormFieldsProps) {
     <>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
-        <Input
+        <SecureInput
           id="email"
-          type="email" 
+          type="email"
+          fieldType="email"
+          maxLength={255}
           placeholder="użytkownik@email.com"
           {...register("email", { 
             required: "Email is required",
@@ -43,9 +45,11 @@ export function LoginFormFields({ register, errors }: LoginFormFieldsProps) {
             Nie pamiętasz hasła?
           </Link>
         </div>
-        <Input
+        <SecureInput
           id="password"
           type="password"
+          fieldType="password"
+          maxLength={72}
           placeholder="••••••••"
           {...register("password", { required: "Password is required" })}
         />

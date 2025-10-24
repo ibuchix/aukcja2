@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { SecureInput } from "@/components/ui/secure-input";
 import { Button } from "@/components/ui/button";
+import { PasswordValidation } from "@/components/auth/PasswordValidation";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { confirmPasswordReset } from "@/services/auth/passwordReset";
@@ -155,12 +156,18 @@ export default function PasswordResetWithToken() {
                     <FormItem>
                       <FormLabel>New Password</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="password" 
+                        <SecureInput 
+                          type="password"
+                          fieldType="password"
+                          maxLength={72}
                           placeholder="Enter new password"
                           {...field}
                         />
                       </FormControl>
+                      <PasswordValidation 
+                        password={form.watch("newPassword") || ""} 
+                        className="mt-2"
+                      />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -173,8 +180,10 @@ export default function PasswordResetWithToken() {
                     <FormItem>
                       <FormLabel>Confirm Password</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="password" 
+                        <SecureInput 
+                          type="password"
+                          fieldType="password"
+                          maxLength={72}
                           placeholder="Confirm new password"
                           {...field}
                         />

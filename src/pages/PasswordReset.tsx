@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { SecureInput } from '@/components/ui/secure-input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -108,9 +108,11 @@ export default function PasswordReset() {
 
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
-              <Input
+              <SecureInput
                 id="email"
                 type="email"
+                fieldType="email"
+                maxLength={255}
                 placeholder="Enter your registered email"
                 {...register('email', {
                   required: 'Email is required',
@@ -127,8 +129,10 @@ export default function PasswordReset() {
 
             <div className="space-y-2">
               <Label htmlFor="taxId">Tax ID (NIP)</Label>
-              <Input
+              <SecureInput
                 id="taxId"
+                fieldType="digits"
+                maxLength={10}
                 placeholder="Enter your tax ID"
                 {...register('taxId', { required: 'Tax ID is required' })}
               />
@@ -139,8 +143,10 @@ export default function PasswordReset() {
 
             <div className="space-y-2">
               <Label htmlFor="businessRegistryNumber">Business Registry Number (REGON)</Label>
-              <Input
+              <SecureInput
                 id="businessRegistryNumber"
+                fieldType="digits"
+                maxLength={14}
                 placeholder="Enter your business registry number"
                 {...register('businessRegistryNumber', { required: 'Business registry number is required' })}
               />
@@ -151,8 +157,10 @@ export default function PasswordReset() {
 
             <div className="space-y-2">
               <Label htmlFor="supervisorName">Supervisor Name</Label>
-              <Input
+              <SecureInput
                 id="supervisorName"
+                fieldType="name"
+                maxLength={100}
                 placeholder="Enter supervisor name"
                 {...register('supervisorName', { required: 'Supervisor name is required' })}
               />
