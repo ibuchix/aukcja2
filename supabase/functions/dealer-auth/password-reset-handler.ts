@@ -223,8 +223,29 @@ export async function handlePasswordResetConfirm(
     return respondError("Token and new password are required", 400, requestId);
   }
 
+  // Validate password strength (matching frontend schema)
   if (newPassword.length < 8) {
     return respondError("Password must be at least 8 characters", 400, requestId);
+  }
+
+  if (newPassword.length > 72) {
+    return respondError("Password cannot exceed 72 characters", 400, requestId);
+  }
+
+  if (!/[A-Z]/.test(newPassword)) {
+    return respondError("Password must contain at least one uppercase letter", 400, requestId);
+  }
+
+  if (!/[a-z]/.test(newPassword)) {
+    return respondError("Password must contain at least one lowercase letter", 400, requestId);
+  }
+
+  if (!/[0-9]/.test(newPassword)) {
+    return respondError("Password must contain at least one number", 400, requestId);
+  }
+
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(newPassword)) {
+    return respondError("Password must contain at least one special character", 400, requestId);
   }
 
   try {
@@ -249,8 +270,18 @@ export async function handlePasswordResetConfirm(
     );
 
     if (updateError) {
-      logError("Error updating password", updateError, requestId);
-      return respondError("Unable to update password", 500, requestId);
+      logError("Error updating password", updateError, requestId, {
+        errorCode: updateError.code,
+        errorMessage: updateError.message,
+        errorStatus: updateError.status,
+        passwordLength: newPassword.length
+      });
+      
+      return respondError(
+        `Unable to update password: ${updateError.message || 'Please ensure your password meets all requirements'}`, 
+        updateError.status || 422, 
+        requestId
+      );
     }
 
     // Mark token as used
