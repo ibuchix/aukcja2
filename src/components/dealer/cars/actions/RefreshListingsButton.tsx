@@ -12,13 +12,14 @@ export const RefreshListingsButton = ({ onRefresh, isLoading = false }: RefreshL
   return (
     <div className="flex justify-end">
       <Button 
-        variant="outline" 
+        variant="default"
+        size="lg"
         onClick={onRefresh} 
         disabled={isLoading}
-        className="flex items-center gap-2 bg-secondary border-accent/20 text-body-text hover:bg-accent/20"
+        className="flex items-center gap-3 text-lg font-semibold shadow-lg"
       >
-        <Car className="h-4 w-4" />
-        {isLoading ? "Odświeżanie..." : "Odśwież listę"}
+        <Car className="h-6 w-6" />
+        {isLoading ? "Odświeżanie..." : "Odśwież aukcję"}
       </Button>
     </div>
   );

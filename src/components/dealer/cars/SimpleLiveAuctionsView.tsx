@@ -87,18 +87,7 @@ export const SimpleLiveAuctionsView = () => {
             Sprawdź dostępne pojazdy i złóż swoją ofertę
           </p>
         </div>
-        <div className={`${isMobile ? 'flex flex-col gap-2' : 'flex gap-2'}`}>
-          <Button
-            variant="outline"
-            size={isMobile ? "default" : "sm"}
-            onClick={handleRefreshStatuses}
-            className="flex items-center gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20"
-          >
-            <RotateCcw className="h-4 w-4" />
-            {isMobile ? 'Aktualizuj' : 'Aktualizuj statusy'}
-          </Button>
-          <RefreshListingsButton onRefresh={refetch} isLoading={isLoading} />
-        </div>
+        <RefreshListingsButton onRefresh={refetch} isLoading={isLoading} />
       </div>
 
       <CarSearchFilters
