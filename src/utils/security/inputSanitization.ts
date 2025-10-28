@@ -70,10 +70,47 @@ export function filterInput(
     return value.slice(0, limit);
   }
   
-  // Apply character filter
+  // Special handling for email field
+  if (fieldType === 'email') {
+    // Apply character whitelist first
+    const whitelist = CHARACTER_WHITELIST[fieldType];
+    if (!whitelist.test(value)) {
+      return value.slice(0, -1);
+    }
+    
+    // Additional email-specific rules
+    // 1. Only one @ symbol allowed
+    const atCount = (value.match(/@/g) || []).length;
+    if (atCount > 1) {
+      return value.slice(0, -1);
+    }
+    
+    // 2. Cannot start with @ or .
+    if (value.length === 1 && (value === '@' || value === '.')) {
+      return '';
+    }
+    
+    // 3. Cannot have consecutive dots
+    if (value.includes('..')) {
+      return value.slice(0, -1);
+    }
+    
+    // 4. Cannot have @ followed immediately by .
+    if (value.includes('@.')) {
+      return value.slice(0, -1);
+    }
+    
+    // 5. Cannot have . followed immediately by @
+    if (value.includes('.@')) {
+      return value.slice(0, -1);
+    }
+    
+    return value;
+  }
+  
+  // For non-email fields, use existing logic
   const whitelist = CHARACTER_WHITELIST[fieldType];
   if (whitelist && !whitelist.test(value)) {
-    // Remove the last character if it doesn't match whitelist
     return value.slice(0, -1);
   }
   
