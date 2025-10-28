@@ -14,11 +14,11 @@ interface PasswordValidationProps {
 
 export function PasswordValidation({ password, className = "" }: PasswordValidationProps) {
   const requirements: PasswordRequirement[] = [
-    { label: "At least 8 characters", regex: /.{8,}/ },
-    { label: "At least one uppercase letter", regex: /[A-Z]/ },
-    { label: "At least one lowercase letter", regex: /[a-z]/ },
-    { label: "At least one number", regex: /[0-9]/ },
-    { label: "At least one special character", regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/ }
+    { label: "Co najmniej 8 znaków", regex: /.{8,}/ },
+    { label: "Co najmniej jedna wielka litera", regex: /[A-Z]/ },
+    { label: "Co najmniej jedna mała litera", regex: /[a-z]/ },
+    { label: "Co najmniej jedna cyfra", regex: /[0-9]/ },
+    { label: "Co najmniej jeden znak specjalny", regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/ }
   ];
 
   return (

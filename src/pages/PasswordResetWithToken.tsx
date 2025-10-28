@@ -8,7 +8,7 @@ import { PasswordValidation } from "@/components/auth/PasswordValidation";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { confirmPasswordReset } from "@/services/auth/passwordReset";
-import { ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, Loader2, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface PasswordResetForm {
@@ -23,6 +23,8 @@ export default function PasswordResetWithToken() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [token, setToken] = useState<string | null>(null);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<PasswordResetForm>({
     defaultValues: {
@@ -35,8 +37,8 @@ export default function PasswordResetWithToken() {
     const tokenParam = searchParams.get("token");
     if (!tokenParam) {
       toast({
-        title: "Invalid Link",
-        description: "This password reset link is invalid. Please request a new one.",
+        title: "Nieprawidłowy link",
+        description: "Ten link do resetowania hasła jest nieprawidłowy. Poproś o nowy.",
         variant: "destructive"
       });
       navigate("/auth");
@@ -48,8 +50,8 @@ export default function PasswordResetWithToken() {
   const onSubmit = async (data: PasswordResetForm) => {
     if (!token) {
       toast({
-        title: "Error",
-        description: "Invalid reset token",
+        title: "Błąd",
+        description: "Nieprawidłowy token resetowania",
         variant: "destructive"
       });
       return;
@@ -57,14 +59,14 @@ export default function PasswordResetWithToken() {
 
     if (data.newPassword !== data.confirmPassword) {
       form.setError("confirmPassword", {
-        message: "Passwords do not match"
+        message: "Hasła nie pasują do siebie"
       });
       return;
     }
 
     if (data.newPassword.length < 8) {
       form.setError("newPassword", {
-        message: "Password must be at least 8 characters"
+        message: "Hasło musi mieć co najmniej 8 znaków"
       });
       return;
     }
@@ -77,8 +79,8 @@ export default function PasswordResetWithToken() {
       if (result.success) {
         setIsSuccess(true);
         toast({
-          title: "Success!",
-          description: "Your password has been reset successfully.",
+          title: "Sukces!",
+          description: "Twoje hasło zostało pomyślnie zresetowane.",
         });
         
         setTimeout(() => {
@@ -86,15 +88,15 @@ export default function PasswordResetWithToken() {
         }, 3000);
       } else {
         toast({
-          title: "Reset Failed",
-          description: result.error || "Unable to reset password. The link may have expired.",
+          title: "Resetowanie nie powiodło się",
+          description: result.error || "Nie można zresetować hasła. Link mógł wygasnąć.",
           variant: "destructive"
         });
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: "Błąd",
+        description: "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.",
         variant: "destructive"
       });
     } finally {
@@ -110,9 +112,9 @@ export default function PasswordResetWithToken() {
             <div className="mx-auto mb-4 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
               <CheckCircle className="w-10 h-10 text-green-600" />
             </div>
-            <CardTitle className="text-2xl">Password Reset Successful!</CardTitle>
+            <CardTitle className="text-2xl">Hasło zostało zresetowane!</CardTitle>
             <CardDescription>
-              Your password has been changed. You can now log in with your new password.
+              Twoje hasło zostało zmienione. Możesz teraz zalogować się przy użyciu nowego hasła.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -120,7 +122,7 @@ export default function PasswordResetWithToken() {
               onClick={() => navigate("/auth")} 
               className="w-full"
             >
-              Go to Login
+              Przejdź do logowania
             </Button>
           </CardContent>
         </Card>
@@ -136,14 +138,14 @@ export default function PasswordResetWithToken() {
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Login
+          Wróć do logowania
         </Link>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Set New Password</CardTitle>
+            <CardTitle className="text-2xl">Ustaw nowe hasło</CardTitle>
             <CardDescription>
-              Enter your new password below
+              Wprowadź poniżej swoje nowe hasło
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -154,15 +156,30 @@ export default function PasswordResetWithToken() {
                   name="newPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>New Password</FormLabel>
+                      <FormLabel>Nowe hasło</FormLabel>
                       <FormControl>
-                        <SecureInput 
-                          type="password"
-                          fieldType="password"
-                          maxLength={72}
-                          placeholder="Enter new password"
-                          {...field}
-                        />
+                        <div className="relative">
+                          <SecureInput 
+                            type={showNewPassword ? "text" : "password"}
+                            fieldType="password"
+                            maxLength={72}
+                            placeholder="Wprowadź nowe hasło"
+                            {...field}
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-subtitle-text hover:text-body-text transition-colors"
+                            tabIndex={-1}
+                          >
+                            {showNewPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
                       </FormControl>
                       <PasswordValidation 
                         password={form.watch("newPassword") || ""} 
@@ -178,15 +195,30 @@ export default function PasswordResetWithToken() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
+                      <FormLabel>Potwierdź hasło</FormLabel>
                       <FormControl>
-                        <SecureInput 
-                          type="password"
-                          fieldType="password"
-                          maxLength={72}
-                          placeholder="Confirm new password"
-                          {...field}
-                        />
+                        <div className="relative">
+                          <SecureInput 
+                            type={showConfirmPassword ? "text" : "password"}
+                            fieldType="password"
+                            maxLength={72}
+                            placeholder="Potwierdź nowe hasło"
+                            {...field}
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-subtitle-text hover:text-body-text transition-colors"
+                            tabIndex={-1}
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -199,7 +231,7 @@ export default function PasswordResetWithToken() {
                   disabled={isLoading}
                 >
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Reset Password
+                  Zresetuj hasło
                 </Button>
               </form>
             </Form>
