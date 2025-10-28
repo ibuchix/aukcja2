@@ -50,23 +50,23 @@ export default function PasswordReset() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#454545] flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-gray-800 border-gray-700">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-secondary border-accent">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
-              <Mail className="h-16 w-16 text-[#D81B24] mx-auto" />
+              <Mail className="h-16 w-16 text-primary mx-auto" />
               <div>
-                <h3 className="text-lg font-semibold text-white">Check Your Email</h3>
-                <p className="text-gray-400 mt-2">
-                  We've sent password reset instructions to your email address. 
-                  Please check your inbox and follow the link to reset your password.
+                <h3 className="text-lg font-semibold text-body-text">Sprawdź swoją skrzynkę e-mail</h3>
+                <p className="text-subtitle-text mt-2">
+                  Wysłaliśmy instrukcje resetowania hasła na Twój adres e-mail. 
+                  Sprawdź swoją skrzynkę pocztową i kliknij w link, aby zresetować hasło.
                 </p>
               </div>
               <Button 
                 onClick={() => navigate('/auth')}
                 className="w-full"
               >
-                Return to Login
+                Powrót do logowania
               </Button>
             </div>
           </CardContent>
@@ -76,22 +76,22 @@ export default function PasswordReset() {
   }
 
   return (
-    <div className="min-h-screen bg-[#454545] flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gray-800 border-gray-700">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-secondary border-accent">
         <CardHeader>
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/auth')}
-              className="p-2 hover:bg-gray-700"
+              className="p-2 hover:bg-accent"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <CardTitle className="text-xl text-white">Reset Password</CardTitle>
-              <CardDescription className="text-gray-400">
-                Enter your details to receive password reset instructions
+              <CardTitle className="text-xl text-body-text">Zresetuj hasło</CardTitle>
+              <CardDescription className="text-subtitle-text">
+                Podaj poniższe dane, aby otrzymać instrukcje resetowania hasła
               </CardDescription>
             </div>
           </div>
@@ -107,65 +107,65 @@ export default function PasswordReset() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">Adres e-mail</Label>
               <SecureInput
                 id="email"
                 type="email"
                 fieldType="email"
                 maxLength={255}
-                placeholder="Enter your registered email"
+                placeholder="Wprowadź swój zarejestrowany adres e-mail"
                 {...register('email', {
-                  required: 'Email is required',
+                  required: 'Adres e-mail jest wymagany',
                   pattern: {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Please enter a valid email address'
+                    message: 'Wprowadź poprawny adres e-mail'
                   }
                 })}
               />
               {errors.email && (
-                <p className="text-sm text-[#D81B24]">{errors.email.message}</p>
+                <p className="text-sm text-primary">{errors.email.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="taxId">Tax ID (NIP)</Label>
+              <Label htmlFor="taxId">Numer NIP</Label>
               <SecureInput
                 id="taxId"
                 fieldType="digits"
                 maxLength={10}
-                placeholder="Enter your tax ID"
-                {...register('taxId', { required: 'Tax ID is required' })}
+                placeholder="Wprowadź swój numer NIP"
+                {...register('taxId', { required: 'Numer NIP jest wymagany' })}
               />
               {errors.taxId && (
-                <p className="text-sm text-[#D81B24]">{errors.taxId.message}</p>
+                <p className="text-sm text-primary">{errors.taxId.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="businessRegistryNumber">Business Registry Number (REGON)</Label>
+              <Label htmlFor="businessRegistryNumber">Numer REGON</Label>
               <SecureInput
                 id="businessRegistryNumber"
                 fieldType="digits"
                 maxLength={14}
-                placeholder="Enter your business registry number"
-                {...register('businessRegistryNumber', { required: 'Business registry number is required' })}
+                placeholder="Wprowadź swój numer REGON"
+                {...register('businessRegistryNumber', { required: 'Numer REGON jest wymagany' })}
               />
               {errors.businessRegistryNumber && (
-                <p className="text-sm text-[#D81B24]">{errors.businessRegistryNumber.message}</p>
+                <p className="text-sm text-primary">{errors.businessRegistryNumber.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="supervisorName">Supervisor Name</Label>
+              <Label htmlFor="supervisorName">Imię i nazwisko opiekuna konta</Label>
               <SecureInput
                 id="supervisorName"
                 fieldType="name"
                 maxLength={100}
-                placeholder="Enter supervisor name"
-                {...register('supervisorName', { required: 'Supervisor name is required' })}
+                placeholder="Wprowadź imię i nazwisko opiekuna konta"
+                {...register('supervisorName', { required: 'Imię i nazwisko opiekuna konta jest wymagane' })}
               />
               {errors.supervisorName && (
-                <p className="text-sm text-[#D81B24]">{errors.supervisorName.message}</p>
+                <p className="text-sm text-primary">{errors.supervisorName.message}</p>
               )}
             </div>
 
@@ -174,7 +174,7 @@ export default function PasswordReset() {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? 'Sending...' : 'Send Reset Instructions'}
+              {isLoading ? 'Wysyłanie...' : 'Wyślij instrukcje resetowania hasła'}
             </Button>
           </form>
         </CardContent>
