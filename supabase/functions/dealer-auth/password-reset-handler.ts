@@ -98,7 +98,7 @@ export async function handlePasswordResetRequest(
     const detailsMatch = 
       dealer.tax_id === trimmedTaxId &&
       dealer.business_registry_number === trimmedBusinessRegistryNumber &&
-      dealer.supervisor_name === trimmedSupervisorName;
+      dealer.supervisor_name.toLowerCase() === trimmedSupervisorName.toLowerCase();
 
     if (!detailsMatch) {
       logInfo("Password reset details don't match", { requestId });
