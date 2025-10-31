@@ -78,7 +78,7 @@ export const useAuctionStatusMonitor = ({
   const triggerStatusUpdate = async () => {
     try {
       // Call the auction processing function directly
-      const { data, error } = await supabase.rpc('process_ended_auctions');
+      const { data, error } = await supabase.rpc('process_ended_auctions' as any);
       
       if (error) {
         console.error('Error triggering status update:', error);
