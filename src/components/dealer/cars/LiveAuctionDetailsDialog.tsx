@@ -124,13 +124,26 @@ export const LiveAuctionDetailsDialog = ({
                     </div>
                   </div>
                   
-                  {/* Secondary Specs - Seat Material */}
+                  {/* Secondary Specs - Service History */}
                   <div className="p-5 bg-background border border-accent/20 rounded-lg md:col-span-2 lg:col-span-3">
                     <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
-                      {translateSpecificationLabel('Seat Material')}
+                      {translateSpecificationLabel('Service History')}
                     </div>
-                    <div className="text-lg font-kanit font-medium text-body-text capitalize">
-                      {translateSeatMaterial(car.seat_material || car.seatMaterial)}
+                    <div className="text-lg font-kanit font-medium text-body-text">
+                      {(car.service_history_type || car.serviceHistoryType) ? (
+                        <div className="space-y-1">
+                          <span className="capitalize">
+                            {(car.service_history_type || car.serviceHistoryType).replace(/_/g, ' ')}
+                          </span>
+                          {(car.has_service_history || car.hasServiceHistory) && (
+                            <div className="text-sm text-green-600 font-medium mt-2">
+                              ✓ {translateSpecificationLabel('Full service history available')}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-subtitle-text">{translateSpecificationLabel('Not specified')}</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -179,31 +192,13 @@ export const LiveAuctionDetailsDialog = ({
                 );
               })()}
 
-              {/* Service History */}
-              {(car.service_history_type || car.has_service_history) && (
-                <div className="p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                  <h4 className="font-medium text-base mb-3 text-body-text">{translateSpecificationLabel('Service History')}</h4>
-                  <div className="text-sm space-y-2">
-                    {car.service_history_type && (
-                      <p><span className="text-subtitle-text">Type:</span> <span className="font-medium text-body-text">{car.service_history_type}</span></p>
-                    )}
-                    {car.has_service_history && (
-                      <p className="text-green-600 font-medium">✓ Service history documentation available</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {/* Vehicle Condition & Additional Info */}
               <div className="p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                 <h4 className="font-medium text-base mb-3 text-body-text">{translateSpecificationLabel('Vehicle Condition')}</h4>
                 <div className="text-sm space-y-2">
                   <p><span className="text-subtitle-text">{translateSpecificationLabel('Damaged')}:</span> <span className="font-medium text-body-text">{car.is_damaged ? translateSpecificationLabel('Yes') : translateSpecificationLabel('No')}</span></p>
                   <p><span className="text-subtitle-text">{translateSpecificationLabel('Registered in Poland')}:</span> <span className="font-medium text-body-text">{(car.isRegisteredInPoland || car.is_registered_in_poland) ? translateSpecificationLabel('Yes') : translateSpecificationLabel('No')}</span></p>
-                  <p><span className="text-subtitle-text">{translateSpecificationLabel('Private Plate')}:</span> <span className="font-medium text-body-text">{car.has_private_plate ? translateSpecificationLabel('Yes') : translateSpecificationLabel('No')}</span></p>
-                  {(car.has_full_registration_document !== undefined || car.hasFullRegistrationDocument !== undefined) && (
-                    <p><span className="text-subtitle-text">Pełna dokumentacja rejestracyjna:</span> <span className="font-medium text-body-text">{(car.has_full_registration_document || car.hasFullRegistrationDocument) ? translateSpecificationLabel('Yes') : translateSpecificationLabel('No')}</span></p>
-                  )}
+                  <p><span className="text-subtitle-text">{translateSpecificationLabel('Full Registration Document')}:</span> <span className="font-medium text-body-text">{(car.has_full_registration_document || car.hasFullRegistrationDocument) ? translateSpecificationLabel('Yes') : translateSpecificationLabel('No')}</span></p>
                   {(car.is_selling_on_behalf !== undefined || car.isSellingOnBehalf !== undefined) && (
                     <p><span className="text-subtitle-text">Sprzedaż w imieniu osoby trzeciej:</span> <span className="font-medium text-body-text">{(car.is_selling_on_behalf || car.isSellingOnBehalf) ? translateSpecificationLabel('Yes') : translateSpecificationLabel('No')}</span></p>
                   )}

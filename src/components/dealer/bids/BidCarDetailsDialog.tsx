@@ -206,13 +206,26 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
                     </div>
                   </div>
                   
-                  {/* Secondary Specs - Seat Material */}
+                  {/* Secondary Specs - Service History */}
                   <div className="p-5 bg-background border border-accent/20 rounded-lg md:col-span-2 lg:col-span-3">
                     <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
-                      Materiał siedzeń
+                      Historia serwisowa
                     </div>
-                    <div className="text-lg font-kanit font-medium text-body-text capitalize">
-                      {displayCar?.seat_material || displayCar?.seatMaterial || 'Brak danych'}
+                    <div className="text-lg font-kanit font-medium text-body-text">
+                      {(displayCar?.service_history_type || displayCar?.serviceHistoryType) ? (
+                        <div className="space-y-1">
+                          <span className="capitalize">
+                            {(displayCar.service_history_type || displayCar.serviceHistoryType).replace(/_/g, ' ')}
+                          </span>
+                          {(displayCar?.has_service_history || displayCar?.hasServiceHistory) && (
+                            <div className="text-sm text-green-600 font-medium mt-2">
+                              ✓ Pełna historia serwisowa dostępna
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-subtitle-text">Brak danych</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -261,31 +274,13 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
                 );
               })()}
 
-              {/* Service History */}
-              {(displayCar?.service_history_type || displayCar?.has_service_history) && (
-                <div className="p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                  <h4 className="font-medium text-base mb-3 text-body-text">Historia serwisowa</h4>
-                  <div className="text-sm space-y-2">
-                    {displayCar?.service_history_type && (
-                      <p><span className="text-subtitle-text">Typ:</span> <span className="font-medium text-body-text">{displayCar.service_history_type}</span></p>
-                    )}
-                    {displayCar?.has_service_history && (
-                      <p className="text-green-600 font-medium">✓ Dostępna dokumentacja serwisowa</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {/* Vehicle Condition & Additional Info */}
               <div className="p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                 <h4 className="font-medium text-base mb-3 text-body-text">Stan pojazdu</h4>
                 <div className="text-sm space-y-2">
                   <p><span className="text-subtitle-text">Uszkodzony:</span> <span className="font-medium text-body-text">{displayCar?.is_damaged ? 'Tak' : 'Nie'}</span></p>
                   <p><span className="text-subtitle-text">Zarejestrowany w Polsce:</span> <span className="font-medium text-body-text">{(displayCar?.isRegisteredInPoland || displayCar?.is_registered_in_poland) ? 'Tak' : 'Nie'}</span></p>
-                  <p><span className="text-subtitle-text">Tablice prywatne:</span> <span className="font-medium text-body-text">{displayCar?.has_private_plate ? 'Tak' : 'Nie'}</span></p>
-                  {(displayCar?.has_full_registration_document !== undefined || displayCar?.hasFullRegistrationDocument !== undefined) && (
-                    <p><span className="text-subtitle-text">Pełna dokumentacja rejestracyjna:</span> <span className="font-medium text-body-text">{(displayCar?.has_full_registration_document || displayCar?.hasFullRegistrationDocument) ? 'Tak' : 'Nie'}</span></p>
-                  )}
+                  <p><span className="text-subtitle-text">Pełna dokumentacja rejestracyjna:</span> <span className="font-medium text-body-text">{(displayCar?.has_full_registration_document || displayCar?.hasFullRegistrationDocument) ? 'Tak' : 'Nie'}</span></p>
                   {(displayCar?.is_selling_on_behalf !== undefined || displayCar?.isSellingOnBehalf !== undefined) && (
                     <p><span className="text-subtitle-text">Sprzedaż w imieniu osoby trzeciej:</span> <span className="font-medium text-body-text">{(displayCar?.is_selling_on_behalf || displayCar?.isSellingOnBehalf) ? 'Tak' : 'Nie'}</span></p>
                   )}
