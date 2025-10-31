@@ -7,8 +7,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aukcja Autaro</title>
     
+    <!-- Preconnect to Google Fonts for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Load Oswald and Kanit fonts (Primary method) -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <!-- Content Security Policy for WebSocket connections -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://sdvakfhmoaoucmhbhwvy.supabase.co wss://sdvakfhmoaoucmhbhwvy.supabase.co; frame-src https://app.supademo.com; worker-src 'self' blob:;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://sdvakfhmoaoucmhbhwvy.supabase.co wss://sdvakfhmoaoucmhbhwvy.supabase.co; frame-src https://app.supademo.com; worker-src 'self' blob:;" />
     
     <!-- Open Graph meta tags for link previews -->
     <meta property="og:title" content="Autaro Dealerow" />
