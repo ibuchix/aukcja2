@@ -181,3 +181,24 @@ export const translateSeatMaterial = (material: string | null | undefined): stri
   
   return matchingKey ? materialTranslations[matchingKey] : material;
 };
+
+// Service history type translations
+export const translateServiceHistoryType = (type: string | null | undefined): string => {
+  if (!type) return 'Nie podano';
+  
+  const typeTranslations: Record<string, string> = {
+    'full': 'Pełna',
+    'partial': 'Częściowa',
+    'none': 'Brak',
+    'Full': 'Pełna',
+    'Partial': 'Częściowa',
+    'None': 'Brak'
+  };
+
+  const lowerType = type.toLowerCase();
+  const matchingKey = Object.keys(typeTranslations).find(key => 
+    key.toLowerCase() === lowerType
+  );
+  
+  return matchingKey ? typeTranslations[matchingKey] : type;
+};

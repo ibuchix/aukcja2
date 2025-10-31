@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { MyBid } from "./types";
 import { formatCurrency } from "@/lib/utils";
 import { translateTransmission } from "@/lib/transmissionUtils";
-import { translateVehicleFeature } from "@/lib/vehicleTranslations";
+import { translateVehicleFeature, translateFuelType, translateServiceHistoryType } from "@/lib/vehicleTranslations";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
 import { Clock, Car, Calendar, Gauge, Settings, Fuel } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -191,8 +191,8 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
                     <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
                       Rodzaj paliwa
                     </div>
-                    <div className="text-lg font-kanit font-medium text-body-text capitalize">
-                      {displayCar?.fuel_type || displayCar?.fuelType || 'Brak danych'}
+                    <div className="text-lg font-kanit font-medium text-body-text">
+                      {translateFuelType(displayCar?.fuel_type || displayCar?.fuelType)}
                     </div>
                   </div>
                   
@@ -214,8 +214,8 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
                     <div className="text-lg font-kanit font-medium text-body-text">
                       {(displayCar?.service_history_type || displayCar?.serviceHistoryType) ? (
                         <div className="space-y-1">
-                          <span className="capitalize">
-                            {(displayCar.service_history_type || displayCar.serviceHistoryType).replace(/_/g, ' ')}
+                          <span>
+                            {translateServiceHistoryType(displayCar.service_history_type || displayCar.serviceHistoryType)}
                           </span>
                           {(displayCar?.has_service_history || displayCar?.hasServiceHistory) && (
                             <div className="text-sm text-green-600 font-medium mt-2">

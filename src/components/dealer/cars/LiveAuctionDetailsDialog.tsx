@@ -8,7 +8,7 @@ import { AuctionTimer } from "@/components/auction/AuctionTimer";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
 import { formatCurrency } from "@/lib/utils";
 import { translateTransmission } from "@/lib/transmissionUtils";
-import { translateSpecificationLabel, translateVehicleFeature, translateFuelType, translateSeatMaterial } from "@/lib/vehicleTranslations";
+import { translateSpecificationLabel, translateVehicleFeature, translateFuelType, translateServiceHistoryType } from "@/lib/vehicleTranslations";
 
 interface LiveAuctionDetailsDialogProps {
   car: any;
@@ -132,17 +132,17 @@ export const LiveAuctionDetailsDialog = ({
                     <div className="text-lg font-kanit font-medium text-body-text">
                       {(car.service_history_type || car.serviceHistoryType) ? (
                         <div className="space-y-1">
-                          <span className="capitalize">
-                            {(car.service_history_type || car.serviceHistoryType).replace(/_/g, ' ')}
+                          <span>
+                            {translateServiceHistoryType(car.service_history_type || car.serviceHistoryType)}
                           </span>
                           {(car.has_service_history || car.hasServiceHistory) && (
                             <div className="text-sm text-green-600 font-medium mt-2">
-                              ✓ {translateSpecificationLabel('Full service history available')}
+                              ✓ Pełna historia serwisowa dostępna
                             </div>
                           )}
                         </div>
                       ) : (
-                        <span className="text-subtitle-text">{translateSpecificationLabel('Not specified')}</span>
+                        <span className="text-subtitle-text">Nie podano</span>
                       )}
                     </div>
                   </div>
@@ -203,7 +203,7 @@ export const LiveAuctionDetailsDialog = ({
                     <p><span className="text-subtitle-text">Sprzedaż w imieniu osoby trzeciej:</span> <span className="font-medium text-body-text">{(car.is_selling_on_behalf || car.isSellingOnBehalf) ? translateSpecificationLabel('Yes') : translateSpecificationLabel('No')}</span></p>
                   )}
                   {car.finance_amount && (
-                    <p><span className="text-subtitle-text">Finance Outstanding:</span> <span className="font-medium text-body-text">{formatCurrency(car.finance_amount)}</span></p>
+                    <p><span className="text-subtitle-text">Zadłużenie finansowe:</span> <span className="font-medium text-body-text">{formatCurrency(car.finance_amount)}</span></p>
                   )}
                   {(car.finance_document_name || car.financeDocumentName) && (
                     <p><span className="text-subtitle-text">Dokument finansowy:</span> <span className="font-medium text-body-text">{car.finance_document_name || car.financeDocumentName}</span></p>
@@ -217,7 +217,7 @@ export const LiveAuctionDetailsDialog = ({
                 <p className="text-sm font-medium">
                   {car.town && car.county 
                     ? `${car.town}, ${car.county}` 
-                    : car.town || car.county || translateSpecificationLabel('Location not specified')}
+                    : car.town || car.county || 'Lokalizacja nie podana'}
                 </p>
               </div>
 
@@ -279,11 +279,11 @@ export const LiveAuctionDetailsDialog = ({
 
             {hasEnded && (
               <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold mb-2">Auction Ended</h3>
+                <h3 className="font-semibold mb-2">Aukcja zakończona</h3>
                 {car.auction_status === 'sold' ? (
-                  <p className="text-green-600 font-medium">Vehicle Sold</p>
+                  <p className="text-green-600 font-medium">Pojazd sprzedany</p>
                 ) : (
-                  <p className="text-gray-600">No successful sale</p>
+                  <p className="text-gray-600">Brak sprzedaży</p>
                 )}
               </div>
             )}

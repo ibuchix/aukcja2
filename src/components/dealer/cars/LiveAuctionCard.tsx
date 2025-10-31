@@ -19,12 +19,12 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
   const formatPrice = (price: number | null | undefined) => {
     // Handle null, undefined, or NaN values
     if (price === null || price === undefined || isNaN(Number(price))) {
-      return 'Price not available';
+      return 'Cena niedostępna';
     }
     
     const numPrice = Number(price);
     if (numPrice === 0) {
-      return 'No reserve';
+      return 'Bez ceny minimalnej';
     }
     
     // Format as PLN currency (Polish Zloty)
@@ -153,7 +153,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
           </h3>
           
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>{car.mileage?.toLocaleString()} miles</span>
+            <span>{car.mileage?.toLocaleString()} km</span>
             <span>{translateTransmission(car.transmission)}</span>
           </div>
           
@@ -162,7 +162,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
             <span>
               {car.town && car.county 
                 ? `${car.town}, ${car.county}` 
-                : car.town || car.county || 'Location not specified'}
+                : car.town || car.county || 'Lokalizacja nie podana'}
             </span>
           </div>
           
@@ -173,7 +173,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
                 auctionEndTime={auctionEndTime} 
               />
             ) : hasEnded ? (
-              <span>Auction ended</span>
+              <span>Aukcja zakończona</span>
             ) : auctionEndTime ? (
               // Show countdown even if status calculation failed
               <AuctionTimer 
@@ -194,7 +194,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
             
             {car.current_bid && car.current_bid > 0 && (
               <div className="flex justify-between items-center mt-1">
-                <span className="text-sm text-muted-foreground">Current Bid</span>
+                <span className="text-sm text-muted-foreground">Aktualna oferta</span>
                 <span className={`font-semibold ${hasEnded ? 'text-gray-600' : 'text-green-600'}`}>
                   {formatPrice(car.current_bid)}
                 </span>
@@ -203,8 +203,8 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
             
             {hasEnded && car.auction_status === 'sold' && (
               <div className="flex justify-between items-center mt-1">
-                <span className="text-sm font-medium text-green-600">Final Result</span>
-                <span className="font-semibold text-green-600">SOLD</span>
+                <span className="text-sm font-medium text-green-600">Wynik końcowy</span>
+                <span className="font-semibold text-green-600">SPRZEDANY</span>
               </div>
             )}
           </div>
