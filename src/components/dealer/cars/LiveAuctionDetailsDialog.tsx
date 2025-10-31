@@ -60,38 +60,77 @@ export const LiveAuctionDetailsDialog = ({
             {/* Vehicle Specifications */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-xl font-semibold mb-6 text-body-text">{translateSpecificationLabel('Vehicle Specifications')}</h3>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-semibold">{translateSpecificationLabel('Year')}</span>
-                      <span className="font-medium text-lg text-body-text">{car.year}</span>
+                <h3 className="font-oswald font-semibold text-2xl mb-6 text-body-text border-b border-accent/20 pb-3">
+                  {translateSpecificationLabel('Vehicle Specifications')}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {/* Primary Specs - Year */}
+                  <div className="p-5 bg-background border border-accent/30 rounded-lg hover:border-primary/50 transition-colors">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      {translateSpecificationLabel('Year')}
                     </div>
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-semibold">{translateSpecificationLabel('Mileage')}</span>
-                      <span className="font-medium text-lg text-body-text">{car.mileage?.toLocaleString()} km</span>
-                    </div>
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-semibold">{translateSpecificationLabel('Transmission')}</span>
-                      <span className="font-medium text-lg text-body-text">{translateTransmission(car.transmission)}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-semibold">{translateSpecificationLabel('Fuel Type')}</span>
-                      <span className="font-medium text-lg capitalize text-body-text">{translateFuelType(car.fuel_type || car.fuelType)}</span>
+                    <div className="text-2xl font-kanit font-semibold text-body-text">
+                      {car.year}
                     </div>
                   </div>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-semibold">{translateSpecificationLabel('VIN')}</span>
-                      <span className="font-medium font-mono text-sm break-all text-body-text">{car.vin || translateSpecificationLabel('Not available')}</span>
+                  
+                  {/* Primary Specs - Mileage */}
+                  <div className="p-5 bg-background border border-accent/30 rounded-lg hover:border-primary/50 transition-colors">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      {translateSpecificationLabel('Mileage')}
                     </div>
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-semibold">{translateSpecificationLabel('Number of Keys')}</span>
-                      <span className="font-medium text-lg text-body-text">{(car.numberOfKeys || car.number_of_keys) || translateSpecificationLabel('Not specified')}</span>
+                    <div className="text-2xl font-kanit font-semibold text-body-text">
+                      {car.mileage?.toLocaleString()} <span className="text-base text-subtitle-text">km</span>
                     </div>
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-semibold">{translateSpecificationLabel('Seat Material')}</span>
-                      <span className="font-medium text-lg capitalize text-body-text">{translateSeatMaterial(car.seat_material || car.seatMaterial)}</span>
+                  </div>
+                  
+                  {/* Primary Specs - VIN */}
+                  <div className="p-5 bg-background border border-accent/30 rounded-lg hover:border-primary/50 transition-colors">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      {translateSpecificationLabel('VIN')}
+                    </div>
+                    <div className="text-sm font-mono font-kanit font-medium text-body-text break-all">
+                      {car.vin || translateSpecificationLabel('Not available')}
+                    </div>
+                  </div>
+                  
+                  {/* Secondary Specs - Transmission */}
+                  <div className="p-5 bg-background border border-accent/20 rounded-lg">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      {translateSpecificationLabel('Transmission')}
+                    </div>
+                    <div className="text-lg font-kanit font-medium text-body-text">
+                      {translateTransmission(car.transmission)}
+                    </div>
+                  </div>
+                  
+                  {/* Secondary Specs - Fuel Type */}
+                  <div className="p-5 bg-background border border-accent/20 rounded-lg">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      {translateSpecificationLabel('Fuel Type')}
+                    </div>
+                    <div className="text-lg font-kanit font-medium text-body-text capitalize">
+                      {translateFuelType(car.fuel_type || car.fuelType)}
+                    </div>
+                  </div>
+                  
+                  {/* Secondary Specs - Number of Keys */}
+                  <div className="p-5 bg-background border border-accent/20 rounded-lg">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      {translateSpecificationLabel('Number of Keys')}
+                    </div>
+                    <div className="text-lg font-kanit font-medium text-body-text">
+                      {(car.numberOfKeys || car.number_of_keys) || translateSpecificationLabel('Not specified')}
+                    </div>
+                  </div>
+                  
+                  {/* Secondary Specs - Seat Material */}
+                  <div className="p-5 bg-background border border-accent/20 rounded-lg md:col-span-2 lg:col-span-3">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      {translateSpecificationLabel('Seat Material')}
+                    </div>
+                    <div className="text-lg font-kanit font-medium text-body-text capitalize">
+                      {translateSeatMaterial(car.seat_material || car.seatMaterial)}
                     </div>
                   </div>
                 </div>

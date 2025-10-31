@@ -142,42 +142,77 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
             {/* Vehicle Specifications */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-xl font-semibold mb-6 text-body-text">Specyfikacja pojazdu</h3>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-semibold">Rok</span>
-                      <span className="font-medium text-lg text-body-text">{displayCar?.year || 'Brak danych'}</span>
+                <h3 className="font-oswald font-semibold text-2xl mb-6 text-body-text border-b border-accent/20 pb-3">
+                  Specyfikacja pojazdu
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {/* Primary Specs - Year */}
+                  <div className="p-5 bg-background border border-accent/30 rounded-lg hover:border-primary/50 transition-colors">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      Rok
                     </div>
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-semibold">Przebieg</span>
-                      <span className="font-medium text-lg text-body-text">{displayCar?.mileage?.toLocaleString() || 'Brak danych'} km</span>
-                    </div>
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-semibold">Skrzynia biegów</span>
-                      <span className="font-medium text-lg text-body-text">{displayCar?.transmission ? translateTransmission(displayCar.transmission) : 'Brak danych'}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-semibold">Rodzaj paliwa</span>
-                      <span className="font-medium text-lg capitalize text-body-text">{displayCar?.fuel_type || displayCar?.fuelType || 'Brak danych'}</span>
+                    <div className="text-2xl font-kanit font-semibold text-body-text">
+                      {displayCar?.year || 'Brak danych'}
                     </div>
                   </div>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-semibold">VIN</span>
-                      <span className="font-medium font-mono text-sm break-all text-body-text">{displayCar?.vin || 'Brak danych'}</span>
+                  
+                  {/* Primary Specs - Mileage */}
+                  <div className="p-5 bg-background border border-accent/30 rounded-lg hover:border-primary/50 transition-colors">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      Przebieg
                     </div>
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-semibold">Numer rejestracyjny</span>
-                      <span className="font-medium text-lg text-body-text">{displayCar?.registration_number || 'Brak danych'}</span>
+                    <div className="text-2xl font-kanit font-semibold text-body-text">
+                      {displayCar?.mileage?.toLocaleString() || 'Brak danych'} <span className="text-base text-subtitle-text">km</span>
                     </div>
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-semibold">Liczba kluczyków</span>
-                      <span className="font-medium text-lg text-body-text">{displayCar?.numberOfKeys || displayCar?.number_of_keys || 'Brak danych'}</span>
+                  </div>
+                  
+                  {/* Primary Specs - VIN */}
+                  <div className="p-5 bg-background border border-accent/30 rounded-lg hover:border-primary/50 transition-colors">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      VIN
                     </div>
-                    <div className="flex justify-between items-center p-4 bg-secondary/20 rounded-lg border border-secondary/30">
-                      <span className="text-body-text font-semibold">Materiał siedzeń</span>
-                      <span className="font-medium text-lg capitalize text-body-text">{displayCar?.seat_material || displayCar?.seatMaterial || 'Brak danych'}</span>
+                    <div className="text-sm font-mono font-kanit font-medium text-body-text break-all">
+                      {displayCar?.vin || 'Brak danych'}
+                    </div>
+                  </div>
+                  
+                  {/* Secondary Specs - Transmission */}
+                  <div className="p-5 bg-background border border-accent/20 rounded-lg">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      Skrzynia biegów
+                    </div>
+                    <div className="text-lg font-kanit font-medium text-body-text">
+                      {displayCar?.transmission ? translateTransmission(displayCar.transmission) : 'Brak danych'}
+                    </div>
+                  </div>
+                  
+                  {/* Secondary Specs - Fuel Type */}
+                  <div className="p-5 bg-background border border-accent/20 rounded-lg">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      Rodzaj paliwa
+                    </div>
+                    <div className="text-lg font-kanit font-medium text-body-text capitalize">
+                      {displayCar?.fuel_type || displayCar?.fuelType || 'Brak danych'}
+                    </div>
+                  </div>
+                  
+                  {/* Secondary Specs - Number of Keys */}
+                  <div className="p-5 bg-background border border-accent/20 rounded-lg">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      Liczba kluczyków
+                    </div>
+                    <div className="text-lg font-kanit font-medium text-body-text">
+                      {displayCar?.numberOfKeys || displayCar?.number_of_keys || 'Brak danych'}
+                    </div>
+                  </div>
+                  
+                  {/* Secondary Specs - Seat Material */}
+                  <div className="p-5 bg-background border border-accent/20 rounded-lg md:col-span-2 lg:col-span-3">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      Materiał siedzeń
+                    </div>
+                    <div className="text-lg font-kanit font-medium text-body-text capitalize">
+                      {displayCar?.seat_material || displayCar?.seatMaterial || 'Brak danych'}
                     </div>
                   </div>
                 </div>
