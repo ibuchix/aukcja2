@@ -11,7 +11,7 @@ interface BasicSpecificationsProps {
 const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
   return (
     <div className="space-y-4 p-4 bg-accent/50 rounded-lg">
-      <h3 className="text-lg font-semibold font-oswald flex items-center gap-2">
+      <h3 className="text-lg font-semibold font-kanit flex items-center gap-2">
         <Info className="w-5 h-5" />
         {translateSpecificationLabel('Basic Specifications')}
       </h3>

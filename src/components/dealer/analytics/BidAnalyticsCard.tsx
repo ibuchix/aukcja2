@@ -65,7 +65,7 @@ export function BidAnalyticsCard({ analyticsData, isLoading }: BidAnalyticsCardP
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-heading-md font-oswald flex items-center gap-2">
+        <CardTitle className="text-heading-md font-kanit font-semibold flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
           Bid Analytics
         </CardTitle>

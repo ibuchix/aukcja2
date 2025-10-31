@@ -41,7 +41,7 @@ const Pricing = () => {
 
       <main className="container mx-auto px-4 pt-28 md:pt-32 pb-10 md:pb-14">
         <header className="text-center mb-8 md:mb-12">
-          <h1 className="font-oswald font-bold text-heading-lg md:text-4xl text-body-text">
+          <h1 className="font-kanit font-bold text-heading-lg md:text-4xl text-body-text">
             Cennik opłat dla dealerów
           </h1>
           <div className="mx-auto mt-3 h-1 w-24 bg-primary rounded-full" aria-hidden="true" />

@@ -95,7 +95,7 @@ export const TourStep: React.FC<TourStepProps> = ({
       <Card className="border-2 border-primary">
         <CardHeader className="pb-2">
           <div className="flex justify-between items-center">
-            <CardTitle className="text-lg font-oswald">{step.title}</CardTitle>
+            <CardTitle className="text-lg font-kanit font-semibold">{step.title}</CardTitle>
             <Button variant="ghost" size="icon" onClick={onSkip} className="h-6 w-6">
               <X className="h-4 w-4" />
             </Button>

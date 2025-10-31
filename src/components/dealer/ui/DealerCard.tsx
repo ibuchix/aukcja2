@@ -35,7 +35,7 @@ export function DealerCard({
         <CardHeader>
           <div className="flex items-center space-x-2">
             {icon && <div className="text-muted-foreground">{icon}</div>}
-            {title && <CardTitle className="text-heading-md font-oswald">{title}</CardTitle>}
+            {title && <CardTitle className="text-heading-md font-kanit font-semibold">{title}</CardTitle>}
           </div>
           {description && <CardDescription>{description}</CardDescription>}
         </CardHeader>

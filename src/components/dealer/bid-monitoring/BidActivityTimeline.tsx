@@ -27,7 +27,7 @@ export const BidActivityTimeline = ({ activities, isLoading }: BidActivityTimeli
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-heading-md font-oswald flex items-center gap-2">
+          <CardTitle className="text-heading-md font-kanit font-semibold flex items-center gap-2">
             <Clock className="h-5 w-5" />
             Bid Activity Timeline
           </CardTitle>
@@ -96,7 +96,7 @@ export const BidActivityTimeline = ({ activities, isLoading }: BidActivityTimeli
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-heading-md font-oswald flex items-center gap-2">
+        <CardTitle className="text-heading-md font-kanit font-semibold flex items-center gap-2">
           <Clock className="h-5 w-5" />
           Bid Activity Timeline
         </CardTitle>

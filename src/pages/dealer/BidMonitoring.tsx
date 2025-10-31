@@ -68,7 +68,7 @@ export default function BidMonitoring() {
     <DashboardLayout>
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-heading-lg font-oswald flex items-center gap-2">
+          <CardTitle className="text-heading-lg font-kanit font-bold flex items-center gap-2">
             <ActivitySquare className="h-6 w-6" />
             Bid Monitoring Dashboard
           </CardTitle>

@@ -43,7 +43,7 @@ export const BidRecommendations = ({
     return (
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-heading-sm font-oswald flex items-center gap-2">
+          <CardTitle className="text-heading-sm font-kanit font-semibold flex items-center gap-2">
             <Lightbulb className="h-5 w-5" />
             Bid Recommendations
           </CardTitle>
@@ -67,7 +67,7 @@ export const BidRecommendations = ({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-heading-sm font-oswald flex items-center gap-2">
+        <CardTitle className="text-heading-sm font-kanit font-semibold flex items-center gap-2">
           <Lightbulb className="h-5 w-5" />
           Bid Recommendations
           <Button 

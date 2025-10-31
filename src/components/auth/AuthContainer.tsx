@@ -25,7 +25,7 @@ export function AuthContainer({ children }: AuthContainerProps) {
       <div className="w-full max-w-md">
         <Card className="border-white/20" style={{backgroundColor: '#454545'}}>
           <CardHeader>
-            <CardTitle className="font-oswald text-[#D81B24] text-center">Portal dealera</CardTitle>
+            <CardTitle className="font-kanit font-semibold text-[#D81B24] text-center">Portal dealera</CardTitle>
             <CardDescription className="font-kanit text-[#FCFCFC] text-center">
               Zarejestruj się lub zaloguj do konta dealera
             </CardDescription>

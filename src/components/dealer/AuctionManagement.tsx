@@ -47,7 +47,7 @@ export const AuctionManagement = ({ dealerId }: AuctionManagementProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-heading-md font-oswald flex items-center gap-2">
+        <CardTitle className="text-heading-md font-kanit font-semibold flex items-center gap-2">
           <Gavel className="h-6 w-6" />
           Auction Management
         </CardTitle>

@@ -64,7 +64,7 @@ export const SimpleBidManager = ({
     return (
       <Card className="w-full mb-4">
         <CardHeader>
-          <CardTitle className="text-heading-sm font-oswald flex items-center gap-2">
+          <CardTitle className="text-heading-sm font-kanit font-semibold flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
             Bidding - Verification Required
           </CardTitle>
@@ -143,7 +143,7 @@ export const SimpleBidManager = ({
   return (
     <Card className="w-full mb-4">
       <CardHeader>
-        <CardTitle className="text-heading-sm font-oswald flex items-center gap-2">
+        <CardTitle className="text-heading-sm font-kanit font-semibold flex items-center gap-2">
           <DollarSign className="h-5 w-5" />
           Złóż ofertę
         </CardTitle>

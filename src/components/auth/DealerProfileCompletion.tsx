@@ -105,7 +105,7 @@ export function DealerProfileCompletion({ userId, email }: { userId: string, ema
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-oswald text-[#DC143C]">Complete Your Profile</CardTitle>
+        <CardTitle className="font-kanit font-semibold text-[#DC143C]">Complete Your Profile</CardTitle>
         <CardDescription className="font-kanit">
           We need some additional information to complete your dealer profile.
         </CardDescription>

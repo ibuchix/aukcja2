@@ -37,7 +37,7 @@ export function CookieConsentBanner() {
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: '#383B39', borderColor: '#6A6A77' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle className="text-body-text font-oswald text-heading-md flex items-center gap-2">
+            <CardTitle className="text-body-text font-kanit font-semibold text-heading-md flex items-center gap-2">
               <Settings className="h-5 w-5" />
               Ustawienia plików cookie
             </CardTitle>
@@ -127,7 +127,7 @@ export function CookieConsentBanner() {
             <div className="flex items-start gap-3 flex-1">
               <Cookie className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
               <div>
-                <h3 className="text-body-text font-oswald font-bold text-heading-sm mb-2">
+                <h3 className="text-body-text font-kanit font-bold text-heading-sm mb-2">
                   Używamy plików cookie
                 </h3>
                 <p className="text-subtitle-text text-subtitle">

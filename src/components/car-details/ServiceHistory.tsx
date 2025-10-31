@@ -8,7 +8,7 @@ interface ServiceHistoryProps {
 
 const ServiceHistory = ({ car }: ServiceHistoryProps) => (
   <div className="space-y-4 p-4 bg-accent/50 rounded-lg">
-    <h3 className="text-lg font-semibold font-oswald flex items-center gap-2">
+    <h3 className="text-lg font-semibold font-kanit flex items-center gap-2">
       <Wrench className="w-5 h-5" />
       Service History
     </h3>

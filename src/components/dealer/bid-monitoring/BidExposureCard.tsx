@@ -16,7 +16,7 @@ export const BidExposureCard = ({ dealerId }: BidExposureCardProps) => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-heading-md font-oswald flex items-center gap-2">
+          <CardTitle className="text-heading-md font-kanit font-semibold flex items-center gap-2">
             <Scale className="h-5 w-5" />
             Bid Exposure
           </CardTitle>
@@ -51,7 +51,7 @@ export const BidExposureCard = ({ dealerId }: BidExposureCardProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-heading-md font-oswald flex items-center gap-2">
+        <CardTitle className="text-heading-md font-kanit font-semibold flex items-center gap-2">
           <Scale className="h-5 w-5" />
           Bid Exposure
         </CardTitle>

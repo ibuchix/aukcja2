@@ -12,7 +12,7 @@ const AdditionalInfo = ({ car }: AdditionalInfoProps) => {
 
   return (
     <div className="space-y-2">
-      <h3 className="text-lg font-semibold font-oswald flex items-center gap-2">
+      <h3 className="text-lg font-semibold font-kanit flex items-center gap-2">
         <Info className="w-5 h-5" />
         Additional Information
       </h3>

@@ -9,7 +9,7 @@ export function CookiePolicy() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="text-center mb-8">
-        <h1 className="text-heading-lg font-oswald font-bold text-body-text mb-4">
+        <h1 className="text-heading-lg font-kanit font-bold text-body-text mb-4">
           Polityka plików cookie
         </h1>
         <p className="text-subtitle-text text-subtitle">
@@ -19,7 +19,7 @@ export function CookiePolicy() {
 
       <Card style={{ backgroundColor: '#383B39', borderColor: '#6A6A77' }}>
         <CardHeader>
-          <CardTitle className="text-body-text font-oswald">Czym są pliki cookie?</CardTitle>
+          <CardTitle className="text-body-text font-kanit font-semibold">Czym są pliki cookie?</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 text-subtitle-text">
           <p>
@@ -32,12 +32,12 @@ export function CookiePolicy() {
 
       <Card style={{ backgroundColor: '#383B39', borderColor: '#6A6A77' }}>
         <CardHeader>
-          <CardTitle className="text-body-text font-oswald">Kategorie plików cookie</CardTitle>
+          <CardTitle className="text-body-text font-kanit font-semibold">Kategorie plików cookie</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Essential Cookies */}
           <div className="border-l-4 border-primary pl-4">
-            <h3 className="text-body-text font-oswald font-bold text-heading-sm mb-2">
+            <h3 className="text-body-text font-kanit font-bold text-heading-sm mb-2">
               Niezbędne pliki cookie
             </h3>
             <p className="text-subtitle-text text-subtitle mb-3">
@@ -52,7 +52,7 @@ export function CookiePolicy() {
 
           {/* Functional Cookies */}
           <div className="border-l-4 border-iris pl-4">
-            <h3 className="text-body-text font-oswald font-bold text-heading-sm mb-2">
+            <h3 className="text-body-text font-kanit font-bold text-heading-sm mb-2">
               Funkcjonalne pliki cookie
             </h3>
             <p className="text-subtitle-text text-subtitle mb-3">
@@ -67,7 +67,7 @@ export function CookiePolicy() {
 
           {/* Analytics Cookies */}
           <div className="border-l-4 border-success pl-4">
-            <h3 className="text-body-text font-oswald font-bold text-heading-sm mb-2">
+            <h3 className="text-body-text font-kanit font-bold text-heading-sm mb-2">
               Analityczne pliki cookie
             </h3>
             <p className="text-subtitle-text text-subtitle mb-3">
@@ -84,7 +84,7 @@ export function CookiePolicy() {
 
       <Card style={{ backgroundColor: '#383B39', borderColor: '#6A6A77' }}>
         <CardHeader>
-          <CardTitle className="text-body-text font-oswald">Zarządzanie preferencjami</CardTitle>
+          <CardTitle className="text-body-text font-kanit font-semibold">Zarządzanie preferencjami</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-subtitle-text text-subtitle">
@@ -103,7 +103,7 @@ export function CookiePolicy() {
 
       <Card style={{ backgroundColor: '#383B39', borderColor: '#6A6A77' }}>
         <CardHeader>
-          <CardTitle className="text-body-text font-oswald">Kontakt</CardTitle>
+          <CardTitle className="text-body-text font-kanit font-semibold">Kontakt</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-subtitle-text text-subtitle">

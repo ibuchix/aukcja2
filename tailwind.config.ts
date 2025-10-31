@@ -33,7 +33,6 @@ export default {
       },
       fontFamily: {
         kanit: ["Kanit", "sans-serif"],
-        oswald: ["Oswald", "sans-serif"],
       },
       fontSize: {
         "heading-lg": "2rem",
