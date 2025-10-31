@@ -3074,7 +3074,9 @@ export type Database = {
         Args: { p_amount: number; p_car_id: string; p_dealer_id: string }
         Returns: Json
       }
-      process_auction_end: { Args: { p_car_id: string }; Returns: Json }
+      process_auction_end:
+        | { Args: never; Returns: Json }
+        | { Args: { p_car_id: string }; Returns: Json }
       process_auctions_for_seller_decisions: { Args: never; Returns: number }
       process_ended_auctions_securely: { Args: never; Returns: Json }
       process_missed_auctions: { Args: never; Returns: Json }
