@@ -241,15 +241,24 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
                 </div>
               )}
 
-              {/* Vehicle Condition */}
+              {/* Vehicle Condition & Additional Info */}
               <div className="p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                 <h4 className="font-medium text-base mb-3 text-body-text">Stan pojazdu</h4>
                 <div className="text-sm space-y-2">
                   <p><span className="text-subtitle-text">Uszkodzony:</span> <span className="font-medium text-body-text">{displayCar?.is_damaged ? 'Tak' : 'Nie'}</span></p>
                   <p><span className="text-subtitle-text">Zarejestrowany w Polsce:</span> <span className="font-medium text-body-text">{(displayCar?.isRegisteredInPoland || displayCar?.is_registered_in_poland) ? 'Tak' : 'Nie'}</span></p>
                   <p><span className="text-subtitle-text">Tablice prywatne:</span> <span className="font-medium text-body-text">{displayCar?.has_private_plate ? 'Tak' : 'Nie'}</span></p>
+                  {(displayCar?.has_full_registration_document !== undefined || displayCar?.hasFullRegistrationDocument !== undefined) && (
+                    <p><span className="text-subtitle-text">Pełna dokumentacja rejestracyjna:</span> <span className="font-medium text-body-text">{(displayCar?.has_full_registration_document || displayCar?.hasFullRegistrationDocument) ? 'Tak' : 'Nie'}</span></p>
+                  )}
+                  {(displayCar?.is_selling_on_behalf !== undefined || displayCar?.isSellingOnBehalf !== undefined) && (
+                    <p><span className="text-subtitle-text">Sprzedaż w imieniu osoby trzeciej:</span> <span className="font-medium text-body-text">{(displayCar?.is_selling_on_behalf || displayCar?.isSellingOnBehalf) ? 'Tak' : 'Nie'}</span></p>
+                  )}
                   {displayCar?.finance_amount && (
                     <p><span className="text-subtitle-text">Zadłużenie finansowe:</span> <span className="font-medium text-body-text">{formatCurrency(displayCar.finance_amount)}</span></p>
+                  )}
+                  {(displayCar?.finance_document_name || displayCar?.financeDocumentName) && (
+                    <p><span className="text-subtitle-text">Dokument finansowy:</span> <span className="font-medium text-body-text">{displayCar?.finance_document_name || displayCar?.financeDocumentName}</span></p>
                   )}
                 </div>
               </div>

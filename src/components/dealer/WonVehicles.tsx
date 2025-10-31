@@ -295,6 +295,11 @@ export const WonVehicles = () => {
     hasPrivatePlate: (selectedCarData as any).has_private_plate,
     financeAmount: (selectedCarData as any).finance_amount,
     hasOutstandingFinance: (selectedCarData as any).has_outstanding_finance,
+    // Additional seller information fields
+    hasFullRegistrationDocument: (selectedCarData as any).has_full_registration_document,
+    hasServiceHistory: (selectedCarData as any).has_service_history,
+    isSellingOnBehalf: (selectedCarData as any).is_selling_on_behalf,
+    financeDocumentName: (selectedCarData as any).finance_document_name,
     // Location details
     streetAddress: (selectedCarData as any).street_address,
     town: (selectedCarData as any).town,
