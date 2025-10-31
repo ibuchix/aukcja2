@@ -155,15 +155,24 @@ export const LiveAuctionDetailsDialog = ({
                 </div>
               )}
 
-              {/* Vehicle Condition */}
+              {/* Vehicle Condition & Additional Info */}
               <div className="p-4 bg-secondary/20 rounded-lg border border-secondary/30">
                 <h4 className="font-medium text-base mb-3 text-body-text">{translateSpecificationLabel('Vehicle Condition')}</h4>
                 <div className="text-sm space-y-2">
                   <p><span className="text-subtitle-text">{translateSpecificationLabel('Damaged')}:</span> <span className="font-medium text-body-text">{car.is_damaged ? translateSpecificationLabel('Yes') : translateSpecificationLabel('No')}</span></p>
                   <p><span className="text-subtitle-text">{translateSpecificationLabel('Registered in Poland')}:</span> <span className="font-medium text-body-text">{(car.isRegisteredInPoland || car.is_registered_in_poland) ? translateSpecificationLabel('Yes') : translateSpecificationLabel('No')}</span></p>
                   <p><span className="text-subtitle-text">{translateSpecificationLabel('Private Plate')}:</span> <span className="font-medium text-body-text">{car.has_private_plate ? translateSpecificationLabel('Yes') : translateSpecificationLabel('No')}</span></p>
+                  {(car.has_full_registration_document !== undefined || car.hasFullRegistrationDocument !== undefined) && (
+                    <p><span className="text-subtitle-text">Pełna dokumentacja rejestracyjna:</span> <span className="font-medium text-body-text">{(car.has_full_registration_document || car.hasFullRegistrationDocument) ? translateSpecificationLabel('Yes') : translateSpecificationLabel('No')}</span></p>
+                  )}
+                  {(car.is_selling_on_behalf !== undefined || car.isSellingOnBehalf !== undefined) && (
+                    <p><span className="text-subtitle-text">Sprzedaż w imieniu osoby trzeciej:</span> <span className="font-medium text-body-text">{(car.is_selling_on_behalf || car.isSellingOnBehalf) ? translateSpecificationLabel('Yes') : translateSpecificationLabel('No')}</span></p>
+                  )}
                   {car.finance_amount && (
                     <p><span className="text-subtitle-text">Finance Outstanding:</span> <span className="font-medium text-body-text">{formatCurrency(car.finance_amount)}</span></p>
+                  )}
+                  {(car.finance_document_name || car.financeDocumentName) && (
+                    <p><span className="text-subtitle-text">Dokument finansowy:</span> <span className="font-medium text-body-text">{car.finance_document_name || car.financeDocumentName}</span></p>
                   )}
                 </div>
               </div>
@@ -177,19 +186,6 @@ export const LiveAuctionDetailsDialog = ({
                     : car.town || car.county || translateSpecificationLabel('Location not specified')}
                 </p>
               </div>
-
-              {/* Seller Contact */}
-              {car.seller_name && (
-                <div className="p-4 bg-accent/50 rounded-lg">
-                  <h4 className="font-medium text-base mb-3">Seller Information</h4>
-                  <div className="text-sm space-y-2">
-                    <p><span className="text-muted-foreground">Name:</span> <span className="font-medium">{car.seller_name}</span></p>
-                    {car.mobile_number && (
-                      <p><span className="text-muted-foreground">Contact:</span> <span className="font-medium">{car.mobile_number}</span></p>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* Notes Section */}
               {car.sellerNotes && (

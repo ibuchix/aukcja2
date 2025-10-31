@@ -65,6 +65,10 @@ export interface CarListing {
   condition?: string;
   serviceHistory?: string;
   features?: CarFeatures;
+  hasFullRegistrationDocument?: boolean;
+  hasServiceHistory?: boolean;
+  isSellingOnBehalf?: boolean;
+  financeDocumentName?: string;
   // New auction schedule fields
   scheduleStatus?: string;
   scheduleStartTime?: string;

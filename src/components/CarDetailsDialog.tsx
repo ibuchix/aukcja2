@@ -278,6 +278,11 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
                 Pojazd ma niespłacone finansowanie
                 {car.financeAmount && `: ${formatPricePLN(car.financeAmount)}`}
               </p>
+              {car.financeDocumentName && (
+                <p className="text-sm text-gray-900 mt-2">
+                  <span className="font-medium">Dokument finansowy:</span> {car.financeDocumentName}
+                </p>
+              )}
             </div>
           )}
         </div>

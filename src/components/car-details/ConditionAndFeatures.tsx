@@ -90,7 +90,7 @@ export const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
       </div>
 
       {/* Additional Information */}
-      {(car.serviceHistoryType || car.hasServiceHistory !== undefined || car.isRegisteredInPoland !== undefined) && (
+      {(car.serviceHistoryType || car.hasServiceHistory !== undefined || car.isRegisteredInPoland !== undefined || car.hasFullRegistrationDocument !== undefined || car.isSellingOnBehalf !== undefined) && (
         <div>
           <h3 className="text-lg font-semibold mb-4 text-body-text">{translateSpecificationLabel('Additional Information')}</h3>
           <div className="space-y-3">
@@ -106,6 +106,24 @@ export const ConditionAndFeatures = ({ car }: ConditionAndFeaturesProps) => {
                 <span className="font-medium text-body-text">Historia serwisowa dostępna</span>
                 <Badge variant={car.hasServiceHistory ? "default" : "secondary"}>
                   {car.hasServiceHistory ? "Tak" : "Nie"}
+                </Badge>
+              </div>
+            )}
+
+            {car.hasFullRegistrationDocument !== undefined && (
+              <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg border border-secondary/30">
+                <span className="font-medium text-body-text">Pełna dokumentacja rejestracyjna</span>
+                <Badge variant={car.hasFullRegistrationDocument ? "default" : "secondary"}>
+                  {car.hasFullRegistrationDocument ? "Tak" : "Nie"}
+                </Badge>
+              </div>
+            )}
+
+            {car.isSellingOnBehalf !== undefined && (
+              <div className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg border border-secondary/30">
+                <span className="font-medium text-body-text">Sprzedaż w imieniu osoby trzeciej</span>
+                <Badge variant={car.isSellingOnBehalf ? "default" : "secondary"}>
+                  {car.isSellingOnBehalf ? "Tak" : "Nie"}
                 </Badge>
               </div>
             )}
