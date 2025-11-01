@@ -128,7 +128,8 @@ export const translateSpecificationLabel = (label: string): string => {
     'Vehicle Specifications': 'Specyfikacja pojazdu',
     'Damaged': 'Uszkodzony',
     'Yes': 'Tak',
-    'No': 'Nie'
+    'No': 'Nie',
+    'Full Registration Document': 'Pełna dokumentacja rejestracyjna'
   };
 
   return labelTranslations[label] || label;

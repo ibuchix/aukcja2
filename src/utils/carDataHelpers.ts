@@ -48,6 +48,18 @@ export const processCarData = (rawData: any[]): CarListing[] => {
           scheduleInfo.status
         ) : 'unknown';
 
+      // Debug logging for specific car (Nikola 456)
+      if (car.id === 'b02af546-886a-4811-888e-080b618be747') {
+        console.log('🔍 [CAR DATA TRANSFORMATION] Nikola 456:', {
+          raw_is_damaged: car.is_damaged,
+          raw_is_registered_in_poland: car.is_registered_in_poland,
+          raw_has_full_registration_document: car.has_full_registration_document,
+          typeof_is_damaged: typeof car.is_damaged,
+          typeof_is_registered_in_poland: typeof car.is_registered_in_poland,
+          typeof_has_full_registration_document: typeof car.has_full_registration_document
+        });
+      }
+
       // Generate proper title - prioritize valuation data if stored title is generic
       let finalTitle = car.title || '';
       
@@ -89,7 +101,7 @@ export const processCarData = (rawData: any[]): CarListing[] => {
         auctionEndTime: car.auction_end_time || '',
         minimumBidIncrement: car.minimum_bid_increment || 100,
         auctionStatus: car.auction_status || 'inactive',
-        isDamaged: car.is_damaged || false,
+        isDamaged: car.is_damaged ?? false,
         address: car.address || '',
         town: car.town || '',
         county: car.county || '',
@@ -102,8 +114,9 @@ export const processCarData = (rawData: any[]): CarListing[] => {
         vin: car.vin || '',
         seatMaterial: car.seat_material || '',
         numberOfKeys: car.number_of_keys || 1,
-        isRegisteredInPoland: car.is_registered_in_poland || false,
-        hasPrivatePlate: car.has_private_plate || false,
+        isRegisteredInPoland: car.is_registered_in_poland ?? false,
+        hasFullRegistrationDocument: car.has_full_registration_document ?? false,
+        hasPrivatePlate: car.has_private_plate ?? false,
         financeAmount: car.finance_amount || 0,
         formMetadata: car.form_metadata || {},
         valuationData: car.valuation_data || {},

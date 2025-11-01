@@ -34,6 +34,13 @@ export const LiveAuctionDetailsDialog = ({
     sellerNotes: car.sellerNotes,
     hasSellerNotes: !!car.sellerNotes,
     sellerNotesType: typeof car.sellerNotes,
+    // Condition fields debugging
+    isDamaged: car.isDamaged,
+    is_damaged: car.is_damaged,
+    isRegisteredInPoland: car.isRegisteredInPoland,
+    is_registered_in_poland: car.is_registered_in_poland,
+    hasFullRegistrationDocument: car.hasFullRegistrationDocument,
+    has_full_registration_document: car.has_full_registration_document,
     allKeys: Object.keys(car)
   });
 
