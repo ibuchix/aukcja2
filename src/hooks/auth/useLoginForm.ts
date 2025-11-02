@@ -6,6 +6,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { normalizeEmail } from "@/utils/dealerProfileMapping";
 import { getAuthDiagnostics, clearAuthStorage } from "@/utils/auth-utils";
 import { signInWithEmail } from "@/services/auth/signin";
+import { translateErrorMessage } from "@/lib/vehicleTranslations";
 
 interface LoginFormValues {
   email: string;
@@ -65,13 +66,13 @@ export function useLoginForm() {
         setIsLoading(false);
         
         // Handle specific errors with user-friendly messages
-        let errorMessage = result.error?.message || "Authentication failed. Please check your credentials and try again.";
+        let errorMessage = result.error?.message || translateErrorMessage("Authentication failed. Please check your credentials and try again.");
         
         if (typeof errorMessage === 'string') {
           if (errorMessage.includes("Invalid login credentials")) {
-            errorMessage = "Incorrect email or password. Please try again.";
+            errorMessage = translateErrorMessage("Incorrect email or password. Please try again.");
           } else if (errorMessage.includes("Email not found")) {
-            errorMessage = "No account found with this email. Please check your email or register.";
+            errorMessage = translateErrorMessage("No account found with this email. Please check your email or register.");
           } else if (errorMessage.includes("Invalid email")) {
             errorMessage = "Wprowadź poprawny adres email.";
           }

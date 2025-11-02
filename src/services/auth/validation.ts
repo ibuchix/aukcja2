@@ -20,13 +20,13 @@ export const safeTrim = (str: string | null | undefined): string => {
  */
 export function validateEmail(email: string | null | undefined): ValidationResult {
   if (!email) {
-    return { isValid: false, error: "Email is required" };
+    return { isValid: false, error: "Email jest wymagany" };
   }
 
   const trimmedEmail = email.trim();
   
   if (!trimmedEmail) {
-    return { isValid: false, error: "Email is required" };
+    return { isValid: false, error: "Email jest wymagany" };
   }
 
   // Simple regex for basic email validation
@@ -43,21 +43,21 @@ export function validateEmail(email: string | null | undefined): ValidationResul
  */
 export function validatePassword(password: string | null | undefined): ValidationResult {
   if (!password) {
-    return { isValid: false, error: "Password is required" };
+    return { isValid: false, error: "Hasło jest wymagane" };
   }
 
   if (password.length < 8) {
-    return { isValid: false, error: "Password must be at least 8 characters long" };
+    return { isValid: false, error: "Hasło musi zawierać co najmniej 8 znaków" };
   }
 
   // Check for at least one number
   if (!/\d/.test(password)) {
-    return { isValid: false, error: "Password must contain at least one number" };
+    return { isValid: false, error: "Hasło musi zawierać co najmniej jedną cyfrę" };
   }
 
   // Check for at least one letter
   if (!/[a-zA-Z]/.test(password)) {
-    return { isValid: false, error: "Password must contain at least one letter" };
+    return { isValid: false, error: "Hasło musi zawierać co najmniej jedną literę" };
   }
 
   return { isValid: true };

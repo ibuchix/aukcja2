@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { auctionStatusMonitor } from "@/utils/auctionStatusMonitor";
+import { translateErrorMessage, translateToastMessage } from "@/lib/vehicleTranslations";
 
 interface UseBidFormActionsProps {
   carId: string;
@@ -74,21 +75,21 @@ export const useBidFormActions = ({
 
       if (dealerError || !dealerCheck) {
         console.error('Dealer not found in database:', dealerError);
-        throw new Error('Dealer profile not found. Please ensure your profile is complete.');
+        throw new Error(translateErrorMessage('Dealer profile not found. Please ensure your profile is complete.'));
       }
 
       // Explicit verification with type guard
       if (!isValidVerifiedDealer(dealerCheck)) {
         console.error('Dealer not verified:', dealerCheck);
-        throw new Error('Your dealer account is not verified. Please contact support.');
+        throw new Error(translateErrorMessage('Your dealer account is not verified. Please contact support.'));
       }
       
       if (isNaN(numericBidAmount)) {
-        throw new Error("Please enter a valid number");
+        throw new Error(translateErrorMessage("Please enter a valid number"));
       }
 
       if (numericBidAmount <= 0) {
-        throw new Error("Bid amount must be greater than 0");
+        throw new Error(translateErrorMessage("Bid amount must be greater than 0"));
       }
 
       // Removed minimum bid and current bid restrictions - dealers can bid any positive amount
@@ -133,8 +134,8 @@ export const useBidFormActions = ({
             // Suggest retry for status issues
             if (retryCount < 2) {
               toast({
-                title: "Auction Status Issue",
-                description: "Auction status is being synchronized. Retrying...",
+                title: translateToastMessage("Auction Status Issue"),
+                description: translateToastMessage("Auction status is being synchronized. Retrying..."),
               });
               
               setRetryCount(prev => prev + 1);
@@ -156,8 +157,8 @@ export const useBidFormActions = ({
         setRetryCount(0);
 
         toast({
-          title: "Bid Placed Successfully",
-          description: `Your bid of ${numericBidAmount.toLocaleString()} PLN has been placed successfully`,
+          title: translateToastMessage("Bid Placed Successfully"),
+          description: `Twoja oferta w wysokości ${numericBidAmount.toLocaleString()} PLN została złożona pomyślnie`,
         });
 
         // Call onBidPlaced callback if provided
@@ -168,7 +169,7 @@ export const useBidFormActions = ({
         return;
       } else {
         console.error('Invalid response structure:', data);
-        throw new Error('Invalid response from server');
+        throw new Error(translateErrorMessage('Invalid response from server'));
       }
     } catch (error) {
       console.error('=== ENHANCED BID PLACEMENT ERROR ===');
@@ -185,8 +186,8 @@ export const useBidFormActions = ({
         // Automatic retry with exponential backoff
         setRetryCount(prev => prev + 1);
         toast({
-          title: "Bidding System Busy",
-          description: "The auction is experiencing high activity. Retrying your bid...",
+          title: translateToastMessage("Bidding System Busy"),
+          description: translateToastMessage("The auction is experiencing high activity. Retrying your bid..."),
         });
         
         // Wait before retrying
@@ -196,8 +197,8 @@ export const useBidFormActions = ({
       }
       
       toast({
-        title: "Bid Placement Error",
-        description: errorMessage || "Failed to place bid",
+        title: translateToastMessage("Bid Placement Error"),
+        description: errorMessage || translateErrorMessage("Failed to place bid"),
         variant: "destructive",
       });
     } finally {

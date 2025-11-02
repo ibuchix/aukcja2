@@ -1,5 +1,6 @@
 
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { translateErrorMessage } from "@/lib/vehicleTranslations";
 
 interface RegistrationStatusProps {
   error: string;
@@ -11,7 +12,7 @@ export function RegistrationStatus({ error, emailVerified, registrationStep }: R
   if (error) {
     return (
       <Alert variant="destructive" className="mb-4">
-        <AlertTitle>Registration Error</AlertTitle>
+        <AlertTitle>{translateErrorMessage('Registration Error')}</AlertTitle>
         <AlertDescription>{error}</AlertDescription>
       </Alert>
     );
@@ -22,9 +23,9 @@ export function RegistrationStatus({ error, emailVerified, registrationStep }: R
   if (registrationStep > 1) {
     return (
       <Alert variant="default" className="mb-4 bg-blue-50 border-blue-200">
-        <AlertTitle className="text-blue-800">Registration in Progress</AlertTitle>
+        <AlertTitle className="text-blue-800">{translateErrorMessage('Registration in Progress')}</AlertTitle>
         <AlertDescription className="text-blue-700">
-          Please complete the remaining steps to finish your registration.
+          {translateErrorMessage('Please complete the remaining steps to finish your registration.')}
         </AlertDescription>
       </Alert>
     );

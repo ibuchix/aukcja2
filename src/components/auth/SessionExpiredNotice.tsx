@@ -2,6 +2,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { translateErrorMessage } from '@/lib/vehicleTranslations';
 
 export function SessionExpiredNotice() {
   const [searchParams] = useSearchParams();
@@ -12,9 +13,9 @@ export function SessionExpiredNotice() {
   return (
     <Alert variant="destructive" className="mb-6">
       <AlertCircle className="h-4 w-4" />
-      <AlertTitle>Session Expired</AlertTitle>
+      <AlertTitle>{translateErrorMessage('Session Expired')}</AlertTitle>
       <AlertDescription>
-        Your session has expired for security reasons. Please sign in again to continue.
+        {translateErrorMessage('Your session has expired for security reasons. Please sign in again to continue.')}
       </AlertDescription>
     </Alert>
   );

@@ -203,3 +203,84 @@ export const translateServiceHistoryType = (type: string | null | undefined): st
   
   return matchingKey ? typeTranslations[matchingKey] : type;
 };
+
+// Error message translations
+export const translateErrorMessage = (message: string): string => {
+  const errorTranslations: Record<string, string> = {
+    // Authentication errors
+    'Authentication Error': 'Błąd uwierzytelniania',
+    'There was a problem initializing the authentication system. Please try refreshing the page.': 'Wystąpił problem z inicjalizacją systemu uwierzytelniania. Odśwież stronę.',
+    'Session Expired': 'Sesja wygasła',
+    'Your session has expired for security reasons. Please sign in again to continue.': 'Twoja sesja wygasła ze względów bezpieczeństwa. Zaloguj się ponownie, aby kontynuować.',
+    'Registration Error': 'Błąd rejestracji',
+    'Registration in Progress': 'Rejestracja w toku',
+    'Please complete the remaining steps to finish your registration.': 'Uzupełnij pozostałe kroki, aby zakończyć rejestrację.',
+    
+    // Login errors
+    'Authentication failed. Please check your credentials and try again.': 'Uwierzytelnianie nie powiodło się. Sprawdź dane logowania i spróbuj ponownie.',
+    'Incorrect email or password. Please try again.': 'Nieprawidłowy email lub hasło. Spróbuj ponownie.',
+    'No account found with this email. Please check your email or register.': 'Nie znaleziono konta z tym adresem email. Sprawdź email lub zarejestruj się.',
+    
+    // Validation errors
+    'Email is required': 'Email jest wymagany',
+    'Password is required': 'Hasło jest wymagane',
+    'Password must be at least 8 characters long': 'Hasło musi zawierać co najmniej 8 znaków',
+    'Password must contain at least one number': 'Hasło musi zawierać co najmniej jedną cyfrę',
+    'Password must contain at least one letter': 'Hasło musi zawierać co najmniej jedną literę',
+    
+    // Profile errors
+    'Profile not available': 'Profil niedostępny',
+    "We couldn't access your dealer profile. This may be due to a permission issue.": 'Nie udało się uzyskać dostępu do profilu dealera. Może to być problem z uprawnieniami.',
+    
+    // Bid placement errors
+    'Dealer profile not found. Please ensure your profile is complete.': 'Profil dealera nie został znaleziony. Upewnij się, że Twój profil jest kompletny.',
+    'Your dealer account is not verified. Please contact support.': 'Twoje konto dealera nie jest zweryfikowane. Skontaktuj się z pomocą techniczną.',
+    'Please enter a valid number': 'Wprowadź poprawną liczbę',
+    'Bid amount must be greater than 0': 'Kwota oferty musi być większa niż 0',
+    'Auction Status Issue': 'Problem ze statusem aukcji',
+    'Auction status is being synchronized. Retrying...': 'Status aukcji jest synchronizowany. Ponawiam próbę...',
+    'Invalid response from server': 'Nieprawidłowa odpowiedź serwera',
+    'Bidding System Busy': 'System licytacji zajęty',
+    'The auction is experiencing high activity. Retrying your bid...': 'Aukcja cieszy się dużym zainteresowaniem. Ponawiam próbę złożenia oferty...',
+    'Bid Placement Error': 'Błąd składania oferty',
+    'Failed to place bid': 'Nie udało się złożyć oferty',
+    
+    // Data availability errors
+    'Name not available': 'Imię niedostępne',
+    'Phone not available': 'Telefon niedostępny',
+    'Address not available': 'Adres niedostępny',
+    'Loading seller details...': 'Ładowanie danych sprzedawcy...',
+  };
+  
+  return errorTranslations[message] || message;
+};
+
+// Toast notification translations
+export const translateToastMessage = (message: string): string => {
+  const toastTranslations: Record<string, string> = {
+    'Bid Placed Successfully': 'Oferta złożona pomyślnie',
+    'Bid Placement Error': 'Błąd składania oferty',
+    'Failed to place bid': 'Nie udało się złożyć oferty',
+    'Auction Status Issue': 'Problem ze statusem aukcji',
+    'Auction status is being synchronized. Retrying...': 'Status aukcji jest synchronizowany. Ponawiam próbę...',
+    'Bidding System Busy': 'System licytacji zajęty',
+    'The auction is experiencing high activity. Retrying your bid...': 'Aukcja cieszy się dużym zainteresowaniem. Ponawiam próbę złożenia oferty...',
+  };
+  
+  return toastTranslations[message] || message;
+};
+
+// UI label translations
+export const translateUILabel = (label: string): string => {
+  const labelTranslations: Record<string, string> = {
+    'Clear Auth Storage': 'Wyczyść dane uwierzytelniania',
+    'Refresh Page': 'Odśwież stronę',
+    'Recover Your Profile': 'Odzyskaj profil',
+    'Complete Registration': 'Ukończ rejestrację',
+    'Payment Due': 'Płatność należna',
+    'Unpaid': 'Nieopłacone',
+    'Paid': 'Opłacone',
+  };
+  
+  return labelTranslations[label] || label;
+};
