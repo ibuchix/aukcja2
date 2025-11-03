@@ -32,7 +32,7 @@ const handler = async (req: Request): Promise<Response> => {
     const resetUrl = `https://aukcja.autaro.pl/reset-password?token=${token}`;
 
     const emailResponse = await resend.emails.send({
-      from: "Auto Trader <powiadomienia@autaro.pl>",
+      from: "aukcja.autaro.pl <powiadomienia@autaro.pl>",
       to: [email],
       subject: "Resetowanie hasła konta dealera Autaro.pl",
       html: `
