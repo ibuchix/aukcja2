@@ -10,6 +10,7 @@ import {
   handleSupabaseError
 } from '@/utils/supabase/errorHandler';
 import { processAndLogError } from '@/utils/supabase/errorReporting';
+import { translateUILabel } from '@/lib/vehicleTranslations';
 
 interface UseSupabaseQueryOptions<T> {
   showErrorToast?: boolean;
@@ -33,7 +34,7 @@ export function useSupabaseQuery<T>() {
     const {
       showErrorToast = true,
       showSuccessToast = false,
-      successMessage = 'Operation completed successfully',
+      successMessage = translateUILabel('Operation completed successfully'),
       onSuccess,
       onError,
       formatErrorMessage
@@ -48,7 +49,7 @@ export function useSupabaseQuery<T>() {
       if (result.success && result.data) {
         if (showSuccessToast) {
           toast({
-            title: 'Success',
+            title: translateUILabel('Success'),
             description: successMessage,
           });
         }
@@ -68,7 +69,7 @@ export function useSupabaseQuery<T>() {
             : processAndLogError(result.error);
           
           toast({
-            title: 'Error',
+            title: translateUILabel('Error'),
             description: errorMessage,
             variant: 'destructive',
           });
@@ -92,7 +93,7 @@ export function useSupabaseQuery<T>() {
           : processAndLogError(processedError);
         
         toast({
-          title: 'Error',
+          title: translateUILabel('Error'),
           description: errorMessage,
           variant: 'destructive',
         });

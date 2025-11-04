@@ -280,7 +280,37 @@ export const translateUILabel = (label: string): string => {
     'Payment Due': 'Płatność należna',
     'Unpaid': 'Nieopłacone',
     'Paid': 'Opłacone',
+    'Success': 'Sukces',
+    'Error': 'Błąd',
+    'Operation completed successfully': 'Operacja zakończona pomyślnie',
+    'Try Again': 'Spróbuj ponownie',
+    'Complete Your Profile': 'Uzupełnij profil',
+    'Account Pending Verification': 'Konto oczekuje na weryfikację',
+    'Account Verified': 'Konto zweryfikowane',
+    'Account Rejected': 'Konto odrzucone',
+    'Show password': 'Pokaż hasło',
+    'Hide password': 'Ukryj hasło',
+    'Loading Vehicle Search': 'Ładowanie wyszukiwania pojazdów',
+    'Loading your dealer profile...': 'Ładowanie profilu dealera...',
+    'Profile Loading Error': 'Błąd ładowania profilu',
+    'Profile Setup Required': 'Wymagana konfiguracja profilu',
+    'Complete Your Registration': 'Uzupełnij rejestrację',
+    'Dealer account required': 'Wymagane konto dealera',
   };
   
   return labelTranslations[label] || label;
+};
+
+// Message translations (longer text blocks)
+export const translateMessage = (message: string): string => {
+  const messageTranslations: Record<string, string> = {
+    "Your account is currently under review. You'll be notified once verified.": "Twoje konto jest obecnie sprawdzane. Otrzymasz powiadomienie po weryfikacji.",
+    "Your dealer account has been approved and verified.": "Twoje konto dealera zostało zatwierdzone i zweryfikowane.",
+    "Your account verification was rejected. Please contact support for more information.": "Weryfikacja Twojego konta została odrzucona. Skontaktuj się z pomocą techniczną, aby uzyskać więcej informacji.",
+    "You need to complete your dealer profile before you can search for vehicles.": "Musisz ukończyć swój profil dealera, zanim będziesz mógł wyszukiwać pojazdy.",
+    "This app is restricted to dealer accounts. Please register as a dealer.": "Ta aplikacja jest przeznaczona tylko dla dealerów. Zarejestruj się jako dealer.",
+    "Please provide the required information to finish setting up your dealer account": "Podaj wymagane informacje, aby dokończyć konfigurację konta dealera",
+  };
+
+  return messageTranslations[message] || message;
 };

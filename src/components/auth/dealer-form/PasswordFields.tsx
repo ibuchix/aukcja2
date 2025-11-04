@@ -60,9 +60,9 @@ export function PasswordFields({ form }: PasswordFieldsProps) {
                   onClick={togglePasswordVisibility}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  <span className="sr-only">
-                    {showPassword ? "Hide password" : "Show password"}
-                  </span>
+              <span className="sr-only">
+                {showPassword ? "Ukryj hasło" : "Pokaż hasło"}
+              </span>
                 </Button>
               </div>
             </FormControl>
@@ -99,9 +99,9 @@ export function PasswordFields({ form }: PasswordFieldsProps) {
                   onClick={toggleConfirmPasswordVisibility}
                 >
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  <span className="sr-only">
-                    {showConfirmPassword ? "Hide password" : "Show password"}
-                  </span>
+              <span className="sr-only">
+                {showConfirmPassword ? "Ukryj hasło" : "Pokaż hasło"}
+              </span>
                 </Button>
               </div>
             </FormControl>

@@ -1,6 +1,7 @@
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, BadgeCheck } from "lucide-react";
+import { translateUILabel, translateMessage } from "@/lib/vehicleTranslations";
 
 interface VerificationBannerProps {
   verificationStatus: string;
@@ -11,9 +12,9 @@ export function VerificationBanner({ verificationStatus }: VerificationBannerPro
     return (
       <Alert variant="default" className="mb-4 bg-[#EFEFFD] border-[#4B4DED]">
         <AlertCircle className="h-4 w-4 text-[#4B4DED]" />
-        <AlertTitle className="text-[#4B4DED]">Account Pending Verification</AlertTitle>
+        <AlertTitle className="text-[#4B4DED]">{translateUILabel('Account Pending Verification')}</AlertTitle>
         <AlertDescription>
-          Your account is currently under review. You'll be notified once verified.
+          {translateMessage("Your account is currently under review. You'll be notified once verified.")}
         </AlertDescription>
       </Alert>
     );
@@ -23,9 +24,9 @@ export function VerificationBanner({ verificationStatus }: VerificationBannerPro
     return (
       <Alert variant="default" className="mb-4 bg-green-50 border-green-200">
         <BadgeCheck className="h-4 w-4 text-green-600" />
-        <AlertTitle className="text-green-700">Account Verified</AlertTitle>
+        <AlertTitle className="text-green-700">{translateUILabel('Account Verified')}</AlertTitle>
         <AlertDescription className="text-green-600">
-          Your dealer account has been approved and verified.
+          {translateMessage("Your dealer account has been approved and verified.")}
         </AlertDescription>
       </Alert>
     );
@@ -35,9 +36,9 @@ export function VerificationBanner({ verificationStatus }: VerificationBannerPro
     return (
       <Alert variant="destructive" className="mb-4">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Account Rejected</AlertTitle>
+        <AlertTitle>{translateUILabel('Account Rejected')}</AlertTitle>
         <AlertDescription>
-          Your account verification was rejected. Please contact support for more information.
+          {translateMessage("Your account verification was rejected. Please contact support for more information.")}
         </AlertDescription>
       </Alert>
     );

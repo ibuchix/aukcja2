@@ -7,6 +7,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { fetchDealerProfile } from "../authUtils";
 import { AuthDebugger } from "@/utils/authDebugger";
 import { queryInvalidationManager } from "@/utils/queryInvalidationManager";
+import { translateUILabel, translateMessage } from "@/lib/vehicleTranslations";
 
 /**
  * Enhanced hook to listen for authentication state changes with navigation handling
@@ -98,8 +99,8 @@ export function useAuthStateListener(
                 }
                 if (!dealerId) {
                   toast({
-                    title: 'Dealer account required',
-                    description: 'This app is restricted to dealer accounts. Please register as a dealer.',
+                    title: translateUILabel('Dealer account required'),
+                    description: translateMessage('This app is restricted to dealer accounts. Please register as a dealer.'),
                     variant: 'destructive',
                   });
                   await supabase.auth.signOut();
