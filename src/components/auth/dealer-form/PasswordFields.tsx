@@ -6,6 +6,9 @@ import { DealerFormValues } from "@/schemas/dealerFormSchema";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
+import { PasswordValidation } from "@/components/auth/PasswordValidation";
+import { generateStrongPassword } from "@/utils/passwordGenerator";
+import { useToast } from "@/hooks/use-toast";
 
 interface PasswordFieldsProps {
   form: UseFormReturn<DealerFormValues>;
@@ -14,9 +17,23 @@ interface PasswordFieldsProps {
 export function PasswordFields({ form }: PasswordFieldsProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { toast } = useToast();
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
   const toggleConfirmPasswordVisibility = () => setShowConfirmPassword(!showConfirmPassword);
+
+  const handleGeneratePassword = () => {
+    const generatedPassword = generateStrongPassword();
+    form.setValue("password", generatedPassword);
+    form.setValue("confirmPassword", generatedPassword);
+    setShowPassword(true);
+    
+    toast({
+      title: "Hasło wygenerowane!",
+      description: generatedPassword,
+      duration: 10000,
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -31,7 +48,7 @@ export function PasswordFields({ form }: PasswordFieldsProps) {
                 <SecureInput
                   fieldType="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Min. 8 znaków, jedna duża litera, jedna cyfra i jeden znak specjalny."
+                  placeholder="Min. 12 znaków, jedna duża litera, jedna cyfra i jeden znak specjalny."
                   {...field}
                   className="pr-10"
                 />
@@ -49,6 +66,11 @@ export function PasswordFields({ form }: PasswordFieldsProps) {
                 </Button>
               </div>
             </FormControl>
+            <PasswordValidation 
+              password={form.watch("password") || ""} 
+              className="mt-2"
+              onGeneratePassword={handleGeneratePassword}
+            />
             <FormMessage />
           </FormItem>
         )}

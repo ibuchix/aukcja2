@@ -38,7 +38,7 @@ export const passwordResetRequestSchema = z.object({
  */
 export const passwordResetConfirmSchema = z.object({
   newPassword: z.string()
-    .min(8, { message: "Password must be at least 8 characters" })
+    .min(12, { message: "Password must be at least 12 characters" })
     .max(72, { message: "Password cannot exceed 72 characters" })
     .refine((value) => /[A-Z]/.test(value), {
       message: "Password must contain at least one uppercase letter"

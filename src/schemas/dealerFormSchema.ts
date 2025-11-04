@@ -34,8 +34,8 @@ export const dealerFormSchema = z.object({
       message: "Nieprawidłowe znaki w adresie email",
     }),
   password: z.string()
-    .min(8, {
-      message: "Hasło musi zawierać co najmniej 8 znaków",
+    .min(12, {
+      message: "Hasło musi zawierać co najmniej 12 znaków",
     })
     .max(72, {
       message: "Hasło nie może przekraczać 72 znaków",

@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { confirmPasswordReset } from "@/services/auth/passwordReset";
 import { ArrowLeft, CheckCircle, Loader2, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
+import { generateStrongPassword } from "@/utils/passwordGenerator";
 
 interface PasswordResetForm {
   newPassword: string;
@@ -47,6 +48,19 @@ export default function PasswordResetWithToken() {
     }
   }, [searchParams, navigate, toast]);
 
+  const handleGeneratePassword = () => {
+    const generatedPassword = generateStrongPassword();
+    form.setValue("newPassword", generatedPassword);
+    form.setValue("confirmPassword", generatedPassword);
+    setShowNewPassword(true);
+    
+    toast({
+      title: "Hasło wygenerowane!",
+      description: generatedPassword,
+      duration: 10000,
+    });
+  };
+
   const onSubmit = async (data: PasswordResetForm) => {
     if (!token) {
       toast({
@@ -64,9 +78,9 @@ export default function PasswordResetWithToken() {
       return;
     }
 
-    if (data.newPassword.length < 8) {
+    if (data.newPassword.length < 12) {
       form.setError("newPassword", {
-        message: "Hasło musi mieć co najmniej 8 znaków"
+        message: "Hasło musi mieć co najmniej 12 znaków"
       });
       return;
     }
@@ -184,6 +198,7 @@ export default function PasswordResetWithToken() {
                       <PasswordValidation 
                         password={form.watch("newPassword") || ""} 
                         className="mt-2"
+                        onGeneratePassword={handleGeneratePassword}
                       />
                       <FormMessage />
                     </FormItem>

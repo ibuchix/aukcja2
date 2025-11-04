@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface PasswordRequirement {
   label: string;
@@ -10,11 +10,12 @@ interface PasswordRequirement {
 interface PasswordValidationProps {
   password: string;
   className?: string;
+  onGeneratePassword?: () => void;
 }
 
-export function PasswordValidation({ password, className = "" }: PasswordValidationProps) {
+export function PasswordValidation({ password, className = "", onGeneratePassword }: PasswordValidationProps) {
   const requirements: PasswordRequirement[] = [
-    { label: "Co najmniej 8 znaków", regex: /.{8,}/ },
+    { label: "Co najmniej 12 znaków", regex: /.{12,}/ },
     { label: "Co najmniej jedna wielka litera", regex: /[A-Z]/ },
     { label: "Co najmniej jedna mała litera", regex: /[a-z]/ },
     { label: "Co najmniej jedna cyfra", regex: /[0-9]/ },
@@ -23,6 +24,18 @@ export function PasswordValidation({ password, className = "" }: PasswordValidat
 
   return (
     <div className={`text-sm space-y-2 mt-1 ${className}`}>
+      {onGeneratePassword && (
+        <Button
+          type="button"
+          onClick={onGeneratePassword}
+          variant="outline"
+          size="sm"
+          className="w-full mb-3 border-[#D81B24] text-[#D81B24] hover:bg-[#D81B24] hover:text-white"
+        >
+          <Sparkles className="h-4 w-4 mr-2" />
+          Wygeneruj silne hasło
+        </Button>
+      )}
       {requirements.map((requirement, index) => {
         const isMet = requirement.regex.test(password);
         return (
