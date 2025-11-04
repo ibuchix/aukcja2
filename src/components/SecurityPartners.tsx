@@ -28,9 +28,9 @@ const SecurityPartners = () => {
           >
             <div className="transition-all duration-300 hover:scale-105 cursor-pointer">
               <img 
-                src="/lovable-uploads/2fdd1e70-bb56-42e3-8cbe-b6a59cbf3260.png" 
+                src="/images/carvertical-logo.png" 
                 alt="CarVertical Logo" 
-                className={`${isMobile ? 'h-10' : 'h-12'} w-auto`}
+                className={`${isMobile ? 'max-w-[160px]' : 'max-w-[200px]'} h-auto`}
               />
             </div>
           </motion.div>
@@ -57,9 +57,9 @@ const SecurityPartners = () => {
           >
             <div className="transition-all duration-300 hover:scale-105 cursor-pointer">
               <img 
-                src="/lovable-uploads/31af3dfa-1c5d-4e40-95dd-a08a7f5ec71b.png" 
+                src="/images/autobaza-logo.png" 
                 alt="AutoBaza Logo" 
-                className={`${isMobile ? 'h-10' : 'h-12'} w-auto`}
+                className={`${isMobile ? 'max-w-[160px]' : 'max-w-[200px]'} h-auto`}
               />
             </div>
           </motion.div>
