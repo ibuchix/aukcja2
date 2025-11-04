@@ -66,36 +66,35 @@ export async function handlePasswordResetRequest(
   }
 
   try {
-    // First, find user by email using a direct query to auth.users
-    // This avoids pagination issues with listUsers() which only returns first ~50-100 users
-    const { data: users, error: userLookupError } = await supabaseAdmin
-      .from("users")
-      .select("id, email")
-      .eq("email", trimmedEmail)
-      .limit(1);
+    // Use RPC to lookup user and dealer by email
+    // This avoids pagination issues with listUsers() and directly queries auth.users
+    const { data: userData, error: userLookupError } = await supabaseAdmin
+      .rpc('get_user_and_dealer_by_email', { p_email: trimmedEmail });
 
     if (userLookupError) {
       logError("Error looking up user by email", userLookupError, requestId);
       return respondError("Unable to process request", 500, requestId);
     }
 
-    if (!users || users.length === 0) {
+    if (!userData || userData.length === 0) {
       // Don't reveal if user exists - security best practice
       logInfo("Password reset requested for non-existent email", { requestId });
       return respondSuccess({ message: "If the account exists, a password reset email will be sent" }, requestId);
     }
 
-    const user = users[0];
+    const result = userData[0];
+    const user = { id: result.user_id, email: result.user_email };
+    const dealer = {
+      id: result.dealer_id,
+      dealership_name: result.dealership_name,
+      tax_id: result.tax_id,
+      business_registry_number: result.business_registry_number,
+      supervisor_name: result.supervisor_name,
+      address: result.address
+    };
 
-    // Now get the dealer information for this user
-    const { data: dealer, error: dealerError } = await supabaseAdmin
-      .from("dealers")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
-
-    if (dealerError || !dealer) {
-      logError("Dealer not found", dealerError, requestId);
+    if (!user || !dealer) {
+      logInfo("Password reset requested but incomplete data", { requestId });
       return respondSuccess({ message: "If the account exists, a password reset email will be sent" }, requestId);
     }
 

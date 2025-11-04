@@ -3016,6 +3016,19 @@ export type Database = {
           is_nullable: string
         }[]
       }
+      get_user_and_dealer_by_email: {
+        Args: { p_email: string }
+        Returns: {
+          address: string
+          business_registry_number: string
+          dealer_id: string
+          dealership_name: string
+          supervisor_name: string
+          tax_id: string
+          user_email: string
+          user_id: string
+        }[]
+      }
       get_user_id_by_email: { Args: { p_email: string }; Returns: Json }
       get_user_profile_for_listing: {
         Args: { p_user_id: string }
