@@ -1,4 +1,5 @@
 // Vehicle feature translations from English to Polish
+// Translation utilities for the dealer auction platform
 export const translateVehicleFeature = (feature: string): string => {
   const featureTranslations: Record<string, string> = {
     // Main features
