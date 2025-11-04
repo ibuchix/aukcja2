@@ -26,13 +26,18 @@ const SecurityPartners = () => {
             viewport={{ once: true }}
             className={`flex ${isMobile ? 'justify-start' : 'justify-center'}`}
           >
-            <div className="transition-all duration-300 hover:scale-105 cursor-pointer">
+            <a 
+              href="https://www.carvertical.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="transition-all duration-300 hover:scale-105 cursor-pointer inline-block"
+            >
               <img 
                 src="/images/carvertical-logo.png" 
                 alt="CarVertical Logo" 
                 className={`${isMobile ? 'max-w-[160px]' : 'max-w-[200px]'} h-auto`}
               />
-            </div>
+            </a>
           </motion.div>
 
           {/* Content */}
@@ -55,13 +60,18 @@ const SecurityPartners = () => {
             viewport={{ once: true }}
             className={`flex ${isMobile ? 'justify-start' : 'justify-center'}`}
           >
-            <div className="transition-all duration-300 hover:scale-105 cursor-pointer">
+            <a 
+              href="https://www.autobaza.pl" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="transition-all duration-300 hover:scale-105 cursor-pointer inline-block"
+            >
               <img 
                 src="/images/autobaza-logo.png" 
                 alt="AutoBaza Logo" 
                 className={`${isMobile ? 'max-w-[160px]' : 'max-w-[200px]'} h-auto`}
               />
-            </div>
+            </a>
           </motion.div>
         </div>
       </div>
