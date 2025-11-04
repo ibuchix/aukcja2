@@ -66,23 +66,28 @@ export async function handlePasswordResetRequest(
   }
 
   try {
-    // Verify dealer exists with matching information
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (userError) {
-      logError("Error fetching users", userError, requestId);
+    // First, find user by email using a direct query to auth.users
+    // This avoids pagination issues with listUsers() which only returns first ~50-100 users
+    const { data: users, error: userLookupError } = await supabaseAdmin
+      .from("users")
+      .select("id, email")
+      .eq("email", trimmedEmail)
+      .limit(1);
+
+    if (userLookupError) {
+      logError("Error looking up user by email", userLookupError, requestId);
       return respondError("Unable to process request", 500, requestId);
     }
 
-    const user = userData.users.find(u => u.email === trimmedEmail);
-    
-    if (!user) {
+    if (!users || users.length === 0) {
       // Don't reveal if user exists - security best practice
       logInfo("Password reset requested for non-existent email", { requestId });
       return respondSuccess({ message: "If the account exists, a password reset email will be sent" }, requestId);
     }
 
-    // Verify dealer information matches
+    const user = users[0];
+
+    // Now get the dealer information for this user
     const { data: dealer, error: dealerError } = await supabaseAdmin
       .from("dealers")
       .select("*")
