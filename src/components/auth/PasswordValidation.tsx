@@ -1,4 +1,4 @@
-
+// Password validation component with generator - Updated 2025-11-04
 import { Check, X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
