@@ -59,7 +59,7 @@ const SecurityPartners = () => {
               <img 
                 src="/lovable-uploads/31af3dfa-1c5d-4e40-95dd-a08a7f5ec71b.png" 
                 alt="AutoBaza Logo" 
-                className="h-10 w-auto"
+                className={`${isMobile ? 'h-10' : 'h-12'} w-auto`}
               />
             </div>
           </motion.div>
