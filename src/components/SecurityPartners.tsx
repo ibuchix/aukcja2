@@ -27,7 +27,7 @@ const SecurityPartners = () => {
             className={`flex ${isMobile ? 'justify-start' : 'justify-center'}`}
           >
             <a 
-              href="https://www.carvertical.com" 
+              href="https://www.carvertical.com/pl/landing/features?a=66c6155b1b60f&b=335b1726" 
               target="_blank" 
               rel="noopener noreferrer"
               className="transition-all duration-300 hover:scale-105 cursor-pointer inline-block"
@@ -61,7 +61,7 @@ const SecurityPartners = () => {
             className={`flex ${isMobile ? 'justify-start' : 'justify-center'}`}
           >
             <a 
-              href="https://www.autobaza.pl" 
+              href="https://www.autobaza.pl/partnerid=80000634" 
               target="_blank" 
               rel="noopener noreferrer"
               className="transition-all duration-300 hover:scale-105 cursor-pointer inline-block"
