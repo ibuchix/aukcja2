@@ -19,13 +19,49 @@ export function usePermissions(props?: UsePermissionsProps) {
   const [entityPermissions, setEntityPermissions] = useState<{[key: string]: boolean}>({});
   const [permissionsLoading, setPermissionsLoading] = useState<boolean>(false);
 
-  // Check if user is admin based on profile
+  // Check if user is admin/dealer using secure has_role RPC function
   useEffect(() => {
-    if (!isLoading && profile) {
-      setIsAdmin(profile.role === 'admin');
-      setIsDealer(profile.role === 'dealer');
-    }
-  }, [isLoading, profile]);
+    const checkUserRoles = async () => {
+      if (!isLoading && user) {
+        try {
+          // Check admin role
+          const { data: isAdminRole, error: adminError } = await supabase.rpc('has_role', {
+            _user_id: user.id,
+            _role: 'admin'
+          });
+          
+          if (adminError) {
+            console.error("Error checking admin role:", adminError);
+          } else {
+            setIsAdmin(!!isAdminRole);
+          }
+
+          // Check dealer role
+          const { data: isDealerRole, error: dealerError } = await supabase.rpc('has_role', {
+            _user_id: user.id,
+            _role: 'dealer'
+          });
+          
+          if (dealerError) {
+            console.error("Error checking dealer role:", dealerError);
+          } else {
+            setIsDealer(!!isDealerRole);
+          }
+        } catch (err) {
+          console.error("Error checking user roles:", err);
+          // Reset to safe defaults on error
+          setIsAdmin(false);
+          setIsDealer(false);
+        }
+      } else if (!user) {
+        // User logged out, reset roles
+        setIsAdmin(false);
+        setIsDealer(false);
+      }
+    };
+
+    checkUserRoles();
+  }, [isLoading, user]);
 
   // Function to check if user can perform an action on an entity
   const checkPermission = useCallback(async (action: ActionType, entityType: EntityType, entityId: string) => {
