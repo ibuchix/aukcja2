@@ -561,6 +561,7 @@ export type Database = {
           auction_scheduled: boolean
           auction_status: string | null
           awaiting_seller_decision: boolean
+          contact_email: string
           county: string | null
           created_at: string
           current_bid: number | null
@@ -615,6 +616,7 @@ export type Database = {
           auction_scheduled?: boolean
           auction_status?: string | null
           awaiting_seller_decision?: boolean
+          contact_email: string
           county?: string | null
           created_at?: string
           current_bid?: number | null
@@ -669,6 +671,7 @@ export type Database = {
           auction_scheduled?: boolean
           auction_status?: string | null
           awaiting_seller_decision?: boolean
+          contact_email?: string
           county?: string | null
           created_at?: string
           current_bid?: number | null
@@ -1991,6 +1994,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       vin_reservations: {
         Row: {
           created_at: string | null
@@ -2267,6 +2294,7 @@ export type Database = {
           auction_scheduled: boolean
           auction_status: string | null
           awaiting_seller_decision: boolean
+          contact_email: string
           county: string | null
           created_at: string
           current_bid: number | null
@@ -2347,6 +2375,7 @@ export type Database = {
           auction_scheduled: boolean
           auction_status: string | null
           awaiting_seller_decision: boolean
+          contact_email: string
           county: string | null
           created_at: string
           current_bid: number | null
@@ -2603,6 +2632,23 @@ export type Database = {
         Args: { p_seller_id?: string }
         Returns: Json
       }
+      get_activity_logs: {
+        Args: {
+          p_action_filter?: string
+          p_date_from?: string
+          p_date_to?: string
+        }
+        Returns: {
+          action: Database["public"]["Enums"]["audit_log_type"]
+          created_at: string
+          details: Json
+          entity_id: string
+          entity_type: string
+          id: string
+          user_full_name: string
+          user_id: string
+        }[]
+      }
       get_admin_notifications: {
         Args: never
         Returns: {
@@ -2790,6 +2836,20 @@ export type Database = {
           type: string
         }[]
       }
+      get_form_tracking_logs: {
+        Args: never
+        Returns: {
+          action: Database["public"]["Enums"]["audit_log_type"]
+          created_at: string
+          details: Json
+          entity_id: string
+          entity_type: string
+          id: string
+          user_email: string
+          user_full_name: string
+          user_id: string
+        }[]
+      }
       get_live_auction_schedules: {
         Args: never
         Returns: {
@@ -2857,6 +2917,7 @@ export type Database = {
           auction_scheduled: boolean
           auction_status: string | null
           awaiting_seller_decision: boolean
+          contact_email: string
           county: string | null
           created_at: string
           current_bid: number | null
@@ -2920,6 +2981,7 @@ export type Database = {
           auction_scheduled: boolean
           auction_status: string | null
           awaiting_seller_decision: boolean
+          contact_email: string
           county: string | null
           created_at: string
           current_bid: number | null
@@ -3000,6 +3062,21 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_sellers_with_emails: {
+        Args: never
+        Returns: {
+          active_listings: number
+          address: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_verified: boolean
+          total_listings: number
+          user_id: string
+          verification_status: string
+        }[]
+      }
       get_session_photos: {
         Args: { p_session_id: string; p_user_id: string }
         Returns: {
@@ -3042,6 +3119,13 @@ export type Database = {
         Args: { _car_id: string; _dealer_user_id: string }
         Returns: boolean
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["user_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_admin_user: { Args: { user_id?: string }; Returns: boolean }
       is_dealer: { Args: never; Returns: boolean }
       is_seller: { Args: never; Returns: boolean }
@@ -3063,6 +3147,15 @@ export type Database = {
           p_user_agent?: string
         }
         Returns: string
+      }
+      log_form_tracking_event: {
+        Args: {
+          p_event_type: string
+          p_form_type: string
+          p_metadata?: Json
+          p_source?: string
+        }
+        Returns: undefined
       }
       manual_auction_status_update: { Args: never; Returns: Json }
       mark_all_notifications_read: { Args: never; Returns: undefined }
@@ -3244,6 +3337,7 @@ export type Database = {
         | "feature"
         | "promotion"
         | "policy"
+      app_role: "admin" | "dealer" | "seller"
       auction_schedule_status:
         | "scheduled"
         | "running"
@@ -3428,6 +3522,7 @@ export const Constants = {
         "promotion",
         "policy",
       ],
+      app_role: ["admin", "dealer", "seller"],
       auction_schedule_status: [
         "scheduled",
         "running",
