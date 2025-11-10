@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
+import { translateErrorMessage } from "@/lib/vehicleTranslations";
 
 interface SimpleBidManagerProps {
   carId: string;
@@ -117,6 +118,8 @@ export const SimpleBidManager = ({
       if (error) throw error;
 
       // Type-safe access to response data
+      // The place_bid RPC returns messages in English from the database.
+      // We translate them here to Polish before showing to dealers.
       const response = data as any;
       if (response?.success) {
       // Toast: Bid Placed Successfully - Bid was successfully placed
@@ -127,12 +130,14 @@ export const SimpleBidManager = ({
         await fetchMyBid();
         // The parent component should handle refreshing the data
       } else {
-        throw new Error(response?.error || "Failed to place bid");
+        const errorMessage = response?.message || response?.error || "Failed to place bid";
+        throw new Error(translateErrorMessage(errorMessage));
       }
     } catch (error) {
       // Toast: Failed to Place Bid - Error placing bid
+      const errorMessage = error instanceof Error ? error.message : "Spróbuj ponownie";
       toast({
-        description: error instanceof Error ? error.message : "Spróbuj ponownie",
+        description: translateErrorMessage(errorMessage),
         variant: "destructive",
       });
     } finally {

@@ -246,6 +246,19 @@ export const translateErrorMessage = (message: string): string => {
     'Bid Placement Error': 'Błąd składania oferty',
     'Failed to place bid': 'Nie udało się złożyć oferty',
     
+    // Database function error messages from place_bid()
+    'Missing required parameters': 'Brakuje wymaganych parametrów',
+    'Car not found': 'Pojazd nie został znaleziony',
+    'Car is not available for auction': 'Pojazd nie jest dostępny w aukcji',
+    'Auction is not currently active': 'Aukcja nie jest obecnie aktywna',
+    'This auction is not currently active': 'Aukcja nie jest obecnie aktywna',
+    'Dealer not found': 'Dealer nie został znaleziony',
+    'Dealer is not verified': 'Dealer nie jest zweryfikowany',
+    'Daily bid limit exceeded (40 bids per day)': 'Przekroczono dzienny limit ofert (40 ofert dziennie)',
+    'Bid amount must be between 1 and 2,000,000 PLN': 'Kwota oferty musi być między 1 a 2 000 000 PLN',
+    'Bid amount is too low': 'Kwota oferty jest za niska',
+    'Bid placed successfully': 'Oferta złożona pomyślnie',
+    
     // Data availability errors
     'Name not available': 'Imię niedostępne',
     'Phone not available': 'Telefon niedostępny',

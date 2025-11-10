@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { translateErrorMessage } from "@/lib/vehicleTranslations";
 
 export const useBidActions = (dealerId?: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,11 +24,13 @@ export const useBidActions = (dealerId?: string) => {
       }
 
       // Type assertion with proper error handling
+      // The place_bid RPC returns messages in English from the database.
+      // We translate them here to Polish before showing to dealers.
       const response = data as any;
       
       if (response && typeof response === 'object') {
         const success = Boolean(response.success);
-        const errorMessage = response.error ? String(response.error) : null;
+        const rawError = response.message || response.error || 'Failed to place bid';
 
         if (success) {
           // Toast: Bid Placed - Dealer successfully placed/modified a bid
@@ -36,13 +39,13 @@ export const useBidActions = (dealerId?: string) => {
           });
           return { success: true };
         } else {
-          throw new Error(errorMessage || 'Failed to place bid');
+          throw new Error(translateErrorMessage(String(rawError)));
         }
       } else {
-        throw new Error('Invalid response from server');
+        throw new Error(translateErrorMessage('Invalid response from server'));
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to place bid';
+      const errorMessage = error instanceof Error ? error.message : translateErrorMessage('Failed to place bid');
       // Toast: Error - Failed to place bid
       toast({
         description: errorMessage,

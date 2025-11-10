@@ -122,7 +122,9 @@ export const useBidFormActions = ({
       // Check the response data structure properly
       if (data && typeof data === 'object' && 'success' in data) {
         if (!data.success) {
-          const errorMsg = typeof data.error === 'string' ? String(data.error) : 'Failed to place bid';
+          // The place_bid RPC returns messages in English. data.message is primary, data.error is fallback
+          const rawError = data.message || data.error || 'Failed to place bid';
+          const errorMsg = translateErrorMessage(String(rawError));
           console.error('Enhanced bid placement failed:', errorMsg);
           
           // Check if it's a status-related error and suggest retry
