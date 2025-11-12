@@ -202,33 +202,6 @@ export type Database = {
           },
         ]
       }
-      auction_processing_logs: {
-        Row: {
-          car_id: string | null
-          created_at: string | null
-          details: Json | null
-          id: string
-          processing_type: string
-          status: string | null
-        }
-        Insert: {
-          car_id?: string | null
-          created_at?: string | null
-          details?: Json | null
-          id?: string
-          processing_type: string
-          status?: string | null
-        }
-        Update: {
-          car_id?: string | null
-          created_at?: string | null
-          details?: Json | null
-          id?: string
-          processing_type?: string
-          status?: string | null
-        }
-        Relationships: []
-      }
       auction_results: {
         Row: {
           admin_review_status: string | null
@@ -416,35 +389,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      bid_metrics: {
-        Row: {
-          bid_id: string | null
-          created_at: string | null
-          id: string
-          success: boolean | null
-        }
-        Insert: {
-          bid_id?: string | null
-          created_at?: string | null
-          id?: string
-          success?: boolean | null
-        }
-        Update: {
-          bid_id?: string | null
-          created_at?: string | null
-          id?: string
-          success?: boolean | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bid_metrics_bid_id_fkey"
-            columns: ["bid_id"]
-            isOneToOne: false
-            referencedRelation: "bids"
             referencedColumns: ["id"]
           },
         ]
@@ -774,57 +718,6 @@ export type Database = {
           },
           {
             foreignKeyName: "cars_history_car_id_fkey"
-            columns: ["car_id"]
-            isOneToOne: false
-            referencedRelation: "cars_public_view"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      damage_reports: {
-        Row: {
-          car_id: string | null
-          created_at: string
-          description: string
-          id: string
-          location: string | null
-          photo: string | null
-          severity: Database["public"]["Enums"]["damage_severity"] | null
-          type: string
-          updated_at: string
-        }
-        Insert: {
-          car_id?: string | null
-          created_at?: string
-          description: string
-          id?: string
-          location?: string | null
-          photo?: string | null
-          severity?: Database["public"]["Enums"]["damage_severity"] | null
-          type: string
-          updated_at?: string
-        }
-        Update: {
-          car_id?: string | null
-          created_at?: string
-          description?: string
-          id?: string
-          location?: string | null
-          photo?: string | null
-          severity?: Database["public"]["Enums"]["damage_severity"] | null
-          type?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "damage_reports_car_id_fkey"
-            columns: ["car_id"]
-            isOneToOne: false
-            referencedRelation: "cars"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "damage_reports_car_id_fkey"
             columns: ["car_id"]
             isOneToOne: false
             referencedRelation: "cars_public_view"
@@ -1895,75 +1788,6 @@ export type Database = {
         }
         Relationships: []
       }
-      service_history: {
-        Row: {
-          car_id: string | null
-          created_at: string
-          description: string | null
-          document_url: string
-          id: string
-        }
-        Insert: {
-          car_id?: string | null
-          created_at?: string
-          description?: string | null
-          document_url: string
-          id?: string
-        }
-        Update: {
-          car_id?: string | null
-          created_at?: string
-          description?: string | null
-          document_url?: string
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "service_history_car_id_fkey"
-            columns: ["car_id"]
-            isOneToOne: false
-            referencedRelation: "cars"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "service_history_car_id_fkey"
-            columns: ["car_id"]
-            isOneToOne: false
-            referencedRelation: "cars_public_view"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      system_health: {
-        Row: {
-          created_at: string
-          details: Json | null
-          id: string
-          metric_name: string
-          metric_value: number
-          status: string
-          threshold_value: number | null
-        }
-        Insert: {
-          created_at?: string
-          details?: Json | null
-          id?: string
-          metric_name: string
-          metric_value: number
-          status: string
-          threshold_value?: number | null
-        }
-        Update: {
-          created_at?: string
-          details?: Json | null
-          id?: string
-          metric_name?: string
-          metric_value?: number
-          status?: string
-          threshold_value?: number | null
-        }
-        Relationships: []
-      }
       system_logs: {
         Row: {
           correlation_id: string | null
@@ -2272,6 +2096,35 @@ export type Database = {
           },
         ]
       }
+      cleanup_monitoring_dashboard: {
+        Row: {
+          audit_logs_ready_to_clean: number | null
+          cars_history_ready_to_clean: number | null
+          cleanup_urgency: string | null
+          cron_schedule: string | null
+          current_audit_logs: number | null
+          current_cars_history: number | null
+          current_system_logs: number | null
+          failed_runs: number | null
+          health_status: string | null
+          is_active: boolean | null
+          jobname: string | null
+          last_audit_logs_deleted: number | null
+          last_cars_history_deleted: number | null
+          last_run_duration: unknown
+          last_run_ended: string | null
+          last_run_started: string | null
+          last_run_status: string | null
+          last_system_logs_deleted: number | null
+          last_total_deleted: number | null
+          next_scheduled_run: string | null
+          successful_runs: number | null
+          system_logs_ready_to_clean: number | null
+          total_rows_deleted_lifetime: number | null
+          total_runs: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       activate_listing: {
@@ -2281,6 +2134,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: Json
+      }
+      admin_delete_car_file: {
+        Args: { p_file_id: string; p_table_name: string }
+        Returns: undefined
       }
       admin_end_auction: {
         Args: { p_admin_id: string; p_car_id: string; p_sold?: boolean }
@@ -2431,6 +2288,19 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      admin_get_car_files: {
+        Args: { p_car_id: string }
+        Returns: {
+          car_id: string
+          category: string
+          created_at: string
+          display_order: number
+          file_path: string
+          file_type: string
+          id: string
+          upload_status: string
+        }[]
+      }
       admin_get_manual_valuations: {
         Args: { p_status?: string }
         Returns: Json
@@ -2439,26 +2309,29 @@ export type Database = {
         Args: { p_valuation_id: string }
         Returns: Json
       }
+      admin_reorder_car_files: { Args: { p_files: Json }; Returns: undefined }
       admin_transfer_manual_valuation_to_cars: {
         Args: { p_reserve_price: number; p_valuation_id: string }
         Returns: Json
       }
-      admin_transfer_manual_valuation_to_cars_enhanced:
-        | {
-            Args: { p_manual_valuation_id: string; p_reserve_price?: number }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_admin_id: string
-              p_reserve_price: number
-              p_valuation_id: string
-            }
-            Returns: Json
-          }
+      admin_transfer_manual_valuation_to_cars_enhanced: {
+        Args: { p_manual_valuation_id: string; p_reserve_price?: number }
+        Returns: Json
+      }
       admin_update_manual_valuation: {
         Args: { p_valuation_data: Json; p_valuation_id: string }
         Returns: Json
+      }
+      admin_upload_car_file: {
+        Args: {
+          p_car_id: string
+          p_category: string
+          p_display_order: number
+          p_file_path: string
+          p_file_type: string
+          p_seller_id: string
+        }
+        Returns: string
       }
       approve_listing: {
         Args: { p_admin_id: string; p_listing_id: string; p_notes?: string }
@@ -2502,6 +2375,7 @@ export type Database = {
         Args: { p_email: string }
         Returns: Json
       }
+      check_is_admin: { Args: never; Returns: boolean }
       check_seller_exists: { Args: { p_user_id: string }; Returns: Json }
       check_tax_id_exists: { Args: { tax_id: string }; Returns: Json }
       check_upload_rate_limit: {
@@ -2514,6 +2388,11 @@ export type Database = {
       }
       cleanup_expired_reset_tokens: { Args: never; Returns: undefined }
       cleanup_expired_vin_reservations: { Args: never; Returns: number }
+      cleanup_logs_manual: {
+        Args: { batch_size?: number; max_rows_to_delete?: number }
+        Returns: Json
+      }
+      cleanup_old_logs: { Args: never; Returns: Json }
       cleanup_vin_valuation_cache: { Args: never; Returns: undefined }
       close_ended_auctions: { Args: never; Returns: Json }
       create_admin_notification: {
@@ -2791,6 +2670,23 @@ export type Database = {
         Returns: {
           seller_email: string
           seller_id: string
+        }[]
+      }
+      get_cleanup_job_status: {
+        Args: never
+        Returns: {
+          avg_duration_seconds: number
+          failed_runs: number
+          is_active: boolean
+          job_name: string
+          last_run_duration: unknown
+          last_run_status: string
+          last_run_time: string
+          next_scheduled_run: string
+          rows_deleted_last_run: number
+          schedule: string
+          successful_runs: number
+          total_runs: number
         }[]
       }
       get_correct_auction_status: {
@@ -3126,6 +3022,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin_from_jwt: { Args: never; Returns: boolean }
       is_admin_user: { Args: { user_id?: string }; Returns: boolean }
       is_dealer: { Args: never; Returns: boolean }
       is_seller: { Args: never; Returns: boolean }
@@ -3236,6 +3133,7 @@ export type Database = {
         Returns: undefined
       }
       test_admin_policies: { Args: never; Returns: Json }
+      test_cleanup_small: { Args: never; Returns: Json }
       test_live_auction_schedules_no_auth: {
         Args: never
         Returns: {
