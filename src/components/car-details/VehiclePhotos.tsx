@@ -150,12 +150,13 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
       {/* Gallery Dialog */}
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
         <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
-          <div className="relative w-full h-full flex items-center justify-center bg-black">
+          <div className="relative w-full h-full flex items-center justify-center bg-black p-4">
             {!isImageBroken(allImages[selectedImageIndex]?.src) ? (
               <img
                 src={allImages[selectedImageIndex]?.src}
                 alt={allImages[selectedImageIndex]?.label || "Vehicle photo"}
-                className="max-w-full max-h-full object-contain"
+                className="w-auto h-auto max-w-full max-h-full object-scale-down"
+                style={{ objectFit: 'scale-down', objectPosition: 'center' }}
                 onError={() => handleImageError(allImages[selectedImageIndex]?.src)}
               />
             ) : (
@@ -172,20 +173,22 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
             {allImages.length > 1 && (
               <>
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute left-4 text-white hover:bg-white/20"
+                  variant="default"
+                  size="lg"
+                  className="absolute left-4 bg-primary hover:bg-primary/90 text-white shadow-lg w-14 h-14 rounded-full z-10"
                   onClick={prevImage}
+                  aria-label="Previous image"
                 >
-                  <ChevronLeft className="h-6 w-6" />
+                  <ChevronLeft className="h-8 w-8" />
                 </Button>
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-4 text-white hover:bg-white/20"
+                  variant="default"
+                  size="lg"
+                  className="absolute right-4 bg-primary hover:bg-primary/90 text-white shadow-lg w-14 h-14 rounded-full z-10"
                   onClick={nextImage}
+                  aria-label="Next image"
                 >
-                  <ChevronRight className="h-6 w-6" />
+                  <ChevronRight className="h-8 w-8" />
                 </Button>
               </>
             )}
