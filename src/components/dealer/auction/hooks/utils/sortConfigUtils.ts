@@ -6,11 +6,15 @@ export const getSortConfig = (sortOption: string) => {
     case "newest":
       return { field: 'auction_end_time', direction: 'desc' as const };
     case "price-low-high":
-      return { field: 'price', direction: 'asc' as const };
+      return { field: 'reserve_price', direction: 'asc' as const };
     case "price-high-low":
-      return { field: 'price', direction: 'desc' as const };
+      return { field: 'reserve_price', direction: 'desc' as const };
     case "highest-bid":
       return { field: 'current_bid', direction: 'desc' as const };
+    case "mileage-low":
+      return { field: 'mileage', direction: 'asc' as const };
+    case "mileage-high":
+      return { field: 'mileage', direction: 'desc' as const };
     case "year-new-old":
       return { field: 'year', direction: 'desc' as const };
     case "year-old-new":
