@@ -321,15 +321,15 @@ export const formatAuctionData = async (auctionData: CarData[], dealerBids: BidD
       } as Auction;
     })
     .filter((item): item is Auction => item !== null)
-    // Only apply timing priority sort for time-based sorts (ending-soon, newest)
-    // For user-selected sorts (price, year, mileage), respect the database order
+    // Only apply timing priority sort for "newest"
+    // For user-selected sorts (price, year), respect the database order
     .sort((a, b) => {
-      // For "ending-soon" and "newest", prioritize by timing status first
-      if (sortOption === 'ending-soon' || sortOption === 'newest') {
+      // For "newest", prioritize active auctions first, then by timing status
+      if (sortOption === 'newest') {
         const priorityOrder = { active: 0, scheduled: 1, ended: 2, unknown: 3 };
         return priorityOrder[a.auctionTimingStatus] - priorityOrder[b.auctionTimingStatus];
       }
-      // For all other sorts (price, year, mileage, highest-bid), keep database sort order
+      // For all other sorts (price, year), keep database sort order
       return 0;
     });
 };
