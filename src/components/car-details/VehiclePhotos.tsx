@@ -213,19 +213,25 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                             </div>
 
                             <TransformComponent
-                              wrapperStyle={{
-                                width: "100%",
-                                height: "100%",
+                              wrapperClass="!w-full !h-full"
+                              contentStyle={{
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
+                                width: "100%",
+                                height: "100%",
                               }}
                             >
                               <img
                                 src={image.src}
                                 alt={image.label || `Vehicle photo ${index + 1}`}
                                 className="max-w-full max-h-full object-contain"
-                                style={{ width: 'auto', height: 'auto' }}
+                                style={{ 
+                                  width: 'auto', 
+                                  height: 'auto',
+                                  margin: '0 auto',
+                                  display: 'block'
+                                }}
                                 onError={() => handleImageError(image.src)}
                               />
                             </TransformComponent>
