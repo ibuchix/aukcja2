@@ -4,28 +4,12 @@ import { BaseRecord, TableRow } from '../../../types/supabase/common';
 export interface AuctionFilters {
   priceMin?: string;
   priceMax?: string;
-  priceFrom?: number;
-  priceTo?: number;
   make?: string;
   model?: string;
   yearMin?: string;
   yearMax?: string;
-  yearFrom?: number;
-  yearTo?: number;
   mileageMin?: string;
   mileageMax?: string;
-  mileageFrom?: number;
-  mileageTo?: number;
-  ageMin?: string;
-  ageMax?: string;
-  ageFrom?: number;
-  ageTo?: number;
-  transmission?: string;
-  fuelType?: string;
-  bodyType?: string;
-  location?: string;
-  serviceHistory?: string;
-  distance?: string;
 }
 
 export interface AuctionPaginationResult<T> {

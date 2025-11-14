@@ -74,33 +74,6 @@ export const applyFilters = (query: any, filters: AuctionFilters, searchQuery: s
     }
   }
 
-  // Year range filters (direct year filtering from age range component)
-  if (filters.ageMin && typeof filters.ageMin === 'string') {
-    const yearValue = parseFloat(filters.ageMin);
-    if (!isNaN(yearValue)) {
-      filteredQuery = filteredQuery.gte('year', yearValue);
-    }
-  }
-  
-  if (filters.ageMax && typeof filters.ageMax === 'string') {
-    const yearValue = parseFloat(filters.ageMax);
-    if (!isNaN(yearValue)) {
-      filteredQuery = filteredQuery.lte('year', yearValue);
-    }
-  }
-
-  // Additional string filters
-  if (filters.transmission && typeof filters.transmission === 'string') {
-    filteredQuery = filteredQuery.ilike('transmission', `%${filters.transmission}%`);
-  }
-
-  if (filters.fuelType && typeof filters.fuelType === 'string') {
-    filteredQuery = filteredQuery.ilike('fuel_type', `%${filters.fuelType}%`);
-  }
-
-  if (filters.serviceHistory && typeof filters.serviceHistory === 'string') {
-    filteredQuery = filteredQuery.ilike('service_history_type', `%${filters.serviceHistory}%`);
-  }
   
   // Apply search query with case-insensitive matching
   if (searchQuery && searchQuery.trim()) {

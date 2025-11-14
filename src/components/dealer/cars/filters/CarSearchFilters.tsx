@@ -140,38 +140,6 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
             }}
           />
 
-          {/* Age Range Filter */}
-          <AgeRangeFilter 
-            key="age-range-filter"
-            minAge={filters.ageMin ? Number(filters.ageMin) : undefined}
-            maxAge={filters.ageMax ? Number(filters.ageMax) : undefined}
-            onAgeChange={(min, max) => {
-              onFilterChange('ageMin', min?.toString());
-              onFilterChange('ageMax', max?.toString());
-            }}
-          />
-
-          {/* Additional Filters Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <TransmissionFilter 
-              key="transmission-filter"
-              value={filters.transmission}
-              onChange={(transmission) => onFilterChange('transmission', transmission)}
-            />
-            
-            <FuelTypeFilter 
-              key="fuel-type-filter"
-              value={filters.fuelType}
-              onChange={(fuelType) => onFilterChange('fuelType', fuelType)}
-            />
-            
-            <ServiceHistoryFilter 
-              key="service-history-filter"
-              value={filters.serviceHistory}
-              onChange={(serviceHistory) => onFilterChange('serviceHistory', serviceHistory)}
-            />
-
-          </div>
 
           {/* Clear Filters Button */}
           {activeFilterCount > 0 && (
