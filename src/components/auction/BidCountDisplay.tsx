@@ -1,5 +1,5 @@
 
-import { Users, Gavel } from "lucide-react";
+import { HelpCircle, Gavel } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useBidCount } from "@/hooks/useBidCount";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,8 +26,8 @@ export const BidCountDisplay = ({ carId }: BidCountDisplayProps) => {
       <Card className="mb-4 bg-blue-50 border-blue-200">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-blue-700">
-            <Users className="h-4 w-4" />
-            <span className="text-sm font-medium">Złóż pierwszą ofertę na ten samochód</span>
+            <HelpCircle className="h-4 w-4" />
+            <span className="text-sm font-medium">Cena orientacyjna to kwota zaakceptowana przez sprzedającego. Aby zwiększyć szanse na wygraną, licytuj jak najbliżej tej ceny lub powyżej.</span>
           </div>
         </CardContent>
       </Card>
