@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Camera, AlertCircle, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import {
@@ -28,8 +30,9 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [imageLoadErrors, setImageLoadErrors] = useState<Set<string>>(new Set());
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const isMobile = useIsMobile();
   
-  const { 
+  const {
     getAllImagesWithFallback, 
     getTotalImageCount, 
     isLoadingStorage 
@@ -159,7 +162,10 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
 
       {/* Gallery Dialog */}
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
-        <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
+        <DialogContent className={cn(
+          "max-w-4xl w-full p-0",
+          isMobile ? "h-screen" : "h-[80vh]"
+        )}>
           <div className="relative w-full h-full bg-black">
             <Carousel 
               className="w-full h-full"
@@ -170,9 +176,12 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                 startIndex: selectedImageIndex
               }}
             >
-              <CarouselContent className="h-[80vh]">
+              <CarouselContent className={isMobile ? "h-screen" : "h-[80vh]"}>
                 {allImages.map((image, index) => (
-                  <CarouselItem key={index} className="flex items-center justify-center p-4">
+                  <CarouselItem key={index} className={cn(
+                    "flex items-center justify-center",
+                    isMobile ? "p-2" : "p-4"
+                  )}>
                     {!isImageBroken(image.src) ? (
                       <TransformWrapper
                         key={`transform-${index}`}
@@ -185,42 +194,44 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                       >
                         {({ zoomIn, zoomOut, resetTransform }) => (
                           <div className="relative w-full h-full">
-                            {/* Zoom Controls */}
-                            <div className="absolute top-4 right-4 flex gap-2 z-30">
-                              <Button
-                                size="icon"
-                                className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  zoomIn();
-                                }}
-                                aria-label="Zoom in"
-                              >
-                                <ZoomIn className="h-5 w-5" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  zoomOut();
-                                }}
-                                aria-label="Zoom out"
-                              >
-                                <ZoomOut className="h-5 w-5" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  resetTransform();
-                                }}
-                                aria-label="Reset zoom"
-                              >
-                                <RotateCcw className="h-5 w-5" />
-                              </Button>
-                            </div>
+                            {/* Zoom Controls - Desktop Only */}
+                            {!isMobile && (
+                              <div className="absolute top-4 right-4 flex gap-2 z-30">
+                                <Button
+                                  size="icon"
+                                  className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    zoomIn();
+                                  }}
+                                  aria-label="Zoom in"
+                                >
+                                  <ZoomIn className="h-5 w-5" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    zoomOut();
+                                  }}
+                                  aria-label="Zoom out"
+                                >
+                                  <ZoomOut className="h-5 w-5" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    resetTransform();
+                                  }}
+                                  aria-label="Reset zoom"
+                                >
+                                  <RotateCcw className="h-5 w-5" />
+                                </Button>
+                              </div>
+                            )}
 
                             <TransformComponent
                               wrapperClass="!w-full !h-full"
@@ -265,17 +276,26 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
               {allImages.length > 1 && (
                 <>
                   <CarouselPrevious 
-                    className="absolute left-4 bg-primary hover:bg-primary/90 text-white shadow-lg w-14 h-14 rounded-full border-0 z-10"
+                    className={cn(
+                      "absolute bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full border-0 z-10",
+                      isMobile ? "left-2 w-12 h-12" : "left-4 w-14 h-14"
+                    )}
                   />
                   <CarouselNext 
-                    className="absolute right-4 bg-primary hover:bg-primary/90 text-white shadow-lg w-14 h-14 rounded-full border-0 z-10"
+                    className={cn(
+                      "absolute bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full border-0 z-10",
+                      isMobile ? "right-2 w-12 h-12" : "right-4 w-14 h-14"
+                    )}
                   />
                 </>
               )}
             </Carousel>
 
             {/* Image counter */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded z-20">
+            <div className={cn(
+              "absolute left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded z-20",
+              isMobile ? "bottom-2 text-sm" : "bottom-4 text-base"
+            )}>
               Zdjęcie {selectedImageIndex + 1} z {allImages.length}
             </div>
 
