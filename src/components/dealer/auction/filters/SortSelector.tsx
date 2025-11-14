@@ -9,11 +9,9 @@ import {
 import { SortOption, SortSelectorProps } from "../types";
 
 export const sortOptions: SortOption[] = [
-  { value: "ending-soon", label: "Kończące się wkrótce" },
   { value: "newest", label: "Najnowsze pierwsze" },
   { value: "price-low-high", label: "Cena: od najniższej" },
   { value: "price-high-low", label: "Cena: od najwyższej" },
-  { value: "highest-bid", label: "Najwyższa oferta" },
   { value: "year-new-old", label: "Rok: od najnowszego" },
   { value: "year-old-new", label: "Rok: od najstarszego" },
 ];
