@@ -93,11 +93,11 @@ export const buildAuctionQuery = (
   }
   
   if (filters.priceMin) {
-    query = query.gte("price", filters.priceMin);
+    query = query.gte("reserve_price", filters.priceMin);
   }
   
   if (filters.priceMax) {
-    query = query.lte("price", filters.priceMax);
+    query = query.lte("reserve_price", filters.priceMax);
   }
   
   if (filters.mileageMin) {
