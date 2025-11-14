@@ -175,6 +175,7 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                   <CarouselItem key={index} className="flex items-center justify-center p-4">
                     {!isImageBroken(image.src) ? (
                       <TransformWrapper
+                        key={`transform-${index}`}
                         initialScale={1}
                         minScale={0.5}
                         maxScale={4}
@@ -183,13 +184,16 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                         wheel={{ step: 0.1 }}
                       >
                         {({ zoomIn, zoomOut, resetTransform }) => (
-                          <>
+                          <div className="relative w-full h-full">
                             {/* Zoom Controls */}
                             <div className="absolute top-4 right-4 flex gap-2 z-30">
                               <Button
                                 size="icon"
                                 className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full"
-                                onClick={() => zoomIn()}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  zoomIn();
+                                }}
                                 aria-label="Zoom in"
                               >
                                 <ZoomIn className="h-5 w-5" />
@@ -197,7 +201,10 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                               <Button
                                 size="icon"
                                 className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full"
-                                onClick={() => zoomOut()}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  zoomOut();
+                                }}
                                 aria-label="Zoom out"
                               >
                                 <ZoomOut className="h-5 w-5" />
@@ -205,7 +212,10 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                               <Button
                                 size="icon"
                                 className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full"
-                                onClick={() => resetTransform()}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  resetTransform();
+                                }}
                                 aria-label="Reset zoom"
                               >
                                 <RotateCcw className="h-5 w-5" />
@@ -235,7 +245,7 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                                 onError={() => handleImageError(image.src)}
                               />
                             </TransformComponent>
-                          </>
+                          </div>
                         )}
                       </TransformWrapper>
                     ) : (
