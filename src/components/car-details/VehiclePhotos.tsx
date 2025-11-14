@@ -3,6 +3,14 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Camera, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  CarouselApi,
+} from "@/components/ui/carousel";
 import { CarListing } from "@/types/cars";
 import { getAllCarImages, getImageCount, debugCarImages } from "@/utils/imageUtils";
 import { useCarImagesFallback } from "@/hooks/useCarImagesFallback";
@@ -18,6 +26,7 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [imageLoadErrors, setImageLoadErrors] = useState<Set<string>>(new Set());
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   
   const { 
     getAllImagesWithFallback, 
@@ -31,14 +40,14 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
   const allImages = dbImages.length > 0 ? dbImages : (fallbackImages || []);
   const imageCount = getTotalImageCount();
 
-
-  const nextImage = () => {
-    setSelectedImageIndex((prev) => (prev + 1) % allImages.length);
-  };
-
-  const prevImage = () => {
-    setSelectedImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
-  };
+  // Sync carousel with selected index
+  useEffect(() => {
+    if (!carouselApi) return;
+    
+    carouselApi.on("select", () => {
+      setSelectedImageIndex(carouselApi.selectedScrollSnap());
+    });
+  }, [carouselApi]);
 
   const handleImageError = (src: string) => {
     setImageLoadErrors(prev => new Set([...prev, src]));
@@ -150,58 +159,64 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
       {/* Gallery Dialog */}
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
         <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
-          <div className="relative w-full h-full flex items-center justify-center bg-black p-4">
-            {!isImageBroken(allImages[selectedImageIndex]?.src) ? (
-              <img
-                src={allImages[selectedImageIndex]?.src}
-                alt={allImages[selectedImageIndex]?.label || "Vehicle photo"}
-                className="w-auto h-auto max-w-full max-h-full object-scale-down"
-                style={{ objectFit: 'scale-down', objectPosition: 'center' }}
-                onError={() => handleImageError(allImages[selectedImageIndex]?.src)}
-              />
-            ) : (
-              <div className="text-center text-white">
-                <Camera className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <p>Image failed to load</p>
-                <p className="text-sm opacity-75 mt-2">
-                  {allImages[selectedImageIndex]?.label}
-                </p>
-              </div>
-            )}
-            
-            {/* Navigation buttons */}
-            {allImages.length > 1 && (
-              <>
-                <Button
-                  variant="default"
-                  size="lg"
-                  className="absolute left-4 bg-primary hover:bg-primary/90 text-white shadow-lg w-14 h-14 rounded-full z-10"
-                  onClick={prevImage}
-                  aria-label="Previous image"
-                >
-                  <ChevronLeft className="h-8 w-8" />
-                </Button>
-                <Button
-                  variant="default"
-                  size="lg"
-                  className="absolute right-4 bg-primary hover:bg-primary/90 text-white shadow-lg w-14 h-14 rounded-full z-10"
-                  onClick={nextImage}
-                  aria-label="Next image"
-                >
-                  <ChevronRight className="h-8 w-8" />
-                </Button>
-              </>
-            )}
-            
+          <div className="relative w-full h-full bg-black">
+            <Carousel 
+              className="w-full h-full"
+              setApi={setCarouselApi}
+              opts={{
+                align: "center",
+                loop: true,
+                startIndex: selectedImageIndex
+              }}
+            >
+              <CarouselContent className="h-[80vh]">
+                {allImages.map((image, index) => (
+                  <CarouselItem key={index} className="flex items-center justify-center p-4">
+                    {!isImageBroken(image.src) ? (
+                      <img
+                        src={image.src}
+                        alt={image.label || `Vehicle photo ${index + 1}`}
+                        className="max-w-full max-h-full object-contain"
+                        style={{ width: 'auto', height: 'auto' }}
+                        onError={() => handleImageError(image.src)}
+                      />
+                    ) : (
+                      <div className="text-center text-white">
+                        <Camera className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                        <p>Image failed to load</p>
+                        <p className="text-sm opacity-75 mt-2">
+                          {image.label}
+                        </p>
+                      </div>
+                    )}
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+
+              {/* Big Red Navigation Buttons */}
+              {allImages.length > 1 && (
+                <>
+                  <CarouselPrevious 
+                    className="absolute left-4 bg-primary hover:bg-primary/90 text-white shadow-lg w-14 h-14 rounded-full border-0 z-10"
+                  />
+                  <CarouselNext 
+                    className="absolute right-4 bg-primary hover:bg-primary/90 text-white shadow-lg w-14 h-14 rounded-full border-0 z-10"
+                  />
+                </>
+              )}
+            </Carousel>
+
             {/* Image counter */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded">
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded z-20">
               Zdjęcie {selectedImageIndex + 1} z {allImages.length}
             </div>
-            
+
             {/* Image label */}
-            <div className="absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded">
-              Zdjęcie {selectedImageIndex + 1}
-            </div>
+            {allImages[selectedImageIndex]?.label && (
+              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded z-20">
+                {allImages[selectedImageIndex].label}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
