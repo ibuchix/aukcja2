@@ -42,7 +42,7 @@ export const useAuctionBrowser = (
         const dealerBids = await fetchDealerBids(dealerId, auctionIds);
 
         // Format the data with proper type handling
-        const formattedAuctions = await formatAuctionData(typedAuctionData, dealerBids);
+        const formattedAuctions = await formatAuctionData(typedAuctionData, dealerBids, sortOption);
 
         // Determine if there are more pages
         const hasMore = formattedAuctions.length > PAGE_SIZE;
