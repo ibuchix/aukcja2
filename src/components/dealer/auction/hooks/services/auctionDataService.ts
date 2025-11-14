@@ -224,7 +224,7 @@ export const formatAuctionData = async (auctionData: CarData[], dealerBids: BidD
   
   const now = new Date();
   
-  return auctionData
+  const formattedAuctions = auctionData
     .map((auction) => {
       if (!auction || !auction.id) return null;
       
@@ -320,16 +320,17 @@ export const formatAuctionData = async (auctionData: CarData[], dealerBids: BidD
         fileUploads: fileUploads
       } as Auction;
     })
-    .filter((item): item is Auction => item !== null)
-    // Only apply timing priority sort for "newest"
-    // For user-selected sorts (price, year), respect the database order
-    .sort((a, b) => {
-      // For "newest", prioritize active auctions first, then by timing status
-      if (sortOption === 'newest') {
-        const priorityOrder = { active: 0, scheduled: 1, ended: 2, unknown: 3 };
-        return priorityOrder[a.auctionTimingStatus] - priorityOrder[b.auctionTimingStatus];
-      }
-      // For all other sorts (price, year), keep database sort order
-      return 0;
+    .filter((item): item is Auction => item !== null);
+
+  // Apply timing priority sort ONLY for "newest"
+  // For all other sorts (price, year), return database order AS-IS without any sorting
+  if (sortOption === 'newest') {
+    return formattedAuctions.sort((a, b) => {
+      const priorityOrder = { active: 0, scheduled: 1, ended: 2, unknown: 3 };
+      return priorityOrder[a.auctionTimingStatus] - priorityOrder[b.auctionTimingStatus];
     });
+  }
+  
+  // Return unsorted (maintains database sort order perfectly)
+  return formattedAuctions;
 };
