@@ -179,7 +179,7 @@ export const processAuctionData = (auctionData: any[]): CarData[] => {
     .filter(item => isValidRecord<CarData>(item) && !isSelectQueryError(item)) as CarData[];
 };
 
-export const formatAuctionData = async (auctionData: CarData[], dealerBids: BidData[]): Promise<Auction[]> => {
+export const formatAuctionData = async (auctionData: CarData[], dealerBids: BidData[], sortOption: string): Promise<Auction[]> => {
   console.log('🖼️ formatAuctionData starting to fetch file uploads for', auctionData.length, 'auctions');
   
   // Fetch car file uploads for all auction cars
@@ -303,9 +303,15 @@ export const formatAuctionData = async (auctionData: CarData[], dealerBids: BidD
       } as Auction;
     })
     .filter((item): item is Auction => item !== null)
-    // Sort to prioritize live auctions, then starting soon, then scheduled
+    // Only apply timing priority sort for time-based sorts (ending-soon, newest)
+    // For user-selected sorts (price, year, mileage), respect the database order
     .sort((a, b) => {
-      const priorityOrder = { active: 0, scheduled: 1, ended: 2, unknown: 3 };
-      return priorityOrder[a.auctionTimingStatus] - priorityOrder[b.auctionTimingStatus];
+      // For "ending-soon" and "newest", prioritize by timing status first
+      if (sortOption === 'ending-soon' || sortOption === 'newest') {
+        const priorityOrder = { active: 0, scheduled: 1, ended: 2, unknown: 3 };
+        return priorityOrder[a.auctionTimingStatus] - priorityOrder[b.auctionTimingStatus];
+      }
+      // For all other sorts (price, year, mileage, highest-bid), keep database sort order
+      return 0;
     });
 };
