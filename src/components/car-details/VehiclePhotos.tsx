@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, Camera, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Camera, AlertCircle, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import {
   Carousel,
   CarouselContent,
@@ -173,13 +174,64 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                 {allImages.map((image, index) => (
                   <CarouselItem key={index} className="flex items-center justify-center p-4">
                     {!isImageBroken(image.src) ? (
-                      <img
-                        src={image.src}
-                        alt={image.label || `Vehicle photo ${index + 1}`}
-                        className="max-w-full max-h-full object-contain"
-                        style={{ width: 'auto', height: 'auto' }}
-                        onError={() => handleImageError(image.src)}
-                      />
+                      <TransformWrapper
+                        initialScale={1}
+                        minScale={0.5}
+                        maxScale={4}
+                        doubleClick={{ mode: "toggle" }}
+                        pinch={{ step: 5 }}
+                        wheel={{ step: 0.1 }}
+                      >
+                        {({ zoomIn, zoomOut, resetTransform }) => (
+                          <>
+                            {/* Zoom Controls */}
+                            <div className="absolute top-4 right-4 flex gap-2 z-30">
+                              <Button
+                                size="icon"
+                                className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full"
+                                onClick={() => zoomIn()}
+                                aria-label="Zoom in"
+                              >
+                                <ZoomIn className="h-5 w-5" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full"
+                                onClick={() => zoomOut()}
+                                aria-label="Zoom out"
+                              >
+                                <ZoomOut className="h-5 w-5" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full"
+                                onClick={() => resetTransform()}
+                                aria-label="Reset zoom"
+                              >
+                                <RotateCcw className="h-5 w-5" />
+                              </Button>
+                            </div>
+
+                            <TransformComponent
+                              wrapperStyle={{
+                                width: "100%",
+                                height: "100%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <img
+                                src={image.src}
+                                alt={image.label || `Vehicle photo ${index + 1}`}
+                                className="max-w-full max-h-full object-contain"
+                                style={{ width: 'auto', height: 'auto' }}
+                                onError={() => handleImageError(image.src)}
+                              />
+                            </TransformComponent>
+                          </>
+                        )}
+                      </TransformWrapper>
                     ) : (
                       <div className="text-center text-white">
                         <Camera className="h-16 w-16 mx-auto mb-4 opacity-50" />
@@ -211,12 +263,6 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
               Zdjęcie {selectedImageIndex + 1} z {allImages.length}
             </div>
 
-            {/* Image label */}
-            {allImages[selectedImageIndex]?.label && (
-              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded z-20">
-                {allImages[selectedImageIndex].label}
-              </div>
-            )}
           </div>
         </DialogContent>
       </Dialog>
