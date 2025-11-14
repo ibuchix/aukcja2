@@ -35,14 +35,9 @@ export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardPr
             <Skeleton className="h-4 w-3/4" />
           </div>
         ) : (
-          <div className="space-y-3">
-            <p className="text-subtitle-text">
-              Witamy w panelu dealera 👋. Tutaj możesz przeglądać samochody dostępne w naszych codziennych aukcjach, a także zarządzać swoimi ofertami, zakupami i danymi konta.
-            </p>
-            <p className="text-subtitle-text">
-              Aukcja Autaro.pl zostanie uruchomiona już wkrótce. Po przesłaniu dokumentów Twoje konto będzie kompletne, jednak pełny dostęp do konta i aukcji uzyskasz dopiero w momencie jej startu. Wtedy aktywuje się także Twoje 50% zniżki na pierwsze dwie prowizje.
-            </p>
-          </div>
+          <p className="text-subtitle-text">
+            Witamy w panelu dealera 👋. Tutaj możesz przeglądać samochody dostępne w naszych codziennych aukcjach, a także zarządzać swoimi ofertami, zakupami i danymi konta.
+          </p>
         )}
       </CardContent>
     </Card>
