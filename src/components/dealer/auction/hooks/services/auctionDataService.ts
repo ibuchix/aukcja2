@@ -85,27 +85,45 @@ export const buildAuctionQuery = (
   }
   
   if (filters.yearMin) {
-    query = query.gte("year", filters.yearMin);
+    const minYear = parseInt(filters.yearMin, 10);
+    if (!isNaN(minYear)) {
+      query = query.gte("year", minYear);
+    }
   }
   
   if (filters.yearMax) {
-    query = query.lte("year", filters.yearMax);
+    const maxYear = parseInt(filters.yearMax, 10);
+    if (!isNaN(maxYear)) {
+      query = query.lte("year", maxYear);
+    }
   }
   
   if (filters.priceMin) {
-    query = query.gte("reserve_price", filters.priceMin);
+    const minPrice = parseInt(filters.priceMin, 10);
+    if (!isNaN(minPrice)) {
+      query = query.gte("reserve_price", minPrice);
+    }
   }
   
   if (filters.priceMax) {
-    query = query.lte("reserve_price", filters.priceMax);
+    const maxPrice = parseInt(filters.priceMax, 10);
+    if (!isNaN(maxPrice)) {
+      query = query.lte("reserve_price", maxPrice);
+    }
   }
   
   if (filters.mileageMin) {
-    query = query.gte("mileage", filters.mileageMin);
+    const minMileage = parseInt(filters.mileageMin, 10);
+    if (!isNaN(minMileage)) {
+      query = query.gte("mileage", minMileage);
+    }
   }
   
   if (filters.mileageMax) {
-    query = query.lte("mileage", filters.mileageMax);
+    const maxMileage = parseInt(filters.mileageMax, 10);
+    if (!isNaN(maxMileage)) {
+      query = query.lte("mileage", maxMileage);
+    }
   }
 
   // Apply cursor-based pagination if cursor is provided
