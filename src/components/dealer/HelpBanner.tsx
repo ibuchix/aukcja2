@@ -16,8 +16,6 @@ export const HelpBanner = () => {
         <span>lub</span>
         <a 
           href="https://wa.me/48459567877" 
-          target="_blank"
-          rel="noopener noreferrer"
           className="font-semibold hover:underline underline-offset-2 flex items-center gap-1 transition-all"
           style={{ color: '#32CD32' }}
         >
