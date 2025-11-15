@@ -1,7 +1,7 @@
-
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { HelpBanner } from "@/components/dealer/HelpBanner";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -14,6 +14,7 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
   return (
     <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#454545' }}>
       <Navbar />
+      <HelpBanner />
       
       <div className={`container mx-auto ${isMobile ? 'px-3 py-4' : 'px-4 py-8'} mt-20 flex-grow`}>
         <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold mb-6 text-body-text`}>{title}</h1>
