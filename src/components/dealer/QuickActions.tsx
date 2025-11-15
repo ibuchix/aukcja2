@@ -35,8 +35,6 @@ export function QuickActions() {
   if (isMobile) {
     return (
       <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-4 text-body-text">Szybkie działania</h2>
-        
         <div className="flex justify-center gap-8">
           {quickActionItems.map((item) => (
             <Button
