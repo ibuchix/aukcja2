@@ -44,9 +44,9 @@ export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardPr
               <a 
                 href="/how-it-works" 
                 className="font-semibold hover:underline underline-offset-2 transition-all"
-                style={{ color: '#32CD32' }}
+                style={{ color: '#D81B24' }}
               >
-                „Jak to działa"
+                Jak to działa
               </a>
               {' '}lub zadzwoń do nas pod numer{' '}
               <a 
