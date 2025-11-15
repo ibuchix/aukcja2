@@ -154,13 +154,13 @@ const DashboardContent = () => {
         {errorAlert}
         {verificationBanner}
         
-        {/* Mobile: Quick actions and tabs first, then welcome card */}
+        {/* Mobile: Quick actions, welcome card, then tabs */}
         {/* Desktop: Welcome card first, then quick actions and tabs */}
         {isMobile ? (
           <>
             {quickActions}
-            {tabsSection}
             {welcomeCard}
+            {tabsSection}
           </>
         ) : (
           <>

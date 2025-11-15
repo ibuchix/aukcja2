@@ -17,7 +17,7 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
       <HelpBanner />
       
       <div className={`container mx-auto ${isMobile ? 'px-3 py-4' : 'px-4 py-8'} flex-grow`}>
-        <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold mb-6 text-body-text`}>{title}</h1>
+        {!isMobile && <h1 className="text-3xl font-bold mb-6 text-body-text">{title}</h1>}
         {children}
       </div>
       
