@@ -17,11 +17,11 @@ export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardPr
   // Mobile collapsible version
   if (isMobile) {
     return (
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <Card className="bg-secondary shadow-lg border border-accent/20">
-          <CollapsibleTrigger className="w-full">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
+      <Card className="bg-secondary shadow-lg border border-accent/20">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="pb-2 cursor-pointer hover:bg-accent/10 transition-colors">
+              <div className="flex items-center justify-between w-full">
                 <CardTitle className="text-lg font-semibold text-body-text text-left">
                   {isLoading ? (
                     <Skeleton className="h-6 w-64" />
@@ -30,7 +30,7 @@ export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardPr
                   )}
                 </CardTitle>
                 <ChevronDown 
-                  className={`h-5 w-5 text-body-text transition-transform duration-200 ${
+                  className={`h-5 w-5 text-body-text flex-shrink-0 transition-transform duration-200 ${
                     isOpen ? 'rotate-180' : ''
                   }`}
                 />
@@ -81,8 +81,8 @@ export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardPr
               )}
             </CardContent>
           </CollapsibleContent>
-        </Card>
-      </Collapsible>
+        </Collapsible>
+      </Card>
     );
   }
 
