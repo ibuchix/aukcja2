@@ -107,10 +107,10 @@ function ActionButton({ icon, title, description, link, variant }: ActionButtonP
 
   return (
     <div 
-      className={`${variantStyles[variant]} p-5 rounded-lg cursor-pointer hover:shadow-lg transition-all group`}
+      className={`${variantStyles[variant]} p-4 rounded-lg cursor-pointer hover:shadow-lg transition-all group`}
       onClick={() => navigate(link)}
     >
-      <div className="flex items-center mb-3">
+      <div className="flex items-center">
         <div className="bg-background p-2 rounded-full shadow-sm mr-3 border border-accent/20">
           <div className={iconColors[variant]}>
             {icon}
@@ -118,12 +118,6 @@ function ActionButton({ icon, title, description, link, variant }: ActionButtonP
         </div>
         <h3 className="font-medium text-lg text-body-text">{title}</h3>
       </div>
-      <p className="text-subtitle-text mb-3">{description}</p>
-      <span className={`${textColors[variant]} font-medium group-hover:underline`}>
-        {title === "Moje oferty" ? "Wyświetl moje oferty" : 
-         title === "Wygrane Auta" ? "Zobacz wygrane auta" : 
-         "Zarządzaj dokumentami"} →
-      </span>
     </div>
   );
 }
