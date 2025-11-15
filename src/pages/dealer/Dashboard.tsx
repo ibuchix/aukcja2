@@ -68,87 +68,107 @@ const DashboardContent = () => {
     }
   }, [error, displayProfile, isLoading, toast]);
 
+  // Component definitions for reordering
+  const errorAlert = error && !displayProfile && (
+    <Alert variant="destructive">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle>Błąd ładowania profilu</AlertTitle>
+      <AlertDescription className="space-y-4">
+        <p>{error}</p>
+        <Button onClick={refreshProfile} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Ponów ładowanie profilu
+        </Button>
+      </AlertDescription>
+    </Alert>
+  );
+
+  const verificationBanner = displayProfile && !isVerified && (
+    <Alert className="border-[#DC143C]/20 bg-[#DC143C]/5">
+      <Building2 className="h-4 w-4 text-[#DC143C]" />
+      <AlertTitle className="text-[#DC143C]">Wymagana weryfikacja konta</AlertTitle>
+      <AlertDescription className="text-[#DC143C]/80">
+        <p className="mb-3">
+          Aby uzyskać dostęp do wszystkich funkcji platformy i rozpocząć licytację na aukcjach, prosimy o dokończenie weryfikacji konta poprzez przesłanie rachunku za media Twojej firmy.
+        </p>
+        <Button 
+          onClick={() => navigate('/dealer/documents')}
+          className="bg-[#DC143C] hover:bg-[#DC143C]/90 text-white"
+          size="sm"
+        >
+          <FileText className="w-4 h-4 mr-2" />
+          Przejdź do dokumentów
+        </Button>
+      </AlertDescription>
+    </Alert>
+  );
+
+  const welcomeCard = (
+    <DealerWelcomeCard 
+      dealerName={dealerName}
+      isLoading={isLoading}
+    />
+  );
+
+  const quickActions = <QuickActions />;
+  
+  const tabsSection = (
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="auctions">
+          {isMobile ? "Aukcja" : "Aukcja na żywo"}
+        </TabsTrigger>
+        <TabsTrigger value="overview">Przegląd</TabsTrigger>
+        <TabsTrigger value="profile">Profil</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="auctions">
+        <div className="mt-4">
+          {displayProfile?.id ? (
+            <SimpleLiveAuctionsView />
+          ) : (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Prosimy o dokończenie profilu dealera, aby wyświetlić aukcje na żywo.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="overview" className="space-y-6">
+        <StatsSection />
+      </TabsContent>
+      
+      <TabsContent value="profile">
+        <ProfileInfoSection />
+      </TabsContent>
+    </Tabs>
+  );
+
   return (
     <DashboardLayout title="Aukcja">
-      <div className="space-y-6">
-        {/* Show error if profile failed to load */}
-        {error && !displayProfile && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Błąd ładowania profilu</AlertTitle>
-            <AlertDescription className="space-y-4">
-              <p>{error}</p>
-              <Button onClick={refreshProfile} variant="outline" size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Ponów ładowanie profilu
-              </Button>
-            </AlertDescription>
-          </Alert>
+      <div className={isMobile ? "space-y-4" : "space-y-6"}>
+        {/* Always show errors and verification banner first */}
+        {errorAlert}
+        {verificationBanner}
+        
+        {/* Mobile: Quick actions and tabs first, then welcome card */}
+        {/* Desktop: Welcome card first, then quick actions and tabs */}
+        {isMobile ? (
+          <>
+            {quickActions}
+            {tabsSection}
+            {welcomeCard}
+          </>
+        ) : (
+          <>
+            {welcomeCard}
+            {quickActions}
+            {tabsSection}
+          </>
         )}
-
-        {/* Verification Banner for Unverified Dealers */}
-        {displayProfile && !isVerified && (
-          <Alert className="border-[#DC143C]/20 bg-[#DC143C]/5">
-            <Building2 className="h-4 w-4 text-[#DC143C]" />
-            <AlertTitle className="text-[#DC143C]">Wymagana weryfikacja konta</AlertTitle>
-            <AlertDescription className="text-[#DC143C]/80">
-              <p className="mb-3">
-                Aby uzyskać dostęp do wszystkich funkcji platformy i rozpocząć licytację na aukcjach, prosimy o dokończenie weryfikacji konta poprzez przesłanie rachunku za media Twojej firmy.
-              </p>
-              <Button 
-                onClick={() => navigate('/dealer/documents')}
-                className="bg-[#DC143C] hover:bg-[#DC143C]/90 text-white"
-                size="sm"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Przejdź do dokumentów
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {/* Welcome Card - uses memoized dealer name */}
-        <DealerWelcomeCard 
-          dealerName={dealerName}
-          isLoading={isLoading}
-        />
-        
-        {/* Quick Actions Section */}
-        <QuickActions />
-        
-        {/* Dashboard Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="auctions">
-              {isMobile ? "Aukcja" : "Aukcja na żywo"}
-            </TabsTrigger>
-            <TabsTrigger value="overview">Przegląd</TabsTrigger>
-            <TabsTrigger value="profile">Profil</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="auctions">
-            <div className="mt-4">
-              {displayProfile?.id ? (
-                <SimpleLiveAuctionsView />
-              ) : (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Prosimy o dokończenie profilu dealera, aby wyświetlić aukcje na żywo.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="overview" className="space-y-6">
-            <StatsSection />
-          </TabsContent>
-          
-          <TabsContent value="profile">
-            <ProfileInfoSection />
-          </TabsContent>
-        </Tabs>
       </div>
     </DashboardLayout>
   );
