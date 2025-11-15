@@ -2,7 +2,7 @@ import { Phone, MessageCircle } from "lucide-react";
 
 export const HelpBanner = () => {
   return (
-    <div className="bg-[#D81B24] text-white py-3 px-4">
+    <div className="bg-[#D81B24] text-white py-3 px-4 mt-20">
       <div className="container mx-auto flex items-center justify-center gap-2 text-center flex-wrap text-sm md:text-base">
         <Phone className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
         <span>Jeśli masz pytania lub potrzebujesz pomocy,</span>
