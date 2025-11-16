@@ -112,10 +112,10 @@ export const SimpleBidManager = ({
       return;
     }
 
-    // Validate 40% minimum of reserve price
-    if (reservePrice && numericBidAmount < (reservePrice * 0.4)) {
-      const minAllowed = Math.ceil(reservePrice * 0.4);
-      setBidError(`Minimalna oferta to ${minAllowed.toLocaleString('pl-PL')} PLN (40% ceny minimalnej)`);
+    // Validate 60% minimum of reserve price
+    if (reservePrice && numericBidAmount < (reservePrice * 0.6)) {
+      const minAllowed = Math.ceil(reservePrice * 0.6);
+      setBidError(`Minimalna oferta to ${minAllowed.toLocaleString('pl-PL')} PLN (60% ceny minimalnej)`);
       return;
     }
     setBidError(""); // Clear any previous errors
@@ -218,11 +218,6 @@ export const SimpleBidManager = ({
                 </Tooltip>
               </TooltipProvider>
             </label>
-            {reservePrice && (
-              <p className="text-xs text-muted-foreground mb-2">
-                Minimalna oferta: {Math.ceil(reservePrice * 0.4).toLocaleString('pl-PL')} PLN (40% ceny orientacyjnej)
-              </p>
-            )}
             <Input
               id="bidAmount"
               type="number"
