@@ -5,21 +5,36 @@ const HowItWorks = () => {
     {
       id: 1,
       title: "Załóż konto dealera",
-      description: "• Na aukcjach Autaro mogą składać oferty wyłącznie zweryfikowani dealerzy.\n• Nasz system analizuje dane rynkowe, aby wyznaczać opłacalne ceny orientacyjne pojazdów.\n• Zarejestruj swój komis już teraz i otrzymaj 30% zniżki na pierwszą prowizję.\n• Otrzymasz także powiadomienia o starcie cotygodniowych aukcji.",
+      description: [
+        "Na aukcjach Autaro mogą składać oferty wyłącznie zweryfikowani dealerzy.",
+        "Nasz system analizuje dane rynkowe, aby wyznaczać opłacalne ceny orientacyjne pojazdów.",
+        "Zarejestruj swój komis już teraz i otrzymaj 30% zniżki na pierwszą prowizję.",
+        "Otrzymasz także powiadomienia o starcie cotygodniowych aukcji."
+      ],
       image: "/lovable-uploads/07777f71-e054-4c81-89b9-8cfa9236de87.png",
       alt: "Rejestracja konta dealera na telefonie"
     },
     {
       id: 2,
       title: "Przeglądaj Aukcje i Szukaj Okazji!",
-      description: "• Na Autaro znajdziesz auta różnych marek, roczników i przebiegów — z całej Polski.\n• Każdy dealer znajdzie pojazdy idealne do dalszej odsprzedaży.\n• Integracja z CarVertical i AutoBaza umożliwia szybki zakup raportu historii pojazdu.\n• Dzięki temu masz maksymalną pewność i bezpieczeństwo przy zakupie.",
+      description: [
+        "Na Autaro znajdziesz auta różnych marek, roczników i przebiegów — z całej Polski.",
+        "Każdy dealer znajdzie pojazdy idealne do dalszej odsprzedaży.",
+        "Integracja z CarVertical i AutoBaza umożliwia szybki zakup raportu historii pojazdu.",
+        "Dzięki temu masz maksymalną pewność i bezpieczeństwo przy zakupie."
+      ],
       image: "/lovable-uploads/92128f50-8e2a-4033-a415-a8521467bdd5.png",
       alt: "Przeglądanie aukcji samochodów na laptopie"
     },
     {
       id: 3,
       title: "Wygraj Licytacje i odbierz Samochód!",
-      description: "• Jeśli sprzedający zaakceptuje Twoją ofertę, otrzymasz natychmiastowe powiadomienie.\n• Po opłaceniu prowizji udostępnimy Ci dane kontaktowe sprzedającego.\n• Możesz sprawdzić stan auta podczas odbioru, przed finalizacją zakupu.\n• Jeśli z uzasadnionego powodu sprzedaż nie dojdzie do skutku, możesz poprosić o zwrot prowizji.",
+      description: [
+        "Jeśli sprzedający zaakceptuje Twoją ofertę, otrzymasz natychmiastowe powiadomienie.",
+        "Po opłaceniu prowizji udostępnimy Ci dane kontaktowe sprzedającego.",
+        "Możesz sprawdzić stan auta podczas odbioru, przed finalizacją zakupu.",
+        "Jeśli z uzasadnionego powodu sprzedaż nie dojdzie do skutku, możesz poprosić o zwrot prowizji."
+      ],
       image: "/lovable-uploads/13cf1931-bc2c-436f-86f2-db48c5f32137.png",
       alt: "Finalizacja zakupu samochodu"
     }
@@ -72,9 +87,13 @@ const HowItWorks = () => {
                   <h3 className="text-xl font-bold mb-4 text-body-text group-hover:text-primary transition-colors duration-300">
                     {step.title}
                   </h3>
-                  <p className="text-subtitle-text leading-relaxed">
-                    {step.description}
-                  </p>
+                  <ul className="text-subtitle-text leading-relaxed text-left space-y-2 list-disc list-inside">
+                    {step.description.map((item, idx) => (
+                      <li key={idx} className="text-sm">
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             </motion.div>
