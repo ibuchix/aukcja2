@@ -55,8 +55,13 @@ export const CarListingCard = ({ car, onViewDetails }: CarListingCardProps) => {
           <img 
             src={finalPrimaryImage} 
             alt={car.title || `${car.year} ${car.make} ${car.model}`} 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-opacity duration-300 ease-in-out"
+            loading="lazy"
             onError={handleImageError}
+            onLoad={(e) => {
+              e.currentTarget.style.opacity = '1';
+            }}
+            style={{ opacity: 0 }}
           />
         )}
       </div>
