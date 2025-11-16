@@ -51,7 +51,7 @@ export const AuctionTimer = ({ auctionEndTime }: AuctionTimerProps) => {
   }, [auctionEndTime]);
 
   return (
-    <span className="font-medium">
+    <span className="font-medium text-primary">
       {timeRemaining}
     </span>
   );
