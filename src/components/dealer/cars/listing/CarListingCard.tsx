@@ -3,8 +3,9 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CarListing } from "@/types/cars";
 import { formatCurrency } from "@/lib/utils";
-import { getPrimaryImage } from "@/utils/imageUtils";
+import { getPrimaryImage, getAllCarImages } from "@/utils/imageUtils";
 import { useCarImagesFallback } from "@/hooks/useCarImagesFallback";
+import { useImagePrefetch } from "@/hooks/useImagePrefetch";
 import { Camera } from "lucide-react";
 
 interface CarListingCardProps {
@@ -15,6 +16,7 @@ interface CarListingCardProps {
 export const CarListingCard = ({ car, onViewDetails }: CarListingCardProps) => {
   const [imageError, setImageError] = useState(false);
   const { getPrimaryImageWithFallback, isLoadingStorage } = useCarImagesFallback(car);
+  const { prefetchImages } = useImagePrefetch();
   
   // Get primary image with fallback support
   const primaryImageFromDb = getPrimaryImage(car);
@@ -31,8 +33,24 @@ export const CarListingCard = ({ car, onViewDetails }: CarListingCardProps) => {
     (!finalPrimaryImage || finalPrimaryImage === "/placeholder.svg") && 
     !isLoadingStorage;
 
+  const handleCardHover = () => {
+    // Prefetch all car images when user hovers over card
+    const allImages = getAllCarImages(car);
+    if (allImages.length > 0) {
+      const imageUrls = allImages
+        .map(img => img.src)
+        .filter(url => url && url !== '/placeholder.svg');
+      if (imageUrls.length > 0) {
+        prefetchImages(imageUrls);
+      }
+    }
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+    <div 
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden"
+      onMouseEnter={handleCardHover}
+    >
       <div className="aspect-video w-full overflow-hidden bg-gray-100 dark:bg-gray-900">
         {isLoadingStorage ? (
           <div className="w-full h-full flex items-center justify-center bg-gray-100">
