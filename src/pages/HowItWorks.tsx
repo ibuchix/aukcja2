@@ -6,6 +6,7 @@ import { HeroSection } from "@/components/how-it-works/HeroSection";
 import { TimelineStep } from "@/components/how-it-works/TimelineStep";
 import { WinningProcess } from "@/components/how-it-works/WinningProcess";
 import { ProxyBiddingExample } from "@/components/how-it-works/ProxyBiddingExample";
+import { AuctionRulesSection } from "@/components/how-it-works/AuctionRulesSection";
 
 const HowItWorks = () => {
   return (
@@ -71,6 +72,7 @@ const HowItWorks = () => {
         </div>
       </section>
 
+      <AuctionRulesSection />
       <ProxyBiddingExample />
       <WinningProcess />
       <Footer />
