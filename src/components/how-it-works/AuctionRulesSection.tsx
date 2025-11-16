@@ -1,7 +1,12 @@
 import { Calendar, Zap, EyeOff, DollarSign, Phone, Wallet, Car, Flag, CheckCircle, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
-const rules = [
+const rules: Array<{
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: React.ReactNode;
+  color: string;
+}> = [
   {
     icon: Calendar,
     title: "Czas Trwania Aukcji",
@@ -59,7 +64,26 @@ const rules = [
   {
     icon: MessageCircle,
     title: "Masz Pytania?",
-    description: "Jeśli masz jakiekolwiek pytania, zadzwoń do nas pod +48 459 567 877 lub napisz na WhatsApp.",
+    description: (
+      <>
+        Jeśli masz jakiekolwiek pytania, zadzwoń do nas pod{" "}
+        <a 
+          href="tel:+48459567877" 
+          className="text-success font-semibold hover:underline"
+        >
+          +48 459 567 877
+        </a>
+        {" "}lub napisz na{" "}
+        <a 
+          href="https://wa.me/48459567877" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-success font-semibold hover:underline"
+        >
+          WhatsApp
+        </a>.
+      </>
+    ),
     color: "iris"
   }
 ];
