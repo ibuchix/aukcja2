@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin } from "lucide-react";
 import { AuctionTimer } from "@/components/auction/AuctionTimer";
 import { AuctionStatusIndicator } from "./AuctionStatusIndicator";
-import { getPrimaryImage } from "@/utils/imageUtils";
+import { getPrimaryImage, getAllCarImages } from "@/utils/imageUtils";
+import { useImagePrefetch } from "@/hooks/useImagePrefetch";
 import { translateTransmission } from "@/lib/transmissionUtils";
 import { translateSpecificationLabel } from "@/lib/vehicleTranslations";
 
@@ -16,6 +17,8 @@ interface LiveAuctionCardProps {
 }
 
 export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId, onClick }) => {
+  const { prefetchImages } = useImagePrefetch();
+  
   const formatPrice = (price: number | null | undefined) => {
     // Handle null, undefined, or NaN values
     if (price === null || price === undefined || isNaN(Number(price))) {
@@ -125,10 +128,24 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
     }
   };
 
+  const handleCardHover = () => {
+    // Prefetch all car images when user hovers over card
+    const allImages = getAllCarImages(car);
+    if (allImages.length > 0) {
+      const imageUrls = allImages
+        .map(img => img.src)
+        .filter(url => url && url !== '/placeholder.svg');
+      if (imageUrls.length > 0) {
+        prefetchImages(imageUrls);
+      }
+    }
+  };
+
   return (
     <Card 
       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" 
       onClick={() => onClick(car)}
+      onMouseEnter={handleCardHover}
     >
       <div className="aspect-video relative">
           <img 

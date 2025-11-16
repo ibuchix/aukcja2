@@ -4,6 +4,7 @@ import { CarListing } from "@/types/cars";
 import { CarListingCard } from "./CarListingCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
+import { useScrollPrefetch } from "@/hooks/useScrollPrefetch";
 
 interface CarListingsGridProps {
   listings: CarListing[];
@@ -12,6 +13,13 @@ interface CarListingsGridProps {
 
 export const CarListingsGrid = ({ listings, isLoading }: CarListingsGridProps) => {
   const [selectedCar, setSelectedCar] = useState<CarListing | null>(null);
+
+  // Prefetch images as user scrolls
+  useScrollPrefetch({
+    items: listings,
+    lookahead: 6, // Prefetch next 6 images
+    threshold: 0.7 // Start prefetching at 70% scroll
+  });
 
   const handleViewDetails = (car: CarListing) => {
     setSelectedCar(car);
