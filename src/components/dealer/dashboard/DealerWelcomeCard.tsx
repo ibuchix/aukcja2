@@ -49,16 +49,16 @@ export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardPr
                 </div>
               ) : (
                 <div className="text-subtitle-text space-y-3 text-sm">
-                  <p>Możesz licytować o dowolnej porze — nie ma przewagi czekania do końca, najwyższa oferta wygrywa.</p>
                   <ul className="space-y-2 list-disc list-inside">
-                    <li>Oferty są całkowicie ukryte — inni dealerzy ich nie widzą.</li>
-                    <li>Cena orientacyjna to kwota zaakceptowana przez sprzedającego — oferty blisko niej wygrywają najczęściej.</li>
-                    <li>Płacisz dopiero po odbiorze auta, bezpośrednio prywatnemu sprzedającemu.</li>
-                    <li>Prywatne auta w handlowych cenach — dostępne tylko dla dealerów w ogólnopolskiej aukcji.</li>
-                    <li>Wszystkie samochody na aukcji są zarejestrowane w Polsce.</li>
-                    <li>Złóż swoją najlepszą ofertę — jest ukryta, a najwyższa cena wygrywa auto.</li>
+                    <li>Aukcja trwa od niedzieli 20:00 do piątku 15:00 — możesz licytować o dowolnej porze.</li>
+                    <li>Cena orientacyjna = kwota zaakceptowana przez sprzedającego.</li>
+                    <li>Zakup może nastąpić w każdej chwili, gdy tylko sprzedający zaakceptuje ofertę.</li>
+                    <li>Oferty są ukryte — widzi je wyłącznie sprzedający.</li>
+                    <li>Po Twojej ofercie natychmiast kontaktujemy sprzedającego w celu finalizacji.</li>
+                    <li>Płacisz dopiero po odbiorze auta, bezpośrednio sprzedającemu.</li>
+                    <li>Prywatne auta w cenach handlowych — dostępne tylko dla komisów.</li>
+                    <li>Wszystkie auta są zarejestrowane w Polsce.</li>
                   </ul>
-                  <p>Dzisiejsza aukcja kończy się o 14:00, a kolejna zostanie uruchomiona natychmiast po jej zakończeniu.</p>
                   <p>
                     Więcej informacji o naszej aukcji znajdziesz na stronie{' '}
                     <a 
@@ -108,16 +108,16 @@ export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardPr
           </div>
         ) : (
           <div className="text-subtitle-text space-y-3">
-            <p>Możesz licytować o dowolnej porze — nie ma przewagi czekania do końca, najwyższa oferta wygrywa.</p>
             <ul className="space-y-2 list-disc list-inside">
-              <li>Oferty są całkowicie ukryte — inni dealerzy ich nie widzą.</li>
-              <li>Cena orientacyjna to kwota zaakceptowana przez sprzedającego — oferty blisko niej wygrywają najczęściej.</li>
-              <li>Płacisz dopiero po odbiorze auta, bezpośrednio prywatnemu sprzedającemu.</li>
-              <li>Prywatne auta w handlowych cenach — dostępne tylko dla dealerów w ogólnopolskiej aukcji.</li>
-              <li>Wszystkie samochody na aukcji są zarejestrowane w Polsce.</li>
-              <li>Złóż swoją najlepszą ofertę — jest ukryta, a najwyższa cena wygrywa auto.</li>
+              <li>Aukcja trwa od niedzieli 20:00 do piątku 15:00 — możesz licytować o dowolnej porze.</li>
+              <li>Cena orientacyjna = kwota zaakceptowana przez sprzedającego.</li>
+              <li>Zakup może nastąpić w każdej chwili, gdy tylko sprzedający zaakceptuje ofertę.</li>
+              <li>Oferty są ukryte — widzi je wyłącznie sprzedający.</li>
+              <li>Po Twojej ofercie natychmiast kontaktujemy sprzedającego w celu finalizacji.</li>
+              <li>Płacisz dopiero po odbiorze auta, bezpośrednio sprzedającemu.</li>
+              <li>Prywatne auta w cenach handlowych — dostępne tylko dla komisów.</li>
+              <li>Wszystkie auta są zarejestrowane w Polsce.</li>
             </ul>
-            <p>Dzisiejsza aukcja kończy się o 14:00, a kolejna zostanie uruchomiona natychmiast po jej zakończeniu.</p>
             <p>
               Więcej informacji o naszej aukcji znajdziesz na stronie{' '}
               <a 
