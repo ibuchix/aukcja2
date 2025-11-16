@@ -8,6 +8,7 @@ interface BidFormProps {
   dealerId: string;
   currentHighestBid: number;
   minimumIncrement: number;
+  reservePrice?: number;
 }
 
 export const BidForm = ({
@@ -15,28 +16,36 @@ export const BidForm = ({
   dealerId,
   currentHighestBid,
   minimumIncrement,
+  reservePrice,
 }: BidFormProps) => {
   const {
     bidAmount,
     setBidAmount,
     isSubmitting,
-    handleBidSubmit
+    handleBidSubmit,
+    bidError
   } = useBidForm({
     carId,
     dealerId,
     currentHighestBid,
-    minimumIncrement
+    minimumIncrement,
+    reservePrice
   });
 
   return (
     <div className="flex gap-2">
-      <BidInput 
-        bidAmount={bidAmount}
-        onBidAmountChange={setBidAmount}
-        currentHighestBid={currentHighestBid}
-        minimumIncrement={minimumIncrement}
-        isDisabled={isSubmitting}
-      />
+      <div className="flex-1">
+        <BidInput 
+          bidAmount={bidAmount}
+          onBidAmountChange={setBidAmount}
+          currentHighestBid={currentHighestBid}
+          minimumIncrement={minimumIncrement}
+          isDisabled={isSubmitting}
+        />
+        {bidError && (
+          <p className="text-sm text-red-600 mt-1 font-medium">{bidError}</p>
+        )}
+      </div>
       <BidFormButton 
         onClick={handleBidSubmit}
         isSubmitting={isSubmitting}

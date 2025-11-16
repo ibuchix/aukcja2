@@ -10,6 +10,7 @@ interface UseBidFormActionsProps {
   dealerId: string;
   currentHighestBid: number;
   minimumIncrement: number;
+  reservePrice?: number;
   onBidPlaced?: (amount: number) => void;
 }
 
@@ -43,6 +44,7 @@ export const useBidFormActions = ({
   dealerId,
   currentHighestBid,
   minimumIncrement,
+  reservePrice,
   onBidPlaced,
 }: UseBidFormActionsProps): UseBidFormActionsResult => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,6 +92,12 @@ export const useBidFormActions = ({
 
       if (numericBidAmount <= 0) {
         throw new Error(translateErrorMessage("Bid amount must be greater than 0"));
+      }
+
+      // Validate 40% minimum of reserve price (safety check)
+      if (reservePrice && numericBidAmount < (reservePrice * 0.4)) {
+        const minAllowed = Math.ceil(reservePrice * 0.4);
+        throw new Error(`Minimalna oferta to ${minAllowed.toLocaleString('pl-PL')} PLN (40% ceny minimalnej)`);
       }
 
       // Removed minimum bid and current bid restrictions - dealers can bid any positive amount
