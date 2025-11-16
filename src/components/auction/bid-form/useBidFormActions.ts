@@ -94,10 +94,10 @@ export const useBidFormActions = ({
         throw new Error(translateErrorMessage("Bid amount must be greater than 0"));
       }
 
-      // Validate 40% minimum of reserve price (safety check)
-      if (reservePrice && numericBidAmount < (reservePrice * 0.4)) {
-        const minAllowed = Math.ceil(reservePrice * 0.4);
-        throw new Error(`Minimalna oferta to ${minAllowed.toLocaleString('pl-PL')} PLN (40% ceny minimalnej)`);
+      // Validate 60% minimum of reserve price (safety check)
+      if (reservePrice && numericBidAmount < (reservePrice * 0.6)) {
+        const minAllowed = Math.ceil(reservePrice * 0.6);
+        throw new Error(`Minimalna oferta to ${minAllowed.toLocaleString('pl-PL')} PLN (60% ceny minimalnej)`);
       }
 
       // Removed minimum bid and current bid restrictions - dealers can bid any positive amount
