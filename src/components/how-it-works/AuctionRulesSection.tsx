@@ -1,5 +1,6 @@
 import { Calendar, Zap, EyeOff, DollarSign, Phone, Wallet, Car, Flag, CheckCircle, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const rules: Array<{
   icon: React.ComponentType<{ className?: string }>;
@@ -89,17 +90,19 @@ const rules: Array<{
 ];
 
 export const AuctionRulesSection = () => {
+  const isMobile = useIsMobile();
+  
   return (
-    <section className="py-20 bg-[#2d2f2d]">
+    <section className={`${isMobile ? 'py-10' : 'py-20'} bg-[#2d2f2d]`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className={`text-center ${isMobile ? 'mb-6' : 'mb-12'}`}
         >
-          <h2 className="text-heading-lg font-kanit font-bold text-[#FCFCFC] mb-4">
+          <h2 className={`${isMobile ? 'text-2xl' : 'text-heading-lg'} font-kanit font-bold text-[#FCFCFC] mb-4`}>
             Zasady Aukcji – Pełne Wyjaśnienie
           </h2>
           <p className="text-subtitle text-subtitle-text max-w-3xl mx-auto">
@@ -107,7 +110,7 @@ export const AuctionRulesSection = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className={`grid grid-cols-1 md:grid-cols-2 ${isMobile ? 'gap-4' : 'gap-6'}`}>
           {rules.map((rule, index) => {
             const Icon = rule.icon;
             return (
@@ -117,13 +120,13 @@ export const AuctionRulesSection = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.05 }}
-                className="bg-background rounded-default border border-accent p-6 hover:shadow-lg transition-all duration-300 hover:border-primary/50"
+                className={`bg-background rounded-default border border-accent ${isMobile ? 'p-4' : 'p-6'} hover:shadow-lg transition-all duration-300 hover:border-primary/50`}
               >
                 <div className="flex items-start gap-4">
-                  <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${
+                  <div className={`flex-shrink-0 ${isMobile ? 'w-10 h-10' : 'w-12 h-12'} rounded-full flex items-center justify-center ${
                     rule.color === 'iris' ? 'bg-iris/20' : 'bg-primary/20'
                   }`}>
-                    <Icon className={`w-6 h-6 ${
+                    <Icon className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} ${
                       rule.color === 'iris' ? 'text-iris' : 'text-primary'
                     }`} />
                   </div>
