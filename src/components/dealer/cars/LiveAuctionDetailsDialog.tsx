@@ -156,6 +156,14 @@ export const LiveAuctionDetailsDialog = ({
                 </div>
               </div>
 
+              {/* Notes Section */}
+              {car.sellerNotes && (
+                <div className="p-4 bg-accent/50 rounded-lg">
+                  <h4 className="font-medium text-base mb-3">Uwagi</h4>
+                  <p className="text-sm leading-relaxed">{car.sellerNotes}</p>
+                </div>
+              )}
+
               {/* Vehicle Features */}
               {car.features && Object.keys(car.features).length > 0 && (() => {
                 // Filter features to only show ones that are true
@@ -227,14 +235,6 @@ export const LiveAuctionDetailsDialog = ({
                     : car.town || car.county || 'Lokalizacja nie podana'}
                 </p>
               </div>
-
-              {/* Notes Section */}
-              {car.sellerNotes && (
-                <div className="p-4 bg-accent/50 rounded-lg">
-                  <h4 className="font-medium text-base mb-3">Uwagi</h4>
-                  <p className="text-sm leading-relaxed">{car.sellerNotes}</p>
-                </div>
-              )}
             </div>
           </div>
 
