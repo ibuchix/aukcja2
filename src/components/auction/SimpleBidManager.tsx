@@ -31,6 +31,7 @@ export const SimpleBidManager = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const [myBid, setMyBid] = useState<number | null>(null);
+  const [bidError, setBidError] = useState<string>("");
 
   const fetchMyBid = async () => {
     if (!isVerified) return;
@@ -59,6 +60,13 @@ export const SimpleBidManager = ({
   useEffect(() => {
     fetchMyBid();
   }, [carId, dealerId, isVerified]);
+
+  // Clear error when user types a new amount
+  useEffect(() => {
+    if (bidAmount && bidError) {
+      setBidError("");
+    }
+  }, [bidAmount, bidError]);
 
   // Early return if dealer is not verified
   if (!isVerified) {
@@ -103,6 +111,14 @@ export const SimpleBidManager = ({
       });
       return;
     }
+
+    // Validate 40% minimum of reserve price
+    if (reservePrice && numericBidAmount < (reservePrice * 0.4)) {
+      const minAllowed = Math.ceil(reservePrice * 0.4);
+      setBidError(`Minimalna oferta to ${minAllowed.toLocaleString('pl-PL')} PLN (40% ceny minimalnej)`);
+      return;
+    }
+    setBidError(""); // Clear any previous errors
 
     // Removed minimum bid restrictions - dealers can bid any positive amount
 
@@ -212,6 +228,9 @@ export const SimpleBidManager = ({
               placeholder="Wprowadź swoją ofertę"
               disabled={isSubmitting}
             />
+            {bidError && (
+              <p className="text-sm text-red-600 mt-2 font-medium">{bidError}</p>
+            )}
           </div>
 
           <Button
