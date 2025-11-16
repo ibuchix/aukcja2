@@ -131,11 +131,16 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
       onClick={() => onClick(car)}
     >
       <div className="aspect-video relative">
-        <img 
-          src={getPrimaryImage(car)} 
-          alt={`${car.make} ${car.model}`}
-          className="w-full h-full object-cover"
-        />
+          <img 
+            src={getPrimaryImage(car)} 
+            alt={`${car.make} ${car.model}`}
+            className="w-full h-full object-cover transition-opacity duration-300 ease-in-out"
+            loading="lazy"
+            onLoad={(e) => {
+              e.currentTarget.style.opacity = '1';
+            }}
+            style={{ opacity: 0 }}
+          />
         <div className="absolute top-2 right-2">
           <AuctionStatusIndicator
             auctionTimingStatus={car.auctionTimingStatus || getTimerStatus()}
