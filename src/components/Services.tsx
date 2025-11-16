@@ -18,7 +18,7 @@ const Services = () => {
     {
       icon: Clock,
       title: "Tylko auta z Polski",
-      description: "Na naszych codziennych aukcjach dostępne są wyłącznie auta zarejestrowane w Polsce. Każdego dnia pojawia się nowa selekcja aut do licytacji.",
+      description: "Na naszych aukcjach dostępne są wyłącznie auta zarejestrowane w Polsce. Każdego tygodnia publikujemy nową selekcję pojazdów przeznaczonych do składania ofert. Oferty są prywatne i przekazywane sprzedającemu w czasie rzeczywistym.",
     },
     {
       icon: Shield,
