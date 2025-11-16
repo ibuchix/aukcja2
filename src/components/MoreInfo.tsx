@@ -41,7 +41,27 @@ const MoreInfo = () => {
           </p>
 
           <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            Wystarczy złożyć maksymalną ofertę na wybrane pojazdy, a nasz system licytacji Proxy pomoże Ci uzyskać najniższą możliwą cenę za dany pojazd, licytując w krokach po 250 PLN aż do osiągnięcia Twojej maksymalnej oferty.
+            <strong>Aukcja trwa od niedzieli 20:00 do piątku 15:00 — możesz licytować o dowolnej porze.</strong>
+          </p>
+
+          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
+            Każda aukcja trwa cały tydzień, co daje Ci dużo czasu na przejrzenie samochodów, sprawdzenie VIN, ocenę zdjęć i złożenie oferty w dogodnym momencie. Nie ma presji czasu — możesz działać wtedy, kiedy najbardziej Ci pasuje.
+          </p>
+
+          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
+            <strong>Zakup może nastąpić w każdej chwili, gdy sprzedający zaakceptuje ofertę.</strong>
+          </p>
+
+          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
+            Sprzedający widzi tylko najwyższą aktualną ofertę i może ją zaakceptować w każdym momencie, więc aukcja nie wymaga czekania do ostatniej sekundy. Jeśli Twoja oferta zostanie zaakceptowana, transakcja zostaje zamknięta natychmiast. Auta często sprzedają się już po pierwszej sensownej ofercie.
+          </p>
+
+          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
+            <strong>Oferty są ukryte — widzi je wyłącznie sprzedający.</strong>
+          </p>
+
+          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
+            Inne komisy nie widzą Twoich ofert ani historii licytacji. Dzięki temu możesz licytować spokojnie, bez sztucznego podbijania cen. Sprzedający widzi tylko najwyższą aktualną ofertę.
           </p>
 
           <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
