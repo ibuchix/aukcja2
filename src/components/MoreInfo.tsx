@@ -65,7 +65,7 @@ const MoreInfo = () => {
           </p>
 
           <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            Wszystkie samochody wystawione na codziennej aukcji są profilowane w ten sam sposób, aby wyeliminować wadliwe lub niedokładne profile samochodów.
+            Wszystkie samochody wystawione na aukcji są profilowane w ten sam sposób, aby wyeliminować wadliwe lub niedokładne profile samochodów.
           </p>
 
           <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
