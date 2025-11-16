@@ -5,21 +5,21 @@ const HowItWorks = () => {
     {
       id: 1,
       title: "Załóż konto dealera",
-      description: "Na aukcji Autaro licytować mogą wyłącznie dealerzy. Nasz algorytm analizuje aktualne dane rynkowe, aby wyznaczać optymalne ceny dla aut na naszych codziennych aukcjach. Zarejestruj swój komis teraz i odbierz 50% zniżki na pierwszą prowizję oraz powiadomienie o starcie codziennych aukcji!",
+      description: "• Na aukcjach Autaro mogą składać oferty wyłącznie zweryfikowani dealerzy.\n• Nasz system analizuje dane rynkowe, aby wyznaczać opłacalne ceny orientacyjne pojazdów.\n• Zarejestruj swój komis już teraz i otrzymaj 30% zniżki na pierwszą prowizję.\n• Otrzymasz także powiadomienia o starcie cotygodniowych aukcji.",
       image: "/lovable-uploads/07777f71-e054-4c81-89b9-8cfa9236de87.png",
       alt: "Rejestracja konta dealera na telefonie"
     },
     {
       id: 2,
       title: "Przeglądaj Aukcje i Szukaj Okazji!",
-      description: "Na aukcji Autaro znajdziesz auta różnych marek, roczników i przebiegów – z całej Polski. Dzięki temu każdy dealer znajdzie pojazd, na którym zarobi. Współpraca z CarVertical i AutoBaza umożliwia szybki zakup raportu historii auta, co zapewnia maksymalne bezpieczeństwo transakcji.",
+      description: "• Na Autaro znajdziesz auta różnych marek, roczników i przebiegów — z całej Polski.\n• Każdy dealer znajdzie pojazdy idealne do dalszej odsprzedaży.\n• Integracja z CarVertical i AutoBaza umożliwia szybki zakup raportu historii pojazdu.\n• Dzięki temu masz maksymalną pewność i bezpieczeństwo przy zakupie.",
       image: "/lovable-uploads/92128f50-8e2a-4033-a415-a8521467bdd5.png",
       alt: "Przeglądanie aukcji samochodów na laptopie"
     },
     {
       id: 3,
       title: "Wygraj Licytacje i odbierz Samochód!",
-      description: "Jeżeli Twoja oferta na Samochód była najwyższa, a sprzedawca ją zaakceptował, po opłaceniu prowizji przekażemy ci dane właściciela w celu odbioru pojazdu. Dzięki takiemu rozwiązaniu, możesz sprawdzić jego stan przed ostatecznym zakupem. Jezeli z uzasadnionej przyczyny nie dojdzie do sprzedaży samochodu, po kontakcie z nami będziesz mógł odzyskać zapłaconą prowizje.",
+      description: "• Jeśli sprzedający zaakceptuje Twoją ofertę, otrzymasz natychmiastowe powiadomienie.\n• Po opłaceniu prowizji udostępnimy Ci dane kontaktowe sprzedającego.\n• Możesz sprawdzić stan auta podczas odbioru, przed finalizacją zakupu.\n• Jeśli z uzasadnionego powodu sprzedaż nie dojdzie do skutku, możesz poprosić o zwrot prowizji.",
       image: "/lovable-uploads/13cf1931-bc2c-436f-86f2-db48c5f32137.png",
       alt: "Finalizacja zakupu samochodu"
     }
