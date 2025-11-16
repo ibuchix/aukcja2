@@ -66,7 +66,7 @@ export const SimpleBidManager = ({
     if (bidAmount && bidError) {
       setBidError("");
     }
-  }, [bidAmount, bidError]);
+  }, [bidAmount]);
 
   // Early return if dealer is not verified
   if (!isVerified) {
@@ -218,6 +218,11 @@ export const SimpleBidManager = ({
                 </Tooltip>
               </TooltipProvider>
             </label>
+            {reservePrice && (
+              <p className="text-xs text-muted-foreground mb-2">
+                Minimalna oferta: {Math.ceil(reservePrice * 0.4).toLocaleString('pl-PL')} PLN (40% ceny orientacyjnej)
+              </p>
+            )}
             <Input
               id="bidAmount"
               type="number"

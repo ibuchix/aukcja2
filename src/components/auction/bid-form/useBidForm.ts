@@ -39,7 +39,7 @@ export const useBidForm = ({
     if (bidAmount && bidError) {
       setBidError("");
     }
-  }, [bidAmount, bidError]);
+  }, [bidAmount]);
 
   const handleBidSubmit = () => {
     const numericBidAmount = parseFloat(bidAmount);

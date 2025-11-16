@@ -35,6 +35,11 @@ export const BidForm = ({
   return (
     <div className="flex gap-2">
       <div className="flex-1">
+        {reservePrice && (
+          <p className="text-xs text-muted-foreground mb-2">
+            Minimalna oferta: {Math.ceil(reservePrice * 0.4).toLocaleString('pl-PL')} PLN (40% ceny orientacyjnej)
+          </p>
+        )}
         <BidInput 
           bidAmount={bidAmount}
           onBidAmountChange={setBidAmount}
