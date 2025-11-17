@@ -112,7 +112,8 @@ export const useSimplifiedCarListingsQuery = ({
         });
         
         // STEP 2: Get cars for these schedules
-        const rawCars = await fetchCarsForSchedules(
+        // STEP 2: Get cars for these schedules
+        const rawCarsResult = await fetchCarsForSchedules(
           scheduleCarIds,
           filters,
           sortOption,
@@ -120,6 +121,30 @@ export const useSimplifiedCarListingsQuery = ({
           currentPage,
           pageSize
         );
+        
+        // Handle both old array format and new { cars, total } format
+        let rawCars: any[];
+        let totalCount: number;
+        
+        if (rawCarsResult && typeof rawCarsResult === 'object' && 'cars' in rawCarsResult) {
+          // New format: { cars: [], total: number }
+          rawCars = rawCarsResult.cars || [];
+          totalCount = rawCarsResult.total || 0;
+        } else if (Array.isArray(rawCarsResult)) {
+          // Old format: just array (fallback)
+          rawCars = rawCarsResult;
+          totalCount = rawCarsResult.length;
+        } else {
+          rawCars = [];
+          totalCount = 0;
+        }
+        
+        console.log('📊 [RAW CARS RESULT] [ALWAYS SHOWN]', {
+          carsInCurrentPage: rawCars.length,
+          totalMatchingCars: totalCount,
+          currentPage,
+          pageSize
+        });
         
         // Enhanced validation with better error handling
         if (!Array.isArray(rawCars)) {
@@ -138,7 +163,7 @@ export const useSimplifiedCarListingsQuery = ({
           console.log('⚠️ [RAW CARS EMPTY] [ALWAYS SHOWN] - No cars returned from query');
           return {
             cars: [],
-            total: 0
+            total: totalCount // Return true total even if this page is empty
           };
         }
 
@@ -223,7 +248,11 @@ export const useSimplifiedCarListingsQuery = ({
         });
         
         console.log('✅ [FINAL RESULT] [ALWAYS SHOWN]', {
-          validCarsCount: carsWithUploads.length,
+          carsInCurrentPage: carsWithUploads.length,
+          totalMatchingCars: totalCount,
+          currentPage,
+          pageSize,
+          totalPages: Math.ceil(totalCount / pageSize),
           finalCarsPreview: carsWithUploads.slice(0, 2).map(car => ({
             id: car.id,
             make: car.make,
@@ -237,7 +266,7 @@ export const useSimplifiedCarListingsQuery = ({
         
         return {
           cars: carsWithUploads,
-          total: carsWithUploads.length
+          total: totalCount // Use true total from count query
         };
       } catch (err: any) {
         const errorMessage = err.message || 'Unknown error occurred';
