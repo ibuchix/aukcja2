@@ -95,6 +95,29 @@ export const fetchCarsForSchedules = async (
     sortOption
   });
 
+  // Get total count BEFORE pagination (critical for dynamic pagination)
+  const countQuery = supabase
+    .from('cars')
+    .select('*', { count: 'exact', head: true })
+    .in('id', carIds)
+    .eq('is_auction', true)
+    .eq('auction_status', 'active');
+
+  // Apply same filters to count query
+  const filteredCountQuery = applyFilters(countQuery, filters, searchQuery);
+  const { count: totalCount, error: countError } = await filteredCountQuery;
+
+  if (countError) {
+    console.error('❌ [COUNT ERROR] [ALWAYS SHOWN]', countError);
+  }
+
+  console.log('📊 [TOTAL COUNT] [ALWAYS SHOWN]', {
+    totalMatchingCars: totalCount,
+    currentPage,
+    pageSize,
+    totalPages: totalCount ? Math.ceil(totalCount / pageSize) : 0
+  });
+
   // Apply pagination
   query = applyPagination(query, currentPage, pageSize);
 
@@ -202,9 +225,13 @@ export const fetchCarsForSchedules = async (
     resultCount: carsWithImages.length,
     validCarsCount: validCarsForSample.length,
     invalidCarsCount: carsWithImages.length - validCarsForSample.length,
+    totalCount: totalCount || 0,
     filters,
     sampleResults
   });
 
-  return carsWithImages || [];
+  return {
+    cars: carsWithImages || [],
+    total: totalCount || 0
+  };
 };

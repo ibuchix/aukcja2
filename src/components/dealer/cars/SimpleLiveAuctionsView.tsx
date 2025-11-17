@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AuctionPagination } from "./AuctionPagination";
 
 export const SimpleLiveAuctionsView = () => {
   const [selectedCar, setSelectedCar] = useState<any>(null);
@@ -24,6 +25,9 @@ export const SimpleLiveAuctionsView = () => {
     debouncedFilters,
     sortOption,
     searchQuery,
+    currentPage,
+    handleNextPage,
+    handlePreviousPage,
     handleFilterChange,
     handleFiltersChange,
     handleSortChange,
@@ -34,12 +38,18 @@ export const SimpleLiveAuctionsView = () => {
     filters: debouncedFilters,
     sortOption,
     searchQuery,
-    currentPage: 1,
+    currentPage,
     pageSize: 50,
     dealerId: dealerProfile?.id,
   });
 
   const cars = data?.cars || [];
+  const total = data?.total || 0;
+  
+  // Dynamic pagination calculations
+  const totalPages = Math.ceil(total / 50);
+  const hasMore = currentPage < totalPages;
+  const canGoBack = currentPage > 1;
 
   const handleCloseCarDetails = () => {
     setSelectedCar(null);
@@ -118,16 +128,38 @@ export const SimpleLiveAuctionsView = () => {
           hasSearch={!!searchQuery}
         />
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {cars.map((car) => (
-            <LiveAuctionCard
-              key={car.id}
-              car={car}
-              dealerId={dealerProfile?.id || ""}
-              onClick={setSelectedCar}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {cars.map((car) => (
+              <LiveAuctionCard
+                key={car.id}
+                car={car}
+                dealerId={dealerProfile?.id || ""}
+                onClick={setSelectedCar}
+              />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="mt-8 space-y-4">
+              <div className="text-center text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * 50) + 1}-{Math.min(currentPage * 50, total)} of {total} vehicles
+              </div>
+              
+              <AuctionPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => {
+                  if (page > currentPage) {
+                    handleNextPage();
+                  } else if (page < currentPage) {
+                    handlePreviousPage();
+                  }
+                }}
+              />
+            </div>
+          )}
+        </>
       )}
 
       {selectedCar && (
