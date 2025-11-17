@@ -26,7 +26,7 @@ export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardPr
                   {isLoading ? (
                     <Skeleton className="h-6 w-64" />
                   ) : (
-                    "Zasady Aukcji — Najważniejsze Informacje"
+                    "Jak działa aukcja – Najważniejsze informacje"
                   )}
                 </CardTitle>
                 <ChevronDown 
@@ -52,6 +52,7 @@ export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardPr
                   <ul className="space-y-2 list-disc list-inside">
                     <li>Aukcja trwa od niedzieli 20:00 do piątku 15:00 — możesz licytować o dowolnej porze.</li>
                     <li>Cena orientacyjna = kwota zaakceptowana przez sprzedającego.</li>
+                    <li>Możesz licytować powyżej lub poniżej ceny orientacyjnej — im bardziej konkurencyjna oferta, tym większa szansa na wygraną.</li>
                     <li>Zakup może nastąpić w każdej chwili, gdy tylko sprzedający zaakceptuje ofertę.</li>
                     <li>Oferty są ukryte — widzi je wyłącznie sprzedający.</li>
                     <li>Po Twojej ofercie natychmiast kontaktujemy sprzedającego w celu finalizacji.</li>
@@ -94,7 +95,7 @@ export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardPr
           {isLoading ? (
             <Skeleton className="h-7 w-64" />
           ) : (
-            "Zasady Aukcji — Najważniejsze Informacje"
+            "Jak działa aukcja – Najważniejsze informacje"
           )}
         </CardTitle>
       </CardHeader>
@@ -111,6 +112,7 @@ export const DealerWelcomeCard = ({ dealerName, isLoading }: DealerWelcomeCardPr
             <ul className="space-y-2 list-disc list-inside">
               <li>Aukcja trwa od niedzieli 20:00 do piątku 15:00 — możesz licytować o dowolnej porze.</li>
               <li>Cena orientacyjna = kwota zaakceptowana przez sprzedającego.</li>
+              <li>Możesz licytować powyżej lub poniżej ceny orientacyjnej — im bardziej konkurencyjna oferta, tym większa szansa na wygraną.</li>
               <li>Zakup może nastąpić w każdej chwili, gdy tylko sprzedający zaakceptuje ofertę.</li>
               <li>Oferty są ukryte — widzi je wyłącznie sprzedający.</li>
               <li>Po Twojej ofercie natychmiast kontaktujemy sprzedającego w celu finalizacji.</li>
