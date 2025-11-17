@@ -155,13 +155,9 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
         <img 
           src={getPrimaryImage(car)} 
           alt={`${car.make} ${car.model}`}
-          className="w-full h-full object-cover transition-opacity duration-300 ease-in-out relative z-10"
+          className="w-full h-full object-cover relative z-10"
           loading={priority ? "eager" : "lazy"}
           {...(priority && { fetchPriority: "high" as const })}
-          onLoad={(e) => {
-            e.currentTarget.style.opacity = '1';
-          }}
-          style={{ opacity: 0 }}
         />
         
         <div className="absolute top-2 right-2 z-20">
