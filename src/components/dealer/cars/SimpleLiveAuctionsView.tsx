@@ -138,13 +138,12 @@ export const SimpleLiveAuctionsView = () => {
       ) : (
         <>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {cars.map((car, index) => (
+            {cars.map((car) => (
               <LiveAuctionCard
                 key={car.id}
                 car={car}
                 dealerId={dealerProfile?.id || ""}
                 onClick={setSelectedCar}
-                priority={index < 9}
               />
             ))}
           </div>
