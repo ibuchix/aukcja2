@@ -162,6 +162,29 @@ export const fetchCarsForSchedules = async (
     return [];
   }
 
+  // Sort cars to match the order of carIds array (preserves schedule creation order)
+  const carIdOrderMap = new Map<string, number>();
+  carIds.forEach((id, index) => {
+    carIdOrderMap.set(id, index);
+  });
+  
+  queryData.sort((a: any, b: any) => {
+    const orderA = carIdOrderMap.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+    const orderB = carIdOrderMap.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+    return orderA - orderB;
+  });
+  
+  console.log('✅ [PRESERVED SCHEDULE ORDER] [ALWAYS SHOWN]', {
+    timestamp: new Date().toISOString(),
+    message: 'Cars sorted to match schedule creation order',
+    first3Cars: queryData.slice(0, 3).map((c: any) => ({ 
+      id: c.id, 
+      make: c.make, 
+      model: c.model, 
+      year: c.year 
+    }))
+  });
+
   // Fetch car file uploads for all retrieved cars
   let carsWithImages = queryData;
   try {
