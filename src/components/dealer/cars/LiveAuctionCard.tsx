@@ -14,9 +14,10 @@ interface LiveAuctionCardProps {
   car: any;
   dealerId: string;
   onClick: (car: any) => void;
+  priority?: boolean;
 }
 
-export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId, onClick }) => {
+export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId, onClick, priority = false }) => {
   const { prefetchImages } = useImagePrefetch();
   
   const formatPrice = (price: number | null | undefined) => {
@@ -148,16 +149,19 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
       onMouseEnter={handleCardHover}
     >
       <div className="aspect-video relative">
-          <img 
-            src={getPrimaryImage(car)} 
-            alt={`${car.make} ${car.model}`}
-            className="w-full h-full object-cover transition-opacity duration-300 ease-in-out"
-            loading="lazy"
-            onLoad={(e) => {
-              e.currentTarget.style.opacity = '1';
-            }}
-            style={{ opacity: 0 }}
-          />
+            <img 
+              src={getPrimaryImage(car)} 
+              alt={`${car.make} ${car.model}`}
+              className="w-full h-full object-cover transition-opacity duration-300 ease-in-out"
+              loading={priority ? "eager" : "lazy"}
+              {...(priority && { fetchPriority: "high" as const })}
+              onLoad={(e) => {
+                if (!priority) {
+                  e.currentTarget.style.opacity = '1';
+                }
+              }}
+              style={{ opacity: priority ? 1 : 0 }}
+            />
         <div className="absolute top-2 right-2">
           <AuctionStatusIndicator
             auctionTimingStatus={car.auctionTimingStatus || getTimerStatus()}
