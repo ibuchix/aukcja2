@@ -33,6 +33,7 @@ export const BidCountDisplay = ({ carId }: BidCountDisplayProps) => {
             <ul className="text-sm space-y-1.5 list-disc list-inside ml-1">
               <li>Oferty są ukryte — widzi je wyłącznie sprzedający.</li>
               <li>Cena orientacyjna = kwota zaakceptowana przez sprzedającego.</li>
+              <li>Możesz licytować powyżej lub poniżej ceny orientacyjnej — im bardziej konkurencyjna oferta, tym większa szansa na wygraną.</li>
               <li>Zakup może nastąpić w każdej chwili, gdy sprzedający zaakceptuje ofertę.</li>
               <li>Płacisz dopiero po odbiorze auta, bezpośrednio sprzedającemu.</li>
               <li>Masz okazje sprawdzic auto przed zapłaceniem</li>
