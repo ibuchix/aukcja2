@@ -143,7 +143,7 @@ export const SimpleLiveAuctionsView = () => {
           {totalPages > 1 && (
             <div className="mt-8 space-y-4">
               <div className="text-center text-sm text-muted-foreground">
-                Showing {((currentPage - 1) * 50) + 1}-{Math.min(currentPage * 50, total)} of {total} vehicles
+                Wyświetlanie {((currentPage - 1) * 50) + 1}-{Math.min(currentPage * 50, total)} z {total} pojazdów
               </div>
               
               <AuctionPagination

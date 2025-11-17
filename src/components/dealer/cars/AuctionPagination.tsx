@@ -25,11 +25,11 @@ export const AuctionPagination: React.FC<AuctionPaginationProps> = ({
         disabled={currentPage <= 1}
       >
         <ChevronLeft className="h-4 w-4" />
-        Previous
+        Poprzednia
       </Button>
       
       <span className="px-4 py-2 text-sm">
-        Page {currentPage} of {totalPages}
+        Strona {currentPage} z {totalPages}
       </span>
       
       <Button
@@ -38,7 +38,7 @@ export const AuctionPagination: React.FC<AuctionPaginationProps> = ({
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages}
       >
-        Next
+        Następna
         <ChevronRight className="h-4 w-4" />
       </Button>
     </div>
