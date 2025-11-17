@@ -8,7 +8,7 @@ import { calculatePagination } from "./carSearchUtils";
 export const useCarSearch = (dealerId: string) => {
   const { toast } = useToast();
   const [listings, setListings] = useState<CarListing[]>([]);
-  const pageSize = 10;
+  const pageSize = 100;
   const isDev = process.env.NODE_ENV === 'development';
 
   const {

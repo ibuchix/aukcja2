@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AuctionPagination } from "./AuctionPagination";
+import { useScrollPrefetch } from "@/hooks/useScrollPrefetch";
 
 export const SimpleLiveAuctionsView = () => {
   const [selectedCar, setSelectedCar] = useState<any>(null);
@@ -39,15 +40,22 @@ export const SimpleLiveAuctionsView = () => {
     sortOption,
     searchQuery,
     currentPage,
-    pageSize: 50,
+    pageSize: 100,
     dealerId: dealerProfile?.id,
   });
 
   const cars = data?.cars || [];
   const total = data?.total || 0;
   
+  // Prefetch images as user scrolls through results
+  useScrollPrefetch({
+    items: cars,
+    lookahead: 8,
+    threshold: 0.7
+  });
+  
   // Dynamic pagination calculations
-  const totalPages = Math.ceil(total / 50);
+  const totalPages = Math.ceil(total / 100);
   const hasMore = currentPage < totalPages;
   const canGoBack = currentPage > 1;
 
@@ -143,7 +151,7 @@ export const SimpleLiveAuctionsView = () => {
           {totalPages > 1 && (
             <div className="mt-8 space-y-4">
               <div className="text-center text-sm text-muted-foreground">
-                Wyświetlanie {((currentPage - 1) * 50) + 1}-{Math.min(currentPage * 50, total)} z {total} pojazdów
+                Wyświetlanie {((currentPage - 1) * 100) + 1}-{Math.min(currentPage * 100, total)} z {total} pojazdów
               </div>
               
               <AuctionPagination
