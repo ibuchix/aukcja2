@@ -86,13 +86,15 @@ export const fetchCarsForSchedules = async (
     searchQuery
   });
 
-  // Apply sorting
-  query = applySorting(query, sortOption);
-
-  // TEMPORARY: Log after sorting
-  console.log('📊 [QUERY AFTER SORTING] [ALWAYS SHOWN]', {
-    message: 'Applied sorting',
-    sortOption
+  // NOTE: We do NOT apply database-level sorting here because we want to preserve
+  // the schedule creation order from the carIds array. The carIds come from
+  // get_live_auction_schedules() already sorted by auction_schedules.created_at DESC
+  // (most recently scheduled first). Client-side sorting below (line 165+) will arrange
+  // results to match this order.
+  console.log('📊 [PRESERVING SCHEDULE ORDER] [ALWAYS SHOWN]', {
+    message: 'Skipping database sort to preserve schedule creation order',
+    firstCarId: carIds[0],
+    totalCarIds: carIds.length
   });
 
   // Get total count BEFORE pagination (critical for dynamic pagination)
