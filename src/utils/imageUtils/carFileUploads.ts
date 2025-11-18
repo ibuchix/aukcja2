@@ -99,7 +99,8 @@ export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUplo
       console.log('🔎 [TONALE FOUND IN RESPONSE]', {
         tonaleCarId: 'c255a006-eb33-47e3-ba4e-5f024e41b57e',
         tonaleUploadsCount: tonaleUploads.length,
-        categories: tonaleUploads.map(u => u.category)
+        categories: tonaleUploads.map(u => u.category),
+        uploadStatuses: tonaleUploads.map(u => u.upload_status),
       });
     } else {
       console.warn('⚠️ [TONALE NOT IN RESPONSE] No uploads found for c255a006-eb33-47e3-ba4e-5f024e41b57e');

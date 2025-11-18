@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/carousel";
 import { CarListing } from "@/types/cars";
 import { getAllCarImages, getImageCount, debugCarImages } from "@/utils/imageUtils";
-import { useCarImagesFallback } from "@/hooks/useCarImagesFallback";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { translateSpecificationLabel } from "@/lib/vehicleTranslations";
 
@@ -32,17 +31,9 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const isMobile = useIsMobile();
   
-  const {
-    getAllImagesWithFallback, 
-    getTotalImageCount, 
-    isLoadingStorage 
-  } = useCarImagesFallback(car);
-  
-  // Get images with fallback support
-  const dbImages = getAllCarImages(car);
-  const fallbackImages = getAllImagesWithFallback();
-  const allImages = dbImages.length > 0 ? dbImages : (fallbackImages || []);
-  const imageCount = getTotalImageCount();
+  // Get images directly from car data
+  const allImages = getAllCarImages(car);
+  const imageCount = allImages.length;
 
   // Sync carousel with selected index
   useEffect(() => {
@@ -61,23 +52,12 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
     return imageLoadErrors.has(src);
   };
 
-  if (isLoadingStorage) {
-    return (
-      <div className="space-y-4">
-        <div className="bg-gray-100 rounded-lg p-8 text-center">
-          <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-pulse" />
-          <p className="text-gray-500">Loading vehicle photos...</p>
-        </div>
-      </div>
-    );
-  }
-
   if (allImages.length === 0) {
     return (
       <div className="space-y-4">
         <div className="bg-gray-100 rounded-lg p-8 text-center">
           <Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">No photos available for this vehicle</p>
+          <p className="text-gray-500">Brak zdjęć</p>
         </div>
       </div>
     );
