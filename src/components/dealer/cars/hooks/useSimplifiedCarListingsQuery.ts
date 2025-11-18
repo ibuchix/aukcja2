@@ -70,7 +70,7 @@ export const useSimplifiedCarListingsQuery = ({
       searchQuery, 
       currentPage.toString(),
       pageSize.toString(),
-      "v9" // Increment version to force refetch after RLS fix
+      "v10" // Force refetch with new RPC (no upload_status filter)
     ],
     queryFn: async () => {
       
