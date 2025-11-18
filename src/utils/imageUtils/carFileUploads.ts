@@ -93,6 +93,9 @@ export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUplo
       }, {})
     });
 
+    // Show sample uploads for debugging
+    console.log('📸 [UPLOADS SAMPLE]', result.slice(0, 5));
+
     // Check specifically for the problematic Alfa Romeo Tonale
     const tonaleUploads = result.filter(u => u.car_id === 'c255a006-eb33-47e3-ba4e-5f024e41b57e');
     if (tonaleUploads.length > 0) {

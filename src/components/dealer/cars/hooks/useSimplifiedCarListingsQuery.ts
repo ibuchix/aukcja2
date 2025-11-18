@@ -107,6 +107,11 @@ export const useSimplifiedCarListingsQuery = ({
         // Extract car IDs from schedules
         const scheduleCarIds = schedules.map((schedule) => schedule.car_id);
         
+        // Check if Tonale is in the schedule IDs
+        console.log('🔎 [TONALE IN SCHEDULE IDS?]', {
+          includesTonale: scheduleCarIds.includes('c255a006-eb33-47e3-ba4e-5f024e41b57e'),
+        });
+        
         console.log('🔢 [CAR IDS FROM SCHEDULES] [ALWAYS SHOWN]', {
           carIdsCount: scheduleCarIds.length,
           carIds: scheduleCarIds.slice(0, 5) // Show first 5 for debugging
@@ -145,6 +150,15 @@ export const useSimplifiedCarListingsQuery = ({
           totalMatchingCars: totalCount,
           currentPage,
           pageSize
+        });
+        
+        // Check if Tonale appears in raw cars result
+        const tonaleInRawCars = rawCars.find(
+          (car: any) => car.id === 'c255a006-eb33-47e3-ba4e-5f024e41b57e'
+        );
+        console.log('🚙 [TONALE IN RAW CARS?]', {
+          found: !!tonaleInRawCars,
+          hasFileUploadsProp: tonaleInRawCars && 'fileUploads' in tonaleInRawCars,
         });
         
         // Enhanced validation with better error handling
