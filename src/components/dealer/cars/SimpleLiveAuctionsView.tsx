@@ -14,7 +14,6 @@ import { RotateCcw } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AuctionPagination } from "./AuctionPagination";
 import { useScrollPrefetch } from "@/hooks/useScrollPrefetch";
-import { CompactPaginationInfo } from "./CompactPaginationInfo";
 
 export const SimpleLiveAuctionsView = () => {
   const [selectedCar, setSelectedCar] = useState<any>(null);
@@ -117,15 +116,10 @@ export const SimpleLiveAuctionsView = () => {
         onSearchChange={handleSearchChange}
         sortOption={sortOption}
         searchQuery={searchQuery}
+        currentPage={currentPage}
+        pageSize={100}
+        totalItems={total}
       />
-
-      {!isLoading && cars.length > 0 && (
-        <CompactPaginationInfo
-          currentPage={currentPage}
-          pageSize={100}
-          total={total}
-        />
-      )}
 
       {isLoading ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
