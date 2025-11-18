@@ -69,7 +69,8 @@ export const useSimplifiedCarListingsQuery = ({
       sortOption, 
       searchQuery, 
       currentPage.toString(),
-      "v7" // Increment version for debugging
+      pageSize.toString(),
+      "v8" // Increment version to invalidate cache after adding pageSize
     ],
     queryFn: async () => {
       
