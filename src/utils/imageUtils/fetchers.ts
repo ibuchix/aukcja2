@@ -51,16 +51,7 @@ export const getPrimaryImage = (car: CarListing): string => {
     return primaryImageUrl;
   }
   
-  // Fallback to legacy image fields if available
-  const carAny = car as any;
-  const fallbackUrl = carAny.primary_image_url || carAny.image_url || carAny.image || (car.images && car.images[0]);
-  
-  if (fallbackUrl) {
-    console.log('⚠️ [FALLBACK IMAGE] Using legacy image field for car:', car.id);
-    return transformImageUrl(fallbackUrl);
-  }
-  
-  console.error('❌ No images found for car:', car.id, car.title);
+  console.error('❌ No file uploads found for car:', car.id, car.title);
   return "/placeholder.svg";
 };
 
@@ -71,21 +62,6 @@ export const getAllCarImages = (car: CarListing): { src: string; label: string }
   // Check if car has file uploads data
   if (car.fileUploads && Array.isArray(car.fileUploads) && car.fileUploads.length > 0) {
     return getAllImagesFromUploads(car.fileUploads);
-  }
-  
-  // Fallback to legacy images array if available
-  const carAny = car as any;
-  if (car.images && Array.isArray(car.images) && car.images.length > 0) {
-    return car.images.map((url, index) => ({
-      src: transformImageUrl(url),
-      label: `Image ${index + 1}`
-    }));
-  }
-  
-  // Last resort: if we have any single image field, return it
-  const fallbackUrl = carAny.primary_image_url || carAny.image_url || carAny.image;
-  if (fallbackUrl) {
-    return [{ src: transformImageUrl(fallbackUrl), label: 'Primary Image' }];
   }
   
   return [];
