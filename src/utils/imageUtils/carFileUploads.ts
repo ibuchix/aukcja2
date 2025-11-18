@@ -69,10 +69,9 @@ export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUplo
   }
   
   console.log('🔍 [FETCH CAR FILE UPLOADS] Requesting images for', carIds.length, 'cars');
-  console.log('📋 [CAR IDS SAMPLE]', carIds.slice(0, 5));
   
   try {
-    // Use the new RPC function that handles authentication server-side
+    // Use RPC that returns JSONB to bypass client-side RLS filtering
     const { data, error } = await supabase
       .rpc('get_car_images_for_dealers', { 
         p_car_ids: carIds 
@@ -83,19 +82,17 @@ export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUplo
       return [];
     }
 
-    const result = (data as unknown as CarFileUpload[]) || [];
+    // Parse JSONB response (comes back as a JSON array)
+    const result = (data as any) || [];
     
     console.log('✅ [CAR FILE UPLOADS RPC RESPONSE]', {
       totalUploads: result.length,
-      uploadsByCar: result.reduce((acc: Record<string, number>, upload: CarFileUpload) => {
-        acc[upload.car_id] = (acc[upload.car_id] || 0) + 1;
-        return acc;
-      }, {})
+      affectedCars: [...new Set(result.map((u: any) => u.car_id))].length
     });
 
-    return result;
+    return result as CarFileUpload[];
   } catch (error) {
-    console.error('❌ Exception in fetchCarFileUploads (RPC):', error);
+    console.error('❌ Exception in fetchCarFileUploads:', error);
     return [];
   }
 };
