@@ -25,6 +25,9 @@ interface CarSearchFiltersProps {
   onSortChange: (sort: string) => void;
   sortOption: string;
   searchQuery: string;
+  currentPage?: number;
+  pageSize?: number;
+  totalItems?: number;
 }
 
 export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
@@ -32,7 +35,10 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
   onFilterChange,
   onFiltersChange,
   onSortChange,
-  sortOption
+  sortOption,
+  currentPage,
+  pageSize,
+  totalItems
 }) => {
   const isDev = process.env.NODE_ENV === 'development';
   const [isExpanded, setIsExpanded] = useState(false);
@@ -89,6 +95,12 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
             </Button>
             {activeFilterCount > 0 && (
               <Badge variant="secondary">{activeFilterCount} aktywne</Badge>
+            )}
+            {totalItems && totalItems > (pageSize || 100) && (
+              <span className="text-xs font-medium" style={{ color: '#D81B24' }}>
+                {((currentPage || 1) - 1) * (pageSize || 100) + 1}-
+                {Math.min((currentPage || 1) * (pageSize || 100), totalItems)} z {totalItems}
+              </span>
             )}
           </div>
           <div className={`flex gap-2 ${isMobile ? 'w-full justify-between' : ''}`}>
