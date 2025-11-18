@@ -107,11 +107,6 @@ export const useSimplifiedCarListingsQuery = ({
         // Extract car IDs from schedules
         const scheduleCarIds = schedules.map((schedule) => schedule.car_id);
         
-        // Check if Tonale is in the schedule IDs
-        console.log('🔎 [TONALE IN SCHEDULE IDS?]', {
-          includesTonale: scheduleCarIds.includes('c255a006-eb33-47e3-ba4e-5f024e41b57e'),
-        });
-        
         console.log('🔢 [CAR IDS FROM SCHEDULES] [ALWAYS SHOWN]', {
           carIdsCount: scheduleCarIds.length,
           carIds: scheduleCarIds.slice(0, 5) // Show first 5 for debugging
@@ -150,15 +145,6 @@ export const useSimplifiedCarListingsQuery = ({
           totalMatchingCars: totalCount,
           currentPage,
           pageSize
-        });
-        
-        // Check if Tonale appears in raw cars result
-        const tonaleInRawCars = rawCars.find(
-          (car: any) => car.id === 'c255a006-eb33-47e3-ba4e-5f024e41b57e'
-        );
-        console.log('🚙 [TONALE IN RAW CARS?]', {
-          found: !!tonaleInRawCars,
-          hasFileUploadsProp: tonaleInRawCars && 'fileUploads' in tonaleInRawCars,
         });
         
         // Enhanced validation with better error handling
@@ -217,89 +203,18 @@ export const useSimplifiedCarListingsQuery = ({
         const mergedData = mergeCarDataWithSchedules(validRawCars, typedSchedules);
         
         // Process the merged results
+        // STEP 4: Process car data
+        // Note: fileUploads are already attached by carsQueryBuilder, and processCarData preserves them
         const validCars = processCarData(mergedData);
         
-        // STEP 4: Ensure authentication before fetching file uploads
-        console.log('🔐 [AUTH CHECK] [ALWAYS SHOWN] Checking authentication before fetching file uploads');
-        
-        // Deduplicate car IDs to avoid unnecessary requests
-        const carIds = Array.from(new Set(validCars.map(car => car.id).filter(Boolean)));
-        console.log('🖼️ [FETCHING FILE UPLOADS] [ALWAYS SHOWN] Starting to fetch file uploads for', validCars.length, 'cars with', carIds.length, 'unique IDs');
-        
-        // Check if Tonale ID is in the request
-        const tonaleId = 'c255a006-eb33-47e3-ba4e-5f024e41b57e';
-        if (carIds.includes(tonaleId)) {
-          console.log('🎯 [TONALE IN REQUEST] Alfa Romeo Tonale ID is included in fetch request');
-        }
-        
-        const carFileUploads = await fetchCarFileUploads(carIds);
-        
-        console.log('📸 [FILE UPLOADS RESULT] [ALWAYS SHOWN]', {
-          totalUploads: carFileUploads.length,
-          carIdsRequested: carIds.length,
-          uploadsByCar: carFileUploads.reduce((acc, upload) => {
-            acc[upload.car_id] = (acc[upload.car_id] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>)
+        console.log('✅ [FINAL CARS] [ALWAYS SHOWN]', {
+          totalCars: validCars.length,
+          carsWithUploads: validCars.filter(car => car.fileUploads && car.fileUploads.length > 0).length
         });
         
-        // Organize uploads by car_id
-        const uploadsByCarId = carFileUploads.reduce((acc, upload) => {
-          if (!acc[upload.car_id]) {
-            acc[upload.car_id] = [];
-          }
-          acc[upload.car_id].push(upload);
-          return acc;
-        }, {} as Record<string, CarFileUpload[]>);
-        
-        // Attach file uploads to each car
-        const carsWithUploads = validCars.map(car => {
-          const fileUploads = uploadsByCarId[car.id] || [];
-          
-          // Special logging for Tonale
-          if (car.id === tonaleId) {
-            console.log('🎯 [TONALE MAPPING]', {
-              carId: car.id,
-              title: car.title,
-              uploadsInMap: uploadsByCarId[car.id]?.length || 0,
-              uploadsAttached: fileUploads.length,
-              hasUploadsInMap: car.id in uploadsByCarId
-            });
-          }
-          
-          console.log('🖼️ [CAR FILE UPLOADS] [ALWAYS SHOWN]', {
-            carId: car.id,
-            make: car.make,
-            model: car.model,
-            uploadsFound: fileUploads.length,
-            uploads: fileUploads.map(u => ({ category: u.category, file_path: u.file_path }))
-          });
-          
-          return {
-            ...car,
-            fileUploads: fileUploads
-          };
-        });
-        
-        console.log('✅ [FINAL RESULT] [ALWAYS SHOWN]', {
-          carsInCurrentPage: carsWithUploads.length,
-          totalMatchingCars: totalCount,
-          currentPage,
-          pageSize,
-          totalPages: Math.ceil(totalCount / pageSize),
-          finalCarsPreview: carsWithUploads.slice(0, 2).map(car => ({
-            id: car.id,
-            make: car.make,
-            model: car.model,
-            title: car.title,
-            reserve_price: car.reservePrice,
-            auctionTimingStatus: car.auctionTimingStatus,
-            fileUploadsCount: car.fileUploads?.length || 0
-          }))
-        });
-        
+        // Return both cars and total count for pagination
         return {
-          cars: carsWithUploads,
+          cars: validCars,
           total: totalCount // Use true total from count query
         };
       } catch (err: any) {

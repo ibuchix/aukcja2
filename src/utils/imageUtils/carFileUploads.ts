@@ -93,22 +93,6 @@ export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUplo
       }, {})
     });
 
-    // Show sample uploads for debugging
-    console.log('📸 [UPLOADS SAMPLE]', result.slice(0, 5));
-
-    // Check specifically for the problematic Alfa Romeo Tonale
-    const tonaleUploads = result.filter(u => u.car_id === 'c255a006-eb33-47e3-ba4e-5f024e41b57e');
-    if (tonaleUploads.length > 0) {
-      console.log('🔎 [TONALE FOUND IN RESPONSE]', {
-        tonaleCarId: 'c255a006-eb33-47e3-ba4e-5f024e41b57e',
-        tonaleUploadsCount: tonaleUploads.length,
-        categories: tonaleUploads.map(u => u.category),
-        uploadStatuses: tonaleUploads.map(u => u.upload_status),
-      });
-    } else {
-      console.warn('⚠️ [TONALE NOT IN RESPONSE] No uploads found for c255a006-eb33-47e3-ba4e-5f024e41b57e');
-    }
-    
     return result;
   } catch (error) {
     console.error('❌ Exception in fetchCarFileUploads (RPC):', error);

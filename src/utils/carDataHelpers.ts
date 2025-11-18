@@ -128,7 +128,9 @@ export const processCarData = (rawData: any[]): CarListing[] => {
         scheduleStatus: scheduleInfo?.status,
         scheduleStartTime: scheduleInfo?.start_time,
         scheduleEndTime: scheduleInfo?.end_time,
-        auctionTimingStatus: auctionTimingStatus
+        auctionTimingStatus: auctionTimingStatus,
+        // Preserve file uploads if they exist from carsQueryBuilder
+        fileUploads: car.fileUploads || []
       } as CarListing;
     });
 };
