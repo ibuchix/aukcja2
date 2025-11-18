@@ -70,7 +70,7 @@ export const useSimplifiedCarListingsQuery = ({
       searchQuery, 
       currentPage.toString(),
       pageSize.toString(),
-      "v8" // Increment version to invalidate cache after adding pageSize
+      "v9" // Increment version to force refetch after RLS fix
     ],
     queryFn: async () => {
       
