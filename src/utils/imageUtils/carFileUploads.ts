@@ -64,8 +64,12 @@ export const getStorageImageUrl = (filePath: string): string => {
  */
 export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUpload[]> => {
   if (!carIds.length) {
+    console.log('⚠️ fetchCarFileUploads called with empty car IDs');
     return [];
   }
+  
+  console.log('🔍 [FETCH CAR FILE UPLOADS] Requesting images for', carIds.length, 'cars');
+  console.log('📋 [CAR IDS SAMPLE]', carIds.slice(0, 5));
   
   try {
     // Use the new RPC function that handles authentication server-side
@@ -75,11 +79,32 @@ export const fetchCarFileUploads = async (carIds: string[]): Promise<CarFileUplo
       });
 
     if (error) {
-      console.error('❌ Error fetching car file uploads via RPC:', error);
+      console.error('❌ [CAR FILE UPLOADS ERROR]', error);
       return [];
     }
 
     const result = (data as unknown as CarFileUpload[]) || [];
+    
+    console.log('✅ [CAR FILE UPLOADS RPC RESPONSE]', {
+      totalUploads: result.length,
+      uploadsByCar: result.reduce((acc: Record<string, number>, upload: CarFileUpload) => {
+        acc[upload.car_id] = (acc[upload.car_id] || 0) + 1;
+        return acc;
+      }, {})
+    });
+
+    // Check specifically for the problematic Alfa Romeo Tonale
+    const tonaleUploads = result.filter(u => u.car_id === 'c255a006-eb33-47e3-ba4e-5f024e41b57e');
+    if (tonaleUploads.length > 0) {
+      console.log('🔎 [TONALE FOUND IN RESPONSE]', {
+        tonaleCarId: 'c255a006-eb33-47e3-ba4e-5f024e41b57e',
+        tonaleUploadsCount: tonaleUploads.length,
+        categories: tonaleUploads.map(u => u.category)
+      });
+    } else {
+      console.warn('⚠️ [TONALE NOT IN RESPONSE] No uploads found for c255a006-eb33-47e3-ba4e-5f024e41b57e');
+    }
+    
     return result;
   } catch (error) {
     console.error('❌ Exception in fetchCarFileUploads (RPC):', error);
