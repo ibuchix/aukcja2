@@ -193,15 +193,6 @@ export const fetchCarsForSchedules = async (
     const carIdsArray = queryData.map((car: any) => car?.id).filter(Boolean);
     const fileUploads = await fetchCarFileUploads(carIdsArray);
     
-    // Check for Tonale specifically in the fetched uploads
-    const tonaleUploadsFromFetch = fileUploads.filter(
-      u => u.car_id === 'c255a006-eb33-47e3-ba4e-5f024e41b57e'
-    );
-    console.log('🎯 [TONALE UPLOADS FROM FETCH]', {
-      tonaleUploadsCount: tonaleUploadsFromFetch.length,
-      categories: tonaleUploadsFromFetch.map(u => u.category),
-    });
-    
     console.log('📸 [CAR FILE UPLOADS] [ALWAYS SHOWN]', {
       timestamp: new Date().toISOString(),
       carsCount: carIdsArray.length,
@@ -223,18 +214,6 @@ export const fetchCarsForSchedules = async (
       ...car,
       fileUploads: uploadsByCarId[car?.id] || []
     }));
-    
-    // Check if Tonale car has uploads attached correctly
-    const tonaleCar: any = carsWithImages.find(
-      (car: any) => car?.id === 'c255a006-eb33-47e3-ba4e-5f024e41b57e'
-    );
-    console.log('🚗 [TONALE CAR AFTER ATTACH]', {
-      found: !!tonaleCar,
-      fileUploadsLength: tonaleCar && Array.isArray(tonaleCar.fileUploads) ? tonaleCar.fileUploads.length : 0,
-      fileUploadsCategories: tonaleCar && Array.isArray(tonaleCar.fileUploads) 
-        ? tonaleCar.fileUploads.map((u: any) => u.category) 
-        : [],
-    });
     
     console.log('🚗 [CARS WITH IMAGES] [ALWAYS SHOWN]', {
       timestamp: new Date().toISOString(),
