@@ -33,18 +33,21 @@ export const fetchImagesFromStorage = async (carId: string): Promise<string[]> =
  * Gets the primary image for a car listing using car_file_uploads
  */
 export const getPrimaryImage = (car: CarListing): string => {
-  console.log('🖼️ getPrimaryImage called for car:', {
+  console.log('🖼️ [GET PRIMARY IMAGE]', {
     carId: car.id,
     carTitle: car.title,
     hasFileUploads: !!car.fileUploads,
     fileUploadsLength: car.fileUploads?.length,
-    fileUploadsData: car.fileUploads
+    fileUploadsType: Array.isArray(car.fileUploads) ? 'array' : typeof car.fileUploads,
+    firstUpload: car.fileUploads && car.fileUploads.length > 0 
+      ? { category: car.fileUploads[0].category, file_path: car.fileUploads[0].file_path }
+      : 'none'
   });
 
   // Check if car has file uploads data
   if (car.fileUploads && Array.isArray(car.fileUploads) && car.fileUploads.length > 0) {
     const primaryImageUrl = getPrimaryImageFromUploads(car.fileUploads);
-    console.log('🖼️ Primary image URL generated:', primaryImageUrl);
+    console.log('✅ [PRIMARY IMAGE URL]', primaryImageUrl);
     return primaryImageUrl;
   }
   
