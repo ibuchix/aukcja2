@@ -208,8 +208,15 @@ export const useSimplifiedCarListingsQuery = ({
         // STEP 4: Ensure authentication before fetching file uploads
         console.log('🔐 [AUTH CHECK] [ALWAYS SHOWN] Checking authentication before fetching file uploads');
         
-        const carIds = validCars.map(car => car.id).filter(Boolean);
-        console.log('🖼️ [FETCHING FILE UPLOADS] [ALWAYS SHOWN] Starting to fetch file uploads for', validCars.length, 'cars with IDs:', carIds);
+        // Deduplicate car IDs to avoid unnecessary requests
+        const carIds = Array.from(new Set(validCars.map(car => car.id).filter(Boolean)));
+        console.log('🖼️ [FETCHING FILE UPLOADS] [ALWAYS SHOWN] Starting to fetch file uploads for', validCars.length, 'cars with', carIds.length, 'unique IDs');
+        
+        // Check if Tonale ID is in the request
+        const tonaleId = 'c255a006-eb33-47e3-ba4e-5f024e41b57e';
+        if (carIds.includes(tonaleId)) {
+          console.log('🎯 [TONALE IN REQUEST] Alfa Romeo Tonale ID is included in fetch request');
+        }
         
         const carFileUploads = await fetchCarFileUploads(carIds);
         
@@ -234,6 +241,18 @@ export const useSimplifiedCarListingsQuery = ({
         // Attach file uploads to each car
         const carsWithUploads = validCars.map(car => {
           const fileUploads = uploadsByCarId[car.id] || [];
+          
+          // Special logging for Tonale
+          if (car.id === tonaleId) {
+            console.log('🎯 [TONALE MAPPING]', {
+              carId: car.id,
+              title: car.title,
+              uploadsInMap: uploadsByCarId[car.id]?.length || 0,
+              uploadsAttached: fileUploads.length,
+              hasUploadsInMap: car.id in uploadsByCarId
+            });
+          }
+          
           console.log('🖼️ [CAR FILE UPLOADS] [ALWAYS SHOWN]', {
             carId: car.id,
             make: car.make,
