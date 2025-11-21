@@ -5,6 +5,7 @@ import { Loader } from "@/components/ui/loader";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useDealerPresence } from "@/hooks/useDealerPresence";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -18,6 +19,9 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
   const [dealerCheckComplete, setDealerCheckComplete] = useState(false);
   const [isDealer, setIsDealer] = useState<boolean | null>(null);
+
+  // Silent background presence tracking for authenticated dealers
+  useDealerPresence();
 
   // Mark auth check complete when initialization is done and not loading
   useEffect(() => {
