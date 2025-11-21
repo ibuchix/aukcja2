@@ -20,10 +20,10 @@ export const useDealerPresence = () => {
     }
 
     // Create unique channel for dealer presence
-    const channel = supabase.channel('dealer_presence', {
+    const channel = supabase.channel('dealer-presence', {
       config: {
         presence: {
-          key: dealerProfile.id,
+          key: dealerProfile.user_id,
         },
       },
     });
@@ -36,14 +36,21 @@ export const useDealerPresence = () => {
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           try {
-            // Track dealer presence with essential data
+            // Get auth session to access email
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (!session?.user?.email) {
+              // Can't track without email - fail silently
+              trackingRef.current = false;
+              return;
+            }
+
+            // Track dealer presence with required fields only
             const presenceData = {
-              dealer_id: dealerProfile.id,
               user_id: dealerProfile.user_id,
-              dealership_name: dealerProfile.dealership_name,
-              supervisor_name: dealerProfile.supervisor_name,
+              name: dealerProfile.supervisor_name,
+              email: session.user.email,
               online_at: new Date().toISOString(),
-              is_verified: dealerProfile.is_verified,
             };
 
             await channel.track(presenceData);
