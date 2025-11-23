@@ -213,10 +213,10 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
             <span>{car.mileage?.toLocaleString()} km</span>
             <span>•</span>
             <span>{translateTransmission(car.transmission)}</span>
-            {car.fuel_type && (
+            {car.fuelType && (
               <>
                 <span>•</span>
-                <span className="text-[#D81B24] font-semibold">{translateFuelType(car.fuel_type)}</span>
+                <span className="text-[#D81B24] font-semibold">{translateFuelType(car.fuelType)}</span>
               </>
             )}
           </div>
