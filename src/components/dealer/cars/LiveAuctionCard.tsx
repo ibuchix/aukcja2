@@ -162,14 +162,11 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
           style={{ opacity: 0 }}
         />
         
-        {/* Top-left: Live Status + Timer */}
-        {isLive && auctionEndTime && (
-          <div className="absolute top-2 left-2 flex items-center gap-2">
-            <PhotoBadge variant="live" position="top-left">
-              Aukcja na żywo
-            </PhotoBadge>
-            <AuctionTimer auctionEndTime={auctionEndTime} />
-          </div>
+        {/* Top-left: Live Status Badge */}
+        {isLive && (
+          <PhotoBadge variant="live" position="top-left">
+            Aukcja na żywo
+          </PhotoBadge>
         )}
         
         {/* Top-right: Damage Badge */}
@@ -198,6 +195,13 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
       
       <CardContent className={isMobile ? "p-3" : "p-4"}>
         <div className="space-y-3">
+          {/* Timer - Prominent position when auction is live */}
+          {isLive && auctionEndTime && (
+            <div className="flex justify-center -mt-2 mb-2">
+              <AuctionTimer auctionEndTime={auctionEndTime} />
+            </div>
+          )}
+          
           {/* Title */}
           <h3 className={`font-kanit font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>
             {car.year} {car.make} {car.model}
@@ -225,6 +229,18 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
                 : car.town || car.county || 'Lokalizacja nie podana'}
             </span>
           </div>
+
+          {/* Seller Notes - Prominent position */}
+          {car.seller_notes && (
+            <div className={`${isMobile ? 'text-xs' : 'text-sm'} bg-accent/30 border border-accent/50 p-3 rounded-md`}>
+              <p className="text-muted-foreground font-semibold mb-1.5">Uwagi sprzedającego:</p>
+              <p className="text-foreground leading-relaxed">
+                {car.seller_notes.length > (isMobile ? 100 : 150) 
+                  ? `${car.seller_notes.substring(0, isMobile ? 100 : 150)}...` 
+                  : car.seller_notes}
+              </p>
+            </div>
+          )}
 
           {/* Vehicle Details Section */}
           <div className={`${isMobile ? 'text-xs' : 'text-sm'} space-y-1.5 pt-2 border-t`}>
@@ -280,18 +296,6 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
             <div className={`flex items-center gap-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>
               <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
               <span className="text-green-700 dark:text-green-400">Pełna dokumentacja rejestracyjna</span>
-            </div>
-          )}
-
-          {/* Seller Notes */}
-          {car.seller_notes && (
-            <div className={`${isMobile ? 'text-xs' : 'text-sm'} bg-muted/50 p-3 rounded-md`}>
-              <p className="text-muted-foreground font-semibold mb-1">Uwagi sprzedającego:</p>
-              <p className="text-foreground line-clamp-3">
-                {car.seller_notes.length > (isMobile ? 100 : 150) 
-                  ? `${car.seller_notes.substring(0, isMobile ? 100 : 150)}...` 
-                  : car.seller_notes}
-              </p>
             </div>
           )}
           
