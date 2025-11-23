@@ -2,13 +2,15 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin } from "lucide-react";
+import { Clock, MapPin, Key, FileText, AlertCircle, CheckCircle, Wrench } from "lucide-react";
 import { AuctionTimer } from "@/components/auction/AuctionTimer";
+import { PhotoBadge } from "./PhotoBadge";
 import { AuctionStatusIndicator } from "./AuctionStatusIndicator";
 import { getPrimaryImage, getAllCarImages } from "@/utils/imageUtils";
 import { useImagePrefetch } from "@/hooks/useImagePrefetch";
 import { translateTransmission } from "@/lib/transmissionUtils";
 import { translateSpecificationLabel } from "@/lib/vehicleTranslations";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LiveAuctionCardProps {
   car: any;
@@ -18,6 +20,7 @@ interface LiveAuctionCardProps {
 
 export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId, onClick }) => {
   const { prefetchImages } = useImagePrefetch();
+  const isMobile = useIsMobile();
   
   const formatPrice = (price: number | null | undefined) => {
     // Handle null, undefined, or NaN values
@@ -147,77 +150,168 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
       onClick={() => onClick(car)}
       onMouseEnter={handleCardHover}
     >
-      <div className="aspect-video relative">
-          <img 
-            src={getPrimaryImage(car)} 
-            alt={`${car.make} ${car.model}`}
-            className="w-full h-full object-cover transition-opacity duration-300 ease-in-out"
-            loading="lazy"
-            onLoad={(e) => {
-              e.currentTarget.style.opacity = '1';
-            }}
-            style={{ opacity: 0 }}
-          />
-        <div className="absolute top-2 right-2">
-          <AuctionStatusIndicator
-            auctionTimingStatus={car.auctionTimingStatus || getTimerStatus()}
-            scheduleStartTime={car.scheduleStartTime}
-            scheduleEndTime={car.scheduleEndTime}
-            auctionStatus={car.auction_status}
-          />
-        </div>
+      <div className="aspect-[4/3] relative">
+        <img 
+          src={getPrimaryImage(car)} 
+          alt={`${car.make} ${car.model}`}
+          className="w-full h-full object-cover transition-opacity duration-300 ease-in-out"
+          loading="lazy"
+          onLoad={(e) => {
+            e.currentTarget.style.opacity = '1';
+          }}
+          style={{ opacity: 0 }}
+        />
+        
+        {/* Top-left: Live Status + Timer */}
+        {isLive && auctionEndTime && (
+          <div className="absolute top-2 left-2 flex items-center gap-2">
+            <PhotoBadge variant="live" position="top-left">
+              Aukcja na żywo
+            </PhotoBadge>
+            <AuctionTimer auctionEndTime={auctionEndTime} />
+          </div>
+        )}
+        
+        {/* Top-right: Damage Badge */}
+        {car.is_damaged && (
+          <PhotoBadge variant="damaged" position="top-right">
+            Uszkodzony
+          </PhotoBadge>
+        )}
+        
+        {/* Bottom-left: Registration or Verified Seller */}
+        {car.is_registered_in_poland ? (
+          <PhotoBadge variant="registered" position="bottom-left">
+            Zarejestrowany w Polsce
+          </PhotoBadge>
+        ) : (
+          <PhotoBadge variant="verified-seller" position="bottom-left">
+            Zweryfikowany prywatny sprzedający
+          </PhotoBadge>
+        )}
+        
+        {/* Bottom-right: Payment on Collection (always show) */}
+        <PhotoBadge variant="payment-collection" position="bottom-right">
+          Płatność przy odbiorze
+        </PhotoBadge>
       </div>
       
-      <CardContent className="p-4">
-        <div className="space-y-2">
-          <h3 className="font-semibold text-lg">
+      <CardContent className={isMobile ? "p-3" : "p-4"}>
+        <div className="space-y-3">
+          {/* Title */}
+          <h3 className={`font-kanit font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>
             {car.year} {car.make} {car.model}
           </h3>
           
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          {/* Key Specs */}
+          <div className={`flex items-center gap-3 ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground flex-wrap`}>
             <span>{car.mileage?.toLocaleString()} km</span>
+            <span>•</span>
             <span>{translateTransmission(car.transmission)}</span>
+            {car.fuel_type && (
+              <>
+                <span>•</span>
+                <span>{car.fuel_type}</span>
+              </>
+            )}
           </div>
           
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4" />
+          {/* Location */}
+          <div className={`flex items-center gap-2 ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
+            <MapPin className="h-4 w-4 flex-shrink-0" />
             <span>
               {car.town && car.county 
                 ? `${car.town}, ${car.county}` 
                 : car.town || car.county || 'Lokalizacja nie podana'}
             </span>
           </div>
-          
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            {auctionEndTime && !hasEnded ? (
-              <AuctionTimer 
-                auctionEndTime={auctionEndTime} 
-              />
-            ) : hasEnded ? (
-              <span>Aukcja zakończona</span>
-            ) : auctionEndTime ? (
-              // Show countdown even if status calculation failed
-              <AuctionTimer 
-                auctionEndTime={auctionEndTime} 
-              />
-            ) : (
-              <span>{displayStatus.label}</span>
+
+          {/* Vehicle Details Section */}
+          <div className={`${isMobile ? 'text-xs' : 'text-sm'} space-y-1.5 pt-2 border-t`}>
+            {car.vin && (
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-muted-foreground">VIN:</span>
+                <span className="font-mono">{car.vin}</span>
+              </div>
+            )}
+            {car.registration_number && (
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Rejestracja:</span>
+                <span className="font-semibold">{car.registration_number}</span>
+              </div>
+            )}
+            {car.number_of_keys && (
+              <div className="flex items-center gap-2">
+                <Key className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span>{car.number_of_keys} {car.number_of_keys === 1 ? 'klucz' : 'kluczy'}</span>
+              </div>
+            )}
+            {car.seat_material && (
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Tapicerka:</span>
+                <span>{car.seat_material}</span>
+              </div>
             )}
           </div>
+
+          {/* Service History */}
+          {(car.has_service_history || car.service_history_type) && (
+            <div className={`flex items-center gap-2 ${isMobile ? 'text-xs' : 'text-sm'} bg-green-50 dark:bg-green-950 p-2 rounded-md`}>
+              <Wrench className="h-4 w-4 text-green-600 flex-shrink-0" />
+              <span className="text-green-700 dark:text-green-400">
+                {car.service_history_type || 'Historia serwisowa dostępna'}
+              </span>
+              {car.has_service_history && <CheckCircle className="h-4 w-4 text-green-600" />}
+            </div>
+          )}
+
+          {/* Important Warnings */}
+          {car.has_outstanding_finance && (
+            <div className={`flex items-center gap-2 ${isMobile ? 'text-xs' : 'text-sm'} bg-amber-50 dark:bg-amber-950 p-2 rounded-md`}>
+              <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+              <span className="text-amber-700 dark:text-amber-400">
+                Niespłacone finansowanie: {formatPrice(car.finance_amount)}
+              </span>
+            </div>
+          )}
           
-          <div className="pt-2 border-t">
+          {car.has_full_registration_document && (
+            <div className={`flex items-center gap-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+              <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+              <span className="text-green-700 dark:text-green-400">Pełna dokumentacja rejestracyjna</span>
+            </div>
+          )}
+
+          {/* Seller Notes */}
+          {car.seller_notes && (
+            <div className={`${isMobile ? 'text-xs' : 'text-sm'} bg-muted/50 p-3 rounded-md`}>
+              <p className="text-muted-foreground font-semibold mb-1">Uwagi sprzedającego:</p>
+              <p className="text-foreground line-clamp-3">
+                {car.seller_notes.length > (isMobile ? 100 : 150) 
+                  ? `${car.seller_notes.substring(0, isMobile ? 100 : 150)}...` 
+                  : car.seller_notes}
+              </p>
+            </div>
+          )}
+          
+          {/* Pricing Section */}
+          <div className="pt-3 border-t">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">{translateSpecificationLabel('Reserve Price')}</span>
-              <span className="font-semibold text-lg">
+              <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
+                {translateSpecificationLabel('Reserve Price')}
+              </span>
+              <span className={`font-kanit font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>
                 {formatPrice(reservePrice)}
               </span>
             </div>
             
             {car.current_bid && car.current_bid > 0 && (
               <div className="flex justify-between items-center mt-1">
-                <span className="text-sm text-muted-foreground">Aktualna oferta</span>
-                <span className={`font-semibold ${hasEnded ? 'text-gray-600' : 'text-green-600'}`}>
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
+                  Aktualna oferta
+                </span>
+                <span className={`font-kanit font-semibold ${hasEnded ? 'text-gray-600' : 'text-green-600'} ${isMobile ? 'text-base' : 'text-lg'}`}>
                   {formatPrice(car.current_bid)}
                 </span>
               </div>
@@ -225,8 +319,10 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
             
             {hasEnded && car.auction_status === 'sold' && (
               <div className="flex justify-between items-center mt-1">
-                <span className="text-sm font-medium text-green-600">Wynik końcowy</span>
-                <span className="font-semibold text-green-600">SPRZEDANY</span>
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-green-600`}>
+                  Wynik końcowy
+                </span>
+                <span className="font-kanit font-semibold text-green-600">SPRZEDANY</span>
               </div>
             )}
           </div>
