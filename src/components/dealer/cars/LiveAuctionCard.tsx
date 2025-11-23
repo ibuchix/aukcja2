@@ -9,6 +9,7 @@ import { AuctionStatusIndicator } from "./AuctionStatusIndicator";
 import { getPrimaryImage, getAllCarImages } from "@/utils/imageUtils";
 import { useImagePrefetch } from "@/hooks/useImagePrefetch";
 import { translateTransmission } from "@/lib/transmissionUtils";
+import { translateFuelType } from "@/lib/fuelTypeUtils";
 import { translateSpecificationLabel } from "@/lib/vehicleTranslations";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -215,7 +216,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
             {car.fuel_type && (
               <>
                 <span>•</span>
-                <span>{car.fuel_type}</span>
+                <span className="text-[#D81B24] font-semibold">{translateFuelType(car.fuel_type)}</span>
               </>
             )}
           </div>
