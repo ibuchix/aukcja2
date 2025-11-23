@@ -122,7 +122,7 @@ export const SimpleLiveAuctionsView = () => {
       />
 
       {isLoading ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="animate-pulse">
               <div className="bg-accent/20 aspect-video rounded-lg mb-4"></div>
@@ -140,7 +140,7 @@ export const SimpleLiveAuctionsView = () => {
         />
       ) : (
         <>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
             {cars.map((car) => (
               <LiveAuctionCard
                 key={car.id}
