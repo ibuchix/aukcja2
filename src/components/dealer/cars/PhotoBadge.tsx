@@ -38,13 +38,23 @@ const positionStyles: Record<BadgePosition, string> = {
 export const PhotoBadge = ({ variant, position, className, children }: PhotoBadgeProps) => {
   const isMobile = useIsMobile();
 
+  // On mobile, stack bottom badges vertically to prevent overlap
+  const getMobilePosition = () => {
+    if (!isMobile) return positionStyles[position];
+    
+    if (position === "bottom-right") {
+      return "bottom-12 left-2"; // Stack above bottom-left badge
+    }
+    return positionStyles[position];
+  };
+
   return (
     <div
       className={cn(
         "absolute z-10 flex items-center gap-1 font-kanit font-semibold rounded-md shadow-lg backdrop-blur-sm",
         isMobile ? "text-[10px] px-1.5 py-0.5" : "text-xs px-2.5 py-1",
         variantStyles[variant],
-        positionStyles[position],
+        getMobilePosition(),
         className
       )}
     >
