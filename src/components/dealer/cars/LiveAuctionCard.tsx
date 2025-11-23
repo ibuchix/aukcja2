@@ -195,17 +195,17 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
       
       <CardContent className={isMobile ? "p-3" : "p-4"}>
         <div className="space-y-3">
-          {/* Timer - Prominent position when auction is live */}
-          {isLive && auctionEndTime && (
-            <div className="flex justify-center -mt-2 mb-2">
-              <AuctionTimer auctionEndTime={auctionEndTime} />
-            </div>
-          )}
-          
-          {/* Title */}
-          <h3 className={`font-kanit font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>
-            {car.year} {car.make} {car.model}
-          </h3>
+          {/* Title and Timer */}
+          <div className="flex items-start justify-between gap-3">
+            <h3 className={`font-kanit font-semibold ${isMobile ? 'text-base' : 'text-lg'} flex-1`}>
+              {car.year} {car.make} {car.model}
+            </h3>
+            {isLive && auctionEndTime && (
+              <div className="flex-shrink-0">
+                <AuctionTimer auctionEndTime={auctionEndTime} />
+              </div>
+            )}
+          </div>
           
           {/* Key Specs */}
           <div className={`flex items-center gap-3 ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground flex-wrap`}>
@@ -231,13 +231,13 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
           </div>
 
           {/* Seller Notes - Prominent position */}
-          {car.seller_notes && (
+          {car.sellerNotes && (
             <div className={`${isMobile ? 'text-xs' : 'text-sm'} bg-accent/30 border border-accent/50 p-3 rounded-md`}>
               <p className="text-muted-foreground font-semibold mb-1.5">Uwagi sprzedającego:</p>
               <p className="text-foreground leading-relaxed">
-                {car.seller_notes.length > (isMobile ? 100 : 150) 
-                  ? `${car.seller_notes.substring(0, isMobile ? 100 : 150)}...` 
-                  : car.seller_notes}
+                {car.sellerNotes.length > (isMobile ? 100 : 150) 
+                  ? `${car.sellerNotes.substring(0, isMobile ? 100 : 150)}...` 
+                  : car.sellerNotes}
               </p>
             </div>
           )}
