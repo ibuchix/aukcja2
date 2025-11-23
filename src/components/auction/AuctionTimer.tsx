@@ -1,5 +1,7 @@
 
 import { useState, useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface AuctionTimerProps {
   auctionEndTime: string;
@@ -7,6 +9,7 @@ interface AuctionTimerProps {
 
 export const AuctionTimer = ({ auctionEndTime }: AuctionTimerProps) => {
   const [timeRemaining, setTimeRemaining] = useState<string>("");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // If no end time provided, show unavailable
@@ -51,7 +54,13 @@ export const AuctionTimer = ({ auctionEndTime }: AuctionTimerProps) => {
   }, [auctionEndTime]);
 
   return (
-    <span className="font-medium text-primary">
+    <span 
+      className={cn(
+        "font-kanit font-semibold bg-white rounded-md shadow-sm",
+        "text-[#D81B24]",
+        isMobile ? "text-xs px-2 py-1" : "text-sm px-3 py-1.5"
+      )}
+    >
       {timeRemaining}
     </span>
   );
