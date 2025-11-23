@@ -86,16 +86,22 @@ export const fetchCarsForSchedules = async (
     searchQuery
   });
 
-  // NOTE: We do NOT apply database-level sorting here because we want to preserve
-  // the schedule creation order from the carIds array. The carIds come from
-  // get_live_auction_schedules() already sorted by auction_schedules.created_at DESC
-  // (most recently scheduled first). Client-side sorting below (line 165+) will arrange
-  // results to match this order.
-  console.log('📊 [PRESERVING SCHEDULE ORDER] [ALWAYS SHOWN]', {
-    message: 'Skipping database sort to preserve schedule creation order',
-    firstCarId: carIds[0],
-    totalCarIds: carIds.length
-  });
+  // Apply database sorting only when NOT using default schedule order
+  if (sortOption !== 'newest') {
+    query = applySorting(query, sortOption);
+    console.log('🔄 [DATABASE SORTING APPLIED] [ALWAYS SHOWN]', {
+      message: 'Applied user-selected database sorting',
+      sortOption,
+      totalCarIds: carIds.length
+    });
+  } else {
+    console.log('📊 [PRESERVING SCHEDULE ORDER] [ALWAYS SHOWN]', {
+      message: 'Using default schedule creation order (client-side sort below)',
+      sortOption,
+      firstCarId: carIds[0],
+      totalCarIds: carIds.length
+    });
+  }
 
   // Get total count BEFORE pagination (critical for dynamic pagination)
   const countQuery = supabase
@@ -164,28 +170,44 @@ export const fetchCarsForSchedules = async (
     return [];
   }
 
-  // Sort cars to match the order of carIds array (preserves schedule creation order)
-  const carIdOrderMap = new Map<string, number>();
-  carIds.forEach((id, index) => {
-    carIdOrderMap.set(id, index);
-  });
-  
-  queryData.sort((a: any, b: any) => {
-    const orderA = carIdOrderMap.get(a.id) ?? Number.MAX_SAFE_INTEGER;
-    const orderB = carIdOrderMap.get(b.id) ?? Number.MAX_SAFE_INTEGER;
-    return orderA - orderB;
-  });
-  
-  console.log('✅ [PRESERVED SCHEDULE ORDER] [ALWAYS SHOWN]', {
-    timestamp: new Date().toISOString(),
-    message: 'Cars sorted to match schedule creation order',
-    first3Cars: queryData.slice(0, 3).map((c: any) => ({ 
-      id: c.id, 
-      make: c.make, 
-      model: c.model, 
-      year: c.year 
-    }))
-  });
+  // Only apply schedule order when sortOption is "newest" (default)
+  if (sortOption === 'newest') {
+    // Sort cars to match the order of carIds array (preserves schedule creation order)
+    const carIdOrderMap = new Map<string, number>();
+    carIds.forEach((id, index) => {
+      carIdOrderMap.set(id, index);
+    });
+    
+    queryData.sort((a: any, b: any) => {
+      const orderA = carIdOrderMap.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+      const orderB = carIdOrderMap.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+      return orderA - orderB;
+    });
+    
+    console.log('✅ [SCHEDULE ORDER PRESERVED] [ALWAYS SHOWN]', {
+      timestamp: new Date().toISOString(),
+      message: 'Showing most recently scheduled first',
+      sortOption,
+      first3Cars: queryData.slice(0, 3).map((c: any) => ({ 
+        id: c.id, 
+        make: c.make, 
+        model: c.model, 
+        year: c.year 
+      }))
+    });
+  } else {
+    console.log('✅ [USER SORTING APPLIED] [ALWAYS SHOWN]', {
+      timestamp: new Date().toISOString(),
+      message: 'Database sorting respected',
+      sortOption,
+      first3Cars: queryData.slice(0, 3).map((c: any) => ({ 
+        id: c.id, 
+        make: c.make, 
+        model: c.model, 
+        year: c.year 
+      }))
+    });
+  }
 
   // Fetch car file uploads for all retrieved cars
   let carsWithImages = queryData;
