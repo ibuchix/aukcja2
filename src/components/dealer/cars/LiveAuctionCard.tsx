@@ -170,14 +170,14 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
         )}
         
         {/* Top-right: Damage Badge */}
-        {car.is_damaged && (
+        {car.isDamaged && (
           <PhotoBadge variant="damaged" position="top-right">
             Uszkodzony
           </PhotoBadge>
         )}
         
         {/* Bottom-left: Registration or Verified Seller */}
-        {car.is_registered_in_poland ? (
+        {car.isRegisteredInPoland ? (
           <PhotoBadge variant="registered" position="bottom-left">
             Zarejestrowany w Polsce
           </PhotoBadge>
