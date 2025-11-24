@@ -137,6 +137,7 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
+      allow_promotion_codes: true,
       success_url: `${req.headers.get("origin")}/dealer/won-vehicles?payment_success=true&session_id={CHECKOUT_SESSION_ID}&vehicle_id=${vehicleId}`,
       cancel_url: `${req.headers.get("origin")}/dealer/won-vehicles?payment_cancelled=true`,
       metadata: {
