@@ -148,7 +148,7 @@ const DashboardContent = () => {
   );
 
   return (
-    <DashboardLayout title="Aukcja">
+    <DashboardLayout title="Aukcja" showTitle={false}>
       <div className={isMobile ? "space-y-4" : "space-y-6"}>
         {/* Always show errors and verification banner first */}
         {errorAlert}

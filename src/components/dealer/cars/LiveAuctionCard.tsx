@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin, Key, FileText, AlertCircle, CheckCircle, Wrench } from "lucide-react";
+import { Clock, MapPin, Key, FileText, AlertCircle, CheckCircle, Wrench, ShoppingCart } from "lucide-react";
 import { AuctionTimer } from "@/components/auction/AuctionTimer";
 import { PhotoBadge } from "./PhotoBadge";
 import { AuctionStatusIndicator } from "./AuctionStatusIndicator";
@@ -270,6 +270,14 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
                 <span>{car.seat_material}</span>
               </div>
             )}
+          </div>
+
+          {/* Instant Purchase Badge */}
+          <div className={`flex items-center gap-2 ${isMobile ? 'text-xs' : 'text-sm'} bg-emerald-50 dark:bg-emerald-950 p-2 rounded-md border border-emerald-200 dark:border-emerald-800`}>
+            <ShoppingCart className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+            <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
+              Możliwość Natychmiastowego zakupu
+            </span>
           </div>
 
           {/* Service History */}

@@ -6,9 +6,10 @@ import { HelpBanner } from "@/components/dealer/HelpBanner";
 interface DashboardLayoutProps {
   children: React.ReactNode;
   title: string;
+  showTitle?: boolean;
 }
 
-export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
+export const DashboardLayout = ({ children, title, showTitle = true }: DashboardLayoutProps) => {
   const isMobile = useIsMobile();
   
   return (
@@ -17,7 +18,7 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
       <HelpBanner />
       
       <div className={`container mx-auto ${isMobile ? 'px-3 py-4' : 'px-4 py-8'} flex-grow`}>
-        {!isMobile && <h1 className="text-3xl font-bold mb-6 text-body-text">{title}</h1>}
+        {!isMobile && showTitle && <h1 className="text-3xl font-bold mb-6 text-body-text">{title}</h1>}
         {children}
       </div>
       
