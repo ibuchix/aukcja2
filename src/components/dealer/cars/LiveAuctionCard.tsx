@@ -274,7 +274,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
 
           {/* Instant Purchase Badge */}
           <div className={`flex items-center gap-2 ${isMobile ? 'text-xs' : 'text-sm'} bg-emerald-50 dark:bg-emerald-950 p-2 rounded-md border border-emerald-200 dark:border-emerald-800`}>
-            <Zap className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+            <Zap className="h-4 w-4 text-amber-500 drop-shadow-[0_0_6px_rgba(251,146,60,0.7)] flex-shrink-0" />
             <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
               Możliwość Natychmiastowego zakupu
             </span>
