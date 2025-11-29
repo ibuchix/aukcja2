@@ -54,4 +54,9 @@ export const queryKeys = {
     profile: (dealerId: string) => 
       [...queryKeys.dealers.all, 'profile', dealerId] as const,
   },
+  wishlist: {
+    all: ['wishlist'] as const,
+    list: (dealerId: string) => 
+      [...queryKeys.wishlist.all, 'list', dealerId] as const,
+  },
 };

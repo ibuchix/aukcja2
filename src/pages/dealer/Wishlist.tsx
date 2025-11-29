@@ -18,7 +18,7 @@ const Wishlist = () => {
   const [cars, setCars] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCar, setSelectedCar] = useState<any>(null);
-  const { wishlist, loading: wishlistLoading } = useWishlist(dealerId || undefined);
+  const { wishlist, loading: wishlistLoading } = useWishlist();
 
   useEffect(() => {
     const fetchDealerProfile = async () => {

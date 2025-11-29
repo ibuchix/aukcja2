@@ -24,7 +24,7 @@ interface LiveAuctionCardProps {
 export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId, onClick }) => {
   const { prefetchImages } = useImagePrefetch();
   const isMobile = useIsMobile();
-  const { isInWishlist, toggleWishlist } = useWishlist(dealerId);
+  const { isInWishlist, toggleWishlist } = useWishlist();
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   useEffect(() => {
