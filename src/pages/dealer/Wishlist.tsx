@@ -4,15 +4,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWishlist } from '@/hooks/useWishlist';
 import { DashboardLayout } from '@/components/dealer/dashboard/DashboardLayout';
 import { LiveAuctionCard } from '@/components/dealer/cars/LiveAuctionCard';
+import { LiveAuctionDetailsDialog } from '@/components/dealer/cars/LiveAuctionDetailsDialog';
 import { Heart } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
+import { fetchCarFileUploads, type CarFileUpload } from "@/utils/imageUtils/carFileUploads";
+import { processCarData } from "@/utils/carDataHelpers";
 
 const Wishlist = () => {
   const navigate = useNavigate();
   const [dealerId, setDealerId] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState<boolean>(false);
   const [cars, setCars] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCar, setSelectedCar] = useState<any>(null);
   const { wishlist, loading: wishlistLoading } = useWishlist(dealerId || undefined);
 
   useEffect(() => {
@@ -25,12 +30,13 @@ const Wishlist = () => {
 
       const { data: dealer } = await supabase
         .from('dealers')
-        .select('id')
+        .select('id, is_verified')
         .eq('user_id', user.id)
         .single();
 
       if (dealer) {
         setDealerId((dealer as any).id);
+        setIsVerified((dealer as any).is_verified || false);
       }
     };
 
@@ -47,6 +53,7 @@ const Wishlist = () => {
       try {
         const carIds = wishlist.map((item: any) => item.car_id);
         
+        // Fetch car data with auction schedules
         const { data, error } = await supabase
           .from('cars')
           .select(`
@@ -63,8 +70,31 @@ const Wishlist = () => {
 
         if (error) throw error;
 
+        // Fetch car file uploads for images
+        const fileUploads = await fetchCarFileUploads(carIds);
+        
+        // Organize uploads by car_id
+        const uploadsByCarId = fileUploads.reduce((acc: Record<string, CarFileUpload[]>, upload) => {
+          if (upload.car_id) {
+            if (!acc[upload.car_id]) {
+              acc[upload.car_id] = [];
+            }
+            acc[upload.car_id].push(upload);
+          }
+          return acc;
+        }, {});
+
+        // Merge file uploads with car data
+        const carsWithUploads = ((data as any) || []).map((car: any) => ({
+          ...car,
+          fileUploads: uploadsByCarId[car.id] || []
+        }));
+
+        // Process car data for proper field mapping
+        const processedCars = processCarData(carsWithUploads);
+
         // Merge expiration data from wishlist
-        const carsWithExpiration = ((data as any) || []).map((car: any) => {
+        const carsWithExpiration = processedCars.map((car: any) => {
           const wishlistItem = wishlist.find((item: any) => item.car_id === car.id);
           return {
             ...car,
@@ -86,7 +116,7 @@ const Wishlist = () => {
   }, [wishlist, wishlistLoading]);
 
   const handleCarClick = (car: any) => {
-    navigate(`/dealer/dashboard?carId=${car.id}`);
+    setSelectedCar(car);
   };
 
   const getExpirationText = (expiresAt: string) => {
@@ -161,6 +191,15 @@ const Wishlist = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {selectedCar && (
+        <LiveAuctionDetailsDialog
+          car={selectedCar}
+          dealerId={dealerId || ''}
+          isVerified={isVerified}
+          onClose={() => setSelectedCar(null)}
+        />
       )}
     </DashboardLayout>
   );
