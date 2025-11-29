@@ -141,7 +141,7 @@ const Wishlist = () => {
   }
 
   return (
-    <DashboardLayout title="Moja Lista Życzeń">
+    <DashboardLayout title="Moja Lista Życzeń" showTitle={false}>
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <Heart className="h-8 w-8 text-destructive fill-destructive" />
