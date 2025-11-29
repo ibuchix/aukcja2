@@ -9,6 +9,7 @@ import DealerDashboard from "./pages/dealer/Dashboard";
 import Documents from "./pages/dealer/Documents";
 import WonVehicles from "./pages/dealer/WonVehicles";
 import Bids from "./pages/dealer/Bids";
+import Wishlist from "./pages/dealer/Wishlist";
 import CompleteRegistration from "./pages/CompleteRegistration";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/dealer/Profile";
@@ -80,6 +81,14 @@ function App() {
           element={
             <ProtectedRoute>
               <WonVehicles />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dealer/wishlist"
+          element={
+            <ProtectedRoute>
+              <Wishlist />
             </ProtectedRoute>
           }
         />

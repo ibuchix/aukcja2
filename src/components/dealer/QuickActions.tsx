@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Gavel, FileText, Trophy } from "lucide-react";
+import { Gavel, FileText, Trophy, Heart } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export function QuickActions() {
@@ -29,6 +29,13 @@ export function QuickActions() {
       description: "",
       link: "/dealer/won-vehicles", 
       variant: "blue" as const
+    },
+    {
+      icon: <Heart className="h-5 w-5" />,
+      title: "Lista życzeń",
+      description: "",
+      link: "/dealer/wishlist", 
+      variant: "green" as const
     }
   ];
 

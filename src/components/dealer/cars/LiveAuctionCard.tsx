@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin, Key, FileText, AlertCircle, CheckCircle, Wrench, Zap } from "lucide-react";
+import { Clock, MapPin, Key, FileText, AlertCircle, CheckCircle, Wrench, Zap, Heart } from "lucide-react";
 import { AuctionTimer } from "@/components/auction/AuctionTimer";
 import { PhotoBadge } from "./PhotoBadge";
 import { AuctionStatusIndicator } from "./AuctionStatusIndicator";
@@ -12,6 +12,8 @@ import { translateTransmission } from "@/lib/transmissionUtils";
 import { translateFuelType } from "@/lib/fuelTypeUtils";
 import { translateSpecificationLabel } from "@/lib/vehicleTranslations";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useWishlist } from "@/hooks/useWishlist";
+import { cn } from "@/lib/utils";
 
 interface LiveAuctionCardProps {
   car: any;
@@ -22,6 +24,12 @@ interface LiveAuctionCardProps {
 export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId, onClick }) => {
   const { prefetchImages } = useImagePrefetch();
   const isMobile = useIsMobile();
+  const { isInWishlist, toggleWishlist } = useWishlist(dealerId);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  useEffect(() => {
+    setIsWishlisted(isInWishlist(car.id));
+  }, [car.id, isInWishlist]);
   
   const formatPrice = (price: number | null | undefined) => {
     // Handle null, undefined, or NaN values
@@ -145,6 +153,12 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
     }
   };
 
+  const handleWishlistClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await toggleWishlist(car.id);
+    setIsWishlisted(isInWishlist(car.id));
+  };
+
   return (
     <Card 
       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" 
@@ -170,9 +184,25 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
           </PhotoBadge>
         )}
         
-        {/* Top-right: Damage Badge */}
+        {/* Top-right: Wishlist Heart Button */}
+        <button
+          onClick={handleWishlistClick}
+          className="absolute top-3 right-3 p-2 rounded-full bg-background/90 backdrop-blur shadow-lg hover:bg-background transition-all hover:scale-110 z-10"
+          aria-label={isWishlisted ? "Usuń z listy życzeń" : "Dodaj do listy życzeń"}
+        >
+          <Heart
+            className={cn(
+              "h-5 w-5 transition-all",
+              isWishlisted 
+                ? "fill-destructive text-destructive" 
+                : "text-muted-foreground hover:text-destructive"
+            )}
+          />
+        </button>
+        
+        {/* Damage Badge */}
         {car.isDamaged && (
-          <PhotoBadge variant="damaged" position="top-right">
+          <PhotoBadge variant="damaged" position="top-right" className="mr-16">
             Uszkodzony
           </PhotoBadge>
         )}
