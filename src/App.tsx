@@ -21,6 +21,7 @@ import PasswordReset from "./pages/PasswordReset";
 import PasswordResetWithToken from "./pages/PasswordResetWithToken";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import { CookieConsentBanner } from "./components/cookies/CookieConsentBanner";
+import { DealerLayoutWrapper } from "./components/dealer/DealerLayoutWrapper";
 
 function App() {
   return (
@@ -43,12 +44,14 @@ function App() {
           }
         />
         
-        {/* Dealer dashboard routes */}
+        {/* Dealer dashboard routes - wrapped with DealerLayoutWrapper for shared state */}
         <Route
           path="/dealer/dashboard"
           element={
             <ProtectedRoute>
-              <DealerDashboard />
+              <DealerLayoutWrapper>
+                <DealerDashboard />
+              </DealerLayoutWrapper>
             </ProtectedRoute>
           }
         />
@@ -56,7 +59,9 @@ function App() {
           path="/dealer/profile"
           element={
             <ProtectedRoute>
-              <Profile />
+              <DealerLayoutWrapper>
+                <Profile />
+              </DealerLayoutWrapper>
             </ProtectedRoute>
           }
         />
@@ -64,7 +69,9 @@ function App() {
           path="/dealer/bids"
           element={
             <ProtectedRoute>
-              <Bids />
+              <DealerLayoutWrapper>
+                <Bids />
+              </DealerLayoutWrapper>
             </ProtectedRoute>
           }
         />
@@ -72,7 +79,9 @@ function App() {
           path="/dealer/documents"
           element={
             <ProtectedRoute>
-              <Documents />
+              <DealerLayoutWrapper>
+                <Documents />
+              </DealerLayoutWrapper>
             </ProtectedRoute>
           }
         />
@@ -80,7 +89,9 @@ function App() {
           path="/dealer/won-vehicles"
           element={
             <ProtectedRoute>
-              <WonVehicles />
+              <DealerLayoutWrapper>
+                <WonVehicles />
+              </DealerLayoutWrapper>
             </ProtectedRoute>
           }
         />
@@ -88,7 +99,9 @@ function App() {
           path="/dealer/wishlist"
           element={
             <ProtectedRoute>
-              <Wishlist />
+              <DealerLayoutWrapper>
+                <Wishlist />
+              </DealerLayoutWrapper>
             </ProtectedRoute>
           }
         />
