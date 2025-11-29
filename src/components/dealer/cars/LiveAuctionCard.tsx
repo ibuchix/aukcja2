@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin, Key, FileText, AlertCircle, CheckCircle, Wrench, Zap, Heart } from "lucide-react";
@@ -25,11 +25,6 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
   const { prefetchImages } = useImagePrefetch();
   const isMobile = useIsMobile();
   const { isInWishlist, toggleWishlist } = useWishlist();
-  const [isWishlisted, setIsWishlisted] = useState(false);
-
-  useEffect(() => {
-    setIsWishlisted(isInWishlist(car.id));
-  }, [car.id, isInWishlist]);
   
   const formatPrice = (price: number | null | undefined) => {
     // Handle null, undefined, or NaN values
@@ -153,10 +148,9 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
     }
   };
 
-  const handleWishlistClick = async (e: React.MouseEvent) => {
+  const handleWishlistClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    await toggleWishlist(car.id);
-    setIsWishlisted(isInWishlist(car.id));
+    toggleWishlist(car.id);
   };
 
   return (
@@ -188,12 +182,12 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
         <button
           onClick={handleWishlistClick}
           className="absolute top-3 right-3 p-2 rounded-full bg-background/90 backdrop-blur shadow-lg hover:bg-background transition-all hover:scale-110 z-10"
-          aria-label={isWishlisted ? "Usuń z listy życzeń" : "Dodaj do listy życzeń"}
+          aria-label={isInWishlist(car.id) ? "Usuń z listy życzeń" : "Dodaj do listy życzeń"}
         >
           <Heart
             className={cn(
               "h-5 w-5 transition-all",
-              isWishlisted 
+              isInWishlist(car.id) 
                 ? "fill-destructive text-destructive" 
                 : "text-muted-foreground hover:text-destructive"
             )}
