@@ -933,6 +933,52 @@ export type Database = {
           },
         ]
       }
+      dealer_wishlists: {
+        Row: {
+          car_id: string
+          created_at: string
+          dealer_id: string
+          expires_at: string
+          id: string
+        }
+        Insert: {
+          car_id: string
+          created_at?: string
+          dealer_id: string
+          expires_at?: string
+          id?: string
+        }
+        Update: {
+          car_id?: string
+          created_at?: string
+          dealer_id?: string
+          expires_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dealer_wishlists_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dealer_wishlists_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars_public_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dealer_wishlists_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "dealers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dealer_won_vehicles: {
         Row: {
           auction_end_time: string
@@ -2399,6 +2445,7 @@ export type Database = {
       }
       cleanup_expired_reset_tokens: { Args: never; Returns: undefined }
       cleanup_expired_vin_reservations: { Args: never; Returns: number }
+      cleanup_expired_wishlists: { Args: never; Returns: number }
       cleanup_logs_manual: {
         Args: { batch_size?: number; max_rows_to_delete?: number }
         Returns: Json
