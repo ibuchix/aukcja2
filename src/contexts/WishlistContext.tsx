@@ -108,16 +108,43 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children, de
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ 
+    onMutate: async (carId: string) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ 
         queryKey: queryKeys.wishlist.list(dealerId || '') 
       });
-      toast({
-        title: 'Sukces',
-        description: 'Dodano do listy życzeń',
-      });
+      
+      // Snapshot previous value
+      const previousWishlist = queryClient.getQueryData<WishlistItem[]>(
+        queryKeys.wishlist.list(dealerId || '')
+      );
+      
+      // Optimistically add to wishlist
+      queryClient.setQueryData<WishlistItem[]>(
+        queryKeys.wishlist.list(dealerId || ''),
+        (old = []) => [
+          ...old,
+          {
+            id: `temp-${carId}`,
+            dealer_id: dealerId!,
+            car_id: carId,
+            created_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          }
+        ]
+      );
+      
+      return { previousWishlist };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, carId, context) => {
+      // Rollback on error
+      if (context?.previousWishlist) {
+        queryClient.setQueryData(
+          queryKeys.wishlist.list(dealerId || ''),
+          context.previousWishlist
+        );
+      }
+      
       if (error.message === 'LIMIT_REACHED') {
         toast({
           variant: 'destructive',
@@ -137,6 +164,16 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children, de
         });
       }
     },
+    onSettled: () => {
+      // Always refetch to ensure server state
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.wishlist.list(dealerId || '') 
+      });
+      toast({
+        title: 'Sukces',
+        description: 'Dodano do listy życzeń',
+      });
+    },
   });
 
   // Remove from wishlist mutation
@@ -152,20 +189,48 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children, de
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async (carId: string) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ 
+        queryKey: queryKeys.wishlist.list(dealerId || '') 
+      });
+      
+      // Snapshot previous value
+      const previousWishlist = queryClient.getQueryData<WishlistItem[]>(
+        queryKeys.wishlist.list(dealerId || '')
+      );
+      
+      // Optimistically remove from wishlist
+      queryClient.setQueryData<WishlistItem[]>(
+        queryKeys.wishlist.list(dealerId || ''),
+        (old = []) => old.filter(item => item.car_id !== carId)
+      );
+      
+      return { previousWishlist };
+    },
+    onError: (err, carId, context) => {
+      // Rollback on error
+      if (context?.previousWishlist) {
+        queryClient.setQueryData(
+          queryKeys.wishlist.list(dealerId || ''),
+          context.previousWishlist
+        );
+      }
+      
+      toast({
+        variant: 'destructive',
+        title: 'Błąd',
+        description: 'Nie udało się usunąć z listy życzeń',
+      });
+    },
+    onSettled: () => {
+      // Always refetch to ensure server state
       queryClient.invalidateQueries({ 
         queryKey: queryKeys.wishlist.list(dealerId || '') 
       });
       toast({
         title: 'Usunięto',
         description: 'Usunięto z listy życzeń',
-      });
-    },
-    onError: () => {
-      toast({
-        variant: 'destructive',
-        title: 'Błąd',
-        description: 'Nie udało się usunąć z listy życzeń',
       });
     },
   });
