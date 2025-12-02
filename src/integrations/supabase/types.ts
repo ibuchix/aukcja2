@@ -517,6 +517,7 @@ export type Database = {
           created_at: string
           current_bid: number | null
           email_notification_sent: boolean
+          engine_capacity: string | null
           features: Json | null
           finance_amount: number | null
           finance_document_name: string | null
@@ -572,6 +573,7 @@ export type Database = {
           created_at?: string
           current_bid?: number | null
           email_notification_sent?: boolean
+          engine_capacity?: string | null
           features?: Json | null
           finance_amount?: number | null
           finance_document_name?: string | null
@@ -627,6 +629,7 @@ export type Database = {
           created_at?: string
           current_bid?: number | null
           email_notification_sent?: boolean
+          engine_capacity?: string | null
           features?: Json | null
           finance_amount?: number | null
           finance_document_name?: string | null
@@ -2213,6 +2216,7 @@ export type Database = {
           created_at: string
           current_bid: number | null
           email_notification_sent: boolean
+          engine_capacity: string | null
           features: Json | null
           finance_amount: number | null
           finance_document_name: string | null
@@ -2294,6 +2298,7 @@ export type Database = {
           created_at: string
           current_bid: number | null
           email_notification_sent: boolean
+          engine_capacity: string | null
           features: Json | null
           finance_amount: number | null
           finance_document_name: string | null
@@ -2865,6 +2870,7 @@ export type Database = {
           created_at: string
           current_bid: number | null
           email_notification_sent: boolean
+          engine_capacity: string | null
           features: Json | null
           finance_amount: number | null
           finance_document_name: string | null
@@ -2929,6 +2935,7 @@ export type Database = {
           created_at: string
           current_bid: number | null
           email_notification_sent: boolean
+          engine_capacity: string | null
           features: Json | null
           finance_amount: number | null
           finance_document_name: string | null
