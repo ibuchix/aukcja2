@@ -13,19 +13,27 @@ export const applyFilters = (query: any, filters: AuctionFilters, searchQuery: s
     });
   }
 
-  // Apply make filter with case-insensitive matching
+  // Apply make filter - exact match (case-insensitive) for 100% accuracy
   if (filters.make && typeof filters.make === 'string') {
-    filteredQuery = filteredQuery.ilike('make', `%${filters.make}%`);
+    filteredQuery = filteredQuery.ilike('make', filters.make);
     if (isDev) {
-      console.log('Applied make filter:', filters.make);
+      console.log('Applied make filter (exact):', filters.make);
     }
   }
   
-  // Apply model filter with case-insensitive matching
+  // Apply model filter - exact match (case-insensitive) for 100% accuracy
   if (filters.model && typeof filters.model === 'string') {
-    filteredQuery = filteredQuery.ilike('model', `%${filters.model}%`);
+    filteredQuery = filteredQuery.ilike('model', filters.model);
     if (isDev) {
-      console.log('Applied model filter:', filters.model);
+      console.log('Applied model filter (exact):', filters.model);
+    }
+  }
+  
+  // Apply county filter - case-insensitive partial match to handle messy database data
+  if (filters.county && typeof filters.county === 'string') {
+    filteredQuery = filteredQuery.ilike('county', `%${filters.county}%`);
+    if (isDev) {
+      console.log('Applied county filter:', filters.county);
     }
   }
   

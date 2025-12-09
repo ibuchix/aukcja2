@@ -142,7 +142,7 @@ export const MakeModelFilter: React.FC<MakeModelFilterProps> = ({
   return (
     <div className="space-y-4">
       <div>
-        <Label className="text-sm font-medium mb-2 block">Make & Model</Label>
+        <Label className="text-sm font-medium mb-2 block">Marka i Model</Label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Select 
@@ -153,7 +153,7 @@ export const MakeModelFilter: React.FC<MakeModelFilterProps> = ({
                 <SelectValue placeholder="Wybierz markę" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="any">All Makes</SelectItem>
+                <SelectItem value="any">Wszystkie marki</SelectItem>
                 {CAR_MAKES.map((make) => (
                   <SelectItem key={make} value={make}>
                     {MAKE_DISPLAY_NAMES[make] || make}
@@ -173,7 +173,7 @@ export const MakeModelFilter: React.FC<MakeModelFilterProps> = ({
                 <SelectValue placeholder="Wybierz model" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="any">All Models</SelectItem>
+                <SelectItem value="any">Wszystkie modele</SelectItem>
                 {availableModels.map((model) => (
                   <SelectItem key={model} value={model}>
                     {model}

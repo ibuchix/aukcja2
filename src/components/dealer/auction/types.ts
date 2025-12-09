@@ -10,6 +10,7 @@ export interface AuctionFilters {
   yearMax?: string;
   mileageMin?: string;
   mileageMax?: string;
+  county?: string;
 }
 
 export interface AuctionPaginationResult<T> {

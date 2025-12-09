@@ -9,6 +9,7 @@ import { PriceRangeFilter } from "./PriceRangeFilter";
 import { MileageRangeFilter } from "./MileageRangeFilter";
 import { AgeRangeFilter } from "./AgeRangeFilter";
 import { MakeModelFilter } from "./MakeModelFilter";
+import { CountyFilter } from "./CountyFilter";
 import { TransmissionFilter } from "./TransmissionFilter";
 import { FuelTypeFilter } from "./FuelTypeFilter";
 import { ServiceHistoryFilter } from "./ServiceHistoryFilter";
@@ -128,6 +129,12 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
             selectedModel={filters.model}
             onMakeChange={(make) => onFilterChange('make', make)}
             onModelChange={(model) => onFilterChange('model', model)}
+          />
+
+          {/* County Filter */}
+          <CountyFilter
+            selectedCounty={filters.county}
+            onCountyChange={(county) => onFilterChange('county', county)}
           />
 
           {/* Price Range Filter */}
