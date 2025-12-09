@@ -85,14 +85,14 @@ export const CarSearchFilters: React.FC<CarSearchFiltersProps> = ({
         <div className={`flex ${isMobile ? 'flex-col gap-3' : 'justify-between items-center'}`}>
           <div className="flex items-center gap-2">
             <Button
-              variant="ghost"
-              size="sm"
+              variant="default"
+              size="lg"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 font-semibold animate-pulse hover:animate-none"
             >
-              <SlidersHorizontal className="h-4 w-4" />
-              {isMobile ? "Filtry" : "Filtry pojazdów"}
-              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              <SlidersHorizontal className="h-5 w-5" />
+              {isMobile ? "Filtruj" : "Filtruj pojazdy"}
+              {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </Button>
             {activeFilterCount > 0 && (
               <Badge variant="secondary">{activeFilterCount} aktywne</Badge>
