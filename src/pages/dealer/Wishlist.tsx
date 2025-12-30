@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWishlist } from '@/hooks/useWishlist';
 import { DashboardLayout } from '@/components/dealer/dashboard/DashboardLayout';
 import { LiveAuctionCard } from '@/components/dealer/cars/LiveAuctionCard';
-import { LiveAuctionDetailsDialog } from '@/components/dealer/cars/LiveAuctionDetailsDialog';
 import { Heart } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
@@ -17,7 +16,6 @@ const Wishlist = () => {
   const [isVerified, setIsVerified] = useState<boolean>(false);
   const [cars, setCars] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCar, setSelectedCar] = useState<any>(null);
   const { wishlist, loading: wishlistLoading } = useWishlist();
 
   useEffect(() => {
@@ -115,10 +113,6 @@ const Wishlist = () => {
     }
   }, [wishlist, wishlistLoading]);
 
-  const handleCarClick = (car: any) => {
-    setSelectedCar(car);
-  };
-
   const getExpirationText = (expiresAt: string) => {
     try {
       return formatDistanceToNow(new Date(expiresAt), {
@@ -181,7 +175,6 @@ const Wishlist = () => {
               <LiveAuctionCard
                 car={car}
                 dealerId={dealerId || ''}
-                onClick={handleCarClick}
               />
               {car.wishlist_expires_at && (
                 <div className="mt-2 text-xs text-muted-foreground text-center">
@@ -191,15 +184,6 @@ const Wishlist = () => {
             </div>
           ))}
         </div>
-      )}
-
-      {selectedCar && (
-        <LiveAuctionDetailsDialog
-          car={selectedCar}
-          dealerId={dealerId || ''}
-          isVerified={isVerified}
-          onClose={() => setSelectedCar(null)}
-        />
       )}
     </DashboardLayout>
   );

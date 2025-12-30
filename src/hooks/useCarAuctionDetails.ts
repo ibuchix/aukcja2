@@ -37,14 +37,14 @@ export const useCarAuctionDetails = ({ carId }: UseCarAuctionDetailsProps) => {
         .limit(1)
         .maybeSingle();
 
-      const scheduleData = scheduleRaw as { id: string; start_time: string; end_time: string; status: string; is_manually_controlled: boolean } | null;
+      const scheduleData = scheduleRaw as unknown as { id: string; start_time: string; end_time: string; status: string; is_manually_controlled: boolean } | null;
 
       // Fetch file uploads
       const fileUploads = await fetchCarFileUploads([carId]);
       
       // Merge data
       const carWithData = {
-        ...(carData as Record<string, unknown>),
+        ...(carData as unknown as Record<string, unknown>),
         fileUploads: fileUploads || [],
         auction_schedules: scheduleData ? [scheduleData] : []
       };

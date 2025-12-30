@@ -1,8 +1,6 @@
-import { useState } from "react";
 import { useSimplifiedCarListingsQuery } from "./hooks/useSimplifiedCarListingsQuery";
 import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 import { LiveAuctionCard } from "./LiveAuctionCard";
-import { LiveAuctionDetailsDialog } from "./LiveAuctionDetailsDialog";
 import { CarSearchFilters } from "./filters/CarSearchFilters";
 import { useCarFilters } from "./hooks/useCarFilters";
 import { AuctionEmptyState } from "../auction/components/AuctionEmptyState";
@@ -16,7 +14,6 @@ import { AuctionPagination } from "./AuctionPagination";
 import { useScrollPrefetch } from "@/hooks/useScrollPrefetch";
 
 export const SimpleLiveAuctionsView = () => {
-  const [selectedCar, setSelectedCar] = useState<any>(null);
   const { dealerProfile } = useDealerProfileSimple();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
@@ -58,10 +55,6 @@ export const SimpleLiveAuctionsView = () => {
   const totalPages = Math.ceil(total / 100);
   const hasMore = currentPage < totalPages;
   const canGoBack = currentPage > 1;
-
-  const handleCloseCarDetails = () => {
-    setSelectedCar(null);
-  };
 
   // Monitor auction status changes and refresh data when needed
   const { triggerStatusUpdate } = useAuctionStatusMonitor({
@@ -146,7 +139,6 @@ export const SimpleLiveAuctionsView = () => {
                 key={car.id}
                 car={car}
                 dealerId={dealerProfile?.id || ""}
-                onClick={setSelectedCar}
               />
             ))}
           </div>
@@ -171,15 +163,6 @@ export const SimpleLiveAuctionsView = () => {
             </div>
           )}
         </>
-      )}
-
-      {selectedCar && (
-        <LiveAuctionDetailsDialog
-          car={selectedCar}
-          dealerId={dealerProfile?.id || ""}
-          isVerified={isVerified}
-          onClose={handleCloseCarDetails}
-        />
       )}
     </div>
   );
