@@ -10,6 +10,7 @@ import Documents from "./pages/dealer/Documents";
 import WonVehicles from "./pages/dealer/WonVehicles";
 import Bids from "./pages/dealer/Bids";
 import Wishlist from "./pages/dealer/Wishlist";
+import CarAuction from "./pages/dealer/CarAuction";
 import CompleteRegistration from "./pages/CompleteRegistration";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/dealer/Profile";
@@ -101,6 +102,16 @@ function App() {
             <ProtectedRoute>
               <DealerLayoutWrapper>
                 <Wishlist />
+              </DealerLayoutWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dealer/auction/:carId"
+          element={
+            <ProtectedRoute>
+              <DealerLayoutWrapper>
+                <CarAuction />
               </DealerLayoutWrapper>
             </ProtectedRoute>
           }

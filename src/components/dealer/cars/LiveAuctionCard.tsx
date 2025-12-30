@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin, Key, FileText, AlertCircle, CheckCircle, Wrench, Zap, Heart } from "lucide-react";
@@ -18,10 +19,11 @@ import { cn } from "@/lib/utils";
 interface LiveAuctionCardProps {
   car: any;
   dealerId: string;
-  onClick: (car: any) => void;
+  onClick?: (car: any) => void;
 }
 
 export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId, onClick }) => {
+  const navigate = useNavigate();
   const { prefetchImages } = useImagePrefetch();
   const isMobile = useIsMobile();
   const { isInWishlist, toggleWishlist } = useWishlist();
@@ -153,10 +155,18 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
     toggleWishlist(car.id);
   };
 
+  const handleCardClick = () => {
+    if (onClick) {
+      onClick(car);
+    } else {
+      navigate(`/dealer/auction/${car.id}`);
+    }
+  };
+
   return (
     <Card 
       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" 
-      onClick={() => onClick(car)}
+      onClick={handleCardClick}
       onMouseEnter={handleCardHover}
     >
       <div className="aspect-[4/3] relative">

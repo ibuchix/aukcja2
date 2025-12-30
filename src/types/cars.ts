@@ -87,6 +87,26 @@ export interface CarListing {
     created_at: string;
   }>;
   requiredPhotos?: Record<string, any>;
+  // Additional vehicle properties
+  vin?: string;
+  numberOfKeys?: number;
+  serviceHistoryType?: string;
+  sellerNotes?: string;
+  isDamaged?: boolean;
+  isRegisteredInPoland?: boolean;
+  financeAmount?: number;
+  seatMaterial?: string;
+  hasPrivatePlate?: boolean;
+  isAuction?: boolean;
+  sellerId?: string;
+  sellerName?: string;
+  mobileNumber?: string;
+  address?: string;
+  registrationNumber?: string;
+  valuationData?: any;
+  formMetadata?: any;
+  lastSaved?: string;
+  additionalPhotos?: any[];
   [key: string]: any;
 }
 
