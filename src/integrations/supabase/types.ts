@@ -529,21 +529,31 @@ export type Database = {
           finance_document_name: string | null
           finance_document_uploaded_at: string | null
           finance_document_url: string | null
+          first_registration_date: string | null
           form_metadata: Json | null
           fuel_type: string | null
           gearbox_faults: boolean | null
           has_dents: boolean | null
           has_full_registration_document: boolean | null
           has_interior_stains: boolean | null
+          has_mileage_discrepancy: boolean | null
           has_outstanding_finance: boolean | null
           has_rust: boolean | null
           has_scratches: boolean | null
           has_service_history: boolean | null
+          horsepower: number | null
           id: string
           images: string[] | null
+          import_year: number | null
+          is_accident_record_abroad: boolean | null
+          is_accident_record_poland: boolean | null
           is_auction: boolean | null
           is_damaged: boolean | null
+          is_damaged_record_abroad: boolean | null
+          is_damaged_record_poland: boolean | null
           is_manually_controlled: boolean | null
+          is_polish_origin: boolean | null
+          is_recorded_stolen: boolean | null
           is_registered_in_poland: boolean | null
           is_selling_on_behalf: boolean | null
           last_saved: string | null
@@ -553,6 +563,7 @@ export type Database = {
           mobile_number: string | null
           model: string | null
           number_of_keys: number | null
+          owners_count_poland: number | null
           postcode: string | null
           registration_number: string | null
           required_photos: Json | null
@@ -567,6 +578,7 @@ export type Database = {
           status: string | null
           street_address: string | null
           suspension_noisy: boolean | null
+          technical_inspection_valid_until: string | null
           tires_legal_depth: boolean | null
           title: string | null
           town: string | null
@@ -601,21 +613,31 @@ export type Database = {
           finance_document_name?: string | null
           finance_document_uploaded_at?: string | null
           finance_document_url?: string | null
+          first_registration_date?: string | null
           form_metadata?: Json | null
           fuel_type?: string | null
           gearbox_faults?: boolean | null
           has_dents?: boolean | null
           has_full_registration_document?: boolean | null
           has_interior_stains?: boolean | null
+          has_mileage_discrepancy?: boolean | null
           has_outstanding_finance?: boolean | null
           has_rust?: boolean | null
           has_scratches?: boolean | null
           has_service_history?: boolean | null
+          horsepower?: number | null
           id?: string
           images?: string[] | null
+          import_year?: number | null
+          is_accident_record_abroad?: boolean | null
+          is_accident_record_poland?: boolean | null
           is_auction?: boolean | null
           is_damaged?: boolean | null
+          is_damaged_record_abroad?: boolean | null
+          is_damaged_record_poland?: boolean | null
           is_manually_controlled?: boolean | null
+          is_polish_origin?: boolean | null
+          is_recorded_stolen?: boolean | null
           is_registered_in_poland?: boolean | null
           is_selling_on_behalf?: boolean | null
           last_saved?: string | null
@@ -625,6 +647,7 @@ export type Database = {
           mobile_number?: string | null
           model?: string | null
           number_of_keys?: number | null
+          owners_count_poland?: number | null
           postcode?: string | null
           registration_number?: string | null
           required_photos?: Json | null
@@ -639,6 +662,7 @@ export type Database = {
           status?: string | null
           street_address?: string | null
           suspension_noisy?: boolean | null
+          technical_inspection_valid_until?: string | null
           tires_legal_depth?: boolean | null
           title?: string | null
           town?: string | null
@@ -673,21 +697,31 @@ export type Database = {
           finance_document_name?: string | null
           finance_document_uploaded_at?: string | null
           finance_document_url?: string | null
+          first_registration_date?: string | null
           form_metadata?: Json | null
           fuel_type?: string | null
           gearbox_faults?: boolean | null
           has_dents?: boolean | null
           has_full_registration_document?: boolean | null
           has_interior_stains?: boolean | null
+          has_mileage_discrepancy?: boolean | null
           has_outstanding_finance?: boolean | null
           has_rust?: boolean | null
           has_scratches?: boolean | null
           has_service_history?: boolean | null
+          horsepower?: number | null
           id?: string
           images?: string[] | null
+          import_year?: number | null
+          is_accident_record_abroad?: boolean | null
+          is_accident_record_poland?: boolean | null
           is_auction?: boolean | null
           is_damaged?: boolean | null
+          is_damaged_record_abroad?: boolean | null
+          is_damaged_record_poland?: boolean | null
           is_manually_controlled?: boolean | null
+          is_polish_origin?: boolean | null
+          is_recorded_stolen?: boolean | null
           is_registered_in_poland?: boolean | null
           is_selling_on_behalf?: boolean | null
           last_saved?: string | null
@@ -697,6 +731,7 @@ export type Database = {
           mobile_number?: string | null
           model?: string | null
           number_of_keys?: number | null
+          owners_count_poland?: number | null
           postcode?: string | null
           registration_number?: string | null
           required_photos?: Json | null
@@ -711,6 +746,7 @@ export type Database = {
           status?: string | null
           street_address?: string | null
           suspension_noisy?: boolean | null
+          technical_inspection_valid_until?: string | null
           tires_legal_depth?: boolean | null
           title?: string | null
           town?: string | null
@@ -1479,6 +1515,7 @@ export type Database = {
           finance_document_name: string | null
           finance_document_uploaded_at: string | null
           finance_document_url: string | null
+          first_registration_date: string | null
           fuel_type: string | null
           gearbox_faults: boolean | null
           has_dents: boolean | null
@@ -1499,6 +1536,7 @@ export type Database = {
           name: string | null
           number_of_keys: number | null
           postcode: string | null
+          registration_number: string | null
           reserve_price: number | null
           runs_smoothly: boolean | null
           seat_material: string | null
@@ -1538,6 +1576,7 @@ export type Database = {
           finance_document_name?: string | null
           finance_document_uploaded_at?: string | null
           finance_document_url?: string | null
+          first_registration_date?: string | null
           fuel_type?: string | null
           gearbox_faults?: boolean | null
           has_dents?: boolean | null
@@ -1558,6 +1597,7 @@ export type Database = {
           name?: string | null
           number_of_keys?: number | null
           postcode?: string | null
+          registration_number?: string | null
           reserve_price?: number | null
           runs_smoothly?: boolean | null
           seat_material?: string | null
@@ -1597,6 +1637,7 @@ export type Database = {
           finance_document_name?: string | null
           finance_document_uploaded_at?: string | null
           finance_document_url?: string | null
+          first_registration_date?: string | null
           fuel_type?: string | null
           gearbox_faults?: boolean | null
           has_dents?: boolean | null
@@ -1617,6 +1658,7 @@ export type Database = {
           name?: string | null
           number_of_keys?: number | null
           postcode?: string | null
+          registration_number?: string | null
           reserve_price?: number | null
           runs_smoothly?: boolean | null
           seat_material?: string | null
@@ -2250,30 +2292,38 @@ export type Database = {
       }
       cleanup_monitoring_dashboard: {
         Row: {
-          audit_logs_ready_to_clean: number | null
           cars_history_ready_to_clean: number | null
+          cars_ready_to_clean: number | null
           cleanup_urgency: string | null
-          cron_schedule: string | null
           current_audit_logs: number | null
           current_cars_history: number | null
           current_system_logs: number | null
-          failed_runs: number | null
+          expired_tokens_to_clean: number | null
           health_status: string | null
-          is_active: boolean | null
-          jobname: string | null
-          last_audit_logs_deleted: number | null
-          last_cars_history_deleted: number | null
-          last_run_duration: unknown
-          last_run_ended: string | null
-          last_run_started: string | null
-          last_run_status: string | null
-          last_system_logs_deleted: number | null
-          last_total_deleted: number | null
-          next_scheduled_run: string | null
-          successful_runs: number | null
+          manual_valuations_ready_to_clean: number | null
+          monthly_failed_runs: number | null
+          monthly_is_active: boolean | null
+          monthly_job_name: string | null
+          monthly_last_run_duration: unknown
+          monthly_last_run_ended: string | null
+          monthly_last_run_started: string | null
+          monthly_last_run_status: string | null
+          monthly_schedule: string | null
+          monthly_successful_runs: number | null
+          monthly_total_runs: number | null
+          old_notifications_to_clean: number | null
           system_logs_ready_to_clean: number | null
-          total_rows_deleted_lifetime: number | null
-          total_runs: number | null
+          vin_cache_ready_to_clean: number | null
+          weekly_failed_runs: number | null
+          weekly_is_active: boolean | null
+          weekly_job_name: string | null
+          weekly_last_run_duration: unknown
+          weekly_last_run_ended: string | null
+          weekly_last_run_started: string | null
+          weekly_last_run_status: string | null
+          weekly_schedule: string | null
+          weekly_successful_runs: number | null
+          weekly_total_runs: number | null
         }
         Relationships: []
       }
@@ -2324,21 +2374,31 @@ export type Database = {
           finance_document_name: string | null
           finance_document_uploaded_at: string | null
           finance_document_url: string | null
+          first_registration_date: string | null
           form_metadata: Json | null
           fuel_type: string | null
           gearbox_faults: boolean | null
           has_dents: boolean | null
           has_full_registration_document: boolean | null
           has_interior_stains: boolean | null
+          has_mileage_discrepancy: boolean | null
           has_outstanding_finance: boolean | null
           has_rust: boolean | null
           has_scratches: boolean | null
           has_service_history: boolean | null
+          horsepower: number | null
           id: string
           images: string[] | null
+          import_year: number | null
+          is_accident_record_abroad: boolean | null
+          is_accident_record_poland: boolean | null
           is_auction: boolean | null
           is_damaged: boolean | null
+          is_damaged_record_abroad: boolean | null
+          is_damaged_record_poland: boolean | null
           is_manually_controlled: boolean | null
+          is_polish_origin: boolean | null
+          is_recorded_stolen: boolean | null
           is_registered_in_poland: boolean | null
           is_selling_on_behalf: boolean | null
           last_saved: string | null
@@ -2348,6 +2408,7 @@ export type Database = {
           mobile_number: string | null
           model: string | null
           number_of_keys: number | null
+          owners_count_poland: number | null
           postcode: string | null
           registration_number: string | null
           required_photos: Json | null
@@ -2362,6 +2423,7 @@ export type Database = {
           status: string | null
           street_address: string | null
           suspension_noisy: boolean | null
+          technical_inspection_valid_until: string | null
           tires_legal_depth: boolean | null
           title: string | null
           town: string | null
@@ -2422,21 +2484,31 @@ export type Database = {
           finance_document_name: string | null
           finance_document_uploaded_at: string | null
           finance_document_url: string | null
+          first_registration_date: string | null
           form_metadata: Json | null
           fuel_type: string | null
           gearbox_faults: boolean | null
           has_dents: boolean | null
           has_full_registration_document: boolean | null
           has_interior_stains: boolean | null
+          has_mileage_discrepancy: boolean | null
           has_outstanding_finance: boolean | null
           has_rust: boolean | null
           has_scratches: boolean | null
           has_service_history: boolean | null
+          horsepower: number | null
           id: string
           images: string[] | null
+          import_year: number | null
+          is_accident_record_abroad: boolean | null
+          is_accident_record_poland: boolean | null
           is_auction: boolean | null
           is_damaged: boolean | null
+          is_damaged_record_abroad: boolean | null
+          is_damaged_record_poland: boolean | null
           is_manually_controlled: boolean | null
+          is_polish_origin: boolean | null
+          is_recorded_stolen: boolean | null
           is_registered_in_poland: boolean | null
           is_selling_on_behalf: boolean | null
           last_saved: string | null
@@ -2446,6 +2518,7 @@ export type Database = {
           mobile_number: string | null
           model: string | null
           number_of_keys: number | null
+          owners_count_poland: number | null
           postcode: string | null
           registration_number: string | null
           required_photos: Json | null
@@ -2460,6 +2533,7 @@ export type Database = {
           status: string | null
           street_address: string | null
           suspension_noisy: boolean | null
+          technical_inspection_valid_until: string | null
           tires_legal_depth: boolean | null
           title: string | null
           town: string | null
@@ -2576,6 +2650,8 @@ export type Database = {
         Args: { p_user_id: string; p_vin: string }
         Returns: Json
       }
+      cleanup_cars_history_backlog: { Args: never; Returns: Json }
+      cleanup_cars_history_daily: { Args: never; Returns: Json }
       cleanup_expired_reset_tokens: { Args: never; Returns: undefined }
       cleanup_expired_vin_reservations: { Args: never; Returns: number }
       cleanup_expired_wishlists: { Args: never; Returns: number }
@@ -2584,6 +2660,7 @@ export type Database = {
         Returns: Json
       }
       cleanup_old_logs: { Args: never; Returns: Json }
+      cleanup_old_vehicle_data: { Args: { dry_run?: boolean }; Returns: Json }
       cleanup_vin_valuation_cache: { Args: never; Returns: undefined }
       close_ended_auctions: { Args: never; Returns: Json }
       create_admin_notification: {
@@ -3010,21 +3087,31 @@ export type Database = {
           finance_document_name: string | null
           finance_document_uploaded_at: string | null
           finance_document_url: string | null
+          first_registration_date: string | null
           form_metadata: Json | null
           fuel_type: string | null
           gearbox_faults: boolean | null
           has_dents: boolean | null
           has_full_registration_document: boolean | null
           has_interior_stains: boolean | null
+          has_mileage_discrepancy: boolean | null
           has_outstanding_finance: boolean | null
           has_rust: boolean | null
           has_scratches: boolean | null
           has_service_history: boolean | null
+          horsepower: number | null
           id: string
           images: string[] | null
+          import_year: number | null
+          is_accident_record_abroad: boolean | null
+          is_accident_record_poland: boolean | null
           is_auction: boolean | null
           is_damaged: boolean | null
+          is_damaged_record_abroad: boolean | null
+          is_damaged_record_poland: boolean | null
           is_manually_controlled: boolean | null
+          is_polish_origin: boolean | null
+          is_recorded_stolen: boolean | null
           is_registered_in_poland: boolean | null
           is_selling_on_behalf: boolean | null
           last_saved: string | null
@@ -3034,6 +3121,7 @@ export type Database = {
           mobile_number: string | null
           model: string | null
           number_of_keys: number | null
+          owners_count_poland: number | null
           postcode: string | null
           registration_number: string | null
           required_photos: Json | null
@@ -3048,6 +3136,7 @@ export type Database = {
           status: string | null
           street_address: string | null
           suspension_noisy: boolean | null
+          technical_inspection_valid_until: string | null
           tires_legal_depth: boolean | null
           title: string | null
           town: string | null
@@ -3091,21 +3180,31 @@ export type Database = {
           finance_document_name: string | null
           finance_document_uploaded_at: string | null
           finance_document_url: string | null
+          first_registration_date: string | null
           form_metadata: Json | null
           fuel_type: string | null
           gearbox_faults: boolean | null
           has_dents: boolean | null
           has_full_registration_document: boolean | null
           has_interior_stains: boolean | null
+          has_mileage_discrepancy: boolean | null
           has_outstanding_finance: boolean | null
           has_rust: boolean | null
           has_scratches: boolean | null
           has_service_history: boolean | null
+          horsepower: number | null
           id: string
           images: string[] | null
+          import_year: number | null
+          is_accident_record_abroad: boolean | null
+          is_accident_record_poland: boolean | null
           is_auction: boolean | null
           is_damaged: boolean | null
+          is_damaged_record_abroad: boolean | null
+          is_damaged_record_poland: boolean | null
           is_manually_controlled: boolean | null
+          is_polish_origin: boolean | null
+          is_recorded_stolen: boolean | null
           is_registered_in_poland: boolean | null
           is_selling_on_behalf: boolean | null
           last_saved: string | null
@@ -3115,6 +3214,7 @@ export type Database = {
           mobile_number: string | null
           model: string | null
           number_of_keys: number | null
+          owners_count_poland: number | null
           postcode: string | null
           registration_number: string | null
           required_photos: Json | null
@@ -3129,6 +3229,7 @@ export type Database = {
           status: string | null
           street_address: string | null
           suspension_noisy: boolean | null
+          technical_inspection_valid_until: string | null
           tires_legal_depth: boolean | null
           title: string | null
           town: string | null
