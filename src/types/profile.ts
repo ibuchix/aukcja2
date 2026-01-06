@@ -1,7 +1,8 @@
 // User profile types
+// NOTE: Role is NOT stored on profile - use user_roles table and has_role() function
 export interface Profile {
   id: string;
-  role: string;
+  // role is intentionally excluded - use has_role() RPC for role checks
   profile_status?: string;
   needs_recovery?: boolean;
   updated_at: string;

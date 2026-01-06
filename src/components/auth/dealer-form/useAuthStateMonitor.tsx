@@ -25,10 +25,10 @@ export function useAuthStateMonitor(setEmailVerified: (verified: boolean) => voi
         // If not verified but has a session, we still need to wait for verification
         setEmailVerified(false);
         
-        // Use direct string literals instead of helper functions
+        // Query profile without role column (role is in user_roles table)
         const { data: profile } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, full_name, avatar_url, suspended, updated_at')
           .eq('id', session.user.id)
           .single();
         
