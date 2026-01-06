@@ -409,14 +409,6 @@ const CarAuction = () => {
               </div>
             </div>
 
-            {/* Seller Notes */}
-            {car.sellerNotes && (
-              <div className="p-4 bg-accent/50 rounded-lg">
-                <h4 className="font-medium text-base mb-3">Uwagi sprzedającego</h4>
-                <p className="text-sm leading-relaxed">{car.sellerNotes}</p>
-              </div>
-            )}
-
             {/* Vehicle Health Report */}
             <VehicleHealthReport car={car} />
 
@@ -472,6 +464,14 @@ const CarAuction = () => {
                 )}
               </div>
             </div>
+
+            {/* Seller Notes */}
+            {car.sellerNotes && (
+              <div className="p-4 bg-accent/50 rounded-lg">
+                <h4 className="font-medium text-base mb-3">Uwagi sprzedającego</h4>
+                <p className="text-sm leading-relaxed">{car.sellerNotes}</p>
+              </div>
+            )}
 
             {/* Location */}
             <div className="p-4 bg-accent/50 rounded-lg">
