@@ -149,7 +149,17 @@ export const processCarData = (rawData: any[]): CarListing[] => {
         acWorking: car.ac_working ?? null,
         windowsWorking: car.windows_working ?? null,
         runsSmoothly: car.runs_smoothly ?? null,
-        tiresLegalDepth: car.tires_legal_depth ?? null
+        tiresLegalDepth: car.tires_legal_depth ?? null,
+        
+        // Vehicle History fields
+        isPolishOrigin: car.is_polish_origin ?? null,
+        isDamagedRecordPoland: car.is_damaged_record_poland ?? null,
+        isDamagedRecordAbroad: car.is_damaged_record_abroad ?? null,
+        isAccidentRecordPoland: car.is_accident_record_poland ?? null,
+        isAccidentRecordAbroad: car.is_accident_record_abroad ?? null,
+        hasMileageDiscrepancy: car.has_mileage_discrepancy ?? null,
+        isRecordedStolen: car.is_recorded_stolen ?? null,
+        ownersCountPoland: car.owners_count_poland ?? null
       } as CarListing;
     });
 };
