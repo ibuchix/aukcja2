@@ -1,4 +1,4 @@
-import { Check, X, Minus, ClipboardList, Shield, AlertTriangle } from "lucide-react";
+import { Check, X, Minus, ClipboardList, Shield } from "lucide-react";
 import { CarListing } from "@/types/cars";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -201,61 +201,31 @@ export const VehicleHealthReport = ({ car }: VehicleHealthReportProps) => {
   const reportDate = format(new Date(), "d MMMM yyyy", { locale: pl });
 
   return (
-    <div className="border-l-4 border-primary rounded-lg overflow-hidden bg-muted/30 shadow-lg">
+    <div className="border-l-4 border-primary rounded-lg overflow-hidden bg-muted/30 shadow-md">
       {/* Document Header */}
-      <div className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border-b border-accent/30 px-6 py-5">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
-              <ClipboardList className="h-6 w-6 text-primary" />
+      <div className="bg-muted/50 border-b border-accent/30 px-6 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+              <ClipboardList className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-kanit font-bold text-xl text-body-text uppercase tracking-wide">
+              <h3 className="font-kanit font-bold text-lg text-body-text uppercase tracking-wide">
                 Raport Stanu Technicznego
               </h3>
-              <p className="text-sm text-subtitle-text mt-0.5">
+              <p className="text-xs text-subtitle-text">
                 Oficjalna ocena stanu pojazdu
               </p>
             </div>
           </div>
-          <div className="text-left md:text-right space-y-1">
-            <p className="text-xs font-mono text-subtitle-text">
-              Nr dokumentu: <span className="text-body-text font-semibold">{documentNumber}</span>
-            </p>
-            <p className="text-xs text-subtitle-text">
-              Data raportu: <span className="text-body-text">{reportDate}</span>
-            </p>
+          <div className="flex items-center gap-4 text-xs text-subtitle-text">
+            <span className="font-mono">
+              Nr: <span className="text-body-text font-medium">{documentNumber}</span>
+            </span>
+            <span>
+              {reportDate}
+            </span>
           </div>
-        </div>
-
-        {/* Vehicle Identification */}
-        <div className="mt-4 pt-4 border-t border-accent/20 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <p className="text-xs text-subtitle-text uppercase tracking-wide">Pojazd</p>
-            <p className="text-sm font-semibold text-body-text">
-              {car.make} {car.model} {car.year}
-            </p>
-          </div>
-          {car.vin && (
-            <div>
-              <p className="text-xs text-subtitle-text uppercase tracking-wide">VIN</p>
-              <p className="text-sm font-mono font-medium text-body-text">{car.vin}</p>
-            </div>
-          )}
-          {car.registrationNumber && (
-            <div>
-              <p className="text-xs text-subtitle-text uppercase tracking-wide">Nr rejestracyjny</p>
-              <p className="text-sm font-semibold text-body-text">{car.registrationNumber}</p>
-            </div>
-          )}
-          {car.mileage && (
-            <div>
-              <p className="text-xs text-subtitle-text uppercase tracking-wide">Przebieg</p>
-              <p className="text-sm font-semibold text-body-text">
-                {car.mileage.toLocaleString('pl-PL')} km
-              </p>
-            </div>
-          )}
         </div>
       </div>
 
@@ -311,21 +281,6 @@ export const VehicleHealthReport = ({ car }: VehicleHealthReportProps) => {
         />
       </div>
 
-      {/* Official Footer */}
-      <div className="px-6 py-4 bg-muted/50 border-t border-accent/30">
-        <div className="flex items-start gap-2">
-          <AlertTriangle className="h-4 w-4 text-subtitle-text mt-0.5 flex-shrink-0" />
-          <div className="space-y-1">
-            <p className="text-xs text-subtitle-text leading-relaxed">
-              Niniejszy raport został wygenerowany automatycznie na podstawie oświadczenia sprzedawcy pojazdu. 
-              Dane nie zostały niezależnie zweryfikowane przez AutoBidMaster.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Dokument wygenerowany: {reportDate} | AutoBidMaster Sp. z o.o.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
