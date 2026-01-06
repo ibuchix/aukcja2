@@ -107,6 +107,26 @@ export interface CarListing {
   formMetadata?: any;
   lastSaved?: string;
   additionalPhotos?: any[];
+  
+  // Body/Interior Condition fields
+  hasScratches?: boolean | null;
+  hasDents?: boolean | null;
+  hasRust?: boolean | null;
+  hasInteriorStains?: boolean | null;
+  
+  // Mechanical/Systems Condition fields
+  engineSmokes?: boolean | null;
+  engineFaults?: boolean | null;
+  gearboxFaults?: boolean | null;
+  brakesNoisy?: boolean | null;
+  suspensionNoisy?: boolean | null;
+  electricalFaults?: boolean | null;
+  warningLightsOn?: boolean | null;
+  acWorking?: boolean | null;
+  windowsWorking?: boolean | null;
+  runsSmoothly?: boolean | null;
+  tiresLegalDepth?: boolean | null;
+  
   [key: string]: any;
 }
 
