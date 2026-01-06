@@ -130,7 +130,26 @@ export const processCarData = (rawData: any[]): CarListing[] => {
         scheduleEndTime: scheduleInfo?.end_time,
         auctionTimingStatus: auctionTimingStatus,
         // Preserve file uploads if they exist from carsQueryBuilder
-        fileUploads: car.fileUploads || []
+        fileUploads: car.fileUploads || [],
+        
+        // Body/Interior Condition fields
+        hasScratches: car.has_scratches ?? null,
+        hasDents: car.has_dents ?? null,
+        hasRust: car.has_rust ?? null,
+        hasInteriorStains: car.has_interior_stains ?? null,
+        
+        // Mechanical/Systems Condition fields
+        engineSmokes: car.engine_smokes ?? null,
+        engineFaults: car.engine_faults ?? null,
+        gearboxFaults: car.gearbox_faults ?? null,
+        brakesNoisy: car.brakes_noisy ?? null,
+        suspensionNoisy: car.suspension_noisy ?? null,
+        electricalFaults: car.electrical_faults ?? null,
+        warningLightsOn: car.warning_lights_on ?? null,
+        acWorking: car.ac_working ?? null,
+        windowsWorking: car.windows_working ?? null,
+        runsSmoothly: car.runs_smoothly ?? null,
+        tiresLegalDepth: car.tires_legal_depth ?? null
       } as CarListing;
     });
 };

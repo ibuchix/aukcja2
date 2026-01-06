@@ -3,6 +3,7 @@ import { useCarAuctionDetails } from "@/hooks/useCarAuctionDetails";
 import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 import { DashboardLayout } from "@/components/dealer/dashboard/DashboardLayout";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
+import { VehicleHealthReport } from "@/components/car-details/VehicleHealthReport";
 import { SimpleBidManager } from "@/components/auction/SimpleBidManager";
 import { BidCountDisplay } from "@/components/auction/BidCountDisplay";
 import { AuctionTimer } from "@/components/auction/AuctionTimer";
@@ -267,6 +268,9 @@ const CarAuction = () => {
                 <p className="text-sm leading-relaxed">{car.sellerNotes}</p>
               </div>
             )}
+
+            {/* Vehicle Health Report */}
+            <VehicleHealthReport car={car} />
 
             {/* Vehicle Features */}
             {car.features && Object.keys(car.features).length > 0 && (() => {
