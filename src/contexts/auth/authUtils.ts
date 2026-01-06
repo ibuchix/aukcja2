@@ -10,9 +10,10 @@ import { Profile } from '@/types/profile';
  */
 export const getUserProfile = async (userId: string): Promise<Profile | null> => {
   try {
+    // Explicitly select columns, excluding role (role is in user_roles table)
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, full_name, avatar_url, suspended, updated_at')
       .eq('id', userId)
       .single();
 
@@ -77,10 +78,10 @@ export const refreshUserSession = async () => {
  */
 export const fetchDealerProfile = async (userId: string) => {
   try {
-    // First get the user profile
+    // First get the user profile (excluding role - use user_roles table for role checks)
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, full_name, avatar_url, suspended, updated_at')
       .eq('id', userId)
       .single();
 

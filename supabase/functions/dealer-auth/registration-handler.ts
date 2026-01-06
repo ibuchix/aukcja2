@@ -251,12 +251,12 @@ export async function handleDealerRegister(
       userId = userData.user.id;
     }
 
-    // Update or create profile with dealer role
+    // Update or create profile (role is managed in user_roles table, not profiles)
     try {
       // First check if profile already exists
       const { data: profileData, error: profileCheckError } = await supabaseAdmin
         .from('profiles')
-        .select('id, role')
+        .select('id')
         .eq('id', userId)
         .single();
       
@@ -265,11 +265,10 @@ export async function handleDealerRegister(
       }
       
       if (profileData) {
-        // Profile exists, update it to include dealer role
+        // Profile exists, update name only (role is in user_roles table)
         const { error: updateError } = await supabaseAdmin
           .from('profiles')
           .update({
-            role: 'dealer',
             full_name: cleanedMetadata.name,
             updated_at: new Date().toISOString()
           })
@@ -279,12 +278,11 @@ export async function handleDealerRegister(
           logWarning("Error updating profile:", updateError);
         }
       } else {
-        // Create new profile with dealer role
+        // Create new profile (role is managed via user_roles table)
         const { error: profileError } = await supabaseAdmin
           .from('profiles')
           .insert({
             id: userId,
-            role: 'dealer',
             full_name: cleanedMetadata.name,
             updated_at: new Date().toISOString()
           });
@@ -292,6 +290,18 @@ export async function handleDealerRegister(
         if (profileError) {
           logWarning("Error creating profile:", profileError);
         }
+      }
+      
+      // Add dealer role to user_roles table
+      const { error: roleError } = await supabaseAdmin
+        .from('user_roles')
+        .upsert({
+          user_id: userId,
+          role: 'dealer'
+        }, { onConflict: 'user_id,role' });
+      
+      if (roleError) {
+        logWarning("Error adding dealer role:", roleError);
       }
     } catch (metaError) {
       logWarning("Error managing profile:", metaError);

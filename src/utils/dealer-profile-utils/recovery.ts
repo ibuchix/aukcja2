@@ -18,10 +18,10 @@ export async function recoverDealerProfile() {
     const userId = session.user.id;
     console.log(`Attempting to recover profile for user ID: ${userId}`);
     
-    // First check if we already have a profile record
+    // First check if we already have a profile record (excluding role - use user_roles table)
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, full_name, avatar_url, suspended, updated_at')
       .eq('id', userId)
       .maybeSingle();
     
@@ -48,12 +48,11 @@ export async function recoverDealerProfile() {
       const userMetadata = userData?.user?.user_metadata || {};
       const name = userMetadata.name || userData?.user?.email?.split('@')[0] || 'Dealer';
       
-      // Create basic profile with dealer role
+      // Create basic profile (role is managed in user_roles table, not profiles)
       const { error: createError } = await supabase
         .from('profiles')
         .insert({
           id: userId,
-          role: 'dealer',
           full_name: name,
           updated_at: new Date().toISOString()
         });
@@ -129,10 +128,10 @@ export async function verifyUserProfileIntegrity(): Promise<{complete: boolean, 
     
     const userId = session.user.id;
     
-    // Check if profile exists
+    // Check if profile exists (excluding role - use user_roles table for role checks)
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, full_name, avatar_url, suspended, updated_at')
       .eq('id', userId)
       .maybeSingle();
       
