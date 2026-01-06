@@ -1,6 +1,8 @@
-import { Check, X, Minus, ClipboardList } from "lucide-react";
+import { Check, X, Minus, ClipboardList, Shield, AlertTriangle } from "lucide-react";
 import { CarListing } from "@/types/cars";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { pl } from "date-fns/locale";
 
 interface VehicleHealthReportProps {
   car: CarListing;
@@ -9,128 +11,320 @@ interface VehicleHealthReportProps {
 interface ConditionItem {
   label: string;
   value: boolean | null | undefined;
-  isPositiveWhenTrue: boolean; // true means "good when value is true" (e.g., AC working)
+  isPositiveWhenTrue: boolean;
+  type: 'defect' | 'working' | 'issue';
 }
 
-const ConditionIndicator = ({ 
+const getStatusLabel = (value: boolean | null | undefined, isPositiveWhenTrue: boolean, type: ConditionItem['type']) => {
+  if (value === null || value === undefined) {
+    return { text: "BRAK DANYCH", isGood: null };
+  }
+  
+  const isGood = isPositiveWhenTrue ? value : !value;
+  
+  switch (type) {
+    case 'defect':
+      return { text: isGood ? "BRAK" : "WYKRYTO", isGood };
+    case 'working':
+      return { text: isGood ? "SPRAWNE" : "NIESPRAWNE", isGood };
+    case 'issue':
+      return { text: isGood ? "BRAK USTEREK" : "USTERKA", isGood };
+  }
+};
+
+const StatusIndicator = ({ 
   value, 
-  isPositiveWhenTrue 
+  isPositiveWhenTrue,
+  type
 }: { 
   value: boolean | null | undefined; 
   isPositiveWhenTrue: boolean;
+  type: ConditionItem['type'];
 }) => {
-  if (value === null || value === undefined) {
+  const status = getStatusLabel(value, isPositiveWhenTrue, type);
+
+  if (status.isGood === null) {
     return (
       <div className="flex items-center gap-2">
-        <Minus className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">Nie podano</span>
+        <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+          <Minus className="h-3.5 w-3.5 text-muted-foreground" />
+        </div>
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          {status.text}
+        </span>
       </div>
     );
   }
 
-  // Determine if this is a "good" or "bad" status
-  const isGood = isPositiveWhenTrue ? value : !value;
-
   return (
     <div className="flex items-center gap-2">
-      {isGood ? (
-        <>
-          <Check className="h-4 w-4 text-green-600" />
-          <span className="text-sm font-medium text-green-600">
-            {isPositiveWhenTrue ? "Tak" : "Nie"}
-          </span>
-        </>
-      ) : (
-        <>
-          <X className="h-4 w-4 text-destructive" />
-          <span className="text-sm font-medium text-destructive">
-            {isPositiveWhenTrue ? "Nie" : "Tak"}
-          </span>
-        </>
-      )}
+      <div className={cn(
+        "w-6 h-6 rounded-full flex items-center justify-center",
+        status.isGood ? "bg-green-500/20" : "bg-destructive/20"
+      )}>
+        {status.isGood ? (
+          <Check className="h-3.5 w-3.5 text-green-500" />
+        ) : (
+          <X className="h-3.5 w-3.5 text-destructive" />
+        )}
+      </div>
+      <span className={cn(
+        "text-xs font-semibold uppercase tracking-wide",
+        status.isGood ? "text-green-500" : "text-destructive"
+      )}>
+        {status.text}
+      </span>
     </div>
   );
 };
 
-const ConditionRow = ({ item }: { item: ConditionItem }) => (
-  <div className="flex items-center justify-between py-3 px-4 bg-background/50 rounded border border-accent/20">
-    <span className="text-sm text-body-text">{item.label}</span>
-    <ConditionIndicator value={item.value} isPositiveWhenTrue={item.isPositiveWhenTrue} />
+const ConditionRow = ({ item, index }: { item: ConditionItem; index: number }) => (
+  <div className={cn(
+    "flex items-center justify-between py-3 px-4 rounded-md",
+    index % 2 === 0 ? "bg-background/30" : "bg-background/50"
+  )}>
+    <span className="text-sm text-body-text font-medium">{item.label}</span>
+    <StatusIndicator value={item.value} isPositiveWhenTrue={item.isPositiveWhenTrue} type={item.type} />
   </div>
 );
+
+const CategorySection = ({ 
+  number, 
+  title, 
+  items 
+}: { 
+  number: string; 
+  title: string; 
+  items: ConditionItem[];
+}) => {
+  const itemsWithData = items.filter(item => item.value !== null && item.value !== undefined);
+  const goodItems = itemsWithData.filter(item => 
+    item.isPositiveWhenTrue ? item.value === true : item.value === false
+  );
+  const categoryScore = itemsWithData.length > 0 ? Math.round((goodItems.length / itemsWithData.length) * 100) : 0;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between border-b border-accent/30 pb-2">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded">
+            {number}
+          </span>
+          <h4 className="text-sm font-semibold text-body-text uppercase tracking-wider">
+            {title}
+          </h4>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={cn(
+            "text-xs font-semibold px-2 py-1 rounded",
+            categoryScore >= 70 ? "bg-green-500/20 text-green-500" :
+            categoryScore >= 50 ? "bg-yellow-500/20 text-yellow-500" :
+            "bg-destructive/20 text-destructive"
+          )}>
+            {goodItems.length}/{itemsWithData.length} Pozytywne
+          </span>
+        </div>
+      </div>
+      
+      {/* Category Progress Bar */}
+      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+        <div 
+          className={cn(
+            "h-full rounded-full transition-all",
+            categoryScore >= 70 ? "bg-green-500" :
+            categoryScore >= 50 ? "bg-yellow-500" :
+            "bg-destructive"
+          )}
+          style={{ width: `${categoryScore}%` }}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+        {items.map((item, index) => (
+          <ConditionRow key={index} item={item} index={index} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const getHealthGrade = (score: number): { label: string; color: string } => {
+  if (score >= 90) return { label: "DOSKONAŁY", color: "text-green-500" };
+  if (score >= 70) return { label: "BARDZO DOBRY", color: "text-green-500" };
+  if (score >= 50) return { label: "DOBRY", color: "text-yellow-500" };
+  if (score >= 30) return { label: "DOSTATECZNY", color: "text-orange-500" };
+  return { label: "WYMAGA UWAGI", color: "text-destructive" };
+};
 
 export const VehicleHealthReport = ({ car }: VehicleHealthReportProps) => {
   // Body/Interior conditions - these are BAD when true (defects)
   const bodyInteriorItems: ConditionItem[] = [
-    { label: "Rysy na karoserii", value: car.hasScratches, isPositiveWhenTrue: false },
-    { label: "Wgniecenia", value: car.hasDents, isPositiveWhenTrue: false },
-    { label: "Rdza", value: car.hasRust, isPositiveWhenTrue: false },
-    { label: "Plamy we wnętrzu", value: car.hasInteriorStains, isPositiveWhenTrue: false },
+    { label: "Rysy na karoserii", value: car.hasScratches, isPositiveWhenTrue: false, type: 'defect' },
+    { label: "Wgniecenia", value: car.hasDents, isPositiveWhenTrue: false, type: 'defect' },
+    { label: "Rdza", value: car.hasRust, isPositiveWhenTrue: false, type: 'defect' },
+    { label: "Plamy we wnętrzu", value: car.hasInteriorStains, isPositiveWhenTrue: false, type: 'defect' },
   ];
 
-  // Mechanical conditions - mixed: some are bad when true (faults), some are good when true (working)
+  // Mechanical conditions - mixed types
   const mechanicalItems: ConditionItem[] = [
-    { label: "Silnik dymi", value: car.engineSmokes, isPositiveWhenTrue: false },
-    { label: "Usterki silnika", value: car.engineFaults, isPositiveWhenTrue: false },
-    { label: "Usterki skrzyni biegów", value: car.gearboxFaults, isPositiveWhenTrue: false },
-    { label: "Hałaśliwe hamulce", value: car.brakesNoisy, isPositiveWhenTrue: false },
-    { label: "Hałaśliwe zawieszenie", value: car.suspensionNoisy, isPositiveWhenTrue: false },
-    { label: "Usterki elektryczne", value: car.electricalFaults, isPositiveWhenTrue: false },
-    { label: "Kontrolki ostrzegawcze", value: car.warningLightsOn, isPositiveWhenTrue: false },
-    { label: "Klimatyzacja sprawna", value: car.acWorking, isPositiveWhenTrue: true },
-    { label: "Szyby sprawne", value: car.windowsWorking, isPositiveWhenTrue: true },
-    { label: "Silnik pracuje płynnie", value: car.runsSmoothly, isPositiveWhenTrue: true },
-    { label: "Legalna głębokość opon", value: car.tiresLegalDepth, isPositiveWhenTrue: true },
+    { label: "Silnik dymi", value: car.engineSmokes, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Usterki silnika", value: car.engineFaults, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Usterki skrzyni biegów", value: car.gearboxFaults, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Hałaśliwe hamulce", value: car.brakesNoisy, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Hałaśliwe zawieszenie", value: car.suspensionNoisy, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Usterki elektryczne", value: car.electricalFaults, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Kontrolki ostrzegawcze", value: car.warningLightsOn, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Klimatyzacja", value: car.acWorking, isPositiveWhenTrue: true, type: 'working' },
+    { label: "Szyby elektryczne", value: car.windowsWorking, isPositiveWhenTrue: true, type: 'working' },
+    { label: "Praca silnika", value: car.runsSmoothly, isPositiveWhenTrue: true, type: 'working' },
+    { label: "Głębokość bieżnika opon", value: car.tiresLegalDepth, isPositiveWhenTrue: true, type: 'working' },
   ];
 
   // Check if we have any data to show
-  const hasBodyData = bodyInteriorItems.some(item => item.value !== null && item.value !== undefined);
-  const hasMechanicalData = mechanicalItems.some(item => item.value !== null && item.value !== undefined);
+  const allItems = [...bodyInteriorItems, ...mechanicalItems];
+  const hasData = allItems.some(item => item.value !== null && item.value !== undefined);
 
-  if (!hasBodyData && !hasMechanicalData) {
+  if (!hasData) {
     return null;
   }
 
+  // Calculate overall health score
+  const itemsWithData = allItems.filter(item => item.value !== null && item.value !== undefined);
+  const goodItems = itemsWithData.filter(item => 
+    item.isPositiveWhenTrue ? item.value === true : item.value === false
+  );
+  const healthScore = Math.round((goodItems.length / itemsWithData.length) * 100);
+  const healthGrade = getHealthGrade(healthScore);
+
+  // Generate document number from car ID
+  const documentNumber = `VHR-${new Date().getFullYear()}-${car.id?.substring(0, 8).toUpperCase() || 'XXXXXXXX'}`;
+  const reportDate = format(new Date(), "d MMMM yyyy", { locale: pl });
+
   return (
-    <div className="border border-accent/30 rounded-lg overflow-hidden bg-muted/30">
-      {/* Header */}
-      <div className="bg-primary/10 border-b border-accent/30 px-6 py-4">
-        <div className="flex items-center gap-3">
-          <ClipboardList className="h-6 w-6 text-primary" />
-          <h3 className="font-kanit font-semibold text-xl text-body-text uppercase tracking-wide">
-            Raport Stanu Technicznego Pojazdu
-          </h3>
+    <div className="border-l-4 border-primary rounded-lg overflow-hidden bg-muted/30 shadow-lg">
+      {/* Document Header */}
+      <div className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border-b border-accent/30 px-6 py-5">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
+              <ClipboardList className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-kanit font-bold text-xl text-body-text uppercase tracking-wide">
+                Raport Stanu Technicznego
+              </h3>
+              <p className="text-sm text-subtitle-text mt-0.5">
+                Oficjalna ocena stanu pojazdu
+              </p>
+            </div>
+          </div>
+          <div className="text-left md:text-right space-y-1">
+            <p className="text-xs font-mono text-subtitle-text">
+              Nr dokumentu: <span className="text-body-text font-semibold">{documentNumber}</span>
+            </p>
+            <p className="text-xs text-subtitle-text">
+              Data raportu: <span className="text-body-text">{reportDate}</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Vehicle Identification */}
+        <div className="mt-4 pt-4 border-t border-accent/20 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <p className="text-xs text-subtitle-text uppercase tracking-wide">Pojazd</p>
+            <p className="text-sm font-semibold text-body-text">
+              {car.make} {car.model} {car.year}
+            </p>
+          </div>
+          {car.vin && (
+            <div>
+              <p className="text-xs text-subtitle-text uppercase tracking-wide">VIN</p>
+              <p className="text-sm font-mono font-medium text-body-text">{car.vin}</p>
+            </div>
+          )}
+          {car.registrationNumber && (
+            <div>
+              <p className="text-xs text-subtitle-text uppercase tracking-wide">Nr rejestracyjny</p>
+              <p className="text-sm font-semibold text-body-text">{car.registrationNumber}</p>
+            </div>
+          )}
+          {car.mileage && (
+            <div>
+              <p className="text-xs text-subtitle-text uppercase tracking-wide">Przebieg</p>
+              <p className="text-sm font-semibold text-body-text">
+                {car.mileage.toLocaleString('pl-PL')} km
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
-        {/* Body/Interior Section */}
-        {hasBodyData && (
-          <div>
-            <h4 className="text-sm font-semibold text-subtitle-text uppercase tracking-wider mb-3 border-b border-accent/20 pb-2">
-              Nadwozie i Wnętrze
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {bodyInteriorItems.map((item, index) => (
-                <ConditionRow key={index} item={item} />
-              ))}
+      {/* Overall Health Score */}
+      <div className="px-6 py-5 bg-background/50 border-b border-accent/30">
+        <div className="flex flex-col md:flex-row md:items-center gap-4">
+          <div className="flex items-center gap-3">
+            <Shield className={cn("h-8 w-8", healthGrade.color)} />
+            <div>
+              <p className="text-xs text-subtitle-text uppercase tracking-wide">Ogólna ocena stanu</p>
+              <p className={cn("text-2xl font-bold", healthGrade.color)}>
+                {healthScore}%
+              </p>
             </div>
           </div>
-        )}
+          
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className={cn("text-sm font-bold uppercase tracking-wide", healthGrade.color)}>
+                {healthGrade.label}
+              </span>
+              <span className="text-xs text-subtitle-text">
+                {goodItems.length} z {itemsWithData.length} punktów kontrolnych pozytywnych
+              </span>
+            </div>
+            <div className="h-3 bg-muted rounded-full overflow-hidden">
+              <div 
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  healthScore >= 70 ? "bg-green-500" :
+                  healthScore >= 50 ? "bg-yellow-500" :
+                  "bg-destructive"
+                )}
+                style={{ width: `${healthScore}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
 
-        {/* Mechanical/Systems Section */}
-        {hasMechanicalData && (
-          <div>
-            <h4 className="text-sm font-semibold text-subtitle-text uppercase tracking-wider mb-3 border-b border-accent/20 pb-2">
-              Układ Mechaniczny i Systemy
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {mechanicalItems.map((item, index) => (
-                <ConditionRow key={index} item={item} />
-              ))}
-            </div>
+      {/* Condition Sections */}
+      <div className="p-6 space-y-6">
+        <CategorySection 
+          number="1.0" 
+          title="Nadwozie i Wnętrze" 
+          items={bodyInteriorItems} 
+        />
+        
+        <CategorySection 
+          number="2.0" 
+          title="Układ Mechaniczny i Systemy" 
+          items={mechanicalItems} 
+        />
+      </div>
+
+      {/* Official Footer */}
+      <div className="px-6 py-4 bg-muted/50 border-t border-accent/30">
+        <div className="flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 text-subtitle-text mt-0.5 flex-shrink-0" />
+          <div className="space-y-1">
+            <p className="text-xs text-subtitle-text leading-relaxed">
+              Niniejszy raport został wygenerowany automatycznie na podstawie oświadczenia sprzedawcy pojazdu. 
+              Dane nie zostały niezależnie zweryfikowane przez AutoBidMaster.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Dokument wygenerowany: {reportDate} | AutoBidMaster Sp. z o.o.
+            </p>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
