@@ -34,7 +34,7 @@ const CarAuction = () => {
   const hasEnded = car?.auctionTimingStatus === 'ended';
 
   const handleBack = () => {
-    navigate(-1);
+    navigate("/dealer/dashboard");
   };
 
   const handleShare = async () => {
