@@ -379,6 +379,33 @@ const CarAuction = () => {
                     </span>
                   </div>
                 </div>
+                
+                {/* Technical Inspection Valid Until */}
+                <div className="p-5 bg-background border border-accent/30 rounded-lg">
+                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                    Badanie techniczne ważne do
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {car.technicalInspectionValidUntil ? (
+                      <>
+                        {new Date(car.technicalInspectionValidUntil) > new Date() ? (
+                          <Check className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <X className="h-4 w-4 text-destructive" />
+                        )}
+                        <span className="text-lg font-kanit font-medium text-body-text">
+                          {new Date(car.technicalInspectionValidUntil).toLocaleDateString('pl-PL', { 
+                            day: 'numeric', 
+                            month: 'short', 
+                            year: 'numeric' 
+                          })}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-lg font-kanit font-medium text-body-text">Brak danych</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 

@@ -136,6 +136,7 @@ export interface CarListing {
   hasMileageDiscrepancy?: boolean | null;
   isRecordedStolen?: boolean | null;
   ownersCountPoland?: number | null;
+  technicalInspectionValidUntil?: string | null;
   
   [key: string]: any;
 }
