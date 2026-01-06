@@ -175,50 +175,50 @@ const CarAuction = () => {
               <h3 className="font-kanit font-semibold text-2xl mb-6 text-body-text border-b border-accent/20 pb-3">
                 {translateSpecificationLabel('Vehicle Specifications')}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {/* Year */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     {translateSpecificationLabel('Year')}
                   </div>
-                  <div className="text-xl font-kanit font-semibold text-body-text">
+                  <div className="text-lg font-kanit font-semibold text-body-text">
                     {car.year}
                   </div>
                 </div>
                 
                 {/* Mileage */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     {translateSpecificationLabel('Mileage')}
                   </div>
-                  <div className="text-xl font-kanit font-semibold text-body-text">
-                    {car.mileage?.toLocaleString()} <span className="text-base text-subtitle-text">km</span>
+                  <div className="text-lg font-kanit font-semibold text-body-text">
+                    {car.mileage?.toLocaleString()} <span className="text-sm text-subtitle-text">km</span>
                   </div>
                 </div>
                 
                 {/* Transmission */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     {translateSpecificationLabel('Transmission')}
                   </div>
-                  <div className="text-lg font-kanit font-medium text-body-text">
+                  <div className="text-base font-kanit font-medium text-body-text">
                     {translateTransmission(car.transmission)}
                   </div>
                 </div>
                 
                 {/* Fuel Type */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     {translateSpecificationLabel('Fuel Type')}
                   </div>
-                  <div className="text-lg font-kanit font-medium text-body-text capitalize">
+                  <div className="text-base font-kanit font-medium text-body-text capitalize">
                     {translateFuelType(car.fuelType)}
                   </div>
                 </div>
                 
                 {/* VIN */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)] md:col-span-2 lg:col-span-2">
+                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     {translateSpecificationLabel('VIN')}
                   </div>
                   <div className="text-sm font-mono font-kanit font-medium text-body-text break-all">
@@ -227,162 +227,31 @@ const CarAuction = () => {
                 </div>
                 
                 {/* Number of Keys */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     {translateSpecificationLabel('Number of Keys')}
                   </div>
-                  <div className="text-lg font-kanit font-medium text-body-text">
+                  <div className="text-base font-kanit font-medium text-body-text">
                     {car.numberOfKeys || translateSpecificationLabel('Not specified')}
                   </div>
                 </div>
                 
                 {/* Service History */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     {translateSpecificationLabel('Service History')}
                   </div>
                   <div className="flex items-center gap-2">
                     {car.hasServiceHistory && <Check className="h-4 w-4 text-green-500" />}
-                    <span className="text-lg font-kanit font-medium text-body-text">
+                    <span className="text-base font-kanit font-medium text-body-text">
                       {car.serviceHistoryType ? translateServiceHistoryType(car.serviceHistoryType) : 'Nie podano'}
                     </span>
                   </div>
                 </div>
                 
-                {/* Polish Origin */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
-                    Pochodzenie polskie
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {car.isPolishOrigin === true ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : car.isPolishOrigin === false ? (
-                      <X className="h-4 w-4 text-destructive" />
-                    ) : null}
-                    <span className="text-lg font-kanit font-medium text-body-text">
-                      {car.isPolishOrigin === true ? 'Tak' : car.isPolishOrigin === false ? 'Nie' : 'Brak danych'}
-                    </span>
-                  </div>
-                </div>
-                
-                {/* Owners Count Poland */}
-                {car.ownersCountPoland !== null && car.ownersCountPoland !== undefined && (
-                  <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
-                      Liczba właścicieli w Polsce
-                    </div>
-                    <div className="text-lg font-kanit font-medium text-body-text">
-                      {car.ownersCountPoland}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Damage Record Poland */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
-                    Szkody w Polsce
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {car.isDamagedRecordPoland === false ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : car.isDamagedRecordPoland === true ? (
-                      <X className="h-4 w-4 text-destructive" />
-                    ) : null}
-                    <span className="text-lg font-kanit font-medium text-body-text">
-                      {car.isDamagedRecordPoland === false ? 'Brak' : car.isDamagedRecordPoland === true ? 'Odnotowano' : 'Brak danych'}
-                    </span>
-                  </div>
-                </div>
-                
-                {/* Damage Record Abroad */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
-                    Szkody za granicą
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {car.isDamagedRecordAbroad === false ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : car.isDamagedRecordAbroad === true ? (
-                      <X className="h-4 w-4 text-destructive" />
-                    ) : null}
-                    <span className="text-lg font-kanit font-medium text-body-text">
-                      {car.isDamagedRecordAbroad === false ? 'Brak' : car.isDamagedRecordAbroad === true ? 'Odnotowano' : 'Brak danych'}
-                    </span>
-                  </div>
-                </div>
-                
-                {/* Accident Record Poland */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
-                    Wypadki w Polsce
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {car.isAccidentRecordPoland === false ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : car.isAccidentRecordPoland === true ? (
-                      <X className="h-4 w-4 text-destructive" />
-                    ) : null}
-                    <span className="text-lg font-kanit font-medium text-body-text">
-                      {car.isAccidentRecordPoland === false ? 'Brak' : car.isAccidentRecordPoland === true ? 'Odnotowano' : 'Brak danych'}
-                    </span>
-                  </div>
-                </div>
-                
-                {/* Accident Record Abroad */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
-                    Wypadki za granicą
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {car.isAccidentRecordAbroad === false ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : car.isAccidentRecordAbroad === true ? (
-                      <X className="h-4 w-4 text-destructive" />
-                    ) : null}
-                    <span className="text-lg font-kanit font-medium text-body-text">
-                      {car.isAccidentRecordAbroad === false ? 'Brak' : car.isAccidentRecordAbroad === true ? 'Odnotowano' : 'Brak danych'}
-                    </span>
-                  </div>
-                </div>
-                
-                {/* Mileage Discrepancy */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
-                    Rozbieżność przebiegu
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {car.hasMileageDiscrepancy === false ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : car.hasMileageDiscrepancy === true ? (
-                      <X className="h-4 w-4 text-destructive" />
-                    ) : null}
-                    <span className="text-lg font-kanit font-medium text-body-text">
-                      {car.hasMileageDiscrepancy === false ? 'Brak' : car.hasMileageDiscrepancy === true ? 'Wykryto' : 'Brak danych'}
-                    </span>
-                  </div>
-                </div>
-                
-                {/* Stolen Status */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
-                    Status kradzieży
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {car.isRecordedStolen === false ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : car.isRecordedStolen === true ? (
-                      <X className="h-4 w-4 text-destructive" />
-                    ) : null}
-                    <span className="text-lg font-kanit font-medium text-body-text">
-                      {car.isRecordedStolen === false ? 'Czysty' : car.isRecordedStolen === true ? 'Odnotowano' : 'Brak danych'}
-                    </span>
-                  </div>
-                </div>
-                
                 {/* Technical Inspection Valid Until */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     Badanie techniczne ważne do
                   </div>
                   <div className="flex items-center gap-2">
@@ -393,7 +262,7 @@ const CarAuction = () => {
                         ) : (
                           <X className="h-4 w-4 text-destructive" />
                         )}
-                        <span className="text-lg font-kanit font-medium text-body-text">
+                        <span className="text-base font-kanit font-medium text-body-text">
                           {new Date(car.technicalInspectionValidUntil).toLocaleDateString('pl-PL', { 
                             day: 'numeric', 
                             month: 'short', 
@@ -402,8 +271,139 @@ const CarAuction = () => {
                         </span>
                       </>
                     ) : (
-                      <span className="text-lg font-kanit font-medium text-body-text">Brak danych</span>
+                      <span className="text-base font-kanit font-medium text-body-text">Brak danych</span>
                     )}
+                  </div>
+                </div>
+                
+                {/* Polish Origin */}
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                    Pochodzenie polskie
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {car.isPolishOrigin === true ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : car.isPolishOrigin === false ? (
+                      <X className="h-4 w-4 text-destructive" />
+                    ) : null}
+                    <span className="text-base font-kanit font-medium text-body-text">
+                      {car.isPolishOrigin === true ? 'Tak' : car.isPolishOrigin === false ? 'Nie' : 'Brak danych'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Owners Count Poland */}
+                {car.ownersCountPoland !== null && car.ownersCountPoland !== undefined && (
+                  <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                    <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                      Liczba właścicieli w Polsce
+                    </div>
+                    <div className="text-base font-kanit font-medium text-body-text">
+                      {car.ownersCountPoland}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Damage Record Poland */}
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                    Szkody w Polsce
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {car.isDamagedRecordPoland === false ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : car.isDamagedRecordPoland === true ? (
+                      <X className="h-4 w-4 text-destructive" />
+                    ) : null}
+                    <span className="text-base font-kanit font-medium text-body-text">
+                      {car.isDamagedRecordPoland === false ? 'Brak' : car.isDamagedRecordPoland === true ? 'Odnotowano' : 'Brak danych'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Damage Record Abroad */}
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                    Szkody za granicą
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {car.isDamagedRecordAbroad === false ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : car.isDamagedRecordAbroad === true ? (
+                      <X className="h-4 w-4 text-destructive" />
+                    ) : null}
+                    <span className="text-base font-kanit font-medium text-body-text">
+                      {car.isDamagedRecordAbroad === false ? 'Brak' : car.isDamagedRecordAbroad === true ? 'Odnotowano' : 'Brak danych'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Accident Record Poland */}
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                    Wypadki w Polsce
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {car.isAccidentRecordPoland === false ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : car.isAccidentRecordPoland === true ? (
+                      <X className="h-4 w-4 text-destructive" />
+                    ) : null}
+                    <span className="text-base font-kanit font-medium text-body-text">
+                      {car.isAccidentRecordPoland === false ? 'Brak' : car.isAccidentRecordPoland === true ? 'Odnotowano' : 'Brak danych'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Accident Record Abroad */}
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                    Wypadki za granicą
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {car.isAccidentRecordAbroad === false ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : car.isAccidentRecordAbroad === true ? (
+                      <X className="h-4 w-4 text-destructive" />
+                    ) : null}
+                    <span className="text-base font-kanit font-medium text-body-text">
+                      {car.isAccidentRecordAbroad === false ? 'Brak' : car.isAccidentRecordAbroad === true ? 'Odnotowano' : 'Brak danych'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Mileage Discrepancy */}
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                    Rozbieżność przebiegu
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {car.hasMileageDiscrepancy === false ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : car.hasMileageDiscrepancy === true ? (
+                      <X className="h-4 w-4 text-destructive" />
+                    ) : null}
+                    <span className="text-base font-kanit font-medium text-body-text">
+                      {car.hasMileageDiscrepancy === false ? 'Brak' : car.hasMileageDiscrepancy === true ? 'Wykryto' : 'Brak danych'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Stolen Status */}
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                    Status kradzieży
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {car.isRecordedStolen === false ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : car.isRecordedStolen === true ? (
+                      <X className="h-4 w-4 text-destructive" />
+                    ) : null}
+                    <span className="text-base font-kanit font-medium text-body-text">
+                      {car.isRecordedStolen === false ? 'Czysty' : car.isRecordedStolen === true ? 'Odnotowano' : 'Brak danych'}
+                    </span>
                   </div>
                 </div>
               </div>
