@@ -127,6 +127,16 @@ export interface CarListing {
   runsSmoothly?: boolean | null;
   tiresLegalDepth?: boolean | null;
   
+  // Vehicle History fields
+  isPolishOrigin?: boolean | null;
+  isDamagedRecordPoland?: boolean | null;
+  isDamagedRecordAbroad?: boolean | null;
+  isAccidentRecordPoland?: boolean | null;
+  isAccidentRecordAbroad?: boolean | null;
+  hasMileageDiscrepancy?: boolean | null;
+  isRecordedStolen?: boolean | null;
+  ownersCountPoland?: number | null;
+  
   [key: string]: any;
 }
 

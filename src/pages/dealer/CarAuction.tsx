@@ -9,7 +9,7 @@ import { BidCountDisplay } from "@/components/auction/BidCountDisplay";
 import { AuctionTimer } from "@/components/auction/AuctionTimer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Share2, Heart, MapPin, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { ArrowLeft, Share2, Heart, MapPin, AlertCircle, CheckCircle, Clock, Check, X } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { translateTransmission } from "@/lib/transmissionUtils";
 import { translateSpecificationLabel, translateVehicleFeature, translateFuelType, translateServiceHistoryType } from "@/lib/vehicleTranslations";
@@ -175,39 +175,29 @@ const CarAuction = () => {
               <h3 className="font-kanit font-semibold text-2xl mb-6 text-body-text border-b border-accent/20 pb-3">
                 {translateSpecificationLabel('Vehicle Specifications')}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Year */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg hover:border-primary/50 transition-colors">
+                <div className="p-5 bg-background border border-accent/30 rounded-lg">
                   <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
                     {translateSpecificationLabel('Year')}
                   </div>
-                  <div className="text-2xl font-kanit font-semibold text-body-text">
+                  <div className="text-xl font-kanit font-semibold text-body-text">
                     {car.year}
                   </div>
                 </div>
                 
                 {/* Mileage */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg hover:border-primary/50 transition-colors">
+                <div className="p-5 bg-background border border-accent/30 rounded-lg">
                   <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
                     {translateSpecificationLabel('Mileage')}
                   </div>
-                  <div className="text-2xl font-kanit font-semibold text-body-text">
+                  <div className="text-xl font-kanit font-semibold text-body-text">
                     {car.mileage?.toLocaleString()} <span className="text-base text-subtitle-text">km</span>
                   </div>
                 </div>
                 
-                {/* VIN */}
-                <div className="p-5 bg-background border border-accent/30 rounded-lg hover:border-primary/50 transition-colors">
-                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
-                    {translateSpecificationLabel('VIN')}
-                  </div>
-                  <div className="text-sm font-mono font-kanit font-medium text-body-text break-all">
-                    {car.vin || translateSpecificationLabel('Not available')}
-                  </div>
-                </div>
-                
                 {/* Transmission */}
-                <div className="p-5 bg-background border border-accent/20 rounded-lg">
+                <div className="p-5 bg-background border border-accent/30 rounded-lg">
                   <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
                     {translateSpecificationLabel('Transmission')}
                   </div>
@@ -217,7 +207,7 @@ const CarAuction = () => {
                 </div>
                 
                 {/* Fuel Type */}
-                <div className="p-5 bg-background border border-accent/20 rounded-lg">
+                <div className="p-5 bg-background border border-accent/30 rounded-lg">
                   <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
                     {translateSpecificationLabel('Fuel Type')}
                   </div>
@@ -226,8 +216,18 @@ const CarAuction = () => {
                   </div>
                 </div>
                 
+                {/* VIN */}
+                <div className="p-5 bg-background border border-accent/30 rounded-lg">
+                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                    {translateSpecificationLabel('VIN')}
+                  </div>
+                  <div className="text-sm font-mono font-kanit font-medium text-body-text break-all">
+                    {car.vin || translateSpecificationLabel('Not available')}
+                  </div>
+                </div>
+                
                 {/* Number of Keys */}
-                <div className="p-5 bg-background border border-accent/20 rounded-lg">
+                <div className="p-5 bg-background border border-accent/30 rounded-lg">
                   <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
                     {translateSpecificationLabel('Number of Keys')}
                   </div>
@@ -237,25 +237,146 @@ const CarAuction = () => {
                 </div>
                 
                 {/* Service History */}
-                <div className="p-5 bg-background border border-accent/20 rounded-lg md:col-span-2 lg:col-span-3">
+                <div className="p-5 bg-background border border-accent/30 rounded-lg">
                   <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
                     {translateSpecificationLabel('Service History')}
                   </div>
-                  <div className="text-lg font-kanit font-medium text-body-text">
-                    {car.serviceHistoryType ? (
-                      <div className="space-y-1">
-                        <span>
-                          {translateServiceHistoryType(car.serviceHistoryType)}
-                        </span>
-                        {car.hasServiceHistory && (
-                          <div className="text-sm text-green-600 font-medium mt-2">
-                            ✓ Pełna historia serwisowa dostępna
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-subtitle-text">Nie podano</span>
-                    )}
+                  <div className="flex items-center gap-2">
+                    {car.hasServiceHistory && <Check className="h-4 w-4 text-green-500" />}
+                    <span className="text-lg font-kanit font-medium text-body-text">
+                      {car.serviceHistoryType ? translateServiceHistoryType(car.serviceHistoryType) : 'Nie podano'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Polish Origin */}
+                <div className="p-5 bg-background border border-accent/30 rounded-lg">
+                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                    Pochodzenie polskie
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {car.isPolishOrigin === true ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : car.isPolishOrigin === false ? (
+                      <X className="h-4 w-4 text-destructive" />
+                    ) : null}
+                    <span className="text-lg font-kanit font-medium text-body-text">
+                      {car.isPolishOrigin === true ? 'Tak' : car.isPolishOrigin === false ? 'Nie' : 'Brak danych'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Owners Count Poland */}
+                {car.ownersCountPoland !== null && car.ownersCountPoland !== undefined && (
+                  <div className="p-5 bg-background border border-accent/30 rounded-lg">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      Liczba właścicieli w Polsce
+                    </div>
+                    <div className="text-lg font-kanit font-medium text-body-text">
+                      {car.ownersCountPoland}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Damage Record Poland */}
+                <div className="p-5 bg-background border border-accent/30 rounded-lg">
+                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                    Szkody w Polsce
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {car.isDamagedRecordPoland === false ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : car.isDamagedRecordPoland === true ? (
+                      <X className="h-4 w-4 text-destructive" />
+                    ) : null}
+                    <span className="text-lg font-kanit font-medium text-body-text">
+                      {car.isDamagedRecordPoland === false ? 'Brak' : car.isDamagedRecordPoland === true ? 'Odnotowano' : 'Brak danych'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Damage Record Abroad */}
+                <div className="p-5 bg-background border border-accent/30 rounded-lg">
+                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                    Szkody za granicą
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {car.isDamagedRecordAbroad === false ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : car.isDamagedRecordAbroad === true ? (
+                      <X className="h-4 w-4 text-destructive" />
+                    ) : null}
+                    <span className="text-lg font-kanit font-medium text-body-text">
+                      {car.isDamagedRecordAbroad === false ? 'Brak' : car.isDamagedRecordAbroad === true ? 'Odnotowano' : 'Brak danych'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Accident Record Poland */}
+                <div className="p-5 bg-background border border-accent/30 rounded-lg">
+                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                    Wypadki w Polsce
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {car.isAccidentRecordPoland === false ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : car.isAccidentRecordPoland === true ? (
+                      <X className="h-4 w-4 text-destructive" />
+                    ) : null}
+                    <span className="text-lg font-kanit font-medium text-body-text">
+                      {car.isAccidentRecordPoland === false ? 'Brak' : car.isAccidentRecordPoland === true ? 'Odnotowano' : 'Brak danych'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Accident Record Abroad */}
+                <div className="p-5 bg-background border border-accent/30 rounded-lg">
+                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                    Wypadki za granicą
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {car.isAccidentRecordAbroad === false ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : car.isAccidentRecordAbroad === true ? (
+                      <X className="h-4 w-4 text-destructive" />
+                    ) : null}
+                    <span className="text-lg font-kanit font-medium text-body-text">
+                      {car.isAccidentRecordAbroad === false ? 'Brak' : car.isAccidentRecordAbroad === true ? 'Odnotowano' : 'Brak danych'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Mileage Discrepancy */}
+                <div className="p-5 bg-background border border-accent/30 rounded-lg">
+                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                    Rozbieżność przebiegu
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {car.hasMileageDiscrepancy === false ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : car.hasMileageDiscrepancy === true ? (
+                      <X className="h-4 w-4 text-destructive" />
+                    ) : null}
+                    <span className="text-lg font-kanit font-medium text-body-text">
+                      {car.hasMileageDiscrepancy === false ? 'Brak' : car.hasMileageDiscrepancy === true ? 'Wykryto' : 'Brak danych'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Stolen Status */}
+                <div className="p-5 bg-background border border-accent/30 rounded-lg">
+                  <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                    Status kradzieży
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {car.isRecordedStolen === false ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : car.isRecordedStolen === true ? (
+                      <X className="h-4 w-4 text-destructive" />
+                    ) : null}
+                    <span className="text-lg font-kanit font-medium text-body-text">
+                      {car.isRecordedStolen === false ? 'Czysty' : car.isRecordedStolen === true ? 'Odnotowano' : 'Brak danych'}
+                    </span>
                   </div>
                 </div>
               </div>
