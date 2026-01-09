@@ -16,6 +16,43 @@ export interface CarFileUpload {
 }
 
 /**
+ * Strict category ordering for auction image display
+ * This order is enforced for all car listings - 22 total slots
+ */
+const IMAGE_CATEGORY_ORDER: Record<string, number> = {
+  'exterior_front': 1,       // Przód samochodu - Front of car
+  'walkaround_video': 2,     // VID OF CAR - Walk around video
+  'exterior_rear': 3,        // Tył samochodu - Back of car
+  'exterior_left': 4,        // Bok kierowcy - Driver's side
+  'exterior_right': 5,       // Bok pasażera - Passenger's side
+  'interior_front': 6,       // Przednia część wnętrza - Front interior
+  'dashboard': 7,            // Deska rozdzielcza - Dashboard
+  'interior_rear': 8,        // Tylna część wnętrza - Back interior
+  'engine_bay': 9,           // Komora silnika - Engine bay
+  'oil_cap_underneath': 10,  // Zdjęcie spodu korka oleju (optional)
+  'rim_front_left': 11,      // Przednia felga kierowcy - Driver front rim
+  'rim_front_right': 12,     // Przednia felga pasażera - Passenger front rim
+  'rim_rear_left': 13,       // Tylna felga kierowcy - Driver rear rim
+  'rim_rear_right': 14,      // Tylna felga pasażera - Passenger rear rim
+  // Additional optional photos (15-22)
+  'additional_1': 15,
+  'additional_2': 16,
+  'additional_3': 17,
+  'additional_4': 18,
+  'additional_5': 19,
+  'additional_6': 20,
+  'additional_7': 21,
+  'additional_8': 22,
+};
+
+/**
+ * Get priority for a category (unknown categories go to end)
+ */
+const getCategoryPriority = (category: string): number => {
+  return IMAGE_CATEGORY_ORDER[category] ?? 999;
+};
+
+/**
  * Convert file path to Supabase Storage public URL
  * Supports both 'car-images' and 'manual-valuation-photos' buckets
  */
@@ -105,7 +142,7 @@ export const fetchCarFileUploadsById = async (carId: string): Promise<CarFileUpl
 };
 
 /**
- * Organize car file uploads by category with priority ordering
+ * Organize car file uploads by category with strict priority ordering
  */
 export const organizeImagesByCategory = (uploads: CarFileUpload[]): Record<string, CarFileUpload[]> => {
   const categorized: Record<string, CarFileUpload[]> = {};
@@ -118,56 +155,72 @@ export const organizeImagesByCategory = (uploads: CarFileUpload[]): Record<strin
     categorized[category].push(upload);
   });
   
-  // Sort each category by display_order
+  // Sort each category's images by display_order
   Object.keys(categorized).forEach(category => {
     categorized[category].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
   });
   
-  return categorized;
+  // Return with categories in strict priority order
+  const orderedResult: Record<string, CarFileUpload[]> = {};
+  Object.keys(categorized)
+    .sort((a, b) => getCategoryPriority(a) - getCategoryPriority(b))
+    .forEach(key => {
+      orderedResult[key] = categorized[key];
+    });
+  
+  return orderedResult;
 };
 
 /**
- * Get primary image from car file uploads (ordered by upload sequence)
+ * Get primary image from car file uploads (strict category order - exterior_front first)
  */
 export const getPrimaryImageFromUploads = (uploads: CarFileUpload[]): string => {
   if (!uploads.length) {
     return "";
   }
   
-  // Sort by upload order: first by display_order, then by created_at as fallback
-  const sortedUploads = [...uploads].sort((a, b) => {
-    // First sort by display_order (lower numbers first)
-    if (a.display_order !== b.display_order) {
-      return (a.display_order || 0) - (b.display_order || 0);
-    }
-    // Fallback to created_at timestamp (earlier uploads first)
-    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-  });
+  // Filter to images only (exclude videos for primary image)
+  // Sort by strict category priority order
+  const sortedUploads = [...uploads]
+    .filter(u => u.file_type?.startsWith('image/'))
+    .sort((a, b) => {
+      const priorityA = getCategoryPriority(a.category);
+      const priorityB = getCategoryPriority(b.category);
+      return priorityA - priorityB;
+    });
   
-  // Return the first image in upload order
+  if (!sortedUploads.length) {
+    return "";
+  }
+  
+  // Return the first image by category priority (exterior_front)
   const firstImage = sortedUploads[0];
   return getStorageImageUrl(firstImage.file_path);
 };
 
 /**
- * Get all images from car file uploads with proper labeling (ordered by upload sequence)
+ * Get all images from car file uploads with proper labeling (strict category order)
  */
 export const getAllImagesFromUploads = (uploads: CarFileUpload[]): { src: string; label: string }[] => {
   if (!uploads.length) return [];
   
-  // Sort by upload order: first by display_order, then by created_at as fallback
+  // Sort by strict category priority order
   const sortedUploads = [...uploads].sort((a, b) => {
-    // First sort by display_order (lower numbers first)
-    if (a.display_order !== b.display_order) {
-      return (a.display_order || 0) - (b.display_order || 0);
+    const priorityA = getCategoryPriority(a.category);
+    const priorityB = getCategoryPriority(b.category);
+    
+    // Primary sort: category priority
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
     }
-    // Fallback to created_at timestamp (earlier uploads first)
-    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    
+    // Secondary sort: display_order within same category
+    return (a.display_order || 0) - (b.display_order || 0);
   });
   
   return sortedUploads.map((upload, index) => ({
     src: getStorageImageUrl(upload.file_path),
-    label: `IMAGE ${index + 1}` // Simple sequential numbering based on upload order
+    label: `IMAGE ${index + 1}` // Sequential numbering based on sorted order
   }));
 };
 
