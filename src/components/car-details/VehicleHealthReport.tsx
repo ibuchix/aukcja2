@@ -160,8 +160,8 @@ export const VehicleHealthReport = ({ car }: VehicleHealthReportProps) => {
   // Body/Interior conditions - these are BAD when true (defects)
   const bodyInteriorItems: ConditionItem[] = [
     { label: "Rysy na karoserii", value: car.hasScratches, isPositiveWhenTrue: false, type: 'defect' },
-    { label: "Wgniecenia", value: car.hasDents, isPositiveWhenTrue: false, type: 'defect' },
-    { label: "Rdza", value: car.hasRust, isPositiveWhenTrue: false, type: 'defect' },
+    { label: "Wgniecenia na karoserii", value: car.hasDents, isPositiveWhenTrue: false, type: 'defect' },
+    { label: "Rdza na karoserii", value: car.hasRust, isPositiveWhenTrue: false, type: 'defect' },
     { label: "Plamy we wnętrzu", value: car.hasInteriorStains, isPositiveWhenTrue: false, type: 'defect' },
   ];
 
