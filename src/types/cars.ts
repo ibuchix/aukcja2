@@ -137,6 +137,7 @@ export interface CarListing {
   isRecordedStolen?: boolean | null;
   ownersCountPoland?: number | null;
   technicalInspectionValidUntil?: string | null;
+  importYear?: number | null;
   
   [key: string]: any;
 }

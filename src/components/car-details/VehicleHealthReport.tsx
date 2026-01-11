@@ -22,14 +22,13 @@ const getStatusLabel = (value: boolean | null | undefined, isPositiveWhenTrue: b
   
   const isGood = isPositiveWhenTrue ? value : !value;
   
-  switch (type) {
-    case 'defect':
-      return { text: isGood ? "BRAK" : "WYKRYTO", isGood };
-    case 'working':
-      return { text: isGood ? "SPRAWNE" : "NIESPRAWNE", isGood };
-    case 'issue':
-      return { text: isGood ? "BRAK USTEREK" : "USTERKA", isGood };
+  // For defects/issues: isGood means problem is NOT present, so we say "Nie" (no problem)
+  // For working: isGood means it IS working, so we say "Tak" (yes, it works)
+  if (type === 'working') {
+    return { text: isGood ? "Tak" : "Nie", isGood };
   }
+  // For defects and issues: "Tak" means problem exists, "Nie" means no problem
+  return { text: isGood ? "Nie" : "Tak", isGood };
 };
 
 const StatusIndicator = ({ 

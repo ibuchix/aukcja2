@@ -299,6 +299,18 @@ const CarAuction = () => {
                   </div>
                 </div>
                 
+                {/* Import Year - only show if data exists */}
+                {car.importYear && (
+                  <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                    <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                      Rok importu
+                    </div>
+                    <div className="text-base font-kanit font-medium text-body-text">
+                      {car.importYear}
+                    </div>
+                  </div>
+                )}
+                
                 {/* Owners Count Poland */}
                 {car.ownersCountPoland !== null && car.ownersCountPoland !== undefined && (
                   <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
