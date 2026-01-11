@@ -277,7 +277,7 @@ const CarAuction = () => {
                         </span>
                       </>
                     ) : (
-                      <span className="text-base font-kanit font-medium text-body-text">Brak danych</span>
+                      <span className="text-base font-kanit font-medium text-body-text">Nie odnotowano</span>
                     )}
                   </div>
                 </div>
@@ -294,7 +294,7 @@ const CarAuction = () => {
                       <X className="h-4 w-4 text-destructive" />
                     ) : null}
                     <span className="text-base font-kanit font-medium text-body-text">
-                      {car.isPolishOrigin === true ? 'Tak' : car.isPolishOrigin === false ? 'Nie' : 'Brak danych'}
+                      {car.isPolishOrigin === true ? 'Tak' : car.isPolishOrigin === false ? 'Nie' : 'Nie odnotowano'}
                     </span>
                   </div>
                 </div>
@@ -323,7 +323,7 @@ const CarAuction = () => {
                       <X className="h-4 w-4 text-destructive" />
                     ) : null}
                     <span className="text-base font-kanit font-medium text-body-text">
-                      {car.isDamagedRecordPoland === false ? 'Brak' : car.isDamagedRecordPoland === true ? 'Odnotowano' : 'Brak danych'}
+                      {car.isDamagedRecordPoland === false ? 'Brak' : car.isDamagedRecordPoland === true ? 'Odnotowano' : 'Nie odnotowano'}
                     </span>
                   </div>
                 </div>
@@ -340,7 +340,7 @@ const CarAuction = () => {
                       <X className="h-4 w-4 text-destructive" />
                     ) : null}
                     <span className="text-base font-kanit font-medium text-body-text">
-                      {car.isDamagedRecordAbroad === false ? 'Brak' : car.isDamagedRecordAbroad === true ? 'Odnotowano' : 'Brak danych'}
+                      {car.isDamagedRecordAbroad === false ? 'Brak' : car.isDamagedRecordAbroad === true ? 'Odnotowano' : 'Nie odnotowano'}
                     </span>
                   </div>
                 </div>
@@ -357,7 +357,7 @@ const CarAuction = () => {
                       <X className="h-4 w-4 text-destructive" />
                     ) : null}
                     <span className="text-base font-kanit font-medium text-body-text">
-                      {car.isAccidentRecordPoland === false ? 'Brak' : car.isAccidentRecordPoland === true ? 'Odnotowano' : 'Brak danych'}
+                      {car.isAccidentRecordPoland === false ? 'Brak' : car.isAccidentRecordPoland === true ? 'Odnotowano' : 'Nie odnotowano'}
                     </span>
                   </div>
                 </div>
@@ -374,7 +374,7 @@ const CarAuction = () => {
                       <X className="h-4 w-4 text-destructive" />
                     ) : null}
                     <span className="text-base font-kanit font-medium text-body-text">
-                      {car.isAccidentRecordAbroad === false ? 'Brak' : car.isAccidentRecordAbroad === true ? 'Odnotowano' : 'Brak danych'}
+                      {car.isAccidentRecordAbroad === false ? 'Brak' : car.isAccidentRecordAbroad === true ? 'Odnotowano' : 'Nie odnotowano'}
                     </span>
                   </div>
                 </div>
@@ -391,7 +391,7 @@ const CarAuction = () => {
                       <X className="h-4 w-4 text-destructive" />
                     ) : null}
                     <span className="text-base font-kanit font-medium text-body-text">
-                      {car.hasMileageDiscrepancy === false ? 'Brak' : car.hasMileageDiscrepancy === true ? 'Wykryto' : 'Brak danych'}
+                      {car.hasMileageDiscrepancy === false ? 'Brak' : car.hasMileageDiscrepancy === true ? 'Wykryto' : 'Nie odnotowano'}
                     </span>
                   </div>
                 </div>
@@ -408,7 +408,7 @@ const CarAuction = () => {
                       <X className="h-4 w-4 text-destructive" />
                     ) : null}
                     <span className="text-base font-kanit font-medium text-body-text">
-                      {car.isRecordedStolen === false ? 'Czysty' : car.isRecordedStolen === true ? 'Odnotowano' : 'Brak danych'}
+                      {car.isRecordedStolen === false ? 'Czysty' : car.isRecordedStolen === true ? 'Odnotowano' : 'Nie odnotowano'}
                     </span>
                   </div>
                 </div>
