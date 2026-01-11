@@ -188,7 +188,7 @@ export class EnhancedQueryBuilder implements Promise<any> {
 
   private async execute(): Promise<any> {
     const sessionAwareClient = await getSessionAwareClient();
-    const query = await sessionAwareClient.createSessionAwareQuery(this.params.table);
+    const query = await sessionAwareClient.createSessionAwareQuery(this.params.table as any);
     
     let builtQuery = this.buildQuery(query);
     const result = await builtQuery;

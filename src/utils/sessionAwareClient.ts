@@ -104,7 +104,7 @@ export class SessionAwareClient {
           throw new Error('Fresh client session validation failed');
         }
         
-        return freshClient.from(tableName);
+        return freshClient.from(tableName as any);
       } catch (error) {
         if (attemptNumber < maxRetries && this.isRetryableError(error)) {
           if (isDev) {
