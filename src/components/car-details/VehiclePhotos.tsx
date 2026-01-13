@@ -81,9 +81,10 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
           <img
             src={allImages[0]?.src}
             alt={allImages[0]?.label || "Vehicle photo"}
-            className="w-full h-64 object-cover rounded-lg cursor-pointer"
+            className="w-full h-64 object-cover rounded-lg cursor-pointer image-render-quality"
             onClick={() => setIsGalleryOpen(true)}
             onError={() => handleImageError(allImages[0]?.src)}
+            decoding="async"
           />
         ) : (
           <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -115,12 +116,13 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                 <img
                   src={image.src}
                   alt={image.label}
-                  className="w-full h-16 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                  className="w-full h-16 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity image-render-quality"
                   onClick={() => {
                     setSelectedImageIndex(index + 1);
                     setIsGalleryOpen(true);
                   }}
                   onError={() => handleImageError(image.src)}
+                  decoding="async"
                 />
               ) : (
                 <div className="w-full h-16 bg-gray-100 rounded flex items-center justify-center">
@@ -143,8 +145,8 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
       {/* Gallery Dialog */}
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
         <DialogContent className={cn(
-          "max-w-4xl w-full p-0",
-          isMobile ? "h-screen" : "h-[80vh]"
+          "max-w-6xl w-full p-0",
+          isMobile ? "h-screen" : "h-[90vh]"
         )}>
           <div className="relative w-full h-full bg-black">
             <Carousel 
@@ -156,7 +158,7 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                 startIndex: selectedImageIndex
               }}
             >
-              <CarouselContent className={isMobile ? "h-screen" : "h-[80vh]"}>
+              <CarouselContent className={isMobile ? "h-screen" : "h-[90vh]"}>
                 {allImages.map((image, index) => (
                   <CarouselItem key={index} className={cn(
                     "flex items-center justify-center",
@@ -226,7 +228,7 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                               <img
                                 src={image.src}
                                 alt={image.label || `Vehicle photo ${index + 1}`}
-                                className="max-w-full max-h-full object-contain"
+                                className="max-w-full max-h-full object-contain image-render-quality"
                                 style={{ 
                                   width: 'auto', 
                                   height: 'auto',
@@ -234,6 +236,7 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                                   display: 'block'
                                 }}
                                 onError={() => handleImageError(image.src)}
+                                decoding="async"
                               />
                             </TransformComponent>
                           </div>
