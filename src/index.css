@@ -34,6 +34,15 @@
   }
 }
 
+@layer utilities {
+  .image-render-quality {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+}
+
 @layer components {
   .btn-primary {
     @apply bg-primary text-white px-4 py-2 rounded-default hover:bg-[#B01831] transition-colors font-kanit;
