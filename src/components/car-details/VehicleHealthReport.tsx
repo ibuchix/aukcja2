@@ -1,4 +1,4 @@
-import { Check, X, Minus, ClipboardList, Shield } from "lucide-react";
+import { ClipboardList, Shield } from "lucide-react";
 import { CarListing } from "@/types/cars";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -44,36 +44,16 @@ const StatusIndicator = ({
 
   if (status.isGood === null) {
     return (
-      <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
-          <Minus className="h-3.5 w-3.5 text-muted-foreground" />
-        </div>
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          {status.text}
-        </span>
-      </div>
+      <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+        {status.text}
+      </span>
     );
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <div className={cn(
-        "w-6 h-6 rounded-full flex items-center justify-center",
-        status.isGood ? "bg-green-500/20" : "bg-destructive/20"
-      )}>
-        {status.isGood ? (
-          <Check className="h-3.5 w-3.5 text-green-500" />
-        ) : (
-          <X className="h-3.5 w-3.5 text-destructive" />
-        )}
-      </div>
-      <span className={cn(
-        "text-xs font-semibold uppercase tracking-wide",
-        status.isGood ? "text-green-500" : "text-destructive"
-      )}>
-        {status.text}
-      </span>
-    </div>
+    <span className="text-sm font-semibold uppercase tracking-wide text-body-text">
+      {status.text}
+    </span>
   );
 };
 
