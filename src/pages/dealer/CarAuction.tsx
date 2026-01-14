@@ -178,7 +178,7 @@ const CarAuction = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {/* Year */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     {translateSpecificationLabel('Year')}
                   </div>
                   <div className="text-lg font-kanit font-semibold text-body-text">
@@ -188,7 +188,7 @@ const CarAuction = () => {
                 
                 {/* Mileage */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     {translateSpecificationLabel('Mileage')}
                   </div>
                   <div className="text-lg font-kanit font-semibold text-body-text">
@@ -198,7 +198,7 @@ const CarAuction = () => {
                 
                 {/* Transmission */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     {translateSpecificationLabel('Transmission')}
                   </div>
                   <div className="text-base font-kanit font-medium text-body-text">
@@ -208,7 +208,7 @@ const CarAuction = () => {
                 
                 {/* Fuel Type */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     {translateSpecificationLabel('Fuel Type')}
                   </div>
                   <div className="text-base font-kanit font-medium text-body-text capitalize">
@@ -218,7 +218,7 @@ const CarAuction = () => {
                 
                 {/* VIN */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)] md:col-span-2 lg:col-span-2">
-                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     {translateSpecificationLabel('VIN')}
                   </div>
                   <div className="text-sm font-mono font-kanit font-medium text-body-text break-all">
@@ -228,7 +228,7 @@ const CarAuction = () => {
                 
                 {/* Number of Keys */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     {translateSpecificationLabel('Number of Keys')}
                   </div>
                   <div className="text-base font-kanit font-medium text-body-text">
@@ -238,7 +238,7 @@ const CarAuction = () => {
                 
                 {/* Service History */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     {translateSpecificationLabel('Service History')}
                   </div>
                   <div className="flex items-center gap-2">
@@ -257,7 +257,7 @@ const CarAuction = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {/* Technical Inspection Valid Until */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     Badanie techniczne ważne do
                   </div>
                   <div className="flex items-center gap-2">
@@ -284,7 +284,7 @@ const CarAuction = () => {
                 
                 {/* Polish Origin */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     Pochodzenie polskie
                   </div>
                   <div className="flex items-center gap-2">
@@ -302,7 +302,7 @@ const CarAuction = () => {
                 {/* Import Year - only show if data exists */}
                 {car.importYear && (
                   <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                    <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                    <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                       Rok importu
                     </div>
                     <div className="text-base font-kanit font-medium text-body-text">
@@ -314,7 +314,7 @@ const CarAuction = () => {
                 {/* Owners Count Poland */}
                 {car.ownersCountPoland !== null && car.ownersCountPoland !== undefined && (
                   <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                    <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                    <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                       Liczba właścicieli w Polsce
                     </div>
                     <div className="text-base font-kanit font-medium text-body-text">
@@ -325,7 +325,7 @@ const CarAuction = () => {
                 
                 {/* Damage Record Poland */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     Szkody w Polsce
                   </div>
                   <div className="flex items-center gap-2">
@@ -342,7 +342,7 @@ const CarAuction = () => {
                 
                 {/* Damage Record Abroad */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     Szkody za granicą
                   </div>
                   <div className="flex items-center gap-2">
@@ -359,7 +359,7 @@ const CarAuction = () => {
                 
                 {/* Accident Record Poland */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     Wypadki w Polsce
                   </div>
                   <div className="flex items-center gap-2">
@@ -376,7 +376,7 @@ const CarAuction = () => {
                 
                 {/* Accident Record Abroad */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     Wypadki za granicą
                   </div>
                   <div className="flex items-center gap-2">
@@ -393,7 +393,7 @@ const CarAuction = () => {
                 
                 {/* Mileage Discrepancy */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     Rozbieżność przebiegu
                   </div>
                   <div className="flex items-center gap-2">
@@ -410,7 +410,7 @@ const CarAuction = () => {
                 
                 {/* Stolen Status */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-[10px] text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     Status kradzieży
                   </div>
                   <div className="flex items-center gap-2">
