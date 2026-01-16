@@ -139,16 +139,16 @@ export const VehicleHealthReport = ({ car }: VehicleHealthReportProps) => {
 
   // Mechanical conditions - mixed types
   const mechanicalItems: ConditionItem[] = [
-    { label: "Silnik dymi?", value: car.engineSmokes, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Silnik dymi lub pracuje nierówno?", value: car.engineSmokes, isPositiveWhenTrue: false, type: 'issue' },
     { label: "Usterki silnika?", value: car.engineFaults, isPositiveWhenTrue: false, type: 'issue' },
     { label: "Usterki skrzyni biegów?", value: car.gearboxFaults, isPositiveWhenTrue: false, type: 'issue' },
     { label: "Hałaśliwe hamulce?", value: car.brakesNoisy, isPositiveWhenTrue: false, type: 'issue' },
     { label: "Hałaśliwe zawieszenie?", value: car.suspensionNoisy, isPositiveWhenTrue: false, type: 'issue' },
     { label: "Usterki elektryczne?", value: car.electricalFaults, isPositiveWhenTrue: false, type: 'issue' },
-    { label: "Kontrolki ostrzegawcze?", value: car.warningLightsOn, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Zapalone kontrolki ostrzegawcze?", value: car.warningLightsOn, isPositiveWhenTrue: false, type: 'issue' },
     { label: "Klimatyzacja działa?", value: car.acWorking, isPositiveWhenTrue: true, type: 'working' },
-    { label: "Szyby elektryczne działają?", value: car.windowsWorking, isPositiveWhenTrue: true, type: 'working' },
-    { label: "Silnik pracuje płynnie?", value: car.runsSmoothly, isPositiveWhenTrue: true, type: 'working' },
+    { label: "Szyby działają prawidłowo?", value: car.windowsWorking, isPositiveWhenTrue: true, type: 'working' },
+    { label: "Samochód jeździ prawidłowo?", value: car.runsSmoothly, isPositiveWhenTrue: true, type: 'working' },
     { label: "Bieżnik opon legalny?", value: car.tiresLegalDepth, isPositiveWhenTrue: true, type: 'working' },
   ];
 
