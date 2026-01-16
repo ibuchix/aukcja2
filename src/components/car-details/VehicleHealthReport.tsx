@@ -62,7 +62,7 @@ const ConditionRow = ({ item, index }: { item: ConditionItem; index: number }) =
     "flex items-center justify-between py-3 px-4 rounded-md",
     index % 2 === 0 ? "bg-background/30" : "bg-background/50"
   )}>
-    <span className="text-sm text-body-text font-medium">{item.label}</span>
+    <span className="text-base text-body-text font-medium">{item.label}</span>
     <StatusIndicator value={item.value} isPositiveWhenTrue={item.isPositiveWhenTrue} type={item.type} />
   </div>
 );
@@ -127,36 +127,29 @@ const CategorySection = ({
   );
 };
 
-const getHealthGrade = (score: number): { label: string; color: string } => {
-  if (score >= 90) return { label: "DOSKONAŁY", color: "text-green-500" };
-  if (score >= 70) return { label: "BARDZO DOBRY", color: "text-green-500" };
-  if (score >= 50) return { label: "DOBRY", color: "text-yellow-500" };
-  if (score >= 30) return { label: "DOSTATECZNY", color: "text-orange-500" };
-  return { label: "WYMAGA UWAGI", color: "text-destructive" };
-};
 
 export const VehicleHealthReport = ({ car }: VehicleHealthReportProps) => {
   // Body/Interior conditions - these are BAD when true (defects)
   const bodyInteriorItems: ConditionItem[] = [
-    { label: "Rysy na karoserii", value: car.hasScratches, isPositiveWhenTrue: false, type: 'defect' },
-    { label: "Wgniecenia na karoserii", value: car.hasDents, isPositiveWhenTrue: false, type: 'defect' },
-    { label: "Rdza na karoserii", value: car.hasRust, isPositiveWhenTrue: false, type: 'defect' },
-    { label: "Plamy we wnętrzu", value: car.hasInteriorStains, isPositiveWhenTrue: false, type: 'defect' },
+    { label: "Rysy na karoserii?", value: car.hasScratches, isPositiveWhenTrue: false, type: 'defect' },
+    { label: "Wgniecenia na karoserii?", value: car.hasDents, isPositiveWhenTrue: false, type: 'defect' },
+    { label: "Rdza na karoserii?", value: car.hasRust, isPositiveWhenTrue: false, type: 'defect' },
+    { label: "Plamy we wnętrzu?", value: car.hasInteriorStains, isPositiveWhenTrue: false, type: 'defect' },
   ];
 
   // Mechanical conditions - mixed types
   const mechanicalItems: ConditionItem[] = [
-    { label: "Silnik dymi", value: car.engineSmokes, isPositiveWhenTrue: false, type: 'issue' },
-    { label: "Usterki silnika", value: car.engineFaults, isPositiveWhenTrue: false, type: 'issue' },
-    { label: "Usterki skrzyni biegów", value: car.gearboxFaults, isPositiveWhenTrue: false, type: 'issue' },
-    { label: "Hałaśliwe hamulce", value: car.brakesNoisy, isPositiveWhenTrue: false, type: 'issue' },
-    { label: "Hałaśliwe zawieszenie", value: car.suspensionNoisy, isPositiveWhenTrue: false, type: 'issue' },
-    { label: "Usterki elektryczne", value: car.electricalFaults, isPositiveWhenTrue: false, type: 'issue' },
-    { label: "Kontrolki ostrzegawcze", value: car.warningLightsOn, isPositiveWhenTrue: false, type: 'issue' },
-    { label: "Klimatyzacja", value: car.acWorking, isPositiveWhenTrue: true, type: 'working' },
-    { label: "Szyby elektryczne", value: car.windowsWorking, isPositiveWhenTrue: true, type: 'working' },
-    { label: "Praca silnika", value: car.runsSmoothly, isPositiveWhenTrue: true, type: 'working' },
-    { label: "Głębokość bieżnika opon", value: car.tiresLegalDepth, isPositiveWhenTrue: true, type: 'working' },
+    { label: "Silnik dymi?", value: car.engineSmokes, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Usterki silnika?", value: car.engineFaults, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Usterki skrzyni biegów?", value: car.gearboxFaults, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Hałaśliwe hamulce?", value: car.brakesNoisy, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Hałaśliwe zawieszenie?", value: car.suspensionNoisy, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Usterki elektryczne?", value: car.electricalFaults, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Kontrolki ostrzegawcze?", value: car.warningLightsOn, isPositiveWhenTrue: false, type: 'issue' },
+    { label: "Klimatyzacja działa?", value: car.acWorking, isPositiveWhenTrue: true, type: 'working' },
+    { label: "Szyby elektryczne działają?", value: car.windowsWorking, isPositiveWhenTrue: true, type: 'working' },
+    { label: "Silnik pracuje płynnie?", value: car.runsSmoothly, isPositiveWhenTrue: true, type: 'working' },
+    { label: "Bieżnik opon legalny?", value: car.tiresLegalDepth, isPositiveWhenTrue: true, type: 'working' },
   ];
 
   // Check if we have any data to show
@@ -173,7 +166,7 @@ export const VehicleHealthReport = ({ car }: VehicleHealthReportProps) => {
     item.isPositiveWhenTrue ? item.value === true : item.value === false
   );
   const healthScore = Math.round((goodItems.length / itemsWithData.length) * 100);
-  const healthGrade = getHealthGrade(healthScore);
+  
 
   // Generate document number from car ID
   const documentNumber = `VHR-${new Date().getFullYear()}-${car.id?.substring(0, 8).toUpperCase() || 'XXXXXXXX'}`;
@@ -212,20 +205,17 @@ export const VehicleHealthReport = ({ car }: VehicleHealthReportProps) => {
       <div className="px-6 py-5 bg-background/50 border-b border-accent/30">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex items-center gap-3">
-            <Shield className={cn("h-8 w-8", healthGrade.color)} />
+            <Shield className={cn("h-8 w-8", healthScore >= 70 ? "text-green-500" : healthScore >= 50 ? "text-yellow-500" : "text-destructive")} />
             <div>
               <p className="text-xs text-subtitle-text uppercase tracking-wide">Ogólna ocena stanu</p>
-              <p className={cn("text-2xl font-bold", healthGrade.color)}>
+              <p className={cn("text-2xl font-bold", healthScore >= 70 ? "text-green-500" : healthScore >= 50 ? "text-yellow-500" : "text-destructive")}>
                 {healthScore}%
               </p>
             </div>
           </div>
           
           <div className="flex-1">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className={cn("text-sm font-bold uppercase tracking-wide", healthGrade.color)}>
-                {healthGrade.label}
-              </span>
+            <div className="flex items-center justify-end mb-1.5">
               <span className="text-xs text-subtitle-text">
                 {goodItems.length} z {itemsWithData.length} punktów kontrolnych pozytywnych
               </span>
