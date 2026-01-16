@@ -44,15 +44,15 @@ const StatusIndicator = ({
 
   if (status.isGood === null) {
     return (
-      <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-        {status.text}
+      <span className="text-xs font-normal text-muted-foreground tracking-wide">
+        {status.text.toLowerCase()}
       </span>
     );
   }
 
   return (
-    <span className="text-sm font-semibold uppercase tracking-wide text-body-text">
-      {status.text}
+    <span className="text-xs font-normal tracking-wide text-body-text">
+      {status.text.toLowerCase()}
     </span>
   );
 };
