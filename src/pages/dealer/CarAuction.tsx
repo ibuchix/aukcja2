@@ -233,7 +233,7 @@ const CarAuction = () => {
                 </div>
                 
                 {/* VIN */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)] md:col-span-2 lg:col-span-2">
+                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
                   <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
                     {translateSpecificationLabel('VIN')}
                   </div>
