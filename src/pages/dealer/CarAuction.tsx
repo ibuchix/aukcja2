@@ -186,6 +186,22 @@ const CarAuction = () => {
                   </div>
                 </div>
                 
+                {/* First Registration Date */}
+                {car.firstRegistrationDate && (
+                  <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
+                    <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                      Data pierwszej rejestracji
+                    </div>
+                    <div className="text-base font-kanit font-medium text-body-text">
+                      {new Date(car.firstRegistrationDate).toLocaleDateString('pl-PL', { 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric' 
+                      })}
+                    </div>
+                  </div>
+                )}
+                
                 {/* Mileage */}
                 <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
                   <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">

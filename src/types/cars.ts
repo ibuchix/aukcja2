@@ -138,6 +138,7 @@ export interface CarListing {
   ownersCountPoland?: number | null;
   technicalInspectionValidUntil?: string | null;
   importYear?: number | null;
+  firstRegistrationDate?: string | null;
   
   [key: string]: any;
 }
