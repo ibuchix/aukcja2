@@ -161,7 +161,8 @@ export const processCarData = (rawData: any[]): CarListing[] => {
         isRecordedStolen: car.is_recorded_stolen ?? null,
         ownersCountPoland: car.owners_count_poland ?? null,
         technicalInspectionValidUntil: car.technical_inspection_valid_until ?? null,
-        importYear: car.import_year ?? null
+        importYear: car.import_year ?? null,
+        firstRegistrationDate: car.first_registration_date ?? null
       } as CarListing;
     });
 };
