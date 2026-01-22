@@ -246,9 +246,14 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                     isMobile ? "p-2" : "p-4"
                   )}>
                     {!isImageBroken(image.src) ? (
-                      isVideoFile(image.fileType) ? (
-                        // Video player
-                        <div className="relative w-full h-full flex items-center justify-center">
+                    isVideoFile(image.fileType) ? (
+                        // Video player with event isolation to prevent carousel from intercepting controls
+                        <div 
+                          className="relative w-full h-full flex items-center justify-center"
+                          onClick={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onTouchStart={(e) => e.stopPropagation()}
+                        >
                           <video
                             ref={(el) => setVideoRef(index, el)}
                             src={image.src}
