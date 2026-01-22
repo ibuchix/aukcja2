@@ -58,7 +58,7 @@ export const getPrimaryImage = (car: CarListing): string => {
 /**
  * Gets all available images from a car listing using car_file_uploads
  */
-export const getAllCarImages = (car: CarListing): { src: string; label: string }[] => {
+export const getAllCarImages = (car: CarListing): { src: string; label: string; fileType?: string }[] => {
   // Check if car has file uploads data
   if (car.fileUploads && Array.isArray(car.fileUploads) && car.fileUploads.length > 0) {
     return getAllImagesFromUploads(car.fileUploads);
