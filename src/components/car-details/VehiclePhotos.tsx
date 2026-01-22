@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Camera, AlertCircle, ZoomIn, ZoomOut, RotateCcw, Volume2, VolumeX, Play } from "lucide-react";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { cn } from "@/lib/utils";
@@ -229,6 +229,7 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
           "max-w-6xl w-full p-0",
           isMobile ? "h-screen" : "h-[90vh]"
         )}>
+          <DialogTitle className="sr-only">Galeria zdjęć pojazdu</DialogTitle>
           <div className="relative w-full h-full bg-black">
             <Carousel 
               className="w-full h-full"
@@ -247,12 +248,19 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                   )}>
                     {!isImageBroken(image.src) ? (
                     isVideoFile(image.fileType) ? (
-                        // Video player with event isolation to prevent carousel from intercepting controls
+                        // Video player with complete event isolation to prevent carousel from intercepting controls
                         <div 
                           className="relative w-full h-full flex items-center justify-center"
                           onClick={(e) => e.stopPropagation()}
                           onPointerDown={(e) => e.stopPropagation()}
+                          onPointerMove={(e) => e.stopPropagation()}
+                          onPointerUp={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onMouseMove={(e) => e.stopPropagation()}
+                          onMouseUp={(e) => e.stopPropagation()}
                           onTouchStart={(e) => e.stopPropagation()}
+                          onTouchMove={(e) => e.stopPropagation()}
+                          onTouchEnd={(e) => e.stopPropagation()}
                         >
                           <video
                             ref={(el) => setVideoRef(index, el)}
