@@ -37,6 +37,8 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [videoVolume, setVideoVolume] = useState(0.5);
   const [isMuted, setIsMuted] = useState(false);
+  const [videoLoadErrors, setVideoLoadErrors] = useState<Set<number>>(new Set());
+  const [videoLoading, setVideoLoading] = useState<Set<number>>(new Set());
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
   const isMobile = useIsMobile();
   
@@ -262,19 +264,59 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                           onTouchMove={(e) => e.stopPropagation()}
                           onTouchEnd={(e) => e.stopPropagation()}
                         >
-                          <video
-                            ref={(el) => setVideoRef(index, el)}
-                            src={image.src}
-                            className="max-w-full max-h-full object-contain"
-                            controls
-                            playsInline
-                            style={{ 
-                              width: 'auto', 
-                              height: 'auto',
-                              maxHeight: '100%',
-                              maxWidth: '100%'
-                            }}
-                          />
+                          {videoLoadErrors.has(index) ? (
+                            <div className="text-center text-white p-4">
+                              <Camera className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                              <p>Nie udało się załadować wideo</p>
+                              <a 
+                                href={image.src} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-400 underline text-sm mt-2 block"
+                              >
+                                Otwórz wideo w nowej karcie
+                              </a>
+                            </div>
+                          ) : (
+                            <>
+                              <video
+                                ref={(el) => setVideoRef(index, el)}
+                                src={image.src}
+                                className="max-w-full max-h-full object-contain"
+                                controls
+                                playsInline
+                                crossOrigin="anonymous"
+                                preload="metadata"
+                                onLoadStart={() => {
+                                  console.log('Video loading started:', image.src);
+                                  setVideoLoading(prev => new Set([...prev, index]));
+                                }}
+                                onCanPlay={() => {
+                                  console.log('Video can play:', image.src);
+                                  setVideoLoading(prev => {
+                                    const next = new Set(prev);
+                                    next.delete(index);
+                                    return next;
+                                  });
+                                }}
+                                onError={(e) => {
+                                  console.error('Video load error:', image.src, e);
+                                  setVideoLoadErrors(prev => new Set([...prev, index]));
+                                }}
+                                style={{ 
+                                  width: 'auto', 
+                                  height: 'auto',
+                                  maxHeight: '100%',
+                                  maxWidth: '100%'
+                                }}
+                              />
+                              {videoLoading.has(index) && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none">
+                                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+                                </div>
+                              )}
+                            </>
+                          )}
                         </div>
                       ) : (
                         // Image with zoom controls
