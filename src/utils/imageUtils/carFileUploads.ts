@@ -201,7 +201,7 @@ export const getPrimaryImageFromUploads = (uploads: CarFileUpload[]): string => 
 /**
  * Get all images from car file uploads with proper labeling (strict category order)
  */
-export const getAllImagesFromUploads = (uploads: CarFileUpload[]): { src: string; label: string }[] => {
+export const getAllImagesFromUploads = (uploads: CarFileUpload[]): { src: string; label: string; fileType?: string }[] => {
   if (!uploads.length) return [];
   
   // Sort by strict category priority order
@@ -220,7 +220,8 @@ export const getAllImagesFromUploads = (uploads: CarFileUpload[]): { src: string
   
   return sortedUploads.map((upload, index) => ({
     src: getStorageImageUrl(upload.file_path),
-    label: `IMAGE ${index + 1}` // Sequential numbering based on sorted order
+    label: `IMAGE ${index + 1}`, // Sequential numbering based on sorted order
+    fileType: upload.file_type || undefined
   }));
 };
 
