@@ -113,6 +113,7 @@ export const processCarData = (rawData: any[]): CarListing[] => {
         mobileNumber: car.mobile_number || '',
         vin: car.vin || '',
         seatMaterial: car.seat_material || '',
+        engineCapacity: car.engine_capacity || '',
         numberOfKeys: car.number_of_keys || 1,
         isRegisteredInPoland: car.is_registered_in_poland ?? false,
         hasFullRegistrationDocument: car.has_full_registration_document ?? false,

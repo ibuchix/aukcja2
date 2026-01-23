@@ -96,6 +96,7 @@ export interface CarListing {
   isRegisteredInPoland?: boolean;
   financeAmount?: number;
   seatMaterial?: string;
+  engineCapacity?: string;
   hasPrivatePlate?: boolean;
   isAuction?: boolean;
   sellerId?: string;

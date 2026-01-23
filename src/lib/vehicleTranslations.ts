@@ -101,6 +101,7 @@ export const translateSpecificationLabel = (label: string): string => {
     'VIN': 'Numer VIN',
     'Engine': 'Silnik',
     'Power': 'Moc',
+    'Engine Capacity': 'Pojemność silnika',
     'Color': 'Kolor',
     'Doors': 'Liczba drzwi',
     'Seats': 'Liczba miejsc',
