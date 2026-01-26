@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/carousel";
 import { CarListing } from "@/types/cars";
 import { getAllCarImages, getImageCount, debugCarImages } from "@/utils/imageUtils";
+import { getSignedVideoUrl } from "@/utils/imageUtils/carFileUploads";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { translateSpecificationLabel } from "@/lib/vehicleTranslations";
 
@@ -58,9 +59,11 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
   const [videoLoadErrors, setVideoLoadErrors] = useState<Set<number>>(new Set());
   const [videoLoading, setVideoLoading] = useState<Set<number>>(new Set());
   const [videoModalOpen, setVideoModalOpen] = useState(false);
-  const [iframePlayerOpen, setIframePlayerOpen] = useState(false);
-  const [iframePlayerSrc, setIframePlayerSrc] = useState<string>('');
+  const [signedVideoUrl, setSignedVideoUrl] = useState<string>('');
+  const [videoModalLoading, setVideoModalLoading] = useState(false);
+  const [videoModalError, setVideoModalError] = useState(false);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const modalVideoRef = useRef<HTMLVideoElement>(null);
   const isMobile = useIsMobile();
   
   // Get images directly from car data
@@ -110,6 +113,27 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
 
   const toggleMute = () => {
     setIsMuted(!isMuted);
+  };
+
+  // Open video modal with signed URL generation
+  const openVideoModal = async () => {
+    if (!walkaroundVideoSrc) return;
+    
+    setVideoModalOpen(true);
+    setVideoModalLoading(true);
+    setVideoModalError(false);
+    
+    try {
+      // Generate signed URL for reliable video streaming
+      const signedUrl = await getSignedVideoUrl(walkaroundVideoSrc);
+      setSignedVideoUrl(signedUrl);
+    } catch (error) {
+      console.error('Failed to generate signed video URL:', error);
+      // Fall back to normalized public URL
+      setSignedVideoUrl(normalizeVideoUrl(walkaroundVideoSrc));
+    } finally {
+      setVideoModalLoading(false);
+    }
   };
 
   const setVideoRef = (index: number, element: HTMLVideoElement | null) => {
@@ -190,7 +214,7 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
           <Button
             className="absolute bottom-2 left-2 bg-primary hover:bg-primary/90 text-white"
             size="sm"
-            onClick={() => setVideoModalOpen(true)}
+            onClick={openVideoModal}
           >
             <Play className="h-4 w-4 mr-2" />
             Obejrzyj wideo
@@ -307,34 +331,21 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                             <div className="text-center text-white p-4">
                               <Camera className="h-12 w-12 mx-auto mb-2 opacity-50" />
                               <p className="mb-4">Nie udało się załadować wideo</p>
-                              <div className="flex flex-col gap-2 items-center">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    // Retry loading the video
-                                    setVideoLoadErrors(prev => {
-                                      const next = new Set(prev);
-                                      next.delete(index);
-                                      return next;
-                                    });
-                                    setVideoLoading(prev => new Set([...prev, index]));
-                                  }}
-                                >
-                                  Spróbuj ponownie
-                                </Button>
-                                <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  onClick={() => {
-                                    // Open in iframe player mode
-                                    setIframePlayerSrc(image.src);
-                                    setIframePlayerOpen(true);
-                                  }}
-                                >
-                                  Odtwórz w nowym oknie
-                                </Button>
-                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // Retry loading the video
+                                  setVideoLoadErrors(prev => {
+                                    const next = new Set(prev);
+                                    next.delete(index);
+                                    return next;
+                                  });
+                                  setVideoLoading(prev => new Set([...prev, index]));
+                                }}
+                              >
+                                Spróbuj ponownie
+                              </Button>
                             </div>
                           ) : (
                             <>
@@ -533,39 +544,83 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
         </DialogContent>
       </Dialog>
 
-      {/* Dedicated Video Modal */}
-      {walkaroundVideoSrc && (
-        <Dialog open={videoModalOpen} onOpenChange={setVideoModalOpen}>
-          <DialogContent className="max-w-4xl p-0 bg-black border-0">
-            <DialogTitle className="sr-only">Wideo pojazdu</DialogTitle>
-            <div className="relative w-full aspect-video">
+      {/* Dedicated Video Modal with Signed URL */}
+      <Dialog open={videoModalOpen} onOpenChange={(open) => {
+        setVideoModalOpen(open);
+        if (!open) {
+          setSignedVideoUrl('');
+          setVideoModalError(false);
+        }
+      }}>
+        <DialogContent className="max-w-5xl p-0 bg-black border-0">
+          <DialogTitle className="sr-only">Wideo pojazdu</DialogTitle>
+          
+          {videoModalLoading ? (
+            <div className="w-full aspect-video flex items-center justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+            </div>
+          ) : videoModalError ? (
+            <div className="w-full aspect-video flex flex-col items-center justify-center text-white">
+              <Camera className="h-12 w-12 mb-4 opacity-50" />
+              <p className="mb-4">Nie udało się załadować wideo</p>
+              <Button
+                variant="outline"
+                onClick={openVideoModal}
+              >
+                Spróbuj ponownie
+              </Button>
+            </div>
+          ) : signedVideoUrl ? (
+            <div className="relative">
               <video
-                className="w-full h-full"
+                ref={modalVideoRef}
+                className="w-full aspect-video"
                 controls
                 autoPlay
                 playsInline
                 preload="auto"
+                onError={() => setVideoModalError(true)}
               >
-                <source src={normalizeVideoUrl(walkaroundVideoSrc)} type="video/mp4" />
+                <source src={signedVideoUrl} type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
+              
+              {/* Volume Control Bar */}
+              <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-sm rounded-lg px-4 py-3 flex items-center gap-3 z-20">
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="h-8 w-8 text-white hover:bg-white/20"
+                  onClick={() => {
+                    if (modalVideoRef.current) {
+                      modalVideoRef.current.muted = !modalVideoRef.current.muted;
+                      setIsMuted(modalVideoRef.current.muted);
+                    }
+                  }}
+                >
+                  {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                </Button>
+                <Slider
+                  value={[isMuted ? 0 : videoVolume * 100]}
+                  max={100}
+                  step={1}
+                  onValueChange={(values) => {
+                    const newVolume = values[0] / 100;
+                    setVideoVolume(newVolume);
+                    if (modalVideoRef.current) {
+                      modalVideoRef.current.volume = newVolume;
+                      modalVideoRef.current.muted = newVolume === 0;
+                      setIsMuted(newVolume === 0);
+                    }
+                  }}
+                  className="w-24"
+                />
+                <span className="text-white text-xs min-w-[2rem] text-right">
+                  {isMuted ? 0 : Math.round(videoVolume * 100)}%
+                </span>
+              </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Iframe Player Fallback */}
-      <Dialog open={iframePlayerOpen} onOpenChange={setIframePlayerOpen}>
-        <DialogContent className="max-w-4xl p-0 bg-black border-0">
-          <DialogTitle className="sr-only">Odtwarzacz wideo</DialogTitle>
-          <div className="relative w-full aspect-video">
-            <iframe
-              src={iframePlayerSrc}
-              className="w-full h-full border-0"
-              allow="autoplay; fullscreen"
-              title="Video player"
-            />
-          </div>
+          ) : null}
         </DialogContent>
       </Dialog>
     </div>
