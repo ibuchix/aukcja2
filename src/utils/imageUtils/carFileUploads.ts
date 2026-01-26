@@ -231,3 +231,47 @@ export const getAllImagesFromUploads = (uploads: CarFileUpload[]): { src: string
 export const getImageCountFromUploads = (uploads: CarFileUpload[]): number => {
   return uploads.filter(upload => upload.file_path && upload.upload_status === 'completed').length;
 };
+
+/**
+ * Generate a signed URL for video playback
+ * Signed URLs are more reliable for video streaming than public URLs
+ * because they handle special characters properly and bypass CORS issues
+ */
+export const getSignedVideoUrl = async (filePath: string): Promise<string> => {
+  if (!filePath) return '';
+  
+  let actualPath = filePath;
+  
+  // If already a full URL, extract the path after the bucket name
+  if (filePath.includes('/storage/v1/object/public/car-images/')) {
+    const match = filePath.match(/\/storage\/v1\/object\/public\/car-images\/(.+)/);
+    if (match) {
+      actualPath = decodeURIComponent(match[1]);
+    }
+  } else if (filePath.includes('/storage/v1/object/sign/car-images/')) {
+    // Already a signed URL path, extract properly
+    const match = filePath.match(/\/storage\/v1\/object\/sign\/car-images\/(.+?)(\?|$)/);
+    if (match) {
+      actualPath = decodeURIComponent(match[1]);
+    }
+  }
+  
+  console.log('🎬 Generating signed URL for video:', { originalPath: filePath, actualPath });
+  
+  try {
+    const { data, error } = await supabase.storage
+      .from('car-images')
+      .createSignedUrl(actualPath, 3600); // 1 hour expiry
+    
+    if (error || !data?.signedUrl) {
+      console.error('❌ Failed to create signed URL:', error);
+      return filePath; // Fallback to original URL
+    }
+    
+    console.log('✅ Signed URL generated successfully');
+    return data.signedUrl;
+  } catch (error) {
+    console.error('❌ Exception generating signed URL:', error);
+    return filePath;
+  }
+};
