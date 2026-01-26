@@ -39,12 +39,19 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
   const [isMuted, setIsMuted] = useState(false);
   const [videoLoadErrors, setVideoLoadErrors] = useState<Set<number>>(new Set());
   const [videoLoading, setVideoLoading] = useState<Set<number>>(new Set());
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
   const isMobile = useIsMobile();
   
   // Get images directly from car data
   const allImages = getAllCarImages(car);
   const imageCount = allImages.length;
+  
+  // Find walk-around video in the gallery
+  const walkaroundVideo = allImages.find(img => 
+    img.fileType?.startsWith('video/') && (img.label?.toLowerCase().includes('video') || img.label?.toLowerCase().includes('walkaround'))
+  );
+  const walkaroundVideoSrc = walkaroundVideo?.src;
 
   // Sync carousel with selected index
   useEffect(() => {
@@ -158,6 +165,18 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
           </div>
         )}
         
+        {/* Walk-around Video Quick Access Button */}
+        {walkaroundVideo && (
+          <Button
+            className="absolute bottom-2 left-2 bg-primary hover:bg-primary/90 text-white"
+            size="sm"
+            onClick={() => setVideoModalOpen(true)}
+          >
+            <Play className="h-4 w-4 mr-2" />
+            Obejrzyj wideo
+          </Button>
+        )}
+        
         {allImages.length > 1 && (
           <Button
             variant="secondary"
@@ -268,14 +287,22 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                             <div className="text-center text-white p-4">
                               <Camera className="h-12 w-12 mx-auto mb-2 opacity-50" />
                               <p>Nie udało się załadować wideo</p>
-                              <a 
-                                href={image.src} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-blue-400 underline text-sm mt-2 block"
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="mt-2"
+                                onClick={() => {
+                                  // Retry loading the video
+                                  setVideoLoadErrors(prev => {
+                                    const next = new Set(prev);
+                                    next.delete(index);
+                                    return next;
+                                  });
+                                  setVideoLoading(prev => new Set([...prev, index]));
+                                }}
                               >
-                                Otwórz wideo w nowej karcie
-                              </a>
+                                Spróbuj ponownie
+                              </Button>
                             </div>
                           ) : (
                             <>
@@ -285,7 +312,6 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                                 className="max-w-full max-h-full object-contain"
                                 controls
                                 playsInline
-                                crossOrigin="anonymous"
                                 preload="metadata"
                                 onLoadStart={() => {
                                   console.log('Video loading started:', image.src);
@@ -472,6 +498,25 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dedicated Video Modal */}
+      {walkaroundVideoSrc && (
+        <Dialog open={videoModalOpen} onOpenChange={setVideoModalOpen}>
+          <DialogContent className="max-w-4xl p-0 bg-black border-0">
+            <DialogTitle className="sr-only">Wideo pojazdu</DialogTitle>
+            <div className="relative w-full aspect-video">
+              <video
+                src={walkaroundVideoSrc}
+                className="w-full h-full"
+                controls
+                autoPlay
+                playsInline
+                preload="auto"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
