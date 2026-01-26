@@ -30,6 +30,24 @@ const isVideoFile = (fileType?: string): boolean => {
   return fileType?.startsWith('video/') || false;
 };
 
+// Normalize video URL to fix encoding issues with special characters
+const normalizeVideoUrl = (url: string): string => {
+  if (!url) return '';
+  try {
+    // Decode first to avoid double-encoding, then re-encode properly
+    const decoded = decodeURIComponent(url);
+    const urlObj = new URL(decoded);
+    // Re-encode only the pathname portion
+    urlObj.pathname = urlObj.pathname
+      .split('/')
+      .map(segment => encodeURIComponent(segment))
+      .join('/');
+    return urlObj.toString();
+  } catch {
+    return url;
+  }
+};
+
 export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
@@ -40,6 +58,8 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
   const [videoLoadErrors, setVideoLoadErrors] = useState<Set<number>>(new Set());
   const [videoLoading, setVideoLoading] = useState<Set<number>>(new Set());
   const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [iframePlayerOpen, setIframePlayerOpen] = useState(false);
+  const [iframePlayerSrc, setIframePlayerSrc] = useState<string>('');
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
   const isMobile = useIsMobile();
   
@@ -286,33 +306,44 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                           {videoLoadErrors.has(index) ? (
                             <div className="text-center text-white p-4">
                               <Camera className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                              <p>Nie udało się załadować wideo</p>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="mt-2"
-                                onClick={() => {
-                                  // Retry loading the video
-                                  setVideoLoadErrors(prev => {
-                                    const next = new Set(prev);
-                                    next.delete(index);
-                                    return next;
-                                  });
-                                  setVideoLoading(prev => new Set([...prev, index]));
-                                }}
-                              >
-                                Spróbuj ponownie
-                              </Button>
+                              <p className="mb-4">Nie udało się załadować wideo</p>
+                              <div className="flex flex-col gap-2 items-center">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    // Retry loading the video
+                                    setVideoLoadErrors(prev => {
+                                      const next = new Set(prev);
+                                      next.delete(index);
+                                      return next;
+                                    });
+                                    setVideoLoading(prev => new Set([...prev, index]));
+                                  }}
+                                >
+                                  Spróbuj ponownie
+                                </Button>
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => {
+                                    // Open in iframe player mode
+                                    setIframePlayerSrc(image.src);
+                                    setIframePlayerOpen(true);
+                                  }}
+                                >
+                                  Odtwórz w nowym oknie
+                                </Button>
+                              </div>
                             </div>
                           ) : (
                             <>
                               <video
                                 ref={(el) => setVideoRef(index, el)}
-                                src={image.src}
                                 className="max-w-full max-h-full object-contain"
                                 controls
                                 playsInline
-                                preload="metadata"
+                                preload="auto"
                                 onLoadStart={() => {
                                   console.log('Video loading started:', image.src);
                                   setVideoLoading(prev => new Set([...prev, index]));
@@ -335,7 +366,10 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                                   maxHeight: '100%',
                                   maxWidth: '100%'
                                 }}
-                              />
+                              >
+                                <source src={normalizeVideoUrl(image.src)} type="video/mp4" />
+                                Your browser does not support the video tag.
+                              </video>
                               {videoLoading.has(index) && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none">
                                   <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
@@ -506,17 +540,34 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
             <DialogTitle className="sr-only">Wideo pojazdu</DialogTitle>
             <div className="relative w-full aspect-video">
               <video
-                src={walkaroundVideoSrc}
                 className="w-full h-full"
                 controls
                 autoPlay
                 playsInline
                 preload="auto"
-              />
+              >
+                <source src={normalizeVideoUrl(walkaroundVideoSrc)} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
             </div>
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Iframe Player Fallback */}
+      <Dialog open={iframePlayerOpen} onOpenChange={setIframePlayerOpen}>
+        <DialogContent className="max-w-4xl p-0 bg-black border-0">
+          <DialogTitle className="sr-only">Odtwarzacz wideo</DialogTitle>
+          <div className="relative w-full aspect-video">
+            <iframe
+              src={iframePlayerSrc}
+              className="w-full h-full border-0"
+              allow="autoplay; fullscreen"
+              title="Video player"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
