@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin, Key, FileText, AlertCircle, CheckCircle, Wrench, Zap, Heart } from "lucide-react";
-import { AuctionTimer } from "@/components/auction/AuctionTimer";
+
 import { PhotoBadge } from "./PhotoBadge";
 import { AuctionStatusIndicator } from "./AuctionStatusIndicator";
 import { getPrimaryImage, getAllCarImages } from "@/utils/imageUtils";
@@ -236,11 +236,6 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
             <h3 className={`font-kanit font-semibold ${isMobile ? 'text-base' : 'text-lg'} flex-1`}>
               {car.year} {car.make} {car.model}
             </h3>
-            {isLive && auctionEndTime && (
-              <div className="flex-shrink-0">
-                <AuctionTimer auctionEndTime={auctionEndTime} />
-              </div>
-            )}
           </div>
           
           {/* Key Specs */}
