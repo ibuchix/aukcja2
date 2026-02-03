@@ -3,8 +3,6 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { SimpleBidManager } from "@/components/auction/SimpleBidManager";
-import { BidCountDisplay } from "@/components/auction/BidCountDisplay";
-
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
 import { formatCurrency } from "@/lib/utils";
 import { translateTransmission } from "@/lib/transmissionUtils";
@@ -240,11 +238,6 @@ export const LiveAuctionDetailsDialog = ({
 
           {/* Auction Details - Takes up 1 column on xl screens */}
           <div className="xl:col-span-1 space-y-6">
-            {/* Bid Count Display */}
-            {isLive && !hasEnded && (
-              <BidCountDisplay carId={car.id} />
-            )}
-
             <div className="p-6 bg-muted rounded-lg">
               <h3 className="text-xl font-semibold mb-4">Status licytacji</h3>
               <div className="space-y-4">
