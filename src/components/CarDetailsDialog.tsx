@@ -9,7 +9,7 @@ import { Calendar, Gauge, MapPin, Clock, Car } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
-import { AuctionTimer } from "@/components/auction/AuctionTimer";
+
 import { BidCountDisplay } from "@/components/auction/BidCountDisplay";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
@@ -201,14 +201,6 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-gray-400" />
                       <span>Started: {new Date(scheduleInfo.startTime).toLocaleString()}</span>
-                    </div>
-                  )}
-                  {(scheduleInfo?.endTime || car.scheduleEndTime) && (
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-gray-400" />
-                      <AuctionTimer 
-                        auctionEndTime={car.auctionEndTime} 
-                      />
                     </div>
                   )}
                 </div>

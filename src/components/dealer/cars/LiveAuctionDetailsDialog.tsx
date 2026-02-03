@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { SimpleBidManager } from "@/components/auction/SimpleBidManager";
 import { BidCountDisplay } from "@/components/auction/BidCountDisplay";
-import { AuctionTimer } from "@/components/auction/AuctionTimer";
+
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
 import { formatCurrency } from "@/lib/utils";
 import { translateTransmission } from "@/lib/transmissionUtils";
@@ -251,14 +251,6 @@ export const LiveAuctionDetailsDialog = ({
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground font-medium">Cena orientacyjna:</span>
                   <span className="font-bold text-lg">{formatCurrency(car.reservePrice || car.reserve_price || 0)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground font-medium">Pozostały czas:</span>
-                  <span className="font-medium">
-                    <AuctionTimer 
-                      auctionEndTime={car.auctionEndTime} 
-                    />
-                  </span>
                 </div>
               </div>
             </div>
