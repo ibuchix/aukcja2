@@ -709,9 +709,16 @@ const CarAuction = () => {
         <div className="xl:col-span-1 space-y-6">
           {/* Sticky bidding section on desktop */}
           <div className="xl:sticky xl:top-6 space-y-6">
-            {/* Bid Count Display */}
-            {isLive && !hasEnded && (
-              <BidCountDisplay carId={car.id} />
+            {/* Bidding Section - Moved to top */}
+            {isLive && !hasEnded && isVerified && (
+              <SimpleBidManager
+                carId={car.id}
+                dealerId={dealerProfile?.id || ""}
+                currentHighestBid={car.currentBid || 0}
+                minimumIncrement={1}
+                reservePrice={car.reservePrice}
+                isVerified={isVerified}
+              />
             )}
 
             {/* Auction Status */}
@@ -738,16 +745,58 @@ const CarAuction = () => {
               </div>
             </div>
 
-            {/* Bidding Section */}
-            {isLive && !hasEnded && isVerified && (
-              <SimpleBidManager
-                carId={car.id}
-                dealerId={dealerProfile?.id || ""}
-                currentHighestBid={car.currentBid || 0}
-                minimumIncrement={1}
-                reservePrice={car.reservePrice}
-                isVerified={isVerified}
-              />
+            {/* Bid Count Display - Moved below auction status */}
+            {isLive && !hasEnded && (
+              <BidCountDisplay carId={car.id} />
+            )}
+
+            {/* Partner Images - Extracted from SimpleBidManager */}
+            {isLive && !hasEnded && (
+              <div className="flex flex-col items-center">
+                <a
+                  href="https://www.carvertical.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="carvertical VIN check"
+                >
+                  <img
+                    src="//carvertical.postaffiliatepro.com/accounts/default1/3wboofl3y7q/d7aece8a.jpg"
+                    alt="carvertical VIN check"
+                    title="carvertical VIN check"
+                    width={300}
+                    height={300}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </a>
+                <img
+                  style={{ border: 0 }}
+                  src="https://carvertical.postaffiliatepro.com/scripts/3wioofl3y7q?a=66c6155b1b60f&b=d7aece8a"
+                  width={1}
+                  height={1}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="mt-4" />
+                <a
+                  href="https://www.autobaza.pl/partnerid=80000634"
+                  title="Autobaza.pl Historia Pojazdu"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Autobaza.pl Historia Pojazdu"
+                >
+                  <img
+                    src="https://www.autobaza.pl/partners/250x250_autobaza-pp-b-min.jpg"
+                    alt="Autobaza.pl Historia Pojazdu"
+                    title="Autobaza.pl Historia Pojazdu"
+                    width={300}
+                    height={300}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </a>
+              </div>
             )}
 
             {/* Verification Warning */}
