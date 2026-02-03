@@ -175,27 +175,45 @@ const CarAuction = () => {
               <h3 className="font-kanit font-semibold text-2xl mb-6 text-body-text border-b border-accent/20 pb-3">
                 {translateSpecificationLabel('Vehicle Specifications')}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
                 {/* Year */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className={cn(
+                  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
                     {translateSpecificationLabel('Year')}
                   </div>
-                  <div className="text-lg font-kanit font-semibold text-body-text">
+                  <div className={cn(
+                    "font-kanit font-semibold text-body-text",
+                    isMobile ? "text-base" : "text-lg"
+                  )}>
                     {car.year}
                   </div>
                 </div>
                 
                 {/* First Registration Date */}
                 {car.firstRegistrationDate && (
-                  <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                    <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className={cn(
+                    "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                    isMobile ? "p-3" : "p-4"
+                  )}>
+                    <div className={cn(
+                      "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                      isMobile ? "text-[10px]" : "text-xs"
+                    )}>
                       Data pierwszej rejestracji
                     </div>
-                    <div className="text-base font-kanit font-medium text-body-text">
+                    <div className={cn(
+                      "font-kanit font-medium text-body-text",
+                      isMobile ? "text-sm" : "text-base"
+                    )}>
                       {new Date(car.firstRegistrationDate).toLocaleDateString('pl-PL', { 
                         day: 'numeric', 
-                        month: 'long', 
+                        month: isMobile ? 'short' : 'long', 
                         year: 'numeric' 
                       })}
                     </div>
@@ -203,75 +221,138 @@ const CarAuction = () => {
                 )}
                 
                 {/* Mileage */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className={cn(
+                  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
                     {translateSpecificationLabel('Mileage')}
                   </div>
-                  <div className="text-lg font-kanit font-semibold text-body-text">
-                    {car.mileage?.toLocaleString()} <span className="text-sm text-subtitle-text">km</span>
+                  <div className={cn(
+                    "font-kanit font-semibold text-body-text",
+                    isMobile ? "text-base" : "text-lg"
+                  )}>
+                    {car.mileage?.toLocaleString()} <span className={cn("text-subtitle-text", isMobile ? "text-xs" : "text-sm")}>km</span>
                   </div>
                 </div>
                 
                 {/* Transmission */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className={cn(
+                  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
                     {translateSpecificationLabel('Transmission')}
                   </div>
-                  <div className="text-base font-kanit font-medium text-body-text">
+                  <div className={cn(
+                    "font-kanit font-medium text-body-text",
+                    isMobile ? "text-sm" : "text-base"
+                  )}>
                     {translateTransmission(car.transmission)}
                   </div>
                 </div>
                 
                 {/* Fuel Type */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className={cn(
+                  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
                     {translateSpecificationLabel('Fuel Type')}
                   </div>
-                  <div className="text-base font-kanit font-medium text-body-text capitalize">
+                  <div className={cn(
+                    "font-kanit font-medium text-body-text capitalize",
+                    isMobile ? "text-sm" : "text-base"
+                  )}>
                     {translateFuelType(car.fuelType)}
                   </div>
                 </div>
                 
                 {/* Engine Capacity */}
                 {car.engineCapacity && (
-                  <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                    <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className={cn(
+                    "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                    isMobile ? "p-3" : "p-4"
+                  )}>
+                    <div className={cn(
+                      "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                      isMobile ? "text-[10px]" : "text-xs"
+                    )}>
                       {translateSpecificationLabel('Engine Capacity')}
                     </div>
-                    <div className="text-base font-kanit font-medium text-body-text">
+                    <div className={cn(
+                      "font-kanit font-medium text-body-text",
+                      isMobile ? "text-sm" : "text-base"
+                    )}>
                       {car.engineCapacity}L
                     </div>
                   </div>
                 )}
                 
                 {/* VIN */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className={cn(
+                  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
                     {translateSpecificationLabel('VIN')}
                   </div>
-                  <div className="text-sm font-mono font-kanit font-medium text-body-text break-all">
+                  <div className={cn(
+                    "font-mono font-kanit font-medium text-body-text break-all",
+                    isMobile ? "text-xs" : "text-sm"
+                  )}>
                     {car.vin || translateSpecificationLabel('Not available')}
                   </div>
                 </div>
                 
                 {/* Number of Keys */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className={cn(
+                  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
                     {translateSpecificationLabel('Number of Keys')}
                   </div>
-                  <div className="text-base font-kanit font-medium text-body-text">
+                  <div className={cn(
+                    "font-kanit font-medium text-body-text",
+                    isMobile ? "text-sm" : "text-base"
+                  )}>
                     {car.numberOfKeys || translateSpecificationLabel('Not specified')}
                   </div>
                 </div>
                 
                 {/* Service History */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className={cn(
+                  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
                     {translateSpecificationLabel('Service History')}
                   </div>
                   <div className="flex items-center gap-2">
-                    {car.hasServiceHistory && <Check className="h-4 w-4 text-green-500" />}
-                    <span className="text-base font-kanit font-medium text-body-text">
+                    {car.hasServiceHistory && <Check className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-green-500")} />}
+                    <span className={cn(
+                      "font-kanit font-medium text-body-text",
+                      isMobile ? "text-sm" : "text-base"
+                    )}>
                       {car.serviceHistoryType ? translateServiceHistoryType(car.serviceHistoryType) : 'Nie podano'}
                     </span>
                   </div>
@@ -282,21 +363,30 @@ const CarAuction = () => {
               <h4 className="font-kanit font-semibold text-xl mt-8 mb-4 text-body-text border-b border-accent/20 pb-2">
                 Historia Pojazdu
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
                 {/* Technical Inspection Valid Until */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
-                    Badanie techniczne ważne do
+                <div className={cn(
+                  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
+                    Badanie techniczne
                   </div>
                   <div className="flex items-center gap-2">
                     {car.technicalInspectionValidUntil ? (
                       <>
                         {new Date(car.technicalInspectionValidUntil) > new Date() ? (
-                          <Check className="h-4 w-4 text-green-500" />
+                          <Check className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-green-500")} />
                         ) : (
-                          <X className="h-4 w-4 text-destructive" />
+                          <X className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-destructive")} />
                         )}
-                        <span className="text-base font-kanit font-medium text-body-text">
+                        <span className={cn(
+                          "font-kanit font-medium text-body-text",
+                          isMobile ? "text-sm" : "text-base"
+                        )}>
                           {new Date(car.technicalInspectionValidUntil).toLocaleDateString('pl-PL', { 
                             day: 'numeric', 
                             month: 'short', 
@@ -305,23 +395,35 @@ const CarAuction = () => {
                         </span>
                       </>
                     ) : (
-                      <span className="text-base font-kanit font-medium text-body-text">Nie odnotowano</span>
+                      <span className={cn(
+                        "font-kanit font-medium text-body-text",
+                        isMobile ? "text-sm" : "text-base"
+                      )}>Nie odnotowano</span>
                     )}
                   </div>
                 </div>
                 
                 {/* Polish Origin */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className={cn(
+                  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
                     Pochodzenie polskie
                   </div>
                   <div className="flex items-center gap-2">
                     {car.isPolishOrigin === true ? (
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-green-500")} />
                     ) : car.isPolishOrigin === false ? (
-                      <X className="h-4 w-4 text-destructive" />
+                      <X className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-destructive")} />
                     ) : null}
-                    <span className="text-base font-kanit font-medium text-body-text">
+                    <span className={cn(
+                      "font-kanit font-medium text-body-text",
+                      isMobile ? "text-sm" : "text-base"
+                    )}>
                       {car.isPolishOrigin === true ? 'Tak' : car.isPolishOrigin === false ? 'Nie' : 'Nie odnotowano'}
                     </span>
                   </div>
@@ -329,11 +431,20 @@ const CarAuction = () => {
                 
                 {/* Import Year - only show if data exists */}
                 {car.importYear && (
-                  <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                    <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className={cn(
+                    "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                    isMobile ? "p-3" : "p-4"
+                  )}>
+                    <div className={cn(
+                      "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                      isMobile ? "text-[10px]" : "text-xs"
+                    )}>
                       Rok importu
                     </div>
-                    <div className="text-base font-kanit font-medium text-body-text">
+                    <div className={cn(
+                      "font-kanit font-medium text-body-text",
+                      isMobile ? "text-sm" : "text-base"
+                    )}>
                       {car.importYear}
                     </div>
                   </div>
@@ -341,113 +452,176 @@ const CarAuction = () => {
                 
                 {/* Owners Count Poland */}
                 {car.ownersCountPoland !== null && car.ownersCountPoland !== undefined && (
-                  <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                    <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
-                      Liczba właścicieli w Polsce
+                  <div className={cn(
+                    "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                    isMobile ? "p-3" : "p-4"
+                  )}>
+                    <div className={cn(
+                      "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                      isMobile ? "text-[10px]" : "text-xs"
+                    )}>
+                      Właścicieli w Polsce
                     </div>
-                    <div className="text-base font-kanit font-medium text-body-text">
+                    <div className={cn(
+                      "font-kanit font-medium text-body-text",
+                      isMobile ? "text-sm" : "text-base"
+                    )}>
                       {car.ownersCountPoland}
                     </div>
                   </div>
                 )}
                 
                 {/* Damage Record Poland */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className={cn(
+                  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
                     Szkody w Polsce
                   </div>
                   <div className="flex items-center gap-2">
                     {car.isDamagedRecordPoland === false ? (
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-green-500")} />
                     ) : car.isDamagedRecordPoland === true ? (
-                      <X className="h-4 w-4 text-destructive" />
+                      <X className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-destructive")} />
                     ) : null}
-                    <span className="text-base font-kanit font-medium text-body-text">
+                    <span className={cn(
+                      "font-kanit font-medium text-body-text",
+                      isMobile ? "text-sm" : "text-base"
+                    )}>
                       {car.isDamagedRecordPoland === false ? 'Brak' : car.isDamagedRecordPoland === true ? 'Odnotowano' : 'Nie odnotowano'}
                     </span>
                   </div>
                 </div>
                 
                 {/* Damage Record Abroad */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className={cn(
+                  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
                     Szkody za granicą
                   </div>
                   <div className="flex items-center gap-2">
                     {car.isDamagedRecordAbroad === false ? (
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-green-500")} />
                     ) : car.isDamagedRecordAbroad === true ? (
-                      <X className="h-4 w-4 text-destructive" />
+                      <X className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-destructive")} />
                     ) : null}
-                    <span className="text-base font-kanit font-medium text-body-text">
+                    <span className={cn(
+                      "font-kanit font-medium text-body-text",
+                      isMobile ? "text-sm" : "text-base"
+                    )}>
                       {car.isDamagedRecordAbroad === false ? 'Brak' : car.isDamagedRecordAbroad === true ? 'Odnotowano' : 'Nie odnotowano'}
                     </span>
                   </div>
                 </div>
                 
                 {/* Accident Record Poland */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className={cn(
+                  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
                     Wypadki w Polsce
                   </div>
                   <div className="flex items-center gap-2">
                     {car.isAccidentRecordPoland === false ? (
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-green-500")} />
                     ) : car.isAccidentRecordPoland === true ? (
-                      <X className="h-4 w-4 text-destructive" />
+                      <X className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-destructive")} />
                     ) : null}
-                    <span className="text-base font-kanit font-medium text-body-text">
+                    <span className={cn(
+                      "font-kanit font-medium text-body-text",
+                      isMobile ? "text-sm" : "text-base"
+                    )}>
                       {car.isAccidentRecordPoland === false ? 'Brak' : car.isAccidentRecordPoland === true ? 'Odnotowano' : 'Nie odnotowano'}
                     </span>
                   </div>
                 </div>
                 
                 {/* Accident Record Abroad */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className={cn(
+                  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
                     Wypadki za granicą
                   </div>
                   <div className="flex items-center gap-2">
                     {car.isAccidentRecordAbroad === false ? (
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-green-500")} />
                     ) : car.isAccidentRecordAbroad === true ? (
-                      <X className="h-4 w-4 text-destructive" />
+                      <X className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-destructive")} />
                     ) : null}
-                    <span className="text-base font-kanit font-medium text-body-text">
+                    <span className={cn(
+                      "font-kanit font-medium text-body-text",
+                      isMobile ? "text-sm" : "text-base"
+                    )}>
                       {car.isAccidentRecordAbroad === false ? 'Brak' : car.isAccidentRecordAbroad === true ? 'Odnotowano' : 'Nie odnotowano'}
                     </span>
                   </div>
                 </div>
                 
                 {/* Mileage Discrepancy */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className={cn(
+                  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
                     Rozbieżność przebiegu
                   </div>
                   <div className="flex items-center gap-2">
                     {car.hasMileageDiscrepancy === false ? (
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-green-500")} />
                     ) : car.hasMileageDiscrepancy === true ? (
-                      <X className="h-4 w-4 text-destructive" />
+                      <X className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-destructive")} />
                     ) : null}
-                    <span className="text-base font-kanit font-medium text-body-text">
+                    <span className={cn(
+                      "font-kanit font-medium text-body-text",
+                      isMobile ? "text-sm" : "text-base"
+                    )}>
                       {car.hasMileageDiscrepancy === false ? 'Brak' : car.hasMileageDiscrepancy === true ? 'Wykryto' : 'Nie odnotowano'}
                     </span>
                   </div>
                 </div>
                 
                 {/* Stolen Status */}
-                <div className="group p-4 bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]">
-                  <div className="text-xs text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className={cn(
+                  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
                     Status kradzieży
                   </div>
                   <div className="flex items-center gap-2">
                     {car.isRecordedStolen === false ? (
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-green-500")} />
                     ) : car.isRecordedStolen === true ? (
-                      <X className="h-4 w-4 text-destructive" />
+                      <X className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-destructive")} />
                     ) : null}
-                    <span className="text-base font-kanit font-medium text-body-text">
+                    <span className={cn(
+                      "font-kanit font-medium text-body-text",
+                      isMobile ? "text-sm" : "text-base"
+                    )}>
                       {car.isRecordedStolen === false ? 'Czysty' : car.isRecordedStolen === true ? 'Odnotowano' : 'Nie odnotowano'}
                     </span>
                   </div>

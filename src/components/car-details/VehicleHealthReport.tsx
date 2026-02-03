@@ -3,6 +3,7 @@ import { CarListing } from "@/types/cars";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface VehicleHealthReportProps {
   car: CarListing;
@@ -34,47 +35,61 @@ const getStatusLabel = (value: boolean | null | undefined, isPositiveWhenTrue: b
 const StatusIndicator = ({ 
   value, 
   isPositiveWhenTrue,
-  type
+  type,
+  isMobile
 }: { 
   value: boolean | null | undefined; 
   isPositiveWhenTrue: boolean;
   type: ConditionItem['type'];
+  isMobile: boolean;
 }) => {
   const status = getStatusLabel(value, isPositiveWhenTrue, type);
 
   if (status.isGood === null) {
     return (
-      <span className="text-sm font-normal text-muted-foreground tracking-wide">
+      <span className={cn(
+        "font-normal text-muted-foreground tracking-wide",
+        isMobile ? "text-xs" : "text-sm"
+      )}>
         {status.text.toLowerCase()}
       </span>
     );
   }
 
   return (
-    <span className="text-sm font-normal tracking-wide text-body-text">
+    <span className={cn(
+      "font-normal tracking-wide text-body-text",
+      isMobile ? "text-xs" : "text-sm"
+    )}>
       {status.text.toLowerCase()}
     </span>
   );
 };
 
-const ConditionRow = ({ item, index }: { item: ConditionItem; index: number }) => (
+const ConditionRow = ({ item, index, isMobile }: { item: ConditionItem; index: number; isMobile: boolean }) => (
   <div className={cn(
-    "flex items-center justify-between py-3 px-4 rounded-md",
+    "flex items-center justify-between rounded-md",
+    isMobile ? "py-2 px-2" : "py-3 px-4",
     index % 2 === 0 ? "bg-background/30" : "bg-background/50"
   )}>
-    <span className="text-base text-body-text font-medium">{item.label}</span>
-    <StatusIndicator value={item.value} isPositiveWhenTrue={item.isPositiveWhenTrue} type={item.type} />
+    <span className={cn(
+      "text-body-text font-medium",
+      isMobile ? "text-xs" : "text-base"
+    )}>{item.label}</span>
+    <StatusIndicator value={item.value} isPositiveWhenTrue={item.isPositiveWhenTrue} type={item.type} isMobile={isMobile} />
   </div>
 );
 
 const CategorySection = ({ 
   number, 
   title, 
-  items 
+  items,
+  isMobile
 }: { 
   number: string; 
   title: string; 
   items: ConditionItem[];
+  isMobile: boolean;
 }) => {
   const itemsWithData = items.filter(item => item.value !== null && item.value !== undefined);
   const goodItems = itemsWithData.filter(item => 
@@ -86,21 +101,28 @@ const CategorySection = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between border-b border-accent/30 pb-2">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded">
+          <span className={cn(
+            "font-bold text-primary bg-primary/10 rounded",
+            isMobile ? "text-[10px] px-1.5 py-0.5" : "text-xs px-2 py-1"
+          )}>
             {number}
           </span>
-          <h4 className="text-sm font-semibold text-body-text uppercase tracking-wider">
+          <h4 className={cn(
+            "font-semibold text-body-text uppercase tracking-wider",
+            isMobile ? "text-xs" : "text-sm"
+          )}>
             {title}
           </h4>
         </div>
         <div className="flex items-center gap-2">
           <span className={cn(
-            "text-xs font-semibold px-2 py-1 rounded",
+            "font-semibold rounded",
+            isMobile ? "text-[10px] px-1.5 py-0.5" : "text-xs px-2 py-1",
             categoryScore >= 70 ? "bg-green-500/20 text-green-500" :
             categoryScore >= 50 ? "bg-yellow-500/20 text-yellow-500" :
             "bg-destructive/20 text-destructive"
           )}>
-            {goodItems.length}/{itemsWithData.length} Pozytywne
+            {goodItems.length}/{itemsWithData.length}
           </span>
         </div>
       </div>
@@ -118,9 +140,9 @@ const CategorySection = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+      <div className="grid grid-cols-2 gap-1">
         {items.map((item, index) => (
-          <ConditionRow key={index} item={item} index={index} />
+          <ConditionRow key={index} item={item} index={index} isMobile={isMobile} />
         ))}
       </div>
     </div>
@@ -129,6 +151,8 @@ const CategorySection = ({
 
 
 export const VehicleHealthReport = ({ car }: VehicleHealthReportProps) => {
+  const isMobile = useIsMobile();
+  
   // Body/Interior conditions - these are BAD when true (defects)
   const bodyInteriorItems: ConditionItem[] = [
     { label: "Rysy na karoserii?", value: car.hasScratches, isPositiveWhenTrue: false, type: 'defect' },
@@ -175,24 +199,39 @@ export const VehicleHealthReport = ({ car }: VehicleHealthReportProps) => {
   return (
     <div className="border-l-4 border-primary rounded-lg overflow-hidden bg-muted/30 shadow-md">
       {/* Document Header */}
-      <div className="bg-muted/50 border-b border-accent/30 px-6 py-4">
+      <div className={cn(
+        "bg-muted/50 border-b border-accent/30",
+        isMobile ? "px-4 py-3" : "px-6 py-4"
+      )}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-              <ClipboardList className="h-5 w-5 text-primary" />
+            <div className={cn(
+              "rounded-lg bg-primary/20 flex items-center justify-center",
+              isMobile ? "w-8 h-8" : "w-10 h-10"
+            )}>
+              <ClipboardList className={cn(isMobile ? "h-4 w-4" : "h-5 w-5", "text-primary")} />
             </div>
             <div>
-              <h3 className="font-kanit font-bold text-lg text-body-text uppercase tracking-wide">
+              <h3 className={cn(
+                "font-kanit font-bold text-body-text uppercase tracking-wide",
+                isMobile ? "text-sm" : "text-lg"
+              )}>
                 Raport Stanu Technicznego
               </h3>
-              <p className="text-xs text-subtitle-text">
+              <p className={cn(
+                "text-subtitle-text",
+                isMobile ? "text-[10px]" : "text-xs"
+              )}>
                 Oficjalna ocena stanu pojazdu
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4 text-xs text-subtitle-text">
+          <div className={cn(
+            "flex items-center gap-4 text-subtitle-text",
+            isMobile ? "text-[10px]" : "text-xs"
+          )}>
             <span className="font-mono">
-              Nr: <span className="text-body-text font-medium">{documentNumber}</span>
+              Nr: <span className="text-body-text font-medium">{isMobile ? documentNumber.slice(-8) : documentNumber}</span>
             </span>
             <span>
               {reportDate}
@@ -202,13 +241,26 @@ export const VehicleHealthReport = ({ car }: VehicleHealthReportProps) => {
       </div>
 
       {/* Overall Health Score */}
-      <div className="px-6 py-5 bg-background/50 border-b border-accent/30">
+      <div className={cn(
+        "bg-background/50 border-b border-accent/30",
+        isMobile ? "px-4 py-4" : "px-6 py-5"
+      )}>
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex items-center gap-3">
-            <Shield className={cn("h-8 w-8", healthScore >= 70 ? "text-green-500" : healthScore >= 50 ? "text-yellow-500" : "text-destructive")} />
+            <Shield className={cn(
+              isMobile ? "h-6 w-6" : "h-8 w-8",
+              healthScore >= 70 ? "text-green-500" : healthScore >= 50 ? "text-yellow-500" : "text-destructive"
+            )} />
             <div>
-              <p className="text-xs text-subtitle-text uppercase tracking-wide">Ogólna ocena stanu</p>
-              <p className={cn("text-2xl font-bold", healthScore >= 70 ? "text-green-500" : healthScore >= 50 ? "text-yellow-500" : "text-destructive")}>
+              <p className={cn(
+                "text-subtitle-text uppercase tracking-wide",
+                isMobile ? "text-[10px]" : "text-xs"
+              )}>Ogólna ocena stanu</p>
+              <p className={cn(
+                "font-bold",
+                isMobile ? "text-xl" : "text-2xl",
+                healthScore >= 70 ? "text-green-500" : healthScore >= 50 ? "text-yellow-500" : "text-destructive"
+              )}>
                 {healthScore}%
               </p>
             </div>
@@ -216,8 +268,11 @@ export const VehicleHealthReport = ({ car }: VehicleHealthReportProps) => {
           
           <div className="flex-1">
             <div className="flex items-center justify-end mb-1.5">
-              <span className="text-xs text-subtitle-text">
-                {goodItems.length} z {itemsWithData.length} punktów kontrolnych pozytywnych
+              <span className={cn(
+                "text-subtitle-text",
+                isMobile ? "text-[10px]" : "text-xs"
+              )}>
+                {goodItems.length} z {itemsWithData.length} poz.
               </span>
             </div>
             <div className="h-3 bg-muted rounded-full overflow-hidden">
@@ -236,17 +291,22 @@ export const VehicleHealthReport = ({ car }: VehicleHealthReportProps) => {
       </div>
 
       {/* Condition Sections */}
-      <div className="p-6 space-y-6">
+      <div className={cn(
+        "space-y-6",
+        isMobile ? "p-4" : "p-6"
+      )}>
         <CategorySection 
           number="1.0" 
           title="Nadwozie i Wnętrze" 
-          items={bodyInteriorItems} 
+          items={bodyInteriorItems}
+          isMobile={isMobile}
         />
         
         <CategorySection 
           number="2.0" 
           title="Układ Mechaniczny i Systemy" 
-          items={mechanicalItems} 
+          items={mechanicalItems}
+          isMobile={isMobile}
         />
       </div>
 
