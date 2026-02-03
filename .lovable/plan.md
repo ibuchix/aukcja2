@@ -1,153 +1,89 @@
 
+# Plan: Remove Countdown Timer from All Dealer Auction Pages
 
-# Plan: Optimize Mobile Layout for Dealer Auction Page
+## What We're Changing
 
-## Problem
-
-On mobile devices, dealers need to scroll extensively to reach the bidding section because the "Specyfikacja pojazdu", "Historia Pojazdu", and "Raport Stanu Technicznego" sections display each item in a single column, creating a very long page.
-
-## Current State
-
-| Section | Current Mobile Layout | Current Desktop Layout |
-|---------|----------------------|------------------------|
-| Specyfikacja pojazdu | 1 column | 2-3 columns |
-| Historia Pojazdu | 1 column | 2-3 columns |
-| VehicleHealthReport | 1 column | 2 columns |
-
-## Solution
-
-Use the existing `isMobile` hook (already imported in `CarAuction.tsx`) to make all specification/history sections display as **2 columns on mobile** instead of 1. This approximately halves the scroll distance to reach the bidding section.
-
----
+The countdown timer (showing "Pozostały czas: 244:05:02") still appears in three dealer-facing components. You previously removed it from auction cards, and now we'll remove it from the bidding/details pages too.
 
 ## Files to Modify
 
 ### 1. `src/pages/dealer/CarAuction.tsx`
 
-**Change the Specyfikacja pojazdu grid (line 178):**
+**Remove lines 738-743** (the "Pozostały czas" row showing the timer):
 
-```text
-Current:  grid-cols-1 md:grid-cols-2 lg:grid-cols-3
-New:      grid-cols-2 lg:grid-cols-3
-```
-
-**Change the Historia Pojazdu grid (line 285):**
-
-```text
-Current:  grid-cols-1 md:grid-cols-2 lg:grid-cols-3
-New:      grid-cols-2 lg:grid-cols-3
-```
-
-**Adjust individual card padding for mobile readability:**
-- Use conditional padding: `p-3` on mobile, `p-4` on larger screens
-- Reduce font sizes slightly on mobile for better fit in 2-column layout
-- Use the `isMobile` variable already available in the component
-
-**Example change for specification cards:**
 ```tsx
-<div className={cn(
-  "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40",
-  isMobile ? "p-3" : "p-4"
-)}>
-  <div className={cn(
-    "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1 opacity-70",
-    isMobile ? "text-[10px]" : "text-xs"
-  )}>
-    {translateSpecificationLabel('Year')}
-  </div>
-  <div className={cn(
-    "font-kanit font-semibold text-body-text",
-    isMobile ? "text-base" : "text-lg"
-  )}>
-    {car.year}
-  </div>
+<div className="flex justify-between items-center">
+  <span className="text-muted-foreground font-medium">Pozostały czas:</span>
+  <span className="font-medium">
+    <AuctionTimer auctionEndTime={car.auctionEndTime} />
+  </span>
 </div>
 ```
 
+**Also remove the unused import on line 9:**
+```tsx
+import { AuctionTimer } from "@/components/auction/AuctionTimer";
+```
+
 ---
 
-### 2. `src/components/car-details/VehicleHealthReport.tsx`
+### 2. `src/components/dealer/cars/LiveAuctionDetailsDialog.tsx`
 
-**Add the `useIsMobile` hook import:**
+**Remove lines 255-262** (the "Pozostały czas" row showing the timer):
+
 ```tsx
-import { useIsMobile } from "@/hooks/use-mobile";
-```
-
-**Use the hook in the component:**
-```tsx
-export const VehicleHealthReport = ({ car }: VehicleHealthReportProps) => {
-  const isMobile = useIsMobile();
-  // ... rest of component
-}
-```
-
-**Change the ConditionRow grid layout (line 121 in CategorySection):**
-```text
-Current:  grid-cols-1 md:grid-cols-2
-New:      grid-cols-2
-```
-
-**Adjust ConditionRow styling for mobile:**
-- Pass `isMobile` to the CategorySection and ConditionRow components
-- Reduce padding and font size on mobile for better 2-column fit
-
-**Example ConditionRow adjustment:**
-```tsx
-<div className={cn(
-  "flex items-center justify-between rounded-md",
-  isMobile ? "py-2 px-3" : "py-3 px-4",
-  index % 2 === 0 ? "bg-background/30" : "bg-background/50"
-)}>
-  <span className={cn(
-    "text-body-text font-medium",
-    isMobile ? "text-sm" : "text-base"
-  )}>{item.label}</span>
-  <StatusIndicator ... />
+<div className="flex justify-between items-center">
+  <span className="text-muted-foreground font-medium">Pozostały czas:</span>
+  <span className="font-medium">
+    <AuctionTimer 
+      auctionEndTime={car.auctionEndTime} 
+    />
+  </span>
 </div>
 ```
 
----
-
-## Visual Comparison
-
-```text
-BEFORE (Mobile - 1 column):             AFTER (Mobile - 2 columns):
-
-+---------------------------+           +-------------+-------------+
-|  ROK                      |           |  ROK        |  DATA       |
-|  2014                     |           |  2014       |  13.08.2014 |
-+---------------------------+           +-------------+-------------+
-|  DATA PIERWSZEJ REJ.      |           |  PRZEBIEG   |  SKRZYNIA   |
-|  13 sierpnia 2014         |           |  288,000 km |  Automatycz.|
-+---------------------------+           +-------------+-------------+
-|  PRZEBIEG                 |           |  TYP PALIWA |  POJEMNOŚĆ  |
-|  288,000 km               |           |  Benzyna    |  3.0L       |
-+---------------------------+           +-------------+-------------+
-|  SKRZYNIA BIEGÓW          |
-|  Automatyczna             |
-+---------------------------+
-|  TYP PALIWA               |
-|  Benzyna                  |
-+---------------------------+
-|  POJEMNOŚĆ SILNIKA        |
-|  3.0L                     |
-+---------------------------+
+**Also remove the unused import on line 7:**
+```tsx
+import { AuctionTimer } from "@/components/auction/AuctionTimer";
 ```
 
 ---
 
-## Summary of Changes
+### 3. `src/components/CarDetailsDialog.tsx`
 
-| File | Changes |
-|------|---------|
-| `CarAuction.tsx` | Change spec/history grids from `grid-cols-1 md:grid-cols-2` to `grid-cols-2`; adjust padding/font sizes for mobile using `isMobile` |
-| `VehicleHealthReport.tsx` | Import `useIsMobile`; change condition grid to always 2 columns; adjust padding/font for mobile |
+**Remove lines 206-213** (the timer display in auction info):
+
+```tsx
+{(scheduleInfo?.endTime || car.scheduleEndTime) && (
+  <div className="flex items-center gap-2">
+    <Clock className="h-4 w-4 text-gray-400" />
+    <AuctionTimer 
+      auctionEndTime={car.auctionEndTime} 
+    />
+  </div>
+)}
+```
+
+**Also remove the unused import on line 12:**
+```tsx
+import { AuctionTimer } from "@/components/auction/AuctionTimer";
+```
 
 ---
 
-## Benefits
+## Summary
 
-1. **~50% less scrolling** to reach the bidding section on mobile
-2. **Compact but readable** - smaller padding and fonts fit well in 2-column layout
-3. **Uses existing pattern** - the `useIsMobile` hook is already used in the project
-4. **No layout changes on desktop** - only affects mobile viewport
+| File | Change |
+|------|--------|
+| `CarAuction.tsx` | Remove "Pozostały czas" row and AuctionTimer import |
+| `LiveAuctionDetailsDialog.tsx` | Remove "Pozostały czas" row and AuctionTimer import |
+| `CarDetailsDialog.tsx` | Remove timer section and AuctionTimer import |
+
+## Result
+
+After these changes, dealers will no longer see the countdown timer anywhere:
+- Not on auction cards (already done)
+- Not on the auction bidding page
+- Not in auction details dialogs
+
+The timer component (`AuctionTimer.tsx`) will remain in the codebase in case it's needed for seller views or future use.
