@@ -1,89 +1,129 @@
 
-# Plan: Remove Countdown Timer from All Dealer Auction Pages
+
+# Plan: Swap Bidding Box and Info Box Positions
 
 ## What We're Changing
 
-The countdown timer (showing "Pozostały czas: 244:05:02") still appears in three dealer-facing components. You previously removed it from auction cards, and now we'll remove it from the bidding/details pages too.
+Currently on the auction page, the order is:
+1. Blue info box ("Informacje o licytacji" with bullet points)
+2. Auction status (Cena orientacyjna, etc.)
+3. Bidding box ("Złóż ofertę" with input and button)
+4. Partner images (carvertical, Autobaza)
+
+After the change, the order will be:
+1. Bidding box ("Złóż ofertę" with input and button) - **without partner images**
+2. Auction status (Cena orientacyjna, etc.)
+3. Blue info box ("Informacje o licytacji")
+4. Partner images (carvertical, Autobaza)
+
+This puts the bidding action at the very top so dealers immediately see where to place their offer.
+
+---
 
 ## Files to Modify
 
-### 1. `src/pages/dealer/CarAuction.tsx`
+### 1. `src/components/auction/SimpleBidManager.tsx`
 
-**Remove lines 738-743** (the "Pozostały czas" row showing the timer):
+**Remove the partner images section** (lines 243-288) from this component. The partner images will be moved to be rendered separately in the parent component.
 
+This means removing:
 ```tsx
-<div className="flex justify-between items-center">
-  <span className="text-muted-foreground font-medium">Pozostały czas:</span>
-  <span className="font-medium">
-    <AuctionTimer auctionEndTime={car.auctionEndTime} />
-  </span>
+<div className="mt-4 flex flex-col items-center">
+  <a href="https://www.carvertical.com" ...>
+    <img src="//carvertical..." ... />
+  </a>
+  <img ... tracking pixel ... />
+  <div className="mt-4" />
+  <a href="https://www.autobaza.pl/..." ...>
+    <img src="https://www.autobaza.pl/..." ... />
+  </a>
 </div>
-```
-
-**Also remove the unused import on line 9:**
-```tsx
-import { AuctionTimer } from "@/components/auction/AuctionTimer";
 ```
 
 ---
 
-### 2. `src/components/dealer/cars/LiveAuctionDetailsDialog.tsx`
+### 2. `src/pages/dealer/CarAuction.tsx`
 
-**Remove lines 255-262** (the "Pozostały czas" row showing the timer):
+**Reorder the right column sections** to swap positions:
 
+**Current order (lines 711-751):**
 ```tsx
-<div className="flex justify-between items-center">
-  <span className="text-muted-foreground font-medium">Pozostały czas:</span>
-  <span className="font-medium">
-    <AuctionTimer 
-      auctionEndTime={car.auctionEndTime} 
-    />
-  </span>
-</div>
+<div className="xl:sticky xl:top-6 space-y-6">
+  {/* 1. Bid Count Display (blue box) */}
+  {isLive && !hasEnded && (
+    <BidCountDisplay carId={car.id} />
+  )}
+
+  {/* 2. Auction Status */}
+  <div className="p-6 bg-muted rounded-lg">...</div>
+
+  {/* 3. Bidding Section (SimpleBidManager) */}
+  {isLive && !hasEnded && isVerified && (
+    <SimpleBidManager ... />
+  )}
 ```
 
-**Also remove the unused import on line 7:**
+**New order:**
 ```tsx
-import { AuctionTimer } from "@/components/auction/AuctionTimer";
+<div className="xl:sticky xl:top-6 space-y-6">
+  {/* 1. Bidding Section (SimpleBidManager) - MOVED TO TOP */}
+  {isLive && !hasEnded && isVerified && (
+    <SimpleBidManager ... />
+  )}
+
+  {/* 2. Auction Status */}
+  <div className="p-6 bg-muted rounded-lg">...</div>
+
+  {/* 3. Bid Count Display (blue box) - MOVED DOWN */}
+  {isLive && !hasEnded && (
+    <BidCountDisplay carId={car.id} />
+  )}
+
+  {/* 4. Partner Images (NEW - extracted from SimpleBidManager) */}
+  {isLive && !hasEnded && (
+    <div className="flex flex-col items-center">
+      ... partner images ...
+    </div>
+  )}
 ```
 
 ---
 
-### 3. `src/components/CarDetailsDialog.tsx`
+## Visual Before/After
 
-**Remove lines 206-213** (the timer display in auction info):
+```text
+BEFORE:                          AFTER:
 
-```tsx
-{(scheduleInfo?.endTime || car.scheduleEndTime) && (
-  <div className="flex items-center gap-2">
-    <Clock className="h-4 w-4 text-gray-400" />
-    <AuctionTimer 
-      auctionEndTime={car.auctionEndTime} 
-    />
-  </div>
-)}
-```
-
-**Also remove the unused import on line 12:**
-```tsx
-import { AuctionTimer } from "@/components/auction/AuctionTimer";
++------------------------+       +------------------------+
+| 📘 Informacje o        |       | 💰 Złóż ofertę         |
+|    licytacji           |       |    Cena orientacyjna   |
+|    • bullet 1          |       |    [Input field]       |
+|    • bullet 2          |       |    [Złóż ofertę btn]   |
++------------------------+       +------------------------+
+| Status licytacji       |       | Status licytacji       |
+| Cena orientacyjna:     |       | Cena orientacyjna:     |
++------------------------+       +------------------------+
+| 💰 Złóż ofertę         |       | 📘 Informacje o        |
+|    [Input field]       |       |    licytacji           |
+|    [Złóż ofertę btn]   |       |    • bullet 1          |
+|    [Partner images]    |       |    • bullet 2          |
++------------------------+       +------------------------+
+                                 |    [Partner images]    |
+                                 +------------------------+
 ```
 
 ---
 
 ## Summary
 
-| File | Change |
-|------|--------|
-| `CarAuction.tsx` | Remove "Pozostały czas" row and AuctionTimer import |
-| `LiveAuctionDetailsDialog.tsx` | Remove "Pozostały czas" row and AuctionTimer import |
-| `CarDetailsDialog.tsx` | Remove timer section and AuctionTimer import |
+| File | Changes |
+|------|---------|
+| `SimpleBidManager.tsx` | Remove partner images section (lines 243-288) |
+| `CarAuction.tsx` | Reorder: SimpleBidManager first, then Auction Status, then BidCountDisplay, then add partner images separately |
 
 ## Result
 
-After these changes, dealers will no longer see the countdown timer anywhere:
-- Not on auction cards (already done)
-- Not on the auction bidding page
-- Not in auction details dialogs
+- Dealers see the bidding input immediately at the top
+- The informational blue box moves below, providing context after they've seen the action area
+- Partner images remain at the bottom of the bidding section
 
-The timer component (`AuctionTimer.tsx`) will remain in the codebase in case it's needed for seller views or future use.
