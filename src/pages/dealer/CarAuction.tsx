@@ -6,7 +6,7 @@ import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
 import { VehicleHealthReport } from "@/components/car-details/VehicleHealthReport";
 import { SimpleBidManager } from "@/components/auction/SimpleBidManager";
 import { BidCountDisplay } from "@/components/auction/BidCountDisplay";
-import { AuctionTimer } from "@/components/auction/AuctionTimer";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Share2, Heart, MapPin, AlertCircle, CheckCircle, Clock, Check, X } from "lucide-react";
@@ -735,12 +735,6 @@ const CarAuction = () => {
                   </div>
                 )}
                 
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground font-medium">Pozostały czas:</span>
-                  <span className="font-medium">
-                    <AuctionTimer auctionEndTime={car.auctionEndTime} />
-                  </span>
-                </div>
               </div>
             </div>
 
