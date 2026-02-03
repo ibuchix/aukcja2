@@ -9,8 +9,6 @@ import { Calendar, Gauge, MapPin, Clock, Car } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
-
-import { BidCountDisplay } from "@/components/auction/BidCountDisplay";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
@@ -176,11 +174,6 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
                 )}
               </div>
             </div>
-
-            {/* Bid Count Display for Live Auctions */}
-            {isLiveAuction && (
-              <BidCountDisplay carId={car.id} />
-            )}
 
             {/* VIN Display */}
             {car.vin && (

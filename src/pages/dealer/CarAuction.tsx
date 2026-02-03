@@ -5,8 +5,6 @@ import { DashboardLayout } from "@/components/dealer/dashboard/DashboardLayout";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
 import { VehicleHealthReport } from "@/components/car-details/VehicleHealthReport";
 import { SimpleBidManager } from "@/components/auction/SimpleBidManager";
-import { BidCountDisplay } from "@/components/auction/BidCountDisplay";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Share2, Heart, MapPin, AlertCircle, CheckCircle, Clock, Check, X } from "lucide-react";
@@ -744,11 +742,6 @@ const CarAuction = () => {
                 
               </div>
             </div>
-
-            {/* Bid Count Display - Moved below auction status */}
-            {isLive && !hasEnded && (
-              <BidCountDisplay carId={car.id} />
-            )}
 
             {/* Partner Images - Extracted from SimpleBidManager */}
             {isLive && !hasEnded && (
