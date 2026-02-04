@@ -181,9 +181,14 @@ export const SimpleBidManager = ({
               </p>
             )}
             {reservePrice && (
-              <p className="text-sm text-muted-foreground">
-                Cena orientacyjna: {formatCurrency(reservePrice)}
-              </p>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  Cena wyjściowa = {Math.round(reservePrice).toLocaleString('pl-PL')} zł
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Oferty mogą być składane powyżej lub poniżej tej kwoty. Im bardziej atrakcyjna oferta, tym większa szansa na akceptację.
+                </p>
+              </div>
             )}
           </div>
           
