@@ -1,94 +1,72 @@
 
-# Plan: Enhance "Złóż ofertę" Button and Add Info Text
+# Plan: Enhance Typography for Price Section
 
-## What We're Changing
+## Current State
 
-### 1. Button Modifications
+Looking at the file, I can see:
 
-**Current button (line 241-247):**
+**Line 188-189** (explanation under "Cena wyjściowa"):
 ```tsx
-<Button
-  onClick={handlePlaceBid}
-  disabled={isSubmitting || !bidAmount || parseFloat(bidAmount) <= 0}
-  className="w-full"
->
-  {isSubmitting ? "Składanie oferty..." : "Złóż ofertę"}
-</Button>
+<p className="text-xs text-muted-foreground">
+  Oferty mogą być składane powyżej lub poniżej tej kwoty...
+</p>
 ```
+This is `text-xs` (12px)
 
-**New button:**
-- Remove the `!bidAmount || parseFloat(bidAmount) <= 0` from disabled condition (only disable during submission)
-- Make it very large with explicit brand red background (`bg-[#D81B24]`)
-- Add larger text size, more padding, and font weight
-
-```tsx
-<Button
-  onClick={handlePlaceBid}
-  disabled={isSubmitting}
-  className="w-full h-16 text-xl font-bold bg-[#D81B24] hover:bg-[#B01831]"
->
-  {isSubmitting ? "Składanie oferty..." : "Złóż ofertę"}
-</Button>
-```
-
-### 2. Add Informational Text Below Button
-
-Add a new section directly after the button with the provided Polish text:
-
+**Lines 249-254** (text under bidding button):
 ```tsx
 <div className="mt-4 text-sm text-muted-foreground space-y-2">
-  <p>Oferty są przekazywane sprzedającemu natychmiastowo.</p>
-  <p>Po podjęciu decyzji przez sprzedającego kontaktujemy się z Tobą.</p>
-  <p>Konkurencyjna oferta złożona wcześniej ma większą szansę na akceptację, zanim pojawią się kolejne — wyższe — oferty.</p>
-  <p>W przypadku akceptacji oferty płatność następuje dopiero przy odbiorze auta, po jego obejrzeniu.</p>
-</div>
+```
+This is `text-sm` (14px)
+
+## Changes Required
+
+We'll update two things as discussed:
+
+### 1. Make "Cena wyjściowa" and price more prominent (lines 183-191)
+- Split label and price into separate elements
+- Label: `text-base font-medium` (16px)
+- Price: `text-3xl font-bold text-foreground` (30px, bold, high contrast)
+- Center align for visual impact
+
+### 2. Make explanation text bigger (line 188-189)
+- Change from `text-xs` (12px) to `text-sm` (14px) to match the button info text
+
+## Updated Code
+
+**Lines 183-191** will become:
+
+```tsx
+{reservePrice && (
+  <div className="space-y-2">
+    <div className="text-center">
+      <p className="text-base text-muted-foreground font-medium">
+        Cena wyjściowa
+      </p>
+      <p className="text-3xl font-bold text-foreground">
+        {Math.round(reservePrice).toLocaleString('pl-PL')} zł
+      </p>
+    </div>
+    <p className="text-sm text-muted-foreground text-center">
+      Oferty mogą być składane powyżej lub poniżej tej kwoty. Im bardziej atrakcyjna oferta, tym większa szansa na akceptację.
+    </p>
+  </div>
+)}
 ```
 
----
+## Visual Comparison
+
+| Element | Before | After |
+|---------|--------|-------|
+| "Cena wyjściowa" label | `text-sm` (14px) | `text-base font-medium` (16px) |
+| Price in złoty | `text-sm` (14px) | `text-3xl font-bold` (30px) |
+| Explanation text | `text-xs` (12px) | `text-sm` (14px) |
+| Layout | Left-aligned | Center-aligned |
 
 ## File to Modify
 
-### `src/components/auction/SimpleBidManager.tsx`
+**`src/components/auction/SimpleBidManager.tsx`** - Lines 183-191
 
-**Lines 241-247** - Update button:
-- Remove validation from `disabled` prop (keep only `isSubmitting`)
-- Add styling classes: `h-16 text-xl font-bold bg-[#D81B24] hover:bg-[#B01831]`
+## Result
 
-**After line 247** - Add new informational text block
-
----
-
-## Visual Result
-
-```text
-+--------------------------------+
-| Złóż ofertę                    |
-+--------------------------------+
-| Twoja ostatnia oferta: X zł    |
-| Cena wyjściowa = 22 394 zł     |
-| (explanation text)             |
-|                                |
-| Twoja oferta (PLN)             |
-| [________________]             |
-|                                |
-| +----------------------------+ |
-| |      ZŁÓŻ OFERTĘ           | | ← BIG RED BUTTON (always active)
-| +----------------------------+ |
-|                                |
-| Oferty są przekazywane...      |
-| Po podjęciu decyzji...         |
-| Konkurencyjna oferta...        |
-| W przypadku akceptacji...      |
-+--------------------------------+
-```
-
----
-
-## Summary
-
-| Change | Details |
-|--------|---------|
-| Button always enabled | Remove `!bidAmount` check from disabled prop |
-| Brand red color | `bg-[#D81B24]` with `hover:bg-[#B01831]` |
-| Bigger button | `h-16 text-xl font-bold` for prominence |
-| Info text below | 4 paragraphs explaining the bidding process |
+The price will be immediately visible with large, bold typography (30px), and the explanation text below will match the size of the informational text under the bidding button (both 14px).
