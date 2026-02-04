@@ -1,91 +1,94 @@
 
+# Plan: Enhance "Złóż ofertę" Button and Add Info Text
 
-# Plan: Remove "Status licytacji" Section from Auction Pages
+## What We're Changing
 
-## What We're Removing
+### 1. Button Modifications
 
-The gray box showing:
-- **"Status licytacji"** heading
-- **"Cena orientacyjna:"** with the reserve price
-- **"Aktualna oferta:"** with current bid (if exists)
+**Current button (line 241-247):**
+```tsx
+<Button
+  onClick={handlePlaceBid}
+  disabled={isSubmitting || !bidAmount || parseFloat(bidAmount) <= 0}
+  className="w-full"
+>
+  {isSubmitting ? "Składanie oferty..." : "Złóż ofertę"}
+</Button>
+```
 
-## Files to Modify
-
-### 1. `src/pages/dealer/CarAuction.tsx`
-
-**Remove lines 722-744** (the entire "Status licytacji" section):
+**New button:**
+- Remove the `!bidAmount || parseFloat(bidAmount) <= 0` from disabled condition (only disable during submission)
+- Make it very large with explicit brand red background (`bg-[#D81B24]`)
+- Add larger text size, more padding, and font weight
 
 ```tsx
-{/* Auction Status */}
-<div className="p-6 bg-muted rounded-lg">
-  <h3 className="text-xl font-semibold mb-4">Status licytacji</h3>
-  <div className="space-y-4">
-    <div className="flex justify-between items-center">
-      <span className="text-muted-foreground font-medium">Cena orientacyjna:</span>
-      <span className="font-bold text-lg">{formatCurrency(car.reservePrice || 0)}</span>
-    </div>
-    
-    {car.currentBid && car.currentBid > 0 && (
-      <div className="flex justify-between items-center">
-        <span className="text-muted-foreground font-medium">Aktualna oferta:</span>
-        <span className={cn(...)}>
-          {formatCurrency(car.currentBid)}
-        </span>
-      </div>
-    )}
-    
-  </div>
+<Button
+  onClick={handlePlaceBid}
+  disabled={isSubmitting}
+  className="w-full h-16 text-xl font-bold bg-[#D81B24] hover:bg-[#B01831]"
+>
+  {isSubmitting ? "Składanie oferty..." : "Złóż ofertę"}
+</Button>
+```
+
+### 2. Add Informational Text Below Button
+
+Add a new section directly after the button with the provided Polish text:
+
+```tsx
+<div className="mt-4 text-sm text-muted-foreground space-y-2">
+  <p>Oferty są przekazywane sprzedającemu natychmiastowo.</p>
+  <p>Po podjęciu decyzji przez sprzedającego kontaktujemy się z Tobą.</p>
+  <p>Konkurencyjna oferta złożona wcześniej ma większą szansę na akceptację, zanim pojawią się kolejne — wyższe — oferty.</p>
+  <p>W przypadku akceptacji oferty płatność następuje dopiero przy odbiorze auta, po jego obejrzeniu.</p>
 </div>
 ```
 
-**No unused imports** - Both `formatCurrency` and `cn` are still used elsewhere in the file (e.g., line 681 for finance amount display).
+---
+
+## File to Modify
+
+### `src/components/auction/SimpleBidManager.tsx`
+
+**Lines 241-247** - Update button:
+- Remove validation from `disabled` prop (keep only `isSubmitting`)
+- Add styling classes: `h-16 text-xl font-bold bg-[#D81B24] hover:bg-[#B01831]`
+
+**After line 247** - Add new informational text block
 
 ---
 
-### 2. `src/components/dealer/cars/LiveAuctionDetailsDialog.tsx`
+## Visual Result
 
-**Remove lines 241-249** (the "Status licytacji" section):
-
-```tsx
-<div className="p-6 bg-muted rounded-lg">
-  <h3 className="text-xl font-semibold mb-4">Status licytacji</h3>
-  <div className="space-y-4">
-    <div className="flex justify-between items-center">
-      <span className="text-muted-foreground font-medium">Cena orientacyjna:</span>
-      <span className="font-bold text-lg">{formatCurrency(car.reservePrice || car.reserve_price || 0)}</span>
-    </div>
-  </div>
-</div>
+```text
++--------------------------------+
+| Złóż ofertę                    |
++--------------------------------+
+| Twoja ostatnia oferta: X zł    |
+| Cena wyjściowa = 22 394 zł     |
+| (explanation text)             |
+|                                |
+| Twoja oferta (PLN)             |
+| [________________]             |
+|                                |
+| +----------------------------+ |
+| |      ZŁÓŻ OFERTĘ           | | ← BIG RED BUTTON (always active)
+| +----------------------------+ |
+|                                |
+| Oferty są przekazywane...      |
+| Po podjęciu decyzji...         |
+| Konkurencyjna oferta...        |
+| W przypadku akceptacji...      |
++--------------------------------+
 ```
-
-**No unused imports** - `formatCurrency` is still used on line 219 to display finance amount.
-
----
-
-## Code Bloat Check
-
-| Import/Utility | Still Used? | Location |
-|----------------|-------------|----------|
-| `formatCurrency` in CarAuction.tsx | Yes | Line 681 (finance amount) |
-| `cn` in CarAuction.tsx | Yes | Lines 119, 154, 178, 182, etc. (many places) |
-| `formatCurrency` in LiveAuctionDetailsDialog.tsx | Yes | Line 219 (finance amount) |
-
-**All imports remain in use** - no cleanup needed for imports.
 
 ---
 
 ## Summary
 
-| File | Changes | Cleanup Needed? |
-|------|---------|-----------------|
-| `CarAuction.tsx` | Remove lines 722-744 | No - imports still used |
-| `LiveAuctionDetailsDialog.tsx` | Remove lines 241-249 | No - imports still used |
-
-## Result
-
-After these changes, the auction sidebar will only show:
-1. **Bidding box** ("Złóż ofertę") - at top
-2. **Partner images** (carvertical, Autobaza) - at bottom
-
-No orphaned code or unused imports will remain.
-
+| Change | Details |
+|--------|---------|
+| Button always enabled | Remove `!bidAmount` check from disabled prop |
+| Brand red color | `bg-[#D81B24]` with `hover:bg-[#B01831]` |
+| Bigger button | `h-16 text-xl font-bold` for prominence |
+| Info text below | 4 paragraphs explaining the bidding process |
