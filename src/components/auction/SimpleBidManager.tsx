@@ -240,11 +240,18 @@ export const SimpleBidManager = ({
 
           <Button
             onClick={handlePlaceBid}
-            disabled={isSubmitting || !bidAmount || parseFloat(bidAmount) <= 0}
-            className="w-full"
+            disabled={isSubmitting}
+            className="w-full h-16 text-xl font-bold bg-[#D81B24] hover:bg-[#B01831]"
           >
             {isSubmitting ? "Składanie oferty..." : "Złóż ofertę"}
           </Button>
+
+          <div className="mt-4 text-sm text-muted-foreground space-y-2">
+            <p>Oferty są przekazywane sprzedającemu natychmiastowo.</p>
+            <p>Po podjęciu decyzji przez sprzedającego kontaktujemy się z Tobą.</p>
+            <p>Konkurencyjna oferta złożona wcześniej ma większą szansę na akceptację, zanim pojawią się kolejne — wyższe — oferty.</p>
+            <p>W przypadku akceptacji oferty płatność następuje dopiero przy odbiorze auta, po jego obejrzeniu.</p>
+          </div>
         </div>
       </CardContent>
     </Card>
