@@ -719,29 +719,6 @@ const CarAuction = () => {
               />
             )}
 
-            {/* Auction Status */}
-            <div className="p-6 bg-muted rounded-lg">
-              <h3 className="text-xl font-semibold mb-4">Status licytacji</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground font-medium">Cena orientacyjna:</span>
-                  <span className="font-bold text-lg">{formatCurrency(car.reservePrice || 0)}</span>
-                </div>
-                
-                {car.currentBid && car.currentBid > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground font-medium">Aktualna oferta:</span>
-                    <span className={cn(
-                      "font-bold text-lg",
-                      hasEnded ? "text-gray-600" : "text-green-600"
-                    )}>
-                      {formatCurrency(car.currentBid)}
-                    </span>
-                  </div>
-                )}
-                
-              </div>
-            </div>
 
             {/* Partner Images - Extracted from SimpleBidManager */}
             {isLive && !hasEnded && (
