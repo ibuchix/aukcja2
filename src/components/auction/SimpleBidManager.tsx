@@ -237,6 +237,7 @@ export const SimpleBidManager = ({
               step="1"
               placeholder="Wprowadź swoją ofertę"
               disabled={isSubmitting}
+              className="h-14 text-lg border-2 border-[#D81B24] focus-visible:ring-[#D81B24]"
             />
             {bidError && (
               <p className="text-sm text-red-600 mt-2 font-medium">{bidError}</p>

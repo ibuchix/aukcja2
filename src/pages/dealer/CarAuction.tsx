@@ -706,7 +706,7 @@ const CarAuction = () => {
         {/* Right Column - Bidding Section */}
         <div className="xl:col-span-1 space-y-6">
           {/* Sticky bidding section on desktop */}
-          <div className="xl:sticky xl:top-6 space-y-6">
+          <div className="xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto space-y-6">
             {/* Bidding Section - Moved to top */}
             {isLive && !hasEnded && isVerified && (
               <SimpleBidManager
