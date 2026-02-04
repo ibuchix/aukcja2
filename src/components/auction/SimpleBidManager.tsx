@@ -180,16 +180,21 @@ export const SimpleBidManager = ({
                 </span>
               </p>
             )}
-            {reservePrice && (
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">
-                  Cena wyjściowa = {Math.round(reservePrice).toLocaleString('pl-PL')} zł
+          {reservePrice && (
+            <div className="space-y-2">
+              <div className="text-center">
+                <p className="text-base text-muted-foreground font-medium">
+                  Cena wyjściowa
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Oferty mogą być składane powyżej lub poniżej tej kwoty. Im bardziej atrakcyjna oferta, tym większa szansa na akceptację.
+                <p className="text-3xl font-bold text-foreground">
+                  {Math.round(reservePrice).toLocaleString('pl-PL')} zł
                 </p>
               </div>
-            )}
+              <p className="text-sm text-muted-foreground text-center">
+                Oferty mogą być składane powyżej lub poniżej tej kwoty. Im bardziej atrakcyjna oferta, tym większa szansa na akceptację.
+              </p>
+            </div>
+          )}
           </div>
           
           <div className="space-y-2">
