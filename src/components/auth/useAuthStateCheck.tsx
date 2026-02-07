@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { sanitizeReturnUrl } from "@/utils/sanitizeReturnUrl";
 
 export function useAuthStateCheck(returnUrl: string) {
   const navigate = useNavigate();
@@ -75,7 +76,7 @@ export function useAuthStateCheck(returnUrl: string) {
         clearTimeout(navigationTimeoutRef.current);
       }
       navigationTimeoutRef.current = setTimeout(() => {
-        navigate(returnUrl, { replace: true });
+        navigate(sanitizeReturnUrl(returnUrl), { replace: true });
       }, 100);
     } else if (isInitialized && !isLoading && !isAuthenticated) {
       console.log("ℹ️ User not authenticated - staying on auth page");
