@@ -15,7 +15,7 @@ interface ResetPasswordResponse {
   tokenForDev?: string;
 }
 
-export async function requestPasswordReset(data: Omit<ResetPasswordRequest, 'newPassword'>): Promise<ResetPasswordResponse> {
+export async function requestPasswordReset(data: Omit<ResetPasswordRequest, 'newPassword'> & { turnstileToken?: string }): Promise<ResetPasswordResponse> {
   try {
     const { data: result, error } = await supabase.functions.invoke('dealer-auth', {
       body: {
@@ -23,7 +23,8 @@ export async function requestPasswordReset(data: Omit<ResetPasswordRequest, 'new
         email: data.email,
         taxId: data.taxId,
         businessRegistryNumber: data.businessRegistryNumber,
-        supervisorName: data.supervisorName
+        supervisorName: data.supervisorName,
+        turnstileToken: data.turnstileToken,
       }
     });
 
@@ -49,13 +50,14 @@ export async function requestPasswordReset(data: Omit<ResetPasswordRequest, 'new
   }
 }
 
-export async function confirmPasswordReset(token: string, newPassword: string): Promise<ResetPasswordResponse> {
+export async function confirmPasswordReset(token: string, newPassword: string, turnstileToken?: string): Promise<ResetPasswordResponse> {
   try {
     const { data: result, error } = await supabase.functions.invoke('dealer-auth', {
       body: {
         action: 'password_reset_confirm',
         token,
-        newPassword
+        newPassword,
+        turnstileToken,
       }
     });
 

@@ -8,9 +8,10 @@ import { preparePassword } from "@/utils/auth-utils";
 interface SignInParams {
   email: string;
   password: string;
+  turnstileToken?: string;
 }
 
-export const signInWithEmail = async ({ email, password }: SignInParams) => {
+export const signInWithEmail = async ({ email, password, turnstileToken }: SignInParams) => {
   console.log("🚀 Starting enhanced sign in process");
   
   try {
@@ -21,13 +22,18 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
     console.log("🔐 Login password length after preparation:", cleanedPassword.length);
     
     // Create request body
-    const requestBody = {
+    const requestBody: Record<string, unknown> = {
       action: 'login',
       email: email.trim().toLowerCase(),
       password: cleanedPassword,
       requestId: crypto.randomUUID(),
       timestamp: new Date().toISOString()
     };
+
+    // Include turnstile token if available
+    if (turnstileToken) {
+      requestBody.turnstileToken = turnstileToken;
+    }
     
     // Get Supabase URL and anon key for the fetch request
     const supabaseUrl = SUPABASE_URL;
@@ -36,7 +42,8 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
     // Log the request we're about to send (sanitized)
     console.log("📤 Sending login request:", {
       ...requestBody,
-      password: "[REDACTED]"
+      password: "[REDACTED]",
+      turnstileToken: turnstileToken ? "[PRESENT]" : "[MISSING]"
     });
     
     // Build the full URL
@@ -179,7 +186,6 @@ export const signInWithEmail = async ({ email, password }: SignInParams) => {
         const { data: verifySession } = await supabase.auth.getSession();
         if (!verifySession.session) {
           console.warn("⚠️ Session verification failed - session not found after setSession");
-          // Don't fail here as the session might still be valid, just log the warning
         } else {
           console.log("✅ Session verification successful");
         }

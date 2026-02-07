@@ -11,7 +11,8 @@ import { RegistrationStatus } from "@/components/auth/dealer-form/RegistrationSt
 import { useRegistrationSteps } from "@/components/auth/dealer-form/useRegistrationSteps";
 import { useAuthStateMonitor } from "@/components/auth/dealer-form/useAuthStateMonitor";
 import { useFormSubmission } from "@/components/auth/dealer-form/useFormSubmission";
-import { useState } from "react";
+import { CloudflareTurnstile, CloudflareTurnstileRef } from "@/components/auth/CloudflareTurnstile";
+import { useState, useRef } from "react";
 
 export function DealerSignupForm({ onRegistrationComplete }: { onRegistrationComplete?: () => void }) {
   const {
@@ -25,6 +26,8 @@ export function DealerSignupForm({ onRegistrationComplete }: { onRegistrationCom
   } = useRegistrationSteps();
   
   const [registrationSubmitted, setRegistrationSubmitted] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<CloudflareTurnstileRef>(null);
 
   // Monitor auth state changes
   useAuthStateMonitor(setEmailVerified);
@@ -61,10 +64,13 @@ export function DealerSignupForm({ onRegistrationComplete }: { onRegistrationCom
   });
 
   const onSubmit = async (values: DealerFormValues) => {
-    const success = await handleFormSubmit(values);
+    const success = await handleFormSubmit(values, turnstileToken);
     if (success) {
       form.reset();
     }
+    // Reset turnstile after submission
+    setTurnstileToken(null);
+    turnstileRef.current?.reset();
   };
 
   return (
@@ -87,10 +93,17 @@ export function DealerSignupForm({ onRegistrationComplete }: { onRegistrationCom
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DealerFormFields form={form} />
+            
+            <CloudflareTurnstile
+              ref={turnstileRef}
+              onVerify={(token) => setTurnstileToken(token)}
+              onExpire={() => setTurnstileToken(null)}
+            />
+            
             <Button 
               type="submit" 
               className="w-full"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !turnstileToken}
             >
               {isSubmitting ? (
                 <>

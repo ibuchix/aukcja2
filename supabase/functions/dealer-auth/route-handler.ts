@@ -6,6 +6,49 @@ import { processWithRetry } from "./retry-handler.ts";
 import { parseRequestBody } from "./request-parser.ts";
 
 /**
+ * Verify Cloudflare Turnstile token server-side
+ */
+async function verifyTurnstileToken(token: string): Promise<{ success: boolean; error?: string }> {
+  const secretKey = Deno.env.get("TURNSTILE_SECRET_KEY");
+  
+  if (!secretKey) {
+    logWarning("TURNSTILE_SECRET_KEY not configured - skipping Turnstile verification");
+    return { success: true };
+  }
+
+  // Allow fallback tokens from frontend load failures
+  if (token === "TURNSTILE_LOAD_FAILED" || token === "TURNSTILE_TIMEOUT") {
+    logWarning(`Turnstile fallback token received: ${token} - allowing request`);
+    return { success: true };
+  }
+
+  try {
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        secret: secretKey,
+        response: token,
+      }),
+    });
+
+    const result = await response.json();
+    logInfo(`Turnstile verification result: success=${result.success}`);
+
+    if (!result.success) {
+      logWarning(`Turnstile verification failed: ${JSON.stringify(result["error-codes"] || [])}`);
+      return { success: false, error: "Weryfikacja Turnstile nie powiodła się. Spróbuj ponownie." };
+    }
+
+    return { success: true };
+  } catch (error) {
+    logError("Turnstile verification request failed", error);
+    // On network errors, allow the request through (graceful degradation)
+    return { success: true };
+  }
+}
+
+/**
  * Handles the main routing of dealer auth requests
  */
 export async function handleDealerAuthRequest(req: Request, startTime: number): Promise<Response> {
@@ -30,6 +73,26 @@ export async function handleDealerAuthRequest(req: Request, startTime: number): 
       requestId: body.requestId,
       email: body.email ? `${body.email.substring(0, 3)}...` : undefined
     });
+
+    // Verify Turnstile token for all actions except debug and check_dealer_email
+    const actionsRequiringTurnstile = ["login", "register", "password_reset_request", "password_reset_confirm"];
+    if (actionsRequiringTurnstile.includes(body.action)) {
+      const turnstileToken = body.turnstileToken;
+      
+      if (!turnstileToken) {
+        // Only enforce if TURNSTILE_SECRET_KEY is configured
+        const secretKey = Deno.env.get("TURNSTILE_SECRET_KEY");
+        if (secretKey) {
+          logWarning(`Missing Turnstile token for action: ${body.action}`);
+          return respondError("Brak tokenu weryfikacji Turnstile. Odśwież stronę i spróbuj ponownie.", 400);
+        }
+      } else {
+        const turnstileResult = await verifyTurnstileToken(turnstileToken);
+        if (!turnstileResult.success) {
+          return respondError(turnstileResult.error || "Weryfikacja nie powiodła się.", 403);
+        }
+      }
+    }
 
     // Handle the different actions
     switch (body.action) {
@@ -68,7 +131,7 @@ export async function handleDealerAuthRequest(req: Request, startTime: number): 
           debug: {
             method: req.method,
             headers: Object.fromEntries(req.headers.entries()),
-            body: { ...body, password: body.password ? "[REDACTED]" : undefined },
+            body: { ...body, password: body.password ? "[REDACTED]" : undefined, turnstileToken: body.turnstileToken ? "[REDACTED]" : undefined },
             url: req.url,
             timestamp: new Date().toISOString(),
             trackingId,
