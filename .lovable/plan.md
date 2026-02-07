@@ -1,117 +1,124 @@
 
-# Plan: Enhance Bid Input and Sticky Bidding Section
+
+# Plan: Add Cloudflare Turnstile to All Dealer Auth Forms
 
 ## Overview
 
-Two enhancements requested:
-1. **Bigger bid input with red border** - Make the input more prominent and easy to spot
-2. **Sticky bidding section** - Keep the bidding panel visible as users scroll through auction details
+Add Cloudflare Turnstile (managed mode) with Polish language to all 4 authentication forms. The existing `TURNSTILE_SECRET_KEY` already stored in Supabase will be used for server-side verification -- no new secrets needed.
+
+## Prerequisites (Your Action)
+
+Add `aukcja.autaro.pl` to your existing Turnstile widget's hostname list in the Cloudflare dashboard:
+**Turnstile > your widget > Settings > Hostname Management > Add `aukcja.autaro.pl`**
+
+You also need to provide your Turnstile **Site Key** (the public one, not the secret) so it can be embedded in the frontend code.
 
 ---
 
-## Change 1: Enhance Bid Input Box
+## Changes Summary
 
-### Current State (SimpleBidManager.tsx, line 231-240)
+### 1. New File: `src/components/auth/CloudflareTurnstile.tsx`
 
-```tsx
-<Input
-  id="bidAmount"
-  type="number"
-  value={bidAmount}
-  onChange={(e) => setBidAmount(e.target.value)}
-  min="1"
-  step="1"
-  placeholder="Wprowadź swoją ofertę"
-  disabled={isSubmitting}
-/>
-```
+A reusable React component that:
+- Loads the Turnstile script from `challenges.cloudflare.com` (once, cached)
+- Renders the managed widget with **Polish language** (`data-language="pl"`)
+- Calls `onVerify(token)` when verification passes
+- Handles errors and expiration gracefully
+- Exposes a `reset()` method via ref for re-rendering after submissions
+- Includes a fallback timeout so users are never locked out if Turnstile fails to load
 
-Uses default Input styling with `h-10` (40px) height.
+### 2. Update: `index.html` (CSP Headers)
 
-### Proposed Changes
+Add Cloudflare domains to the Content Security Policy:
+- `script-src`: add `https://challenges.cloudflare.com`
+- `frame-src`: add `https://challenges.cloudflare.com`
+- `connect-src`: add `https://challenges.cloudflare.com`
 
-Add custom classes to make the input stand out:
-- **Taller**: `h-14` (56px height instead of 40px)
-- **Larger text**: `text-lg` (18px font size)
-- **Red border**: `border-2 border-[#D81B24]` (prominent red border using brand color)
-- **Red focus ring**: `focus-visible:ring-[#D81B24]` (red highlight when focused)
+### 3. Update: `src/components/auth/DealerLoginForm.tsx` (Login Form)
 
-```tsx
-<Input
-  id="bidAmount"
-  type="number"
-  value={bidAmount}
-  onChange={(e) => setBidAmount(e.target.value)}
-  min="1"
-  step="1"
-  placeholder="Wprowadź swoją ofertę"
-  disabled={isSubmitting}
-  className="h-14 text-lg border-2 border-[#D81B24] focus-visible:ring-[#D81B24]"
-/>
-```
+- Import and render `CloudflareTurnstile` between the form fields and submit button
+- Store the Turnstile token in local state
+- Disable the submit button until Turnstile verification passes
+- Pass the token to the login submission flow
 
----
+### 4. Update: `src/hooks/auth/useLoginForm.ts` (Login Hook)
 
-## Change 2: Smooth Sticky Bidding Section
+- Accept a `turnstileToken` parameter in the `onSubmit` function
+- Include the token in the request body sent to the `dealer-auth` edge function
 
-### Current State (CarAuction.tsx, line 709)
+### 5. Update: `src/services/auth/signin.ts` (Login Service)
 
-```tsx
-<div className="xl:sticky xl:top-6 space-y-6">
-```
+- Accept an optional `turnstileToken` parameter in `signInWithEmail`
+- Include it in the request body (`turnstileToken` field)
 
-Currently only sticky on `xl` screens (1280px+).
+### 6. Update: `src/pages/auth/DealerSignupForm.tsx` (Registration Form)
 
-### Analysis
+- Add `CloudflareTurnstile` widget before the submit button
+- Store the token in state
+- Pass it through to the registration submission flow
 
-The grid layout is:
-```tsx
-<div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-```
+### 7. Update: `src/components/auth/dealer-form/useFormSubmission.tsx` (Registration Submission)
 
-This means:
-- **Desktop (xl: 1280px+)**: 3-column grid, sidebar is in right column → sticky makes sense
-- **iPad/smaller**: Single column layout, content stacks vertically
+- Accept a `turnstileToken` parameter
+- Pass it to `useCompleteRegistration`
 
-For **iPad landscape** (1024px-1279px), the layout is still single-column, so making it sticky at `lg` won't have a visible effect since there's nothing to scroll past.
+### 8. Update: `src/hooks/registration/useCompleteRegistration.ts` (Registration Service)
 
-However, to ensure smooth experience when users resize or on larger iPads, I'll keep it at `xl` where the sidebar is actually in a side column. But I'll add better styling for the sticky behavior:
+- Accept `turnstileToken` in the request body sent to `dealer-auth`
 
-### Proposed Changes
+### 9. Update: `src/pages/PasswordReset.tsx` (Password Reset Request Form)
 
-Keep the `xl:sticky` breakpoint (since that's when the 3-column layout activates) but improve the sticky experience:
+- Add `CloudflareTurnstile` widget before the submit button
+- Store the token and include it in the `requestPasswordReset` call
 
-```tsx
-<div className="xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto space-y-6">
-```
+### 10. Update: `src/pages/PasswordResetWithToken.tsx` (Password Reset Confirm Form)
 
-This adds:
-- **`xl:max-h-[calc(100vh-3rem)]`**: Limits height to viewport minus top offset
-- **`xl:overflow-y-auto`**: Adds scroll if content is taller than viewport (prevents content from being cut off)
+- Add `CloudflareTurnstile` widget before the submit button
+- Include the token in the `confirmPasswordReset` call
+
+### 11. Update: `src/services/auth/passwordReset.ts` (Password Reset Service)
+
+- Accept `turnstileToken` parameter in both `requestPasswordReset` and `confirmPasswordReset`
+- Include it in the request body sent to `dealer-auth`
+
+### 12. Update: `supabase/functions/dealer-auth/route-handler.ts` (Server-Side Verification)
+
+Add a Turnstile verification function that runs **before** any action handler:
+
+1. Extract `turnstileToken` from the request body
+2. If token is missing, return 400 error with Polish message
+3. POST to `https://challenges.cloudflare.com/turnstile/v0/siteverify` with the secret key (`TURNSTILE_SECRET_KEY` from environment) and the token
+4. If verification fails, return 403 error with Polish message
+5. If verification passes, proceed to existing handler logic
+
+This single checkpoint protects ALL actions (login, register, password_reset_request, password_reset_confirm) since they all route through this handler. The `debug` action will be excluded from Turnstile checks.
 
 ---
 
-## Files to Modify
+## Safety / Non-Breaking Guarantees
 
-| File | Line | Change |
-|------|------|--------|
-| `src/components/auction/SimpleBidManager.tsx` | 231 | Add `className` with enhanced styling |
-| `src/pages/dealer/CarAuction.tsx` | 709 | Add max-height and overflow for smooth sticky |
+- **Graceful frontend degradation**: If Turnstile script fails to load (network issues, ad blockers), a 10-second timeout allows form submission anyway (with a console warning). Users are never locked out.
+- **Server-side fallback**: If `TURNSTILE_SECRET_KEY` is not found in the environment, the edge function logs a warning and allows the request through. This means the app works normally even if the secret is temporarily unavailable.
+- **No database changes**: Zero migrations required.
+- **Polish language**: The widget uses `data-language="pl"` so all Turnstile UI elements (challenges, messages) appear in Polish.
+- **Existing functionality untouched**: All current auth flows remain identical -- Turnstile is purely additive.
 
 ---
 
-## Visual Result
+## Files to Create/Edit
 
-### Bid Input
-```text
-+------------------------------------------+
-|                                          |  ← Bigger (56px height)
-|    Wprowadź swoją ofertę                 |  ← Larger text (18px)
-|                                          |
-+==========================================+  ← Bold red border (#D81B24)
-```
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/components/auth/CloudflareTurnstile.tsx` | **Create** | Reusable Turnstile widget (Polish, managed mode) |
+| `index.html` | Edit | Add Cloudflare to CSP |
+| `src/components/auth/DealerLoginForm.tsx` | Edit | Add Turnstile to login form |
+| `src/hooks/auth/useLoginForm.ts` | Edit | Pass token through login flow |
+| `src/services/auth/signin.ts` | Edit | Include token in login request |
+| `src/pages/auth/DealerSignupForm.tsx` | Edit | Add Turnstile to registration |
+| `src/components/auth/dealer-form/useFormSubmission.tsx` | Edit | Pass token in registration flow |
+| `src/hooks/registration/useCompleteRegistration.ts` | Edit | Include token in registration request |
+| `src/pages/PasswordReset.tsx` | Edit | Add Turnstile to password reset request |
+| `src/pages/PasswordResetWithToken.tsx` | Edit | Add Turnstile to password reset confirm |
+| `src/services/auth/passwordReset.ts` | Edit | Include token in reset requests |
+| `supabase/functions/dealer-auth/route-handler.ts` | Edit | Server-side Turnstile verification |
 
-### Sticky Behavior
-- On desktop (1280px+): Bidding section stays visible in the right column as user scrolls through photos and details
-- If bidding section is taller than viewport, it becomes scrollable independently
-- Smooth, non-jarring experience as the rest of the page scrolls beneath it
