@@ -1,37 +1,45 @@
 
-# Fix: Upgrade @isaacs/brace-expansion to Patch DoS Vulnerability
 
-## Risk Assessment
+# Fix: Upgrade @remix-run/router to Clear Dependabot Alert
 
-**Severity in your project: Very Low (dev-only dependency)**
+## Impact Assessment
 
-The vulnerable package `@isaacs/brace-expansion@5.0.0` is a transitive **development-only** dependency. It is:
-- Never shipped to production (not in the browser bundle)
-- Never exposed to user input
-- Only used during build by `tailwindcss` and `lovable-tagger`
+**Your application is NOT affected by this vulnerability.**
 
-However, patching it will clear the GitHub Dependabot alert and is good security hygiene.
+The XSS-via-open-redirect vulnerability only applies to React Router apps using **Framework Mode**, **Data Mode**, or **unstable RSC modes** (i.e., those using `createBrowserRouter` / `RouterProvider`).
+
+Your app uses **Declarative Mode** (`<BrowserRouter>`) exclusively -- confirmed by:
+- `src/Root.tsx` wraps everything in `<BrowserRouter>`
+- Zero usage of `createBrowserRouter`, `RouterProvider`, or any Data Mode APIs anywhere in the codebase
+- All routing uses `<Routes>`, `<Route>`, `<Navigate>`, and `useNavigate()` -- all Declarative Mode
+
+The advisory explicitly states: *"This does not impact applications that use Declarative Mode (`<BrowserRouter>`)."*
+
+## Recommendation
+
+Even though the app is not vulnerable, upgrading will clear the GitHub Dependabot alert and is good security hygiene.
 
 ## Fix (1 file)
 
-### `package.json` -- Add override
+### `package.json` -- Add override for `@remix-run/router`
 
-Add `@isaacs/brace-expansion` to the existing `overrides` section (line 99-102) to force version `>=5.0.1`:
+Add `@remix-run/router` to the existing `overrides` section to force version `>=1.23.2`:
 
 ```json
 "overrides": {
   "glob": ">=10.5.0",
   "js-yaml": ">=4.1.1",
-  "@isaacs/brace-expansion": ">=5.0.1"
+  "@isaacs/brace-expansion": ">=5.0.1",
+  "@remix-run/router": ">=1.23.2"
 }
 ```
 
-This tells the package manager to resolve any version of `@isaacs/brace-expansion` to at least `5.0.1`, which contains the fix for the unbounded brace range expansion DoS.
-
-After the lockfile regenerates, the `package-lock.json` and `bun.lock` entries for `@isaacs/brace-expansion` will update from `5.0.0` to `5.0.1`.
+The locked version is currently `1.20.0` (transitive via `react-router-dom@6.27.0`). The override forces the package manager to resolve it to the patched version (`>=1.23.2`), clearing the alert.
 
 ## What this changes
 
-- The `overrides` field forces all transitive references to use the patched version
-- No functional change to your app -- this is a dev-only dependency
+- Forces `@remix-run/router` to resolve to at least `1.23.2` in the lockfile
+- No functional change -- Declarative Mode routing is unaffected by this patch
 - The Dependabot alert on GitHub will be resolved
+- Zero risk of breakage since the patch only fixes a code path your app never uses
+
