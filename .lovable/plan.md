@@ -1,69 +1,54 @@
 
 
-# Fix: Upgrade react-router and Add returnUrl Sanitization
+# Fix: Add Missing Overrides to Resolve Dependabot Alert
 
-## Risk Assessment
+## What went wrong previously
 
-**Severity: Low-Medium**
+The earlier fix added `@remix-run/router` and `react-router` as **direct dependencies** instead of adding them to the **overrides section**. This resulted in:
 
-Your app has two code paths where a dynamic `returnUrl` value flows into `navigate()`. While the `returnUrl` originates from `location.pathname` (set by ProtectedRoute), the React Router vulnerability means specially crafted URLs could potentially cause external redirects.
+- `@remix-run/router@1.23.2` installed at the root level (as a direct dep)
+- `@remix-run/router@1.20.0` STILL installed nested under `react-router-dom` (the vulnerable transitive copy)
+- Same situation for `react-router`: v7.13.0 at root, but v6.27.0 still nested under `react-router-dom`
 
-The advisory states: *"This is only an issue if developers pass untrusted content into navigation paths."* Your `returnUrl` is not directly user-input, but it derives from the browser's URL which users control.
+npm's `overrides` is the mechanism that forces ALL copies of a package (including transitive/nested ones) to resolve to a specific version. Without it, both versions coexist.
 
-## Fix (3 files)
+## Fix (1 file)
 
-### 1. `package.json` -- Add override for `react-router`
+### `package.json` -- Two changes
 
-Add `react-router` to the existing `overrides` section to force the patched version:
+**1. Remove the unnecessary direct dependencies**
+
+Remove these two lines from `dependencies` since they are not used directly by the app and were only added to try to patch the transitive versions:
+
+```
+"@remix-run/router": "^1.23.2",   (line 44 -- remove)
+"react-router": "^7.13.0",        (line 72 -- remove)
+```
+
+**2. Add proper overrides**
+
+Update the `overrides` section (currently lines 102-105) to force the transitive dependencies to the patched versions:
 
 ```json
 "overrides": {
   "glob": ">=10.5.0",
   "js-yaml": ">=4.1.1",
+  "@remix-run/router": ">=1.23.2",
   "react-router": ">=6.30.2"
 }
 ```
 
-This forces the transitive dependency `react-router@6.27.0` (pulled in by `react-router-dom@6.27.0`) to resolve to the patched version.
+## Why this works
 
-### 2. Create `src/utils/sanitizeReturnUrl.ts` -- Defense-in-depth URL sanitizer
-
-Create a small utility function that validates any `returnUrl` before it's used in navigation. This ensures that even if the React Router patch were somehow bypassed, the app would never navigate to an external URL.
-
-The function will:
-- Strip any protocol schemes (e.g., `javascript:`, `https://`)
-- Reject URLs that start with `//` (protocol-relative external URLs)
-- Ensure the path always starts with `/`
-- Default to `/dealer/dashboard` if the URL is invalid
-
-### 3. `src/components/auth/useAuthStateCheck.tsx` -- Sanitize returnUrl before navigate
-
-Wrap the `returnUrl` parameter through the sanitizer before passing it to `navigate()`:
-
-```typescript
-import { sanitizeReturnUrl } from "@/utils/sanitizeReturnUrl";
-
-// Inside the redirect logic:
-const safeUrl = sanitizeReturnUrl(returnUrl);
-navigate(safeUrl, { replace: true });
-```
-
-### 4. `src/contexts/auth/hooks/useAuthStateListener.ts` -- Sanitize targetUrl before navigate
-
-Apply the same sanitization to `targetUrl` before navigation:
-
-```typescript
-import { sanitizeReturnUrl } from "@/utils/sanitizeReturnUrl";
-
-// Inside the SIGNED_IN handler:
-const targetUrl = sanitizeReturnUrl(currentLocation.state?.returnUrl || "/dealer/dashboard");
-navigate(targetUrl, { replace: true });
-```
+- `overrides` tells npm: "wherever you see `@remix-run/router` in any dependency tree, resolve it to `>=1.23.2`"
+- This eliminates the nested `1.20.0` copy under `react-router-dom/node_modules/`
+- Same for `react-router`: forces `>=6.30.2` instead of the nested `6.27.0`
+- The Dependabot alert will clear because the lockfile will no longer contain the vulnerable versions
 
 ## What this changes
 
-- Forces `react-router` to resolve to at least `6.30.2` in the lockfile, patching the vulnerability at its source
-- Adds a defense-in-depth sanitizer so that no navigation path can ever point to an external URL, even if new vulnerabilities are found in the future
-- No functional change for normal users -- all internal redirect paths (like `/dealer/dashboard`) pass through unchanged
-- The Dependabot alert on GitHub will be resolved
+- No functional change -- the app uses Declarative Mode (`BrowserRouter`) which is unaffected by these vulnerabilities
+- Removes two unnecessary direct dependencies that were cluttering the dependency list
+- Properly forces patched versions via overrides, which is the correct npm mechanism for transitive dependency patching
+- Both Dependabot alerts (react-router #23 and @remix-run/router #22) will be resolved
 
