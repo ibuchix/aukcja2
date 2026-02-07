@@ -62,8 +62,18 @@ export const CloudflareTurnstile = forwardRef<CloudflareTurnstileRef, Cloudflare
   ({ onVerify, onError, onExpire }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const widgetIdRef = useRef<string | null>(null);
+    const scriptLoadedRef = useRef(false);
     const [scriptLoaded, setScriptLoaded] = useState(false);
     const [loadError, setLoadError] = useState(false);
+
+    // Store callbacks in refs to avoid re-rendering the widget when parent re-renders
+    const onVerifyRef = useRef(onVerify);
+    const onErrorRef = useRef(onError);
+    const onExpireRef = useRef(onExpire);
+
+    useEffect(() => { onVerifyRef.current = onVerify; }, [onVerify]);
+    useEffect(() => { onErrorRef.current = onError; }, [onError]);
+    useEffect(() => { onExpireRef.current = onExpire; }, [onExpire]);
 
     const renderWidget = useCallback(() => {
       if (!containerRef.current || !window.turnstile) return;
@@ -86,19 +96,19 @@ export const CloudflareTurnstile = forwardRef<CloudflareTurnstileRef, Cloudflare
         language: "pl",
         callback: (token: string) => {
           console.log("✅ Turnstile verification passed");
-          onVerify(token);
+          onVerifyRef.current(token);
         },
         "error-callback": () => {
           console.warn("⚠️ Turnstile error");
-          onError?.();
+          onErrorRef.current?.();
         },
         "expired-callback": () => {
           console.warn("⚠️ Turnstile token expired");
-          onExpire?.();
+          onExpireRef.current?.();
         },
         theme: "dark",
       });
-    }, [onVerify, onError, onExpire]);
+    }, []); // No callback deps needed — refs are used inside
 
     useImperativeHandle(ref, () => ({
       reset: () => {
@@ -118,21 +128,24 @@ export const CloudflareTurnstile = forwardRef<CloudflareTurnstileRef, Cloudflare
 
       loadTurnstileScript()
         .then(() => {
+          scriptLoadedRef.current = true;
           setScriptLoaded(true);
+          clearTimeout(timeoutId);
         })
         .catch((err) => {
           console.error("❌ Failed to load Turnstile:", err);
+          clearTimeout(timeoutId);
           setLoadError(true);
           // Graceful fallback: allow form submission after timeout
-          onVerify("TURNSTILE_LOAD_FAILED");
+          onVerifyRef.current("TURNSTILE_LOAD_FAILED");
         });
 
       // Fallback timeout: if Turnstile doesn't load in time, allow submission
       timeoutId = setTimeout(() => {
-        if (!scriptLoaded && !loadError) {
+        if (!scriptLoadedRef.current) {
           console.warn("⚠️ Turnstile load timeout, allowing fallback");
           setLoadError(true);
-          onVerify("TURNSTILE_TIMEOUT");
+          onVerifyRef.current("TURNSTILE_TIMEOUT");
         }
       }, FALLBACK_TIMEOUT_MS);
 
