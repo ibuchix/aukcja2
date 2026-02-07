@@ -8,6 +8,7 @@ import { fetchDealerProfile } from "../authUtils";
 import { AuthDebugger } from "@/utils/authDebugger";
 import { queryInvalidationManager } from "@/utils/queryInvalidationManager";
 import { translateUILabel, translateMessage } from "@/lib/vehicleTranslations";
+import { sanitizeReturnUrl } from "@/utils/sanitizeReturnUrl";
 
 /**
  * Enhanced hook to listen for authentication state changes with navigation handling
@@ -115,7 +116,7 @@ export function useAuthStateListener(
             // Get current location from ref
             const currentLocation = locationRef.current;
             const isOnAuthPage = currentLocation.pathname === '/auth' || currentLocation.pathname.includes('/auth');
-            const targetUrl = currentLocation.state?.returnUrl || "/dealer/dashboard";
+            const targetUrl = sanitizeReturnUrl(currentLocation.state?.returnUrl || "/dealer/dashboard");
             
             console.log("🔍 Navigation analysis:");
             console.log("  - Current pathname:", currentLocation.pathname);
