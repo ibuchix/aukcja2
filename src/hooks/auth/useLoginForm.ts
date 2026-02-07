@@ -39,7 +39,7 @@ export function useLoginForm() {
     return authInfo;
   };
 
-  const onSubmit = async (data: LoginFormValues) => {
+  const onSubmit = async (data: LoginFormValues, turnstileToken?: string | null) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -59,6 +59,7 @@ export function useLoginForm() {
       const result = await signInWithEmail({
         email: normalizedEmail,
         password: data.password.trim(),
+        turnstileToken: turnstileToken || undefined,
       });
       
       if (result.error) {

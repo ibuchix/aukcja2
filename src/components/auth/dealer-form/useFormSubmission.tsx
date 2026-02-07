@@ -21,7 +21,7 @@ export function useFormSubmission({
   const navigate = useNavigate();
   const { handleSubmit: completeRegistration } = useCompleteRegistration();
   
-  const handleFormSubmit = async (values: DealerFormValues) => {
+  const handleFormSubmit = async (values: DealerFormValues, turnstileToken?: string | null) => {
     setIsSubmitting(true);
     resetError();
     
@@ -29,7 +29,7 @@ export function useFormSubmission({
       console.log("Starting dealer registration process...");
       
       // Call our registration hook that handles both auth and profile creation
-      const result = await completeRegistration(values);
+      const result = await completeRegistration(values, turnstileToken);
       
       if (result.success) {
         console.log("Registration successful", result.loginSuccessful ? "and user automatically logged in" : "but automatic login failed");

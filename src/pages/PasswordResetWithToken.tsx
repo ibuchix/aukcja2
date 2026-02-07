@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { confirmPasswordReset } from "@/services/auth/passwordReset";
 import { ArrowLeft, CheckCircle, Loader2, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { generateStrongPassword } from "@/utils/passwordGenerator";
+import { CloudflareTurnstile, CloudflareTurnstileRef } from "@/components/auth/CloudflareTurnstile";
 
 interface PasswordResetForm {
   newPassword: string;
@@ -26,6 +27,8 @@ export default function PasswordResetWithToken() {
   const [token, setToken] = useState<string | null>(null);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<CloudflareTurnstileRef>(null);
 
   const form = useForm<PasswordResetForm>({
     defaultValues: {
@@ -88,7 +91,7 @@ export default function PasswordResetWithToken() {
     setIsLoading(true);
 
     try {
-      const result = await confirmPasswordReset(token, data.newPassword);
+      const result = await confirmPasswordReset(token, data.newPassword, turnstileToken || undefined);
 
       if (result.success) {
         setIsSuccess(true);
@@ -106,6 +109,9 @@ export default function PasswordResetWithToken() {
           description: result.error || "Nie można zresetować hasła. Link mógł wygasnąć.",
           variant: "destructive"
         });
+        // Reset turnstile on error
+        setTurnstileToken(null);
+        turnstileRef.current?.reset();
       }
     } catch (error) {
       toast({
@@ -113,6 +119,8 @@ export default function PasswordResetWithToken() {
         description: "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.",
         variant: "destructive"
       });
+      setTurnstileToken(null);
+      turnstileRef.current?.reset();
     } finally {
       setIsLoading(false);
     }
@@ -240,10 +248,16 @@ export default function PasswordResetWithToken() {
                   )}
                 />
 
+                <CloudflareTurnstile
+                  ref={turnstileRef}
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken(null)}
+                />
+
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isLoading}
+                  disabled={isLoading || !turnstileToken}
                 >
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Zresetuj hasło

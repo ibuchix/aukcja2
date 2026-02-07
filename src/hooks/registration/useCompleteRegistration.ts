@@ -18,7 +18,7 @@ export function useCompleteRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = async (values: DealerFormValues): Promise<CompleteRegistrationResult> => {
+  const handleSubmit = async (values: DealerFormValues, turnstileToken?: string | null): Promise<CompleteRegistrationResult> => {
     // Prevent duplicate submissions
     if (isSubmitting) {
       console.log("Registration already in progress, ignoring duplicate request");
@@ -51,7 +51,7 @@ export function useCompleteRegistration() {
       });
       
       // Create request body 
-      const requestBody = {
+      const requestBody: Record<string, unknown> = {
         action: 'register',
         email: values.email.trim().toLowerCase(),
         password: cleanedPassword,
@@ -66,6 +66,11 @@ export function useCompleteRegistration() {
         requestId: crypto.randomUUID(),
         timestamp: new Date().toISOString()
       };
+
+      // Include turnstile token if available
+      if (turnstileToken) {
+        requestBody.turnstileToken = turnstileToken;
+      }
       
       // Use centralized Supabase configuration
       const url = `${SUPABASE_URL}/functions/v1/dealer-auth`;
@@ -75,7 +80,8 @@ export function useCompleteRegistration() {
       // Create sanitized body for logging
       const sanitizedBody = {
         ...requestBody,
-        password: '[REDACTED]'
+        password: '[REDACTED]',
+        turnstileToken: turnstileToken ? '[PRESENT]' : '[MISSING]'
       };
       console.log("Registration request body:", sanitizedBody);
       
@@ -137,7 +143,6 @@ export function useCompleteRegistration() {
         data = responseText ? JSON.parse(responseText) : null;
       } catch (e) {
         console.error("Error parsing registration response:", e);
-        // Be tolerant: registration likely succeeded even if response isn't JSON
         toast({
           title: "Rejestracja pomyślna",
           description: "Konto utworzone. Zaloguj się swoimi danymi.",
@@ -150,7 +155,6 @@ export function useCompleteRegistration() {
       
       if (!data) {
         console.error("Empty response from registration service");
-        // Assume success if HTTP was OK but body is empty
         toast({
           title: "Rejestracja pomyślna",
           description: "Konto utworzone. Zaloguj się swoimi danymi.",
@@ -165,19 +169,18 @@ export function useCompleteRegistration() {
       const response_data = data;
       
       if (!response_data.success) {
-        // Special handling for "email already exists" error - this might mean registration actually succeeded
+        // Special handling for "email already exists" error
         if (response_data.error?.toLowerCase().includes("already exists")) {
-          console.log("Email already exists error - checking if user can log in (registration may have succeeded)");
+          console.log("Email already exists error - checking if user can log in");
           
           try {
-            // Try to log in with the provided credentials
             const signInResult = await signInWithEmail({
               email: values.email.trim().toLowerCase(),
               password: values.password
             });
             
             if (!signInResult.error && signInResult.data) {
-              console.log("Login successful after 'already exists' error - registration was actually successful");
+              console.log("Login successful after 'already exists' error");
               toast({
                 title: "Witamy ponownie!",
                 description: "Masz już konto i zostałeś zalogowany.",
@@ -212,7 +215,7 @@ export function useCompleteRegistration() {
 
       // Check for auto-generated session
       if (response_data.session) {
-        console.log("Registration successful with automatic session, user is now logged in");
+        console.log("Registration successful with automatic session");
         toast({
           title: "Witamy w Twoim panelu! 🎉",
           description: "Rejestracja zakończona, jesteś teraz zalogowany",
@@ -224,8 +227,7 @@ export function useCompleteRegistration() {
         };
       }
       
-      // If no session was returned but registration was successful,
-      // attempt to login immediately 
+      // If no session was returned, attempt to login immediately 
       try {
         console.log("Registration successful, attempting immediate login");
         toast({

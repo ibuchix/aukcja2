@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, CheckCircle, AlertCircle, Mail } from 'lucide-react';
 import { requestPasswordReset } from '@/services/auth/passwordReset';
+import { CloudflareTurnstile, CloudflareTurnstileRef } from '@/components/auth/CloudflareTurnstile';
 
 interface PasswordResetRequestForm {
   email: string;
@@ -21,6 +22,8 @@ export default function PasswordReset() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<CloudflareTurnstileRef>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<PasswordResetRequestForm>();
 
@@ -33,16 +36,22 @@ export default function PasswordReset() {
         email: data.email.trim(),
         taxId: data.taxId.trim(),
         businessRegistryNumber: data.businessRegistryNumber.trim(),
-        supervisorName: data.supervisorName.trim()
+        supervisorName: data.supervisorName.trim(),
+        turnstileToken: turnstileToken || undefined,
       });
 
       if (result.success) {
         setSuccess(true);
       } else {
         setError(result.error || 'Password reset request failed');
+        // Reset turnstile on error
+        setTurnstileToken(null);
+        turnstileRef.current?.reset();
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
+      setTurnstileToken(null);
+      turnstileRef.current?.reset();
     } finally {
       setIsLoading(false);
     }
@@ -169,10 +178,16 @@ export default function PasswordReset() {
               )}
             </div>
 
+            <CloudflareTurnstile
+              ref={turnstileRef}
+              onVerify={(token) => setTurnstileToken(token)}
+              onExpire={() => setTurnstileToken(null)}
+            />
+
             <Button 
               type="submit"
               className="w-full"
-              disabled={isLoading}
+              disabled={isLoading || !turnstileToken}
             >
               {isLoading ? 'Wysyłanie...' : 'Wyślij instrukcje resetowania hasła'}
             </Button>
