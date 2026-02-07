@@ -1,124 +1,45 @@
 
 
-# Plan: Add Cloudflare Turnstile to All Dealer Auth Forms
+# Fix: Cloudflare Turnstile Stale Closure Bug
 
-## Overview
+## What's Happening
 
-Add Cloudflare Turnstile (managed mode) with Polish language to all 4 authentication forms. The existing `TURNSTILE_SECRET_KEY` already stored in Supabase will be used for server-side verification -- no new secrets needed.
+1. **Console errors (401, cross-origin frame) are EXPECTED** -- Cloudflare confirms these are normal Turnstile behaviour. No action needed for those.
 
-## Prerequisites (Your Action)
+2. **The real bug**: A stale closure in the fallback timeout causes the Turnstile widget to be removed from the page after 10 seconds, even when it loaded successfully. The form then submits with a fake `TURNSTILE_TIMEOUT` token, and the backend accepts it as a fallback -- effectively bypassing Turnstile protection entirely.
 
-Add `aukcja.autaro.pl` to your existing Turnstile widget's hostname list in the Cloudflare dashboard:
-**Turnstile > your widget > Settings > Hostname Management > Add `aukcja.autaro.pl`**
+## Root Cause
 
-You also need to provide your Turnstile **Site Key** (the public one, not the secret) so it can be embedded in the frontend code.
+In `CloudflareTurnstile.tsx`, the timeout callback captures `scriptLoaded` at its initial value (`false`). When the timeout fires 10 seconds later, it still sees `false` even though `setScriptLoaded(true)` was called. This causes the widget to be destroyed and a fallback token to be sent.
 
----
+## Fix (2 files)
 
-## Changes Summary
+### File 1: `src/components/auth/CloudflareTurnstile.tsx`
 
-### 1. New File: `src/components/auth/CloudflareTurnstile.tsx`
+**Fix the stale closure** by clearing the timeout as soon as the script loads successfully:
 
-A reusable React component that:
-- Loads the Turnstile script from `challenges.cloudflare.com` (once, cached)
-- Renders the managed widget with **Polish language** (`data-language="pl"`)
-- Calls `onVerify(token)` when verification passes
-- Handles errors and expiration gracefully
-- Exposes a `reset()` method via ref for re-rendering after submissions
-- Includes a fallback timeout so users are never locked out if Turnstile fails to load
+- In the `loadTurnstileScript().then()` handler, call `clearTimeout(timeoutId)` after `setScriptLoaded(true)`
+- In the `.catch()` handler, also call `clearTimeout(timeoutId)` to avoid double-firing
+- Use a ref (`scriptLoadedRef`) to track load state reliably across closures
+- This ensures the fallback timeout only fires if the script genuinely fails to load within 10 seconds
 
-### 2. Update: `index.html` (CSP Headers)
+Additionally, stabilise the callback references using refs to prevent unnecessary widget re-renders when parent components re-render:
+- Store `onVerify`, `onError`, `onExpire` in refs
+- Reference the refs inside `renderWidget` instead of the props directly
+- Remove callback props from the `useCallback` dependency array
 
-Add Cloudflare domains to the Content Security Policy:
-- `script-src`: add `https://challenges.cloudflare.com`
-- `frame-src`: add `https://challenges.cloudflare.com`
-- `connect-src`: add `https://challenges.cloudflare.com`
+### File 2: `vite.config.ts`
 
-### 3. Update: `src/components/auth/DealerLoginForm.tsx` (Login Form)
+Update the CSP in the Vite dev server config to include `https://challenges.cloudflare.com` in `script-src`, `connect-src`, and add a `frame-src` directive. This only affects local development but ensures consistency with `index.html`.
 
-- Import and render `CloudflareTurnstile` between the form fields and submit button
-- Store the Turnstile token in local state
-- Disable the submit button until Turnstile verification passes
-- Pass the token to the login submission flow
+## What This Fixes
 
-### 4. Update: `src/hooks/auth/useLoginForm.ts` (Login Hook)
+- Turnstile widget will no longer be destroyed after 10 seconds
+- Real Turnstile tokens will be sent to the backend instead of `TURNSTILE_TIMEOUT`
+- Server-side verification will actually validate tokens against Cloudflare's API
+- The fallback timeout will only trigger if the Turnstile script genuinely fails to load (network error, ad blocker, etc.)
 
-- Accept a `turnstileToken` parameter in the `onSubmit` function
-- Include the token in the request body sent to the `dealer-auth` edge function
+## What About the Console Errors?
 
-### 5. Update: `src/services/auth/signin.ts` (Login Service)
-
-- Accept an optional `turnstileToken` parameter in `signInWithEmail`
-- Include it in the request body (`turnstileToken` field)
-
-### 6. Update: `src/pages/auth/DealerSignupForm.tsx` (Registration Form)
-
-- Add `CloudflareTurnstile` widget before the submit button
-- Store the token in state
-- Pass it through to the registration submission flow
-
-### 7. Update: `src/components/auth/dealer-form/useFormSubmission.tsx` (Registration Submission)
-
-- Accept a `turnstileToken` parameter
-- Pass it to `useCompleteRegistration`
-
-### 8. Update: `src/hooks/registration/useCompleteRegistration.ts` (Registration Service)
-
-- Accept `turnstileToken` in the request body sent to `dealer-auth`
-
-### 9. Update: `src/pages/PasswordReset.tsx` (Password Reset Request Form)
-
-- Add `CloudflareTurnstile` widget before the submit button
-- Store the token and include it in the `requestPasswordReset` call
-
-### 10. Update: `src/pages/PasswordResetWithToken.tsx` (Password Reset Confirm Form)
-
-- Add `CloudflareTurnstile` widget before the submit button
-- Include the token in the `confirmPasswordReset` call
-
-### 11. Update: `src/services/auth/passwordReset.ts` (Password Reset Service)
-
-- Accept `turnstileToken` parameter in both `requestPasswordReset` and `confirmPasswordReset`
-- Include it in the request body sent to `dealer-auth`
-
-### 12. Update: `supabase/functions/dealer-auth/route-handler.ts` (Server-Side Verification)
-
-Add a Turnstile verification function that runs **before** any action handler:
-
-1. Extract `turnstileToken` from the request body
-2. If token is missing, return 400 error with Polish message
-3. POST to `https://challenges.cloudflare.com/turnstile/v0/siteverify` with the secret key (`TURNSTILE_SECRET_KEY` from environment) and the token
-4. If verification fails, return 403 error with Polish message
-5. If verification passes, proceed to existing handler logic
-
-This single checkpoint protects ALL actions (login, register, password_reset_request, password_reset_confirm) since they all route through this handler. The `debug` action will be excluded from Turnstile checks.
-
----
-
-## Safety / Non-Breaking Guarantees
-
-- **Graceful frontend degradation**: If Turnstile script fails to load (network issues, ad blockers), a 10-second timeout allows form submission anyway (with a console warning). Users are never locked out.
-- **Server-side fallback**: If `TURNSTILE_SECRET_KEY` is not found in the environment, the edge function logs a warning and allows the request through. This means the app works normally even if the secret is temporarily unavailable.
-- **No database changes**: Zero migrations required.
-- **Polish language**: The widget uses `data-language="pl"` so all Turnstile UI elements (challenges, messages) appear in Polish.
-- **Existing functionality untouched**: All current auth flows remain identical -- Turnstile is purely additive.
-
----
-
-## Files to Create/Edit
-
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/components/auth/CloudflareTurnstile.tsx` | **Create** | Reusable Turnstile widget (Polish, managed mode) |
-| `index.html` | Edit | Add Cloudflare to CSP |
-| `src/components/auth/DealerLoginForm.tsx` | Edit | Add Turnstile to login form |
-| `src/hooks/auth/useLoginForm.ts` | Edit | Pass token through login flow |
-| `src/services/auth/signin.ts` | Edit | Include token in login request |
-| `src/pages/auth/DealerSignupForm.tsx` | Edit | Add Turnstile to registration |
-| `src/components/auth/dealer-form/useFormSubmission.tsx` | Edit | Pass token in registration flow |
-| `src/hooks/registration/useCompleteRegistration.ts` | Edit | Include token in registration request |
-| `src/pages/PasswordReset.tsx` | Edit | Add Turnstile to password reset request |
-| `src/pages/PasswordResetWithToken.tsx` | Edit | Add Turnstile to password reset confirm |
-| `src/services/auth/passwordReset.ts` | Edit | Include token in reset requests |
-| `supabase/functions/dealer-auth/route-handler.ts` | Edit | Server-side Turnstile verification |
+The 401 errors and cross-origin frame messages will remain in the console -- this is normal Cloudflare Turnstile behaviour and cannot be suppressed. They do not affect functionality.
 
