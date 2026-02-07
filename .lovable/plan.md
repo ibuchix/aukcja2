@@ -1,45 +1,47 @@
 
 
-# Fix: Upgrade @remix-run/router to Clear Dependabot Alert
+# Fix: Upgrade jsPDF to 4.1.0 to Patch PDF Injection Vulnerability
 
 ## Impact Assessment
 
-**Your application is NOT affected by this vulnerability.**
+**Your application is NOT directly affected by this vulnerability.**
 
-The XSS-via-open-redirect vulnerability only applies to React Router apps using **Framework Mode**, **Data Mode**, or **unstable RSC modes** (i.e., those using `createBrowserRouter` / `RouterProvider`).
+The vulnerability requires using jsPDF's AcroForm API, specifically:
+- `AcroFormChoiceField.addOption`
+- `AcroFormChoiceField.setOptions`
+- `AcroFormCheckBox.appearanceState`
+- `AcroFormRadioButton.appearanceState`
 
-Your app uses **Declarative Mode** (`<BrowserRouter>`) exclusively -- confirmed by:
-- `src/Root.tsx` wraps everything in `<BrowserRouter>`
-- Zero usage of `createBrowserRouter`, `RouterProvider`, or any Data Mode APIs anywhere in the codebase
-- All routing uses `<Routes>`, `<Route>`, `<Navigate>`, and `useNavigate()` -- all Declarative Mode
+Your codebase uses jsPDF in exactly two files:
+1. `src/components/dealer/documents/CancellationForm.tsx` -- uses only `doc.text()`, `doc.rect()`, `doc.line()`, `doc.setFont()`, `doc.save()`
+2. `src/components/dealer/documents/LoyaltyAgreementForm.tsx` -- uses only `doc.text()`, `doc.addPage()`, `doc.splitTextToSize()`, `doc.save()`
 
-The advisory explicitly states: *"This does not impact applications that use Declarative Mode (`<BrowserRouter>`)."*
+Neither file uses any AcroForm features. A full codebase search for `AcroForm`, `addOption`, `setOptions`, and `appearanceState` returned zero results.
 
 ## Recommendation
 
-Even though the app is not vulnerable, upgrading will clear the GitHub Dependabot alert and is good security hygiene.
+Even though the app is not vulnerable today, upgrading clears the GitHub Dependabot alert and protects against future code that might use AcroForm features.
 
 ## Fix (1 file)
 
-### `package.json` -- Add override for `@remix-run/router`
+### `package.json` -- Upgrade jsPDF dependency
 
-Add `@remix-run/router` to the existing `overrides` section to force version `>=1.23.2`:
+Update the jsPDF version from `^4.0.0` to `^4.1.0` in the dependencies section. This is a minor version bump with no breaking changes -- the patch only adds input sanitization to the AcroForm module.
 
+**Current:**
 ```json
-"overrides": {
-  "glob": ">=10.5.0",
-  "js-yaml": ">=4.1.1",
-  "@isaacs/brace-expansion": ">=5.0.1",
-  "@remix-run/router": ">=1.23.2"
-}
+"jspdf": "^4.0.0"
 ```
 
-The locked version is currently `1.20.0` (transitive via `react-router-dom@6.27.0`). The override forces the package manager to resolve it to the patched version (`>=1.23.2`), clearing the alert.
+**Updated:**
+```json
+"jspdf": "^4.1.0"
+```
 
 ## What this changes
 
-- Forces `@remix-run/router` to resolve to at least `1.23.2` in the lockfile
-- No functional change -- Declarative Mode routing is unaffected by this patch
+- Upgrades jsPDF from 4.0.0 to 4.1.0 (minor version, no breaking changes)
+- The patch adds input sanitization to AcroForm fields to prevent PDF object injection
+- Your existing PDF generation code (text-only, no forms) is completely unaffected
 - The Dependabot alert on GitHub will be resolved
-- Zero risk of breakage since the patch only fixes a code path your app never uses
 
