@@ -11,8 +11,8 @@ interface BidFormButtonProps {
 export const BidFormButton = ({
   onClick,
   isSubmitting,
-  label = "Place Bid",
-  submittingLabel = "Placing Bid..."
+  label = "Złóż ofertę",
+  submittingLabel = "Składanie oferty..."
 }: BidFormButtonProps) => {
   return (
     <Button 
