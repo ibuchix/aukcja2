@@ -1,50 +1,38 @@
 
 
-# Streamline Auction Cards and Add Inline Bidding
+# Polish Language Fixes, Label Change, and Text Size Improvements
 
 ## Overview
 
-Three changes to the `LiveAuctionCard` component to declutter the cards and let dealers bid directly from the card listing without clicking into the detail page.
+Four targeted changes across 3 files to fix the language consistency on auction cards and improve text legibility.
 
 ## Changes
 
-### 1. Remove colourful badges from the car image
+### 1. BidInput placeholder -- English to Polish
 
-Remove all `PhotoBadge` overlays from the image area:
-- "Aukcja na zywo" (green live badge, top-left)
-- "Uszkodzony" (red damage badge, top-right)
-- "Zarejestrowany w Polsce" / "Zweryfikowany prywatny sprzedajacy" (bottom-left)
-- "Platnosc przy odbiorze" (bottom-right)
+**File: `src/components/auction/bid-form/BidInput.tsx` (line 24)**
 
-The wishlist heart button stays -- it is not a badge, it is a functional button.
+Change the placeholder from `"Enter any bid amount"` to `"Wprowadź swoją ofertę"` to match the detail page.
 
-### 2. Remove VIN from the card
+### 2. BidFormButton label -- English to Polish
 
-Remove the VIN display block (lines 278-283 in `LiveAuctionCard.tsx`). Dealers can still see the VIN when they click into the car detail page.
+**File: `src/components/auction/bid-form/BidFormButton.tsx` (lines 14-15)**
 
-### 3. Add inline BidForm below the pricing section
+Change default `label` from `"Place Bid"` to `"Złóż ofertę"` and `submittingLabel` from `"Placing Bid..."` to `"Składanie oferty..."`.
 
-Reuse the existing `BidForm` component (`src/components/auction/bid-form/BidForm.tsx`) and place it directly below the price on each card. This gives dealers the option to bid immediately without navigating to the detail page.
+### 3. "Cena orientacyjna" to "Cena wyjściowa"
 
-The `BidForm` needs `carId`, `dealerId`, `currentHighestBid`, `minimumIncrement`, and optionally `reservePrice` -- all of which are already available in `LiveAuctionCard`. The bid form click will use `e.stopPropagation()` to prevent the card's click-to-navigate behaviour from triggering.
+**File: `src/lib/vehicleTranslations.ts` (line 120)**
 
-The bid form will only show when the auction is live (not ended, not scheduled).
+Change the translation for `'Reserve Price'` from `'Cena orientacyjna'` to `'Cena wyjściowa'`. This affects all places where `translateSpecificationLabel('Reserve Price')` is called, keeping it consistent app-wide.
 
----
+### 4. Bigger, more legible car info text on cards
 
-## Technical Details
+**File: `src/components/dealer/cars/LiveAuctionCard.tsx`**
 
-### File: `src/components/dealer/cars/LiveAuctionCard.tsx`
+Three text size increases:
 
-**Removals:**
-- Remove all 4 `PhotoBadge` usages (lines 185-229)
-- Remove the `PhotoBadge` import (line 8)
-- Remove VIN block (lines 278-283)
-- Remove `FileText` from the lucide import since it was only used for VIN
-
-**Addition:**
-- Import `BidForm` from `@/components/auction/bid-form/BidForm`
-- After the pricing section (after line 371's closing `</div>`), add a wrapper `div` with `onClick={e => e.stopPropagation()}` containing the `BidForm` component
-- Only render the bid form when the auction is live (`isLive && !hasEnded`)
-- Pass props: `carId={car.id}`, `dealerId={dealerId}`, `currentHighestBid={car.current_bid || 0}`, `minimumIncrement={250}`, `reservePrice={reservePrice}`
+- **Car title** (line 191): Change from `text-base` / `text-lg` to `text-lg` / `text-xl`
+- **Key specs** (line 197): Change from `text-xs` / `text-sm` to `text-sm` / `text-base`
+- **Location** (line 210): Change from `text-xs` / `text-sm` to `text-sm` / `text-base`
 
