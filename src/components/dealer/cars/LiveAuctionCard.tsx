@@ -3,9 +3,9 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin, Key, FileText, AlertCircle, CheckCircle, Wrench, Zap, Heart } from "lucide-react";
+import { Clock, MapPin, Key, AlertCircle, CheckCircle, Wrench, Zap, Heart } from "lucide-react";
 
-import { PhotoBadge } from "./PhotoBadge";
+import { BidForm } from "@/components/auction/BidForm";
 import { AuctionStatusIndicator } from "./AuctionStatusIndicator";
 import { getPrimaryImage, getAllCarImages } from "@/utils/imageUtils";
 import { useImagePrefetch } from "@/hooks/useImagePrefetch";
@@ -182,51 +182,6 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
           style={{ opacity: 0 }}
         />
         
-        {/* Top-left: Live Status Badge */}
-        {isLive && (
-          <PhotoBadge variant="live" position="top-left">
-            Aukcja na żywo
-          </PhotoBadge>
-        )}
-        
-        {/* Top-right: Wishlist Heart Button */}
-        <button
-          onClick={handleWishlistClick}
-          className="absolute top-3 right-3 p-2 rounded-full bg-background/90 backdrop-blur shadow-lg hover:bg-background transition-all hover:scale-110 z-10"
-          aria-label={isInWishlist(car.id) ? "Usuń z listy życzeń" : "Dodaj do listy życzeń"}
-        >
-          <Heart
-            className={cn(
-              "h-5 w-5 transition-all",
-              isInWishlist(car.id) 
-                ? "fill-destructive text-destructive" 
-                : "text-muted-foreground hover:text-destructive"
-            )}
-          />
-        </button>
-        
-        {/* Damage Badge */}
-        {car.isDamaged && (
-          <PhotoBadge variant="damaged" position="top-right" className="mr-16">
-            Uszkodzony
-          </PhotoBadge>
-        )}
-        
-        {/* Bottom-left: Registration or Verified Seller */}
-        {car.isRegisteredInPoland ? (
-          <PhotoBadge variant="registered" position="bottom-left">
-            Zarejestrowany w Polsce
-          </PhotoBadge>
-        ) : (
-          <PhotoBadge variant="verified-seller" position="bottom-left">
-            Zweryfikowany prywatny sprzedający
-          </PhotoBadge>
-        )}
-        
-        {/* Bottom-right: Payment on Collection (always show) */}
-        <PhotoBadge variant="payment-collection" position="bottom-right">
-          Płatność przy odbiorze
-        </PhotoBadge>
       </div>
       
       <CardContent className={isMobile ? "p-3" : "p-4"}>
@@ -275,13 +230,6 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
 
           {/* Vehicle Details Section */}
           <div className={`${isMobile ? 'text-xs' : 'text-sm'} space-y-1.5 pt-2 border-t`}>
-            {car.vin && (
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="text-muted-foreground">VIN:</span>
-                <span className="font-mono">{car.vin}</span>
-              </div>
-            )}
             {car.registration_number && (
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground">Rejestracja:</span>
@@ -369,6 +317,19 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
               </div>
             )}
           </div>
+
+          {/* Inline Bid Form */}
+          {isLive && !hasEnded && (
+            <div onClick={(e) => e.stopPropagation()} className="pt-3 border-t">
+              <BidForm
+                carId={car.id}
+                dealerId={dealerId}
+                currentHighestBid={car.current_bid || 0}
+                minimumIncrement={250}
+                reservePrice={reservePrice}
+              />
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
