@@ -188,13 +188,13 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
         <div className="space-y-3">
           {/* Title and Timer */}
           <div className="flex items-start justify-between gap-3">
-            <h3 className={`font-kanit font-semibold ${isMobile ? 'text-base' : 'text-lg'} flex-1`}>
+            <h3 className={`font-kanit font-semibold ${isMobile ? 'text-lg' : 'text-xl'} flex-1`}>
               {car.year} {car.make} {car.model}
             </h3>
           </div>
           
           {/* Key Specs */}
-          <div className={`flex items-center gap-3 ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground flex-wrap`}>
+          <div className={`flex items-center gap-3 ${isMobile ? 'text-sm' : 'text-base'} text-muted-foreground flex-wrap`}>
             <span>{car.mileage?.toLocaleString()} km</span>
             <span>•</span>
             <span>{translateTransmission(car.transmission)}</span>
@@ -207,7 +207,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
           </div>
           
           {/* Location */}
-          <div className={`flex items-center gap-2 ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
+          <div className={`flex items-center gap-2 ${isMobile ? 'text-sm' : 'text-base'} text-muted-foreground`}>
             <MapPin className="h-4 w-4 flex-shrink-0" />
             <span>
               {car.town && car.county 
