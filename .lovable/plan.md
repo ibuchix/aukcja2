@@ -1,38 +1,27 @@
 
 
-# Polish Language Fixes, Label Change, and Text Size Improvements
+# Fix Location (County) Filter for Auctions
 
-## Overview
+## Root Cause
 
-Four targeted changes across 3 files to fix the language consistency on auction cards and improve text legibility.
+The auction browser uses `buildAuctionQuery` in `src/components/dealer/auction/hooks/services/auctionDataService.ts` to fetch auctions. This function applies filters for make, model, year, price, and mileage -- but **the county filter was never added**. When a dealer selects a location, it gets stored in `filters.county` but is silently ignored.
 
-## Changes
+## Database Reality
 
-### 1. BidInput placeholder -- English to Polish
+The county data in the database is inconsistent -- values like `"dolnoslaskie"`, `"Dolnośląskie"`, `"Dolnośląskie "` (trailing space), `"Dolno śląskie"` all exist. The filter needs to use a case-insensitive partial match (`ilike`) to work reliably.
 
-**File: `src/components/auction/bid-form/BidInput.tsx` (line 24)**
+## Fix
 
-Change the placeholder from `"Enter any bid amount"` to `"Wprowadź swoją ofertę"` to match the detail page.
+### File: `src/components/dealer/auction/hooks/services/auctionDataService.ts`
 
-### 2. BidFormButton label -- English to Polish
+Add the missing county filter after the existing mileage filter block (after line 127), before the cursor pagination logic:
 
-**File: `src/components/auction/bid-form/BidFormButton.tsx` (lines 14-15)**
+```typescript
+if (filters.county) {
+  query = query.ilike("county", `%${filters.county}%`);
+}
+```
 
-Change default `label` from `"Place Bid"` to `"Złóż ofertę"` and `submittingLabel` from `"Placing Bid..."` to `"Składanie oferty..."`.
+This uses the same `ilike` partial-match approach already used in `filterUtils.ts`, which handles the messy data well. When a dealer selects "Dolnośląskie", it will match all variations in the database.
 
-### 3. "Cena orientacyjna" to "Cena wyjściowa"
-
-**File: `src/lib/vehicleTranslations.ts` (line 120)**
-
-Change the translation for `'Reserve Price'` from `'Cena orientacyjna'` to `'Cena wyjściowa'`. This affects all places where `translateSpecificationLabel('Reserve Price')` is called, keeping it consistent app-wide.
-
-### 4. Bigger, more legible car info text on cards
-
-**File: `src/components/dealer/cars/LiveAuctionCard.tsx`**
-
-Three text size increases:
-
-- **Car title** (line 191): Change from `text-base` / `text-lg` to `text-lg` / `text-xl`
-- **Key specs** (line 197): Change from `text-xs` / `text-sm` to `text-sm` / `text-base`
-- **Location** (line 210): Change from `text-xs` / `text-sm` to `text-sm` / `text-base`
-
+No other files need to change -- the `CountyFilter` component and filter state management already work correctly. The only gap was the query not applying the filter.
