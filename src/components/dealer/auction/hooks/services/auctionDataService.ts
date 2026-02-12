@@ -126,6 +126,10 @@ export const buildAuctionQuery = (
     }
   }
 
+  if (filters.county) {
+    query = query.ilike("county", `%${filters.county}%`);
+  }
+
   // Apply cursor-based pagination if cursor is provided
   if (cursor) {
     const decodedCursor = decodeCursor(cursor);
