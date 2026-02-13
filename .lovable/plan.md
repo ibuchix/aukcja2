@@ -1,63 +1,42 @@
 
-# Fix Location Filter to Match All Diacritical Variants
+# Add Horsepower to Vehicle Specifications
 
-## Problem
+## Overview
+The `horsepower` column exists in the database with real data for all auction cars, but is never passed through to the UI. Three small changes will surface it in the specification sections, labeled in Polish as "Moc silnika" with "KM" units.
 
-The database contains voivodeship names written in many ways -- with full Polish diacritics ("Łódzkie"), without them ("Lodzkie"), partially ("Łodzkie"), and with trailing spaces. The current `ilike` filter only matches exact character patterns, so selecting "Łódzkie" from the dropdown misses entries like "Lodzkie" or "lodzkie" because `ł` does not match `l` in PostgreSQL `ilike`.
+## Changes
 
-## Solution
+### 1. Add `horsepower` to the data transformation layer
+**File: `src/utils/carDataHelpers.ts`**
 
-Create a diacritics-aware mapping utility and update the query to match **all known ASCII and Polish variants** of each voivodeship name.
+Add `horsepower: car.horsepower || null` to the return object in `processCarData`, alongside the other vehicle fields like `engineCapacity`.
 
-### Step 1 -- New utility: `src/constants/countyVariants.ts`
+### 2. Add `horsepower` to the CarListing type
+**File: `src/types/cars.ts`**
 
-A map from each canonical Polish county name to an array of search patterns that cover all realistic spellings. For example:
+Add `horsepower?: number | null` to the `CarListing` interface, near the other engine-related fields like `engineCapacity`.
 
-```
-"Łódzkie" -> ["łódzkie", "lodzkie", "łodzkie"]
-"Śląskie" -> ["śląskie", "slaskie", "ślaskie"]
-"Małopolskie" -> ["małopolskie", "malopolskie"]
-"Świętokrzyskie" -> ["świętokrzyskie", "swietokrzyskie", "świetokrzyskie"]
-"Warmińsko-mazurskie" -> ["warmińsko-mazurskie", "warminsko-mazurskie"]
-"Kujawsko-pomorskie" -> ["kujawsko-pomorskie"]  (no diacritics to strip)
-```
+### 3. Display horsepower in the specification sections
 
-Each variant will be used as a separate `ilike` pattern so that any spelling in the database is caught.
+**File: `src/components/car-details/BasicSpecifications.tsx`**
 
-A helper function `getCountySearchPatterns(county: string): string[]` will return the list of patterns for a given canonical name.
+Add a new grid cell after Engine Capacity / Fuel Type:
+- Label: `Moc silnika` (via `translateSpecificationLabel('Horsepower')`)
+- Value: `{car.horsepower} KM` or "N/A"
 
-### Step 2 -- Update query in `auctionDataService.ts`
+**File: `src/components/dealer/bids/BidCarDetailsDialog.tsx`**
 
-Replace the single `ilike` line:
+Add a new spec card in the existing grid (after Fuel Type, before Number of Keys):
+- Label: `Moc silnika` (hardcoded Polish, matching the existing pattern in this file)
+- Value: `{displayCar?.horsepower} KM` or "Brak danych"
+- Same card styling as the other secondary spec cards
 
-```typescript
-if (filters.county) {
-  query = query.ilike("county", `%${filters.county}%`);
-}
-```
+### 4. Add Polish translation entry
+**File: `src/lib/vehicleTranslations.ts`**
 
-With an `OR` filter that covers all variants:
+Add `'Horsepower': 'Moc silnika'` to the specification label translations map so `BasicSpecifications.tsx` can use the standard `translateSpecificationLabel` call.
 
-```typescript
-if (filters.county) {
-  const patterns = getCountySearchPatterns(filters.county);
-  const orCondition = patterns
-    .map(p => `county.ilike.%${p}%`)
-    .join(',');
-  query = query.or(orCondition);
-}
-```
-
-This generates a query like `county ilike '%łódzkie%' OR county ilike '%lodzkie%' OR county ilike '%łodzkie%'`, catching every variation.
-
-### Step 3 -- Apply the same fix in `filterUtils.ts`
-
-The same county filter logic in `src/components/dealer/cars/hooks/utils/filterUtils.ts` (used for non-auction car browsing) also needs updating with the same pattern-matching approach to stay consistent.
-
-## Files Changed
-
-| File | Change |
-|------|--------|
-| `src/constants/countyVariants.ts` (new) | Mapping of canonical county names to all diacritical variants |
-| `src/components/dealer/auction/hooks/services/auctionDataService.ts` | Replace single `ilike` with multi-variant `or` filter |
-| `src/components/dealer/cars/hooks/utils/filterUtils.ts` | Same multi-variant approach for consistency |
+## Technical Details
+- No new dependencies or database changes needed
+- The `horsepower` column is already in the Supabase types (`number | null`)
+- Unit displayed as "KM" (Polish convention for horsepower, not "HP")
