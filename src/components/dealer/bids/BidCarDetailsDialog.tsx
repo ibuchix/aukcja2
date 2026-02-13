@@ -196,6 +196,16 @@ export const BidCarDetailsDialog = ({ isOpen, onOpenChange, bid }: BidCarDetails
                     </div>
                   </div>
                   
+                  {/* Secondary Specs - Horsepower */}
+                  <div className="p-5 bg-background border border-accent/20 rounded-lg">
+                    <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
+                      Moc silnika
+                    </div>
+                    <div className="text-lg font-kanit font-medium text-body-text">
+                      {(displayCar?.horsepower || displayCar?.horsepower === 0) ? `${displayCar.horsepower} KM` : 'Brak danych'}
+                    </div>
+                  </div>
+                  
                   {/* Secondary Specs - Number of Keys */}
                   <div className="p-5 bg-background border border-accent/20 rounded-lg">
                     <div className="text-xs text-subtitle-text font-kanit font-light uppercase tracking-wider mb-2">
