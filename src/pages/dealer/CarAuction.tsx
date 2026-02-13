@@ -294,6 +294,27 @@ const CarAuction = () => {
                       {car.engineCapacity}L
                     </div>
                   </div>
+              )}
+
+                {/* Moc silnika (Horsepower) */}
+                {car.horsepower && (
+                  <div className={cn(
+                    "group bg-secondary/50 border border-transparent rounded-xl transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]",
+                    isMobile ? "p-3" : "p-4"
+                  )}>
+                    <div className={cn(
+                      "text-subtitle-text font-kanit font-medium uppercase tracking-widest mb-1.5 opacity-70 group-hover:opacity-100 transition-opacity",
+                      isMobile ? "text-[10px]" : "text-xs"
+                    )}>
+                      Moc silnika
+                    </div>
+                    <div className={cn(
+                      "font-kanit font-medium text-body-text",
+                      isMobile ? "text-sm" : "text-base"
+                    )}>
+                      {car.horsepower} KM
+                    </div>
+                  </div>
                 )}
                 
                 {/* VIN */}
