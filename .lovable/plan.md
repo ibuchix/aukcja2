@@ -1,29 +1,39 @@
 
-# Add Horsepower to Auction Detail Page Specifications
+
+# Restore Wishlist Heart Button on Auction Cards
 
 ## Problem
-The horsepower ("Moc silnika") was added to `BasicSpecifications.tsx` and `BidCarDetailsDialog.tsx`, but the actual auction detail page at `/dealer/auction/:id` renders its own specifications section directly inside `src/pages/dealer/CarAuction.tsx`. This is the page shown in the screenshot -- and it was missed in the previous update.
+The heart icon for adding cars to the wishlist was removed from the auction card image overlay during a previous badge cleanup. All the supporting code (import, hook, click handler) is still in `LiveAuctionCard.tsx` -- only the JSX rendering the button is missing.
 
 ## Fix
 
-### File: `src/pages/dealer/CarAuction.tsx`
+### File: `src/components/dealer/cars/LiveAuctionCard.tsx`
 
-Add a new spec card for "Moc silnika" after the Engine Capacity card (after line 297), using the exact same card styling as the other spec items. It will display `{car.horsepower} KM` or fall back to "Brak danych".
+Add the heart button back into the image overlay area (the empty space at line 183-185, inside the `aspect-[4/3] relative` div). The button will:
+
+- Be positioned in the top-right corner of the car image (`absolute top-2 right-2`)
+- Use the existing `handleWishlistClick` function (which already calls `e.stopPropagation()`)
+- Use the existing `isInWishlist(car.id)` check to toggle between filled (red) and outline (white) heart
+- Have a semi-transparent dark background circle for visibility over any image
+- Match the app's red color (#D81B24) when active
+
+The added JSX (inserted after the `<img>` tag, before the closing `</div>` of the image container):
 
 ```
-{/* Moc silnika (Horsepower) */}
-{car.horsepower && (
-  <div className="group bg-secondary/50 border border-transparent rounded-xl ...">
-    <div className="text-subtitle-text ...">
-      Moc silnika
-    </div>
-    <div className="font-kanit font-medium text-body-text ...">
-      {car.horsepower} KM
-    </div>
-  </div>
-)}
+<button
+  onClick={handleWishlistClick}
+  className="absolute top-2 right-2 p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors z-10"
+  aria-label="Dodaj do listy życzeń"
+>
+  <Heart
+    className={cn(
+      "h-5 w-5 transition-colors",
+      isInWishlist(car.id)
+        ? "fill-[#D81B24] text-[#D81B24]"
+        : "text-white"
+    )}
+  />
+</button>
 ```
 
-The card will use the same responsive sizing (`isMobile` checks), hover effects, and font styling as the existing cards (Engine Capacity, VIN, etc.) so it fits perfectly into the grid.
-
-Only one file needs to change: `src/pages/dealer/CarAuction.tsx`.
+No new files, no new dependencies. This is a single-line restoration using code that already exists in the component.
