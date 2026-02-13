@@ -181,7 +181,20 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
           }}
           style={{ opacity: 0 }}
         />
-        
+        <button
+          onClick={handleWishlistClick}
+          className="absolute top-2 right-2 p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors z-10"
+          aria-label="Dodaj do listy życzeń"
+        >
+          <Heart
+            className={cn(
+              "h-5 w-5 transition-colors",
+              isInWishlist(car.id)
+                ? "fill-[#D81B24] text-[#D81B24]"
+                : "text-white"
+            )}
+          />
+        </button>
       </div>
       
       <CardContent className={isMobile ? "p-3" : "p-4"}>
