@@ -5,6 +5,7 @@ import { decodeCursor, getCursorOperator } from "@/utils/cursorPagination";
 import { calculateAuctionTimingStatus } from "../utils/auctionTimingUtils";
 import { CarData, BidData } from "../types/auctionBrowserTypes";
 import { fetchCarFileUploads, type CarFileUpload } from "@/utils/imageUtils/carFileUploads";
+import { getCountySearchPatterns } from "@/constants/countyVariants";
 
 const PAGE_SIZE = 10;
 
@@ -127,7 +128,11 @@ export const buildAuctionQuery = (
   }
 
   if (filters.county) {
-    query = query.ilike("county", `%${filters.county}%`);
+    const patterns = getCountySearchPatterns(filters.county);
+    const orCondition = patterns
+      .map(p => `county.ilike.%${p}%`)
+      .join(',');
+    query = query.or(orCondition);
   }
 
   // Apply cursor-based pagination if cursor is provided

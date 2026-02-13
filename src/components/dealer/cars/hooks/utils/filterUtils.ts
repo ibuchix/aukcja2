@@ -1,5 +1,6 @@
 
 import { AuctionFilters } from "../../../auction/types";
+import { getCountySearchPatterns } from "@/constants/countyVariants";
 
 export const applyFilters = (query: any, filters: AuctionFilters, searchQuery: string) => {
   let filteredQuery = query;
@@ -29,11 +30,15 @@ export const applyFilters = (query: any, filters: AuctionFilters, searchQuery: s
     }
   }
   
-  // Apply county filter - case-insensitive partial match to handle messy database data
+  // Apply county filter - match all diacritical variants for Polish voivodeships
   if (filters.county && typeof filters.county === 'string') {
-    filteredQuery = filteredQuery.ilike('county', `%${filters.county}%`);
+    const patterns = getCountySearchPatterns(filters.county);
+    const orCondition = patterns
+      .map(p => `county.ilike.%${p}%`)
+      .join(',');
+    filteredQuery = filteredQuery.or(orCondition);
     if (isDev) {
-      console.log('Applied county filter:', filters.county);
+      console.log('Applied county filter with variants:', patterns);
     }
   }
   
