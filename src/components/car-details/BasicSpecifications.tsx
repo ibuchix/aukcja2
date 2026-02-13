@@ -41,6 +41,10 @@ const BasicSpecifications = ({ car }: BasicSpecificationsProps) => {
           <p className="font-medium">{translateFuelType(car.fuel_type || car.fuelType)}</p>
         </div>
         <div>
+          <p className="text-subtitle-text">{translateSpecificationLabel('Horsepower')}</p>
+          <p className="font-medium">{car.horsepower ? `${car.horsepower} KM` : "N/A"}</p>
+        </div>
+        <div>
           <p className="text-subtitle-text">{translateSpecificationLabel('VIN Number')}</p>
           <p className="font-medium">{car.vin || "Not available"}</p>
         </div>

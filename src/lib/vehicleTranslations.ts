@@ -102,6 +102,7 @@ export const translateSpecificationLabel = (label: string): string => {
     'Engine': 'Silnik',
     'Power': 'Moc',
     'Engine Capacity': 'Pojemność silnika',
+    'Horsepower': 'Moc silnika',
     'Color': 'Kolor',
     'Doors': 'Liczba drzwi',
     'Seats': 'Liczba miejsc',

@@ -97,6 +97,7 @@ export interface CarListing {
   financeAmount?: number;
   seatMaterial?: string;
   engineCapacity?: string;
+  horsepower?: number | null;
   hasPrivatePlate?: boolean;
   isAuction?: boolean;
   sellerId?: string;
