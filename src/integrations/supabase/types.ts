@@ -1949,6 +1949,57 @@ export type Database = {
           },
         ]
       }
+      seller_reviews: {
+        Row: {
+          car_id: string
+          car_title: string
+          created_at: string
+          id: string
+          rating: number
+          review_text: string
+          seller_id: string
+          seller_name: string
+          status: string
+        }
+        Insert: {
+          car_id: string
+          car_title: string
+          created_at?: string
+          id?: string
+          rating: number
+          review_text: string
+          seller_id: string
+          seller_name: string
+          status?: string
+        }
+        Update: {
+          car_id?: string
+          car_title?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          review_text?: string
+          seller_id?: string
+          seller_name?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_reviews_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_reviews_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars_public_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sellers: {
         Row: {
           address: string | null
