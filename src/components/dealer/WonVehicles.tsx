@@ -4,7 +4,7 @@ import { useCurrentDealerProfile } from "@/hooks/useCurrentDealerProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Eye } from "lucide-react";
+import { RefreshCw, Eye, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +12,8 @@ import { calculatePlatformFee } from "@/utils/platformFeeCalculator";
 import CarDetailsDialog from "@/components/CarDetailsDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { fetchCarFileUploads, getPrimaryImageFromUploads } from "@/utils/imageUtils/carFileUploads";
+import { ReviewDialog } from "@/components/dealer/ReviewDialog";
+import { useDealerCarReview } from "@/hooks/useDealerReviews";
 
 // Seller Contact Component
 const SellerContactInfo = ({ vehicleId }: { vehicleId: string }) => {
@@ -109,6 +111,37 @@ interface WonVehicle {
   updated_at: string;
 }
 
+// Sub-component to check review status per vehicle (needs its own hook call)
+const ReviewButtonForVehicle = ({
+  dealerId, carId, dealerName, carTitle, onOpenReview
+}: {
+  dealerId: string; carId: string; dealerName: string; carTitle: string;
+  onOpenReview: (carId: string, title: string) => void;
+}) => {
+  const { data: existingReview } = useDealerCarReview(dealerId, carId);
+  
+  if (existingReview) {
+    return (
+      <Button variant="outline" size="lg" disabled className="opacity-60">
+        <Star className="h-4 w-4 mr-2 fill-yellow-400 text-yellow-400" />
+        Recenzja wysłana
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="lg"
+      className="text-yellow-600 border-yellow-300 hover:bg-yellow-50"
+      onClick={() => onOpenReview(carId, carTitle)}
+    >
+      <Star className="h-4 w-4 mr-2" />
+      Napisz recenzję
+    </Button>
+  );
+};
+
 export const WonVehicles = () => {
   const { dealerProfile, isLoading: dealerLoading } = useCurrentDealerProfile();
   const { toast } = useToast();
@@ -116,6 +149,8 @@ export const WonVehicles = () => {
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null);
   const [paymentLoading, setPaymentLoading] = useState<string | null>(null);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+  const [reviewCarId, setReviewCarId] = useState<string | null>(null);
+  const [reviewCarTitle, setReviewCarTitle] = useState("");
 
   const { data: wonVehicles, isLoading, error, refetch } = useQuery({
     queryKey: ["wonVehicles", dealerProfile?.id],
@@ -679,8 +714,8 @@ export const WonVehicles = () => {
                   </CardContent>
                 </Card>
 
-                {/* View Full Details Button */}
-                <div className="flex justify-center">
+                {/* Action Buttons */}
+                <div className="flex justify-center gap-3 flex-wrap">
                   <Button 
                     variant="outline" 
                     className="text-red-600 border-red-200 hover:bg-red-50"
@@ -690,6 +725,16 @@ export const WonVehicles = () => {
                     <Eye className="h-4 w-4 mr-2" />
                      Zobacz pełny profil pojazdu
                   </Button>
+
+                  {vehicle.payment_status === 'paid' && (
+                    <ReviewButtonForVehicle
+                      dealerId={dealerProfile!.id}
+                      carId={vehicle.car_id}
+                      dealerName={dealerProfile!.dealership_name}
+                      carTitle={`${vehicle.vehicle_year} ${vehicle.vehicle_make} ${vehicle.vehicle_model}`}
+                      onOpenReview={(carId, title) => { setReviewCarId(carId); setReviewCarTitle(title); }}
+                    />
+                  )}
                 </div>
               </div>
             );
@@ -714,6 +759,18 @@ export const WonVehicles = () => {
         <CarDetailsDialog
           car={selectedCar}
           onClose={handleCloseDialog}
+        />
+      )}
+
+      {/* Review Dialog */}
+      {reviewCarId && dealerProfile && (
+        <ReviewDialog
+          open={!!reviewCarId}
+          onOpenChange={(open) => { if (!open) setReviewCarId(null); }}
+          dealerId={dealerProfile.id}
+          carId={reviewCarId}
+          dealerName={dealerProfile.dealership_name}
+          carTitle={reviewCarTitle}
         />
       )}
     </div>

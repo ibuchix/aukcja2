@@ -1,5 +1,6 @@
 
 import Hero from "@/components/Hero";
+import DealerReviews from "@/components/DealerReviews";
 import Services from "@/components/Services";
 import HowItWorks from "@/components/HowItWorks";
 import VideoDemo from "@/components/VideoDemo";
@@ -16,6 +17,9 @@ const Index = () => {
       
       {/* Hero Section */}
       <Hero />
+
+      {/* Dealer Reviews Section */}
+      <DealerReviews />
       
       {/* Services Section */}
       <Services />
