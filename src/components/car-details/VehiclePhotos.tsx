@@ -72,7 +72,7 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
   
   // Find walk-around video in the gallery
   const walkaroundVideo = allImages.find(img => 
-    img.fileType?.startsWith('video/') && (img.label?.toLowerCase().includes('video') || img.label?.toLowerCase().includes('walkaround'))
+    img.fileType?.startsWith('video/')
   );
   const walkaroundVideoSrc = walkaroundVideo?.src;
 
@@ -378,7 +378,7 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
                                   maxWidth: '100%'
                                 }}
                               >
-                                <source src={normalizeVideoUrl(image.src)} type="video/mp4" />
+                                <source src={image.src} type="video/mp4" />
                                 Your browser does not support the video tag.
                               </video>
                               {videoLoading.has(index) && (
