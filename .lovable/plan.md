@@ -1,76 +1,63 @@
 
 
-# Dealer Review System
+# Fix Video Playback for Auction Cars
 
-## Overview
-Allow dealers to leave reviews (1-5 stars + up to 300 words) for cars they've won. Reviews are tied to specific won vehicles, require admin approval, and the 7 most recent approved reviews display on the home page above the "Dlaczego warto nas wybrać" section.
+## Problem Found
+After investigating car `e32f42b5-6c3b-467e-8bac-0abe0e240c65` (2015 Opel Cross):
 
-## Database
+1. **The video EXISTS** in both the database (`car_file_uploads` table) and Supabase Storage (`car-images` bucket). It is a `video/mp4` file with status `completed`.
 
-### New table: `dealer_reviews`
-Mirrors the existing `seller_reviews` table structure:
+2. **Root cause**: The walk-around video detection logic in `VehiclePhotos.tsx` has a broken condition. It uses an `AND` check requiring BOTH the `fileType` to start with `video/` AND the `label` to contain "video" or "walkaround". However, the labels are generated as "IMAGE 1", "IMAGE 2", etc. -- they never contain the word "video" or "walkaround". This means:
+   - The "Obejrzyj wideo" (Watch video) button **never appears**
+   - The signed-URL video modal **never opens**
+   - The video only shows inline in the gallery carousel, where a separate `normalizeVideoUrl` function can introduce URL encoding bugs for filenames with spaces (like WhatsApp videos)
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid | Primary key, default `gen_random_uuid()` |
-| dealer_id | uuid | References `dealers.id` |
-| car_id | uuid | References `cars.id` |
-| rating | integer | 1-5, NOT NULL |
-| review_text | text | NOT NULL |
-| dealer_name | text | Dealership name snapshot |
-| car_title | text | e.g. "2020 BMW 320i" |
-| status | text | Default `'pending'`, values: pending / approved / rejected |
-| created_at | timestamptz | Default `now()` |
+3. **Secondary issue**: The `normalizeVideoUrl` function decodes and re-encodes URLs, which can break URLs that Supabase's `getPublicUrl` already encoded correctly -- especially for filenames with spaces like `WhatsApp Video 2026-01-28 at 15.42.17.mp4`.
 
-### RLS Policies
-- **Dealers can insert** their own reviews (where `dealer_id` matches their dealer record)
-- **Dealers can view** their own reviews
-- **Anyone authenticated can read approved reviews** (for the home page display)
-- **Admins have full access** (to approve/reject)
+## Fix (2 changes in 1 file)
 
-## UI Changes
+### File: `src/components/car-details/VehiclePhotos.tsx`
 
-### 1. "Napisz recenzję" button on Won Vehicles cards
-**File: `src/components/dealer/WonVehicles.tsx`**
+**Change 1 -- Fix video detection (line 74-76)**
 
-Add a "Napisz recenzję" (Write a review) button next to the existing "Zobacz pelny profil pojazdu" button at the bottom of each won vehicle card. The button:
-- Only appears when `payment_status === 'paid'` (dealer has completed the purchase)
-- Is disabled with "Recenzja wysłana" label if a review already exists for that car
-- Opens a review dialog/modal on click
+Replace the overly restrictive AND condition with a simpler check that only requires the `fileType` to start with `video/`:
 
-### 2. New Review Dialog component
-**File: `src/components/dealer/ReviewDialog.tsx`**
+```typescript
+// Before (broken -- label never matches):
+const walkaroundVideo = allImages.find(img => 
+  img.fileType?.startsWith('video/') && (img.label?.toLowerCase().includes('video') || img.label?.toLowerCase().includes('walkaround'))
+);
 
-A modal dialog containing:
-- Star rating selector (1-5 clickable stars using the Star icon from lucide-react)
-- Textarea for review text (max 300 words, with live word counter)
-- Submit button that inserts into `dealer_reviews`
-- Polish labels throughout (e.g., "Oceń transakcję", "Twoja recenzja", "Wyślij recenzję")
+// After (fixed -- only checks file type):
+const walkaroundVideo = allImages.find(img => 
+  img.fileType?.startsWith('video/')
+);
+```
 
-### 3. Reviews section on the home page
-**File: `src/components/DealerReviews.tsx`**
+This restores the "Obejrzyj wideo" button and enables the signed-URL modal (which is the most reliable playback method, per the existing memory notes).
 
-A new section component that:
-- Fetches the 7 most recent approved dealer reviews from `dealer_reviews` where `status = 'approved'`
-- Displays them in a horizontal scrollable card layout (matching the app's dark styling)
-- Each card shows: star rating, review text (truncated if long), dealer name, car title
-- Section title: "Opinie naszych dealerów"
+**Change 2 -- Fix inline video URL encoding (line 381)**
 
-**File: `src/pages/Index.tsx`**
+For the gallery carousel's inline video player, use `image.src` directly instead of passing it through `normalizeVideoUrl`, which can corrupt already-encoded URLs:
 
-Insert `<DealerReviews />` between `<Hero />` and `<Services />`.
+```typescript
+// Before:
+<source src={normalizeVideoUrl(image.src)} type="video/mp4" />
 
-### 4. Custom hook for reviews
-**File: `src/hooks/useDealerReviews.ts`**
+// After:
+<source src={image.src} type="video/mp4" />
+```
 
-- `useSubmitReview(dealerId, carId, rating, reviewText, dealerName, carTitle)` -- mutation to insert
-- `useApprovedReviews(limit)` -- query to fetch approved reviews for home page
-- `useDealerCarReview(dealerId, carId)` -- query to check if a review already exists for a specific car
+The `getPublicUrl` from Supabase already handles URL encoding correctly. The `normalizeVideoUrl` decode/re-encode cycle can break filenames with spaces.
+
+## Impact
+- The "Obejrzyj wideo" button will appear for all cars that have a walk-around video
+- Clicking it opens the reliable signed-URL modal (1-hour expiry, handles special characters)
+- Inline gallery video playback will also work correctly for WhatsApp-named files
+- No new files or dependencies needed
+- Affects all cars with videos, not just this one
 
 ## Technical Details
-
-- No new dependencies needed
-- Star rating uses lucide-react `Star` icon (already installed)
-- Word count validation done client-side before submit
-- The review is a one-time action per won vehicle (checked via `useDealerCarReview`)
-- Reviews table uses the same `status` pattern as `seller_reviews` for admin workflow consistency
+- Only 1 file modified: `src/components/car-details/VehiclePhotos.tsx`
+- 2 line-level changes (no structural changes)
+- The signed URL modal (the preferred playback path) was already fully implemented but unreachable due to the label detection bug
