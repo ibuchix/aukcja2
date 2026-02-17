@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, Camera, AlertCircle, ZoomIn, ZoomOut, RotateCcw, Volume2, VolumeX, Play } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { ChevronLeft, ChevronRight, Camera, AlertCircle, ZoomIn, ZoomOut, RotateCcw, Volume2, VolumeX, Play, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -291,10 +291,18 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
       {/* Gallery Dialog */}
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
         <DialogContent className={cn(
-          "max-w-6xl w-full p-0",
+          "max-w-6xl w-full p-0 [&>button]:hidden",
           isMobile ? "h-screen" : "h-[90vh]"
         )}>
           <DialogTitle className="sr-only">Galeria zdjęć pojazdu</DialogTitle>
+          <DialogClose
+            className="absolute right-4 top-4 z-50 rounded-full bg-black/60 p-2 text-white hover:bg-black/80 transition-colors"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <X className="h-5 w-5" />
+            <span className="sr-only">Close</span>
+          </DialogClose>
           <div className="relative w-full h-full bg-black">
             <Carousel 
               className="w-full h-full"
