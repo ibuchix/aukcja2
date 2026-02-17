@@ -291,7 +291,7 @@ export const VehiclePhotos = ({ car, showHeader = true }: VehiclePhotosProps) =>
       {/* Gallery Dialog */}
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
         <DialogContent className={cn(
-          "max-w-6xl w-full p-0 [&>button]:hidden",
+          "max-w-6xl w-full p-0 [&>button:last-child]:hidden",
           isMobile ? "h-screen" : "h-[90vh]"
         )}>
           <DialogTitle className="sr-only">Galeria zdjęć pojazdu</DialogTitle>
