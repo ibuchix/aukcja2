@@ -113,13 +113,22 @@ serve(async (req) => {
       console.log('No existing customer found, will create new one');
     }
 
-    // Build product name safely - use generic name since we removed car details
+    // Build product name safely
     const productName = `Platform Fee - Vehicle Purchase`;
     const productDescription = `Platform fee for winning bid of ${vehicle.winning_bid_amount} PLN`;
 
-    console.log('Creating Stripe checkout session...');
+    // Calculate VAT manually - 23% Polish VAT
+    const vatRate = 0.23;
+    const netAmountGrosze = Math.round(platformFee * 100);
+    const vatAmountGrosze = Math.round(platformFee * vatRate * 100);
 
-    // Create checkout session
+    console.log('Creating Stripe checkout session with VAT breakdown...', {
+      netAmount: platformFee,
+      vatAmount: platformFee * vatRate,
+      totalAmount: platformFee * (1 + vatRate),
+    });
+
+    // Create checkout session with explicit VAT line item
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : userData.user.email,
@@ -130,15 +139,23 @@ serve(async (req) => {
             product_data: { 
               name: productName,
               description: productDescription,
-              tax_code: "txcd_10000000", // General services tax code
             },
-            unit_amount: Math.round(platformFee * 100), // Convert to grosze (Polish cents)
-            tax_behavior: "exclusive", // VAT added on top of the fee
+            unit_amount: netAmountGrosze,
+          },
+          quantity: 1,
+        },
+        {
+          price_data: {
+            currency: "pln",
+            product_data: {
+              name: "VAT 23%",
+              description: "Podatek VAT 23%",
+            },
+            unit_amount: vatAmountGrosze,
           },
           quantity: 1,
         },
       ],
-      automatic_tax: { enabled: true }, // Enable Stripe Tax for Polish VAT
       mode: "payment",
       allow_promotion_codes: true,
       success_url: `${req.headers.get("origin")}/dealer/won-vehicles?payment_success=true&session_id={CHECKOUT_SESSION_ID}&vehicle_id=${vehicleId}`,
@@ -147,6 +164,7 @@ serve(async (req) => {
         vehicle_id: vehicleId,
         dealer_id: vehicle.dealer_id,
         platform_fee: platformFee.toString(),
+        vat_amount: (platformFee * vatRate).toString(),
       }
     });
 
