@@ -129,13 +129,16 @@ serve(async (req) => {
             currency: "pln",
             product_data: { 
               name: productName,
-              description: productDescription
+              description: productDescription,
+              tax_code: "txcd_10000000", // General services tax code
             },
             unit_amount: Math.round(platformFee * 100), // Convert to grosze (Polish cents)
+            tax_behavior: "exclusive", // VAT added on top of the fee
           },
           quantity: 1,
         },
       ],
+      automatic_tax: { enabled: true }, // Enable Stripe Tax for Polish VAT
       mode: "payment",
       allow_promotion_codes: true,
       success_url: `${req.headers.get("origin")}/dealer/won-vehicles?payment_success=true&session_id={CHECKOUT_SESSION_ID}&vehicle_id=${vehicleId}`,
