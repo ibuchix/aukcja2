@@ -116,6 +116,10 @@ const Pricing = () => {
             </CardContent>
           </Card>
         </section>
+
+        <p className="text-center text-subtitle-text text-subtitle mt-6">
+          Wszystkie podane kwoty są kwotami netto. Do opłaty zostanie doliczony podatek VAT 23%.
+        </p>
       </main>
 
       <Footer />
