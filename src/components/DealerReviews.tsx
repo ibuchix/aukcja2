@@ -3,16 +3,18 @@ import { useApprovedDealerReviews } from "@/hooks/useDealerReviews";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const DealerReviews = () => {
   const { data: reviews, isLoading } = useApprovedDealerReviews(7);
+  const isMobile = useIsMobile();
 
   if (isLoading || !reviews || reviews.length === 0) return null;
 
   return (
     <section className="py-16 px-4">
       <div className="max-w-7xl mx-auto">
-        <h2 className="font-kanit text-heading-md text-center text-foreground mb-10">
+        <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-center text-body-text mb-10`}>
           Opinie naszych dealerów
         </h2>
 
