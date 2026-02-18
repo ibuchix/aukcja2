@@ -1,51 +1,51 @@
 
 
-# Fix: Gallery Close Button Frame Shift (Video-Only Bug)
+# Fix Dealer Reviews: Missing Table Permissions
 
-## Root Cause
-The video slide wrapper in `VehiclePhotos.tsx` (lines 317-329) calls `stopPropagation()` on all pointer/mouse/touch events to prevent the Embla Carousel from hijacking video controls. This creates an inconsistency: the carousel doesn't see any pointer activity during the video slide, but when the close "X" button is clicked (which sits outside this wrapper, at the `DialogContent` level), Embla suddenly receives an unexpected pointer event and misinterprets it as a drag gesture, shifting the frame.
+## Problem
+The `dealer_reviews` table has RLS enabled and 4 policies correctly defined:
+- "Admins full access dealer reviews" (ALL)
+- "Anyone can read approved reviews" (SELECT)
+- "Dealers can insert own reviews" (INSERT)
+- "Dealers can view own reviews" (SELECT)
 
-Images don't have this problem because `TransformWrapper` manages pointer events differently and doesn't create this Embla inconsistency.
+However, **no GRANT permissions** have been issued to the `anon` or `authenticated` roles. Without GRANTs, Postgres blocks access before RLS policies are even evaluated. Every request returns:
 
-## Fix (1 change in 1 file)
-
-### File: `src/components/car-details/VehiclePhotos.tsx`
-
-On the gallery `DialogContent` (around line 293):
-
-1. Add `[&>button]:hidden` to the className to hide the default Radix close button
-2. Import `DialogClose` from the dialog component
-3. Add a custom close button inside the dialog that calls `e.stopPropagation()` on both `onPointerDown` and `onClick`
-
-```tsx
-// Import DialogClose alongside existing dialog imports
-import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
-
-// On the DialogContent, hide the default close button:
-<DialogContent className={cn(
-  "max-w-6xl w-full p-0 [&>button]:hidden",
-  isMobile ? "h-screen" : "h-[90vh]"
-)}>
-  <DialogTitle className="sr-only">Galeria zdjec pojazdu</DialogTitle>
-  {/* Custom close button with event isolation */}
-  <DialogClose
-    className="absolute right-4 top-4 z-50 rounded-full bg-black/60 p-2 text-white hover:bg-black/80 transition-colors"
-    onClick={(e) => e.stopPropagation()}
-    onPointerDown={(e) => e.stopPropagation()}
-  >
-    <X className="h-5 w-5" />
-    <span className="sr-only">Close</span>
-  </DialogClose>
-  ...
+```
+permission denied for table dealer_reviews
 ```
 
-## Why This Works
-- `onPointerDown` stopPropagation prevents Embla from initiating a drag sequence
-- `onClick` stopPropagation prevents the click from reaching the carousel
-- The fix is scoped to the gallery dialog only -- no other dialogs are affected
-- The custom button is styled to be clearly visible over the dark gallery background
+This breaks:
+- The homepage "Opinie naszych dealerów" section (approved reviews won't load)
+- Dealers submitting reviews from the Won Vehicles page
+- Dealers checking if they've already reviewed a car
 
-## Impact
-- Closing the gallery on a video slide will no longer cause a frame shift
-- Image slides remain unaffected (they already work correctly)
-- The close button gets a slightly improved look (rounded, semi-transparent background) for better visibility on dark gallery backgrounds
+## Fix
+
+### Step 1: Grant table permissions (SQL)
+
+Run the following SQL to grant the necessary permissions:
+
+```sql
+-- Allow anonymous users to read approved reviews (homepage)
+GRANT SELECT ON public.dealer_reviews TO anon;
+
+-- Allow authenticated users to read and insert reviews
+GRANT SELECT, INSERT ON public.dealer_reviews TO authenticated;
+```
+
+The existing RLS policies will then correctly restrict:
+- `anon` to only reading rows where `status = 'approved'`
+- `authenticated` dealers to inserting only their own reviews and reading their own reviews
+- Admins to full access
+
+### Step 2: Verify the fix
+
+After applying the GRANTs, the following should work:
+1. Homepage loads the "Opinie naszych dealerów" section without 401 errors (though it will be empty since there are no reviews yet)
+2. A dealer can open the review dialog from Won Vehicles and submit a review
+3. The review appears with status `pending` in the database
+4. An admin can approve the review, after which it appears on the homepage
+
+## No code changes needed
+The frontend code (`DealerReviews.tsx`, `ReviewDialog.tsx`, `useDealerReviews.ts`) is already correct. Only the database permissions need to be added.
