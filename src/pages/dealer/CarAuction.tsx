@@ -24,6 +24,7 @@ const CarAuction = () => {
   const specsRef = useRef<HTMLDivElement>(null);
   const biddingRef = useRef<HTMLDivElement>(null);
   const [showFloatingBid, setShowFloatingBid] = useState(false);
+  const [biddingInView, setBiddingInView] = useState(false);
   const { dealerProfile } = useDealerProfileSimple();
   const { isInWishlist, toggleWishlist } = useWishlist();
   
@@ -38,12 +39,25 @@ const CarAuction = () => {
   // IntersectionObserver for floating bid button on mobile
   useEffect(() => {
     if (!isMobile || !specsRef.current) return;
-    const observer = new IntersectionObserver(
+    const specsObserver = new IntersectionObserver(
       ([entry]) => setShowFloatingBid(!entry.isIntersecting),
-      { threshold: 0, rootMargin: "0px 0px 0px 0px" }
+      { threshold: 0 }
     );
-    observer.observe(specsRef.current);
-    return () => observer.disconnect();
+    specsObserver.observe(specsRef.current);
+
+    let biddingObserver: IntersectionObserver | undefined;
+    if (biddingRef.current) {
+      biddingObserver = new IntersectionObserver(
+        ([entry]) => setBiddingInView(entry.isIntersecting),
+        { threshold: 0 }
+      );
+      biddingObserver.observe(biddingRef.current);
+    }
+
+    return () => {
+      specsObserver.disconnect();
+      biddingObserver?.disconnect();
+    };
   }, [isMobile, car]);
 
   const handleBack = () => {
@@ -183,9 +197,9 @@ const CarAuction = () => {
           <VehiclePhotos car={car} showHeader={false} />
           
           {/* Vehicle Specifications */}
-          <div className="space-y-6" ref={specsRef}>
+          <div className="space-y-6">
             <div>
-              <h3 className="font-kanit font-semibold text-2xl mb-6 text-body-text border-b border-accent/20 pb-3">
+              <h3 ref={specsRef} className="font-kanit font-semibold text-2xl mb-6 text-body-text border-b border-accent/20 pb-3">
                 {translateSpecificationLabel('Vehicle Specifications')}
               </h3>
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
@@ -851,7 +865,7 @@ const CarAuction = () => {
         </div>
       </div>
       {/* Floating "Złóż ofertę" button for mobile */}
-      {isMobile && isLive && !hasEnded && isVerified && showFloatingBid && (
+      {isMobile && isLive && !hasEnded && isVerified && showFloatingBid && !biddingInView && (
         <button
           onClick={() => biddingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-6 py-3 rounded-full bg-[#D81B24] text-white font-kanit font-semibold text-base shadow-lg hover:bg-[#B01831] transition-colors active:scale-95"
