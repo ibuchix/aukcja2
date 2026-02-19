@@ -7,7 +7,7 @@ import { VehicleHealthReport } from "@/components/car-details/VehicleHealthRepor
 import { SimpleBidManager } from "@/components/auction/SimpleBidManager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Share2, Heart, MapPin, AlertCircle, CheckCircle, Clock, Check, X } from "lucide-react";
+import { ArrowLeft, Share2, Heart, MapPin, AlertCircle, CheckCircle, Clock, Check, X, Gavel } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { translateTransmission } from "@/lib/transmissionUtils";
 import { translateSpecificationLabel, translateVehicleFeature, translateFuelType, translateServiceHistoryType } from "@/lib/vehicleTranslations";
@@ -15,11 +15,15 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import { useRef, useState, useEffect } from "react";
 
 const CarAuction = () => {
   const { carId } = useParams<{ carId: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const specsRef = useRef<HTMLDivElement>(null);
+  const biddingRef = useRef<HTMLDivElement>(null);
+  const [showFloatingBid, setShowFloatingBid] = useState(false);
   const { dealerProfile } = useDealerProfileSimple();
   const { isInWishlist, toggleWishlist } = useWishlist();
   
@@ -30,6 +34,17 @@ const CarAuction = () => {
   const isVerified = dealerProfile?.verification_status === 'approved' || dealerProfile?.is_verified === true;
   const isLive = car?.auctionTimingStatus === 'active' || car?.auctionTimingStatus === 'unknown';
   const hasEnded = car?.auctionTimingStatus === 'ended';
+
+  // IntersectionObserver for floating bid button on mobile
+  useEffect(() => {
+    if (!isMobile || !specsRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowFloatingBid(!entry.isIntersecting),
+      { threshold: 0, rootMargin: "0px 0px 0px 0px" }
+    );
+    observer.observe(specsRef.current);
+    return () => observer.disconnect();
+  }, [isMobile, car]);
 
   const handleBack = () => {
     navigate("/dealer/dashboard");
@@ -168,7 +183,7 @@ const CarAuction = () => {
           <VehiclePhotos car={car} showHeader={false} />
           
           {/* Vehicle Specifications */}
-          <div className="space-y-6">
+          <div className="space-y-6" ref={specsRef}>
             <div>
               <h3 className="font-kanit font-semibold text-2xl mb-6 text-body-text border-b border-accent/20 pb-3">
                 {translateSpecificationLabel('Vehicle Specifications')}
@@ -729,6 +744,7 @@ const CarAuction = () => {
           {/* Sticky bidding section on desktop */}
           <div className="xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto space-y-6">
             {/* Bidding Section - Moved to top */}
+            <div ref={biddingRef} />
             {isLive && !hasEnded && isVerified && (
               <SimpleBidManager
                 carId={car.id}
@@ -834,6 +850,17 @@ const CarAuction = () => {
           </div>
         </div>
       </div>
+      {/* Floating "Złóż ofertę" button for mobile */}
+      {isMobile && isLive && !hasEnded && isVerified && showFloatingBid && (
+        <button
+          onClick={() => biddingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-6 py-3 rounded-full bg-[#D81B24] text-white font-kanit font-semibold text-base shadow-lg hover:bg-[#B01831] transition-colors active:scale-95"
+          aria-label="Złóż ofertę"
+        >
+          <Gavel className="h-5 w-5" />
+          Złóż ofertę
+        </button>
+      )}
     </DashboardLayout>
   );
 };
