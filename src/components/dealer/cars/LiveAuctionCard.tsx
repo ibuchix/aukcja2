@@ -159,7 +159,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
     if (onClick) {
       onClick(car);
     } else {
-      navigate(`/dealer/auction/${car.id}`);
+      window.open(`/dealer/auction/${car.id}`, '_blank');
     }
   };
 
