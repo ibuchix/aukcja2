@@ -1,51 +1,30 @@
 
+# Open Car Auction in New Tab
 
-# Fix: Floating Bid Button Visibility Timing
+## What Changes
 
-## Problem
+When a dealer clicks on a car in the auction listings, instead of navigating away from the current page, the car's auction page will open in a **new browser tab**. The dealer stays on the auction listing page and can continue browsing other cars.
 
-The `specsRef` is attached to the outer wrapper div (line 186) that contains ALL vehicle details (specs, history, condition, features, partners). The IntersectionObserver only fires when that entire giant div leaves the viewport -- which is why the button only appears near the partners section at the very bottom.
+## Technical Change
 
-## Fix (single file, ~10 lines changed)
+**Single file change: `src/components/dealer/cars/LiveAuctionCard.tsx`**
 
-### File: `src/pages/dealer/CarAuction.tsx`
-
-**Change 1: Move `specsRef` to the specs heading only**
-
-Currently (line 186):
-```
-<div className="space-y-6" ref={specsRef}>
+Line 162 currently uses React Router's `navigate()` which replaces the current page:
+```tsx
+navigate(`/dealer/auction/${car.id}`);
 ```
 
-Move the ref to the "Specyfikacja pojazdu" heading element (line 188) instead, so the observer triggers as soon as the heading scrolls out of view -- exactly when the user finishes passing the specs title.
-
-**Change 2: Add a second IntersectionObserver for `biddingRef`**
-
-Track a `biddingInView` state. When the bidding section (`SimpleBidManager`) enters the viewport, hide the floating button since the dealer is already at the real bid form.
-
-Updated useEffect logic:
-```
-specsRef not visible  -->  show button
-biddingRef visible    -->  hide button
+This will be changed to:
+```tsx
+window.open(`/dealer/auction/${car.id}`, '_blank');
 ```
 
-So the button shows when: specs heading is off-screen AND bidding section is not yet on-screen.
+This opens the auction page in a new browser tab while keeping the dealer on the current listings page. The new tab will still be a protected route requiring authentication (the dealer's session is shared across tabs).
 
-**Change 3: Update the visibility condition**
+## What Won't Break
 
-Currently:
-```
-{isMobile && isLive && !hasEnded && isVerified && showFloatingBid && (...)}
-```
-
-Updated to:
-```
-{isMobile && isLive && !hasEnded && isVerified && showFloatingBid && !biddingInView && (...)}
-```
-
-## Result
-
-- Button appears right after the dealer scrolls past "Specyfikacja pojazdu"
-- Button follows them through history, condition, features, partners
-- Button disappears when they reach the actual "Zloz oferte" bidding section
-- Desktop completely unaffected
+- The `/dealer/auction/:carId` route and `CarAuction.tsx` page remain completely unchanged
+- Authentication and protected routes work across tabs (Supabase session is stored in localStorage, shared between tabs)
+- The floating "Zloz oferte" button, bidding logic, and all auction functionality stay the same
+- The `onClick` prop path (line 159-160) for any parent component that passes a custom click handler is unchanged
+- Back button on the car auction page still works (it uses `navigate(-1)` which will just close the tab or go to browser history)
