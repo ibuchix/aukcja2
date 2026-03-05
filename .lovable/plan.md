@@ -1,30 +1,43 @@
 
-# Open Car Auction in New Tab
 
-## What Changes
+# Fix: Car Images Not Loading After Storage Security Changes
 
-When a dealer clicks on a car in the auction listings, instead of navigating away from the current page, the car's auction page will open in a **new browser tab**. The dealer stays on the auction listing page and can continue browsing other cars.
+## Root Cause
 
-## Technical Change
+The `car-images` storage bucket was changed from **public** to **private** (`public: false`) during recent security improvements. However, the entire codebase uses `getPublicUrl()` to generate image URLs. When a bucket is private, `getPublicUrl()` still returns a URL, but Supabase returns a **403 Forbidden** when anyone tries to load that URL — causing all car images to fail.
 
-**Single file change: `src/components/dealer/cars/LiveAuctionCard.tsx`**
+## Recommended Fix: Make `car-images` bucket public again
 
-Line 162 currently uses React Router's `navigate()` which replaces the current page:
-```tsx
-navigate(`/dealer/auction/${car.id}`);
+Car listing photos are not sensitive data. They are meant to be seen by all dealers (and potentially on public-facing pages). Making this bucket public is the correct approach. The RLS SELECT policies already in place (e.g., "Allow public read access to car-images") will continue to work, and the existing `getPublicUrl()` calls throughout the codebase will function again.
+
+**Single SQL migration:**
+
+```sql
+UPDATE storage.buckets 
+SET public = true 
+WHERE id = 'car-images';
 ```
 
-This will be changed to:
-```tsx
-window.open(`/dealer/auction/${car.id}`, '_blank');
-```
+This one statement restores image loading across the entire app without any code changes.
 
-This opens the auction page in a new browser tab while keeping the dealer on the current listings page. The new tab will still be a protected route requiring authentication (the dealer's session is shared across tabs).
+## Why Not Use Signed URLs Instead?
 
-## What Won't Break
+Switching to `createSignedUrl()` would require:
+- Changing every image URL generation call across 3+ files
+- Adding async/await where URLs are currently generated synchronously
+- Managing URL expiration and refresh logic
+- Significant refactoring of components that display images
 
-- The `/dealer/auction/:carId` route and `CarAuction.tsx` page remain completely unchanged
-- Authentication and protected routes work across tabs (Supabase session is stored in localStorage, shared between tabs)
-- The floating "Zloz oferte" button, bidding logic, and all auction functionality stay the same
-- The `onClick` prop path (line 159-160) for any parent component that passes a custom click handler is unchanged
-- Back button on the car auction page still works (it uses `navigate(-1)` which will just close the tab or go to browser history)
+This is unnecessary complexity for non-sensitive car photos.
+
+## What Stays Secure
+
+- The `dealer-documents` bucket remains private (sensitive dealer files)
+- The `manual-valuation-photos` bucket remains private with its RLS policies restricting access to verified dealers viewing active auctions
+- Upload policies still require authentication — anonymous users cannot upload
+- Delete/update policies still require ownership
+
+## No Code Changes Required
+
+All existing code already uses `getPublicUrl()` correctly. The only issue is the bucket visibility flag.
+
