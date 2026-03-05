@@ -1748,6 +1748,51 @@ export type Database = {
         }
         Relationships: []
       }
+      metrics_weekly_snapshots: {
+        Row: {
+          active_dealers_7d: number
+          avg_bids_per_listing: number
+          created_at: string
+          dealer_activation_rate: number
+          id: string
+          pct_listings_2plus_bids: number
+          sell_through_rate: number
+          seller_acceptance_rate: number
+          snapshot_date: string
+          total_approved_dealers: number
+          total_bids: number
+          total_listings: number
+        }
+        Insert: {
+          active_dealers_7d?: number
+          avg_bids_per_listing?: number
+          created_at?: string
+          dealer_activation_rate?: number
+          id?: string
+          pct_listings_2plus_bids?: number
+          sell_through_rate?: number
+          seller_acceptance_rate?: number
+          snapshot_date?: string
+          total_approved_dealers?: number
+          total_bids?: number
+          total_listings?: number
+        }
+        Update: {
+          active_dealers_7d?: number
+          avg_bids_per_listing?: number
+          created_at?: string
+          dealer_activation_rate?: number
+          id?: string
+          pct_listings_2plus_bids?: number
+          sell_through_rate?: number
+          seller_acceptance_rate?: number
+          snapshot_date?: string
+          total_approved_dealers?: number
+          total_bids?: number
+          total_listings?: number
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
@@ -2419,7 +2464,7 @@ export type Database = {
           monthly_failed_runs: number | null
           monthly_is_active: boolean | null
           monthly_job_name: string | null
-          monthly_last_run_duration: unknown
+          monthly_last_run_duration: string | null
           monthly_last_run_ended: string | null
           monthly_last_run_started: string | null
           monthly_last_run_status: string | null
@@ -2432,7 +2477,7 @@ export type Database = {
           weekly_failed_runs: number | null
           weekly_is_active: boolean | null
           weekly_job_name: string | null
-          weekly_last_run_duration: unknown
+          weekly_last_run_duration: string | null
           weekly_last_run_ended: string | null
           weekly_last_run_started: string | null
           weekly_last_run_status: string | null
@@ -2783,6 +2828,7 @@ export type Database = {
       }
       cleanup_vin_valuation_cache: { Args: never; Returns: undefined }
       close_ended_auctions: { Args: never; Returns: Json }
+      compute_platform_metrics: { Args: never; Returns: Json }
       create_admin_notification: {
         Args: {
           p_action_url?: string
@@ -2905,6 +2951,13 @@ export type Database = {
       fetch_seller_performance: {
         Args: { p_seller_id?: string }
         Returns: Json
+      }
+      get_active_auction_bid_counts: {
+        Args: never
+        Returns: {
+          recent_bids: number
+          total_bids: number
+        }[]
       }
       get_activity_logs: {
         Args: {
@@ -3062,7 +3115,7 @@ export type Database = {
           failed_runs: number
           is_active: boolean
           job_name: string
-          last_run_duration: unknown
+          last_run_duration: string
           last_run_status: string
           last_run_time: string
           next_scheduled_run: string
