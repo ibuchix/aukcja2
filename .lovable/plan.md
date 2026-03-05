@@ -1,38 +1,48 @@
 
 
-# Fix: Images from `manual-valuation-photos` Bucket Not Loading
+# Security & Access Audit: Dealer Operations After Bucket Changes
 
-## Root Cause
+## Summary
 
-The console logs reveal the problem clearly. Some cars (like the VW Golf 4) have images stored in the **`manual-valuation-photos`** bucket, not `car-images`. We only made `car-images` public in the last migration. The `manual-valuation-photos` bucket is still **private**, so `getPublicUrl()` returns 403 Forbidden errors.
+After reviewing all relevant RLS policies on storage, cars, bids, car_file_uploads, and dealer_wishlists — **everything is correctly configured**. The bucket visibility changes do not affect any dealer operations. No code or migration changes are needed.
 
-From the logs:
-```
-VW Golf 4 → bucket: "manual-valuation-photos" → generates public URL → 403 on mobile
-Peugeot 508 → bucket: "car-images" → generates public URL → works fine
-```
+## Detailed Findings
 
-Desktop may show cached versions from before the bucket was locked down, which is why it appears to work there but fails on mobile (no cache).
+### 1. Image/Media Access (Storage Buckets)
+- **`car-images`** — now public. `getPublicUrl()` works. Write policies (upload/delete) still require authentication. No issue.
+- **`manual-valuation-photos`** — now public. `getPublicUrl()` works. Write policies still restricted to sellers/admins. No issue.
+- **`dealer-documents`** — remains private. Not affected.
 
-## Fix
+Making a bucket "public" only affects **read access** (anonymous GET requests). Upload, update, and delete operations still require authentication and pass through RLS policies. Dealers cannot tamper with images they do not own.
 
-**Single SQL migration** — make `manual-valuation-photos` bucket public as well:
+### 2. Placing Bids
+The `bids` table RLS correctly allows verified dealers to:
+- **INSERT** their own bids (dealer_id matches their profile)
+- **UPDATE** their own bids
+- **DELETE** their own bids
+- **SELECT** their own bids + bids on cars they're bidding on
 
-```sql
-UPDATE storage.buckets 
-SET public = true 
-WHERE id = 'manual-valuation-photos';
-```
+The `place_bid` RPC function handles bid logic server-side. No storage bucket change affects this.
 
-These are car photos displayed in auction listings to all dealers. They are not sensitive data and must be publicly accessible for the auction to function.
+### 3. Adding Cars to Favourites (Wishlists)
+The `dealer_wishlists` table RLS correctly allows verified dealers to:
+- **INSERT** to their own wishlist
+- **DELETE** from their own wishlist
+- **SELECT** their own wishlist
 
-## No Code Changes Required
+No dependency on storage bucket visibility.
 
-The `getStorageImageUrl()` function in `carFileUploads.ts` already correctly detects the bucket and generates URLs. The only issue is the bucket's visibility flag blocking access.
+### 4. Viewing Car Data & File Uploads
+- **`cars` table**: Verified dealers can view active auction cars, cars they've bid on, and won vehicles. Correct.
+- **`car_file_uploads` table**: Verified dealers can view file records for active auction cars and won vehicles. Correct.
 
-## What Stays Secure
+### 5. Potential Edge Case (Already Handled)
+The `car_file_uploads` RLS policy "Dealers can view active auction car images" requires the auction schedule status to be `'active'`. This means if an auction ends, dealers can no longer query new file upload records for that car — but this is **intentional behavior**. Won vehicle images are covered by a separate policy.
 
-- `dealer-documents` bucket remains private (sensitive dealer identity documents)
-- Upload/delete policies still require authentication
-- Only read access becomes public — matching the intended use case
+## Conclusion
+
+No changes required. All dealer operations (bidding, favourites, viewing media) are unaffected by the bucket visibility changes. The security model is sound:
+- Public buckets = anyone can **read** images (which is correct for car listings)
+- RLS on tables = still controls who can **write/modify** data
+- Write policies on storage = still controls who can **upload/delete** files
 
