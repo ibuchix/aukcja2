@@ -1,43 +1,38 @@
 
 
-# Fix: Car Images Not Loading After Storage Security Changes
+# Fix: Images from `manual-valuation-photos` Bucket Not Loading
 
 ## Root Cause
 
-The `car-images` storage bucket was changed from **public** to **private** (`public: false`) during recent security improvements. However, the entire codebase uses `getPublicUrl()` to generate image URLs. When a bucket is private, `getPublicUrl()` still returns a URL, but Supabase returns a **403 Forbidden** when anyone tries to load that URL — causing all car images to fail.
+The console logs reveal the problem clearly. Some cars (like the VW Golf 4) have images stored in the **`manual-valuation-photos`** bucket, not `car-images`. We only made `car-images` public in the last migration. The `manual-valuation-photos` bucket is still **private**, so `getPublicUrl()` returns 403 Forbidden errors.
 
-## Recommended Fix: Make `car-images` bucket public again
+From the logs:
+```
+VW Golf 4 → bucket: "manual-valuation-photos" → generates public URL → 403 on mobile
+Peugeot 508 → bucket: "car-images" → generates public URL → works fine
+```
 
-Car listing photos are not sensitive data. They are meant to be seen by all dealers (and potentially on public-facing pages). Making this bucket public is the correct approach. The RLS SELECT policies already in place (e.g., "Allow public read access to car-images") will continue to work, and the existing `getPublicUrl()` calls throughout the codebase will function again.
+Desktop may show cached versions from before the bucket was locked down, which is why it appears to work there but fails on mobile (no cache).
 
-**Single SQL migration:**
+## Fix
+
+**Single SQL migration** — make `manual-valuation-photos` bucket public as well:
 
 ```sql
 UPDATE storage.buckets 
 SET public = true 
-WHERE id = 'car-images';
+WHERE id = 'manual-valuation-photos';
 ```
 
-This one statement restores image loading across the entire app without any code changes.
-
-## Why Not Use Signed URLs Instead?
-
-Switching to `createSignedUrl()` would require:
-- Changing every image URL generation call across 3+ files
-- Adding async/await where URLs are currently generated synchronously
-- Managing URL expiration and refresh logic
-- Significant refactoring of components that display images
-
-This is unnecessary complexity for non-sensitive car photos.
-
-## What Stays Secure
-
-- The `dealer-documents` bucket remains private (sensitive dealer files)
-- The `manual-valuation-photos` bucket remains private with its RLS policies restricting access to verified dealers viewing active auctions
-- Upload policies still require authentication — anonymous users cannot upload
-- Delete/update policies still require ownership
+These are car photos displayed in auction listings to all dealers. They are not sensitive data and must be publicly accessible for the auction to function.
 
 ## No Code Changes Required
 
-All existing code already uses `getPublicUrl()` correctly. The only issue is the bucket visibility flag.
+The `getStorageImageUrl()` function in `carFileUploads.ts` already correctly detects the bucket and generates URLs. The only issue is the bucket's visibility flag blocking access.
+
+## What Stays Secure
+
+- `dealer-documents` bucket remains private (sensitive dealer identity documents)
+- Upload/delete policies still require authentication
+- Only read access becomes public — matching the intended use case
 
