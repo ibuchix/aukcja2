@@ -134,9 +134,10 @@ export const useDealerProfileData = (userId: string | undefined): UseDealerProfi
     setError(null);
 
     try {
+      const { needs_recovery, ...dbUpdates } = updates as any;
       const { data, error } = await supabase
         .from('dealers')
-        .update(updates)
+        .update(dbUpdates)
         .eq('user_id', userId)
         .select('*')
         .single();
