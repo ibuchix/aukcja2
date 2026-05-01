@@ -183,18 +183,16 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
           style={{ opacity: 0 }}
         />
         {/* Trust badges overlay */}
-        <div className="absolute top-2 left-2 z-10 flex flex-col gap-1.5 items-start">
-          {car.isAccidentRecordPoland === false && car.isAccidentRecordAbroad === false && (
-            <PhotoBadge variant="accident-free" position="top-left" className="!static">
-              Bezwypadkowy
-            </PhotoBadge>
-          )}
-          {car.isPolishOrigin === true && (
-            <PhotoBadge variant="salon-pl" position="top-left" className="!static">
-              Salon PL
-            </PhotoBadge>
-          )}
-        </div>
+        {car.isAccidentRecordPoland === false && car.isAccidentRecordAbroad === false && (
+          <PhotoBadge variant="accident-free" position="top-left">
+            Bezwypadkowy
+          </PhotoBadge>
+        )}
+        {car.isPolishOrigin === true && (
+          <PhotoBadge variant="salon-pl" position="bottom-right">
+            Salon PL
+          </PhotoBadge>
+        )}
         <button
           onClick={handleWishlistClick}
           className="absolute top-2 right-2 p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors z-10"
