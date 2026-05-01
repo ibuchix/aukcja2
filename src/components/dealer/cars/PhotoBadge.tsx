@@ -8,7 +8,9 @@ export type BadgeVariant =
   | "registered"
   | "verified-seller"
   | "payment-collection"
-  | "instant-purchase";
+  | "instant-purchase"
+  | "accident-free"
+  | "salon-pl";
 
 export type BadgePosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
@@ -26,6 +28,8 @@ const variantStyles: Record<BadgeVariant, string> = {
   "verified-seller": "bg-purple-600 text-white",
   "payment-collection": "bg-amber-500 text-white",
   "instant-purchase": "bg-emerald-500 text-white",
+  "accident-free": "bg-green-600 text-white border border-white/20",
+  "salon-pl": "bg-white text-[#D81B24] border border-[#D81B24]/30",
 };
 
 const positionStyles: Record<BadgePosition, string> = {
