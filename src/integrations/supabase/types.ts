@@ -761,15 +761,7 @@ export type Database = {
           windows_working?: boolean | null
           year?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_cars_seller"
-            columns: ["seller_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       cars_history: {
         Row: {
@@ -1971,6 +1963,7 @@ export type Database = {
           id: string
           role: Database["public"]["Enums"]["user_role"]
           suspended: boolean
+          tracking_ref: string | null
           updated_at: string
         }
         Insert: {
@@ -1979,6 +1972,7 @@ export type Database = {
           id: string
           role?: Database["public"]["Enums"]["user_role"]
           suspended?: boolean
+          tracking_ref?: string | null
           updated_at?: string
         }
         Update: {
@@ -1987,6 +1981,7 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
           suspended?: boolean
+          tracking_ref?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -2052,6 +2047,39 @@ export type Database = {
           },
         ]
       }
+      seller_email_events: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string | null
+          metadata: Json
+          recipient_email: string
+          seller_id: string
+          subject: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          metadata?: Json
+          recipient_email: string
+          seller_id: string
+          subject: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          metadata?: Json
+          recipient_email?: string
+          seller_id?: string
+          subject?: string
+          type?: string
+        }
+        Relationships: []
+      }
       seller_reviews: {
         Row: {
           car_id: string
@@ -2111,6 +2139,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_verified: boolean
+          phone_number: string | null
           tax_id: string | null
           updated_at: string
           user_id: string
@@ -2123,6 +2152,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_verified?: boolean
+          phone_number?: string | null
           tax_id?: string | null
           updated_at?: string
           user_id: string
@@ -2135,6 +2165,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_verified?: boolean
+          phone_number?: string | null
           tax_id?: string | null
           updated_at?: string
           user_id?: string
@@ -2169,6 +2200,158 @@ export type Database = {
           id?: string
           log_type?: string
           message?: string
+        }
+        Relationships: []
+      }
+      tracking_conversions: {
+        Row: {
+          conversion_type: string
+          created_at: string
+          event_id: string
+          id: string
+          link_id: string
+          user_id: string | null
+        }
+        Insert: {
+          conversion_type: string
+          created_at?: string
+          event_id: string
+          id?: string
+          link_id: string
+          user_id?: string | null
+        }
+        Update: {
+          conversion_type?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          link_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracking_conversions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "tracking_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracking_conversions_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "tracking_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracking_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          ip_hash: string | null
+          link_id: string | null
+          metadata: Json
+          page_url: string | null
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_hash?: string | null
+          link_id?: string | null
+          metadata?: Json
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_hash?: string | null
+          link_id?: string | null
+          metadata?: Json
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracking_events_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "tracking_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracking_links: {
+        Row: {
+          affiliate_name: string | null
+          click_count: number
+          code: string
+          created_at: string
+          created_by: string
+          destination_path: string
+          id: string
+          is_active: boolean
+          name: string
+          platform: string
+          updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          affiliate_name?: string | null
+          click_count?: number
+          code: string
+          created_at?: string
+          created_by: string
+          destination_path?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          platform?: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          affiliate_name?: string | null
+          click_count?: number
+          code?: string
+          created_at?: string
+          created_by?: string
+          destination_path?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          platform?: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Relationships: []
       }
@@ -2249,6 +2432,70 @@ export type Database = {
           vin?: string
         }
         Relationships: []
+      }
+      whatsapp_message_log: {
+        Row: {
+          car_id: string | null
+          created_at: string
+          dealer_id: string
+          error_message: string | null
+          id: string
+          message_body: string
+          phone_number: string
+          sent_by: string | null
+          status: string
+          template_name: string | null
+          twilio_message_sid: string | null
+        }
+        Insert: {
+          car_id?: string | null
+          created_at?: string
+          dealer_id: string
+          error_message?: string | null
+          id?: string
+          message_body: string
+          phone_number: string
+          sent_by?: string | null
+          status?: string
+          template_name?: string | null
+          twilio_message_sid?: string | null
+        }
+        Update: {
+          car_id?: string | null
+          created_at?: string
+          dealer_id?: string
+          error_message?: string | null
+          id?: string
+          message_body?: string
+          phone_number?: string
+          sent_by?: string | null
+          status?: string
+          template_name?: string | null
+          twilio_message_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_message_log_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_message_log_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars_public_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_message_log_dealer_id_fkey"
+            columns: ["dealer_id"]
+            isOneToOne: false
+            referencedRelation: "dealers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -2440,15 +2687,7 @@ export type Database = {
           vin?: string | null
           year?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_cars_seller"
-            columns: ["seller_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       cleanup_monitoring_dashboard: {
         Row: {
@@ -3232,6 +3471,7 @@ export type Database = {
           id: string
           role: Database["public"]["Enums"]["user_role"]
           suspended: boolean
+          tracking_ref: string | null
           updated_at: string
         }[]
         SetofOptions: {
@@ -3334,6 +3574,14 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_seller_email_notification_counts: {
+        Args: { p_seller_ids: string[] }
+        Returns: {
+          seller_id: string
+          send_count: number
+          type: string
+        }[]
       }
       get_seller_listings: {
         Args: { p_seller_id: string }
@@ -3442,6 +3690,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_verified: boolean
+          phone_number: string | null
           tax_id: string | null
           updated_at: string
           user_id: string
@@ -3464,6 +3713,7 @@ export type Database = {
           full_name: string
           id: string
           is_verified: boolean
+          phone_number: string
           total_listings: number
           user_id: string
           verification_status: string
@@ -3483,6 +3733,19 @@ export type Database = {
           column_name: string
           data_type: string
           is_nullable: string
+        }[]
+      }
+      get_tracking_funnel_stats: {
+        Args: { _from?: string; _to?: string }
+        Returns: {
+          clicks: number
+          link_code: string
+          link_id: string
+          link_name: string
+          listings: number
+          platform: string
+          registrations: number
+          valuations: number
         }[]
       }
       get_user_and_dealer_by_email: {
@@ -3525,6 +3788,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_click_count: { Args: { _link_id: string }; Returns: undefined }
       is_admin_from_jwt: { Args: never; Returns: boolean }
       is_admin_user: { Args: { user_id?: string }; Returns: boolean }
       is_dealer: { Args: never; Returns: boolean }
