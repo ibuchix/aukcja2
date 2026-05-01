@@ -1,48 +1,76 @@
+# Show Bezwypadkowy and Salon PL Badges on Auction Cards
 
+## Goal
 
-# Security & Access Audit: Dealer Operations After Bucket Changes
+Surface two trust signals as eye-catching badges on every auction car card so dealers can spot them at a glance:
 
-## Summary
+- **Bezwypadkowy** — bright green badge, white text. Shown when the car has no accident history recorded in Poland or abroad.
+- **Salon PL** — white background, deep red text (`#D81B24`). Shown when the car originated from a Polish dealership (Polish origin).
 
-After reviewing all relevant RLS policies on storage, cars, bids, car_file_uploads, and dealer_wishlists — **everything is correctly configured**. The bucket visibility changes do not affect any dealer operations. No code or migration changes are needed.
+Example: the 2018 MERCEDES-BENZ GLC-CLASS that qualifies as Bezwypadkowy currently shows nothing on its auction card — after this change the green Bezwypadkowy badge will appear over its photo.
 
-## Detailed Findings
+## How the data maps (verified against the database)
 
-### 1. Image/Media Access (Storage Buckets)
-- **`car-images`** — now public. `getPublicUrl()` works. Write policies (upload/delete) still require authentication. No issue.
-- **`manual-valuation-photos`** — now public. `getPublicUrl()` works. Write policies still restricted to sellers/admins. No issue.
-- **`dealer-documents`** — remains private. Not affected.
+The data already exists on the `cars` table — no schema change needed:
 
-Making a bucket "public" only affects **read access** (anonymous GET requests). Upload, update, and delete operations still require authentication and pass through RLS policies. Dealers cannot tamper with images they do not own.
+- **Bezwypadkowy** → `is_accident_record_poland === false` AND `is_accident_record_abroad === false`
+  (both fields must be explicitly `false`, not `null`. `null` means "not recorded" and should NOT trigger the badge.)
+- **Salon PL** → `is_polish_origin === true`
 
-### 2. Placing Bids
-The `bids` table RLS correctly allows verified dealers to:
-- **INSERT** their own bids (dealer_id matches their profile)
-- **UPDATE** their own bids
-- **DELETE** their own bids
-- **SELECT** their own bids + bids on cars they're bidding on
+Both fields are already mapped through `src/utils/carDataHelpers.ts` into `isAccidentRecordPoland`, `isAccidentRecordAbroad`, and `isPolishOrigin` on the `CarListing` object that auction cards consume.
 
-The `place_bid` RPC function handles bid logic server-side. No storage bucket change affects this.
+## Where the badges will appear
 
-### 3. Adding Cars to Favourites (Wishlists)
-The `dealer_wishlists` table RLS correctly allows verified dealers to:
-- **INSERT** to their own wishlist
-- **DELETE** from their own wishlist
-- **SELECT** their own wishlist
+The auction card component is `src/components/dealer/cars/LiveAuctionCard.tsx`. The badges will be overlaid on the car photo (top-left corner of the image), stacked vertically when both apply, so they remain visible on mobile and desktop without interfering with the wishlist heart (top-right).
 
-No dependency on storage bucket visibility.
+```text
+┌────────────────────────────┐
+│ [Bezwypadkowy]        [♥]  │
+│ [Salon PL]                 │
+│                            │
+│         car photo          │
+└────────────────────────────┘
+```
 
-### 4. Viewing Car Data & File Uploads
-- **`cars` table**: Verified dealers can view active auction cars, cars they've bid on, and won vehicles. Correct.
-- **`car_file_uploads` table**: Verified dealers can view file records for active auction cars and won vehicles. Correct.
+## Visual specs
 
-### 5. Potential Edge Case (Already Handled)
-The `car_file_uploads` RLS policy "Dealers can view active auction car images" requires the auction schedule status to be `'active'`. This means if an auction ends, dealers can no longer query new file upload records for that car — but this is **intentional behavior**. Won vehicle images are covered by a separate policy.
+- **Bezwypadkowy badge**
+  - Background: solid green (`bg-green-600`), white text
+  - Bold, rounded, with subtle shadow so it stays readable on any photo
+  - Text: "Bezwypadkowy"
+- **Salon PL badge**
+  - Background: white, text in deep red `#D81B24`
+  - Same size/shape as Bezwypadkowy for visual consistency
+  - Text: "Salon PL"
+- Both use the same Kanit semibold styling already used elsewhere on the cards.
+- On mobile, badges shrink slightly (smaller text / padding) so they don't dominate the photo.
 
-## Conclusion
+## Implementation steps
 
-No changes required. All dealer operations (bidding, favourites, viewing media) are unaffected by the bucket visibility changes. The security model is sound:
-- Public buckets = anyone can **read** images (which is correct for car listings)
-- RLS on tables = still controls who can **write/modify** data
-- Write policies on storage = still controls who can **upload/delete** files
+1. Reuse and extend the existing `src/components/dealer/cars/PhotoBadge.tsx` component:
+   - Add two new variants: `accident-free` (green/white) and `salon-pl` (white background, `#D81B24` text).
+   - The component already handles positioning and mobile sizing.
+2. In `LiveAuctionCard.tsx`, inside the image container, render:
+   - `<PhotoBadge variant="accident-free" position="top-left">Bezwypadkowy</PhotoBadge>` when both accident fields are explicitly `false`.
+   - `<PhotoBadge variant="salon-pl" position="top-left">Salon PL</PhotoBadge>` when `isPolishOrigin === true`.
+   - When both apply, stack them vertically with a small gap so they don't overlap.
+3. Verify the same change is applied to any other auction card surface that needs it. Audit:
+   - `LiveAuctionCard.tsx` (main auction grid) — primary target.
+   - `LiveAuctionDetailsDialog.tsx` — extend with the same badges on the hero image inside the dialog so the signal is consistent.
+   - `CarListingCard.tsx` (dealer car listings grid) — out of scope unless you want it there too; this plan keeps the change focused on the auction surfaces only.
 
+## Out of scope
+
+- No changes to `cars` table, RLS, storage, or bid logic.
+- No changes to the seller-side form that captures these fields.
+- No new translations file — badge copy is hard-coded Polish (matches the rest of the auction UI).
+
+## Verification
+
+After implementation, on the auction grid:
+
+1. The qualifying 2018 MERCEDES-BENZ GLC-CLASS (id `848cf0aa-fdc4-4164-97d5-99a4d043d8db`) shows the green **Bezwypadkowy** badge over its photo.
+2. The other three GLC entries (with `null` accident fields) show no Bezwypadkowy badge.
+3. Any car with `is_polish_origin = true` shows the white **Salon PL** badge in deep red text.
+4. Cards without either signal look unchanged.
+5. Both mobile (≤640px) and desktop renderings stay readable; badges don't collide with the wishlist heart.
