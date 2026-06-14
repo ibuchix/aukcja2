@@ -3635,6 +3635,14 @@ export type Database = {
           seller_phone: string
         }[]
       }
+      get_seller_contact_for_dealer: {
+        Args: { _car_id: string }
+        Returns: {
+          contact_email: string
+          mobile_number: string
+          seller_name: string
+        }[]
+      }
       get_seller_email_notification_counts: {
         Args: { p_seller_ids: string[] }
         Returns: {
