@@ -5,6 +5,7 @@ import { DashboardLayout } from "@/components/dealer/dashboard/DashboardLayout";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
 import { VehicleHealthReport } from "@/components/car-details/VehicleHealthReport";
 import { SimpleBidManager } from "@/components/auction/SimpleBidManager";
+import { SellerContactCard } from "@/components/dealer/SellerContactCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Share2, Heart, MapPin, AlertCircle, CheckCircle, Clock, Check, X, Gavel } from "lucide-react";
