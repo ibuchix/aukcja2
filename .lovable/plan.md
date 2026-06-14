@@ -1,76 +1,54 @@
-# Show Bezwypadkowy and Salon PL Badges on Auction Cards
 
-## Goal
+# Subscription-Based Seller Contact Access
 
-Surface two trust signals as eye-catching badges on every auction car card so dealers can spot them at a glance:
+Pivot from the current pay-per-win platform fee model to a monthly subscription. While a dealer's subscription is active, they can view seller first name, email, and phone number on any **live** auction. Existing platform fee / won-vehicle flows are disabled (kept in code, hidden in UI) so we can revert if needed.
 
-- **Bezwypadkowy** — bright green badge, white text. Shown when the car has no accident history recorded in Poland or abroad.
-- **Salon PL** — white background, deep red text (`#D81B24`). Shown when the car originated from a Polish dealership (Polish origin).
+## Scope
 
-Example: the 2018 MERCEDES-BENZ GLC-CLASS that qualifies as Bezwypadkowy currently shows nothing on its auction card — after this change the green Bezwypadkowy badge will appear over its photo.
+### 1. Database
+New migration adds:
+- `dealer_subscriptions` table: `id`, `dealer_id` (FK → `dealers.id`), `stripe_customer_id`, `stripe_subscription_id`, `status` (`active`, `past_due`, `canceled`, `incomplete`), `current_period_end timestamptz`, `cancel_at_period_end bool`, timestamps. Unique on `dealer_id`.
+- Standard `GRANT`s (`authenticated` SELECT own row, `service_role` ALL) + RLS: dealer can read only their own row; only `service_role` (webhook) can write.
+- Security-definer function `public.dealer_has_active_subscription(_user_id uuid) returns boolean` — checks `status='active' AND current_period_end > now()`. Used by RLS and by a server-side view to gate seller contact.
+- New view `public.live_auction_sellers` (security_invoker=on) joining `cars` + `sellers` + `auth.users.email`, exposing `car_id, seller_first_name, seller_email, seller_phone`, but only for rows where the car has an active auction schedule (live) AND `dealer_has_active_subscription(auth.uid())`. RLS on base `sellers` continues to deny direct access.
+- Index on `dealer_subscriptions(stripe_subscription_id)` for webhook lookups.
 
-## How the data maps (verified against the database)
+### 2. Stripe (reuses existing keys, no new secrets)
+- New edge function `create-subscription-checkout`: creates a Stripe Customer (idempotent by dealer), creates a Checkout Session in `mode: 'subscription'` with one recurring price (999 PLN net/month) + explicit 23% VAT handling consistent with `mem://payments/stripe/vat-handling`. Success URL → `/dealer/subscription?status=success`.
+- New edge function `stripe-subscription-webhook` (verify_jwt=false, signature verified) handling `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed` → upserts `dealer_subscriptions` using `SERVICE_ROLE_KEY`. Add `STRIPE_WEBHOOK_SECRET` only if not already present (user will set the webhook URL in Stripe dashboard — we'll surface the URL).
+- New edge function `cancel-subscription`: authenticated dealer call → `stripe.subscriptions.update(..., { cancel_at_period_end: true })`. (Immediate-lock requirement is enforced by the `current_period_end` check + the webhook on `customer.subscription.deleted`; "immediate lock" per the answers means access disappears as soon as `status` flips away from `active`.)
 
-The data already exists on the `cars` table — no schema change needed:
+### 3. Frontend
+- New hook `useDealerSubscription()` → reads `dealer_subscriptions` for current dealer; exposes `isActive`, `periodEnd`, `cancelAtPeriodEnd`.
+- New page `/dealer/subscription`: shows current state, "Subskrybuj 999 PLN/mies. + VAT" CTA → invokes `create-subscription-checkout`, and "Anuluj subskrypcję" → `cancel-subscription`. Handles `?status=success` toast.
+- Gate seller contact UI: in `CarDetailsDialog` and the full car-auction page, replace the existing "pay platform fee to unlock" block with:
+  - If subscription active **and** auction is live → query `live_auction_sellers` view and render first name / email / phone (tel: and mailto: links).
+  - Otherwise → show "Subskrybuj, aby zobaczyć dane kontaktowe sprzedawcy" with a link to `/dealer/subscription`.
+- Hide (do not delete) the platform-fee UI on `WonVehicles` and any "unlock seller details" buttons. Keep underlying components/files so we can revert.
+- Add subscription status indicator + link in dealer dashboard header.
 
-- **Bezwypadkowy** → `is_accident_record_poland === false` AND `is_accident_record_abroad === false`
-  (both fields must be explicitly `false`, not `null`. `null` means "not recorded" and should NOT trigger the badge.)
-- **Salon PL** → `is_polish_origin === true`
+### 4. Disable old per-win flow (reversible)
+- Stop creating `dealer_won_vehicles` rows on auction end? Per the project knowledge the won-vehicle record is created at auction end and that logic stays — we only stop charging for it and stop using `seller_details_unlocked` for visibility. The flag is ignored by the new view; existing rows are untouched.
+- Remove platform-fee CTAs from the dealer UI but leave `create-platform-fee-payment` / `verify-payment-status` functions deployed and unreferenced.
 
-Both fields are already mapped through `src/utils/carDataHelpers.ts` into `isAccidentRecordPoland`, `isAccidentRecordAbroad`, and `isPolishOrigin` on the `CarListing` object that auction cards consume.
+### 5. Security considerations
+- Seller PII (email, phone, full name) currently lives in `sellers` + `auth.users`. The new view is the ONLY path that exposes them to dealers, gated by:
+  1. RLS on `dealer_subscriptions` (dealer can't fake their own status — only webhook writes).
+  2. `dealer_has_active_subscription` is `security definer` reading `dealer_subscriptions` by `auth.uid()`.
+  3. View filters to live auctions only, so ended/scheduled auctions don't leak.
+  4. Base `sellers` table SELECT policy remains restrictive; no direct SELECT for dealers.
+- Stripe webhook requires signature verification — never trust unsigned payloads.
+- `cancel-subscription` must verify `auth.uid()` owns the dealer record before calling Stripe.
+- Audit log entry written on each contact view (insert into existing `audit_logs`) for misuse traceability.
+- Rate-limit seller-contact view queries per dealer to discourage scraping (reuse `dealer_bid_rate_limits` pattern or add new bucket).
+- Update `mem://security/data/seller-contact-protection` after rollout to reflect the new gating rule.
 
-## Where the badges will appear
-
-The auction card component is `src/components/dealer/cars/LiveAuctionCard.tsx`. The badges will be overlaid on the car photo (top-left corner of the image), stacked vertically when both apply, so they remain visible on mobile and desktop without interfering with the wishlist heart (top-right).
-
-```text
-┌────────────────────────────┐
-│ [Bezwypadkowy]        [♥]  │
-│ [Salon PL]                 │
-│                            │
-│         car photo          │
-└────────────────────────────┘
-```
-
-## Visual specs
-
-- **Bezwypadkowy badge**
-  - Background: solid green (`bg-green-600`), white text
-  - Bold, rounded, with subtle shadow so it stays readable on any photo
-  - Text: "Bezwypadkowy"
-- **Salon PL badge**
-  - Background: white, text in deep red `#D81B24`
-  - Same size/shape as Bezwypadkowy for visual consistency
-  - Text: "Salon PL"
-- Both use the same Kanit semibold styling already used elsewhere on the cards.
-- On mobile, badges shrink slightly (smaller text / padding) so they don't dominate the photo.
-
-## Implementation steps
-
-1. Reuse and extend the existing `src/components/dealer/cars/PhotoBadge.tsx` component:
-   - Add two new variants: `accident-free` (green/white) and `salon-pl` (white background, `#D81B24` text).
-   - The component already handles positioning and mobile sizing.
-2. In `LiveAuctionCard.tsx`, inside the image container, render:
-   - `<PhotoBadge variant="accident-free" position="top-left">Bezwypadkowy</PhotoBadge>` when both accident fields are explicitly `false`.
-   - `<PhotoBadge variant="salon-pl" position="top-left">Salon PL</PhotoBadge>` when `isPolishOrigin === true`.
-   - When both apply, stack them vertically with a small gap so they don't overlap.
-3. Verify the same change is applied to any other auction card surface that needs it. Audit:
-   - `LiveAuctionCard.tsx` (main auction grid) — primary target.
-   - `LiveAuctionDetailsDialog.tsx` — extend with the same badges on the hero image inside the dialog so the signal is consistent.
-   - `CarListingCard.tsx` (dealer car listings grid) — out of scope unless you want it there too; this plan keeps the change focused on the auction surfaces only.
+## Open items to confirm
+1. Stripe **Price ID** for the 999 PLN/mo product — should I create it dynamically in code (price_data on checkout) or do you want a fixed Price ID configured as a secret?
+2. Webhook endpoint setup: I can deploy the function and tell you the URL to register in Stripe → that yields a `STRIPE_WEBHOOK_SECRET` you'd paste back. OK to proceed that way?
+3. "Live auction only" — should subscribers also see contact on auctions that have ended in the last X hours (e.g., to follow up), or strictly only while the schedule status is live?
 
 ## Out of scope
-
-- No changes to `cars` table, RLS, storage, or bid logic.
-- No changes to the seller-side form that captures these fields.
-- No new translations file — badge copy is hard-coded Polish (matches the rest of the auction UI).
-
-## Verification
-
-After implementation, on the auction grid:
-
-1. The qualifying 2018 MERCEDES-BENZ GLC-CLASS (id `848cf0aa-fdc4-4164-97d5-99a4d043d8db`) shows the green **Bezwypadkowy** badge over its photo.
-2. The other three GLC entries (with `null` accident fields) show no Bezwypadkowy badge.
-3. Any car with `is_polish_origin = true` shows the white **Salon PL** badge in deep red text.
-4. Cards without either signal look unchanged.
-5. Both mobile (≤640px) and desktop renderings stay readable; badges don't collide with the wishlist heart.
+- Refunds/proration for in-flight subscriptions.
+- Tiered plans, annual billing, team seats.
+- Deletion of historical `dealer_won_vehicles` / platform-fee data.
