@@ -5,6 +5,7 @@ import { DashboardLayout } from "@/components/dealer/dashboard/DashboardLayout";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
 import { VehicleHealthReport } from "@/components/car-details/VehicleHealthReport";
 import { SimpleBidManager } from "@/components/auction/SimpleBidManager";
+import { SellerContactCard } from "@/components/dealer/SellerContactCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Share2, Heart, MapPin, AlertCircle, CheckCircle, Clock, Check, X, Gavel } from "lucide-react";
@@ -757,6 +758,9 @@ const CarAuction = () => {
         <div className="xl:col-span-1 space-y-6">
           {/* Sticky bidding section on desktop */}
           <div className="xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto space-y-6">
+            {/* Seller contact (subscription-gated) */}
+            <SellerContactCard carId={car.id} isLive={isLive && !hasEnded} />
+
             {/* Bidding Section - Moved to top */}
             <div ref={biddingRef} />
             {isLive && !hasEnded && isVerified && (

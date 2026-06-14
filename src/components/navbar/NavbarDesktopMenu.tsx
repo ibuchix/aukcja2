@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { LayoutDashboard, HelpCircle, Loader2 } from "lucide-react";
+import { LayoutDashboard, HelpCircle, Loader2, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NavbarDesktopMenuProps {
@@ -16,6 +16,12 @@ export const NavbarDesktopMenu = ({ session, isLoading, handleLogout }: NavbarDe
         <Link to="/dealer/dashboard" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
           <LayoutDashboard size={20} />
           Aukcja
+        </Link>
+      )}
+      {session && (
+        <Link to="/dealer/subscription" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
+          <CreditCard size={20} />
+          Subskrypcja
         </Link>
       )}
       <Link to="/how-it-works" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
