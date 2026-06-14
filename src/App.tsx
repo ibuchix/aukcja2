@@ -14,6 +14,7 @@ import CarAuction from "./pages/dealer/CarAuction";
 import CompleteRegistration from "./pages/CompleteRegistration";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/dealer/Profile";
+import Subscription from "./pages/dealer/Subscription";
 import HowItWorks from "./pages/HowItWorks";
 import Index from "./pages/Index";
 import Pricing from "./pages/Pricing";
@@ -112,6 +113,16 @@ function App() {
             <ProtectedRoute>
               <DealerLayoutWrapper>
                 <CarAuction />
+              </DealerLayoutWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dealer/subscription"
+          element={
+            <ProtectedRoute>
+              <DealerLayoutWrapper>
+                <Subscription />
               </DealerLayoutWrapper>
             </ProtectedRoute>
           }

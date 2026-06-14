@@ -757,6 +757,9 @@ const CarAuction = () => {
         <div className="xl:col-span-1 space-y-6">
           {/* Sticky bidding section on desktop */}
           <div className="xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto space-y-6">
+            {/* Seller contact (subscription-gated) */}
+            <SellerContactCard carId={car.id} isLive={isLive && !hasEnded} />
+
             {/* Bidding Section - Moved to top */}
             <div ref={biddingRef} />
             {isLive && !hasEnded && isVerified && (
