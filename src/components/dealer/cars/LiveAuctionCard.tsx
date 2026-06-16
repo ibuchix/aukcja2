@@ -30,6 +30,7 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
   const { prefetchImages } = useImagePrefetch();
   const isMobile = useIsMobile();
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const { isActive: isSubscribed, isLoading: subLoading } = useDealerSubscription();
   
   const formatPrice = (price: number | null | undefined) => {
     // Handle null, undefined, or NaN values
@@ -348,13 +349,17 @@ export const LiveAuctionCard: React.FC<LiveAuctionCardProps> = ({ car, dealerId,
           {/* Inline Bid Form */}
           {isLive && !hasEnded && (
             <div onClick={(e) => e.stopPropagation()} className="pt-3 border-t">
-              <BidForm
-                carId={car.id}
-                dealerId={dealerId}
-                currentHighestBid={car.current_bid || 0}
-                minimumIncrement={250}
-                reservePrice={reservePrice}
-              />
+              {!subLoading && !isSubscribed ? (
+                <SubscribeToBidButton />
+              ) : (
+                <BidForm
+                  carId={car.id}
+                  dealerId={dealerId}
+                  currentHighestBid={car.current_bid || 0}
+                  minimumIncrement={250}
+                  reservePrice={reservePrice}
+                />
+              )}
             </div>
           )}
         </div>
