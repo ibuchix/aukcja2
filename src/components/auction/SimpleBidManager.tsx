@@ -193,9 +193,6 @@ export const SimpleBidManager = ({
                   {Math.round(reservePrice).toLocaleString('pl-PL')} zł
                 </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Oferty mogą być składane powyżej lub poniżej tej kwoty. Im bardziej atrakcyjna oferta, tym większa szansa na akceptację.
-              </p>
             </div>
           )}
           </div>
