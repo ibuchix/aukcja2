@@ -200,52 +200,7 @@ export const SimpleBidManager = ({
           )}
           </div>
           
-          <div className="space-y-2">
-            <label htmlFor="bidAmount" className="flex items-center gap-1 text-sm font-medium">
-              Twoja oferta (PLN)
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label="Informacje o maksymalnej ofercie"
-                      className="ml-1 inline-flex items-center text-muted-foreground hover:text-foreground"
-                    >
-                      <Info className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent 
-                    side="left" 
-                    sideOffset={12} 
-                    avoidCollisions={true} 
-                    collisionPadding={16} 
-                    align="center"
-                    className="max-w-sm bg-[#393b39] text-body-text"
-                  >
-                    <div className="text-left leading-relaxed">
-                      Ustal maksymalną ofertę, a my będziemy automatycznie licytować w Twoim imieniu, podbijając o 250PLN, aby zapewnić wygraną.
-                      <br />
-                      Jeśli jesteś jedynym licytującym, Twoja ostateczna oferta zostanie ustalona na poziomie ceny orientacyjnej lub Twojej maksymalnej oferty, jeśli jest ona niższa niż cena orientacyjna.
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </label>
-            <Input
-              id="bidAmount"
-              type="number"
-              value={bidAmount}
-              onChange={(e) => setBidAmount(e.target.value)}
-              min="1"
-              step="1"
-              placeholder="Wprowadź swoją ofertę"
-              disabled={isSubmitting}
-              className="h-14 text-lg border-2 border-[#D81B24] focus-visible:ring-[#D81B24]"
-            />
-            {bidError && (
-              <p className="text-sm text-red-600 mt-2 font-medium">{bidError}</p>
-            )}
-          </div>
+          {/* Bid input hidden — dealers no longer place bids in the new business model */}
 
           {!subLoading && !isSubscribed ? (
             <SubscribeToBidButton />
