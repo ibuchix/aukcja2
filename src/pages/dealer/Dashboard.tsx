@@ -6,6 +6,7 @@ import { DealerProfileProvider } from '@/contexts/dealer-profile';
 import { DashboardLayout } from '@/components/dealer/dashboard/DashboardLayout';
 import { ProfileInfoSection } from "@/components/dealer/dashboard/ProfileInfoSection";
 import { DealerWelcomeCard } from "@/components/dealer/dashboard/DealerWelcomeCard";
+import { SubscriptionPromptCard } from "@/components/dealer/dashboard/SubscriptionPromptCard";
 import { StatsSection } from "@/components/dealer/dashboard/StatsSection";
 import { SimpleLiveAuctionsView } from '@/components/dealer/cars/SimpleLiveAuctionsView';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw, FileText, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDealerProfile } from "@/contexts/dealer-profile";
+import { useDealerSubscription } from "@/hooks/useDealerSubscription";
 
 const DashboardContent = () => {
   const { user } = useAuth();
@@ -27,6 +29,29 @@ const DashboardContent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { refresh: refreshSubscription } = useDealerSubscription();
+
+  // Handle return from Stripe Checkout
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const subStatus = params.get("subscription");
+    if (subStatus === "success") {
+      toast({
+        title: "Subskrypcja aktywna",
+        description: "Możesz teraz licytować na wszystkich aukcjach.",
+      });
+      // Webhook may take a moment; retry refresh a few times
+      let attempts = 0;
+      const id = setInterval(() => {
+        refreshSubscription();
+        attempts += 1;
+        if (attempts >= 4) clearInterval(id);
+      }, 1500);
+      // Strip the query param
+      navigate("/dealer/dashboard", { replace: true });
+      return () => clearInterval(id);
+    }
+  }, [location.search, navigate, refreshSubscription, toast]);
   
   // Use our custom hook to sync tab state between components
   const { activeTab, setActiveTab } = useDashboardTabs(activeTabRaw, setActiveTabRaw);
@@ -153,6 +178,7 @@ const DashboardContent = () => {
         {/* Always show errors and verification banner first */}
         {errorAlert}
         {verificationBanner}
+        <SubscriptionPromptCard />
         
         {/* Mobile: Welcome card first, then quick actions and tabs */}
         {/* Desktop: Welcome card first, then quick actions and tabs */}
