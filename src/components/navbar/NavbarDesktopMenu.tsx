@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import { LayoutDashboard, HelpCircle, Loader2, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useDealerSubscription } from "@/hooks/useDealerSubscription";
 
 interface NavbarDesktopMenuProps {
   session: any;
@@ -10,6 +11,8 @@ interface NavbarDesktopMenuProps {
 }
 
 export const NavbarDesktopMenu = ({ session, isLoading, handleLogout }: NavbarDesktopMenuProps) => {
+  const { isActive, isLoading: subLoading } = useDealerSubscription();
+  const showNudge = !!session && !subLoading && !isActive;
   return (
     <div className="hidden md:flex items-center space-x-8">
       {session && (
@@ -19,9 +22,17 @@ export const NavbarDesktopMenu = ({ session, isLoading, handleLogout }: NavbarDe
         </Link>
       )}
       {session && (
-        <Link to="/dealer/subscription" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
-          <CreditCard size={20} />
-          Subskrypcja
+        <Link to="/dealer/subscription" className="relative text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
+          <span className="relative inline-flex">
+            <CreditCard size={20} />
+            {showNudge && (
+              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-600" />
+              </span>
+            )}
+          </span>
+          {showNudge ? "Subskrybuj" : "Subskrypcja"}
         </Link>
       )}
       <Link to="/how-it-works" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
