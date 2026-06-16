@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin, Key, AlertCircle, CheckCircle, Wrench, Zap, Heart } from "lucide-react";
 
 import { BidForm } from "@/components/auction/BidForm";
+import { useDealerSubscription } from "@/hooks/useDealerSubscription";
+import { SubscribeToBidButton } from "@/components/dealer/SubscribeToBidButton";
 import { AuctionStatusIndicator } from "./AuctionStatusIndicator";
 import { PhotoBadge } from "./PhotoBadge";
 import { getPrimaryImage, getAllCarImages } from "@/utils/imageUtils";
