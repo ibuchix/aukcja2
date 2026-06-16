@@ -199,7 +199,11 @@ export const SimpleBidManager = ({
           
           {/* Bid input hidden — dealers no longer place bids in the new business model */}
 
-          {!subLoading && !isSubscribed ? (
+          {subLoading ? (
+            <Button disabled className="w-full h-16 text-xl font-bold bg-muted text-muted-foreground">
+              Ładowanie...
+            </Button>
+          ) : !isSubscribed ? (
             <SubscribeToBidButton />
           ) : (
             <Button
