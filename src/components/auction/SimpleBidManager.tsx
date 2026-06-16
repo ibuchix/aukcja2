@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 import { translateErrorMessage } from "@/lib/vehicleTranslations";
+import { useDealerSubscription } from "@/hooks/useDealerSubscription";
+import { SubscribeToBidButton } from "@/components/dealer/SubscribeToBidButton";
 
 interface SimpleBidManagerProps {
   carId: string;
@@ -28,6 +30,7 @@ export const SimpleBidManager = ({
   isVerified = true,
 }: SimpleBidManagerProps) => {
   const [bidAmount, setBidAmount] = useState<string>("");
+  const { isActive: isSubscribed, isLoading: subLoading } = useDealerSubscription();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const [myBid, setMyBid] = useState<number | null>(null);
@@ -244,13 +247,17 @@ export const SimpleBidManager = ({
             )}
           </div>
 
-          <Button
-            onClick={handlePlaceBid}
-            disabled={isSubmitting}
-            className="w-full h-16 text-xl font-bold bg-[#D81B24] hover:bg-[#B01831]"
-          >
-            {isSubmitting ? "Składanie oferty..." : "Złóż ofertę"}
-          </Button>
+          {!subLoading && !isSubscribed ? (
+            <SubscribeToBidButton />
+          ) : (
+            <Button
+              onClick={handlePlaceBid}
+              disabled={isSubmitting}
+              className="w-full h-16 text-xl font-bold bg-[#D81B24] hover:bg-[#B01831]"
+            >
+              {isSubmitting ? "Składanie oferty..." : "Złóż ofertę"}
+            </Button>
+          )}
 
           <div className="mt-4 text-sm text-muted-foreground space-y-2">
             <p>Oferty są przekazywane sprzedającemu natychmiastowo.</p>

@@ -97,7 +97,7 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      success_url: `${origin}/dealer/subscription?status=success&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/dealer/dashboard?subscription=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/dealer/subscription?status=cancelled`,
       metadata: {
         dealer_id: dealer.id,
