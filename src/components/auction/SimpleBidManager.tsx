@@ -1,14 +1,8 @@
 
-import React, { useEffect, useState } from 'react';
-import { DollarSign, Info } from "lucide-react";
+import React from 'react';
+import { DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/utils";
-import { translateErrorMessage } from "@/lib/vehicleTranslations";
 import { useDealerSubscription } from "@/hooks/useDealerSubscription";
 import { SubscribeToBidButton } from "@/components/dealer/SubscribeToBidButton";
 
@@ -16,60 +10,16 @@ interface SimpleBidManagerProps {
   carId: string;
   dealerId: string;
   currentHighestBid: number;
-  minimumIncrement?: number; // Made optional since we're allowing any increment
+  minimumIncrement?: number;
   reservePrice?: number;
   isVerified?: boolean;
 }
 
 export const SimpleBidManager = ({
-  carId,
-  dealerId,
-  currentHighestBid,
-  minimumIncrement = 1, // Set to 1 PLN as absolute minimum
   reservePrice,
   isVerified = true,
 }: SimpleBidManagerProps) => {
-  const [bidAmount, setBidAmount] = useState<string>("");
   const { isActive: isSubscribed, isLoading: subLoading } = useDealerSubscription();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-  const [myBid, setMyBid] = useState<number | null>(null);
-  const [bidError, setBidError] = useState<string>("");
-
-  const fetchMyBid = async () => {
-    if (!isVerified) return;
-    const { data, error } = await supabase
-      .from('bids')
-      .select('amount')
-      .eq('car_id', carId)
-      .eq('dealer_id', dealerId)
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (!error && data) {
-      const row = data as any;
-      if (row && typeof row.amount !== 'undefined' && row.amount !== null) {
-        setMyBid(Number(row.amount));
-      } else {
-        setMyBid(null);
-      }
-    } else {
-      setMyBid(null);
-    }
-  };
-
-  useEffect(() => {
-    fetchMyBid();
-  }, [carId, dealerId, isVerified]);
-
-  // Clear error when user types a new amount
-  useEffect(() => {
-    if (bidAmount && bidError) {
-      setBidError("");
-    }
-  }, [bidAmount]);
 
   // Early return if dealer is not verified
   if (!isVerified) {
@@ -78,13 +28,13 @@ export const SimpleBidManager = ({
         <CardHeader>
           <CardTitle className="text-heading-sm font-kanit font-semibold flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Bidding - Verification Required
+            Wymagana weryfikacja
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
             <p className="text-amber-800">
-              Dostęp do licytacji mają wyłącznie zweryfikowani dealerzy. Zweryfikuj konto, aby kontynuować
+              Dostęp do danych sprzedającego mają wyłącznie zweryfikowani dealerzy. Zweryfikuj konto, aby kontynuować.
             </p>
           </div>
         </CardContent>
@@ -92,112 +42,30 @@ export const SimpleBidManager = ({
     );
   }
 
-  const handlePlaceBid = async () => {
-    if (isSubmitting) return;
-
-    const numericBidAmount = parseFloat(bidAmount);
-    
-    if (isNaN(numericBidAmount)) {
-      // Toast: Invalid Bid Amount - Bid is not a valid number
-      toast({
-        description: "Wprowadź prawidłową liczbę",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (numericBidAmount <= 0) {
-      // Toast: Invalid Bid Amount - Bid must be greater than zero
-      toast({
-        description: "Kwota oferty musi być większa niż 0",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate 60% minimum of reserve price
-    if (reservePrice && numericBidAmount < (reservePrice * 0.6)) {
-      const minAllowed = Math.ceil(reservePrice * 0.6);
-      setBidError(`Minimalna oferta to ${minAllowed.toLocaleString('pl-PL')} PLN (60% ceny minimalnej)`);
-      return;
-    }
-    setBidError(""); // Clear any previous errors
-
-    // Removed minimum bid restrictions - dealers can bid any positive amount
-
-    setIsSubmitting(true);
-
-    try {
-      const { data, error } = await supabase.rpc('place_bid', {
-        p_car_id: carId,
-        p_dealer_id: dealerId,
-        p_amount: numericBidAmount
-      });
-
-      if (error) throw error;
-
-      // Type-safe access to response data
-      // The place_bid RPC returns messages in English from the database.
-      // We translate them here to Polish before showing to dealers.
-      const response = data as any;
-      if (response?.success) {
-      // Toast: Bid Placed Successfully - Bid was successfully placed
-      toast({
-        description: `Twoja oferta w wysokości ${formatCurrency(numericBidAmount)} została złożona`,
-      });
-        setBidAmount("");
-        await fetchMyBid();
-        // The parent component should handle refreshing the data
-      } else {
-        const errorMessage = response?.message || response?.error || "Failed to place bid";
-        throw new Error(translateErrorMessage(errorMessage));
-      }
-    } catch (error) {
-      // Toast: Failed to Place Bid - Error placing bid
-      const errorMessage = error instanceof Error ? error.message : "Spróbuj ponownie";
-      toast({
-        description: translateErrorMessage(errorMessage),
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <Card className="w-full mb-4">
       <CardHeader>
         <CardTitle className="text-heading-sm font-kanit font-semibold flex items-center gap-2">
           <DollarSign className="h-5 w-5" />
-          Złóż ofertę
+          Dostęp do oferty
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div>
-            {myBid !== null && (
-              <p className="text-sm text-muted-foreground mb-2">
-                Twoja ostatnia oferta:
-                <span className="ml-1 inline-flex items-center rounded border border-green-200 bg-green-100 px-2 py-0.5 font-semibold text-green-800">
-                  {formatCurrency(myBid)}
-                </span>
-              </p>
-            )}
-          {reservePrice && (
-            <div className="space-y-2">
-              <div className="text-center">
-                <p className="text-base text-muted-foreground font-medium">
-                  Cena wyjściowa
-                </p>
-                <p className="text-3xl font-bold text-foreground">
-                  {Math.round(reservePrice).toLocaleString('pl-PL')} zł
-                </p>
+            {reservePrice && (
+              <div className="space-y-2">
+                <div className="text-center">
+                  <p className="text-base text-muted-foreground font-medium">
+                    Cena wyjściowa
+                  </p>
+                  <p className="text-3xl font-bold text-foreground">
+                    {Math.round(reservePrice).toLocaleString('pl-PL')} zł
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
           </div>
-          
-          {/* Bid input hidden — dealers no longer place bids in the new business model */}
 
           {subLoading ? (
             <Button disabled className="w-full h-16 text-xl font-bold bg-muted text-muted-foreground">
@@ -206,13 +74,12 @@ export const SimpleBidManager = ({
           ) : !isSubscribed ? (
             <SubscribeToBidButton />
           ) : (
-            <Button
-              onClick={handlePlaceBid}
-              disabled={isSubmitting}
-              className="w-full h-16 text-xl font-bold bg-[#D81B24] hover:bg-[#B01831]"
-            >
-              {isSubmitting ? "Składanie oferty..." : "Złóż ofertę"}
-            </Button>
+            <div className="w-full p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+              <p className="text-green-800 font-medium">Subskrypcja aktywna</p>
+              <p className="text-sm text-green-700 mt-1">
+                Masz dostęp do pełnych danych pojazdu i danych sprzedającego.
+              </p>
+            </div>
           )}
         </div>
       </CardContent>
