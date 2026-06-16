@@ -1,16 +1,13 @@
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useIsMobile } from "@/hooks/useIsMobile";
-import MobileStickyBidBar from "@/components/auction/MobileStickyBidBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CarListing } from "@/types/cars";
 import { formatCurrency } from "@/lib/utils";
-import { Calendar, Gauge, MapPin, Clock, Car } from "lucide-react";
+import { Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MaxBidInterface } from "@/components/auction/MaxBidInterface";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDealerProfileSimple } from "@/hooks/useDealerProfileSimple";
 import { VehiclePhotos } from "@/components/car-details/VehiclePhotos";
@@ -47,10 +44,6 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const { user } = useAuth();
   const { dealerProfile } = useDealerProfileSimple();
-  const isMobile = useIsMobile();
-  const specsRef = useRef<HTMLDivElement>(null);
-  const [showStickyBid, setShowStickyBid] = useState(false);
-  const [stickyBidDismissed, setStickyBidDismissed] = useState(false);
   // Query for auction schedule data
   const { data: scheduleData } = useQuery({
     queryKey: ["auction-schedule", car?.id],
@@ -72,19 +65,6 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
     },
     enabled: !!car?.id,
   });
-
-  // IntersectionObserver: detect when specs section scrolls out of view
-  useEffect(() => {
-    if (!isMobile || !specsRef.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setShowStickyBid(!entry.isIntersecting);
-      },
-      { threshold: 0, rootMargin: "-80px 0px 0px 0px" }
-    );
-    observer.observe(specsRef.current);
-    return () => observer.disconnect();
-  }, [isMobile]);
 
   if (!car) return null;
 
@@ -221,7 +201,7 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
         </div>
 
         {/* Basic Specifications */}
-        <div className="mt-6" ref={specsRef}>
+        <div className="mt-6">
           <BasicSpecifications car={car} />
         </div>
 
@@ -290,30 +270,11 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
           )}
         </div>
 
-        {/* Bidding Interface for Live Auctions */}
-        {isLiveAuction && dealerProfile?.id && (
-          <div className="mt-6 pt-6 border-t">
-            <MaxBidInterface
-              carId={car.id}
-              dealerId={dealerProfile.id}
-              currentHighestBid={car.currentBid || car.current_bid || 0}
-              minimumIncrement={1} // Allow any increment above current bid
-              auctionEndTime={scheduleInfo?.endTime || car.scheduleEndTime || car.auction_end_time}
-              reservePrice={reservePrice}
-              isVerified={isVerified}
-              scheduleStatus={scheduleInfo?.status || 'active'}
-              scheduleStartTime={scheduleInfo?.startTime || car.scheduleStartTime}
-              scheduleEndTime={scheduleInfo?.endTime || car.scheduleEndTime}
-              auctionTimingStatus={car.auctionTimingStatus || 'active'}
-            />
-          </div>
-        )}
-
-        {/* Call to Action for Non-Live Auctions - Only show for non-dealers */}
-        {!isLiveAuction && !dealerProfile?.id && (
+        {/* Call to Action for Non-Dealers */}
+        {!dealerProfile?.id && (
           <div className="pt-4 border-t">
             <p className="text-sm text-gray-600 mb-4">
-              To participate in auctions and place bids, you need to register as a verified dealer.
+              To participate and access seller details, you need to register as a verified dealer.
             </p>
             <div className="flex gap-2">
               <Button className="flex-1">
@@ -324,17 +285,6 @@ const CarDetailsDialog = ({ car, onClose }: CarDetailsDialogProps) => {
               </Button>
             </div>
           </div>
-        )}
-
-        {/* Mobile Sticky Bid Bar */}
-        {isMobile && isLiveAuction && isVerified && dealerProfile?.id && showStickyBid && !stickyBidDismissed && (
-          <MobileStickyBidBar
-            carId={car.id}
-            dealerId={dealerProfile.id}
-            currentHighestBid={car.currentBid || car.current_bid || 0}
-            reservePrice={reservePrice}
-            onDismiss={() => setStickyBidDismissed(true)}
-          />
         )}
       </DialogContent>
     </Dialog>
