@@ -1,10 +1,10 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { GavelIcon, ShoppingCart, Car } from "lucide-react";
+import { GavelIcon, Car } from "lucide-react";
 import { useDealerStats } from "@/hooks/useDealerStats";
 
 export const StatsSection = () => {
-  const { activeBids, wonAuctions, availableAuctions, loading, error } = useDealerStats();
+  const { activeBids, availableAuctions, loading, error } = useDealerStats();
 
   const stats = [
     {
@@ -12,12 +12,6 @@ export const StatsSection = () => {
       value: loading ? "..." : activeBids.toString(),
       icon: <GavelIcon className="h-5 w-5 text-iris" />,
       description: "Bieżące aktywne oferty"
-    },
-    {
-      title: "Wygrane aukcje",
-      value: loading ? "..." : wonAuctions.toString(),
-      icon: <ShoppingCart className="h-5 w-5 text-success" />,
-      description: "Pomyślnie wygrane"
     },
     {
       title: "Dostępne aukcje",

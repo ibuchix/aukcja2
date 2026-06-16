@@ -7,7 +7,6 @@ import {
 import Auth from "./pages/Auth";
 import DealerDashboard from "./pages/dealer/Dashboard"; 
 import Documents from "./pages/dealer/Documents";
-import WonVehicles from "./pages/dealer/WonVehicles";
 import Bids from "./pages/dealer/Bids";
 import Wishlist from "./pages/dealer/Wishlist";
 import CarAuction from "./pages/dealer/CarAuction";
@@ -83,16 +82,6 @@ function App() {
             <ProtectedRoute>
               <DealerLayoutWrapper>
                 <Documents />
-              </DealerLayoutWrapper>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dealer/won-vehicles"
-          element={
-            <ProtectedRoute>
-              <DealerLayoutWrapper>
-                <WonVehicles />
               </DealerLayoutWrapper>
             </ProtectedRoute>
           }
