@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { Crown, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useDealerSubscription } from "@/hooks/useDealerSubscription";
@@ -11,7 +11,7 @@ export const SubscriptionPromptCard = () => {
 
   return (
     <Alert className="border-[#16A34A]/20 bg-[#16A34A]/5">
-      <Sparkles className="h-4 w-4 text-[#16A34A]" />
+      <Crown className="h-4 w-4 text-[#16A34A]" />
       <AlertTitle className="text-[#16A34A]">
         Aktywuj subskrypcję, aby licytować
       </AlertTitle>
