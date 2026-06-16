@@ -1,54 +1,63 @@
+# Dealer Subscription Onboarding — Presentation Plan
 
-# Subscription-Based Seller Contact Access
+Goal: Make it impossible for a newly-registered dealer to miss the subscription step, while leaving the existing verification flow untouched. Everything auto-disappears once their subscription is active.
 
-Pivot from the current pay-per-win platform fee model to a monthly subscription. While a dealer's subscription is active, they can view seller first name, email, and phone number on any **live** auction. Existing platform fee / won-vehicle flows are disabled (kept in code, hidden in UI) so we can revert if needed.
+## What the dealer will see
 
-## Scope
+### 1. Hero subscription card on the dashboard (primary CTA)
+A prominent branded card rendered at the **top** of `/dealer/dashboard`, above the welcome card. Only shown when `useDealerSubscription().isActive === false`.
 
-### 1. Database
-New migration adds:
-- `dealer_subscriptions` table: `id`, `dealer_id` (FK → `dealers.id`), `stripe_customer_id`, `stripe_subscription_id`, `status` (`active`, `past_due`, `canceled`, `incomplete`), `current_period_end timestamptz`, `cancel_at_period_end bool`, timestamps. Unique on `dealer_id`.
-- Standard `GRANT`s (`authenticated` SELECT own row, `service_role` ALL) + RLS: dealer can read only their own row; only `service_role` (webhook) can write.
-- Security-definer function `public.dealer_has_active_subscription(_user_id uuid) returns boolean` — checks `status='active' AND current_period_end > now()`. Used by RLS and by a server-side view to gate seller contact.
-- New view `public.live_auction_sellers` (security_invoker=on) joining `cars` + `sellers` + `auth.users.email`, exposing `car_id, seller_first_name, seller_email, seller_phone`, but only for rows where the car has an active auction schedule (live) AND `dealer_has_active_subscription(auth.uid())`. RLS on base `sellers` continues to deny direct access.
-- Index on `dealer_subscriptions(stripe_subscription_id)` for webhook lookups.
+Layout (Polish copy):
+- Heading: **"Aktywuj subskrypcję, aby licytować"**
+- Sub-line: short value statement — access to live auctions, unlimited bids, seller contact after winning.
+- Benefits row (3 icon + label items): Dostęp do aukcji na żywo • Nielimitowane oferty • Dane sprzedającego po wygranej
+- Large green CTA button: **"Subskrybuj teraz"** (bg `#16a34a`/green-600, white text) → navigates to `/dealer/subscription`
+- Secondary text link: "Dowiedz się więcej" → also `/dealer/subscription`
+- Subtle gradient background + green left border accent so it reads as positive/action (distinct from the red verification banner which signals a blocker).
 
-### 2. Stripe (reuses existing keys, no new secrets)
-- New edge function `create-subscription-checkout`: creates a Stripe Customer (idempotent by dealer), creates a Checkout Session in `mode: 'subscription'` with one recurring price (999 PLN net/month) + explicit 23% VAT handling consistent with `mem://payments/stripe/vat-handling`. Success URL → `/dealer/subscription?status=success`.
-- New edge function `stripe-subscription-webhook` (verify_jwt=false, signature verified) handling `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed` → upserts `dealer_subscriptions` using `SERVICE_ROLE_KEY`. Add `STRIPE_WEBHOOK_SECRET` only if not already present (user will set the webhook URL in Stripe dashboard — we'll surface the URL).
-- New edge function `cancel-subscription`: authenticated dealer call → `stripe.subscriptions.update(..., { cancel_at_period_end: true })`. (Immediate-lock requirement is enforced by the `current_period_end` check + the webhook on `customer.subscription.deleted`; "immediate lock" per the answers means access disappears as soon as `status` flips away from `active`.)
+Coexistence with verification banner: both can show simultaneously — verification banner stays red (account issue), subscription card stays green (opportunity). They serve different purposes and should not be merged.
 
-### 3. Frontend
-- New hook `useDealerSubscription()` → reads `dealer_subscriptions` for current dealer; exposes `isActive`, `periodEnd`, `cancelAtPeriodEnd`.
-- New page `/dealer/subscription`: shows current state, "Subskrybuj 999 PLN/mies. + VAT" CTA → invokes `create-subscription-checkout`, and "Anuluj subskrypcję" → `cancel-subscription`. Handles `?status=success` toast.
-- Gate seller contact UI: in `CarDetailsDialog` and the full car-auction page, replace the existing "pay platform fee to unlock" block with:
-  - If subscription active **and** auction is live → query `live_auction_sellers` view and render first name / email / phone (tel: and mailto: links).
-  - Otherwise → show "Subskrybuj, aby zobaczyć dane kontaktowe sprzedawcy" with a link to `/dealer/subscription`.
-- Hide (do not delete) the platform-fee UI on `WonVehicles` and any "unlock seller details" buttons. Keep underlying components/files so we can revert.
-- Add subscription status indicator + link in dealer dashboard header.
+### 2. Sidebar/navbar "Subskrybuj" nudge
+- Add a permanent **"Subskrybuj"** menu entry (CreditCard icon, already added in earlier step) with a small **green pulsing dot** badge while `isActive === false`.
+- Once active, the dot disappears and the label optionally swaps to "Subskrypcja" with a subtle check icon.
+- Lives in both `NavbarDesktopMenu` (already linked) and the mobile menu.
 
-### 4. Disable old per-win flow (reversible)
-- Stop creating `dealer_won_vehicles` rows on auction end? Per the project knowledge the won-vehicle record is created at auction end and that logic stays — we only stop charging for it and stop using `seller_details_unlocked` for visibility. The flag is ignored by the new view; existing rows are untouched.
-- Remove platform-fee CTAs from the dealer UI but leave `create-platform-fee-payment` / `verify-payment-status` functions deployed and unreferenced.
+### 3. Locked bid buttons on auction cards
+- In the live auction list and `CarAuction` page, when the dealer is verified but not subscribed:
+  - Replace the "Złóż ofertę" submit button with a disabled green button labeled **"Subskrybuj, aby licytować"**.
+  - Clicking it routes to `/dealer/subscription`.
+  - Tooltip: "Aktywna subskrypcja jest wymagana do składania ofert."
+- Verified + subscribed dealers see the normal `BidForm` (unchanged).
+- Unverified dealers continue to see the existing verification gate (untouched).
 
-### 5. Security considerations
-- Seller PII (email, phone, full name) currently lives in `sellers` + `auth.users`. The new view is the ONLY path that exposes them to dealers, gated by:
-  1. RLS on `dealer_subscriptions` (dealer can't fake their own status — only webhook writes).
-  2. `dealer_has_active_subscription` is `security definer` reading `dealer_subscriptions` by `auth.uid()`.
-  3. View filters to live auctions only, so ended/scheduled auctions don't leak.
-  4. Base `sellers` table SELECT policy remains restrictive; no direct SELECT for dealers.
-- Stripe webhook requires signature verification — never trust unsigned payloads.
-- `cancel-subscription` must verify `auth.uid()` owns the dealer record before calling Stripe.
-- Audit log entry written on each contact view (insert into existing `audit_logs`) for misuse traceability.
-- Rate-limit seller-contact view queries per dealer to discourage scraping (reuse `dealer_bid_rate_limits` pattern or add new bucket).
-- Update `mem://security/data/seller-contact-protection` after rollout to reflect the new gating rule.
+### 4. Return-to-dashboard after subscribing
+- `create-subscription-checkout` already accepts success/cancel URLs. Set `success_url` to `/dealer/dashboard?subscription=success` and `cancel_url` to `/dealer/subscription?canceled=1`.
+- On dashboard mount, if `?subscription=success` is present:
+  - Show a one-time success toast: "Subskrypcja aktywna — możesz teraz licytować!"
+  - Call `useDealerSubscription().refresh()` (with brief retry since the Stripe webhook may take a second).
+  - Strip the query param.
 
-## Open items to confirm
-1. Stripe **Price ID** for the 999 PLN/mo product — should I create it dynamically in code (price_data on checkout) or do you want a fixed Price ID configured as a secret?
-2. Webhook endpoint setup: I can deploy the function and tell you the URL to register in Stripe → that yields a `STRIPE_WEBHOOK_SECRET` you'd paste back. OK to proceed that way?
-3. "Live auction only" — should subscribers also see contact on auctions that have ended in the last X hours (e.g., to follow up), or strictly only while the schedule status is live?
+## Files to change / add
 
-## Out of scope
-- Refunds/proration for in-flight subscriptions.
-- Tiered plans, annual billing, team seats.
-- Deletion of historical `dealer_won_vehicles` / platform-fee data.
+Frontend only — no backend or schema changes.
+
+- **New** `src/components/dealer/dashboard/SubscriptionPromptCard.tsx` — hero green card; renders nothing when `isActive` or still loading.
+- **Edit** `src/pages/dealer/Dashboard.tsx` — render `<SubscriptionPromptCard />` above `welcomeCard`; handle `?subscription=success` query param (toast + refresh + cleanup).
+- **Edit** `src/components/navbar/NavbarDesktopMenu.tsx` — add green pulsing dot badge next to the existing Subskrybuj link when not subscribed.
+- **Edit** mobile menu component (locate via grep around `NavbarDesktopMenu`) — same nudge.
+- **New** `src/components/dealer/SubscribeToBidButton.tsx` — disabled green button + tooltip used as a gate wrapper.
+- **Edit** `src/components/dealer/BidForm.tsx` (and/or its wrapper in `CarAuction.tsx` and live auction card) — when verified but `!isActive`, render `SubscribeToBidButton` instead of the normal submit control.
+- **Edit** `supabase/functions/create-subscription-checkout/index.ts` — point `success_url` to `/dealer/dashboard?subscription=success`.
+
+## Behavior matrix
+
+| Verification | Subscription | Dashboard top                              | Bid action                          |
+|--------------|--------------|--------------------------------------------|-------------------------------------|
+| Pending      | —            | Red verification banner (unchanged)        | Existing verification gate          |
+| Approved     | Inactive     | Green subscription hero card               | "Subskrybuj, aby licytować" gate    |
+| Approved     | Active       | Nothing extra (welcome card as today)      | Normal BidForm                      |
+
+## Out of scope (intentionally not doing)
+- No full-screen blocking gate — too aggressive; the hero card + locked bid button already provide a clear, unmissable funnel without trapping the user.
+- No post-verification modal — adds a second interruption on top of the always-visible hero card; can revisit later if conversion is low.
+- No changes to verification logic, RLS, or Stripe webhook handling.
