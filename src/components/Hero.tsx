@@ -34,7 +34,7 @@ const Hero = () => {
             <div className="space-y-6">
               <div className="space-y-2 max-w-3xl">
                 <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl sm:text-4xl lg:text-4xl xl:text-4xl'} font-bold text-body-text leading-tight`}>
-                  Aukcja samochodowa <span className="text-primary">online</span>
+                  Samochody od prywatnych <span className="text-primary">sprzedawców</span>.
                 </h1>
                 <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl sm:text-4xl lg:text-4xl xl:text-4xl'} font-bold text-body-text leading-tight`}>
                   Tylko dla <span className="text-primary">dealerów</span>.
@@ -44,12 +44,12 @@ const Hero = () => {
               <div className="w-20 h-1 bg-primary rounded-full"></div>
               
               <p className={`text-subtitle-text ${isMobile ? 'text-base' : 'text-lg lg:text-xl'} leading-relaxed max-w-2xl`}>
-                Autaro.pl to pierwsza w Polsce aukcja samochodowa online dla dealerów. Samochody tylko od prywatnych sprzedawców, wyłącznie dla zweryfikowanych dealerów. Wszystkie zarejestrowane w Polsce, z pełnym profilem i opisem.
+                Autaro.pl to pierwsza w Polsce platforma zakupu aut tylko dla dealerów. Samochody mogą sprzedawać wyłącznie zweryfikowani prywatni sprzedawcy, a dostęp mają tylko zarejestrowani dealerzy. W ramach jednego miesięcznego abonamentu zyskujesz dostęp do setek aut z całej Polski — z danymi kontaktowymi przy każdym ogłoszeniu, co pozwala szybko sfinalizować transakcję.
               </p>
               
               <div className={`bg-primary/10 border-l-4 border-primary ${isMobile ? 'p-3' : 'p-4'} rounded-r-lg`}>
                 <p className={`text-primary font-semibold ${isMobile ? 'text-base' : 'text-lg lg:text-xl'} leading-relaxed`}>
-                  Zarejestruj swój komis teraz i odbierz 30% zniżki na pierwszą prowizje. Rejestracja jest bezpłatna!
+                  Każde auto ma zweryfikowany profil z raportem historii pojazdu i raportem stanu technicznego.
                 </p>
               </div>
             </div>
@@ -64,7 +64,7 @@ const Hero = () => {
                 onClick={handleButtonClick}
                 className={`btn-primary ${isMobile ? 'text-base px-6 py-3' : 'text-lg lg:text-xl px-8 lg:px-12 py-4 lg:py-5'} flex items-center gap-3 group shadow-lg hover:shadow-xl transition-all duration-300`}
               >
-                {isAuthenticated ? 'Przejdź do aukcji!' : 'Załóż konto teraz!'}
+                {isAuthenticated ? 'Przeglądaj dostępne samochody!' : 'Załóż konto teraz!'}
                 <ArrowRight className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5 lg:w-6 lg:h-6'} group-hover:translate-x-1 transition-transform`} />
               </button>
             </motion.div>
