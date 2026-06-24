@@ -8,14 +8,16 @@ export function QuickActions() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
+  // NOTE: "Moje oferty" tile is intentionally hidden for now.
+  // Keep the entry below commented so we can re-enable it later if needed.
   const quickActionItems = [
-    {
-      icon: <Gavel className="h-5 w-5" />,
-      title: "Moje oferty",
-      description: "",
-      link: "/dealer/bids",
-      variant: "green" as const
-    },
+    // {
+    //   icon: <Gavel className="h-5 w-5" />,
+    //   title: "Moje oferty",
+    //   description: "",
+    //   link: "/dealer/bids",
+    //   variant: "green" as const
+    // },
     {
       icon: <FileText className="h-5 w-5" />,
       title: "Centrum Dokumentów", 
@@ -58,7 +60,7 @@ export function QuickActions() {
     <div className="mb-6">
       <h2 className="text-xl font-semibold mb-4 text-body-text">Szybkie działania</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {quickActionItems.map((item) => (
           <ActionButton
             key={item.title}
