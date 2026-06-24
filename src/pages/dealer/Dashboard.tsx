@@ -114,7 +114,7 @@ const DashboardContent = () => {
       <AlertTitle className="text-[#DC143C]">Wymagana weryfikacja konta</AlertTitle>
       <AlertDescription className="text-[#DC143C]/80">
         <p className="mb-3">
-          Aby uzyskać dostęp do wszystkich funkcji platformy i rozpocząć licytację na aukcjach, prosimy o dokończenie weryfikacji konta poprzez przesłanie rachunku za media Twojej firmy.
+          Aby uzyskać dostęp do wszystkich funkcji naszej platformy, prosimy o dokończenie weryfikacji konta poprzez potwierdzenie adresu firmy, np. fakturą lub rachunkiem za media.
         </p>
         <Button 
           onClick={() => navigate('/dealer/documents')}
@@ -141,7 +141,7 @@ const DashboardContent = () => {
     <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="auctions">
-          {isMobile ? "Aukcja" : "Aukcja na żywo"}
+          {isMobile ? "Samochody" : "Samochody dostępne do zakupu"}
         </TabsTrigger>
         <TabsTrigger value="overview">Przegląd</TabsTrigger>
         <TabsTrigger value="profile">Profil</TabsTrigger>
