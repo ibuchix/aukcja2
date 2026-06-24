@@ -57,7 +57,7 @@ export const SimpleBidManager = ({
               <div className="space-y-2">
                 <div className="text-center">
                   <p className="text-base text-muted-foreground font-medium">
-                    Cena wyjściowa
+                    Cena proponowana przez sprzedającego
                   </p>
                   <p className="text-3xl font-bold text-foreground">
                     {Math.round(reservePrice).toLocaleString('pl-PL')} zł
