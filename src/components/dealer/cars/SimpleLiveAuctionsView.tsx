@@ -92,10 +92,10 @@ export const SimpleLiveAuctionsView = () => {
       <div className={`${isMobile ? 'space-y-4' : 'flex justify-between items-center'}`}>
         <div>
           <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-white mb-2`}>
-            Aukcje na żywo
+            Samochody dostępne do zakupu
           </h2>
           <p className={`text-gray-300 ${isMobile ? 'text-sm' : ''}`}>
-            Sprawdź dostępne pojazdy i złóż swoją ofertę
+            Zobacz wszystkie samochody dostępne do natychmiastowego zakupu.
           </p>
         </div>
         <RefreshListingsButton onRefresh={refetch} isLoading={isLoading} />
