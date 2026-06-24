@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Gavel, FileText, Heart } from "lucide-react";
+import { FileText, Heart } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export function QuickActions() {
