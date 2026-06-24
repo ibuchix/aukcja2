@@ -118,7 +118,7 @@ export const translateSpecificationLabel = (label: string): string => {
     'Vehicle Features': 'Wyposażenie pojazdu',
     'Additional Information': 'Dodatkowe informacje',
     'Seller Notes': 'Uwagi sprzedawcy',
-    'Reserve Price': 'Cena wyjściowa',
+    'Reserve Price': 'Cena proponowana przez sprzedającego',
     'Current Bid': 'Aktualna oferta',
     'Actions': 'Akcje',
     'View All': 'Zobacz wszystkie zdjęcia',

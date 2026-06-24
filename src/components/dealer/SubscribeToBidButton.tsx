@@ -52,7 +52,7 @@ export const SubscribeToBidButton = ({ className }: SubscribeToBidButtonProps) =
             ) : (
               <Lock className="mr-2 h-5 w-5" />
             )}
-            Subskrybuj, aby licytować
+            Wykup abonament, aby zobaczyć dane sprzedającego
           </Button>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">
