@@ -45,14 +45,14 @@ export const SubscribeToBidButton = ({ className }: SubscribeToBidButtonProps) =
           <Button
             onClick={handleSubscribe}
             disabled={submitting}
-            className={`w-full h-16 text-xl font-bold bg-green-600 hover:bg-green-700 text-white ${className ?? ""}`}
+            className={`w-full min-h-16 h-auto py-3 px-4 text-sm sm:text-base md:text-lg font-bold bg-green-600 hover:bg-green-700 text-white whitespace-normal break-words leading-snug text-center flex items-center justify-center gap-2 ${className ?? ""}`}
           >
             {submitting ? (
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin shrink-0" />
             ) : (
-              <Lock className="mr-2 h-5 w-5" />
+              <Lock className="h-5 w-5 shrink-0" />
             )}
-            Wykup abonament, aby zobaczyć dane sprzedającego
+            <span>Wykup abonament, aby zobaczyć dane sprzedającego</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">
