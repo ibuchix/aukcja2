@@ -35,11 +35,13 @@ export const NavbarDesktopMenu = ({ session, isLoading, handleLogout }: NavbarDe
           {showNudge ? "Subskrybuj" : "Subskrypcja"}
         </Link>
       )}
+      {/* Temporarily hidden — keep for future restoration
       <Link to="/how-it-works" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-2">
         <HelpCircle size={20} />
         Jak to Działa
       </Link>
-      
+      */}
+
       {isLoading ? (
         <Button disabled className="px-4 py-2">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
