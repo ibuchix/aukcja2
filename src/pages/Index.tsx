@@ -3,7 +3,6 @@ import Hero from "@/components/Hero";
 import DealerReviews from "@/components/DealerReviews";
 import Services from "@/components/Services";
 import HowItWorks from "@/components/HowItWorks";
-import VideoDemo from "@/components/VideoDemo";
 import MoreInfo from "@/components/MoreInfo";
 import SecurityPartners from "@/components/SecurityPartners";
 import Navbar from "@/components/Navbar";
@@ -26,9 +25,6 @@ const Index = () => {
 
       {/* How It Works Section */}
       <HowItWorks />
-
-      {/* Video Demo Section */}
-      <VideoDemo />
 
       {/* More Info Section */}
       <MoreInfo />
