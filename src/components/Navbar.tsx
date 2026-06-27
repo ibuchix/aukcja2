@@ -115,10 +115,12 @@ export default function Navbar() {
             </Link>
           )}
           
+          {/* Temporarily hidden — keep for future restoration
           <Link to="/how-it-works" className="text-body-text hover:text-primary transition-colors">
             Jak to Działa
           </Link>
-          
+          */}
+
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -172,14 +174,16 @@ export default function Navbar() {
                 </Link>
               )}
               
-              <Link 
-                to="/how-it-works" 
+              {/* Temporarily hidden — keep for future restoration
+              <Link
+                to="/how-it-works"
                 className="text-body-text hover:text-primary transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Jak to Działa
               </Link>
-              
+              */}
+
               {isAuthenticated ? (
                 <>
                   <Link 
