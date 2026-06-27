@@ -13,12 +13,12 @@ const Services = () => {
     {
       icon: TrendingUp,
       title: "Precyzyjny algorytm wyceny",
-      description: "Algorytm Autaro.pl wykorzystuje aktualne dane rynkowe, aby ustalać opłacalne ceny orientacyjne dla wszystkich aut dostępnych na naszych codziennych aukcjach.",
+      description: "Algorytm Autaro.pl wykorzystuje aktualne dane rynkowe, aby ustalać opłacalne ceny orientacyjne dla wszystkich aut dostępnych na naszej platformie.",
     },
     {
       icon: Clock,
       title: "Tylko auta z Polski",
-      description: "Na naszych aukcjach dostępne są wyłącznie auta zarejestrowane w Polsce. Każdego tygodnia publikujemy nową selekcję pojazdów przeznaczonych do składania ofert. Oferty są prywatne i przekazywane sprzedającemu w czasie rzeczywistym.",
+      description: "Na naszej platformie dostępne są tylko samochody zarejestrowane w Polsce. Każdego tygodnia publikujemy nową selekcję pojazdów przeznaczonych do składania ofert. Oferty są prywatne i przekazywane sprzedającemu w czasie rzeczywistym.",
     },
     {
       icon: Shield,

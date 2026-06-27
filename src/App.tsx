@@ -118,7 +118,9 @@ function App() {
         />
         
         {/* Other pages */}
+        {/* Temporarily disabled — keep route for future restoration
         <Route path="/how-it-works" element={<HowItWorks />} />
+        */}
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/cookie-policy" element={<CookiePolicyPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />

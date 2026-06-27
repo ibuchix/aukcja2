@@ -22,11 +22,13 @@ export const NavbarMobileMenu = ({ isOpen, session, isLoading, handleLogout }: N
             Aukcja
           </Link>
         )}
+        {/* Temporarily hidden — keep for future restoration
         <Link to="/how-it-works" className="block text-gray-700 hover:text-primary py-2 flex items-center gap-2">
           <HelpCircle size={20} />
           Jak to Działa
         </Link>
-        
+        */}
+
         {isLoading ? (
           <Button disabled className="block w-full">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
