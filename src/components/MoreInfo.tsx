@@ -29,60 +29,36 @@ const MoreInfo = () => {
           style={{backgroundColor: '#393b39'}}
         >
           <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-           Autaro.pl to pierwsza w Polsce aukcja samochodowa online stworzona jedynie dla dealerów. Nowe oferty samochodów tylko od osób prywatnych, dostępne wyłącznie dla zweryfikowanych dealerów.
+            Autaro.pl to pierwsza w Polsce platforma zakupu aut stworzona wyłącznie dla dealerów. Samochody mogą sprzedawać tylko zweryfikowani prywatni sprzedający, a dostęp do platformy mają wyłącznie zarejestrowani dealerzy. Po obu stronach są wyłącznie zweryfikowani uczestnicy — prawdziwi prywatni właściciele i sprawdzeni dealerzy — co eliminuje przypadkowość i daje pewność każdej transakcji.
           </p>
 
-          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            Wszystkie samochody dostępne do zakupu na naszej platformie są zarejestrowane w Polsce.
-          </p>
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold" style={{color: '#FCFCFC'}}>Sprzedający otwarci na sprzedaż do handlu.</h3>
+            <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
+              Wszyscy sprzedający na platformie świadomie wystawiają auta z myślą o sprzedaży dealerom. Ich oczekiwania cenowe są do tego dopasowane, dzięki czemu negocjacje są krótsze, a cała transakcja przebiega sprawnie i bez nieporozumień.
+            </p>
+          </div>
 
-          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            Nasz algorytm wycenia samochody w taki sposob, aby byly oplacalne dla dealerow kupujaych na naszych aukcjach.
-          </p>
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold" style={{color: '#FCFCFC'}}>Natychmiastowy dostęp do danych kontaktowych.</h3>
+            <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
+              W ramach abonamentu widzisz dane kontaktowe sprzedającego przy każdym samochodzie. Możesz skontaktować się od razu, bez pośredników i bez czekania — co pozwala szybko domknąć transakcję, zanim zrobi to ktoś inny.
+            </p>
+          </div>
 
-          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            <strong>Aukcja trwa od niedzieli 20:00 do piątku 15:00 — możesz licytować o dowolnej porze.</strong>
-          </p>
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold" style={{color: '#FCFCFC'}}>Każde auto opisane według tego samego schematu.</h3>
+            <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
+              Wszystkie samochody są profilowane w identyczny sposób, z tym samym zakresem informacji — w tym z raportem historii pojazdu oraz raportem stanu technicznego. Wiesz dokładnie, co kupujesz, jeszcze przed kontaktem ze sprzedającym.
+            </p>
+          </div>
 
-          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            Każda aukcja trwa cały tydzień, co daje Ci dużo czasu na przejrzenie samochodów, sprawdzenie VIN, ocenę zdjęć i złożenie oferty w dogodnym momencie. Nie ma presji czasu — możesz działać wtedy, kiedy najbardziej Ci pasuje.
-          </p>
-
-          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            <strong>Zakup może nastąpić w każdej chwili, gdy sprzedający zaakceptuje ofertę.</strong>
-          </p>
-
-          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            Sprzedający widzi tylko najwyższą aktualną ofertę i może ją zaakceptować w każdym momencie, więc aukcja nie wymaga czekania do ostatniej sekundy. Jeśli Twoja oferta zostanie zaakceptowana, transakcja zostaje zamknięta natychmiast. Auta często sprzedają się już po pierwszej sensownej ofercie.
-          </p>
-
-          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            <strong>Oferty są ukryte — widzi je wyłącznie sprzedający.</strong>
-          </p>
-
-          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            Inne komisy nie widzą Twoich ofert ani historii licytacji. Dzięki temu możesz licytować spokojnie, bez sztucznego podbijania cen. Sprzedający widzi tylko najwyższą aktualną ofertę.
-          </p>
-
-          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            Wszystkie samochody wystawione na aukcji są profilowane w ten sam sposób, aby wyeliminować wadliwe lub niedokładne profile samochodów.
-          </p>
-
-          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            Jako dealer kupujący masz możliwość ostatecznej weryfikacji samochodu pod względem jego profilu podczas odbioru, zanim sfinalizujesz zakup.
-          </p>
-
-          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            Jeżeli stan samochodu jest zgodny z jego profilem, dealer płaci cenę na miejscu i kupuje samochód.
-          </p>
-
-          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            Jezeli stan samochodu jest niezgodny z jego profilem, jest mozliwosc negocjacji ceny lub calkowitego odwolania zakupu. 
-          </p>
-
-          <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
-            W przypadku całkowitego odwołania zakupu, wystarczy wypełnić protokół anulacji sprzedaży, a pełna prowizja zapłacona przed odbiorem zostanie zwrócona.
-          </p>
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold" style={{color: '#FCFCFC'}}>Tylko zweryfikowani prywatni sprzedający.</h3>
+            <p className="text-lg leading-relaxed" style={{color: '#FCFCFC'}}>
+              Eliminujemy ukrytych handlarzy podszywających się pod osoby prywatne. Każdy sprzedający jest weryfikowany, więc masz pewność, że kupujesz auto bezpośrednio od prawdziwego właściciela.
+            </p>
+          </div>
         </motion.div>
       </div>
     </section>
